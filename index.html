@@ -1326,8 +1326,6 @@ document.body.style.overflow='hidden';
 }
 
 let smsTimer=null;
-// 短信后端地址（部署后替换为实际地址）
-const SMS_API='https://your-sms-server.onrender.com';
 function sendSmsCode(){
 const phone=document.getElementById('bindPhone').value.trim();
 if(!/^1\d{10}$/.test(phone))return toast('请输入正确的11位手机号','error');
@@ -2102,7 +2100,7 @@ ${modes.map((m,i)=>`<div class="cw-type${i===0?' active':''}" onclick="selectPho
 <div id="photoResult" style="margin-top:16px"></div>
 </div>`;
 }
-function previewPhoto(inp):{
+function previewPhoto(inp){
 const f=inp.files[0];if(!f)return;
 const r=new FileReader();r.onload=e=>{document.getElementById('photoPreview').innerHTML=`<img src="${e.target.result}" style="max-width:100%;max-height:200px;border-radius:8px;margin-top:8px">`};r.readAsDataURL(f);
 }
@@ -2244,7 +2242,7 @@ ${modes.map((m,i)=>`<div class="cw-type${i===0?' active':''}" onclick="selectAud
 <div id="audioResult" style="margin-top:16px"></div>
 </div>`;
 }
-function previewAudio(inp):{
+function previewAudio(inp){
 const f=inp.files[0];if(!f)return;
 document.getElementById('audioPreview').innerHTML=`<div style="padding:12px;background:var(--card);border-radius:10px;display:flex;align-items:center;gap:10px;margin-top:8px"><span style="font-size:24px">🎵</span><div><p style="font-size:13px;font-weight:600">${f.name}</p><p style="font-size:11px;color:var(--b)">${(f.size/1024/1024).toFixed(1)}MB</p></div></div>`;
 }
