@@ -701,27 +701,31 @@ function withTimeout(promise,ms){
   return Promise.race([promise,new Promise((_,rej)=>setTimeout(()=>rej(new Error('AI请求超时，请稍后重试')),ms))]);
 }
 
-async function aiGenerateText(prompt,systemPrompt,model){
-  try{
-    const mdl=model||'openai-large';
-    const controller=new AbortController();
-    const tid=setTimeout(()=>controller.abort(),AI_TIMEOUT);
-    const r=await fetch(AI_TEXT_API,{method:'POST',signal:controller.signal,headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:mdl,messages:[
-        {role:'system',content:systemPrompt||'你是一个专业的AI助手，请根据用户要求生成高质量内容。回复只包含生成的内容，不要包含任何解释或说明。'},
-        {role:'user',content:prompt}
-      ],max_tokens:4000,temperature:0.9})});
-    clearTimeout(tid);
-    if(!r.ok)throw new Error('HTTP '+r.status);
-    const d=await r.json();
-    if(d.choices&&d.choices[0])return d.choices[0].message.content.trim();
-    if(d.error)throw new Error(d.error);
-    return null;
-  }catch(e){
-    if(e.name==='AbortError')console.log('AI请求超时');
-    else console.log('AI Text API error:',e);
-    return null;
+async function aiGenerateText(prompt,systemPrompt,model,retries){
+  retries=retries||2;
+  for(let i=0;i<=retries;i++){
+    try{
+      const mdl=model||'openai-large';
+      const controller=new AbortController();
+      const tid=setTimeout(()=>controller.abort(),AI_TIMEOUT);
+      const r=await fetch(AI_TEXT_API,{method:'POST',signal:controller.signal,headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({model:mdl,messages:[
+          {role:'system',content:systemPrompt||'你是一个专业的AI助手，请根据用户要求生成高质量内容。回复只包含生成的内容，不要包含任何解释或说明。'},
+          {role:'user',content:prompt}
+        ],max_tokens:4000,temperature:0.9})});
+      clearTimeout(tid);
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      const d=await r.json();
+      if(d.choices&&d.choices[0])return d.choices[0].message.content.trim();
+      if(d.error)throw new Error(d.error);
+      if(i<retries)await new Promise(r=>setTimeout(r,1500*(i+1)));
+    }catch(e){
+      if(e.name==='AbortError')console.log('AI请求超时 (try '+i+')');
+      else console.log('AI Text API error (try '+i+'):',e);
+      if(i<retries)await new Promise(r=>setTimeout(r,1500*(i+1)));
+    }
   }
+  return null;
 }
 
 function aiImageUrl(prompt,w=512,h=512){
