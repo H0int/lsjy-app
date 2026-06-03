@@ -379,7 +379,7 @@ function updateLockoutUI(){
     box.innerHTML='<i class="fa-solid fa-lock"></i><div style="font-weight:700;margin-bottom:4px">账号已锁定</div><div>连续5次登录失败，请等待'+Math.ceil(rem/60)+'分钟后再试</div>';
   }else{box.style.display='none'}
 }
-setInterval(updateLockoutUI,5000);
+setInterval(updateLockoutUI,5000);updateLockoutUI();
 function doLogout(){localStorage.removeItem('lsjy3_cur');document.getElementById('loginPage').style.display='';document.getElementById('app').classList.remove('active');toast('已退出登录')}
 function enterApp(){
   document.getElementById('loginPage').style.display='none';document.getElementById('app').classList.add('active');
