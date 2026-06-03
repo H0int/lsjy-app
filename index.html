@@ -6,6 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+<link rel="icon" href="logo.png" type="image/png">
 <title>罗圣纪元 - 互联网数字化综合平台</title>
 <meta name="description" content="罗圣纪元互联网数字化综合平台 - AI赋能实体经济，6大业务板块全覆盖，算力驱动AI创作">
 <meta name="theme-color" content="#0d1b2a">
@@ -567,6 +568,7 @@ textarea.fi{resize:vertical;min-height:120px}
 <p style="margin-top:8px">AI · 自媒体 · 电商 · 宠物 · 教育 · 伯雅校园</p>
 </footer>
 
+<div id="toastBox"></div>
 <!-- ===== DETAIL MODAL ===== -->
 <div class="detail-overlay" id="detailOverlay" onclick="closeDetail(event)">
 <div class="detail-panel">
@@ -1078,6 +1080,67 @@ navigator.clipboard.writeText(text).then(()=>toast('已复制到剪贴板','succ
 const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('已复制到剪贴板','success');
 });
 }
+
+// ===== TOAST =====
+function toast(msg,type='success',dur=3000){const box=document.getElementById('toastBox');if(!box)return;const el=document.createElement('div');el.className='toast '+type;el.textContent=msg;box.appendChild(el);requestAnimationFrame(()=>el.classList.add('show'));setTimeout(()=>{el.classList.remove('show');setTimeout(()=>el.remove(),300)},dur)}
+
+// ===== MOBILE MENU =====
+function toggleMobileMenu(){document.getElementById('mobileMenu').classList.toggle('show')}
+function closeMobileMenu(){document.getElementById('mobileMenu').classList.remove('show')}
+
+// ===== DETAIL MODAL =====
+function openMod(modId){
+const m=MODULES.find(x=>x.id===modId);if(!m)return;
+document.getElementById('detailIcon').textContent=m.icon;
+document.getElementById('detailTitle').textContent=m.name;
+document.getElementById('detailSub').textContent=m.summary;
+const body=document.getElementById('detailBody');
+let html='<div class="detail-services">';
+if(m.services&&m.services.length){m.services.forEach(s=>{html+=`<div class="detail-svc"><h4>${s.name}</h4><p>${s.desc}</p></div>`})}
+else{html+='<p style="color:var(--b)">暂无服务项目</p>'}
+html+='</div><button class="btn btn-p" style="width:100%;margin-top:16px" onclick="closeDetail();document.querySelector(\'#contact\').scrollIntoView({behavior:\'smooth\'})">📋 咨询该业务</button>';
+body.innerHTML=html;
+document.getElementById('detailOverlay').classList.add('show');
+document.body.style.overflow='hidden';
+}
+function closeDetail(e){if(e&&e.target!==e.currentTarget)return;document.getElementById('detailOverlay').classList.remove('show');document.body.style.overflow=''}
+
+// ===== TOOL PANEL =====
+function renderCopywriter(){
+document.getElementById('toolPanel').innerHTML=`<div class="tool-header"><h3>✍️ 智能文案工具</h3><button class="detail-close" onclick="closeTool()">✕</button></div>
+<div class="tool-body">
+<div class="copywriter-types">${[{e:'🎬',n:'短视频脚本'},{e:'🛍️',n:'团购文案'},{e:'📱',n:'朋友圈文案'},{e:'📕',n:'小红书种草'},{e:'📢',n:'广告文案'}].map((s,i)=>`<div class="cw-type${i===0?' active':''}" onclick="selectCwType(this,${i})">${s.e} ${s.n}</div>`).join('')}</div>
+<div class="fg"><label class="fl">产品/关键词</label><input class="fi" id="cwKeyword" placeholder="请输入产品名称或关键词"></div>
+<div class="fg"><label class="fl">补充说明（选填）</label><textarea class="fi" id="cwExtra" rows="2" placeholder="卖点、目标人群、风格偏好等"></textarea></div>
+<button class="btn btn-p" style="width:100%" onclick="aiDoCopywriter()">🚀 生成文案</button>
+<div id="cwOutput" style="margin-top:16px"></div>
+</div>`;
+window._cwType=0;
+}
+function aiDoCopywriter(){
+const kw=document.getElementById('cwKeyword').value.trim();if(!kw)return toast('请输入关键词','error');
+const extra=document.getElementById('cwExtra').value.trim();
+const types=['短视频脚本','团购文案','朋友圈文案','小红书种草笔记','广告文案'];
+const prompt=`请为"${kw}"写一段${types[window._cwType||0]}。${extra?'要求：'+extra+'。':''}风格生动吸引人，包含emoji。`;
+const out=document.getElementById('cwOutput');
+out.innerHTML='<p style="color:var(--b);text-align:center">⏳ AI生成中...</p>';
+if(typeof aiGenerateText==='function'){aiGenerateText(prompt).then(text=>{out.innerHTML=`<div style="padding:16px;background:var(--bg);border-radius:12px;border:1px solid var(--bd);white-space:pre-wrap;line-height:1.8;font-size:14px">${text}</div><button class="btn btn-o btn-sm" onclick="copyText('cwOutput')" style="margin-top:8px">📋 复制文案</button>`}).catch(()=>{out.innerHTML='<p style="color:var(--err)">AI生成失败，请稍后重试</p>'})}else{out.innerHTML='<p style="color:var(--err)">AI服务未就绪</p>'}
+}
+const _TOOL_MAP={copywriter:renderCopywriter,watermark:renderWatermark,rewrite:renderRewrite,hashtag:renderHashtag,viralVideo:renderViralVideo,digitalHuman:renderDigitalHuman,voiceClone:renderVoiceClone,videoLib:renderVideoLib,aigc:renderAIGC,photoEdit:renderPhotoEdit,audioEdit:renderAudioEdit,accompaniment:renderAccompaniment,docGen:renderDocGen,credits:renderCredits};
+const _TOOL_COST={viralVideo:50,digitalHuman:100,voiceClone:30,aigc:20,photoEdit:30,audioEdit:25,accompaniment:40,docGen:35};
+function openTool(id){
+if(id==='credits'||id==='videoLib'){_TOOL_MAP[id]&&_TOOL_MAP[id]();document.getElementById('toolOverlay').classList.add('show');document.body.style.overflow='hidden';return}
+if(requireLogin&&typeof requireLogin==='function'&&!isLoggedIn()){requireLogin();return}
+const cost=_TOOL_COST[id];
+if(cost&&typeof deductCredits==='function'){if(!deductCredits(cost)){return}}
+_TOOL_MAP[id]&&_TOOL_MAP[id]();
+document.getElementById('toolOverlay').classList.add('show');
+document.body.style.overflow='hidden';
+}
+function closeTool(e){if(e&&e.target!==e.currentTarget)return;document.getElementById('toolOverlay').classList.remove('show');document.body.style.overflow='';if(typeof aiStopVoice==='function')aiStopVoice()}
+
+// ===== COPYWRITER TYPE SELECT =====
+function selectCwType(el,i){el.parentElement.querySelectorAll('.cw-type').forEach(e=>e.classList.remove('active'));el.classList.add('active');window._cwType=i}
 
 // ===== AUTH SYSTEM =====
 function openAuth(tab){

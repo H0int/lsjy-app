@@ -7,6 +7,7 @@
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="logo.png" type="image/png">
 <title>罗圣纪元 - 后台管理系统</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <style>
@@ -272,7 +273,6 @@ tr:hover td{background:var(--ps)}
 <div class="modal-bg" id="modalBg" onclick="closeModal(event)"><div class="modal-box" id="modalBox"></div></div>
 
 <script>
-(function(){const _V='admin-v3.2-fix1';const _cv=localStorage.getItem('lsjy_admin_ver');if(_cv!==_V){localStorage.setItem('lsjy_admin_ver',_V);try{location.reload(true)}catch(e){}}})();
 // ===== Data Modules =====
 const MODULES=[
 {id:'ai',name:'AI 人工智能',icon:'fa-solid fa-robot',color:'#3b82f6',gradient:'linear-gradient(135deg,#3b82f6,#60a5fa)',summary:'依托自研 AI 技术面向中小商家落地数字化转型',services:[
@@ -405,8 +405,7 @@ function enterApp(){
   goPage('dashboard');
 }
 (function(){const u=getCur();const ADMIN_ROLES=['admin','super_admin','supreme_admin','boss'];if(u&&ADMIN_ROLES.includes(u.role))enterApp()})();
-// Cache bust: force reload if version mismatch
-(function(){const VER='v3.1-final';const stored=localStorage.getItem('lsjy_admin_ver');if(stored!==VER){localStorage.setItem('lsjy_admin_ver',VER);if(stored){setTimeout(()=>location.reload(true),100)}}})();
+// Cache bust handled by version check in footer integrity check
 
 // ===== Navigation =====
 const _pageTitles={dashboard:'数据看板',modules:'业务模块',services:'服务管理',users:'用户管理',messages:'留言管理',leads:'线索管理',orders:'订单管理',content:'内容管理',aihub:'AI创作中心',recycle:'回收站',logs:'操作日志',settings:'系统设置'};
@@ -1493,6 +1492,9 @@ ${r}\`);toast('Markdown已复制','success')" style="margin:0">📋 复制Markdo
 // ===== Modal =====
 function showMod(h){document.getElementById('modalBox').innerHTML=h;document.getElementById('modalBg').classList.add('show')}
 function closeModal(e){if(e&&e.target!==e.currentTarget)return;document.getElementById('modalBg').classList.remove('show')}
+
+// ===== VERSION & INTEGRITY CHECK =====
+(function(){const VER='admin-v3.2';const stored=localStorage.getItem('lsjy_admin_ver');if(stored!==VER){localStorage.setItem('lsjy_admin_ver',VER);if(stored)location.reload(true)}else if(typeof goPage!=='function'||typeof renderDashboard!=='function'){const fc=localStorage.getItem('lsjy_admin_jsok');if(fc===VER)return;localStorage.setItem('lsjy_admin_jsok',VER);window.location.replace(window.location.pathname+'?_r='+Date.now())}})();
 </script>
 </body>
 </html>
