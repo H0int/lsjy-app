@@ -1162,7 +1162,7 @@ updateNavAuth();toast('注册成功！','success');
 
 // ===== SMS Login/Register =====
 let _loginSmsTimer=null,_regSmsTimer=null;
-function _startSmsCountdown(btn,_timerRef){btn.disabled=true;let sec=60;btn.textContent=sec+'s';clearInterval(timerRef);timerRef=setInterval(()=>{sec--;btn.textContent=sec+'s';if(sec<=0){clearInterval(timerRef);btn.disabled=false;btn.textContent='发送验证码'}},1000);return timerRef}
+function _startSmsCountdown(btn,_timerRef){btn.disabled=true;let sec=60;btn.textContent=sec+'s';clearInterval(_timerRef);_timerRef=setInterval(()=>{sec--;btn.textContent=sec+'s';if(sec<=0){clearInterval(_timerRef);btn.disabled=false;btn.textContent='发送验证码'}},1000);return _timerRef}
 function _sendSmsCode(phone,codeInputId){
 if(SMS_ENABLED&&SMS_API!=='https://your-sms-server.onrender.com'){
   fetch(SMS_API+'/api/sms/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone})})
