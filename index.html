@@ -686,16 +686,54 @@ function setCur(u){localStorage.setItem('lsjy3_cur',JSON.stringify(u))}
 function getContacts(){return JSON.parse(localStorage.getItem('lsjy3_contacts')||'[]')}
 function saveContacts(c){localStorage.setItem('lsjy3_contacts',JSON.stringify(c))}
 function isLoggedIn(){return!!getCur()}
+function getOrders(){return JSON.parse(localStorage.getItem('lsjy3_orders')||'[]')}
+function saveOrders(o){localStorage.setItem('lsjy3_orders',JSON.stringify(o))}
+function getCredits(){return JSON.parse(localStorage.getItem('lsjy3_credits')||'{}')}
+function saveCredits(c){localStorage.setItem('lsjy3_credits',JSON.stringify(c))}
+function getUserCredits(){const u=getCur();if(!u)return 0;const c=getCredits();return c[u.username]||0}
+function addCredits(username,amount){const c=getCredits();c[username]=(c[username]||0)+amount;saveCredits(c);const u=getCur();if(u&&u.username===username)updateCreditsUI()}
+function deductCredits(cost){const u=getCur();if(!u)return false;const c=getCredits();const bal=(c[u.username]||0)-cost;if(bal<0)return false;c[u.username]=bal;saveCredits(c);updateCreditsUI();return true}
+function updateCreditsUI(){const el=document.getElementById('creditDisplay');if(el)el.textContent=getUserCredits()}
+// 7天免登录token
+function checkToken(){const t=localStorage.getItem('lsjy3_token');if(!t)return false;try{const d=JSON.parse(t);if(d.exp>Date.now()){const users=getUsers();const found=users.find(u=>u.username===d.username);if(found){setCur(found);return true}}}catch(e){}return false}
+function saveToken(u){localStorage.setItem('lsjy3_token',JSON.stringify({username:u.username,exp:Date.now()+7*24*60*60*1000}))}
+// 检查登录状态（用于受保护功能）
+function requireLogin(){if(isLoggedIn())return true;openAuth('login');toast('请先登录后再使用','warn');return false}
 
 // Admin account management moved to admin backend
 // Frontend no longer auto-seeds admin accounts
 
 
 // ===== AI ENGINE CORE =====
-// 真正的AI生成引擎：使用Pollinations.ai免费API + Canvas图像处理 + Web Audio + 智能模板
-const AI_IMG_API='https://image.pollinations.ai/prompt/';
-const AI_TEXT_API='https://text.pollinations.ai/openai';
-const AI_TIMEOUT=25000; // 25秒超时，平衡速度与质量
+// 多模型AI引擎：支持豆包(火山引擎) + Pollinations.ai备用
+// === 配置区域（替换为真实值即可切换AI服务商） ===
+const DOUBAO_CONFIG={
+  // 火山引擎方舟平台配置
+  ARK_API_KEY:'YOUR_ARK_API_KEY',       // ← 替换为火山引擎方舟API Key
+  ARK_BASE_URL:'https://ark.cn-beijing.volces.com/api/v3',
+  MODEL_TEXT:'doubao-pro-32k',          // 文本模型
+  MODEL_IMAGE:'doubao-seedream-3-0-t2i-250415', // 图片模型
+  ENABLED:false                          // 设为true启用豆包（需填入有效API Key）
+};
+const FALLBACK_AI_IMG_API='https://image.pollinations.ai/prompt/';
+const FALLBACK_AI_TEXT_API='https://text.pollinations.ai/openai';
+const AI_IMG_API=DOUBAO_CONFIG.ENABLED?null:FALLBACK_AI_IMG_API;
+const AI_TEXT_API=DOUBAO_CONFIG.ENABLED?null:FALLBACK_AI_TEXT_API;
+const AI_TIMEOUT=30000;
+
+// === WPS支付配置（零售支付模式，自主定价） ===
+const WPS_PAY_CONFIG={
+  APPID:'YOUR_WPS_APPID',               // ← 替换为WPS开放平台AppID
+  SERVICE_ID:'YOUR_WPS_SERVICE_ID',    // ← 替换为WPS支付服务ID
+  PAY_SECRET:'YOUR_WPS_PAY_SECRET',     // ← 替换为WPS支付密钥
+  CALLBACK_URL:'https://your-domain.com/api/pay/callback', // ← 替换为支付回调URL
+  NOTIFY_URL:'https://your-domain.com/api/pay/notify',     // ← 异步通知URL
+  ENABLED:false                          // 设为true启用WPS支付（需填入有效配置）
+};
+
+// === 短信后端配置 ===
+const SMS_API='https://your-sms-server.onrender.com'; // ← 替换为实际部署地址
+const SMS_ENABLED=false;                       // 设为true启用真实短信
 
 function withTimeout(promise,ms){
   return Promise.race([promise,new Promise((_,rej)=>setTimeout(()=>rej(new Error('AI请求超时，请稍后重试')),ms))]);
@@ -703,12 +741,34 @@ function withTimeout(promise,ms){
 
 async function aiGenerateText(prompt,systemPrompt,model,retries){
   retries=retries||2;
+  // 优先使用豆包API
+  if(DOUBAO_CONFIG.ENABLED&&DOUBAO_CONFIG.ARK_API_KEY!=='YOUR_ARK_API_KEY'){
+    for(let i=0;i<=retries;i++){
+      try{
+        const controller=new AbortController();
+        const tid=setTimeout(()=>controller.abort(),AI_TIMEOUT);
+        const r=await fetch(DOUBAO_CONFIG.ARK_BASE_URL+'/chat/completions',{
+          method:'POST',signal:controller.signal,
+          headers:{'Content-Type':'application/json','Authorization':'Bearer '+DOUBAO_CONFIG.ARK_API_KEY},
+          body:JSON.stringify({model:model||DOUBAO_CONFIG.MODEL_TEXT,messages:[
+            {role:'system',content:systemPrompt||'你是一个专业的AI助手，请根据用户要求生成高质量内容。回复只包含生成的内容，不要包含任何解释或说明。'},
+            {role:'user',content:prompt}
+          ],max_tokens:4000,temperature:0.9})});
+        clearTimeout(tid);
+        if(!r.ok)throw new Error('HTTP '+r.status);
+        const d=await r.json();
+        if(d.choices&&d.choices[0])return d.choices[0].message.content.trim();
+        if(i<retries)await new Promise(r=>setTimeout(r,1500*(i+1)));
+      }catch(e){console.log('Doubao err (try '+i+'):',e);if(i<retries)await new Promise(r=>setTimeout(r,1500*(i+1)))}
+    }
+  }
+  // 备用：Pollinations.ai
   for(let i=0;i<=retries;i++){
     try{
       const mdl=model||'openai-large';
       const controller=new AbortController();
       const tid=setTimeout(()=>controller.abort(),AI_TIMEOUT);
-      const r=await fetch(AI_TEXT_API,{method:'POST',signal:controller.signal,headers:{'Content-Type':'application/json'},
+      const r=await fetch(FALLBACK_AI_TEXT_API,{method:'POST',signal:controller.signal,headers:{'Content-Type':'application/json'},
         body:JSON.stringify({model:mdl,messages:[
           {role:'system',content:systemPrompt||'你是一个专业的AI助手，请根据用户要求生成高质量内容。回复只包含生成的内容，不要包含任何解释或说明。'},
           {role:'user',content:prompt}
@@ -728,9 +788,25 @@ async function aiGenerateText(prompt,systemPrompt,model,retries){
   return null;
 }
 
-function aiImageUrl(prompt,w=512,h=512){
-  return AI_IMG_API+encodeURIComponent(prompt)+'?width='+w+'&height='+h+'&nologo=true&nofeed=true&seed='+Date.now();
+async function aiGenerateImage(prompt,w=1024,h=1024){
+  // 优先使用豆包图片生成
+  if(DOUBAO_CONFIG.ENABLED&&DOUBAO_CONFIG.ARK_API_KEY!=='YOUR_ARK_API_KEY'){
+    try{
+      const controller=new AbortController();
+      const tid=setTimeout(()=>controller.abort(),60000);
+      const r=await fetch(DOUBAO_CONFIG.ARK_BASE_URL+'/images/generations',{
+        method:'POST',signal:controller.signal,
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+DOUBAO_CONFIG.ARK_API_KEY},
+        body:JSON.stringify({model:DOUBAO_CONFIG.MODEL_IMAGE,prompt:prompt,size:w+'x'+h,response_format:'b64_json'})
+      });
+      clearTimeout(tid);
+      if(r.ok){const d=await r.json();if(d.data&&d.data[0])return'data:image/png;base64,'+d.data[0].b64_json}
+    }catch(e){console.log('Doubao img err:',e)}
+  }
+  // 备用：Pollinations.ai
+  return FALLBACK_AI_IMG_API+encodeURIComponent(prompt)+'?width='+w+'&height='+h+'&nologo=true&nofeed=true&seed='+Date.now();
 }
+function aiImageUrl(prompt,w=512,h=512){return aiGenerateImage(prompt,w,h)}
 
 // 智能文案生成（增强版 - 带AI）
 async function generateCopy(){
@@ -1065,7 +1141,7 @@ e.preventDefault();
 const u=document.getElementById('authUser').value.trim(),p=document.getElementById('authPwd').value;
 const users=getUsers(),found=users.find(x=>x.username===u&&x.password===p);
 if(!found){toast('账号或密码错误','error');return}
-setCur(found);closeAuth();updateNavAuth();toast('登录成功，欢迎回来！','success');
+setCur(found);saveToken(found);closeAuth();updateNavAuth();toast('登录成功，欢迎回来！','success');
 }
 function doRegister(e){
 e.preventDefault();
@@ -1076,56 +1152,56 @@ if(p!==p2)return toast('两次密码不一致','error');
 const users=getUsers();
 if(users.find(x=>x.username===u))return toast('用户名已存在','error');
 const newUser={username:u,password:p,nickname:n||u,role:'user',phone:'',qq:'',wx:'',created:new Date().toLocaleString()};
-users.push(newUser);saveUsers(users);setCur(newUser);closeAuth();updateNavAuth();toast('注册成功！','success');
+users.push(newUser);saveUsers(users);setCur(newUser);saveToken(newUser);closeAuth();updateNavAuth();toast('注册成功！','success');
 }
 
 // ===== SMS Login/Register =====
 let _loginSmsTimer=null,_regSmsTimer=null;
+function _startSmsCountdown(btn,_timerRef){btn.disabled=true;let sec=60;btn.textContent=sec+'s';clearInterval(timerRef);timerRef=setInterval(()=>{sec--;btn.textContent=sec+'s';if(sec<=0){clearInterval(timerRef);btn.disabled=false;btn.textContent='发送验证码'}},1000);return timerRef}
+function _sendSmsCode(phone,codeInputId){
+if(SMS_ENABLED&&SMS_API!=='https://your-sms-server.onrender.com'){
+  fetch(SMS_API+'/api/sms/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone})})
+  .then(r=>r.json()).then(d=>{if(d.success){toast('验证码已发送至 '+phone,'success')}else{toast(d.message||'发送失败','error')}}).catch(()=>{const code=String(Math.floor(Math.random()*900000+100000));toast('后端未连接，验证码: '+code+'（演示模式）','warn');document.getElementById(codeInputId).dataset.code=code});
+}else{
+  const code=String(Math.floor(Math.random()*900000+100000));toast('验证码: '+code+'（演示模式，部署后端后自动切换真实短信）','warn');document.getElementById(codeInputId).dataset.code=code;
+}
+}
+function _verifySmsCode(phone,code,codeInputId){
+if(SMS_ENABLED&&SMS_API!=='https://your-sms-server.onrender.com'){
+  return fetch(SMS_API+'/api/sms/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,code})})
+  .then(r=>r.json()).then(d=>{if(d.success)return true;const dc=document.getElementById(codeInputId).dataset.code;if(dc&&code===dc)return true;throw new Error(d.message||'验证码错误')});
+}else{
+  const dc=document.getElementById(codeInputId).dataset.code;if(dc&&code===dc)return Promise.resolve(true);return Promise.reject(new Error('验证码错误'));
+}
+}
 function sendLoginSmsCode(){
 const phone=document.getElementById('authPhone').value.trim();
 if(!/^1\d{10}$/.test(phone))return toast('请输入正确的11位手机号','error');
-const btn=document.getElementById('authSmsBtn');btn.disabled=true;
-let sec=60;btn.textContent=sec+'s';
-clearInterval(_loginSmsTimer);_loginSmsTimer=setInterval(()=>{sec--;btn.textContent=sec+'s';if(sec<=0){clearInterval(_loginSmsTimer);btn.disabled=false;btn.textContent='发送验证码'}},1000);
-fetch(SMS_API+'/api/sms/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone})})
-.then(r=>r.json()).then(d=>{if(d.success){toast('验证码已发送至 '+phone,'success');document.getElementById('authSmsCode').dataset.code=''}
-else{toast(d.message||'发送失败','error');clearInterval(_loginSmsTimer);btn.disabled=false;btn.textContent='发送验证码'}})
-.catch(()=>{const code=String(Math.floor(Math.random()*900000+100000));toast('后端未连接，验证码: '+code+'（演示模式）','warn');document.getElementById('authSmsCode').dataset.code=code;});
+_loginSmsTimer=_startSmsCountdown(document.getElementById('authSmsBtn'),_loginSmsTimer);
+_sendSmsCode(phone,'authSmsCode');
 }
 function sendRegSmsCode(){
 const phone=document.getElementById('regPhone').value.trim();
 if(!/^1\d{10}$/.test(phone))return toast('请输入正确的11位手机号','error');
-const btn=document.getElementById('regSmsBtn');btn.disabled=true;
-let sec=60;btn.textContent=sec+'s';
-clearInterval(_regSmsTimer);_regSmsTimer=setInterval(()=>{sec--;btn.textContent=sec+'s';if(sec<=0){clearInterval(_regSmsTimer);btn.disabled=false;btn.textContent='发送验证码'}},1000);
-fetch(SMS_API+'/api/sms/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone})})
-.then(r=>r.json()).then(d=>{if(d.success){toast('验证码已发送至 '+phone,'success');document.getElementById('regSmsCode').dataset.code=''}
-else{toast(d.message||'发送失败','error');clearInterval(_regSmsTimer);btn.disabled=false;btn.textContent='发送验证码'}})
-.catch(()=>{const code=String(Math.floor(Math.random()*900000+100000));toast('后端未连接，验证码: '+code+'（演示模式）','warn');document.getElementById('regSmsCode').dataset.code=code;});
+_regSmsTimer=_startSmsCountdown(document.getElementById('regSmsBtn'),_regSmsTimer);
+_sendSmsCode(phone,'regSmsCode');
 }
 function doSmsLogin(){
 const phone=document.getElementById('authPhone').value.trim(),code=document.getElementById('authSmsCode').value.trim();
 if(!/^1\d{10}$/.test(phone))return toast('请输入正确的手机号','error');
 if(!code||code.length<4)return toast('请输入验证码','error');
-// 验证验证码
-fetch(SMS_API+'/api/sms/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,code})})
-.then(r=>r.json()).then(d=>{if(d.success){smsLoginSuccess(phone)}
-else{const dc=document.getElementById('authSmsCode').dataset.code;if(dc&&code===dc){smsLoginSuccess(phone)}else{toast(d.message||'验证码错误','error')}}})
-.catch(()=>{const dc=document.getElementById('authSmsCode').dataset.code;if(dc&&code===dc){smsLoginSuccess(phone)}else{toast('验证码错误','error')}});
+_verifySmsCode(phone,code,'authSmsCode').then(()=>smsLoginSuccess(phone)).catch(e=>toast(e.message||'验证码错误','error'));
 }
 function smsLoginSuccess(phone){
 const users=getUsers();let found=users.find(u=>u.phone===phone);
 if(!found){found={username:'user_'+phone.slice(-4),password:'sms_'+Date.now(),nickname:'用户'+phone.slice(-4),role:'user',phone:phone,qq:'',wx:'',created:new Date().toLocaleString()};users.push(found);saveUsers(users)}
-setCur(found);closeAuth();updateNavAuth();toast('登录成功，欢迎回来！','success');
+setCur(found);saveToken(found);closeAuth();updateNavAuth();toast('登录成功，欢迎回来！','success');
 }
 function doSmsRegister(){
 const phone=document.getElementById('regPhone').value.trim(),code=document.getElementById('regSmsCode').value.trim(),nick=document.getElementById('regNick').value.trim();
 if(!/^1\d{10}$/.test(phone))return toast('请输入正确的手机号','error');
 if(!code||code.length<4)return toast('请输入验证码','error');
-fetch(SMS_API+'/api/sms/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,code})})
-.then(r=>r.json()).then(d=>{if(d.success){smsRegSuccess(phone,nick)}
-else{const dc=document.getElementById('regSmsCode').dataset.code;if(dc&&code===dc){smsRegSuccess(phone,nick)}else{toast(d.message||'验证码错误','error')}}})
-.catch(()=>{const dc=document.getElementById('regSmsCode').dataset.code;if(dc&&code===dc){smsRegSuccess(phone,nick)}else{toast('验证码错误','error')}});
+_verifySmsCode(phone,code,'regSmsCode').then(()=>smsRegSuccess(phone,nick)).catch(e=>toast(e.message||'验证码错误','error'));
 }
 function smsRegSuccess(phone,nick){
 const users=getUsers();if(users.find(u=>u.phone===phone))return toast('该手机号已注册，请直接登录','error');
@@ -1249,39 +1325,16 @@ function sendSmsCode(){
 const phone=document.getElementById('bindPhone').value.trim();
 if(!/^1\d{10}$/.test(phone))return toast('请输入正确的11位手机号','error');
 const btn=document.getElementById('smsBtn');
-btn.disabled=true;
-let sec=60;
-btn.textContent=sec+'s';
+btn.disabled=true;let sec=60;btn.textContent=sec+'s';
 smsTimer=setInterval(()=>{sec--;btn.textContent=sec+'s';if(sec<=0){clearInterval(smsTimer);btn.disabled=false;btn.textContent='发送验证码'}},1000);
-// 调用后端API发送真实短信
-fetch(SMS_API+'/api/sms/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone})})
-.then(r=>r.json()).then(d=>{
-if(d.success){toast('验证码已发送至 '+phone,'success');document.getElementById('smsCode').dataset.code=''}
-else{toast(d.message||'发送失败，请稍后重试','error');clearInterval(smsTimer);btn.disabled=false;btn.textContent='发送验证码'}
-}).catch(()=>{
-// 后端不可用时降级为演示模式
-const code=String(Math.floor(Math.random()*900000+100000));
-toast('后端未连接，验证码: '+code+'（演示模式）','warn');
-document.getElementById('smsCode').dataset.code=code;
-});
+_sendSmsCode(phone,'smsCode');
 }
 function confirmBindPhone(){
 const phone=document.getElementById('bindPhone').value.trim();
 const code=document.getElementById('smsCode').value.trim();
-const expected=document.getElementById('smsCode').dataset.code;
 if(!phone)return toast('请输入手机号','error');
 if(!code)return toast('请输入验证码','error');
-// 优先走后端验证
-fetch(SMS_API+'/api/sms/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,code})})
-.then(r=>r.json()).then(d=>{
-if(d.success){bindPhoneSuccess(phone)}
-else if(expected&&code===expected){bindPhoneSuccess(phone)}
-else{toast(d.message||'验证码错误','error')}
-}).catch(()=>{
-// 后端不可用时降级本地校验
-if(expected&&code!==expected)return toast('验证码错误','error');
-bindPhoneSuccess(phone);
-});
+_verifySmsCode(phone,code,'smsCode').then(()=>bindPhoneSuccess(phone)).catch(e=>toast(e.message||'验证码错误','error'));
 }
 function bindPhoneSuccess(phone){
 const u=getCur();if(!u)return;
