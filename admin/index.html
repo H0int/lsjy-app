@@ -387,6 +387,8 @@ function enterApp(){
   goPage('dashboard');
 }
 (function(){const u=getCur();if(u&&u.role==='admin')enterApp()})();
+// Cache bust: force reload if version mismatch
+(function(){const VER='v2.1-aihub';const stored=localStorage.getItem('lsjy_admin_ver');if(stored!==VER){localStorage.setItem('lsjy_admin_ver',VER);if(stored){setTimeout(()=>location.reload(true),100)}}})();
 
 // ===== Navigation =====
 const _pageTitles={dashboard:'数据看板',modules:'业务模块',services:'服务管理',users:'用户管理',messages:'留言管理',orders:'订单管理',aihub:'AI创作中心',recycle:'回收站',settings:'系统设置'};
