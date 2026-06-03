@@ -412,20 +412,18 @@ function doLogout(){localStorage.removeItem('lsjy3_cur');document.getElementById
 const _pageTitles={dashboard:'数据看板',modules:'业务模块',services:'服务管理',users:'用户管理',messages:'留言管理',leads:'线索管理',orders:'订单管理',redeemCodes:'卡密管理',content:'内容管理',aihub:'AI创作中心',recycle:'回收站',logs:'操作日志',settings:'系统设置'};
 const _pageRenders={dashboard:renderDashboard,modules:renderModules,services:renderServices,users:renderUsers,messages:renderMessages,leads:renderLeads,orders:renderOrders,redeemCodes:renderRedeemCodes,content:renderContent,aihub:renderAIHub,recycle:renderRecycle,logs:renderLogs,settings:renderSettings};
 function goPage(page,el){
-function enterApp(){
-  document.getElementById('loginPage').style.display='none';document.getElementById('app').classList.add('active');
-  const u=getCur();document.getElementById('tbAvatar').textContent=(u.nickname||u.username)[0].toUpperCase();document.getElementById('tbName').textContent=u.nickname||u.username;
-  goPage('dashboard');
-}
-(function(){const u=getCur();const ADMIN_ROLES=['admin','super_admin','supreme_admin','boss'];if(u&&ADMIN_ROLES.includes(u.role))enterApp()})();
-// Cache bust handled by version check in footer integrity check
-
   document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
   if(el)el.classList.add('active');
   document.getElementById('pageTitle').textContent=_pageTitles[page]||page;
   if(_pageRenders[page])_pageRenders[page]();
   if(window.innerWidth<769)toggleSidebar();
 }
+function enterApp(){
+  document.getElementById('loginPage').style.display='none';document.getElementById('app').classList.add('active');
+  const u=getCur();document.getElementById('tbAvatar').textContent=(u.nickname||u.username)[0].toUpperCase();document.getElementById('tbName').textContent=u.nickname||u.username;
+  goPage('dashboard');
+}
+(function(){const u=getCur();const ADMIN_ROLES=['admin','super_admin','supreme_admin','boss'];if(u&&ADMIN_ROLES.includes(u.role))enterApp()})();
 
 // ===== Pagination =====
 function paginate(arr,page,size){const total=Math.ceil(arr.length/size);return{data:arr.slice((page-1)*size,page*size),page,total,allCount:arr.length}}
