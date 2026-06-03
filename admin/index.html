@@ -988,7 +988,7 @@ const DOUBAO_CONFIG={
 };
 const FALLBACK_AI_IMG_API='https://image.pollinations.ai/prompt/';
 const FALLBACK_AI_TEXT_API='https://text.pollinations.ai/openai';
-const AI_IMG_API=DOUBAO_CONFIG.ENABLED?null:FALLBACK_AI_IMG_API;
+const AI_IMG_API=FALLBACK_AI_IMG_API;
 const AI_TEXT_API=DOUBAO_CONFIG.ENABLED?null:FALLBACK_AI_TEXT_API;
 const AI_TIMEOUT=30000;
 let _aiCurrentTool=null;
@@ -1042,6 +1042,7 @@ async function aiGenerateText(prompt,sysPrompt,model,retries){
       clearTimeout(tid);
       if(!r.ok)throw new Error('HTTP '+r.status);
       const d=await r.json();
+      if(d.choices&&d.choices.length){const c=d.choices[0];if(c&&c.message&&c.message.content)return c.message.content.trim();}
       if(d.output&&d.output.length){const msg=d.output.filter(o=>o.type==='message').pop();if(msg&&msg.content&&msg.content.length)return msg.content[0].text.trim();}
     }catch(e){console.log('AI err (try '+i+'):',e);if(i<retries)await new Promise(r=>setTimeout(r,1500*(i+1)))}
   }
@@ -1116,7 +1117,9 @@ function openAITool(id){
   _aiCurrentTool=id;
   const panel=document.getElementById('aiToolPanel');
   document.querySelectorAll('.ai-card').forEach(c=>c.classList.remove('active'));
-  event.currentTarget.classList.add('active');
+  const cards=document.querySelectorAll('.ai-card');
+  const idx=AI_TOOLS.findIndex(t=>t.id===id);
+  if(idx>=0&&cards[idx])cards[idx].classList.add('active');
   switch(id){
     case'copy':renderAICopy();break;case'hashtag':renderAIHash();break;
     case'rewrite':renderAIRewrite();break;case'viral':renderAIViral();break;
@@ -1480,6 +1483,7 @@ async function aiDoDoc(){
   out.innerHTML='<div style="text-align:center;padding:20px"><div class="ai-spinner"></div><p style="margin-top:12px;color:var(--b);font-size:13px">AI正在生成图文表格...</p></div>';
   const r=await aiGenerateText(`请根据以下信息生成一个结构化的Markdown表格（用|分隔）：\n主题：${topic}\n${extra?'要求：'+extra:''}\n\n请生成包含表头和至少5行数据的完整表格，用|分隔列。`);
   if(r){
+    var _lastDocMd=r;
     const lines=r.trim().split('\n').filter(l=>l.trim());
     let html='<table style="width:100%;border-collapse:collapse;font-size:13px">';
     lines.forEach((line,i)=>{
@@ -1489,9 +1493,7 @@ async function aiDoDoc(){
       html+='<tr>'+cells.map(c=>`<${tag} style="padding:10px 12px;border:1px solid var(--bd);text-align:left;${i===0?'background:var(--ps);font-weight:700;color:var(--p)':''}">${c.trim()}</${tag}>`).join('')+'</tr>';
     });
     html+='</table>';
-    out.innerHTML=`<div style="font-weight:700;color:var(--ok);margin-bottom:12px">✅ 表格生成完成</div><div style="overflow-x:auto;border-radius:10px;border:1px solid var(--bd)">${html}</div><div style="display:flex;gap:8px;margin-top:12px"><button class="ai-back" onclick="navigator.clipboard.writeText(\`${r}\
-\
-${r}\`);toast('Markdown已复制','success')" style="margin:0">📋 复制Markdown</button><button class="ai-back" onclick="aiDoDoc()" style="margin:0">🔄 重新生成</button></div>`;
+    out.innerHTML=`<div style="font-weight:700;color:var(--ok);margin-bottom:12px">✅ 表格生成完成</div><div style="overflow-x:auto;border-radius:10px;border:1px solid var(--bd)">${html}</div><div style="display:flex;gap:8px;margin-top:12px"><button class="ai-back" onclick="navigator.clipboard.writeText(_lastDocMd);toast('Markdown已复制','success')" style="margin:0">📋 复制Markdown</button><button class="ai-back" onclick="aiDoDoc()" style="margin:0">🔄 重新生成</button></div>`;
     toast('表格生成成功！','success');
   }else{out.innerHTML='<span style="color:var(--warn)">AI服务繁忙，请稍后重试</span>'}
 }
@@ -1651,7 +1653,7 @@ function showMod(h){document.getElementById('modalBox').innerHTML=h;document.get
 function closeModal(e){if(e&&e.target!==e.currentTarget)return;document.getElementById('modalBg').classList.remove('show')}
 
 // ===== VERSION & INTEGRITY CHECK =====
-(function(){const VER='admin-v3.4';const stored=localStorage.getItem('lsjy_admin_ver');if(stored!==VER){localStorage.setItem('lsjy_admin_ver',VER);if(stored)location.reload(true)}else if(typeof goPage!=='function'||typeof renderDashboard!=='function'){const fc=localStorage.getItem('lsjy_admin_jsok');if(fc===VER)return;localStorage.setItem('lsjy_admin_jsok',VER);window.location.replace(window.location.pathname+'?_r='+Date.now())}})();
+(function(){const VER='admin-v3.5';const stored=localStorage.getItem('lsjy_admin_ver');if(stored!==VER){localStorage.setItem('lsjy_admin_ver',VER);if(stored)location.reload(true)}else if(typeof goPage!=='function'||typeof renderDashboard!=='function'){const fc=localStorage.getItem('lsjy_admin_jsok');if(fc===VER)return;localStorage.setItem('lsjy_admin_jsok',VER);window.location.replace(window.location.pathname+'?_r='+Date.now())}})();
 </script>
 </body>
 </html>
