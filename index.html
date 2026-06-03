@@ -333,6 +333,7 @@ textarea.fi{resize:vertical;min-height:120px}
 .ai-spinner{display:inline-block;width:40px;height:40px;border:3px solid var(--bd);border-top-color:var(--p);border-radius:50%;animation:ai-spin .8s linear infinite}
 @keyframes ai-spin{to{transform:rotate(360deg)}}
 </style>
+<script>if(localStorage.getItem('lsjy3_ver')!=='v3.2-fix7'){localStorage.setItem('lsjy3_ver','v3.2-fix7');location.reload(true)}</script>
 </head>
 <body>
 
@@ -640,7 +641,7 @@ textarea.fi{resize:vertical;min-height:120px}
 
 <script>
 // ===== CACHE BUSTER & VERSION CHECK =====
-(function(){const _V='v3.2-fix5';const _cv=localStorage.getItem('lsjy3_ver');if(_cv!==_V){localStorage.setItem('lsjy3_ver',_V);sessionStorage.clear();try{if('caches'in window)caches.keys().then(k=>k.forEach(n=>caches.delete(n)))}catch(e){}}else{try{const _ck=document.cookie;if(!_ck.includes('lsjy_v='+_V)){document.cookie='lsjy_v='+_V+';path=/;max-age=3600'}}catch(e){}}})();
+(function(){const _V='v3.2-fix7';const _cv=localStorage.getItem('lsjy3_ver');if(_cv!==_V){localStorage.setItem('lsjy3_ver',_V);sessionStorage.clear();try{if('caches'in window)caches.keys().then(k=>k.forEach(n=>caches.delete(n)))}catch(e){}try{document.cookie='lsjy3_ver=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT';document.cookie='lsjy_v=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT';document.cookie='__cf_bm=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT'}catch(e){}}})();
 // ===== DATA =====
 const MODULES=[
 {id:'ai',name:'AI 人工智能',icon:'🤖',color:'#3b82f6',gradient:'linear-gradient(135deg,#3b82f6,#60a5fa)',summary:'依托自研 AI 技术面向中小商家落地数字化转型',services:[
@@ -2768,10 +2769,9 @@ if(target){e.preventDefault();target.scrollIntoView({behavior:'smooth',block:'st
 })});
 
 // ===== JS INTEGRITY CHECK =====
-if(typeof openAuth!=='function'||typeof doLogin!=='function'){
-  const _fv='v3.2-fix5';
+if(typeof openAuth!=='function'||typeof doLogin!=='function'||typeof openTool!=='function'||typeof toast!=='function'){
+  const _fv='v3.2-fix7';
   const _sv=localStorage.getItem('lsjy3_jsok');
-  if(_sv===_fv){console.error('JS integrity check failed, forcing reload...')}
   localStorage.setItem('lsjy3_jsok',_fv);
   window.stop&&window.stop();
   window.location.replace(window.location.pathname+'?_r='+Date.now());
