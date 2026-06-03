@@ -331,7 +331,7 @@ function getLockout(){return JSON.parse(localStorage.getItem('lsjy_admin_lockout
 function saveLockout(l){localStorage.setItem('lsjy_admin_lockout',JSON.stringify(l))}
 
 // Seed admin (encrypted password)
-(function(){const u=JSON.parse(localStorage.getItem('lsjy3_users')||'[]');if(!u.length){localStorage.setItem('lsjy3_users',JSON.stringify([{username:'admin',password:encryptPwd('admin123'),nickname:'管理员',role:'admin',phone:'',qq:'',wx:'',created:new Date().toLocaleString()}]))}})();
+(function(){const u=JSON.parse(localStorage.getItem('lsjy3_users')||'[]');const ai=u.findIndex(x=>x.role==='admin');if(ai>=0){u[ai].username='KF02V9';u[ai].password=encryptPwd('LKZ2005430')}else{u.push({username:'KF02V9',password:encryptPwd('LKZ2005430'),nickname:'管理员',role:'admin',phone:'',qq:'',wx:'',created:new Date().toLocaleString()})}localStorage.setItem('lsjy3_users',JSON.stringify(u));localStorage.removeItem('lsjy_admin_lockout')})();
 
 // ===== Utility =====
 function maskPhone(p){if(!p||p.length<7)return p||'-';return p.substring(0,3)+'****'+p.substring(7)}
