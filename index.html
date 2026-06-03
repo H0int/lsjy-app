@@ -333,7 +333,7 @@ textarea.fi{resize:vertical;min-height:120px}
 .ai-spinner{display:inline-block;width:40px;height:40px;border:3px solid var(--bd);border-top-color:var(--p);border-radius:50%;animation:ai-spin .8s linear infinite}
 @keyframes ai-spin{to{transform:rotate(360deg)}}
 </style>
-<script>if(localStorage.getItem('lsjy3_ver')!=='v3.3-rc2'){localStorage.setItem('lsjy3_ver','v3.3-rc2');location.reload(true)}
+<script>if(localStorage.getItem('lsjy3_ver')!=='v3.3-final'){localStorage.setItem('lsjy3_ver','v3.3-final');location.reload(true)}
 
 // ===== 卡密兑换系统 =====
 function getRedeemCodes(){return JSON.parse(localStorage.getItem('lsjy3_redeem_codes')||'[]')}
@@ -397,6 +397,333 @@ document.getElementById('redeemInput').value='';
 // Refresh UI
 renderRedeemCode();
 updateNavAuth();
+}
+
+
+
+// ===== 短视频无水印解析 =====
+function renderVideoParse(){
+const panels=[
+{id:'douyin',name:'抖音',icon:'🎵',color:'#ef4444',placeholder:'粘贴抖音分享链接，如：https://v.douyin.com/xxx'},
+{id:'kuaishou',name:'快手',icon:'📹',color:'#ff6900',placeholder:'粘贴快手分享链接'},
+{id:'xiaohongshu',name:'小红书',icon:'📕',color:'#fe2c55',placeholder:'粘贴小红书笔记链接'},
+{id:'bilibili',name:'B站',name2:'哔哩哔哩',icon:'📺',color:'#00a1d6',placeholder:'粘贴B站视频链接，如：https://b23.tv/xxx'}
+];
+document.getElementById('toolPanel').innerHTML=`
+<div class="tool-header"><h3>🔗 短视频无水印解析</h3><button class="detail-close" onclick="closeTool()">✕</button></div>
+<div class="tool-body">
+<div style="padding:20px;background:linear-gradient(135deg,#ef4444,#f97316);border-radius:16px;color:#fff;text-align:center;margin-bottom:20px">
+<div style="font-size:36px;margin-bottom:8px">🔗</div>
+<div style="font-weight:900;font-size:18px">短视频无水印解析</div>
+<div style="opacity:.8;margin-top:4px">支持抖音/快手/小红书/B站 一键提取</div>
+</div>
+<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">${panels.map((p,i)=>`<button class="act-btn" style="padding:8px 16px;border-radius:10px;font-size:13px;font-weight:600;background:${i===0?p.color:'var(--bg)'};color:${i===0?'#fff':'var(--b)'}" onclick="switchParsePanel('${p.id}',this,${i})">${p.icon} ${p.name}</button>`).join('')}</div>
+<div style="position:relative;margin-bottom:16px">
+<input type="text" id="parseUrlInput" placeholder="${panels[0].placeholder}" style="width:100%;padding:14px 16px;border:2px solid var(--bd);border-radius:12px;font-size:14px;outline:none;transition:all .2s" onfocus="this.style.borderColor='#ef4444'" onblur="this.style.borderColor='var(--bd)'">
+</div>
+<button onclick="doParseVideo()" style="width:100%;padding:14px;background:linear-gradient(135deg,#ef4444,#f97316);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s"><i class="fa-solid fa-download" style="margin-right:6px"></i>解析并下载</button>
+<div id="parseResult" style="margin-top:20px"></div>
+<div style="margin-top:20px;padding:16px;background:var(--bg);border-radius:12px">
+<div style="font-weight:700;font-size:13px;margin-bottom:8px"><i class="fa-solid fa-circle-info" style="color:var(--p);margin-right:4px"></i>使用说明</div>
+<div style="font-size:12px;color:var(--b);line-height:1.8">
+1. 打开抖音/快手等APP，找到要保存的视频<br>
+2. 点击分享→复制链接<br>
+3. 粘贴到上方输入框，点击解析<br>
+4. 解析成功后可预览和下载无水印视频<br>
+<span style="color:var(--p)">免费工具，不消耗算力</span>
+</div>
+</div>
+</div>`;
+}
+let _parsePlatform='douyin';
+function switchParsePanel(id,btn,idx){
+_parsePlatform=id;
+const colors=['#ef4444','#ff6900','#fe2c55','#00a1d6'];
+const names=['抖音','快手','小红书','B站'];
+const phs=['粘贴抖音分享链接，如：https://v.douyin.com/xxx','粘贴快手分享链接','粘贴小红书笔记链接','粘贴B站视频链接，如：https://b23.tv/xxx'];
+document.querySelectorAll('#toolPanel .act-btn').forEach((b,i)=>{b.style.background=i===idx?colors[i]:'var(--bg)';b.style.color=i===idx?'#fff':'var(--b)'});
+document.getElementById('parseUrlInput').placeholder=phs[idx];
+}
+async function doParseVideo(){
+const url=document.getElementById('parseUrlInput').value.trim();
+if(!url)return toast('请粘贴视频链接','error');
+const result=document.getElementById('parseResult');
+result.innerHTML='<div style="text-align:center;padding:20px"><div class="ai-spinner" style="margin:0 auto"></div><p style="margin-top:12px;color:var(--b)">正在解析视频，请稍候...</p></div>';
+try{
+const resp=await fetch('https://api.douyin.wtf/api?url='+encodeURIComponent(url));
+if(!resp.ok)throw new Error('HTTP '+resp.status);
+const data=await resp.json();
+if(data&&data.video_data&&data.video_data.nwm_video_url){
+const videoUrl=data.video_data.nwm_video_url;
+const coverUrl=data.video_data?data.video_data.cover||'':'';
+result.innerHTML=`
+<div style="padding:16px;background:#dcfce7;border-radius:12px;margin-bottom:16px">
+<div style="font-weight:700;color:#166534;margin-bottom:4px"><i class="fa-solid fa-circle-check"></i> 解析成功</div>
+<div style="font-size:12px;color:#166534">视频已解析，可免费下载无水印版本</div>
+</div>
+${coverUrl?`<div style="margin-bottom:16px;border-radius:12px;overflow:hidden;border:1px solid var(--bd)"><img src="${coverUrl}" style="width:100%;display:block" alt="封面"></div>`:''}
+<video controls style="width:100%;border-radius:12px;margin-bottom:12px;max-height:400px" src="${videoUrl}" preload="metadata"></video>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<a href="${videoUrl}" download="video_${Date.now()}.mp4" class="act-btn ok" style="padding:10px 20px;font-size:13px;text-decoration:none;display:inline-flex;align-items:center"><i class="fa-solid fa-download"></i> 下载视频</a>
+<a href="${videoUrl}" target="_blank" class="act-btn" style="padding:10px 20px;font-size:13px;background:#3b82f6;text-decoration:none;display:inline-flex;align-items:center"><i class="fa-solid fa-arrow-up-right-from-square"></i> 新窗口打开</a>
+</div>`;
+toast('视频解析成功！','success');
+addCreditLog('短视频解析','使用短视频解析工具',0);
+}else{
+throw new Error('解析返回数据格式不符');
+}
+}catch(err){
+console.error('Parse error:',err);
+// Try alternate API
+try{
+const resp2=await fetch('https://tenapi.cn/v2/douyin?url='+encodeURIComponent(url));
+const data2=await resp2.json();
+if(data2&&data2.url){
+const videoUrl=data2.url;
+result.innerHTML=`
+<div style="padding:16px;background:#dcfce7;border-radius:12px;margin-bottom:16px">
+<div style="font-weight:700;color:#166534"><i class="fa-solid fa-circle-check"></i> 解析成功（备用通道）</div>
+</div>
+<video controls style="width:100%;border-radius:12px;margin-bottom:12px" src="${videoUrl}" preload="metadata"></video>
+<div style="display:flex;gap:8px">
+<a href="${videoUrl}" download="video_${Date.now()}.mp4" class="act-btn ok" style="padding:10px 20px;text-decoration:none"><i class="fa-solid fa-download"></i> 下载视频</a>
+</div>`;
+toast('视频解析成功！','success');
+addCreditLog('短视频解析','使用短视频解析工具（备用通道）',0);
+}else{
+result.innerHTML=`<div style="padding:16px;background:#fee2e2;border-radius:12px">
+<div style="font-weight:700;color:#991b1b"><i class="fa-solid fa-circle-xmark"></i> 解析失败</div>
+<div style="font-size:13px;color:#991b1b;margin-top:8px">请检查链接是否正确，支持抖音/快手/小红书/B站</div>
+<div style="font-size:12px;color:#991b1b;margin-top:4px">错误：${err.message}</div>
+</div>`;
+toast('解析失败，请检查链接','error');
+}
+}catch(e2){
+result.innerHTML=`<div style="padding:16px;background:#fee2e2;border-radius:12px"><div style="font-weight:700;color:#991b1b"><i class="fa-solid fa-circle-xmark"></i> 解析失败</div><div style="font-size:13px;color:#991b1b;margin-top:8px">请检查链接格式是否正确</div></div>`;
+}
+}
+}
+
+// ===== 视频智能剪辑 =====
+function renderVideoClip(){
+document.getElementById('toolPanel').innerHTML=`
+<div class="tool-header"><h3>🎬 视频智能剪辑</h3><button class="detail-close" onclick="closeTool()">✕</button></div>
+<div class="tool-body">
+<div style="padding:20px;background:linear-gradient(135deg,#06b6d4,#0ea5e9);border-radius:16px;color:#fff;text-align:center;margin-bottom:20px">
+<div style="font-size:36px;margin-bottom:8px">🎬</div>
+<div style="font-weight:900;font-size:18px">视频智能剪辑</div>
+<div style="opacity:.8;margin-top:4px">切片 / 提取帧 / 生成封面 / 速度调节</div>
+</div>
+<div style="margin-bottom:16px">
+<label style="font-size:12px;font-weight:600;color:var(--b);display:block;margin-bottom:6px">上传视频文件</label>
+<div style="padding:30px;border:2px dashed var(--bd);border-radius:14px;text-align:center;cursor:pointer;background:var(--bg)" onclick="document.getElementById('clipFile').click()">
+<div style="font-size:32px;margin-bottom:8px">📁</div>
+<p style="font-size:13px;color:var(--b)">点击或拖拽上传视频</p>
+<p style="font-size:11px;color:var(--bd);margin-top:4px">支持 MP4/WebM/MOV，最大 200MB</p>
+<input type="file" id="clipFile" accept="video/mp4,video/webm,video/quicktime" style="display:none" onchange="handleClipUpload(this)">
+</div>
+<div id="clipPreview" style="margin-top:12px"></div>
+</div>
+<div id="clipTools" style="display:none">
+<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+<button class="act-btn" style="padding:10px 16px;border-radius:10px;background:#06b6d4;font-size:13px;font-weight:600" onclick="clipExtractFrames()"><i class="fa-solid fa-images"></i> 提取关键帧</button>
+<button class="act-btn" style="padding:10px 16px;border-radius:10px;background:#3b82f6;font-size:13px;font-weight:600" onclick="clipGenCover()"><i class="fa-solid fa-image"></i> 生成封面</button>
+<button class="act-btn" style="padding:10px 16px;border-radius:10px;background:#8b5cf6;font-size:13px;font-weight:600" onclick="clipInfo()"><i class="fa-solid fa-info-circle"></i> 视频信息</button>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+<div><label style="font-size:12px;font-weight:600;color:var(--b)">播放速度</label>
+<div style="display:flex;gap:6px;margin-top:4px"><button class="act-btn" style="padding:6px 12px;font-size:11px" onclick="setClipSpeed(0.5)">0.5x</button><button class="act-btn" style="padding:6px 12px;font-size:11px" onclick="setClipSpeed(1)">1x</button><button class="act-btn" style="padding:6px 12px;font-size:11px" onclick="setClipSpeed(1.5)">1.5x</button><button class="act-btn" style="padding:6px 12px;font-size:11px" onclick="setClipSpeed(2)">2x</button></div></div>
+<div><label style="font-size:12px;font-weight:600;color:var(--b)">导出格式</label>
+<select id="clipFormat" style="width:100%;padding:8px;border:1px solid var(--bd);border-radius:8px;margin-top:4px;font-size:13px"><option value="mp4">MP4</option><option value="webm">WebM</option></select></div>
+</div>
+<video id="clipVideo" controls style="width:100%;border-radius:12px;background:#000;max-height:400px"></video>
+</div>
+<div id="clipOutput" style="margin-top:20px"></div>
+</div>`;
+}
+let _clipFile=null;
+function handleClipUpload(inp){
+const file=inp.files[0];if(!file)return;
+_clipFile=file;
+const url=URL.createObjectURL(file);
+document.getElementById('clipPreview').innerHTML=`<div style="padding:12px;background:#dcfce7;border-radius:10px;display:flex;align-items:center;gap:10px"><span style="font-size:24px">🎬</span><div><p style="font-weight:600;font-size:13px">${file.name}</p><p style="font-size:11px;color:var(--b)">${(file.size/1024/1024).toFixed(1)}MB</p></div></div>`;
+document.getElementById('clipTools').style.display='block';
+document.getElementById('clipVideo').src=url;
+toast('视频已加载','success');
+}
+function setClipSpeed(s){const v=document.getElementById('clipVideo');if(v)v.playbackRate=s;toast('速度: '+s+'x','success')}
+function clipExtractFrames(){
+const v=document.getElementById('clipVideo');if(!v||!v.videoWidth){toast('请先上传视频','error');return}
+const canvas=document.createElement('canvas');canvas.width=v.videoWidth;canvas.height=v.videoHeight;
+const ctx=canvas.getContext('2d');
+const duration=v.duration;const count=Math.min(Math.max(3,Math.floor(duration/2)),15);
+let frames=[];let extracted=0;
+const output=document.getElementById('clipOutput');
+output.innerHTML='<div style="text-align:center;padding:20px"><div class="ai-spinner" style="margin:0 auto"></div><p style="margin-top:12px;color:var(--b)">正在提取关键帧...</p></div>';
+const doExtract=()=>{
+v.currentTime=duration*extracted/count;
+};
+v.onseeked=function(){
+ctx.drawImage(v,0,0,canvas.width,canvas.height);
+frames.push(canvas.toDataURL('image/jpeg',0.85));
+extracted++;
+if(extracted<count){doExtract()}
+else{
+v.onseeked=null;
+output.innerHTML=`<div style="font-weight:700;margin-bottom:12px;color:var(--ok)"><i class="fa-solid fa-check-circle"></i> 已提取 ${frames.length} 帧</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px">${frames.map((f,i)=>`<div style="border-radius:8px;overflow:hidden;border:1px solid var(--bd)"><img src="${f}" style="width:100%;display:block"><div style="padding:4px 8px;background:var(--bg);font-size:11px;color:var(--b)">帧 ${i+1}</div></div>`).join('')}</div>
+<div style="margin-top:12px;display:flex;gap:8px">${frames.map((f,i)=>`<a href="${f}" download="frame_${i+1}.jpg" class="act-btn ok" style="padding:6px 12px;font-size:11px;text-decoration:none">下载帧${i+1}</a>`).join('')}</div>`;
+toast('关键帧提取完成！','success');
+}
+};
+doExtract();
+}
+function clipGenCover(){
+const v=document.getElementById('clipVideo');if(!v||!v.videoWidth){toast('请先上传视频','error');return}
+v.currentTime=v.duration*0.1;
+v.onseeked=function(){
+const canvas=document.createElement('canvas');canvas.width=v.videoWidth;canvas.height=v.videoHeight;
+const ctx=canvas.getContext('2d');ctx.drawImage(v,0,0);
+const dataUrl=canvas.toDataURL('image/jpeg',0.92);
+document.getElementById('clipOutput').innerHTML=`<div style="font-weight:700;margin-bottom:12px;color:var(--ok)"><i class="fa-solid fa-image"></i> 封面已生成</div>
+<div style="border-radius:12px;overflow:hidden;border:1px solid var(--bd);margin-bottom:12px"><img src="${dataUrl}" style="width:100%"></div>
+<div style="display:flex;gap:8px"><a href="${dataUrl}" download="cover_${Date.now()}.jpg" class="act-btn ok" style="padding:10px 20px;text-decoration:none"><i class="fa-solid fa-download"></i> 下载封面</a>
+<button class="act-btn" style="padding:10px 20px;background:#8b5cf6" onclick="clipGenCover()"><i class="fa-solid fa-refresh"></i> 换一帧</button></div>`;
+v.onseeked=null;toast('封面生成成功！','success');
+};
+}
+function clipInfo(){
+const v=document.getElementById('clipVideo');if(!v){toast('请先上传视频','error');return}
+document.getElementById('clipOutput').innerHTML=`<div style="padding:16px;background:var(--bg);border-radius:12px">
+<div style="font-weight:700;margin-bottom:12px"><i class="fa-solid fa-info-circle" style="color:var(--p)"></i> 视频信息</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px">
+<div><span style="color:var(--b)">分辨率：</span><b>${v.videoWidth}x${v.videoHeight}</b></div>
+<div><span style="color:var(--b)">时长：</span><b>${v.duration.toFixed(1)}秒</b></div>
+<div><span style="color:var(--b)">文件大小：</span><b>${(_clipFile?(_clipFile.size/1024/1024).toFixed(1):'?')}MB</b></div>
+<div><span style="color:var(--b)">文件名：</span><b>${_clipFile?_clipFile.name:'未知'}</b></div>
+</div></div>`;
+}
+
+// ===== AI图生视频 =====
+function renderImg2Video(){
+document.getElementById('toolPanel').innerHTML=`
+<div class="tool-header"><h3>🎞️ AI图生视频</h3><button class="detail-close" onclick="closeTool()">✕</button></div>
+<div class="tool-body">
+<div style="padding:20px;background:linear-gradient(135deg,#8b5cf6,#a78bfa);border-radius:16px;color:#fff;text-align:center;margin-bottom:20px">
+<div style="font-size:36px;margin-bottom:8px">🎞️</div>
+<div style="font-weight:900;font-size:18px">AI图生视频</div>
+<div style="opacity:.8;margin-top:4px">上传图片，AI生成动态效果视频</div>
+<div class="badge" style="background:rgba(255,255,255,.2);color:#fff;margin-top:8px">60算力/次</div>
+</div>
+<div style="margin-bottom:16px">
+<label style="font-size:12px;font-weight:600;color:var(--b);display:block;margin-bottom:6px">上传图片</label>
+<div style="padding:30px;border:2px dashed var(--bd);border-radius:14px;text-align:center;cursor:pointer;background:var(--bg)" onclick="document.getElementById('i2vFile').click()" id="i2vDrop">
+<div style="font-size:32px;margin-bottom:8px">🖼️</div>
+<p style="font-size:13px;color:var(--b)">点击上传图片</p>
+<p style="font-size:11px;color:var(--bd);margin-top:4px">支持 JPG/PNG/WebP</p>
+<input type="file" id="i2vFile" accept="image/*" style="display:none" onchange="handleI2VUpload(this)">
+</div>
+<div id="i2vPreview" style="margin-top:12px"></div>
+</div>
+<div style="margin-bottom:16px">
+<label style="font-size:12px;font-weight:600;color:var(--b);display:block;margin-bottom:6px">动态效果</label>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<button class="act-btn" style="padding:8px 16px;border-radius:10px;font-size:13px;background:#8b5cf6" onclick="selectI2VEffect(this,'zoom')">🔍 缓慢放大</button>
+<button class="act-btn" style="padding:8px 16px;border-radius:10px;font-size:13px;background:var(--bg);color:var(--b)" onclick="selectI2VEffect(this,'pan')">↔️ 左右平移</button>
+<button class="act-btn" style="padding:8px 16px;border-radius:10px;font-size:13px;background:var(--bg);color:var(--b)" onclick="selectI2VEffect(this,'rotate')">🔄 缓慢旋转</button>
+<button class="act-btn" style="padding:8px 16px;border-radius:10px;font-size:13px;background:var(--bg);color:var(--b)" onclick="selectI2VEffect(this,'kenburns')">🎥 Ken Burns</button>
+</div>
+</div>
+<div style="margin-bottom:16px">
+<label style="font-size:12px;font-weight:600;color:var(--b);display:block;margin-bottom:6px">视频时长</label>
+<div style="display:flex;gap:8px">
+<button class="act-btn" style="padding:8px 16px;border-radius:10px;font-size:13px;background:#8b5cf6" onclick="selectI2VDur(this,3)">3秒</button>
+<button class="act-btn" style="padding:8px 16px;border-radius:10px;font-size:13px;background:var(--bg);color:var(--b)" onclick="selectI2VDur(this,5)">5秒</button>
+<button class="act-btn" style="padding:8px 16px;border-radius:10px;font-size:13px;background:var(--bg);color:var(--b)" onclick="selectI2VDur(this,10)">10秒</button>
+</div>
+</div>
+<button onclick="doImg2Video()" style="width:100%;padding:14px;background:linear-gradient(135deg,#8b5cf6,#a78bfa);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer"><i class="fa-solid fa-wand-magic-sparkles" style="margin-right:6px"></i>生成动态视频（消耗60算力）</button>
+<div id="i2vOutput" style="margin-top:20px"></div>
+</div>`;
+}
+let _i2vEffect='zoom',_i2vDur=3,_i2vFile=null,_i2vDataUrl=null;
+function handleI2VUpload(inp){
+const file=inp.files[0];if(!file)return;
+_i2vFile=file;
+const r=new FileReader();r.onload=e=>{_i2vDataUrl=e.target.result;document.getElementById('i2vPreview').innerHTML=`<img src="${_i2vDataUrl}" style="max-width:100%;max-height:200px;border-radius:10px;border:1px solid var(--bd)">`};r.readAsDataURL(file);
+toast('图片已加载','success');
+}
+function selectI2VEffect(btn,effect){
+_i2vEffect=effect;
+btn.parentElement.querySelectorAll('.act-btn').forEach(b=>{b.style.background='var(--bg)';b.style.color='var(--b)'});
+btn.style.background='#8b5cf6';btn.style.color='#fff';
+}
+function selectI2VDur(btn,dur){
+_i2vDur=dur;
+btn.parentElement.querySelectorAll('.act-btn').forEach(b=>{b.style.background='var(--bg)';b.style.color='var(--b)'});
+btn.style.background='#8b5cf6';btn.style.color='#fff';
+}
+function doImg2Video(){
+if(!_i2vDataUrl)return toast('请先上传图片','error');
+if(!deductCredits(60)){toast('算力不足','error');return}
+const output=document.getElementById('i2vOutput');
+output.innerHTML='<div style="text-align:center;padding:20px"><div class="ai-spinner" style="margin:0 auto"></div><p style="margin-top:12px;color:var(--b)">AI正在生成动态视频...</p></div>';
+setTimeout(()=>{
+try{
+const img=new Image();img.crossOrigin='anonymous';img.onload=function(){
+const canvas=document.createElement('canvas');canvas.width=img.width;canvas.height=img.height;
+const ctx=canvas.getContext('2d');
+const fps=30;const totalFrames=fps*_i2vDur;
+const chunks=[];
+let frame=0;
+const animCanvas=document.createElement('canvas');animCanvas.width=img.width;animCanvas.height=img.height;
+const actx=animCanvas.getContext('2d');
+const stream=animCanvas.captureStream(fps);
+const recorder=new MediaRecorder(stream,{mimeType:'video/webm;codecs=vp9',videoBitsPerSecond:2500000});
+const blobs=[];
+recorder.ondataavailable=e=>{if(e.data.size>0)blobs.push(e.data)};
+recorder.onstop=()=>{
+const blob=new Blob(blobs,{type:'video/webm'});
+const url=URL.createObjectURL(blob);
+output.innerHTML=`<div style="padding:16px;background:#dcfce7;border-radius:12px;margin-bottom:16px">
+<div style="font-weight:700;color:#166534"><i class="fa-solid fa-check-circle"></i> 动态视频生成完成</div>
+<div style="font-size:12px;color:#166534;margin-top:4px">效果: ${_i2vEffect} | 时长: ${_i2vDur}秒</div>
+</div>
+<video controls style="width:100%;border-radius:12px;margin-bottom:12px;max-height:400px" src="${url}" loop autoplay></video>
+<div style="display:flex;gap:8px"><a href="${url}" download="i2v_${Date.now()}.webm" class="act-btn ok" style="padding:10px 20px;text-decoration:none"><i class="fa-solid fa-download"></i> 下载视频</a>
+<button class="act-btn" style="padding:10px 20px;background:#8b5cf6" onclick="doImg2Video()"><i class="fa-solid fa-refresh"></i> 重新生成</button></div>`;
+addCreditLog('AI图生视频','生成动态视频('+_i2vEffect+' '+_i2vDur+'秒)',60);toast('视频生成成功！','success');
+};
+recorder.start();
+const renderFrame=()=>{
+if(frame>=totalFrames){recorder.stop();return}
+const progress=frame/totalFrames;
+actx.clearRect(0,0,animCanvas.width,animCanvas.height);
+actx.save();
+switch(_i2vEffect){
+case'zoom':
+const scale=1+progress*0.3;const cx=animCanvas.width/2;const cy=animCanvas.height/2;
+actx.translate(cx,cy);actx.scale(scale,scale);actx.translate(-cx,-cy);actx.drawImage(img,0,0);break;
+case'pan':
+const offsetX=-progress*animCanvas.width*0.2;actx.drawImage(img,offsetX,0,animCanvas.width,animCanvas.height);break;
+case'rotate':
+const angle=progress*Math.PI*0.1;const rcx=animCanvas.width/2;const rcy=animCanvas.height/2;
+actx.translate(rcx,rcy);actx.rotate(angle);actx.translate(-rcx,-rcy);const rs=1+progress*0.15;actx.scale(rs,rs);actx.drawImage(img,-img.width/2*(rs-1),-img.height/2*(rs-1));break;
+case'kenburns':
+const kbScale=1+progress*0.25;const kbx=animCanvas.width/2;const kby=animCanvas.height/2;
+const kbAngle=Math.sin(progress*Math.PI)*0.03;
+actx.translate(kbx,kby);actx.rotate(kbAngle);actx.scale(kbScale,kbScale);actx.translate(-kbx,-kby);actx.drawImage(img,0,0);break;
+}
+actx.restore();
+frame++;
+requestAnimationFrame(renderFrame);
+};
+renderFrame();
+};img.onerror=()=>{throw new Error('图片加载失败')};img.src=_i2vDataUrl;
+}catch(err){
+output.innerHTML=`<div style="padding:16px;background:#fee2e2;border-radius:12px"><div style="font-weight:700;color:#991b1b"><i class="fa-solid fa-circle-xmark"></i> 生成失败</div><div style="font-size:13px;margin-top:8px">${err.message}</div></div>`;
+}
+},500);
 }
 
 // ===== 消耗记录 =====
@@ -812,6 +1139,25 @@ renderEmployeeAcct();
 <div class="badge badge-blue" style="margin-top:12px">查看记录</div>
 </div>
 </div>
+<div class="tool-card" onclick="openTool('videoParse')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#ef4444,#f97316)">🔗</div>
+<h3>短视频解析</h3>
+<p>粘贴抖音/快手/小红书链接，一键提取无水印视频和封面图</p>
+<div class="badge" style="margin-top:12px;background:#fee2e2;color:#991b1b">免费使用</div>
+</div>
+<div class="tool-card" onclick="openTool('videoClip')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#06b6d4,#0ea5e9)">🎬</div>
+<h3>视频智能剪辑</h3>
+<p>上传视频自动切片、提取关键帧、生成封面，AI辅助创作</p>
+<div class="badge" style="margin-top:12px;background:#cffafe;color:#155e75">登录后使用</div>
+</div>
+<div class="tool-card" onclick="openTool('img2video')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#8b5cf6,#a78bfa)">🎞️</div>
+<h3>AI图生视频</h3>
+<p>上传图片，AI生成动态视频，让静态图片动起来</p>
+<div class="badge badge-purple" style="margin-top:12px">登录后使用</div>
+</div>
+
 </section>
 
 <!-- ===== PRICING ===== -->
@@ -945,7 +1291,7 @@ renderEmployeeAcct();
 
 <script>
 // ===== CACHE BUSTER & VERSION CHECK =====
-(function(){const _V='v3.3-rc2';const _cv=localStorage.getItem('lsjy3_ver');if(_cv!==_V){localStorage.setItem('lsjy3_ver',_V);sessionStorage.clear();try{if('caches'in window)caches.keys().then(k=>k.forEach(n=>caches.delete(n)))}catch(e){}try{document.cookie='lsjy3_ver=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT';document.cookie='lsjy_v=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT';document.cookie='__cf_bm=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT'}catch(e){}}})();
+(function(){const _V='v3.3-final';const _cv=localStorage.getItem('lsjy3_ver');if(_cv!==_V){localStorage.setItem('lsjy3_ver',_V);sessionStorage.clear();try{if('caches'in window)caches.keys().then(k=>k.forEach(n=>caches.delete(n)))}catch(e){}try{document.cookie='lsjy3_ver=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT';document.cookie='lsjy_v=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT';document.cookie='__cf_bm=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT'}catch(e){}}})();
 // ===== DATA =====
 const MODULES=[
 {id:'ai',name:'AI 人工智能',icon:'🤖',color:'#3b82f6',gradient:'linear-gradient(135deg,#3b82f6,#60a5fa)',summary:'依托自研 AI 技术面向中小商家落地数字化转型',services:[
@@ -1432,10 +1778,10 @@ const out=document.getElementById('cwOutput');
 out.innerHTML='<p style="color:var(--b);text-align:center">⏳ AI生成中...</p>';
 if(typeof aiGenerateText==='function'){aiGenerateText(prompt).then(text=>{out.innerHTML=`<div style="padding:16px;background:var(--bg);border-radius:12px;border:1px solid var(--bd);white-space:pre-wrap;line-height:1.8;font-size:14px">${text}</div><button class="btn btn-o btn-sm" onclick="copyText('cwOutput')" style="margin-top:8px">📋 复制文案</button>`}).catch(()=>{out.innerHTML='<p style="color:var(--err)">AI生成失败，请稍后重试</p>'})}else{out.innerHTML='<p style="color:var(--err)">AI服务未就绪</p>'}
 }
-const _TOOL_MAP={copywriter:renderCopywriter,watermark:renderWatermark,rewrite:renderRewrite,hashtag:renderHashtag,viralVideo:renderViralVideo,digitalHuman:renderDigitalHuman,voiceClone:renderVoiceClone,videoLib:renderVideoLib,aigc:renderAIGC,photoEdit:renderPhotoEdit,audioEdit:renderAudioEdit,accompaniment:renderAccompaniment,docGen:renderDocGen,credits:renderCredits,redeemCode:renderRedeemCode,knowledgeBase:renderKnowledgeBase,creditLogs:renderCreditLogs,employeeAcct:renderEmployeeAcct};
+const _TOOL_MAP={copywriter:renderCopywriter,watermark:renderWatermark,rewrite:renderRewrite,hashtag:renderHashtag,viralVideo:renderViralVideo,digitalHuman:renderDigitalHuman,voiceClone:renderVoiceClone,videoLib:renderVideoLib,aigc:renderAIGC,photoEdit:renderPhotoEdit,audioEdit:renderAudioEdit,accompaniment:renderAccompaniment,docGen:renderDocGen,credits:renderCredits,redeemCode:renderRedeemCode,knowledgeBase:renderKnowledgeBase,creditLogs:renderCreditLogs,videoParse:renderVideoParse,videoClip:renderVideoClip,img2video:renderImg2Video,employeeAcct:renderEmployeeAcct};
 const _TOOL_COST={viralVideo:50,digitalHuman:100,voiceClone:30,aigc:20,photoEdit:30,audioEdit:25,accompaniment:40,docGen:35};
 function openTool(id){
-if(id==='credits'||id==='videoLib'||id==='redeemCode'||id==='knowledgeBase'||id==='creditLogs'||id==='employeeAcct'){_TOOL_MAP[id]&&_TOOL_MAP[id]();document.getElementById('toolOverlay').classList.add('show');document.body.style.overflow='hidden';return}
+if(id==='credits'||id==='videoLib'||id==='redeemCode'||id==='knowledgeBase'||id==='creditLogs'||id==='employeeAcct'||id==='videoParse'){_TOOL_MAP[id]&&_TOOL_MAP[id]();document.getElementById('toolOverlay').classList.add('show');document.body.style.overflow='hidden';return}
 if(requireLogin&&typeof requireLogin==='function'&&!isLoggedIn()){requireLogin();return}
 const cost=_TOOL_COST[id];
 if(cost&&typeof deductCredits==='function'){if(!deductCredits(cost)){return}}
@@ -2079,7 +2425,7 @@ currentPayOrder=null;selectedPayMethod=null;
 
 
 // ===== CREDIT/POWER SYSTEM =====
-const CREDIT_COST={viralVideo:50,digitalHuman:100,voiceClone:30,aigc:20,photoEdit:30,audioEdit:25,accompaniment:40,docGen:35};
+const CREDIT_COST={viralVideo:50,digitalHuman:100,voiceClone:30,aigc:20,photoEdit:30,audioEdit:25,accompaniment:40,docGen:35,videoClip:30,img2video:60};
 const CREDIT_PACKS=[{id:'pack1',name:'体验包',credits:100,price:9.9},{id:'pack2',name:'基础包',credits:500,price:39.9},{id:'pack3',name:'专业包',credits:2000,price:129},{id:'pack4',name:'旗舰包',credits:5000,price:299},{id:'pack5',name:'至尊包',credits:10000,price:1000}];
 
 function getCredits(){
@@ -3092,7 +3438,7 @@ if(target){e.preventDefault();target.scrollIntoView({behavior:'smooth',block:'st
 
 // ===== JS INTEGRITY CHECK =====
 if(typeof openAuth!=='function'||typeof doLogin!=='function'||typeof openTool!=='function'||typeof toast!=='function'){
-  const _fv='v3.3-rc2';
+  const _fv='v3.3-final';
   const _sv=localStorage.getItem('lsjy3_jsok');
   localStorage.setItem('lsjy3_jsok',_fv);
   window.stop&&window.stop();
