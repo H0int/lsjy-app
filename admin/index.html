@@ -981,11 +981,11 @@ function renderLogs(p){
 // ===== AI ENGINE CORE (后台集成) =====
 // === 多模型AI引擎配置（替换为真实值即可切换服务商） ===
 const DOUBAO_CONFIG={
-  ARK_API_KEY:'YOUR_ARK_API_KEY',
+  ARK_API_KEY:'ark-0eabaec4-127a-4681-8f7f-b211742511b8-aed94',
   ARK_BASE_URL:'https://ark.cn-beijing.volces.com/api/v3',
-  MODEL_TEXT:'doubao-pro-32k',
+  MODEL_TEXT:'doubao-seed-2-0-pro-260215',
   MODEL_IMAGE:'doubao-seedream-3-0-t2i-250415',
-  ENABLED:false
+  ENABLED:true
 };
 const FALLBACK_AI_IMG_API='https://image.pollinations.ai/prompt/';
 const FALLBACK_AI_TEXT_API='https://text.pollinations.ai/openai';
@@ -1016,17 +1016,17 @@ async function aiGenerateText(prompt,sysPrompt,model,retries){
       try{
         const controller=new AbortController();
         const tid=setTimeout(()=>controller.abort(),AI_TIMEOUT);
-        const r=await fetch(DOUBAO_CONFIG.ARK_BASE_URL+'/chat/completions',{
+        const r=await fetch(DOUBAO_CONFIG.ARK_BASE_URL+'/responses',{
           method:'POST',signal:controller.signal,
           headers:{'Content-Type':'application/json','Authorization':'Bearer '+DOUBAO_CONFIG.ARK_API_KEY},
-          body:JSON.stringify({model:model||DOUBAO_CONFIG.MODEL_TEXT,messages:[
+          body:JSON.stringify({model:model||DOUBAO_CONFIG.MODEL_TEXT,input:[
             {role:'system',content:sysPrompt||'你是专业AI助手，回复只包含生成内容，不含解释。'},
             {role:'user',content:prompt}
-          ],max_tokens:4000,temperature:0.9})});
+          ],max_output_tokens:4000,temperature:0.9})});
         clearTimeout(tid);
         if(!r.ok)throw new Error('HTTP '+r.status);
         const d=await r.json();
-        if(d.choices&&d.choices[0])return d.choices[0].message.content.trim();
+        if(d.output&&d.output.length){const msg=d.output.filter(o=>o.type==='message').pop();if(msg&&msg.content&&msg.content.length)return msg.content[0].text.trim();}
       }catch(e){console.log('Doubao err (try '+i+'):',e);if(i<retries)await new Promise(r=>setTimeout(r,1500*(i+1)))}
     }
   }
@@ -1043,7 +1043,7 @@ async function aiGenerateText(prompt,sysPrompt,model,retries){
       clearTimeout(tid);
       if(!r.ok)throw new Error('HTTP '+r.status);
       const d=await r.json();
-      if(d.choices&&d.choices[0])return d.choices[0].message.content.trim();
+      if(d.output&&d.output.length){const msg=d.output.filter(o=>o.type==='message').pop();if(msg&&msg.content&&msg.content.length)return msg.content[0].text.trim();}
     }catch(e){console.log('AI err (try '+i+'):',e);if(i<retries)await new Promise(r=>setTimeout(r,1500*(i+1)))}
   }
   return null;
