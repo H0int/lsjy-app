@@ -333,7 +333,7 @@ textarea.fi{resize:vertical;min-height:120px}
 .ai-spinner{display:inline-block;width:40px;height:40px;border:3px solid var(--bd);border-top-color:var(--p);border-radius:50%;animation:ai-spin .8s linear infinite}
 @keyframes ai-spin{to{transform:rotate(360deg)}}
 </style>
-<script>if(localStorage.getItem('lsjy3_ver')!=='v3.3-rc1'){localStorage.setItem('lsjy3_ver','v3.3-rc1');location.reload(true)}
+<script>if(localStorage.getItem('lsjy3_ver')!=='v3.3-rc2'){localStorage.setItem('lsjy3_ver','v3.3-rc2');location.reload(true)}
 
 // ===== 卡密兑换系统 =====
 function getRedeemCodes(){return JSON.parse(localStorage.getItem('lsjy3_redeem_codes')||'[]')}
@@ -945,7 +945,7 @@ renderEmployeeAcct();
 
 <script>
 // ===== CACHE BUSTER & VERSION CHECK =====
-(function(){const _V='v3.3-rc1';const _cv=localStorage.getItem('lsjy3_ver');if(_cv!==_V){localStorage.setItem('lsjy3_ver',_V);sessionStorage.clear();try{if('caches'in window)caches.keys().then(k=>k.forEach(n=>caches.delete(n)))}catch(e){}try{document.cookie='lsjy3_ver=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT';document.cookie='lsjy_v=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT';document.cookie='__cf_bm=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT'}catch(e){}}})();
+(function(){const _V='v3.3-rc2';const _cv=localStorage.getItem('lsjy3_ver');if(_cv!==_V){localStorage.setItem('lsjy3_ver',_V);sessionStorage.clear();try{if('caches'in window)caches.keys().then(k=>k.forEach(n=>caches.delete(n)))}catch(e){}try{document.cookie='lsjy3_ver=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT';document.cookie='lsjy_v=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT';document.cookie='__cf_bm=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT'}catch(e){}}})();
 // ===== DATA =====
 const MODULES=[
 {id:'ai',name:'AI 人工智能',icon:'🤖',color:'#3b82f6',gradient:'linear-gradient(135deg,#3b82f6,#60a5fa)',summary:'依托自研 AI 技术面向中小商家落地数字化转型',services:[
@@ -2080,7 +2080,7 @@ currentPayOrder=null;selectedPayMethod=null;
 
 // ===== CREDIT/POWER SYSTEM =====
 const CREDIT_COST={viralVideo:50,digitalHuman:100,voiceClone:30,aigc:20,photoEdit:30,audioEdit:25,accompaniment:40,docGen:35};
-const CREDIT_PACKS=[{id:'pack1',name:'体验包',credits:100,price:9.9},{id:'pack2',name:'基础包',credits:500,price:39.9},{id:'pack3',name:'专业包',credits:2000,price:129},{id:'pack4',name:'旗舰包',credits:5000,price:299},{id:'pack5',name:'无限包',credits:99999,price:599}];
+const CREDIT_PACKS=[{id:'pack1',name:'体验包',credits:100,price:9.9},{id:'pack2',name:'基础包',credits:500,price:39.9},{id:'pack3',name:'专业包',credits:2000,price:129},{id:'pack4',name:'旗舰包',credits:5000,price:299},{id:'pack5',name:'至尊包',credits:10000,price:1000}];
 
 function getCredits(){
 const u=getCur();if(!u)return 0;
@@ -3092,7 +3092,7 @@ if(target){e.preventDefault();target.scrollIntoView({behavior:'smooth',block:'st
 
 // ===== JS INTEGRITY CHECK =====
 if(typeof openAuth!=='function'||typeof doLogin!=='function'||typeof openTool!=='function'||typeof toast!=='function'){
-  const _fv='v3.3-rc1';
+  const _fv='v3.3-rc2';
   const _sv=localStorage.getItem('lsjy3_jsok');
   localStorage.setItem('lsjy3_jsok',_fv);
   window.stop&&window.stop();

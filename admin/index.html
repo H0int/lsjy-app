@@ -762,7 +762,7 @@ function confirmOrder(idx){
   const orders=getOrders();if(!orders[idx])return;const o=orders[idx];
   if(o.moduleId==='credits'){
     const targetUser=prompt('请输入充值用户名 (当前: '+(o.username||'未指定')+'):',o.username||'');
-    if(!targetUser)return;const packs=[{id:'pack1',credits:100},{id:'pack2',credits:500},{id:'pack3',credits:2000},{id:'pack4',credits:5000},{id:'pack5',credits:99999}];
+    if(!targetUser)return;const packs=[{id:'pack1',credits:100},{id:'pack2',credits:500},{id:'pack3',credits:2000},{id:'pack4',credits:5000},{id:'pack5',credits:10000}];
     const pack=packs.find(p=>p.id===o.serviceId);const addCredits=pack?pack.credits:0;
     if(addCredits>0){const all=getAllCredits();all[targetUser]=(all[targetUser]||0)+addCredits;saveAllCredits(all)}
     o.confirmedUser=targetUser;
@@ -1504,7 +1504,7 @@ const CREDIT_PACKS=[
   {id:'pack2',name:'基础包',credits:500,price:39.9},
   {id:'pack3',name:'专业包',credits:2000,price:129},
   {id:'pack4',name:'旗舰包',credits:5000,price:299},
-  {id:'pack5',name:'无限包',credits:99999,price:599}
+  {id:'pack5',name:'至尊包',credits:10000,price:1000}
 ];
 function genCode(){const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='';for(let i=0;i<8;i++)s+=c[Math.floor(Math.random()*c.length)];return 'LSJY-'+s}
 let _rcPage=1,_rcFilter='',_rcStatus='';
@@ -1652,7 +1652,7 @@ function showMod(h){document.getElementById('modalBox').innerHTML=h;document.get
 function closeModal(e){if(e&&e.target!==e.currentTarget)return;document.getElementById('modalBg').classList.remove('show')}
 
 // ===== VERSION & INTEGRITY CHECK =====
-(function(){const VER='admin-v3.3';const stored=localStorage.getItem('lsjy_admin_ver');if(stored!==VER){localStorage.setItem('lsjy_admin_ver',VER);if(stored)location.reload(true)}else if(typeof goPage!=='function'||typeof renderDashboard!=='function'){const fc=localStorage.getItem('lsjy_admin_jsok');if(fc===VER)return;localStorage.setItem('lsjy_admin_jsok',VER);window.location.replace(window.location.pathname+'?_r='+Date.now())}})();
+(function(){const VER='admin-v3.4';const stored=localStorage.getItem('lsjy_admin_ver');if(stored!==VER){localStorage.setItem('lsjy_admin_ver',VER);if(stored)location.reload(true)}else if(typeof goPage!=='function'||typeof renderDashboard!=='function'){const fc=localStorage.getItem('lsjy_admin_jsok');if(fc===VER)return;localStorage.setItem('lsjy_admin_jsok',VER);window.location.replace(window.location.pathname+'?_r='+Date.now())}})();
 </script>
 </body>
 </html>
