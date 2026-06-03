@@ -1814,13 +1814,18 @@ if(typeof aiGenerateText==='function'){aiGenerateText(prompt).then(text=>{out.in
 const _TOOL_MAP={copywriter:renderCopywriter,watermark:renderWatermark,rewrite:renderRewrite,hashtag:renderHashtag,viralVideo:renderViralVideo,digitalHuman:renderDigitalHuman,voiceClone:renderVoiceClone,videoLib:renderVideoLib,aigc:renderAIGC,photoEdit:renderPhotoEdit,audioEdit:renderAudioEdit,accompaniment:renderAccompaniment,docGen:renderDocGen,credits:renderCredits,redeemCode:renderRedeemCode,knowledgeBase:renderKnowledgeBase,creditLogs:renderCreditLogs,videoParse:renderVideoParse,videoClip:renderVideoClip,img2video:renderImg2Video,employeeAcct:renderEmployeeAcct};
 const _TOOL_COST={viralVideo:50,digitalHuman:100,voiceClone:30,aigc:20,photoEdit:30,audioEdit:25,accompaniment:40,docGen:35};
 function openTool(id){
-if(id==='credits'||id==='videoLib'||id==='redeemCode'||id==='knowledgeBase'||id==='creditLogs'||id==='employeeAcct'||id==='videoParse'){_TOOL_MAP[id]&&_TOOL_MAP[id]();document.getElementById('toolOverlay').classList.add('show');document.body.style.overflow='hidden';return}
-if(requireLogin&&typeof requireLogin==='function'&&!isLoggedIn()){requireLogin();return}
-const cost=_TOOL_COST[id];
-if(cost&&typeof deductCredits==='function'){if(!deductCredits(cost)){return}}
-_TOOL_MAP[id]&&_TOOL_MAP[id]();
-document.getElementById('toolOverlay').classList.add('show');
+const overlay=document.getElementById('toolOverlay');
+const panel=document.getElementById('toolPanel');
+if(!overlay||!panel)return;
+// 先显示弹层，让 innerHTML 模式的函数也能正常渲染
+overlay.classList.add('show');
 document.body.style.overflow='hidden';
+// 调用渲染函数
+if(_TOOL_MAP[id]&&typeof _TOOL_MAP[id]==='function'){
+const result=_TOOL_MAP[id]();
+// 如果函数返回了字符串（return 模板），写入 panel
+if(typeof result==='string'&&result.length>0){panel.innerHTML=result}
+}
 }
 function closeTool(e){if(e&&e.target!==e.currentTarget)return;document.getElementById('toolOverlay').classList.remove('show');document.body.style.overflow='';if(typeof aiStopVoice==='function')aiStopVoice()}
 
