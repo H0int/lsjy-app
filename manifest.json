@@ -1,0 +1,14 @@
+{
+  "name": "罗圣纪元 - 业务平台",
+  "short_name": "罗圣纪元",
+  "description": "罗圣纪元互联网科技有限责任公司业务平台",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#533afd",
+  "theme_color": "#533afd",
+  "orientation": "portrait",
+  "icons": [
+    {"src": "logo.png","sizes": "192x192","type": "image/png","purpose": "any maskable"},
+    {"src": "logo.png","sizes": "512x512","type": "image/png","purpose": "any maskable"}
+  ]
+}

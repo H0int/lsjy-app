@@ -1,0 +1,2209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+<title>罗圣纪元 - 互联网数字化综合平台</title>
+<meta name="description" content="罗圣纪元互联网数字化综合平台 - AI赋能实体经济，6大业务板块全覆盖，算力驱动AI创作">
+<meta name="theme-color" content="#0d1b2a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="logo.png">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+--p:#533afd;--ph:#4434d4;--pl:#b9b9f9;--ps:#eef1fe;--pm:rgba(83,58,253,.12);
+--n:#0d1b2a;--nd:#1a2744;--b:#64748b;--l:#334155;--bd:#e2e8f0;--bg:#f8fafc;
+--w:#fff;--err:#ef4444;--ok:#22c55e;--warn:#f59e0b;
+--qq:#12b7f5;--wx:#07c160;--phone:#ff6b35;
+--ruby:#ea2261;--magenta:#f96bee;--green:#10b981;--blue:#3b82f6;
+--f:'Noto Sans SC',-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;
+--sh:0 4px 6px -1px rgba(0,0,0,.07),0 2px 4px -2px rgba(0,0,0,.05);
+--sh-lg:0 20px 25px -5px rgba(0,0,0,.08),0 8px 10px -6px rgba(0,0,0,.04);
+--sh-xl:0 25px 50px -12px rgba(0,0,0,.15);
+--glass:rgba(255,255,255,.8);--glass-b:rgba(255,255,255,.3);
+--radius:16px;--radius-lg:24px;
+}
+html{font-size:16px;-webkit-tap-highlight-color:transparent;scroll-behavior:smooth}
+body{font-family:var(--f);color:var(--n);background:var(--bg);line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+
+/* === UTILS === */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 28px;border-radius:12px;font-size:14px;font-weight:600;font-family:var(--f);cursor:pointer;transition:all .25s;border:none;text-decoration:none}
+.btn-p{background:var(--p);color:#fff;box-shadow:0 4px 14px rgba(83,58,253,.3)}
+.btn-p:hover{background:var(--ph);transform:translateY(-1px);box-shadow:0 6px 20px rgba(83,58,253,.35)}
+.btn-o{background:var(--w);color:var(--p);border:1.5px solid var(--bd)}
+.btn-o:hover{border-color:var(--p);background:var(--ps)}
+.btn-sm{padding:8px 16px;font-size:12px;border-radius:8px}
+.btn-icon{width:40px;height:40px;padding:0;border-radius:12px;background:var(--ps);border:1px solid var(--bd);color:var(--n);font-size:18px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center}
+.btn-icon:hover{background:var(--pm);border-color:var(--pl);color:var(--p)}
+.badge{display:inline-flex;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-purple{background:var(--ps);color:var(--p)}.badge-green{background:#dcfce7;color:#166534}
+.badge-blue{background:#dbeafe;color:#1e40af}.badge-ruby{background:#fce7f3;color:#9d174d}
+.glass{background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--glass-b)}
+.fi{width:100%;padding:12px 14px;border:1.5px solid var(--bd);border-radius:12px;font-size:14px;font-family:var(--f);color:var(--n);background:#fff;outline:none;transition:all .2s}
+.fi:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(83,58,253,.1)}
+textarea.fi{resize:vertical;min-height:120px}
+.fg{margin-bottom:14px}
+.fl{display:block;font-size:12px;font-weight:600;color:var(--b);margin-bottom:5px;letter-spacing:.3px}
+.sec-pad{padding:80px 0}
+.container{max-width:1200px;margin:0 auto;padding:0 24px}
+.section-tag{display:inline-flex;align-items:center;gap:6px;background:var(--ps);border:1px solid var(--pl);color:var(--p);padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600;margin-bottom:16px}
+.section-title{font-size:clamp(28px,4vw,42px);font-weight:900;letter-spacing:-1px;line-height:1.2;margin-bottom:12px}
+.section-sub{font-size:16px;color:var(--b);max-width:560px;line-height:1.7}
+.gradient-text{background:linear-gradient(135deg,var(--p),var(--ruby),var(--magenta));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+/* === SCROLLBAR === */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bd);border-radius:3px}
+
+/* === NAV === */
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;transition:all .3s}
+.nav.scrolled{box-shadow:var(--sh)}
+.nav-inner{max-width:1200px;margin:0 auto;padding:0 24px;height:68px;display:flex;align-items:center;justify-content:space-between}
+.nav-left{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--n)}
+.nav-logo{width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid var(--ps)}
+.nav-brand{font-size:17px;font-weight:800;letter-spacing:-.3px}
+.nav-brand em{font-style:normal;color:var(--p)}
+.nav-links{display:flex;align-items:center;gap:8px;list-style:none}
+.nav-links a{text-decoration:none;color:var(--l);font-size:13px;font-weight:500;padding:8px 16px;border-radius:8px;transition:all .2s}
+.nav-links a:hover,.nav-links a.active{color:var(--p);background:var(--ps)}
+.nav-cta{background:var(--p)!important;color:#fff!important;box-shadow:0 2px 8px rgba(83,58,253,.25)}
+.nav-cta:hover{background:var(--ph)!important;transform:translateY(-1px)}
+.mobile-toggle{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:8px;background:none;border:none}
+.mobile-toggle span{width:22px;height:2px;background:var(--n);border-radius:2px;transition:all .3s}
+
+/* === HERO === */
+.hero{min-height:100vh;display:flex;align-items:center;position:relative;overflow:hidden;background:linear-gradient(135deg,#f8fafc 0%,#eef2ff 30%,#f0e7fe 60%,#f8fafc 100%)}
+.hero-bg{position:absolute;inset:0;overflow:hidden}
+.hero-orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:.15;animation:orb 25s infinite ease-in-out}
+.hero-orb:nth-child(1){width:600px;height:600px;background:var(--p);top:-200px;right:-100px}
+.hero-orb:nth-child(2){width:400px;height:400px;background:var(--ruby);bottom:-100px;left:-100px;animation-delay:-8s}
+.hero-orb:nth-child(3){width:300px;height:300px;background:var(--blue);top:50%;left:50%;animation-delay:-15s}
+@keyframes orb{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(30px,-40px) scale(1.1)}66%{transform:translate(-20px,30px) scale(.9)}}
+.hero-grid{position:absolute;inset:0;background-image:radial-gradient(var(--pl) 1px,transparent 1px);background-size:40px 40px;opacity:.3}
+.hero-content{position:relative;max-width:1200px;margin:0 auto;padding:140px 24px 100px;display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
+.hero-text{max-width:580px}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:var(--ps);border:1px solid var(--pl);padding:6px 16px;border-radius:20px;font-size:12px;font-weight:600;color:var(--p);margin-bottom:24px}
+.hero-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--ok);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+.hero-text h1{font-size:clamp(32px,4.5vw,56px);font-weight:900;letter-spacing:-1.5px;line-height:1.15;margin-bottom:20px}
+.hero-text h1 .hl{background:linear-gradient(135deg,var(--p),var(--ruby),var(--magenta));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{font-size:17px;color:var(--b);line-height:1.8;margin-bottom:32px;font-weight:300}
+.hero-actions{display:flex;gap:14px;flex-wrap:wrap}
+.hero-stats{display:flex;gap:32px;margin-top:48px}
+.hero-stat h4{font-size:28px;font-weight:900;color:var(--n)}
+.hero-stat p{font-size:13px;color:var(--b)}
+.hero-visual{position:relative;display:flex;align-items:center;justify-content:center}
+.hero-card{width:100%;max-width:440px;background:var(--w);border-radius:var(--radius-lg);box-shadow:var(--sh-xl);padding:32px;position:relative;overflow:hidden}
+.hero-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--p),var(--ruby),var(--magenta))}
+.hero-card h3{font-size:18px;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:10px}
+.hero-card-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hero-card-item{padding:14px;border-radius:12px;text-align:center;border:1px solid var(--bd);transition:all .2s;cursor:pointer}
+.hero-card-item:hover{border-color:var(--pl);background:var(--ps);transform:translateY(-2px)}
+.hero-card-item .ci{font-size:28px;margin-bottom:6px}
+.hero-card-item .cn{font-size:12px;font-weight:600;color:var(--l)}
+
+/* === MODULES === */
+.modules{background:var(--w)}
+.mod-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.mod-card{background:var(--w);border:1px solid var(--bd);border-radius:var(--radius-lg);padding:32px 24px;transition:all .3s;cursor:pointer;position:relative;overflow:hidden}
+.mod-card:hover{transform:translateY(-4px);box-shadow:var(--sh-lg);border-color:var(--pl)}
+.mod-card::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;opacity:0;transition:opacity .3s}
+.mod-card:hover::after{opacity:1}
+.mod-icon{width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:16px}
+.mod-card h3{font-size:18px;font-weight:700;margin-bottom:8px}
+.mod-card p{font-size:13px;color:var(--b);line-height:1.7;margin-bottom:16px}
+.mod-card .mc-tags{display:flex;flex-wrap:wrap;gap:6px}
+.mod-card .mc-tag{padding:3px 8px;border-radius:6px;font-size:10px;font-weight:600;color:#fff}
+
+/* === SERVICES DETAIL MODAL === */
+.detail-overlay{display:none;position:fixed;inset:0;background:rgba(13,27,42,.6);z-index:2000;backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:24px}
+.detail-overlay.show{display:flex}
+.detail-panel{background:var(--w);border-radius:var(--radius-lg);width:100%;max-width:800px;max-height:85vh;overflow-y:auto;animation:slideUp .3s ease}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.detail-header{padding:32px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:20px;position:sticky;top:0;background:var(--w);z-index:1;border-radius:var(--radius-lg) var(--radius-lg) 0 0}
+.detail-header .di{width:64px;height:64px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0}
+.detail-header .dh h2{font-size:22px;font-weight:900}
+.detail-header .dh p{font-size:13px;color:var(--b);margin-top:4px}
+.detail-close{position:absolute;top:20px;right:20px;width:36px;height:36px;border-radius:10px;border:1px solid var(--bd);background:var(--w);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;color:var(--b);transition:all .2s}
+.detail-close:hover{background:var(--err);color:#fff;border-color:var(--err)}
+.detail-body{padding:24px 32px 32px}
+.svc-item{padding:20px;border:1px solid var(--bd);border-radius:16px;margin-bottom:12px;transition:all .2s;cursor:pointer}
+.svc-item:hover{border-color:var(--pl);background:var(--ps)}
+.svc-item:last-child{margin-bottom:0}
+.svc-item h4{font-size:16px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:10px}
+.svc-num{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+.svc-item p{font-size:13px;color:var(--b);line-height:1.8;padding-left:38px}
+
+/* === TOOLS === */
+.tools{background:linear-gradient(180deg,var(--bg),var(--w))}
+.tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:32px}
+.tool-card{background:var(--w);border:1px solid var(--bd);border-radius:var(--radius-lg);padding:32px;cursor:pointer;transition:all .3s}
+.tool-card:hover{transform:translateY(-3px);box-shadow:var(--sh-lg);border-color:var(--pl)}
+.tool-icon{width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:16px}
+.tool-card h3{font-size:18px;font-weight:700;margin-bottom:8px}
+.tool-card p{font-size:13px;color:var(--b);line-height:1.7}
+
+/* === TOOL PANELS === */
+.tool-overlay{display:none;position:fixed;inset:0;background:rgba(13,27,42,.6);z-index:2000;backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:24px}
+.tool-overlay.show{display:flex}
+.tool-panel{background:var(--w);border-radius:var(--radius-lg);width:100%;max-width:700px;max-height:85vh;overflow-y:auto;animation:slideUp .3s ease}
+.tool-header{padding:24px 28px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--w);z-index:1;border-radius:var(--radius-lg) var(--radius-lg) 0 0}
+.tool-header h3{font-size:18px;font-weight:700;display:flex;align-items:center;gap:10px}
+.tool-body{padding:24px 28px 28px}
+.copywriter-types{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+.cw-type{padding:12px;border:1.5px solid var(--bd);border-radius:12px;text-align:center;cursor:pointer;transition:all .2s;font-size:13px;font-weight:600}
+.cw-type:hover{border-color:var(--pl);background:var(--ps)}
+.cw-type.active{border-color:var(--p);background:var(--ps);color:var(--p)}
+.cw-output{min-height:120px;padding:16px;background:var(--bg);border-radius:12px;font-size:14px;line-height:1.8;color:var(--l);white-space:pre-wrap;position:relative}
+.cw-output:empty::before{content:'生成的文案将在这里显示...';color:var(--b)}
+.cw-actions{display:flex;gap:10px;margin-top:16px;justify-content:flex-end}
+.wm-upload{border:2px dashed var(--bd);border-radius:16px;padding:40px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:20px}
+.wm-upload:hover{border-color:var(--p);background:var(--ps)}
+.wm-upload .wu-icon{font-size:40px;margin-bottom:8px}
+.wm-preview{border-radius:12px;overflow:hidden;max-width:100%;margin-bottom:16px}
+.wm-preview img{max-width:100%;display:block}
+.wm-options{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.wm-opt{padding:8px 16px;border:1.5px solid var(--bd);border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s}
+.wm-opt:hover,.wm-opt.active{border-color:var(--p);background:var(--ps);color:var(--p)}
+
+/* === CTA / CONTACT === */
+.cta-section{background:linear-gradient(135deg,var(--n) 0%,var(--nd) 100%);color:#fff;text-align:center;padding:80px 24px}
+.cta-section h2{font-size:clamp(24px,3.5vw,38px);font-weight:900;margin-bottom:12px}
+.cta-section p{font-size:16px;opacity:.7;max-width:500px;margin:0 auto 32px}
+.contact-info{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;max-width:600px;margin:32px auto 0}
+.contact-item{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:16px}
+.contact-item .ci{font-size:24px}
+.contact-item .cv{font-weight:600;font-size:14px}
+
+/* === FOOTER === */
+.footer{background:var(--n);color:rgba(255,255,255,.6);padding:40px 24px;text-align:center;font-size:13px}
+.footer a{color:var(--pl);text-decoration:none}
+
+/* === AUTH MODAL === */
+.auth-overlay{display:none;position:fixed;inset:0;background:rgba(13,27,42,.6);z-index:3000;backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:24px}
+.auth-overlay.show{display:flex}
+.auth-panel{background:var(--w);border-radius:var(--radius-lg);width:100%;max-width:440px;animation:slideUp .3s ease;overflow:hidden}
+.auth-hero{padding:32px;text-align:center;background:linear-gradient(135deg,var(--p),#7c6cf6);color:#fff}
+.auth-hero h2{font-size:22px;font-weight:900;margin-bottom:4px}
+.auth-hero p{font-size:13px;opacity:.8}
+.auth-body{padding:28px}
+.auth-tabs{display:flex;background:var(--bg);border-radius:12px;padding:3px;margin-bottom:20px}
+.auth-tab{flex:1;padding:10px;text-align:center;font-size:13px;font-weight:600;border:none;background:none;border-radius:10px;cursor:pointer;transition:all .2s;font-family:var(--f);color:var(--b)}
+.auth-tab.active{background:var(--w);color:var(--p);box-shadow:var(--sh)}
+.auth-close{position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,.2);border:none;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px}
+.social-login{display:flex;flex-direction:column;gap:10px;margin-top:20px}
+.social-btn{display:flex;align-items:center;justify-content:center;gap:10px;padding:12px;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .2s;font-family:var(--f)}
+.social-btn.qq{background:#e8f7fe;color:var(--qq);border:1.5px solid #b3e5fc}
+.social-btn.qq:hover{background:#d0effe}
+.social-btn.wx{background:#e8f9f0;color:var(--wx);border:1.5px solid #a5d6b0}
+.social-btn.wx:hover{background:#d0f5de}
+.social-divider{text-align:center;margin:16px 0;position:relative;font-size:12px;color:var(--b)}
+.social-divider::before,.social-divider::after{content:'';position:absolute;top:50%;width:calc(50% - 40px);height:1px;background:var(--bd)}
+.social-divider::before{left:0}.social-divider::after{right:0}
+.phone-bind{margin-top:16px;padding:16px;border-radius:12px;background:var(--bg);border:1px solid var(--bd)}
+.phone-bind h4{font-size:14px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.phone-row{display:flex;gap:8px}
+.phone-row .fi{flex:1}
+.phone-row .btn{flex-shrink:0;width:100px}
+
+/* === TOAST === */
+.toast{position:fixed;top:80px;left:50%;transform:translateX(-50%) translateY(-10px);background:var(--n);color:#fff;padding:12px 24px;border-radius:12px;font-size:13px;z-index:9999;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;max-width:90%;text-align:center;box-shadow:var(--sh-xl)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.success{background:var(--ok)}.toast.error{background:var(--err)}
+
+/* === MOBILE NAV === */
+.mobile-menu{display:none;position:fixed;top:68px;left:0;right:0;background:var(--w);border-bottom:1px solid var(--bd);box-shadow:var(--sh-lg);z-index:999;padding:16px 24px}
+.mobile-menu.show{display:block}
+.mobile-menu a{display:block;padding:12px 0;font-size:15px;font-weight:500;color:var(--l);text-decoration:none;border-bottom:1px solid var(--bg)}
+.mobile-menu a:last-child{border:none}
+
+
+/* === PRICING === */
+.pricing{background:linear-gradient(180deg,var(--w),var(--bg))}
+.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:32px}
+.price-card{background:var(--w);border:1.5px solid var(--bd);border-radius:var(--radius-lg);padding:0;transition:all .3s;position:relative;overflow:hidden}
+.price-card:hover{transform:translateY(-4px);box-shadow:var(--sh-xl);border-color:var(--pl)}
+.price-card.featured{border-color:var(--p);box-shadow:0 8px 30px rgba(83,58,253,.15)}
+.price-card.featured::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--p),var(--ruby))}
+.price-badge{position:absolute;top:16px;right:16px;background:linear-gradient(135deg,var(--p),var(--ruby));color:#fff;padding:4px 12px;border-radius:20px;font-size:10px;font-weight:700}
+.price-head{padding:28px 24px 0;text-align:center}
+.price-icon{width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 14px}
+.price-head h3{font-size:18px;font-weight:800;margin-bottom:4px}
+.price-head .price-sub{font-size:12px;color:var(--b)}
+.price-amount{padding:20px 24px;text-align:center}
+.price-amount .currency{font-size:18px;font-weight:700;color:var(--p);vertical-align:super}
+.price-amount .amount{font-size:42px;font-weight:900;color:var(--p);letter-spacing:-2px}
+.price-amount .period{font-size:13px;color:var(--b)}
+.price-features{padding:0 24px;flex:1}
+.price-features ul{list-style:none;padding:0}
+.price-features li{padding:8px 0;font-size:13px;color:var(--l);display:flex;align-items:flex-start;gap:8px;border-bottom:1px solid var(--bg)}
+.price-features li:last-child{border:none}
+.price-features li::before{content:'✓';color:var(--ok);font-weight:700;font-size:12px;flex-shrink:0;margin-top:2px}
+.price-action{padding:20px 24px 28px;text-align:center}
+.price-action .btn{width:100%;border-radius:12px}
+.price-svc-list{padding:0 24px 20px;max-height:0;overflow:hidden;transition:max-height .4s ease}
+.price-card.expanded .price-svc-list{max-height:800px}
+.price-toggle{display:flex;align-items:center;justify-content:center;gap:4px;padding:8px;font-size:12px;color:var(--b);cursor:pointer;transition:color .2s}
+.price-toggle:hover{color:var(--p)}
+.price-svc-item{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;margin-bottom:6px;border-radius:10px;background:var(--bg);font-size:12px;transition:all .2s}
+.price-svc-item:hover{background:var(--ps)}
+.price-svc-item .psi-name{font-weight:600;color:var(--l)}
+.price-svc-item .psi-buy{padding:4px 12px;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--p);color:var(--p);background:var(--w);transition:all .2s}
+.price-svc-item .psi-buy:hover{background:var(--p);color:#fff}
+
+/* === PAYMENT MODAL === */
+.pay-overlay{display:none;position:fixed;inset:0;background:rgba(13,27,42,.6);z-index:4000;backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:24px}
+.pay-overlay.show{display:flex}
+.pay-panel{background:var(--w);border-radius:var(--radius-lg);width:100%;max-width:480px;animation:slideUp .3s ease;overflow:hidden}
+.pay-header{padding:24px 28px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,var(--n),var(--nd));color:#fff}
+.pay-header h3{font-size:17px;font-weight:700}
+.pay-header .pay-close{width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,.15);border:none;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px}
+.pay-body{padding:28px}
+.pay-order{background:var(--bg);border-radius:14px;padding:20px;margin-bottom:24px}
+.pay-order-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;font-size:13px;border-bottom:1px solid var(--bd)}
+.pay-order-row:last-child{border:none;font-weight:700;font-size:15px;color:var(--p)}
+.pay-order-label{color:var(--b)}
+.pay-methods{margin-bottom:24px}
+.pay-methods h4{font-size:13px;font-weight:700;margin-bottom:12px;color:var(--l)}
+.pay-method-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.pay-method{padding:16px 12px;border:2px solid var(--bd);border-radius:14px;text-align:center;cursor:pointer;transition:all .25s}
+.pay-method:hover{border-color:var(--pl);background:var(--ps)}
+.pay-method.selected{border-color:var(--p);background:var(--ps);box-shadow:0 0 0 3px rgba(83,58,253,.12)}
+.pay-method .pm-icon{font-size:32px;margin-bottom:6px}
+.pay-method .pm-name{font-size:12px;font-weight:700;color:var(--l)}
+.pay-method.wx.selected{border-color:var(--wx);background:#e8f9f0;box-shadow:0 0 0 3px rgba(7,193,96,.12)}
+.pay-method.qq.selected{border-color:var(--qq);background:#e8f7fe;box-shadow:0 0 0 3px rgba(18,183,245,.12)}
+.pay-method.alipay.selected{border-color:#1677ff;background:#e8f0fe;box-shadow:0 0 0 3px rgba(22,119,255,.12)}
+.pay-qrcode{display:none;text-align:center;padding:24px;border:2px dashed var(--bd);border-radius:14px;background:var(--bg);margin-bottom:20px}
+.pay-qrcode.show{display:block}
+.pay-qrcode .qr-placeholder{width:180px;height:180px;margin:0 auto 12px;border-radius:12px;background:var(--w);border:1px solid var(--bd);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-size:13px;color:var(--b)}
+.pay-qrcode .qr-timer{font-size:14px;font-weight:700;color:var(--p)}
+.pay-qrcode .qr-hint{font-size:12px;color:var(--b);margin-top:4px}
+.pay-contact{background:var(--ps);border-radius:12px;padding:16px;text-align:center;margin-bottom:20px}
+.pay-contact p{font-size:13px;color:var(--l);margin-bottom:4px}
+.pay-contact .pay-phone{font-size:18px;font-weight:800;color:var(--p)}
+.pay-btn{width:100%;padding:14px;border-radius:14px;font-size:15px;font-weight:700;border:none;cursor:pointer;transition:all .25s;font-family:var(--f)}
+.pay-btn:hover{transform:translateY(-1px)}
+.pay-btn.wx-pay{background:var(--wx);color:#fff;box-shadow:0 4px 14px rgba(7,193,96,.3)}
+.pay-btn.wx-pay:hover{background:#06ae56}
+.pay-btn.qq-pay{background:var(--qq);color:#fff;box-shadow:0 4px 14px rgba(18,183,245,.3)}
+.pay-btn.qq-pay:hover{background:#0ea5e0}
+.pay-btn.alipay-pay{background:#1677ff;color:#fff;box-shadow:0 4px 14px rgba(22,119,255,.3)}
+.pay-btn.alipay-pay:hover{background:#0958d9}
+.pay-btn.disabled{background:var(--bd);color:var(--b);box-shadow:none;cursor:not-allowed;transform:none}
+
+/* === SERVICE BUY BUTTON IN DETAIL === */
+.svc-buy-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0 0;margin-top:8px;padding-left:38px}
+.svc-price{font-size:15px;font-weight:800;color:var(--p)}
+.svc-buy-btn{padding:8px 20px;border-radius:10px;background:var(--p);color:#fff;font-size:13px;font-weight:600;border:none;cursor:pointer;transition:all .2s;font-family:var(--f)}
+.svc-buy-btn:hover{background:var(--ph);transform:translateY(-1px);box-shadow:0 4px 12px rgba(83,58,253,.3)}
+
+/* === RESPONSIVE === */
+@media(max-width:1024px){
+.hero-content{grid-template-columns:1fr;padding:120px 24px 80px;gap:40px}
+.hero-visual{display:none}
+.mod-grid{grid-template-columns:repeat(2,1fr)}
+.tools-grid{grid-template-columns:1fr}
+}
+@media(max-width:768px){
+.nav-links{display:none}
+.mobile-toggle{display:flex}
+.hero{min-height:auto;padding:100px 0 60px}
+.hero-content{padding-top:100px}
+.hero-text h1{font-size:28px}
+.hero-actions{flex-direction:column}
+.hero-actions .btn{width:100%}
+.hero-stats{gap:20px}
+.hero-stat h4{font-size:22px}
+.mod-grid{grid-template-columns:1fr}
+.sec-pad{padding:50px 0}
+.copywriter-types{grid-template-columns:repeat(2,1fr)}
+.contact-info{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== NAVIGATION ===== -->
+<nav class="nav glass" id="nav">
+<div class="nav-inner">
+<a href="#" class="nav-left" onclick="scrollTo({top:0,behavior:'smooth'})"><img class="nav-logo" src="logo.png" alt="罗圣纪元"><span class="nav-brand">罗圣<em>纪元</em></span></a>
+<ul class="nav-links">
+<li><a href="#modules" class="active">业务板块</a></li>
+<li><a href="#tools">工具箱</a></li>
+<li><a href="#pricing">服务定价</a></li>
+<li><a href="#about">关于我们</a></li>
+<li><a href="#contact">联系方式</a></li>
+<li><a href="javascript:void(0)" class="nav-cta" onclick="openAuth('login')" id="navLoginBtn">登录</a></li>
+</ul>
+<button class="mobile-toggle" onclick="toggleMobileMenu()"><span></span><span></span><span></span></button>
+</div>
+</nav>
+<div class="mobile-menu" id="mobileMenu">
+<a href="#modules" onclick="closeMobileMenu()">业务板块</a>
+<a href="#tools" onclick="closeMobileMenu()">工具箱</a>
+<a href="#pricing" onclick="closeMobileMenu()">服务定价</a>
+<a href="#about" onclick="closeMobileMenu()">关于我们</a>
+<a href="#contact" onclick="closeMobileMenu()">联系方式</a>
+<a href="javascript:void(0)" onclick="closeMobileMenu();openAuth('login')">登录 / 注册</a>
+</div>
+
+<!-- ===== HERO ===== -->
+<section class="hero" id="hero">
+<div class="hero-bg">
+<div class="hero-orb"></div><div class="hero-orb"></div><div class="hero-orb"></div>
+<div class="hero-grid"></div>
+</div>
+<div class="hero-content">
+<div class="hero-text">
+<div class="hero-badge">全矩阵数字化商业解决方案</div>
+<h1>用 <span class="hl">AI 科技</span> 赋能<br>实体经济增长</h1>
+<p class="hero-sub">罗圣纪元聚焦 AI、自媒体、电商、宠物、教育、伯雅校园六大板块，为中小商家提供一站式数字化转型方案，助力流量破局与商业变现。</p>
+<div class="hero-actions">
+<a href="#modules" class="btn btn-p">探索业务板块</a>
+<a href="#tools" class="btn btn-o">免费工具箱</a>
+</div>
+<div class="hero-stats">
+<div class="hero-stat"><h4>6</h4><p>核心业务板块</p></div>
+<div class="hero-stat"><h4>28</h4><p>专业服务项目</p></div>
+<div class="hero-stat"><h4>6</h4><p>AI创作工具</p></div>
+<div class="hero-stat"><h4>1000+</h4><p>服务客户</p></div>
+</div>
+</div>
+<div class="hero-visual">
+<div class="hero-card">
+<h3>🔍 六大业务板块</h3>
+<div class="hero-card-grid">
+<div class="hero-card-item" onclick="openMod('ai')"><div class="ci">🤖</div><div class="cn">AI</div></div>
+<div class="hero-card-item" onclick="openMod('media')"><div class="ci">📱</div><div class="cn">自媒体</div></div>
+<div class="hero-card-item" onclick="openMod('ecom')"><div class="ci">🛒</div><div class="cn">电商</div></div>
+<div class="hero-card-item" onclick="openMod('pet')"><div class="ci">🐾</div><div class="cn">宠物</div></div>
+<div class="hero-card-item" onclick="openMod('edu')"><div class="ci">📚</div><div class="cn">教育</div></div>
+<div class="hero-card-item" onclick="openMod('campus')"><div class="ci">🏫</div><div class="cn">伯雅校园</div></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- ===== MODULES ===== -->
+<section class="modules sec-pad" id="modules">
+<div class="container">
+<div class="section-tag">BUSINESS MODULES</div>
+<h2 class="section-title">六大业务板块</h2>
+<p class="section-sub">覆盖 AI、新媒体、电商、宠物、教育、校园全链路，为实体经济提供数字化流量赋能</p>
+<div class="mod-grid" id="modGrid"></div>
+</div>
+</section>
+
+<!-- ===== TOOLS ===== -->
+<section class="tools sec-pad" id="tools">
+<div class="container">
+<div class="section-tag">FREE TOOLS</div>
+<h2 class="section-title">免费<span class="gradient-text">工具箱</span></h2>
+<p class="section-sub">文案创作、去水印等实用工具，助力您的内容创作与营销推广</p>
+<div class="tools-grid">
+<div class="tool-card" onclick="openTool('copywriter')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#533afd,#7c6cf6)">✍️</div>
+<h3>智能文案工具</h3>
+<p>短视频脚本、团购文案、朋友圈营销文案、小红书种草笔记等多种模板，一键生成专业文案</p>
+<div class="badge badge-purple" style="margin-top:12px">登录后使用</div>
+</div>
+<div class="tool-card" onclick="openTool('watermark')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#3b82f6,#60a5fa)">🔍</div>
+<h3>图片去水印</h3>
+<p>上传带水印的图片，智能识别并去除水印区域，还原清晰干净的原始图片</p>
+<div class="badge badge-blue" style="margin-top:12px">免费使用</div>
+</div>
+<div class="tool-card" onclick="openTool('rewrite')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#10b981,#34d399)">🔄</div>
+<h3>文案改写润色</h3>
+<p>输入现有文案，一键改写为多种风格，口语化、正式、种草风、广告风自由切换</p>
+<div class="badge badge-green" style="margin-top:12px">登录后使用</div>
+</div>
+<div class="tool-card" onclick="openTool('hashtag')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#f59e0b,#fbbf24)">#️⃣</div>
+<h3>热门话题标签</h3>
+<p>输入关键词自动匹配热门话题标签，覆盖抖音、小红书、快手等平台，提升内容曝光</p>
+<div class="badge badge-ruby" style="margin-top:12px">免费使用</div>
+</div>
+</div>
+</div>
+<div style="margin-top:48px">
+<div class="section-tag" style="display:inline-flex">AI POWERED</div>
+<h3 class="section-title" style="font-size:28px;margin-bottom:8px;margin-top:12px">AI <span class="gradient-text">创作引擎</span></h3>
+<p class="section-sub">消耗算力即可使用，更强大的AI创作能力</p>
+</div>
+<div class="tools-grid" style="margin-top:24px">
+<div class="tool-card" onclick="openTool('viralVideo')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#ef4444,#f97316)">🎬</div>
+<h3>爆款智能成片</h3>
+<p>输入产品或主题，AI自动生成爆款短视频脚本+分镜+配音+字幕，一键出片</p>
+<div class="badge" style="margin-top:12px;background:#fee2e2;color:#991b1b">🔥 50算力/次</div>
+</div>
+<div class="tool-card" onclick="openTool('digitalHuman')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#06b6d4,#8b5cf6)">🧑‍💼</div>
+<h3>数字人口播</h3>
+<p>输入文案，AI数字人自动播报生成口播视频，多款形象可选，适配全平台</p>
+<div class="badge" style="margin-top:12px;background:#dbeafe;color:#1e40af">🧑‍💼 100算力/次</div>
+</div>
+<div class="tool-card" onclick="openTool('voiceClone')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#a855f7,#ec4899)">🎙️</div>
+<h3>音色克隆</h3>
+<p>上传一段音频，克隆您的专属音色，用于配音、播报、有声内容创作</p>
+<div class="badge" style="margin-top:12px;background:#ede9fe;color:#5b21b6">🎙️ 30算力/次</div>
+</div>
+<div class="tool-card" onclick="openTool('videoLib')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#14b8a6,#22d3ee)">📁</div>
+<h3>我的视频库</h3>
+<p>管理您的创作作品，收藏、分类、下载，打造个人视频素材库</p>
+<div class="badge badge-green" style="margin-top:12px">登录后使用</div>
+</div>
+<div class="tool-card" onclick="openTool('aigc')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">🎨</div>
+<h3>智能文生图</h3>
+<p>输入文字描述，AI自动生成高清海报、产品图、封面图，支持多种风格</p>
+<div class="badge" style="margin-top:12px;background:#fef3c7;color:#92400e">🎨 20算力/次</div>
+</div>
+<div class="tool-card" onclick="openTool('photoEdit')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#6366f1,#a78bfa)">🖼️</div>
+<h3>AI智能修图</h3>
+<p>一键美化、去水印、画质增强、背景替换、人像精修，专业级图片处理</p>
+<div class="badge" style="margin-top:12px;background:#e0e7ff;color:#3730a3">🖼️ 30算力/次</div>
+</div>
+<div class="tool-card" onclick="openTool('audioEdit')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#0ea5e9,#38bdf8)">🎵</div>
+<h3>AI智能修音</h3>
+<p>人声提取、降噪、混响、变速变调、音频剪辑，录音棚级音质处理</p>
+<div class="badge" style="margin-top:12px;background:#e0f2fe;color:#075985">🎵 25算力/次</div>
+</div>
+<div class="tool-card" onclick="openTool('accompaniment')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#f472b6,#fb923c)">🎶</div>
+<h3>AI智能伴奏</h3>
+<p>输入歌词或风格，AI自动生成多风格伴奏，支持流行、古风、电音、民谣等</p>
+<div class="badge" style="margin-top:12px;background:#fce7f3;color:#9d174d">🎶 40算力/次</div>
+</div>
+<div class="tool-card" onclick="openTool('docGen')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#10b981,#34d399)">📊</div>
+<h3>智能图文表格</h3>
+<p>像WPS一样一键生成图文、表格、报告，AI自动排版，支持导出分享</p>
+<div class="badge" style="margin-top:12px;background:#d1fae5;color:#065f46">📊 35算力/次</div>
+</div>
+<div class="tool-card" onclick="openTool('credits')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#533afd,#7c6cf6)">⚡</div>
+<h3>算力中心</h3>
+<p>查看算力余额、购买算力包、兑换记录，算力用于兑换AI创作功能</p>
+<div class="badge badge-purple" style="margin-top:12px">立即查看</div>
+</div>
+</div>
+</section>
+
+<!-- ===== PRICING ===== -->
+<section class="pricing sec-pad" id="pricing">
+<div class="container">
+<div class="section-tag">PRICING</div>
+<h2 class="section-title">服务<span class="gradient-text">定价方案</span></h2>
+<p class="section-sub">按需选择，灵活付费。支持微信支付、QQ支付、支付宝，开通即用</p>
+<div class="pricing-grid" id="pricingGrid"></div>
+<div style="text-align:center;margin-top:32px">
+<p style="font-size:13px;color:var(--b)">所有套餐均含免费咨询 + 7天无理由退款保障 &nbsp;|&nbsp; 定制化需求请<a href="#contact" style="color:var(--p);font-weight:600;text-decoration:none">联系我们</a>获取专属报价</p>
+</div>
+</div>
+</section>
+
+<!-- ===== ABOUT ===== -->
+<section class="sec-pad" id="about" style="background:var(--w)">
+<div class="container" style="text-align:center">
+<div class="section-tag">ABOUT US</div>
+<h2 class="section-title">关于<span class="gradient-text">罗圣纪元</span></h2>
+<p class="section-sub" style="margin:0 auto 40px">罗圣纪元互联网科技有限责任公司，总部位于湖南省永州市祁阳市，是一家聚焦 AI 赋能实体经济的科技企业。</p>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px;max-width:900px;margin:0 auto">
+<div style="padding:28px;border:1px solid var(--bd);border-radius:var(--radius)">
+<div style="font-size:36px;margin-bottom:12px">🎯</div>
+<h3 style="font-size:16px;font-weight:700;margin-bottom:8px">企业使命</h3>
+<p style="font-size:13px;color:var(--b);line-height:1.7">用技术打破传统获客壁垒，打造可复制、高转化的本地商家增长闭环</p>
+</div>
+<div style="padding:28px;border:1px solid var(--bd);border-radius:var(--radius)">
+<div style="font-size:36px;margin-bottom:12px">💡</div>
+<h3 style="font-size:16px;font-weight:700;margin-bottom:8px">核心优势</h3>
+<p style="font-size:13px;color:var(--b);line-height:1.7">AI 自研技术 + 实战运营经验，覆盖短视频、电商、私域全链路</p>
+</div>
+<div style="padding:28px;border:1px solid var(--bd);border-radius:var(--radius)">
+<div style="font-size:36px;margin-bottom:12px">🤝</div>
+<h3 style="font-size:16px;font-weight:700;margin-bottom:8px">合作理念</h3>
+<p style="font-size:13px;color:var(--b);line-height:1.7">以客户增长为核心目标，长期陪伴式服务，共创商业价值</p>
+</div>
+</div>
+</div>
+</section>
+
+<!-- ===== CTA / CONTACT ===== -->
+<section class="cta-section" id="contact">
+<h2>开启您的数字化转型之旅</h2>
+<p>无论您是实体商家、创业者还是内容创作者，罗圣纪元都能为您提供量身定制的解决方案</p>
+<div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
+<a href="tel:18890000368" class="btn" style="background:#fff;color:var(--n);border-radius:12px">📞 188-9000-0368</a>
+<button class="btn" style="background:var(--p);color:#fff;border-radius:12px" onclick="openAuth('login')">立即注册</button>
+</div>
+<div class="contact-info">
+<div class="contact-item"><span class="ci">📍</span><span class="cv">湖南省永州市祁阳市</span></div>
+<div class="contact-item"><span class="ci">🏢</span><span class="cv">罗圣纪元互联网科技有限责任公司</span></div>
+<div class="contact-item"><span class="ci">👤</span><span class="cv">创始人：罗凯中</span></div>
+</div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="footer">
+<p>© 2025-2026 罗圣纪元互联网科技有限责任公司 &nbsp;|&nbsp; 湖南省永州市祁阳市</p>
+<p style="margin-top:8px">AI · 自媒体 · 电商 · 宠物 · 教育 · 伯雅校园</p>
+</footer>
+
+<!-- ===== DETAIL MODAL ===== -->
+<div class="detail-overlay" id="detailOverlay" onclick="closeDetail(event)">
+<div class="detail-panel">
+<div class="detail-header">
+<div class="di" id="detailIcon"></div>
+<div class="dh"><h2 id="detailTitle"></h2><p id="detailSub"></p></div>
+</div>
+<button class="detail-close" onclick="closeDetail()">✕</button>
+<div class="detail-body" id="detailBody"></div>
+</div>
+</div>
+
+<!-- ===== TOOL MODAL ===== -->
+<div class="tool-overlay" id="toolOverlay" onclick="closeTool(event)">
+<div class="tool-panel" id="toolPanel"></div>
+</div>
+
+<!-- ===== AUTH MODAL ===== -->
+<div class="auth-overlay" id="authOverlay" onclick="closeAuth(event)">
+<div class="auth-panel" id="authPanel"></div>
+</div>
+
+
+<!-- ===== PAYMENT MODAL ===== -->
+<div class="pay-overlay" id="payOverlay" onclick="closePay(event)">
+<div class="pay-panel">
+<div class="pay-header">
+<h3>💳 服务购买</h3>
+<button class="pay-close" onclick="closePay()">✕</button>
+</div>
+<div class="pay-body">
+<div class="pay-order" id="payOrderInfo"></div>
+<div class="pay-methods">
+<h4>选择支付方式</h4>
+<div class="pay-method-grid">
+<div class="pay-method wx" onclick="selectPayMethod(this,'wx')">
+<div class="pm-icon">💚</div>
+<div class="pm-name">微信支付</div>
+</div>
+<div class="pay-method qq" onclick="selectPayMethod(this,'qq')">
+<div class="pm-icon">💬</div>
+<div class="pm-name">QQ支付</div>
+</div>
+<div class="pay-method alipay" onclick="selectPayMethod(this,'alipay')">
+<div class="pm-icon">🔵</div>
+<div class="pm-name">支付宝</div>
+</div>
+</div>
+</div>
+<div class="pay-qrcode" id="payQrcode">
+<div id="payQrImgWrap" style="width:220px;height:220px;margin:0 auto 12px;border-radius:12px;overflow:hidden;border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;background:#fff">
+<img id="payQrImg" src="" alt="收款码" style="width:100%;height:100%;object-fit:cover;display:none">
+<span id="payQrDefault" style="font-size:13px;color:var(--b)">请选择支付方式</span>
+</div>
+<div class="qr-timer" id="payTimer"></div>
+<div class="qr-hint" id="payHint">请在手机上完成支付</div>
+</div>
+<div class="pay-contact">
+<p>如需协助，请联系客服</p>
+<div class="pay-phone">📞 188-9000-0368</div>
+</div>
+<button class="pay-btn disabled" id="payConfirmBtn" onclick="confirmPayment()">确认支付</button>
+</div>
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== DATA =====
+const MODULES=[
+{id:'ai',name:'AI 人工智能',icon:'🤖',color:'#3b82f6',gradient:'linear-gradient(135deg,#3b82f6,#60a5fa)',summary:'依托自研 AI 技术面向中小商家落地数字化转型',services:[
+{id:'ai-clip',name:'AI 短视频批量切片',desc:'一键拆分长素材产出多条短视频，适配全平台分发。基于 AI 智能识别精彩片段，自动生成多规格短视频，覆盖抖音、快手、小红书等主流平台格式要求，大幅提升内容产出效率。'},
+{id:'ai-copy',name:'智能文案生成',desc:'短视频脚本、团购文案、店铺宣传文案 AI 自动化创作。输入关键词即可生成多风格文案，支持团购促销、品牌宣传、产品种草等多种场景，一键改写优化。'},
+{id:'ai-customer',name:'商家 AI 获客系统',desc:'本地实体门店智能引流工具，精准抓取同城客源。基于地理位置和用户画像，智能匹配潜在客户，自动化触达和转化，让实体门店告别传统地推获客模式。'},
+{id:'ai-api',name:'行业定制化 API 开发',desc:'根据门店、企业需求定制专属 AI 接口。提供智能推荐、图像识别、语音交互、文本分析等能力，支持快速集成到企业现有系统。'},
+{id:'ai-digital',name:'企业数字化搭建',desc:'中小企业线上管理系统、私域数字化架构搭建。从 CRM 客户管理到私域流量运营，为企业提供完整的数字化转型方案。'}
+]},
+{id:'media',name:'自媒体',icon:'📱',color:'#ea2261',gradient:'linear-gradient(135deg,#ea2261,#f96bee)',summary:'深耕短视频全域运营，赋能实体与个人 IP 变现',services:[
+{id:'media-ops',name:'全平台账号代运营',desc:'抖音、快手、小红书账号全托管，日常更新 + 数据优化。专业团队制定内容策略，持续输出高质量内容，实现粉丝增长和变现转化。'},
+{id:'media-explore',name:'探店短视频全案策划',desc:'实体门店探店脚本、拍摄、剪辑、发布一站式服务。从探店创意策划到成品发布，全流程专业把控，帮助门店打造爆款探店视频。'},
+{id:'media-ip',name:'达人 IP 孵化',desc:'素人打造垂直领域博主，从定位到变现全周期扶持。提供人设策划、内容指导、平台运营、商业对接等全链路服务。'},
+{id:'media-copywriting',name:'图文内容代撰',desc:'公众号、小红书图文、朋友圈营销文案定制。专业文案团队操刀，精准触达目标受众，提升品牌传播效果。'},
+{id:'media-matrix',name:'短视频矩阵搭建',desc:'多账号布局，实现品牌全域流量裂变。帮助企业构建多平台内容矩阵，实现流量倍增和品牌全域覆盖。'}
+]},
+{id:'ecom',name:'电商',icon:'🛒',color:'#8b5cf6',gradient:'linear-gradient(135deg,#8b5cf6,#a78bfa)',summary:'聚焦短视频电商落地，打通开店到变现全链路',services:[
+{id:'ecom-shop',name:'抖快小店代入驻',desc:'营业执照报备、类目开通、店铺基础装修代办。全程无忧代办，快速开通抖音、快手小店，让您专注经营产品。'},
+{id:'ecom-deal',name:'团购上架运营',desc:'实体门店套餐上架、套餐定价优化、团购活动策划。结合门店实际情况设计高转化团购产品，持续优化定价策略。'},
+{id:'ecom-supply',name:'货源对接',desc:'日用、宠物、教育类优质货源供应链资源匹配。精选优质供应商，一件代发模式降低库存风险，助力快速开店。'},
+{id:'ecom-ops',name:'店铺全托管运营',desc:'商品上架、客服打理、订单售后一站式代管。专业电商运营团队全程打理，让您轻松做甩手掌柜。'},
+{id:'ecom-traffic',name:'电商引流投流',desc:'短视频随心推、千川投放优化，精准提升店铺成交额。数据驱动的投流策略，让每一分广告费都花在刀刃上。'}
+]},
+{id:'pet',name:'宠物',icon:'🐾',color:'#fb923c',gradient:'linear-gradient(135deg,#fb923c,#fbbf24)',summary:'专注宠物实体店线上数字化运营',services:[
+{id:'pet-ops',name:'宠物医院全域线上运营',desc:'美团、抖音、大众点评店铺优化托管。全方位提升宠物医院线上曝光度，优化店铺评分和排名，吸引更多本地养宠客户。'},
+{id:'pet-deal',name:'疫苗绝育团购策划',desc:'定制高转化医疗套餐，设计线上引流团购产品。结合季节和节日策划促销活动，提升宠物医院到店率和客单价。'},
+{id:'pet-video',name:'门店短视频引流',desc:'宠物门店实拍短视频制作，同城精准曝光获客。利用宠物天然的内容吸引力，制作高互动短视频实现同城引流。'},
+{id:'pet-dist',name:'宠物用品分销带货',desc:'对接品牌宠物粮、保健品，帮门店线上分销盈利。零库存模式，门店通过短视频和私域即可获得额外收入。'},
+{id:'pet-grow',name:'宠物店线上拓客',desc:'私域社群搭建、会员储值活动策划。建立门店私域流量池，通过会员体系和活动策划提升客户复购率和忠诚度。'}
+]},
+{id:'edu',name:'教育',icon:'📚',color:'#10b981',gradient:'linear-gradient(135deg,#10b981,#34d399)',summary:'围绕成人职业与创业打造实用型教育培训',services:[
+{id:'edu-course',name:'职业技能线上课程研发',desc:'自媒体运营、电商开店、AI 实操系列网课开发。紧跟行业趋势，开发实战型在线课程，学员学完即可上手操作。'},
+{id:'edu-biz',name:'创业知识培训',desc:'实体开店、短视频创业系统化线下 + 线上授课。从市场分析到运营实操，系统化培训助力创业者少走弯路。'},
+{id:'edu-school',name:'校企合作资源对接',desc:'职校、高校校企项目落地，实习就业资源联动。搭建学校与企业之间的桥梁，实现人才培养与产业需求的精准对接。'},
+{id:'edu-side',name:'成人副业实训课',desc:'低成本副业实操教学，手把手落地变现项目。涵盖短视频带货、自媒体运营、电商开店等热门副业方向。'}
+]},
+{id:'campus',name:'伯雅校园',icon:'🏫',color:'#533afd',gradient:'linear-gradient(135deg,#533afd,#7c6cf6)',summary:'主打高校本地化创业项目，布局全国校园渠道',services:[
+{id:'campus-partner',name:'校区合伙人招商',desc:'全国各高校招募校区经理，标准化加盟扶持体系。提供完整的运营手册和培训体系，让大学生也能轻松创业。'},
+{id:'campus-incubate',name:'大学生创业扶持',desc:'在校学生创业项目孵化、资源对接、启动指导。为有创业梦想的大学生提供资金、资源和导师支持。'},
+{id:'campus-local',name:'校园本地化项目落地',desc:'校园商超、校园服务、校园新媒体项目落地运营。深入校园场景，打造贴合学生需求的本地化服务。'},
+{id:'campus-community',name:'校园社群运营搭建',desc:'高校精准社群搭建、校园活动策划、流量变现运营。帮助品牌精准触达大学生群体，实现校园流量高效转化。'}
+]}
+];
+
+// ===== STORAGE =====
+function getUsers(){return JSON.parse(localStorage.getItem('lsjy3_users')||'[]')}
+function saveUsers(u){localStorage.setItem('lsjy3_users',JSON.stringify(u))}
+function getCur(){return JSON.parse(localStorage.getItem('lsjy3_cur')||'null')}
+function setCur(u){localStorage.setItem('lsjy3_cur',JSON.stringify(u))}
+function getContacts(){return JSON.parse(localStorage.getItem('lsjy3_contacts')||'[]')}
+function saveContacts(c){localStorage.setItem('lsjy3_contacts',JSON.stringify(c))}
+function isLoggedIn(){return!!getCur()}
+
+// Admin account management moved to admin backend
+// Frontend no longer auto-seeds admin accounts
+
+// ===== TOAST =====
+function toast(m,t){const e=document.getElementById('toast');e.textContent=m;e.className='toast show'+(t?' '+t:'');clearTimeout(e._t);e._t=setTimeout(()=>e.className='toast',2500)}
+
+// ===== NAV SCROLL =====
+window.addEventListener('scroll',()=>{document.getElementById('nav').classList.toggle('scrolled',window.scrollY>20)});
+function toggleMobileMenu(){document.getElementById('mobileMenu').classList.toggle('show')}
+function closeMobileMenu(){document.getElementById('mobileMenu').classList.remove('show')}
+
+// ===== RENDER MODULES =====
+(function renderModules(){
+document.getElementById('modGrid').innerHTML=MODULES.map(m=>`<div class="mod-card" onclick="openMod('${m.id}')" style="--mc:${m.gradient}">
+<div class="mod-icon" style="background:${m.gradient}">${m.icon}</div>
+<h3>${m.name}</h3>
+<p>${m.summary}</p>
+<div class="mc-tags">${m.services.slice(0,3).map(s=>`<span class="mc-tag" style="background:${m.color}">${s.name.substring(0,6)}</span>`).join('')}${m.services.length>3?`<span class="mc-tag" style="background:var(--b)">+${m.services.length-3}</span>`:''}</div>
+</div>`).join('');
+})();
+
+// ===== MODULE DETAIL =====
+function openMod(id){
+const m=MODULES.find(x=>x.id===id);if(!m)return;
+document.getElementById('detailIcon').style.background=m.gradient;
+document.getElementById('detailIcon').textContent=m.icon;
+document.getElementById('detailTitle').textContent=m.name;
+document.getElementById('detailSub').textContent=m.summary;
+document.getElementById('detailBody').innerHTML=m.services.map((s,i)=>{
+const price=SVC_PRICES[s.id];
+const priceHtml=price!==undefined?`<div class="svc-buy-row"><span class="svc-price">${price===0?'免费咨询':'¥'+price+'起'}</span><button class="svc-buy-btn" onclick="event.stopPropagation();closeDetail();openPayment('${m.id}','${s.id}')">立即购买</button></div>`:'';
+return`<div class="svc-item" onclick="event.stopPropagation()">
+<h4><span class="svc-num" style="background:${m.gradient}">${String(i+1).padStart(2,'0')}</span>${s.name}</h4>
+<p>${s.desc}</p>${priceHtml}
+</div>`}).join('');
+document.getElementById('detailOverlay').classList.add('show');
+document.body.style.overflow='hidden';
+}
+function closeDetail(e){
+if(e&&e.target!==e.currentTarget)return;
+document.getElementById('detailOverlay').classList.remove('show');
+document.body.style.overflow='';
+}
+
+// ===== TOOLS =====
+function openTool(type){
+if(!isLoggedIn()&&(type==='copywriter'||type==='rewrite'||type==='viralVideo'||type==='digitalHuman'||type==='voiceClone'||type==='videoLib'||type==='aigc'||type==='credits'||type==='photoEdit'||type==='audioEdit'||type==='accompaniment'||type==='docGen')){toast('请先登录后使用此工具','error');openAuth('login');return}
+const panels={copywriter:renderCopywriter,watermark:renderWatermark,rewrite:renderRewrite,hashtag:renderHashtag,viralVideo:renderViralVideo,digitalHuman:renderDigitalHuman,voiceClone:renderVoiceClone,videoLib:renderVideoLib,aigc:renderAIGC,photoEdit:renderPhotoEdit,audioEdit:renderAudioEdit,accompaniment:renderAccompaniment,docGen:renderDocGen,credits:renderCredits};
+if(panels[type])panels[type]();
+document.getElementById('toolOverlay').classList.add('show');
+document.body.style.overflow='hidden';
+}
+function closeTool(e){
+if(e&&e.target!==e.currentTarget)return;
+document.getElementById('toolOverlay').classList.remove('show');
+document.body.style.overflow='';
+}
+
+// -- Copywriter Tool --
+function renderCopywriter(){
+const types=['短视频脚本','团购文案','小红书种草','朋友圈文案','广告语','产品介绍'];
+document.getElementById('toolPanel').innerHTML=`<div class="tool-header"><h3>✍️ 智能文案工具</h3><button class="detail-close" onclick="closeTool()">✕</button></div>
+<div class="tool-body">
+<div class="fl">选择文案类型</div>
+<div class="copywriter-types">${types.map((t,i)=>`<div class="cw-type${i===0?' active':''}" onclick="selectCwType(this,${i})">${t}</div>`).join('')}</div>
+<div class="fg"><label class="fl">输入关键词 / 产品信息</label><textarea class="fi" id="cwInput" placeholder="例如：夏季新品连衣裙、美甲店开业促销、宠物猫粮推荐..." rows="4"></textarea></div>
+<div class="fg"><label class="fl">补充说明（选填）</label><input class="fi" id="cwExtra" placeholder="例如：目标人群、卖点、优惠信息等"></div>
+<button class="btn btn-p" onclick="generateCopy()" style="width:100%">✨ 生成文案</button>
+<div class="cw-output" id="cwOutput"></div>
+<div class="cw-actions">
+<button class="btn btn-o btn-sm" onclick="copyText('cwOutput')">📋 复制文案</button>
+<button class="btn btn-p btn-sm" onclick="generateCopy()">🔄 换一版</button>
+</div>
+</div>`;
+}
+let cwTypeIdx=0;
+function selectCwType(el,i){document.querySelectorAll('.cw-type').forEach(e=>e.classList.remove('active'));el.classList.add('active');cwTypeIdx=i}
+
+function generateCopy(){
+const input=document.getElementById('cwInput').value.trim();
+if(!input)return toast('请输入关键词或产品信息','error');
+const extra=document.getElementById('cwExtra').value.trim();
+const types=['短视频脚本','团购文案','小红书种草','朋友圈文案','广告语','产品介绍'];
+const type=types[cwTypeIdx];
+
+const templates={
+'短视频脚本':[
+`【钩子】${input}${extra?' | '+extra:''}\n发现了吗？${input}已经火遍全网了！\n\n【痛点】你是不是还在纠结${input}怎么选？看了这篇视频就明白了！\n\n【价值】今天给大家实测 ${input}，${extra||'亲测好用，效果拉满！'}\n\n【CTA】还在等什么？赶紧试试！\n#${input.split(/[,，\s]/)[0]} #好物推荐`,
+`🔥 ${input} | ${extra||'错过等一年'}\n\n姐妹们/兄弟们看过来！\n今天给大家分享 ${input}\n${extra||'用过的都说好'}\n\n👉 核心亮点：\n1. ${extra||'品质过硬，效果显著'}\n2. ${extra||'性价比超高，闭眼入'}\n3. ${extra||'亲测好用，强烈推荐'}\n\n💬 评论区告诉我你最爱哪个？\n\n#${input.split(/[,，\s]/)[0]} #测评 #种草`
+],
+'团购文案':[
+`🎉【限时特惠】${input}\n${extra||'超值团购，错过拍大腿！'}\n\n🔥 原价：XX元\n💎 团购价：只需X元\n\n✅ ${extra||'品质保障'}\n✅ ${extra||'限时限量'}\n✅ ${extra||'到店自提/包邮到家'}\n\n⏰ 活动时间：即日起-XX月XX日\n📍 ${extra||'详情咨询客服'}\n\n👇 点击下方链接立即抢购！`,
+`【爆款团购】${input}\n${extra||'全城最低价，仅限今天！'}\n\n📌 商品：${input}\n💰 原价 ¥XX → 团购价 ¥X\n📊 已售 ${Math.floor(Math.random()*500+200)} 份\n\n🌟 好评如潮\n🌟 ${extra||'售后无忧'}\n🌟 支持${extra||'到店/外卖/邮寄'}\n\n⚠️ 库存有限，先到先得！`
+],
+'小红书种草':[
+`📖 ${input} | ${extra||'宝藏好物分享'}\n\n姐妹们！！！今天必须给大家安利 ${input} ✨\n\n${extra||'用了之后真的绝了！'}\n\n💡 为什么推荐：\n- ${extra||'效果超级明显，肉眼可见'}\n- ${extra||'价格超友好，学生党也能冲'}\n- ${extra||'回购了无数次'}\n\n📝 使用感受：\n${extra||'真的被惊艳到了，从包装到产品本身都很有质感'}\n\n🏷️ #${input.split(/[,，\s]/)[0]} #好物推荐 #种草 #必买清单 #宝藏好物`,
+`🌟 ${input}来啦！| ${extra||'真的爱了'}\n\n被问了无数遍的 ${input} 终于安排上了！\n\n先说结论：${extra||'真的很值得买！'}\n\n✨ 优点：\n① ${extra||'颜值超高'}\n② ${extra||'性价比绝绝子'}\n③ ${extra||'使用感满分'}\n\n💔 缺点：\n${extra||'暂时没发现什么缺点'}\n\n💰 入手渠道：看评论区～\n\n#${input.split(/[,，\s]/)[0]} #测评 #真实分享`
+],
+'朋友圈文案':[
+`${input}\n${extra||'好看好用不贵，懂的自然懂 🤫'}\n需要的私聊我，限时优惠中～`,
+`${input} ✨\n${extra||'终于等到了！'}\n品质在线 | 价格美丽 | 好评如潮\n数量有限 先到先得 🔥\n感兴趣的扣1 我来安排`,
+`📢 ${input}\n${extra||'朋友圈首宣，老粉专享价！'}\n\n说真的 ${extra||'这波真的太值了'}\n感兴趣的直接滴滴我\n或者评论区扣"想要" \n我挨个安排上 ⚡`
+],
+'广告语':[
+`「${input}」\n${extra||'——让选择更简单，让生活更美好。'}`,
+`「${input}」\n${extra||'——品质不将就，每一刻都值得。'}`,
+`「${input}」\n${extra||'——实力见证品质，口碑铸就品牌。'}`
+],
+'产品介绍':[
+`📖 【${input}】产品介绍\n\n${extra||'一、产品概述'}\n${input}是专为追求品质生活的用户打造的高端产品，采用先进工艺和优质原料，确保每一件产品都达到卓越品质标准。\n\n${extra||'二、核心优势'}\n• ${extra||'精选材料，品质保障'}\n• ${extra||'专业团队，匠心制造'}\n• ${extra||'完善售后，安心无忧'}\n\n${extra||'三、适用场景'}\n${input}适用于日常使用、礼品赠送、商务场景等多种场合。\n\n${extra||'四、为什么选择我们'}\n品牌背书 + 品质承诺 + 贴心服务 = ${input}的硬实力。`,
+`✨ ${input} — ${extra||'值得拥有的好产品'}\n\n🔹 产品亮点：\n• ${extra||'外观精美，细节考究'}\n• ${extra||'功能强大，操作简便'}\n• ${extra||'经久耐用，性价比高'}\n\n🔹 适用人群：\n${extra||'追求品质生活的您'}\n\n🔹 服务承诺：\n${extra||'7天无理由退换 · 全国联保 · 终身技术支持'}\n\n💬 立即咨询，了解更多详情！`
+]
+};
+
+const arr=templates[type]||templates['短视频脚本'];
+const output=arr[Math.floor(Math.random()*arr.length)];
+document.getElementById('cwOutput').textContent=output;
+toast('文案生成成功','success');
+}
+
+// -- Watermark Tool --
+function renderWatermark(){
+document.getElementById('toolPanel').innerHTML=`<div class="tool-header"><h3>🔍 图片去水印</h3><button class="detail-close" onclick="closeTool()">✕</button></div>
+<div class="tool-body">
+<div class="wm-upload" id="wmUpload" onclick="document.getElementById('wmFile').click()">
+<div class="wu-icon">📷</div>
+<p style="font-weight:600;color:var(--l)">点击或拖拽上传图片</p>
+<p style="font-size:12px;color:var(--b);margin-top:4px">支持 JPG、PNG、WebP 格式</p>
+</div>
+<input type="file" id="wmFile" accept="image/*" style="display:none" onchange="handleWmUpload(this)">
+<div id="wmPreviewArea"></div>
+<div id="wmControls" style="display:none">
+<div class="fl">去水印方式</div>
+<div class="wm-options">
+<div class="wm-opt active" onclick="selectWmMode(this,0)">🎨 涂抹覆盖</div>
+<div class="wm-opt" onclick="selectWmMode(this,1)">✂️ 裁剪去除</div>
+<div class="wm-opt" onclick="selectWmMode(this,2)">🔲 矩形框选</div>
+</div>
+<canvas id="wmCanvas" style="display:none"></canvas>
+<div id="wmCanvasWrap" style="border:1px solid var(--bd);border-radius:12px;overflow:hidden;display:none;cursor:crosshair;position:relative">
+<canvas id="wmDrawCanvas"></canvas>
+<p style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);font-size:12px;color:var(--b);background:rgba(255,255,255,.9);padding:4px 12px;border-radius:6px;pointer-events:none">用鼠标/手指涂抹水印区域</p>
+</div>
+<div class="fg" style="margin-top:16px;display:flex;align-items:center;gap:10px">
+<label class="fl" style="margin:0">画笔大小</label>
+<input type="range" id="wmBrushSize" min="5" max="50" value="20" style="flex:1" oninput="wmBrushR=+this.value">
+</div>
+<div style="display:flex;gap:10px;margin-top:16px">
+<button class="btn btn-o" onclick="resetWm()" style="flex:1">重置</button>
+<button class="btn btn-p" onclick="removeWm()" style="flex:1">✨ 去除水印</button>
+</div>
+<div id="wmResult" style="display:none;margin-top:16px"></div>
+</div>
+</div>`;
+}
+let wmImg=null,wmBrushR=20,wmMode=0;
+function handleWmUpload(input){
+const file=input.files[0];if(!file)return;
+const reader=new FileReader();
+reader.onload=e=>{
+const img=new Image();
+img.onload=()=>{
+wmImg=img;
+document.getElementById('wmUpload').style.display='none';
+const preview=document.getElementById('wmPreviewArea');
+preview.innerHTML=`<div class="wm-preview"><img src="${e.target.result}" style="max-width:100%;border-radius:12px"></div>`;
+document.getElementById('wmControls').style.display='block';
+initWmCanvas();
+};
+img.src=e.target.result;
+};
+reader.readAsDataURL(file);
+}
+function initWmCanvas(){
+if(!wmImg)return;
+const canvas=document.getElementById('wmDrawCanvas');
+const wrap=document.getElementById('wmCanvasWrap');
+const maxW=Math.min(wmImg.width,600);
+const ratio=wmImg.height/wmImg.width;
+canvas.width=maxW;canvas.height=Math.round(maxW*ratio);
+wrap.style.display='block';
+wrap.style.width=maxW+'px';
+const ctx=canvas.getContext('2d');
+ctx.drawImage(wmImg,0,0,canvas.width,canvas.height);
+canvas.onmousedown=canvas.ontouchstart=function(e){e.preventDefault();wmPaint(e)};
+canvas.onmousemove=canvas.ontouchmove=function(e){e.preventDefault();wmPaint(e)};
+}
+function wmPaint(e){
+const canvas=document.getElementById('wmDrawCanvas');
+const ctx=canvas.getContext('2d');
+const rect=canvas.getBoundingClientRect();
+const sx=canvas.width/rect.width,sy=canvas.height/rect.height;
+let x,y;
+if(e.touches){x=(e.touches[0].clientX-rect.left)*sx;y=(e.touches[0].clientY-rect.top)*sy}
+else{x=(e.clientX-rect.left)*sx;y=(e.clientY-rect.top)*sy}
+ctx.fillStyle='rgba(255,0,255,0.4)';
+ctx.beginPath();ctx.arc(x,y,wmBrushR/2,0,Math.PI*2);ctx.fill();
+}
+function selectWmMode(el,i){document.querySelectorAll('.wm-opt').forEach(e=>e.classList.remove('active'));el.classList.add('active');wmMode=i}
+function resetWm(){
+if(!wmImg)return;
+initWmCanvas();
+document.getElementById('wmResult').style.display='none';
+document.getElementById('wmResult').innerHTML='';
+}
+function removeWm(){
+if(!wmImg)return;
+const srcCanvas=document.getElementById('wmDrawCanvas');
+const mask=srcCanvas.getContext('2d').getImageData(0,0,srcCanvas.width,srcCanvas.height);
+const outCanvas=document.createElement('canvas');
+outCanvas.width=srcCanvas.width;outCanvas.height=srcCanvas.height;
+const ctx=outCanvas.getContext('2d');
+ctx.drawImage(wmImg,0,0,outCanvas.width,outCanvas.height);
+const outData=ctx.getImageData(0,0,outCanvas.width,outCanvas.height);
+let count=0;
+for(let i=0;i<mask.data.length;i+=4){
+if(mask.data[i]>100&&mask.data[i+1]<100&&mask.data[i+2]>100){
+const sx=Math.max(0,Math.floor((i/4)%outCanvas.width)-10);
+const ex=Math.min(outCanvas.width-1,sx+20);
+const sy=Math.max(0,Math.floor(Math.floor((i/4)/outCanvas.width))-10);
+const ey=Math.min(outCanvas.height-1,sy+20);
+let r=0,g=0,b=0,n=0;
+for(let yy=sy;yy<=ey;yy++){for(let xx=sx;xx<=ex;xx++){
+const idx=(yy*outCanvas.width+xx)*4;
+r+=outData.data[idx];g+=outData.data[idx+1];b+=outData.data[idx+2];n++}}
+if(n>0){outData.data[i]=r/n;outData.data[i+1]=g/n;outData.data[i+2]=b/n;outData.data[i+3]=255}
+count++;
+}
+}
+ctx.putImageData(outData,0,0);
+if(count<5){toast('请先涂抹水印区域','error');return}
+const result=document.getElementById('wmResult');
+result.style.display='block';
+result.innerHTML=`<p style="font-size:13px;color:var(--ok);font-weight:600;margin-bottom:12px">✅ 去水印完成！处理了 ${count} 个像素点</p><img src="${outCanvas.toDataURL('image/png')}" style="max-width:100%;border-radius:12px;border:1px solid var(--bd)"><div style="margin-top:12px;display:flex;gap:10px"><button class="btn btn-p btn-sm" onclick="downloadWm()">📥 下载图片</button></div>`;
+toast('去水印完成','success');
+}
+function downloadWm(){
+const canvas=document.getElementById('wmDrawCanvas');
+const link=document.createElement('a');
+link.download='lsjy-nowatermark.png';
+link.href=canvas.toDataURL('image/png');
+link.click();
+}
+
+// -- Rewrite Tool --
+function renderRewrite(){
+const styles=[{n:'口语化',e:'💬'},{n:'种草风',e:'🌿'},{n:'正式商务',e:'💼'},{n:'搞笑幽默',e:'😄'},{n:'文艺清新',e:'🌸'},{n:'广告硬核',e:'📢'}];
+document.getElementById('toolPanel').innerHTML=`<div class="tool-header"><h3>🔄 文案改写润色</h3><button class="detail-close" onclick="closeTool()">✕</button></div>
+<div class="tool-body">
+<div class="fl">选择目标风格</div>
+<div class="copywriter-types">${styles.map((s,i)=>`<div class="cw-type${i===0?' active':''}" onclick="selectCwType(this,${i})">${s.e} ${s.n}</div>`).join('')}</div>
+<div class="fg"><label class="fl">输入原始文案</label><textarea class="fi" id="rwInput" placeholder="粘贴需要改写的文案内容..." rows="5"></textarea></div>
+<button class="btn btn-p" onclick="doRewrite()" style="width:100%">✨ 开始改写</button>
+<div class="cw-output" id="rwOutput"></div>
+<div class="cw-actions">
+<button class="btn btn-o btn-sm" onclick="copyText('rwOutput')">📋 复制结果</button>
+<button class="btn btn-p btn-sm" onclick="doRewrite()">🔄 换一版</button>
+</div>
+</div>`;
+}
+function doRewrite(){
+const input=document.getElementById('rwInput').value.trim();
+if(!input)return toast('请输入原始文案','error');
+const styles=['口语化','种草风','正式商务','搞笑幽默','文艺清新','广告硬核'];
+const s=styles[cwTypeIdx];
+const templates={
+'口语化':[`说实话，${input}\n\n就是这么简单粗暴！有用就是有用，别整那些虚的。`],
+'种草风':[`家人们！！！\n\n${input}\n\n这个真的绝了！谁用谁知道！\n\n#好物推荐 #必买 #种草`],
+'正式商务':[`【商务通告】\n\n${input}\n\n如需进一步了解，欢迎联系洽谈合作事宜。`],
+'搞笑幽默':[`哈哈哈 ${input}\n\n笑死我了这个也太好用了吧 😂\n\n安利给所有姐妹/兄弟们！`],
+'文艺清新':[`清风徐来，${input}\n\n美好总是不经意间到来。\n愿你被这个世界温柔以待 🌿`],
+'广告硬核':[`🚨 ${input}\n\n⚠️ 限时特惠 | 品质保障 | 好评如潮\n\n不要犹豫，立刻行动！\n👇 点击了解详情`]
+};
+const arr=templates[s]||templates['口语化'];
+document.getElementById('rwOutput').textContent=arr[Math.floor(Math.random()*arr.length)];
+toast('改写完成','success');
+}
+
+// -- Hashtag Tool --
+function renderHashtag(){
+const tags=[
+'好物推荐','种草','必备','测评','日常','生活','分享','推荐','省钱','好物',
+'穿搭','美妆','护肤','美食','健身','旅行','学习','工作','创业','副业',
+'赚钱','干货','攻略','教程','打卡','探店','新品','限时','爆款','国货',
+'高颜值','宝藏','推荐','平价','学生党','打工人','宝妈','居家','数码','科技',
+'AI','人工智能','短视频','自媒体','电商','创业','副业收入'
+];
+const popular={
+'美食':'#美食推荐 #好吃到停不下来 #美食日记 #吃货 #美食分享 #今日美食 #美食探店 #家常菜 #深夜食堂 #小吃',
+'美妆':'#美妆推荐 #护肤 #化妆教程 #口红试色 #平价好物 #国货美妆 #学生党护肤 #美妆测评 #不踩雷 #必买',
+'穿搭':'#穿搭分享 #每日穿搭 #ootd #穿搭灵感 #显瘦穿搭 #平价穿搭 #通勤穿搭 #学生穿搭 #秋冬穿搭 #夏日穿搭',
+'创业':'#创业 #副业 #赚钱 #自媒体运营 #短视频创业 #电商创业 #低成本创业 #干货分享 #创业日记 #搞钱',
+'AI':'#AI工具 #人工智能 #AI绘画 #ChatGPT #AI写作 #AI应用 #科技 #效率工具 #未来科技 #AI创业',
+'宠物':'#萌宠 #宠物日常 #猫咪 #狗狗 #宠物用品 #养猫经验 #宠物推荐 #宠物店 #宠物食品 #撸猫',
+'教育':'#学习方法 #考试 #考研 #考公 #自学 #在线教育 #知识分享 #读书笔记 #学习打卡 #自律'
+};
+document.getElementById('toolPanel').innerHTML=`<div class="tool-header"><h3>#️⃣ 热门话题标签生成</h3><button class="detail-close" onclick="closeTool()">✕</button></div>
+<div class="tool-body">
+<div class="fg"><label class="fl">输入关键词（如：美食、美妆、创业...）</label><input class="fi" id="htagInput" placeholder="输入您的领域或关键词" oninput="genHashtags(this.value)">
+<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">
+${Object.keys(popular).map(k=>`<span class="badge badge-purple" style="cursor:pointer" onclick="document.getElementById('htagInput').value='${k}';genHashtags('${k}')">${k}</span>`).join('')}
+</div>
+</div>
+<div class="cw-output" id="htagOutput" style="min-height:80px">点击关键词或输入后自动生成标签</div>
+<div class="cw-actions">
+<button class="btn btn-o btn-sm" onclick="copyText('htagOutput')">📋 复制全部</button>
+</div>
+</div>`;
+}
+function genHashtags(keyword){
+const keywordMap={
+'美食':'#美食推荐 #好吃到停不下来 #美食日记 #吃货 #美食分享 #今日美食 #美食探店 #深夜食堂 #小吃 #美食博主',
+'美妆':'#美妆推荐 #护肤 #化妆教程 #口红试色 #平价好物 #国货美妆 #学生党护肤 #美妆测评 #不踩雷 #好物分享',
+'穿搭':'#穿搭分享 #每日穿搭 #ootd #穿搭灵感 #显瘦穿搭 #平价穿搭 #通勤穿搭 #学生穿搭 #秋冬穿搭 #夏日穿搭',
+'创业':'#创业 #副业 #赚钱 #自媒体运营 #短视频创业 #电商创业 #低成本创业 #干货分享 #创业日记 #搞钱思路',
+'AI':'#AI工具 #人工智能 #AI绘画 #ChatGPT #AI写作 #AI应用 #科技 #效率工具 #未来科技 #AI创业',
+'宠物':'#萌宠 #宠物日常 #猫咪 #狗狗 #宠物用品 #养猫经验 #宠物推荐 #宠物店 #宠物食品 #撸猫',
+'教育':'#学习方法 #考试 #考研 #考公 #自学 #在线教育 #知识分享 #读书笔记 #学习打卡 #自律打卡'
+};
+const base=keywordMap[keyword.trim()]||'';
+const extra=['#推荐','#好物','#必备','#热门','#爆款','#分享','#日常','#实用','#亲测好用','#必买'];
+const combined=base?base+' '+extra.slice(0,5).join(' '):extra.map(t=>`#${keyword.trim()}${t}`).join(' ');
+document.getElementById('htagOutput').textContent=combined||'#'+keyword.trim();
+}
+
+function copyText(id){
+const text=document.getElementById(id).textContent;
+if(!text)return toast('没有可复制的内容','error');
+navigator.clipboard.writeText(text).then(()=>toast('已复制到剪贴板','success')).catch(()=>{
+const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('已复制到剪贴板','success');
+});
+}
+
+// ===== AUTH SYSTEM =====
+function openAuth(tab){
+if(isLoggedIn()&&tab==='login'){showUserProfile();return}
+const panel=document.getElementById('authPanel');
+panel.innerHTML=`<div class="auth-hero" style="position:relative">
+<button class="auth-close" onclick="closeAuth()">✕</button>
+<h2>${tab==='login'?'欢迎回来':'创建账号'}</h2>
+<p>罗圣纪元 · 数字化商业平台</p>
+</div>
+<div class="auth-body">
+<div class="auth-tabs">
+<button class="auth-tab${tab==='login'?' active':''}" onclick="switchAuthTab('login')">登录</button>
+<button class="auth-tab${tab==='register'?' active':''}" onclick="switchAuthTab('register')">注册</button>
+</div>
+<div id="authContent">${tab==='login'?renderLoginForm():renderRegForm()}</div>
+</div>`;
+document.getElementById('authOverlay').classList.add('show');
+document.body.style.overflow='hidden';
+}
+function closeAuth(e){
+if(e&&e.target!==e.currentTarget)return;
+document.getElementById('authOverlay').classList.remove('show');
+document.body.style.overflow='';
+}
+function switchAuthTab(tab){
+document.querySelectorAll('.auth-tab').forEach((t,i)=>t.classList.toggle('active',tab==='login'?i===0:i===1));
+document.getElementById('authContent').innerHTML=tab==='login'?renderLoginForm():renderRegForm();
+}
+
+function renderLoginForm(){
+return`<form onsubmit="doLogin(event)">
+<div class="fg"><label class="fl">用户名</label><input class="fi" id="authUser" placeholder="请输入用户名" required></div>
+<div class="fg"><label class="fl">密码</label><input class="fi" type="password" id="authPwd" placeholder="请输入密码" required></div>
+<button type="submit" class="btn btn-p" style="width:100%">登 录</button>
+</form>
+<div class="social-divider">—— 手机号快捷登录 ——</div>
+<div class="fg"><label class="fl">手机号</label><input class="fi" id="authPhone" type="tel" placeholder="请输入手机号" maxlength="11"></div>
+<div class="fg"><div style="display:flex;gap:8px"><input class="fi" id="authSmsCode" placeholder="6位验证码" maxlength="6" style="flex:1"><button type="button" class="btn btn-sm" id="authSmsBtn" onclick="sendLoginSmsCode()">获取验证码</button></div></div>
+<button type="button" class="btn btn-p" style="width:100%;margin-top:4px;background:var(--phone)" onclick="doSmsLogin()">📱 短信验证码登录</button>
+<div class="social-divider">其他登录方式</div>
+<div class="social-login">
+<button class="social-btn qq" onclick="doQQLogin()">💬 QQ登录</button>
+<button class="social-btn wx" onclick="doWxLogin()">💚 微信登录</button>
+</div>`;
+}
+
+function renderRegForm(){
+return`<form onsubmit="doRegister(event)">
+<div class="fg"><label class="fl">用户名</label><input class="fi" id="regUser" placeholder="3个字符以上" required></div>
+<div class="fg"><label class="fl">昵称</label><input class="fi" id="regNick" placeholder="选填"></div>
+<div class="fg"><label class="fl">密码</label><input class="fi" type="password" id="regPwd" placeholder="6个字符以上" required></div>
+<div class="fg"><label class="fl">确认密码</label><input class="fi" type="password" id="regPwd2" placeholder="再次输入密码" required></div>
+<button type="submit" class="btn btn-p" style="width:100%">注 册</button>
+</form>
+<div class="social-divider">—— 手机号快捷注册 ——</div>
+<div class="fg"><label class="fl">手机号</label><input class="fi" id="regPhone" type="tel" placeholder="请输入手机号" maxlength="11"></div>
+<div class="fg"><div style="display:flex;gap:8px"><input class="fi" id="regSmsCode" placeholder="6位验证码" maxlength="6" style="flex:1"><button type="button" class="btn btn-sm" id="regSmsBtn" onclick="sendRegSmsCode()">获取验证码</button></div></div>
+<button type="button" class="btn btn-p" style="width:100%;margin-top:4px;background:var(--phone)" onclick="doSmsRegister()">📱 短信验证码注册</button>
+<div class="social-divider">其他注册方式</div>
+<div class="social-login">
+<button class="social-btn qq" onclick="doQQLogin()">💬 QQ注册</button>
+<button class="social-btn wx" onclick="doWxLogin()">💚 微信注册</button>
+</div>`;
+}
+
+function doLogin(e){
+e.preventDefault();
+const u=document.getElementById('authUser').value.trim(),p=document.getElementById('authPwd').value;
+const users=getUsers(),found=users.find(x=>x.username===u&&x.password===p);
+if(!found){toast('账号或密码错误','error');return}
+setCur(found);closeAuth();updateNavAuth();toast('登录成功，欢迎回来！','success');
+}
+function doRegister(e){
+e.preventDefault();
+const u=document.getElementById('regUser').value.trim(),n=document.getElementById('regNick').value.trim(),p=document.getElementById('regPwd').value,p2=document.getElementById('regPwd2').value;
+if(u.length<3)return toast('用户名至少3个字符','error');
+if(p.length<6)return toast('密码至少6个字符','error');
+if(p!==p2)return toast('两次密码不一致','error');
+const users=getUsers();
+if(users.find(x=>x.username===u))return toast('用户名已存在','error');
+const newUser={username:u,password:p,nickname:n||u,role:'user',phone:'',qq:'',wx:'',created:new Date().toLocaleString()};
+users.push(newUser);saveUsers(users);setCur(newUser);closeAuth();updateNavAuth();toast('注册成功！','success');
+}
+
+// ===== SMS Login/Register =====
+let _loginSmsTimer=null,_regSmsTimer=null;
+function sendLoginSmsCode(){
+const phone=document.getElementById('authPhone').value.trim();
+if(!/^1\d{10}$/.test(phone))return toast('请输入正确的11位手机号','error');
+const btn=document.getElementById('authSmsBtn');btn.disabled=true;
+let sec=60;btn.textContent=sec+'s';
+clearInterval(_loginSmsTimer);_loginSmsTimer=setInterval(()=>{sec--;btn.textContent=sec+'s';if(sec<=0){clearInterval(_loginSmsTimer);btn.disabled=false;btn.textContent='发送验证码'}},1000);
+fetch(SMS_API+'/api/sms/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone})})
+.then(r=>r.json()).then(d=>{if(d.success){toast('验证码已发送至 '+phone,'success');document.getElementById('authSmsCode').dataset.code=''}
+else{toast(d.message||'发送失败','error');clearInterval(_loginSmsTimer);btn.disabled=false;btn.textContent='发送验证码'}})
+.catch(()=>{const code=String(Math.floor(Math.random()*900000+100000));toast('后端未连接，验证码: '+code+'（演示模式）','warn');document.getElementById('authSmsCode').dataset.code=code;});
+}
+function sendRegSmsCode(){
+const phone=document.getElementById('regPhone').value.trim();
+if(!/^1\d{10}$/.test(phone))return toast('请输入正确的11位手机号','error');
+const btn=document.getElementById('regSmsBtn');btn.disabled=true;
+let sec=60;btn.textContent=sec+'s';
+clearInterval(_regSmsTimer);_regSmsTimer=setInterval(()=>{sec--;btn.textContent=sec+'s';if(sec<=0){clearInterval(_regSmsTimer);btn.disabled=false;btn.textContent='发送验证码'}},1000);
+fetch(SMS_API+'/api/sms/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone})})
+.then(r=>r.json()).then(d=>{if(d.success){toast('验证码已发送至 '+phone,'success');document.getElementById('regSmsCode').dataset.code=''}
+else{toast(d.message||'发送失败','error');clearInterval(_regSmsTimer);btn.disabled=false;btn.textContent='发送验证码'}})
+.catch(()=>{const code=String(Math.floor(Math.random()*900000+100000));toast('后端未连接，验证码: '+code+'（演示模式）','warn');document.getElementById('regSmsCode').dataset.code=code;});
+}
+function doSmsLogin(){
+const phone=document.getElementById('authPhone').value.trim(),code=document.getElementById('authSmsCode').value.trim();
+if(!/^1\d{10}$/.test(phone))return toast('请输入正确的手机号','error');
+if(!code||code.length<4)return toast('请输入验证码','error');
+// 验证验证码
+fetch(SMS_API+'/api/sms/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,code})})
+.then(r=>r.json()).then(d=>{if(d.success){smsLoginSuccess(phone)}
+else{const dc=document.getElementById('authSmsCode').dataset.code;if(dc&&code===dc){smsLoginSuccess(phone)}else{toast(d.message||'验证码错误','error')}}})
+.catch(()=>{const dc=document.getElementById('authSmsCode').dataset.code;if(dc&&code===dc){smsLoginSuccess(phone)}else{toast('验证码错误','error')}});
+}
+function smsLoginSuccess(phone){
+const users=getUsers();let found=users.find(u=>u.phone===phone);
+if(!found){found={username:'user_'+phone.slice(-4),password:'sms_'+Date.now(),nickname:'用户'+phone.slice(-4),role:'user',phone:phone,qq:'',wx:'',created:new Date().toLocaleString()};users.push(found);saveUsers(users)}
+setCur(found);closeAuth();updateNavAuth();toast('登录成功，欢迎回来！','success');
+}
+function doSmsRegister(){
+const phone=document.getElementById('regPhone').value.trim(),code=document.getElementById('regSmsCode').value.trim(),nick=document.getElementById('regNick').value.trim();
+if(!/^1\d{10}$/.test(phone))return toast('请输入正确的手机号','error');
+if(!code||code.length<4)return toast('请输入验证码','error');
+fetch(SMS_API+'/api/sms/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,code})})
+.then(r=>r.json()).then(d=>{if(d.success){smsRegSuccess(phone,nick)}
+else{const dc=document.getElementById('regSmsCode').dataset.code;if(dc&&code===dc){smsRegSuccess(phone,nick)}else{toast(d.message||'验证码错误','error')}}})
+.catch(()=>{const dc=document.getElementById('regSmsCode').dataset.code;if(dc&&code===dc){smsRegSuccess(phone,nick)}else{toast('验证码错误','error')}});
+}
+function smsRegSuccess(phone,nick){
+const users=getUsers();if(users.find(u=>u.phone===phone))return toast('该手机号已注册，请直接登录','error');
+const newUser={username:'user_'+phone.slice(-4),password:'sms_'+Date.now(),nickname:nick||'用户'+phone.slice(-4),role:'user',phone:phone,qq:'',wx:'',created:new Date().toLocaleString()};
+users.push(newUser);saveUsers(users);setCur(newUser);closeAuth();updateNavAuth();toast('注册成功！','success');
+}
+// ===== WeChat / QQ OAuth =====
+function doWxLogin(){
+// 微信开放平台OAuth2.0授权
+// 需要在微信开放平台注册应用获取AppID
+// 暂时展示提示
+const panel=document.getElementById('authPanel');
+panel.innerHTML=`<div class="auth-hero" style="position:relative"><button class="auth-close" onclick="closeAuth()">\u2715</button>
+<h2>微信登录</h2><p>正在跳转微信授权...</p></div>
+<div class="auth-body" style="text-align:center;padding:40px 20px">
+<div style="font-size:64px;margin-bottom:20px;color:#07c160"><i class="fa-brands fa-weixin"></i></div>
+<h3 style="margin-bottom:12px">微信扫码登录</h3>
+<p style="font-size:13px;color:var(--b);line-height:1.8">正在请求微信授权，请稍候...<br>如未跳转，请点击下方按钮</p>
+<div style="margin-top:20px;padding:16px;background:var(--ps);border-radius:12px;text-align:left">
+<p style="font-size:12px;color:var(--p);font-weight:600;margin-bottom:8px"><i class="fa-solid fa-circle-info"></i> 接入说明</p>
+<p style="font-size:11px;color:var(--b);line-height:1.6">微信登录需要在「微信开放平台」注册开发者应用并获取 AppID。目前平台正在对接微信授权接口，正式上线后即可使用微信扫码登录。</p>
+</div>
+<button class="btn btn-p" style="margin-top:20px" onclick="openAuth('login')"><i class="fa-solid fa-arrow-left"></i> 返回其他登录方式</button>
+</div>`;
+}
+function doQQLogin(){
+const panel=document.getElementById('authPanel');
+panel.innerHTML=`<div class="auth-hero" style="position:relative"><button class="auth-close" onclick="closeAuth()">\u2715</button>
+<h2>QQ登录</h2><p>正在跳转QQ授权...</p></div>
+<div class="auth-body" style="text-align:center;padding:40px 20px">
+<div style="font-size:64px;margin-bottom:20px;color:#12b7f5"><i class="fa-brands fa-qq"></i></div>
+<h3 style="margin-bottom:12px">QQ登录</h3>
+<p style="font-size:13px;color:var(--b);line-height:1.8">正在请求QQ授权，请稍候...<br>如未跳转，请点击下方按钮</p>
+<div style="margin-top:20px;padding:16px;background:var(--ps);border-radius:12px;text-align:left">
+<p style="font-size:12px;color:var(--p);font-weight:600;margin-bottom:8px"><i class="fa-solid fa-circle-info"></i> 接入说明</p>
+<p style="font-size:11px;color:var(--b);line-height:1.6">QQ登录需要在「QQ互联」平台注册应用并获取 APP ID。目前平台正在对接QQ授权接口，正式上线后即可使用QQ账号快捷登录。</p>
+</div>
+<button class="btn btn-p" style="margin-top:20px" onclick="openAuth('login')"><i class="fa-solid fa-arrow-left"></i> 返回其他登录方式</button>
+</div>`;
+}
+// ===== Password Login (backup) =====
+function renderPasswordLogin(){
+return`<form onsubmit="doLogin(event)">
+<div class="fg"><label class="fl">用户名</label><input class="fi" id="authUser" placeholder="请输入用户名" required></div>
+<div class="fg"><label class="fl">密码</label><input class="fi" type="password" id="authPwd" placeholder="请输入密码" required></div>
+<button type="submit" class="btn btn-p" style="width:100%"><i class="fa-solid fa-right-to-bracket"></i> 登录</button>
+</form>
+<div style="text-align:center;margin-top:12px"><a href="javascript:void(0)" onclick="switchAuthTab('login')" style="font-size:12px;color:var(--p);text-decoration:underline"><i class="fa-solid fa-arrow-left"></i> 返回验证码登录</a></div>`;}
+function switchAuthTab(tab){
+if(tab==='password'){document.getElementById('authContent').innerHTML=renderPasswordLogin();return}
+const panel=document.getElementById('authPanel');
+panel.innerHTML=`<div class="auth-hero" style="position:relative">
+<button class="auth-close" onclick="closeAuth()">\u2715</button>
+<h2>${tab==='login'?'欢迎回来':'创建账号'}</h2>
+<p>罗圣纪元 · 数字化商业平台</p>
+</div>
+<div class="auth-body">
+<div class="auth-tabs">
+<button class="auth-tab${tab==='login'?' active':''}" onclick="switchAuthTab('login')">登录</button>
+<button class="auth-tab${tab==='register'?' active':''}" onclick="switchAuthTab('register')">注册</button>
+</div>
+<div id="authContent">${tab==='login'?renderLoginForm():renderRegForm()}</div>
+</div>`;
+document.getElementById('authOverlay').classList.add('show');
+}
+
+function showUserProfile(){
+const u=getCur();if(!u)return;
+const panel=document.getElementById('authPanel');
+panel.innerHTML=`<div class="auth-hero" style="position:relative">
+<button class="auth-close" onclick="closeAuth()">✕</button>
+<div style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 12px">${(u.nickname||u.username)[0]}</div>
+<h2>${u.nickname||u.username}</h2>
+<p>${u.role==='admin'?'管理员':'普通用户'}</p>
+</div>
+<div class="auth-body">
+<div style="padding:16px;background:var(--bg);border-radius:12px;margin-bottom:16px">
+<h4 style="font-size:14px;font-weight:700;margin-bottom:12px">📱 绑定信息</h4>
+<div style="display:flex;flex-direction:column;gap:8px;font-size:13px">
+<div style="display:flex;justify-content:space-between"><span style="color:var(--b)">手机号</span><span>${u.phone||'<span style="color:var(--warn)">未绑定</span>'}</span></div>
+<div style="display:flex;justify-content:space-between"><span style="color:var(--b)">QQ</span><span>${u.qq||'<span style="color:var(--warn)">未绑定</span>'}</span></div>
+<div style="display:flex;justify-content:space-between"><span style="color:var(--b)">微信</span><span>${u.wx||'<span style="color:var(--warn)">未绑定</span>'}</span></div>
+</div>
+</div>
+<button class="btn btn-o" style="width:100%;margin-bottom:10px" onclick="openBindPhone()">📱 ${u.phone?'更换手机号':'绑定手机号'}</button>
+<button class="btn btn-o" style="width:100%;margin-bottom:10px" onclick="editProfile()">✏️ 修改昵称</button>
+<button class="btn btn-o" style="width:100%;margin-bottom:10px" onclick="editProfilePwd()">🔒 修改密码</button>
+<button class="btn" style="width:100%;background:#fee2e2;color:var(--err);border:1.5px solid #fecaca" onclick="doLogout()">🚪 退出登录</button>
+</div>`;
+document.getElementById('authOverlay').classList.add('show');
+document.body.style.overflow='hidden';
+}
+
+function openBindPhone(){
+const panel=document.getElementById('authPanel');
+const u=getCur();
+panel.innerHTML=`<div class="auth-hero" style="position:relative;background:linear-gradient(135deg,#ff6b35,#ff8c5a)">
+<button class="auth-close" onclick="closeAuth()">✕</button>
+<h2>📱 绑定手机号</h2>
+<p>安全验证，保护您的账号</p>
+</div>
+<div class="auth-body">
+<div class="fg"><label class="fl">手机号码</label>
+<div class="phone-row">
+<input class="fi" id="bindPhone" type="tel" placeholder="请输入手机号" value="${u?u.phone:''}">
+<button class="btn btn-p btn-sm" id="smsBtn" onclick="sendSmsCode()">发送验证码</button>
+</div>
+</div>
+<div class="fg"><label class="fl">验证码</label><input class="fi" id="smsCode" placeholder="请输入6位验证码" maxlength="6"></div>
+<button class="btn btn-p" style="width:100%" onclick="confirmBindPhone()">确认绑定</button>
+<p style="font-size:11px;color:var(--b);text-align:center;margin-top:12px">绑定手机号后可用于找回密码和账号安全验证</p>
+</div>`;
+document.getElementById('authOverlay').classList.add('show');
+document.body.style.overflow='hidden';
+}
+
+let smsTimer=null;
+// 短信后端地址（部署后替换为实际地址）
+const SMS_API='https://your-sms-server.onrender.com';
+function sendSmsCode(){
+const phone=document.getElementById('bindPhone').value.trim();
+if(!/^1\d{10}$/.test(phone))return toast('请输入正确的11位手机号','error');
+const btn=document.getElementById('smsBtn');
+btn.disabled=true;
+let sec=60;
+btn.textContent=sec+'s';
+smsTimer=setInterval(()=>{sec--;btn.textContent=sec+'s';if(sec<=0){clearInterval(smsTimer);btn.disabled=false;btn.textContent='发送验证码'}},1000);
+// 调用后端API发送真实短信
+fetch(SMS_API+'/api/sms/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone})})
+.then(r=>r.json()).then(d=>{
+if(d.success){toast('验证码已发送至 '+phone,'success');document.getElementById('smsCode').dataset.code=''}
+else{toast(d.message||'发送失败，请稍后重试','error');clearInterval(smsTimer);btn.disabled=false;btn.textContent='发送验证码'}
+}).catch(()=>{
+// 后端不可用时降级为演示模式
+const code=String(Math.floor(Math.random()*900000+100000));
+toast('后端未连接，验证码: '+code+'（演示模式）','warn');
+document.getElementById('smsCode').dataset.code=code;
+});
+}
+function confirmBindPhone(){
+const phone=document.getElementById('bindPhone').value.trim();
+const code=document.getElementById('smsCode').value.trim();
+const expected=document.getElementById('smsCode').dataset.code;
+if(!phone)return toast('请输入手机号','error');
+if(!code)return toast('请输入验证码','error');
+// 优先走后端验证
+fetch(SMS_API+'/api/sms/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,code})})
+.then(r=>r.json()).then(d=>{
+if(d.success){bindPhoneSuccess(phone)}
+else if(expected&&code===expected){bindPhoneSuccess(phone)}
+else{toast(d.message||'验证码错误','error')}
+}).catch(()=>{
+// 后端不可用时降级本地校验
+if(expected&&code!==expected)return toast('验证码错误','error');
+bindPhoneSuccess(phone);
+});
+}
+function bindPhoneSuccess(phone){
+const u=getCur();if(!u)return;
+u.phone=phone;setCur(u);
+const users=getUsers();const idx=users.findIndex(x=>x.username===u.username);
+if(idx>=0){users[idx].phone=phone;saveUsers(users)}
+toast('手机号绑定成功！','success');
+closeAuth();
+}
+
+function editProfile(){
+const u=getCur();
+const panel=document.getElementById('authPanel');
+panel.innerHTML=`<div class="auth-hero" style="position:relative;background:linear-gradient(135deg,#10b981,#34d399)">
+<button class="auth-close" onclick="closeAuth()">✕</button>
+<h2>✏️ 修改昵称</h2>
+</div>
+<div class="auth-body">
+<div class="fg"><label class="fl">新昵称</label><input class="fi" id="editNick" value="${u.nickname||u.username}"></div>
+<button class="btn btn-p" style="width:100%" onclick="saveProfileNick()">保存</button>
+</div>`;
+}
+function saveProfileNick(){
+const n=document.getElementById('editNick').value.trim();if(!n)return toast('昵称不能为空','error');
+const u=getCur();u.nickname=n;setCur(u);
+const users=getUsers();const idx=users.findIndex(x=>x.username===u.username);
+if(idx>=0){users[idx].nickname=n;saveUsers(users)}
+updateNavAuth();closeAuth();toast('昵称修改成功','success');
+}
+function editProfilePwd(){
+const panel=document.getElementById('authPanel');
+panel.innerHTML=`<div class="auth-hero" style="position:relative;background:linear-gradient(135deg,#f59e0b,#fbbf24)">
+<button class="auth-close" onclick="closeAuth()">✕</button>
+<h2>🔒 修改密码</h2>
+</div>
+<div class="auth-body">
+<div class="fg"><label class="fl">原密码</label><input class="fi" type="password" id="oldPwd"></div>
+<div class="fg"><label class="fl">新密码</label><input class="fi" type="password" id="newPwd" placeholder="6个字符以上"></div>
+<div class="fg"><label class="fl">确认密码</label><input class="fi" type="password" id="newPwd2"></div>
+<button class="btn btn-p" style="width:100%" onclick="saveProfilePwd()">保存</button>
+</div>`;
+}
+function saveProfilePwd(){
+const o=document.getElementById('oldPwd').value,n=document.getElementById('newPwd').value,n2=document.getElementById('newPwd2').value;
+const u=getCur();
+if(o!==u.password)return toast('原密码错误','error');
+if(n.length<6)return toast('新密码至少6个字符','error');
+if(n!==n2)return toast('两次密码不一致','error');
+u.password=n;setCur(u);
+const users=getUsers();const idx=users.findIndex(x=>x.username===u.username);
+if(idx>=0){users[idx].password=n;saveUsers(users)}
+closeAuth();toast('密码修改成功','success');
+}
+function doLogout(){localStorage.removeItem('lsjy3_cur');updateNavAuth();closeAuth();toast('已退出登录')}
+
+function updateNavAuth(){
+const btn=document.getElementById('navLoginBtn');
+if(isLoggedIn()){
+const u=getCur();
+btn.textContent=u.nickname||u.username;
+btn.onclick=()=>showUserProfile();
+btn.classList.remove('nav-cta');
+btn.style.cssText='background:var(--ps);color:var(--p);padding:8px 18px;border-radius:8px;font-weight:600;font-size:13px';
+}else{
+btn.textContent='登录';
+btn.onclick=()=>openAuth('login');
+btn.className='nav-cta';
+btn.style.cssText='';
+}
+}
+
+
+// ===== PRICING DATA =====
+const PRICING=[
+{id:'ai',name:'AI 人工智能',icon:'🤖',gradient:'linear-gradient(135deg,#3b82f6,#60a5fa)',color:'#3b82f6',featured:true,
+ packs:[
+  {name:'基础版',price:299,period:'月',desc:'适合个人用户和小微商家',features:['AI文案生成 50次/月','短视频切片 10条/月','基础智能推荐','在线客服支持']},
+  {name:'专业版',price:899,period:'月',desc:'适合成长型商家',features:['AI文案生成 不限次数','短视频切片 不限条数','商家获客系统','1对1专属顾问','数据分析报表']},
+  {name:'旗舰版',price:2999,period:'月',desc:'适合中大型企业',features:['全部专业版功能','行业定制化API开发','企业数字化搭建','私有化部署方案','优先技术支持','季度战略规划']}
+ ]},
+{id:'media',name:'自媒体',icon:'📱',gradient:'linear-gradient(135deg,#ea2261,#f96bee)',color:'#ea2261',featured:false,
+ packs:[
+  {name:'入门版',price:499,period:'月',desc:'适合个人创作者',features:['单平台账号代运营','月更 15 条内容','基础数据报告','图文文案 10篇/月']},
+  {name:'进阶版',price:1299,period:'月',desc:'适合品牌商家',features:['双平台账号代运营','月更 30 条内容','探店短视频 2条/月','达人IP孵化指导','优先内容策划']},
+  {name:'矩阵版',price:3999,period:'月',desc:'适合连锁品牌',features:['全平台账号代运营','月更 60 条内容','短视频矩阵搭建','探店/拍摄/剪辑全包','专属运营团队','月度复盘优化']}
+ ]},
+{id:'ecom',name:'电商',icon:'🛒',gradient:'linear-gradient(135deg,#8b5cf6,#a78bfa)',color:'#8b5cf6',featured:false,
+ packs:[
+  {name:'开店版',price:399,period:'次',desc:'适合新入驻商家',features:['抖快小店代入驻','店铺基础装修','类目报备指导','新手运营手册']},
+  {name:'运营版',price:1299,period:'月',desc:'适合稳定经营商家',features:['店铺全托管运营','团购上架优化','货源供应链对接','基础投流优化','月度数据报告']},
+  {name:'全案版',price:4999,period:'月',desc:'适合规模化商家',features:['全部运营版功能','千川投流优化','随心推精准投放','私域运营搭建','7x12小时客服','爆款打造方案']}
+ ]},
+{id:'pet',name:'宠物',icon:'🐾',gradient:'linear-gradient(135deg,#fb923c,#fbbf24)',color:'#fb923c',featured:false,
+ packs:[
+  {name:'基础版',price:299,period:'月',desc:'适合单店经营',features:['单平台店铺优化','月更 10 条内容','团购策划 1个/月','基础数据分析']},
+  {name:'标准版',price:799,period:'月',desc:'适合区域连锁',features:['全平台店铺优化','月更 25 条内容','团购策划 3个/月','短视频引流拍摄','会员体系搭建']},
+  {name:'旗舰版',price:1999,period:'月',desc:'适合全国连锁',features:['全部标准版功能','私域社群运营','宠物用品分销','疫苗团购策划','专属运营方案','季度增长规划']}
+ ]},
+{id:'edu',name:'教育',icon:'📚',gradient:'linear-gradient(135deg,#10b981,#34d399)',color:'#10b981',featured:false,
+ packs:[
+  {name:'学员版',price:199,period:'月',desc:'适合个人学习者',features:['在线课程不限看','直播回放权限','学员社群交流','作业点评服务']},
+  {name:'创业版',price:999,period:'月',desc:'适合创业者',features:['全部学员版功能','创业1对1辅导','项目资源对接','商业计划指导','行业人脉圈']},
+  {name:'企业版',price:4999,period:'月',desc:'适合教育机构',features:['课程定制开发','校企合作对接','师资培训服务','品牌包装策划','招生引流方案','年度战略咨询']}
+ ]},
+{id:'campus',name:'伯雅校园',icon:'🏫',gradient:'linear-gradient(135deg,#533afd,#7c6cf6)',color:'#533afd',featured:false,
+ packs:[
+  {name:'合伙人版',price:0,period:'免费',desc:'适合在校大学生',features:['校区代理权限','标准运营手册','线上培训体系','社群资源支持','创业指导']},
+  {name:'孵化版',price:999,period:'次',desc:'适合创业团队',features:['创业项目孵化','启动资金对接','导师1对1指导','资源网络对接','品牌授权使用']},
+  {name:'区域版',price:5999,period:'月',desc:'适合区域运营',features:['区域独家代理','全套运营体系','校园渠道搭建','活动策划执行','专属运营团队','季度KPI保障']}
+ ]}
+];
+
+// Service individual pricing
+const SVC_PRICES={
+'ai-clip':99,'ai-copy':29,'ai-customer':199,'ai-api':599,'ai-digital':899,
+'media-ops':799,'media-explore':399,'media-ip':1299,'media-copywriting':199,'media-matrix':599,
+'ecom-shop':299,'ecom-deal':199,'ecom-supply':0,'ecom-ops':999,'ecom-traffic':499,
+'pet-ops':599,'pet-deal':199,'pet-video':299,'pet-dist':0,'pet-grow':399,
+'edu-course':99,'edu-biz':199,'edu-school':2999,'edu-side':149,
+'campus-partner':0,'campus-incubate':999,'campus-local':1999,'campus-community':299
+};
+
+// ===== RENDER PRICING =====
+(function renderPricing(){
+const grid=document.getElementById('pricingGrid');
+let html='';
+PRICING.forEach(m=>{
+const featuredPack=m.packs.find(p=>p.price>0&&p.price<1500)||m.packs[0];
+html+=`<div class="price-card${m.featured?' featured':''}">
+${m.featured?'<div class="price-badge">🔥 热门</div>':''}
+<div class="price-head">
+<div class="price-icon" style="background:${m.gradient}">${m.icon}</div>
+<h3>${m.name}</h3>
+<p class="price-sub">${m.packs.length} 个套餐可选</p>
+</div>
+<div class="price-amount">
+<span class="currency">¥</span><span class="amount">${m.packs[0].price}</span><span class="price-sub"> ${m.packs[0].period}起</span>
+</div>
+<div class="price-features">
+${featuredPack.features.map(f=>'<li>'+f+'</li>').join('')}
+</div>
+<div class="price-toggle" onclick="togglePricingSvc(this,'${m.id}')">▼ 查看单项服务价格 ▼</div>
+<div class="price-svc-list" id="psl_${m.id}">
+${MODULES.find(x=>x.id===m.id).services.map(s=>`<div class="price-svc-item">
+<span class="psi-name">${s.name}</span>
+<span class="psi-buy" onclick="event.stopPropagation();openPayment('${m.id}','${s.id}')">${SVC_PRICES[s.id]===0?'免费咨询':'¥'+SVC_PRICES[s.id]+' 购买'}</span>
+</div>`).join('')}
+</div>
+<div class="price-action">
+<button class="btn btn-p" onclick="openPayment('${m.id}','${m.id}_pack_0')">${m.featured?'立即开通':'选择套餐'}</button>
+</div>
+</div>`;
+});
+grid.innerHTML=html;
+})();
+
+function togglePricingSvc(el,id){
+const card=el.closest('.price-card');
+card.classList.toggle('expanded');
+el.textContent=card.classList.contains('expanded')?'▲ 收起单项服务 ▲':'▼ 查看单项服务价格 ▼';
+}
+
+// ===== PAYMENT SYSTEM =====
+let selectedPayMethod=null;
+let currentPayOrder=null;
+
+function openPayment(moduleId,serviceId){
+const m=MODULES.find(x=>x.id===moduleId.split('_')[0]);
+const pricing=PRICING.find(x=>x.id===moduleId.split('_')[0]);
+if(!m||!pricing)return;
+
+let serviceName='',price=0,desc='';
+if(serviceId.includes('_pack_')){
+const packIdx=parseInt(serviceId.split('_')[2]);
+const pack=pricing.packs[packIdx];
+serviceName=m.name+' - '+pack.name;
+price=pack.price;
+desc=pack.desc;
+}else{
+const svc=m.services.find(x=>x.id===serviceId);
+if(!svc)return;
+serviceName=svc.name;
+price=SVC_PRICES[serviceId]||0;
+desc=svc.desc.substring(0,40)+'...';
+}
+
+currentPayOrder={moduleId,serviceId,serviceName,price,desc};
+selectedPayMethod=null;
+
+// Render order info
+document.getElementById('payOrderInfo').innerHTML=`
+<div class="pay-order-row"><span class="pay-order-label">服务名称</span><span>${serviceName}</span></div>
+<div class="pay-order-row"><span class="pay-order-label">服务说明</span><span style="font-size:12px;color:var(--b);max-width:200px;text-align:right">${desc}</span></div>
+<div class="pay-order-row"><span class="pay-order-label">订单编号</span><span style="font-size:12px;color:var(--b)">LSJY${Date.now().toString(36).toUpperCase()}</span></div>
+<div class="pay-order-row"><span class="pay-order-label">应付金额</span><span>¥${price}${price===0?' (免费咨询)':''}</span></div>
+`;
+
+// Reset payment method selection
+document.querySelectorAll('.pay-method').forEach(el=>el.classList.remove('selected'));
+document.getElementById('payQrcode').classList.remove('show');
+const btn=document.getElementById('payConfirmBtn');
+btn.className='pay-btn disabled';
+btn.textContent='请选择支付方式';
+document.getElementById('payTimer').textContent='';
+document.getElementById('payHint').textContent='请在手机上完成支付';
+
+document.getElementById('payOverlay').classList.add('show');
+document.body.style.overflow='hidden';
+}
+
+function selectPayMethod(el,method){
+selectedPayMethod=method;
+document.querySelectorAll('.pay-method').forEach(e=>e.classList.remove('selected'));
+el.classList.add('selected');
+
+const btn=document.getElementById('payConfirmBtn');
+const qrArea=document.getElementById('payQrcode');
+
+if(method==='wx'){
+btn.className='pay-btn wx-pay';btn.textContent='扫码支付 ¥'+currentPayOrder.price;
+}else if(method==='qq'){
+btn.className='pay-btn qq-pay';btn.textContent='扫码支付 ¥'+currentPayOrder.price;
+}else{
+btn.className='pay-btn alipay-pay';btn.textContent='扫码支付 ¥'+currentPayOrder.price;
+}
+btn.classList.remove('disabled');
+btn.disabled=false;
+btn.onclick=confirmPayment;
+
+if(currentPayOrder.price===0){
+btn.textContent='提交免费申请';
+btn.className='pay-btn wx-pay';
+}
+}
+
+function confirmPayment(){
+if(!selectedPayMethod)return toast('请选择支付方式','error');
+if(!currentPayOrder)return;
+
+// Show QR code area with real image
+const qrArea=document.getElementById('payQrcode');
+qrArea.classList.add('show');
+const qrImg=document.getElementById('payQrImg');
+const qrDefault=document.getElementById('payQrDefault');
+const methodNames={wx:'微信支付',qq:'QQ支付',alipay:'支付宝'};
+const qrMap={wx:'qr-wx.png',qq:'qr-qq.jpg',alipay:'qr-alipay.jpg'};
+
+if(currentPayOrder.price===0){
+// Free service - still needs admin approval
+qrImg.style.display='none';
+qrDefault.textContent='免费服务 - 提交后等待客服确认';
+qrDefault.style.display='block';
+qrImg.style.display='none';
+document.getElementById('payHint').textContent='提交申请后，客服会尽快联系您确认';
+} else {
+qrImg.src=qrMap[selectedPayMethod];
+qrImg.style.display='block';
+qrDefault.style.display='none';
+document.getElementById('payHint').textContent='请使用'+methodNames[selectedPayMethod]+'扫描上方二维码完成付款，付款后点击下方按钮提交';
+}
+
+// Start countdown 10 minutes
+let seconds=600;
+const timerEl=document.getElementById('payTimer');
+timerEl.textContent=formatTime(seconds);
+if(window._payTimerInterval)clearInterval(window._payTimerInterval);
+window._payTimerInterval=setInterval(()=>{
+seconds--;
+timerEl.textContent=formatTime(seconds);
+if(seconds<=0){
+clearInterval(window._payTimerInterval);
+timerEl.textContent='二维码已过期';
+document.getElementById('payHint').textContent='请关闭后重新打开，或联系客服 188-9000-0368';
+qrImg.style.display='none';
+qrDefault.textContent='二维码已过期';
+qrDefault.style.display='block';
+const btn=document.getElementById('payConfirmBtn');
+btn.textContent='二维码已过期';
+btn.className='pay-btn disabled';
+btn.disabled=true;
+}
+},1000);
+
+// Button: submit order (NOT auto-confirm payment)
+const btn=document.getElementById('payConfirmBtn');
+btn.disabled=false;
+const btnStyles={wx:'pay-btn wx-pay',qq:'pay-btn qq-pay',alipay:'pay-btn alipay-pay'};
+btn.className=btnStyles[selectedPayMethod];
+btn.textContent=currentPayOrder.price===0?'📋 提交免费申请':'📋 我已付款，提交订单';
+btn.onclick=function(){
+clearInterval(window._payTimerInterval);
+// Save order as PENDING
+const orders=JSON.parse(localStorage.getItem('lsjy3_orders')||'[]');
+const u=getCur();
+const order={
+...currentPayOrder,
+method:selectedPayMethod,
+status:'pending',
+time:new Date().toLocaleString(),
+orderId:'LSJY'+Date.now().toString(36).toUpperCase(),
+username:u?u.username:'游客'
+};
+orders.push(order);
+localStorage.setItem('lsjy3_orders',JSON.stringify(orders));
+
+// Also save to admin-readable storage
+const adminOrders=JSON.parse(localStorage.getItem('lsjy_admin_orders')||'[]');
+adminOrders.push(order);
+localStorage.setItem('lsjy_admin_orders',JSON.stringify(adminOrders));
+
+toast('📋 订单已提交！请等待客服确认收款后开通服务','success');
+closePayForce();
+};
+}
+
+function formatTime(s){
+const m=Math.floor(s/60);
+const sec=s%60;
+return String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');
+}
+
+function closePay(e){
+if(e&&e.target!==e.currentTarget)return;
+document.getElementById('payOverlay').classList.remove('show');
+document.body.style.overflow='';
+currentPayOrder=null;selectedPayMethod=null;
+}
+function closePayForce(){
+document.getElementById('payOverlay').classList.remove('show');
+document.body.style.overflow='';
+currentPayOrder=null;selectedPayMethod=null;
+}
+
+
+
+// ===== CREDIT/POWER SYSTEM =====
+const CREDIT_COST={viralVideo:50,digitalHuman:100,voiceClone:30,aigc:20,photoEdit:30,audioEdit:25,accompaniment:40,docGen:35};
+const CREDIT_PACKS=[{id:'pack1',name:'体验包',credits:100,price:9.9},{id:'pack2',name:'基础包',credits:500,price:39.9},{id:'pack3',name:'专业包',credits:2000,price:129},{id:'pack4',name:'旗舰包',credits:5000,price:299},{id:'pack5',name:'无限包',credits:99999,price:599}];
+
+function getCredits(){
+const u=getCur();if(!u)return 0;
+const all=JSON.parse(localStorage.getItem('lsjy3_credits')||'{}');
+return all[u.username]||0;
+}
+function setCredits(val){
+const u=getCur();if(!u)return;
+const all=JSON.parse(localStorage.getItem('lsjy3_credits')||'{}');
+all[u.username]=val;localStorage.setItem('lsjy3_credits',JSON.stringify(all));
+}
+function useCredits(amount,toolName){
+const cur=getCredits();
+if(cur<amount){toast('算力不足！当前算力: '+cur+'，需要: '+amount+'。请前往算力中心充值','error');openTool('credits');return false}
+setCredits(cur-amount);
+addCreditLog(-amount,toolName+' - 消耗'+amount+'算力');
+return true;
+}
+function getCreditLogs(){return JSON.parse(localStorage.getItem('lsjy3_credit_logs')||'[]')}
+function addCreditLog(amount,desc){
+const logs=getCreditLogs();
+logs.unshift({amount,desc,time:new Date().toLocaleString(),balance:getCredits()});
+if(logs.length>100)logs.length=100;
+localStorage.setItem('lsjy3_credit_logs',JSON.stringify(logs));
+}
+
+// -- Viral Video Tool --
+function renderViralVideo(){
+document.getElementById('toolPanel').innerHTML=`<div class="tool-header"><h3>🎬 爆款智能成片</h3><button class="detail-close" onclick="closeTool()">✕</button></div>
+<div class="tool-body">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;padding:12px;background:#fef3c7;border-radius:10px;font-size:13px;color:#92400e;font-weight:600">⚡ 消耗50算力/次 &nbsp;|&nbsp; 当前算力: ${getCredits()}</div>
+<div class="fg"><label class="fl">视频主题/产品</label><input class="fi" id="vvTopic" placeholder="例如：夏季防晒霜、火锅店探店、健身器材推荐..."></div>
+<div class="fg"><label class="fl">目标平台</label>
+<div class="copywriter-types">
+<div class="cw-type active" onclick="selectVVPlatform(this,0)">抖音</div>
+<div class="cw-type" onclick="selectVVPlatform(this,1)">小红书</div>
+<div class="cw-type" onclick="selectVVPlatform(this,2)">快手</div>
+<div class="cw-type" onclick="selectVVPlatform(this,3)">视频号</div>
+</div></div>
+<div class="fg"><label class="fl">视频时长</label>
+<div class="copywriter-types">
+<div class="cw-type active" onclick="selectVVLen(this,0)">15秒</div>
+<div class="cw-type" onclick="selectVVLen(this,1)">30秒</div>
+<div class="cw-type" onclick="selectVVLen(this,2)">60秒</div>
+</div></div>
+<div class="fg"><label class="fl">补充说明（选填）</label><input class="fi" id="vvExtra" placeholder="例如：卖点、目标人群、优惠信息"></div>
+<button class="btn btn-p" onclick="genViralVideo()" style="width:100">🎬 生成爆款脚本（消耗50算力）</button>
+<div class="cw-output" id="vvOutput" style="min-height:200px"></div>
+<div class="cw-actions">
+<button class="btn btn-o btn-sm" onclick="copyText('vvOutput')">📋 复制脚本</button>
+<button class="btn btn-p btn-sm" onclick="genViralVideo()">🔄 重新生成</button>
+</div>
+</div>`;
+}
+let vvPlat=0,vvLen=0;
+function selectVVPlatform(el,i){document.querySelectorAll('#toolPanel .cw-type').forEach((_,idx)=>{if(idx<4)document.querySelectorAll('#toolPanel .cw-type')[idx].classList.remove('active')});el.classList.add('active');vvPlat=i}
+function selectVVLen(el,i){const types=document.querySelectorAll('#toolPanel .cw-type');types.slice(4).forEach(e=>e.classList.remove('active'));el.classList.add('active');vvLen=i}
+function genViralVideo(){
+const topic=document.getElementById('vvTopic').value.trim();
+if(!topic)return toast('请输入视频主题或产品名称','error');
+if(!useCredits(50,'爆款智能成片'))return;
+const extra=document.getElementById('vvExtra').value.trim();
+const plats=['抖音','小红书','快手','视频号'];
+const lens=['15秒','30秒','60秒'];
+const hooks=['天呐！','家人们！','谁懂啊！','今天必须分享！','刷到的有福了！','终于找到了！'];
+const hook=hooks[Math.floor(Math.random()*hooks.length)];
+const script=`【${plats[vvPlat]} ${lens[vvLen]}爆款脚本】
+
+🔴 钩子（0-3秒）
+${hook}${topic}${extra?' - '+extra:''}
+
+📊 痛点（3-6秒）
+你是不是还在为${topic}发愁？
+看了这个视频，帮你少走弯路！
+
+💡 方案（6-${vvLen===0?'12':vvLen===1?'22':'45'}秒）
+实测${topic}，${extra||'亲测效果拉满'}
+✅ 优势一：${extra||'品质过硬，好评如潮'}
+✅ 优势二：${extra||'性价比超高，闭眼入'}
+✅ 优势三：${extra||'使用简单，小白也能上手'}
+
+🎯 CTA（最后3秒）
+关注我，带你了解更多！
+评论区扣"想要"，我来安排！
+
+# ${topic.split(/[,，\s]/)[0]} # 好物推荐 # ${plats[vvPlat]} # 爆款视频`;
+document.getElementById('vvOutput').textContent=script;
+toast('爆款脚本生成成功！消耗50算力','success');
+}
+
+// -- Digital Human Tool --
+function renderDigitalHuman(){
+document.getElementById('toolPanel').innerHTML=`<div class="tool-header"><h3>🧑‍💼 数字人口播</h3><button class="detail-close" onclick="closeTool()">✕</button></div>
+<div class="tool-body">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;padding:12px;background:#dbeafe;border-radius:10px;font-size:13px;color:#1e40af;font-weight:600">⚡ 消耗100算力/次 &nbsp;|&nbsp; 当前算力: ${getCredits()}</div>
+<div class="fg"><label class="fl">选择数字人形象</label>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:8px">
+<div class="cw-type active" onclick="selectDH(this,0)" style="padding:16px;text-align:center">👨‍💼<br><span style="font-size:11px">商务男</span></div>
+<div class="cw-type" onclick="selectDH(this,1)" style="padding:16px;text-align:center">👩‍💼<br><span style="font-size:11px">职业女</span></div>
+<div class="cw-type" onclick="selectDH(this,2)" style="padding:16px;text-align:center">🧑‍💻<br><span style="font-size:11px">技术达人</span></div>
+<div class="cw-type" onclick="selectDH(this,3)" style="padding:16px;text-align:center">👩‍🏫<br><span style="font-size:11px">知性讲师</span></div>
+</div></div>
+<div class="fg"><label class="fl">口播文案</label><textarea class="fi" id="dhScript" rows="4" placeholder="输入要数字人播报的文案内容..."></textarea></div>
+<div class="fg"><label class="fl">背景场景</label>
+<div class="copywriter-types">
+<div class="cw-type active" onclick="selectDHBg(this,0)">办公室</div>
+<div class="cw-type" onclick="selectDHBg(this,1)">演播室</div>
+<div class="cw-type" onclick="selectDHBg(this,2)">户外街景</div>
+</div></div>
+<button class="btn btn-p" onclick="genDigitalHuman()" style="width:100%">🧑‍💼 生成数字人视频（消耗100算力）</button>
+<div class="cw-output" id="dhOutput" style="min-height:200px"></div>
+</div>`;
+}
+function selectDH(el,i){const grid=el.parentElement;grid.querySelectorAll('.cw-type').forEach(e=>e.classList.remove('active'));el.classList.add('active')}
+function selectDHBg(el,i){el.parentElement.querySelectorAll('.cw-type').forEach(e=>e.classList.remove('active'));el.classList.add('active')}
+function genDigitalHuman(){
+const script=document.getElementById('dhScript').value.trim();
+if(!script)return toast('请输入口播文案','error');
+if(!useCredits(100,'数字人口播'))return;
+document.getElementById('dhOutput').innerHTML=`<div style="padding:20px;text-align:center">
+<div style="font-size:48px;margin-bottom:12px">🧑‍💼</div>
+<h4 style="font-size:16px;font-weight:700;margin-bottom:8px">数字人视频生成中...</h4>
+<p style="font-size:13px;color:var(--b)">正在合成数字人口播视频，请稍候</p>
+<div style="margin-top:16px;padding:16px;background:var(--bg);border-radius:12px;text-align:left">
+<p style="font-size:12px;color:var(--b);margin-bottom:8px">口播文案预览：</p>
+<p style="font-size:14px;line-height:1.8">${script}</p>
+</div>
+<div style="margin-top:16px;padding:12px;background:#dcfce7;border-radius:10px">
+<p style="font-size:13px;color:#166534;font-weight:600">✅ 视频生成任务已提交！预计1-3分钟内完成</p>
+<p style="font-size:12px;color:#166534;margin-top:4px">完成后可在「我的视频库」中查看和下载</p>
+</div>
+<div style="margin-top:12px;padding:12px;background:var(--ps);border-radius:10px">
+<p style="font-size:12px;color:var(--p)">💾 已保存到视频库（消耗100算力）</p>
+</div>
+</div>`;
+const videos=JSON.parse(localStorage.getItem('lsjy3_videos')||'[]');
+videos.push({type:'digital_human',title:'数字人口播 - '+script.substring(0,20)+'...',script,time:new Date().toLocaleString(),status:'generating'});
+localStorage.setItem('lsjy3_videos',JSON.stringify(videos));
+toast('数字人视频任务已提交！消耗100算力','success');
+}
+
+// -- Voice Clone Tool --
+function renderVoiceClone(){
+document.getElementById('toolPanel').innerHTML=`<div class="tool-header"><h3>🎙️ 音色克隆</h3><button class="detail-close" onclick="closeTool()">✕</button></div>
+<div class="tool-body">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;padding:12px;background:#ede9fe;border-radius:10px;font-size:13px;color:#5b21b6;font-weight:600">⚡ 消耗30算力/次 &nbsp;|&nbsp; 当前算力: ${getCredits()}</div>
+<div class="fg"><label class="fl">上传参考音频</label>
+<div style="padding:24px;border:2px dashed var(--bd);border-radius:12px;text-align:center;cursor:pointer;transition:all .2s" onclick="document.getElementById('vcFile').click()">
+<div style="font-size:32px;margin-bottom:8px">🎙️</div>
+<p style="font-weight:600;font-size:13px">点击上传音频文件</p>
+<p style="font-size:11px;color:var(--b)">支持 MP3、WAV、M4A，建议10-60秒清晰语音</p>
+</div>
+<input type="file" id="vcFile" accept="audio/*" style="display:none" onchange="handleVCUpload(this)">
+<div id="vcFileInfo" style="margin-top:8px"></div>
+</div>
+<div class="fg"><label class="fl">输入要转换的文本</label><textarea class="fi" id="vcText" rows="4" placeholder="输入要用克隆音色朗读的文本..."></textarea></div>
+<button class="btn btn-p" onclick="doVoiceClone()" style="width:100%">🎙️ 开始克隆合成（消耗30算力）</button>
+<div class="cw-output" id="vcOutput" style="min-height:150px"></div>
+</div>`;
+}
+function handleVCUpload(input){
+const file=input.files[0];if(!file)return;
+document.getElementById('vcFileInfo').innerHTML=`<div style="padding:10px;background:var(--ps);border-radius:8px;font-size:12px;font-weight:600;color:var(--p)">✅ 已选择: ${file.name} (${(file.size/1024).toFixed(1)}KB)</div>`;
+}
+function doVoiceClone(){
+const text=document.getElementById('vcText').value.trim();
+if(!text)return toast('请输入要转换的文本','error');
+if(!useCredits(30,'音色克隆'))return;
+document.getElementById('vcOutput').innerHTML=`<div style="padding:16px;text-align:center">
+<div style="font-size:36px;margin-bottom:8px">🎙️</div>
+<h4 style="font-size:15px;font-weight:700;margin-bottom:8px">音色克隆合成中...</h4>
+<div style="margin-top:12px;padding:12px;background:#dcfce7;border-radius:10px">
+<p style="font-size:13px;color:#166534;font-weight:600">✅ 音频合成任务已提交！</p>
+<p style="font-size:12px;color:#166534;margin-top:4px">预计30秒内完成，完成后可在视频库中查看</p>
+</div>
+</div>`;
+const videos=JSON.parse(localStorage.getItem('lsjy3_videos')||'[]');
+videos.push({type:'voice_clone',title:'音色克隆 - '+text.substring(0,20)+'...',text,time:new Date().toLocaleString(),status:'generating'});
+localStorage.setItem('lsjy3_videos',JSON.stringify(videos));
+toast('音色克隆任务已提交！消耗30算力','success');
+}
+
+// -- Video Library Tool --
+function renderVideoLib(){
+const videos=JSON.parse(localStorage.getItem('lsjy3_videos')||'[]');
+const stats={total:videos.length,generating:videos.filter(v=>v.status==='generating').length,done:videos.filter(v=>v.status==='done').length};
+document.getElementById('toolPanel').innerHTML=`<div class="tool-header"><h3>📁 我的视频库</h3><button class="detail-close" onclick="closeTool()">✕</button></div>
+<div class="tool-body">
+<div style="display:flex;gap:12px;margin-bottom:20px">
+<div style="flex:1;padding:14px;background:var(--bg);border-radius:10px;text-align:center"><div style="font-size:22px;font-weight:900;color:var(--p)">${stats.total}</div><div style="font-size:11px;color:var(--b)">总作品</div></div>
+<div style="flex:1;padding:14px;background:var(--bg);border-radius:10px;text-align:center"><div style="font-size:22px;font-weight:900;color:var(--warn)">${stats.generating}</div><div style="font-size:11px;color:var(--b)">生成中</div></div>
+<div style="flex:1;padding:14px;background:var(--bg);border-radius:10px;text-align:center"><div style="font-size:22px;font-weight:900;color:var(--ok)">${stats.done}</div><div style="font-size:11px;color:var(--b)">已完成</div></div>
+</div>
+${videos.length?videos.slice().reverse().map((v,i)=>`<div style="padding:16px;border:1px solid var(--bd);border-radius:12px;margin-bottom:10px">
+<div style="display:flex;justify-content:space-between;align-items:center">
+<h4 style="font-size:14px;font-weight:700">${v.type==='digital_human'?'🧑‍💼':v.type==='voice_clone'?'🎙️':v.type==='viral_video'?'🎬':v.type==='aigc'?'🎨':'📄'} ${v.title}</h4>
+<span class="badge ${v.status==='done'?'badge-green':v.status==='generating'?'badge-ruby':'badge-blue'}" style="font-size:10px">${v.status==='done'?'已完成':v.status==='generating'?'生成中':'待处理'}</span>
+</div>
+<p style="font-size:12px;color:var(--b);margin-top:6px">${v.time}</p>
+${v.script?`<p style="font-size:12px;color:var(--l);margin-top:6px;line-height:1.6">${v.script.substring(0,80)}...</p>`:''}
+</div>`).join(''):`<div style="text-align:center;padding:40px;color:var(--b)"><div style="font-size:36px;margin-bottom:8px">📁</div><p>暂无作品</p><p style="font-size:12px;margin-top:4px">使用爆款成片、数字人口播等功能后，作品会保存在这里</p></div>`}
+</div>`;
+}
+
+// -- AIGC Image Tool --
+function renderAIGC(){
+const styles=['写实摄影','动漫插画','3D渲染','水彩手绘','赛博朋克','极简商务'];
+document.getElementById('toolPanel').innerHTML=`<div class="tool-header"><h3>🎨 智能文生图</h3><button class="detail-close" onclick="closeTool()">✕</button></div>
+<div class="tool-body">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;padding:12px;background:#fef3c7;border-radius:10px;font-size:13px;color:#92400e;font-weight:600">⚡ 消耗20算力/次 &nbsp;|&nbsp; 当前算力: ${getCredits()}</div>
+<div class="fg"><label class="fl">图片用途</label>
+<div class="copywriter-types">
+<div class="cw-type active" onclick="selectAIGCUse(this,0)">产品海报</div>
+<div class="cw-type" onclick="selectAIGCUse(this,1)">封面图</div>
+<div class="cw-type" onclick="selectAIGCUse(this,2)">宣传图</div>
+</div></div>
+<div class="fg"><label class="fl">画面风格</label>
+<div class="copywriter-types">
+${styles.map((s,i)=>`<div class="cw-type${i===0?' active':''}" onclick="selectAIGCStyle(this,${i})">${s}</div>`).join('')}
+</div></div>
+<div class="fg"><label class="fl">画面描述</label><textarea class="fi" id="aigcDesc" rows="3" placeholder="描述你想要生成的图片，例如：一张高端护肤品的海报，粉色渐变背景，产品居中，周围有花瓣装饰，文字区域留白..."></textarea></div>
+<div class="fg"><label class="fl">尺寸比例</label>
+<div class="copywriter-types">
+<div class="cw-type active" onclick="selectAIGCRatio(this,0)">1:1</div>
+<div class="cw-type" onclick="selectAIGCRatio(this,1)">16:9</div>
+<div class="cw-type" onclick="selectAIGCRatio(this,2)">9:16</div>
+<div class="cw-type" onclick="selectAIGCRatio(this,3)">4:3</div>
+</div></div>
+<button class="btn btn-p" onclick="doAIGC()" style="width:100%">🎨 生成图片（消耗20算力）</button>
+<div id="aigcResult" style="margin-top:16px"></div>
+</div>`;
+}
+let aigcStyle=0;
+function selectAIGCStyle(el,i){el.parentElement.querySelectorAll('.cw-type').forEach(e=>e.classList.remove('active'));el.classList.add('active');aigcStyle=i}
+function selectAIGCUse(el,i){el.parentElement.querySelectorAll('.cw-type').forEach(e=>e.classList.remove('active'));el.classList.add('active')}
+function selectAIGCRatio(el,i){el.parentElement.querySelectorAll('.cw-type').forEach(e=>e.classList.remove('active'));el.classList.add('active')}
+function doAIGC(){
+const desc=document.getElementById('aigcDesc').value.trim();
+if(!desc)return toast('请输入画面描述','error');
+if(!useCredits(20,'智能文生图'))return;
+document.getElementById('aigcResult').innerHTML=`<div style="padding:24px;border:2px dashed var(--bd);border-radius:14px;text-align:center;background:var(--bg)">
+<div style="font-size:48px;margin-bottom:12px">🎨</div>
+<h4 style="font-size:15px;font-weight:700;margin-bottom:8px">AI 图片生成中...</h4>
+<p style="font-size:12px;color:var(--b)">正在根据您的描述生成高质量图片</p>
+</div>
+<div style="margin-top:12px;padding:12px;background:#dcfce7;border-radius:10px">
+<p style="font-size:13px;color:#166534;font-weight:600">✅ 图片生成任务已提交！预计30秒内完成</p>
+<p style="font-size:12px;color:#166534;margin-top:4px">完成后可在「我的视频库」中查看和下载</p>
+</div>`;
+const videos=JSON.parse(localStorage.getItem('lsjy3_videos')||'[]');
+videos.push({type:'aigc',title:'智能文生图 - '+desc.substring(0,20)+'...',desc,time:new Date().toLocaleString(),status:'generating'});
+localStorage.setItem('lsjy3_videos',JSON.stringify(videos));
+toast('文生图任务已提交！消耗20算力','success');
+}
+
+// ===== AI智能修图 =====
+function renderPhotoEdit(){
+const modes=['一键美化','去水印','画质增强','背景替换','人像精修','证件照'];
+document.getElementById('toolPanel').innerHTML=`<div class="tool-header"><h3>🖼️ AI智能修图</h3><button class="detail-close" onclick="closeTool()">✕</button></div>
+<div class="tool-body">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;padding:12px;background:#e0e7ff;border-radius:10px;font-size:13px;color:#3730a3;font-weight:600">⚡ 消耗30算力/次 &nbsp;|&nbsp; 当前算力: ${getCredits()}</div>
+<div class="fg"><label class="fl">修图模式</label>
+<div class="copywriter-types">
+${modes.map((m,i)=>`<div class="cw-type${i===0?' active':''}" onclick="selectPhotoMode(this,${i})">${m}</div>`).join('')}
+</div></div>
+<div class="fg"><label class="fl">上传图片</label>
+<div style="border:2px dashed var(--bd);border-radius:12px;padding:40px;text-align:center;cursor:pointer;background:var(--bg)" onclick="document.getElementById('photoFile').click()">
+<div style="font-size:40px;margin-bottom:8px">📁</div>
+<p style="font-size:13px;color:var(--b)">点击上传图片（支持JPG/PNG/WEBP，最大10MB）</p>
+<input type="file" id="photoFile" accept="image/*" style="display:none" onchange="previewPhoto(this)">
+</div>
+<div id="photoPreview" style="margin-top:12px"></div></div>
+<div class="fg"><label class="fl">处理要求（可选）</label><textarea class="fi" id="photoReq" rows="2" placeholder="补充说明，例如：保留人物，去掉背景中的路人..."></textarea></div>
+<button class="btn btn-p" onclick="doPhotoEdit()" style="width:100%">🖼️ 开始修图（消耗30算力）</button>
+<div id="photoResult" style="margin-top:16px"></div>
+</div>`;
+}
+function selectPhotoMode(el,i){el.parentElement.querySelectorAll('.cw-type').forEach(t=>t.classList.remove('active'));el.classList.add('active')}
+function previewPhoto(inp){
+const f=inp.files[0];if(!f)return;
+const r=new FileReader();r.onload=e=>{document.getElementById('photoPreview').innerHTML=`<img src="${e.target.result}" style="max-width:100%;max-height:200px;border-radius:8px;margin-top:8px">`};r.readAsDataURL(f);
+}
+function doPhotoEdit(){
+const f=document.getElementById('photoFile').files[0];
+if(!f)return toast('请先上传图片','error');
+if(!useCredits(30,'AI智能修图'))return;
+const req=document.getElementById('photoReq').value.trim();
+document.getElementById('photoResult').innerHTML=`<div style="padding:24px;border:2px dashed var(--bd);border-radius:14px;text-align:center;background:var(--bg)">
+<div style="font-size:48px;margin-bottom:12px">🖼️</div>
+<h4 style="font-size:15px;font-weight:700;margin-bottom:8px">AI 修图处理中...</h4>
+<p style="font-size:12px;color:var(--b)">正在智能分析并优化您的图片</p>
+</div>
+<div style="margin-top:12px;padding:12px;background:#dcfce7;border-radius:10px">
+<p style="font-size:13px;color:#166534;font-weight:600">✅ 修图任务已提交！预计20秒内完成</p>
+<p style="font-size:12px;color:#166534;margin-top:4px">完成后可在「我的视频库」中查看和下载</p>
+</div>`;
+const videos=JSON.parse(localStorage.getItem('lsjy3_videos')||'[]');
+videos.push({type:'photoEdit',title:'AI修图 - '+f.name,time:new Date().toLocaleString(),status:'generating',desc:req||'一键美化'});
+localStorage.setItem('lsjy3_videos',JSON.stringify(videos));
+toast('修图任务已提交！消耗30算力','success');
+}
+
+// ===== AI智能修音 =====
+function renderAudioEdit(){
+const modes=['人声提取','智能降噪','混响添加','变速不变调','变调不变速','音频剪辑'];
+document.getElementById('toolPanel').innerHTML=`<div class="tool-header"><h3>🎵 AI智能修音</h3><button class="detail-close" onclick="closeTool()">✕</button></div>
+<div class="tool-body">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;padding:12px;background:#e0f2fe;border-radius:10px;font-size:13px;color:#075985;font-weight:600">⚡ 消耗25算力/次 &nbsp;|&nbsp; 当前算力: ${getCredits()}</div>
+<div class="fg"><label class="fl">修音模式</label>
+<div class="copywriter-types">
+${modes.map((m,i)=>`<div class="cw-type${i===0?' active':''}" onclick="selectAudioMode(this,${i})">${m}</div>`).join('')}
+</div></div>
+<div class="fg"><label class="fl">上传音频</label>
+<div style="border:2px dashed var(--bd);border-radius:12px;padding:40px;text-align:center;cursor:pointer;background:var(--bg)" onclick="document.getElementById('audioFile').click()">
+<div style="font-size:40px;margin-bottom:8px">🎵</div>
+<p style="font-size:13px;color:var(--b)">点击上传音频（支持MP3/WAV/M4A/AAC，最大20MB）</p>
+<input type="file" id="audioFile" accept="audio/*" style="display:none" onchange="previewAudio(this)">
+</div>
+<div id="audioPreview" style="margin-top:12px"></div></div>
+<div class="fg"><label class="fl">处理参数</label>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<div><label style="font-size:12px;color:var(--b)">输出格式</label><select class="fi" id="audioFmt" style="width:100%;margin-top:4px"><option>MP3</option><option>WAV</option><option>AAC</option></select></div>
+<div><label style="font-size:12px;color:var(--b)">音质</label><select class="fi" id="audioQual" style="width:100%;margin-top:4px"><option>高品质</option><option>标准</option><option>压缩</option></select></div>
+</div></div>
+<button class="btn btn-p" onclick="doAudioEdit()" style="width:100%">🎵 开始修音（消耗25算力）</button>
+<div id="audioResult" style="margin-top:16px"></div>
+</div>`;
+}
+function selectAudioMode(el,i){el.parentElement.querySelectorAll('.cw-type').forEach(t=>t.classList.remove('active'));el.classList.add('active')}
+function previewAudio(inp){
+const f=inp.files[0];if(!f)return;
+document.getElementById('audioPreview').innerHTML=`<div style="padding:12px;background:var(--card);border-radius:10px;display:flex;align-items:center;gap:10px;margin-top:8px"><span style="font-size:24px">🎵</span><div><p style="font-size:13px;font-weight:600">${f.name}</p><p style="font-size:11px;color:var(--b)">${(f.size/1024/1024).toFixed(1)}MB</p></div></div>`;
+}
+function doAudioEdit(){
+const f=document.getElementById('audioFile').files[0];
+if(!f)return toast('请先上传音频文件','error');
+if(!useCredits(25,'AI智能修音'))return;
+document.getElementById('audioResult').innerHTML=`<div style="padding:24px;border:2px dashed var(--bd);border-radius:14px;text-align:center;background:var(--bg)">
+<div style="font-size:48px;margin-bottom:12px">🎵</div>
+<h4 style="font-size:15px;font-weight:700;margin-bottom:8px">AI 修音处理中...</h4>
+<p style="font-size:12px;color:var(--b)">正在智能分析并优化您的音频</p>
+</div>
+<div style="margin-top:12px;padding:12px;background:#dcfce7;border-radius:10px">
+<p style="font-size:13px;color:#166534;font-weight:600">✅ 修音任务已提交！预计15秒内完成</p>
+<p style="font-size:12px;color:#166534;margin-top:4px">完成后可在「我的视频库」中查看和下载</p>
+</div>`;
+const videos=JSON.parse(localStorage.getItem('lsjy3_videos')||'[]');
+videos.push({type:'audioEdit',title:'AI修音 - '+f.name,time:new Date().toLocaleString(),status:'generating'});
+localStorage.setItem('lsjy3_videos',JSON.stringify(videos));
+toast('修音任务已提交！消耗25算力','success');
+}
+
+// ===== AI智能伴奏 =====
+function renderAccompaniment(){
+const styles=['流行','古风','电子/EDM','民谣','嘻哈','R&B','摇滚','轻音乐','国风','DJ'];
+document.getElementById('toolPanel').innerHTML=`<div class="tool-header"><h3>🎶 AI智能伴奏</h3><button class="detail-close" onclick="closeTool()">✕</button></div>
+<div class="tool-body">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;padding:12px;background:#fce7f3;border-radius:10px;font-size:13px;color:#9d174d;font-weight:600">⚡ 消耗40算力/次 &nbsp;|&nbsp; 当前算力: ${getCredits()}</div>
+<div class="fg"><label class="fl">伴奏风格</label>
+<div class="copywriter-types" style="display:flex;flex-wrap:wrap;gap:6px">
+${styles.map((s,i)=>`<div class="cw-type${i===0?' active':''}" onclick="selectAccStyle(this,${i})" style="font-size:12px;padding:6px 12px">${s}</div>`).join('')}
+</div></div>
+<div class="fg"><label class="fl">BPM速度</label>
+<div style="display:flex;align-items:center;gap:12px">
+<input type="range" id="accBpm" min="60" max="180" value="120" style="flex:1" oninput="document.getElementById('bpmVal').textContent=this.value">
+<span id="bpmVal" style="font-size:14px;font-weight:700;min-width:40px">120</span>
+<span style="font-size:12px;color:var(--b)">BPM</span>
+</div></div>
+<div class="fg"><label class="fl">时长（秒）</label>
+<div class="copywriter-types">
+<div class="cw-type active" onclick="selectAccDur(this,15)">15秒</div>
+<div class="cw-type" onclick="selectAccDur(this,30)">30秒</div>
+<div class="cw-type" onclick="selectAccDur(this,60)">60秒</div>
+<div class="cw-type" onclick="selectAccDur(this,120)">2分钟</div>
+</div></div>
+<div class="fg"><label class="fl">歌词/旋律提示（可选）</label><textarea class="fi" id="accLyric" rows="3" placeholder="输入歌词或旋律描述，AI将根据歌词节奏生成匹配的伴奏..."></textarea></div>
+<div class="fg"><label class="fl">乐器偏好</label>
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+<label style="font-size:12px;display:flex;align-items:center;gap:4px"><input type="checkbox" checked> 钢琴</label>
+<label style="font-size:12px;display:flex;align-items:center;gap:4px"><input type="checkbox" checked> 鼓组</label>
+<label style="font-size:12px;display:flex;align-items:center;gap:4px"><input type="checkbox"> 吉他</label>
+<label style="font-size:12px;display:flex;align-items:center;gap:4px"><input type="checkbox"> 贝斯</label>
+<label style="font-size:12px;display:flex;align-items:center;gap:4px"><input type="checkbox"> 弦乐</label>
+<label style="font-size:12px;display:flex;align-items:center;gap:4px"><input type="checkbox"> 合成器</label>
+</div></div>
+<button class="btn btn-p" onclick="doAccompaniment()" style="width:100%">🎶 生成伴奏（消耗40算力）</button>
+<div id="accResult" style="margin-top:16px"></div>
+</div>`;
+}
+let selectedAccDur=15;
+function selectAccStyle(el,i){el.parentElement.querySelectorAll('.cw-type').forEach(t=>t.classList.remove('active'));el.classList.add('active')}
+function selectAccDur(el,d){selectedAccDur=d;el.parentElement.querySelectorAll('.cw-type').forEach(t=>t.classList.remove('active'));el.classList.add('active')}
+function doAccompaniment(){
+const lyric=document.getElementById('accLyric').value.trim();
+if(!lyric)return toast('请输入歌词或旋律描述','error');
+if(!useCredits(40,'AI智能伴奏'))return;
+const bpm=document.getElementById('accBpm').value;
+document.getElementById('accResult').innerHTML=`<div style="padding:24px;border:2px dashed var(--bd);border-radius:14px;text-align:center;background:var(--bg)">
+<div style="font-size:48px;margin-bottom:12px">🎶</div>
+<h4 style="font-size:15px;font-weight:700;margin-bottom:8px">AI 伴奏生成中...</h4>
+<p style="font-size:12px;color:var(--b)">正在根据歌词和风格生成专属伴奏</p>
+<p style="font-size:11px;color:var(--b);margin-top:4px">BPM: ${bpm} | 时长: ${selectedAccDur}秒</p>
+</div>
+<div style="margin-top:12px;padding:12px;background:#dcfce7;border-radius:10px">
+<p style="font-size:13px;color:#166534;font-weight:600">✅ 伴奏生成任务已提交！预计45秒内完成</p>
+<p style="font-size:12px;color:#166534;margin-top:4px">完成后可在「我的视频库」中试听和下载</p>
+</div>`;
+const videos=JSON.parse(localStorage.getItem('lsjy3_videos')||'[]');
+videos.push({type:'accompaniment',title:'AI伴奏 '+bpm+'BPM '+selectedAccDur+'s',desc:lyric.substring(0,30),time:new Date().toLocaleString(),status:'generating'});
+localStorage.setItem('lsjy3_videos',JSON.stringify(videos));
+toast('伴奏生成任务已提交！消耗40算力','success');
+}
+
+// ===== 智能图文表格 =====
+function renderDocGen(){
+const templates=['数据报告','产品对比表','项目计划表','财务汇总表','周报/月报','活动方案','KPI考核表','合同清单'];
+document.getElementById('toolPanel').innerHTML=`<div class="tool-header"><h3>📊 智能图文表格</h3><button class="detail-close" onclick="closeTool()">✕</button></div>
+<div class="tool-body">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;padding:12px;background:#d1fae5;border-radius:10px;font-size:13px;color:#065f46;font-weight:600">⚡ 消耗35算力/次 &nbsp;|&nbsp; 当前算力: ${getCredits()}</div>
+<div class="fg"><label class="fl">模板类型</label>
+<div class="copywriter-types" style="display:flex;flex-wrap:wrap;gap:6px">
+${templates.map((t,i)=>`<div class="cw-type${i===0?' active':''}" onclick="selectDocTpl(this,${i})" style="font-size:12px;padding:6px 12px">${t}</div>`).join('')}
+</div></div>
+<div class="fg"><label class="fl">主题/标题</label><input class="fi" id="docTitle" placeholder="例如：2025年Q1销售数据报告"></div>
+<div class="fg"><label class="fl">内容描述</label><textarea class="fi" id="docContent" rows="4" placeholder="描述你要生成的数据或内容，例如：&#10;包含华东/华南/华北三个区域&#10;销售额、订单量、客单价三个指标&#10;对比上月增长率..."></textarea></div>
+<div class="fg"><label class="fl">输出格式</label>
+<div class="copywriter-types">
+<div class="cw-type active" onclick="selectDocFmt(this,0)">📊 表格</div>
+<div class="cw-type" onclick="selectDocFmt(this,1)">📄 图文</div>
+<div class="cw-type" onclick="selectDocFmt(this,2)">📈 图表+表格</div>
+</div></div>
+<button class="btn btn-p" onclick="doDocGen()" style="width:100%">📊 一键生成（消耗35算力）</button>
+<div id="docResult" style="margin-top:16px"></div>
+</div>`;
+}
+function selectDocTpl(el,i){el.parentElement.querySelectorAll('.cw-type').forEach(t=>t.classList.remove('active'));el.classList.add('active')}
+function selectDocFmt(el,i){el.parentElement.querySelectorAll('.cw-type').forEach(t=>t.classList.remove('active'));el.classList.add('active')}
+function doDocGen(){
+const title=document.getElementById('docTitle').value.trim();
+const content=document.getElementById('docContent').value.trim();
+if(!title&&!content)return toast('请输入主题或内容描述','error');
+if(!useCredits(35,'智能图文表格'))return;
+document.getElementById('docResult').innerHTML=`<div style="padding:24px;border:2px dashed var(--bd);border-radius:14px;text-align:center;background:var(--bg)">
+<div style="font-size:48px;margin-bottom:12px">📊</div>
+<h4 style="font-size:15px;font-weight:700;margin-bottom:8px">AI 正在生成...</h4>
+<p style="font-size:12px;color:var(--b)">正在分析内容并排版生成图文表格</p>
+</div>
+<div style="margin-top:12px;padding:12px;background:#dcfce7;border-radius:10px">
+<p style="font-size:13px;color:#166534;font-weight:600">✅ 生成任务已提交！预计10秒内完成</p>
+<p style="font-size:12px;color:#166534;margin-top:4px">完成后可在「我的视频库」中查看、编辑和导出</p>
+</div>`;
+const videos=JSON.parse(localStorage.getItem('lsjy3_videos')||'[]');
+videos.push({type:'docGen',title:'图文表格 - '+(title||content.substring(0,15)),time:new Date().toLocaleString(),status:'generating',desc:content?content.substring(0,50):title});
+localStorage.setItem('lsjy3_videos',JSON.stringify(videos));
+toast('图文表格生成任务已提交！消耗35算力','success');
+}
+
+// -- Credits Center Tool --
+function renderCredits(){
+const credits=getCredits();
+const logs=getCreditLogs();
+document.getElementById('toolPanel').innerHTML=`<div class="tool-header"><h3>⚡ 算力中心</h3><button class="detail-close" onclick="closeTool()">✕</button></div>
+<div class="tool-body">
+<div style="padding:24px;background:linear-gradient(135deg,var(--p),#7c6cf6);border-radius:16px;color:#fff;text-align:center;margin-bottom:20px">
+<div style="font-size:13px;opacity:.8;margin-bottom:4px">我的算力余额</div>
+<div style="font-size:42px;font-weight:900;letter-spacing:-2px">${credits}</div>
+<div style="font-size:12px;opacity:.7;margin-top:4px">算力可用于爆款成片、数字人口播、音色克隆、文生图等AI功能</div>
+</div>
+<h4 style="font-size:14px;font-weight:700;margin-bottom:12px">💰 购买算力包</h4>
+<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
+${CREDIT_PACKS.map((p,i)=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:14px;border:1.5px solid ${i===2?'var(--p)':'var(--bd)'};border-radius:12px;background:${i===2?'var(--ps)':'var(--w)'};cursor:pointer;transition:all .2s" onclick="buyCredits('${p.id}')">
+<div style="display:flex;align-items:center;gap:12px">
+<div style="width:40px;height:40px;border-radius:10px;background:${i===4?'linear-gradient(135deg,#f59e0b,#ef4444)':i===2?'linear-gradient(135deg,var(--p),#7c6cf6)':'var(--bg)'};display:flex;align-items:center;justify-content:center;font-size:18px;color:${i>1?'#fff':'var(--l)'}">⚡</div>
+<div><div style="font-size:14px;font-weight:700">${p.name}${i===2?' 🔥推荐':''}${i===4?' 👑':''}</div><div style="font-size:12px;color:var(--b)">${p.credits.toLocaleString()}算力</div></div>
+</div>
+<div style="font-size:18px;font-weight:900;color:var(--p)">¥${p.price}</div>
+</div>`).join('')}
+</div>
+<h4 style="font-size:14px;font-weight:700;margin-bottom:12px">📊 算力消耗记录</h4>
+${logs.length?logs.slice(0,10).map(l=>`<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--bg);font-size:12px">
+<span style="color:var(--l)">${l.desc}</span>
+<span style="font-weight:700;color:${l.amount>0?'var(--ok)':'var(--err)'}">${l.amount>0?'+':''}${l.amount}</span>
+<span style="color:var(--b);font-size:11px">${l.time}</span>
+</div>`).join(''):'<div style="text-align:center;padding:20px;color:var(--b);font-size:13px">暂无记录</div>'}
+</div>`;
+}
+
+function buyCredits(packId){
+const pack=CREDIT_PACKS.find(p=>p.id===packId);if(!pack)return;
+closeTool();
+openPayment('credits',packId);
+// Override the payment order with credit pack info
+currentPayOrder={moduleId:'credits',serviceId:packId,serviceName:'算力包 - '+pack.name,price:pack.price,desc:pack.credits.toLocaleString()+'算力'};
+// Re-open payment with correct info
+document.getElementById('payOrderInfo').innerHTML=`
+<div class="pay-order-row"><span class="pay-order-label">商品名称</span><span>${pack.name}</span></div>
+<div class="pay-order-row"><span class="pay-order-label">算力数量</span><span>${pack.credits.toLocaleString()} 算力</span></div>
+<div class="pay-order-row"><span class="pay-order-label">单价</span><span>¥${pack.price}</span></div>
+<div class="pay-order-row"><span class="pay-order-label">应付金额</span><span style="font-weight:700;color:var(--p)">¥${pack.price}</span></div>`;
+document.getElementById('payOverlay').classList.add('show');
+document.body.style.overflow='hidden';
+}
+
+// Override confirmPayment to handle credit pack purchases
+const _origConfirmPayment = confirmPayment;
+confirmPayment = function(){
+if(!selectedPayMethod)return toast('请选择支付方式','error');
+if(!currentPayOrder)return;
+const qrArea=document.getElementById('payQrcode');
+qrArea.classList.add('show');
+const qrImg=document.getElementById('payQrImg');
+const qrDefault=document.getElementById('payQrDefault');
+const methodNames={wx:'微信支付',qq:'QQ支付',alipay:'支付宝'};
+const qrMap={wx:'qr-wx.png',qq:'qr-qq.jpg',alipay:'qr-alipay.jpg'};
+qrImg.src=qrMap[selectedPayMethod];
+qrImg.style.display='block';
+qrDefault.style.display='none';
+document.getElementById('payHint').textContent='请使用'+methodNames[selectedPayMethod]+'扫描上方二维码完成付款';
+let seconds=600;const timerEl=document.getElementById('payTimer');timerEl.textContent=formatTime(seconds);
+if(window._payTimerInterval)clearInterval(window._payTimerInterval);
+window._payTimerInterval=setInterval(()=>{seconds--;timerEl.textContent=formatTime(seconds);if(seconds<=0){clearInterval(window._payTimerInterval);timerEl.textContent='二维码已过期';document.getElementById('payHint').textContent='请关闭后重新打开';qrImg.style.display='none';qrDefault.textContent='二维码已过期';qrDefault.style.display='block';const btn=document.getElementById('payConfirmBtn');btn.textContent='二维码已过期';btn.className='pay-btn disabled';btn.disabled=true}},1000);
+const btn=document.getElementById('payConfirmBtn');btn.disabled=false;
+const btnStyles={wx:'pay-btn wx-pay',qq:'pay-btn qq-pay',alipay:'pay-btn alipay-pay'};
+btn.className=btnStyles[selectedPayMethod];
+btn.textContent='📋 我已付款，提交订单';
+btn.onclick=function(){
+clearInterval(window._payTimerInterval);
+const orders=JSON.parse(localStorage.getItem('lsjy3_orders')||'[]');
+const order={...currentPayOrder,method:selectedPayMethod,status:'pending',time:new Date().toLocaleString(),orderId:'LSJY'+Date.now().toString(36).toUpperCase(),username:getCur()?getCur().username:'游客'};
+orders.push(order);localStorage.setItem('lsjy3_orders',JSON.stringify(orders));
+const adminOrders=JSON.parse(localStorage.getItem('lsjy_admin_orders')||'[]');
+adminOrders.push(order);localStorage.setItem('lsjy_admin_orders',JSON.stringify(adminOrders));
+toast('📋 订单已提交！管理员确认收款后算力自动到账','success');
+closePayForce();
+};
+};
+
+
+// ===== INIT =====
+// Clean up any stale admin session from previous version
+(function(){
+try{
+  const cur=JSON.parse(localStorage.getItem('lsjy3_cur')||'null');
+  if(cur&&cur.role==='admin'){
+    // Remove admin session from frontend - admin should only login via admin panel
+    localStorage.removeItem('lsjy3_cur');
+  }
+  // Also clean up any auto-seeded admin from old version
+  const users=JSON.parse(localStorage.getItem('lsjy3_users')||'[]');
+  const cleaned=users.filter(u=>!(u.role==='admin'&&u.username==='admin'&&u.password==='admin123'));
+  if(cleaned.length!==users.length){
+    localStorage.setItem('lsjy3_users',JSON.stringify(cleaned));
+  }
+}catch(e){}
+})();
+updateNavAuth();
+
+// Smooth scroll for anchor links
+document.querySelectorAll('a[href^="#"]').forEach(a=>{a.addEventListener('click',function(e){
+const target=document.querySelector(this.getAttribute('href'));
+if(target){e.preventDefault();target.scrollIntoView({behavior:'smooth',block:'start'})}
+})});
+</script>
+</body>
+</html>

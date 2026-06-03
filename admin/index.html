@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>罗圣纪元 - 后台管理系统</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --p:#533afd;--ph:#4434d4;--pl:#b9b9f9;--ps:#eef1fe;
+  --n:#0d1b2a;--b:#64748b;--l:#1e293b;--bd:#e2e8f0;--bg:#f1f5f9;--bg2:#e2e8f0;
+  --w:#fff;--err:#ef4444;--ok:#22c55e;--warn:#f59e0b;--info:#3b82f6;
+  --sidebar:240px;--topbar:56px;
+  --f:'Noto Sans SC',-apple-system,sans-serif;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.06);
+  --shadow-lg:0 10px 25px rgba(0,0,0,.1);
+  --radius:10px;
+}
+html{font-size:14px}
+body{font-family:var(--f);color:var(--n);background:var(--bg);line-height:1.6;overflow-x:hidden}
+a{color:var(--p);text-decoration:none}
+input,select,textarea,button{font-family:var(--f)}
+
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#533afd 0%,#7c6cf6 50%,#a78bfa 100%);padding:20px}
+.login-box{background:var(--w);border-radius:20px;padding:40px 36px;width:100%;max-width:420px;box-shadow:var(--shadow-lg)}
+.login-logo{text-align:center;margin-bottom:24px}
+.login-logo img{width:64px;height:64px;border-radius:50%;border:3px solid var(--pl);margin-bottom:12px}
+.login-logo h1{font-size:22px;font-weight:900;color:var(--n)}
+.login-logo p{font-size:13px;color:var(--b);margin-top:4px}
+.login-box h2{font-size:18px;font-weight:700;margin-bottom:24px;text-align:center}
+.fg{margin-bottom:16px}
+.fl{display:block;font-size:12px;font-weight:600;color:var(--b);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.fi{width:100%;padding:11px 14px;border:1.5px solid var(--bd);border-radius:var(--radius);font-size:14px;color:var(--n);background:var(--w);outline:none;transition:all .2s}
+.fi:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(83,58,253,.12)}
+.btn-p{width:100%;padding:12px;background:var(--p);color:var(--w);border:none;border-radius:var(--radius);font-size:15px;font-weight:600;cursor:pointer;transition:all .2s;position:relative}
+.btn-p:hover{background:var(--ph)}
+.btn-p.loading{pointer-events:none;opacity:.7}
+.btn-p.loading::after{content:'';position:absolute;right:16px;top:50%;margin-top:-8px;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.app{display:none;height:100vh;overflow:hidden}
+.app.active{display:grid;grid-template-columns:var(--sidebar) 1fr;grid-template-rows:var(--topbar) 1fr}
+
+.sidebar{grid-row:1/-1;background:var(--n);color:var(--w);overflow-y:auto;display:flex;flex-direction:column;transition:transform .3s;z-index:200}
+.sb-header{padding:20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sb-header img{width:40px;height:40px;border-radius:50%;border:2px solid rgba(255,255,255,.2)}
+.sb-header h2{font-size:15px;font-weight:700}
+.sb-header span{font-size:11px;opacity:.6;display:block;margin-top:2px}
+.sb-nav{flex:1;padding:12px 0}
+.sb-group{padding:8px 20px 4px;font-size:10px;text-transform:uppercase;letter-spacing:1px;opacity:.4;font-weight:600}
+.sb-item{display:flex;align-items:center;gap:12px;padding:10px 20px;color:rgba(255,255,255,.7);cursor:pointer;transition:all .15s;font-size:13px;font-weight:500;border-left:3px solid transparent}
+.sb-item:hover{background:rgba(255,255,255,.06);color:var(--w)}
+.sb-item.active{background:rgba(83,58,253,.3);color:var(--w);border-left-color:var(--pl)}
+.sb-item i{font-size:16px;width:20px;text-align:center}
+.sb-footer{padding:16px 20px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;opacity:.4;text-align:center}
+
+.topbar{background:var(--w);border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;padding:0 24px;grid-column:2}
+.tb-left{display:flex;align-items:center;gap:16px}
+.tb-left h3{font-size:16px;font-weight:700}
+.tb-right{display:flex;align-items:center;gap:12px}
+.tb-user{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--l)}
+.tb-avatar{width:32px;height:32px;border-radius:50%;background:var(--ps);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--p)}
+.tb-btn{padding:6px 14px;border:1.5px solid var(--bd);background:var(--w);border-radius:8px;font-size:12px;font-weight:500;color:var(--b);cursor:pointer;transition:all .15s}
+.tb-btn:hover{border-color:var(--p);color:var(--p)}
+.tb-btn.danger:hover{border-color:var(--err);color:var(--err)}
+.tb-toggle{display:none;padding:6px 10px;border:1.5px solid var(--bd);background:var(--w);border-radius:8px;cursor:pointer;font-size:16px;color:var(--b)}
+
+.main{grid-column:2;overflow-y:auto;padding:24px;background:var(--bg)}
+
+.card{background:var(--w);border-radius:12px;box-shadow:var(--shadow);margin-bottom:20px;overflow:hidden}
+.card-header{padding:16px 20px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.card-header h3{font-size:15px;font-weight:700}
+.card-body{padding:20px}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:20px}
+.stat-card{background:var(--w);border-radius:12px;box-shadow:var(--shadow);padding:20px;display:flex;align-items:center;gap:16px;transition:transform .15s}
+.stat-card:hover{transform:translateY(-2px)}
+.stat-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;color:#fff}
+.stat-info h4{font-size:24px;font-weight:900;line-height:1.2}
+.stat-info p{font-size:12px;color:var(--b);margin-top:2px}
+
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{background:var(--bg);padding:10px 14px;text-align:left;font-size:12px;font-weight:600;color:var(--b);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--bd);white-space:nowrap}
+td{padding:12px 14px;border-bottom:1px solid var(--bd);font-size:13px;vertical-align:middle}
+tr:hover td{background:var(--ps)}
+.badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600}
+.badge-green{background:#dcfce7;color:#166534}
+.badge-blue{background:#dbeafe;color:#1e40af}
+.badge-red{background:#fee2e2;color:#991b1b}
+.badge-purple{background:#ede9fe;color:#5b21b6}
+.badge-yellow{background:#fef3c7;color:#92400e}
+.badge-gray{background:#f1f5f9;color:#64748b}
+
+.act-btn{padding:5px 10px;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;margin-right:4px;color:#fff}
+.act-btn.edit{background:#3b82f6}
+.act-btn.del{background:#ef4444}
+.act-btn.view{background:#7c3aed}
+.act-btn.ok{background:#22c55e}
+.act-btn:hover{opacity:.8;transform:translateY(-1px)}
+.act-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+
+.mod-tag{display:inline-block;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:600;color:#fff}
+.empty{text-align:center;padding:60px 20px;color:var(--b)}
+.empty i{font-size:48px;margin-bottom:12px;display:block;color:var(--bd)}
+
+.toast{position:fixed;top:20px;right:20px;background:var(--n);color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;z-index:9999;opacity:0;transform:translateY(-10px);transition:all .3s;pointer-events:none;max-width:360px;box-shadow:var(--shadow-lg)}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.success{background:var(--ok)}.toast.error{background:var(--err)}.toast.warning{background:var(--warn)}
+
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:999;align-items:center;justify-content:center;padding:20px}
+.modal-bg.show{display:flex}
+.modal-box{background:var(--w);border-radius:16px;padding:24px;width:100%;max-width:500px;max-height:80vh;overflow-y:auto;animation:mIn .2s ease}
+@keyframes mIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+.modal-box h3{font-size:17px;font-weight:700;margin-bottom:16px}
+.modal-actions{display:flex;gap:10px;margin-top:20px}
+.modal-actions button{flex:1;padding:10px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:var(--f)}
+.m-cancel{background:var(--bg);color:var(--n)}.m-confirm{background:var(--p);color:var(--w)}
+
+.mod-detail-card{border:1px solid var(--bd);border-radius:12px;padding:20px;margin-bottom:16px}
+.mod-detail-card h4{font-size:15px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.mod-detail-card p{font-size:13px;color:var(--b);line-height:1.7}
+.svc-count{display:inline-flex;align-items:center;justify-content:center;background:var(--ps);color:var(--p);font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px}
+
+/* Filters */
+.filter-bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px;padding:12px;background:var(--bg);border-radius:var(--radius)}
+.filter-bar input,.filter-bar select{padding:8px 12px;border:1px solid var(--bd);border-radius:8px;font-size:13px;outline:none}
+.filter-bar input:focus,.filter-bar select:focus{border-color:var(--p)}
+.filter-bar input{flex:1;min-width:160px}
+
+/* Pagination */
+.pagination{display:flex;align-items:center;justify-content:space-between;padding:12px 0;flex-wrap:wrap;gap:8px}
+.pagination .pg-info{font-size:12px;color:var(--b)}
+.pagination .pg-btns{display:flex;gap:4px}
+.pg-btn{padding:6px 12px;border:1px solid var(--bd);background:var(--w);border-radius:6px;font-size:12px;cursor:pointer;transition:all .15s;color:var(--n)}
+.pg-btn:hover{border-color:var(--p);color:var(--p)}
+.pg-btn.active{background:var(--p);color:#fff;border-color:var(--p)}
+.pg-btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* Status flow */
+.status-flow{display:flex;align-items:center;gap:4px;margin:8px 0}
+.status-step{display:flex;align-items:center;gap:4px;font-size:11px;padding:4px 8px;border-radius:6px;background:var(--bg);color:var(--b)}
+.status-step.done{background:#dcfce7;color:#166534}
+.status-step.current{background:#dbeafe;color:#1e40af;font-weight:600}
+.status-step.rejected{background:#fee2e2;color:#991b1b}
+.status-arrow{color:var(--bd);font-size:10px}
+
+/* Batch bar */
+.batch-bar{display:flex;gap:8px;align-items:center;padding:10px 16px;background:#dbeafe;border-radius:8px;margin-bottom:12px;font-size:13px;color:#1e40af}
+.batch-bar .sel-count{font-weight:700;margin-right:8px}
+
+/* Toolbar */
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.toolbar .tb-btn i{margin-right:4px}
+
+/* Login lockout */
+.lockout-box{text-align:center;padding:20px;background:#fee2e2;border-radius:12px;color:#991b1b}
+.lockout-box i{font-size:32px;margin-bottom:8px}
+
+/* Responsive */
+@media(max-width:768px){
+  .app.active{grid-template-columns:1fr}
+  .sidebar{position:fixed;left:0;top:0;bottom:0;transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .main,.topbar{grid-column:1}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .tb-toggle{display:block}
+  .filter-bar{flex-direction:column}
+  .filter-bar input{width:100%}
+}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:199}
+.sidebar-overlay.show{display:block}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+
+<!-- ===== LOGIN ===== -->
+<div id="loginPage" class="login-wrap">
+  <div class="login-box">
+    <div class="login-logo">
+      <img src="logo.png" alt="Logo">
+      <h1>罗圣纪元</h1>
+      <p>后台管理系统</p>
+    </div>
+    <h2>管理员登录</h2>
+    <form onsubmit="doLogin(event)">
+      <div class="fg"><label class="fl"><i class="fa-solid fa-user" style="margin-right:4px"></i>管理员账号</label><input class="fi" id="loginUser" placeholder="请输入管理员账号" required autocomplete="username"></div>
+      <div class="fg"><label class="fl"><i class="fa-solid fa-lock" style="margin-right:4px"></i>密码</label><input class="fi" type="password" id="loginPwd" placeholder="请输入密码" required autocomplete="current-password"></div>
+      <button type="submit" class="btn-p" id="loginBtn">登 录</button>
+    </form>
+    <div id="lockoutInfo" style="display:none" class="lockout-box"></div>
+    <div style="margin-top:12px;text-align:center;font-size:12px;color:var(--b)"><i class="fa-solid fa-shield-halved" style="margin-right:4px"></i>连续5次登录失败将锁定账号15分钟</div>
+  </div>
+</div>
+
+<!-- ===== APP ===== -->
+<div id="app" class="app">
+  <div class="sidebar" id="sidebar">
+    <div class="sb-header">
+      <img src="logo.png" alt="Logo">
+      <div><h2>罗圣纪元</h2><span>管理后台 v2.0</span></div>
+    </div>
+    <div class="sb-nav">
+      <div class="sb-group">概览</div>
+      <div class="sb-item active" onclick="goPage('dashboard',this)"><i class="fa-solid fa-chart-pie"></i>数据看板</div>
+      <div class="sb-group">业务管理</div>
+      <div class="sb-item" onclick="goPage('modules',this)"><i class="fa-solid fa-cubes"></i>业务模块</div>
+      <div class="sb-item" onclick="goPage('services',this)"><i class="fa-solid fa-wrench"></i>服务管理</div>
+      <div class="sb-group">用户运营</div>
+      <div class="sb-item" onclick="goPage('users',this)"><i class="fa-solid fa-users"></i>用户管理</div>
+      <div class="sb-item" onclick="goPage('messages',this)"><i class="fa-solid fa-envelope"></i>留言管理</div>
+      <div class="sb-item" onclick="goPage('orders',this)"><i class="fa-solid fa-receipt"></i>订单管理</div>
+      <div class="sb-group">系统</div>
+      <div class="sb-item" onclick="goPage('recycle',this)"><i class="fa-solid fa-trash-can"></i>回收站</div>
+      <div class="sb-item" onclick="goPage('settings',this)"><i class="fa-solid fa-gear"></i>系统设置</div>
+    </div>
+    <div class="sb-footer">&copy; 2026 罗圣纪元互联网科技有限责任公司</div>
+  </div>
+  <div class="sidebar-overlay" id="sbOverlay" onclick="toggleSidebar()"></div>
+  <div class="topbar">
+    <div class="tb-left">
+      <button class="tb-toggle" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
+      <h3 id="pageTitle">数据看板</h3>
+    </div>
+    <div class="tb-right">
+      <div class="tb-user"><div class="tb-avatar" id="tbAvatar">A</div><span id="tbName">Admin</span></div>
+      <button class="tb-btn" onclick="openEditAdmin()"><i class="fa-solid fa-key"></i> 修改密码</button>
+      <button class="tb-btn danger" onclick="doLogout()"><i class="fa-solid fa-right-from-bracket"></i> 退出</button>
+    </div>
+  </div>
+  <div class="main" id="mainContent"></div>
+</div>
+
+<!-- Modal -->
+<div class="modal-bg" id="modalBg" onclick="closeModal(event)"><div class="modal-box" id="modalBox"></div></div>
+
+<script>
+// ===== Data Modules =====
+const MODULES=[
+{id:'ai',name:'AI 人工智能',icon:'fa-solid fa-robot',color:'#3b82f6',gradient:'linear-gradient(135deg,#3b82f6,#60a5fa)',summary:'依托自研 AI 技术面向中小商家落地数字化转型',services:[
+{id:'ai-clip',name:'AI 短视频批量切片',desc:'一键拆分长素材产出多条短视频，适配全平台分发。'},
+{id:'ai-copy',name:'智能文案生成',desc:'短视频脚本、团购文案、店铺宣传文案 AI 自动化创作。'},
+{id:'ai-customer',name:'商家 AI 获客系统',desc:'本地实体门店智能引流工具，精准抓取同城客源。'},
+{id:'ai-api',name:'行业定制化 API 开发',desc:'根据门店、企业需求定制专属 AI 接口。'},
+{id:'ai-digital',name:'企业数字化搭建',desc:'中小企业线上管理系统、私域数字化架构搭建。'}
+]},
+{id:'media',name:'自媒体',icon:'fa-solid fa-mobile-screen',color:'#ea2261',gradient:'linear-gradient(135deg,#ea2261,#f96bee)',summary:'深耕短视频全域运营，赋能实体与个人 IP 变现',services:[
+{id:'media-ops',name:'全平台账号代运营',desc:'抖音、快手、小红书账号全托管，日常更新 + 数据优化。'},
+{id:'media-explore',name:'探店短视频全案策划',desc:'实体门店探店脚本、拍摄、剪辑、发布一站式服务。'},
+{id:'media-ip',name:'达人 IP 孵化',desc:'素人打造垂直领域博主，从定位到变现全周期扶持。'},
+{id:'media-copywriting',name:'图文内容代撰',desc:'公众号、小红书图文、朋友圈营销文案定制。'},
+{id:'media-matrix',name:'短视频矩阵搭建',desc:'多账号布局，实现品牌全域流量裂变。'}
+]},
+{id:'ecom',name:'电商',icon:'fa-solid fa-cart-shopping',color:'#8b5cf6',gradient:'linear-gradient(135deg,#8b5cf6,#a78bfa)',summary:'聚焦短视频电商落地，打通开店到变现全链路',services:[
+{id:'ecom-shop',name:'抖快小店代入驻',desc:'营业执照报备、类目开通、店铺基础装修代办。'},
+{id:'ecom-deal',name:'团购上架运营',desc:'实体门店套餐上架、套餐定价优化、团购活动策划。'},
+{id:'ecom-supply',name:'货源对接',desc:'日用、宠物、教育类优质货源供应链资源匹配。'},
+{id:'ecom-ops',name:'店铺全托管运营',desc:'商品上架、客服打理、订单售后一站式代管。'},
+{id:'ecom-traffic',name:'电商引流投流',desc:'短视频随心推、千川投放优化，精准提升店铺成交额。'}
+]},
+{id:'pet',name:'宠物',icon:'fa-solid fa-paw',color:'#fb923c',gradient:'linear-gradient(135deg,#fb923c,#fbbf24)',summary:'专注宠物实体店线上数字化运营',services:[
+{id:'pet-ops',name:'宠物医院全域线上运营',desc:'美团、抖音、大众点评店铺优化托管。'},
+{id:'pet-deal',name:'疫苗绝育团购策划',desc:'定制高转化医疗套餐，设计线上引流团购产品。'},
+{id:'pet-video',name:'门店短视频引流',desc:'宠物门店实拍短视频制作，同城精准曝光获客。'},
+{id:'pet-dist',name:'宠物用品分销带货',desc:'对接品牌宠物粮、保健品，帮门店线上分销盈利。'},
+{id:'pet-grow',name:'宠物店线上拓客',desc:'私域社群搭建、会员储值活动策划。'}
+]},
+{id:'edu',name:'教育',icon:'fa-solid fa-graduation-cap',color:'#10b981',gradient:'linear-gradient(135deg,#10b981,#34d399)',summary:'围绕成人职业与创业打造实用型教育培训',services:[
+{id:'edu-course',name:'职业技能线上课程研发',desc:'自媒体运营、电商开店、AI 实操系列网课开发。'},
+{id:'edu-biz',name:'创业知识培训',desc:'实体开店、短视频创业系统化线下 + 线上授课。'},
+{id:'edu-school',name:'校企合作资源对接',desc:'职校、高校校企项目落地，实习就业资源联动。'},
+{id:'edu-side',name:'成人副业实训课',desc:'低成本副业实操教学，手把手落地变现项目。'}
+]},
+{id:'campus',name:'伯雅校园',icon:'fa-solid fa-school',color:'#533afd',gradient:'linear-gradient(135deg,#533afd,#7c6cf6)',summary:'主打高校本地化创业项目，布局全国校园渠道',services:[
+{id:'campus-partner',name:'校区合伙人招商',desc:'全国各高校招募校区经理，标准化加盟扶持体系。'},
+{id:'campus-incubate',name:'大学生创业扶持',desc:'在校学生创业项目孵化、资源对接、启动指导。'},
+{id:'campus-local',name:'校园本地化项目落地',desc:'校园商超、校园服务、校园新媒体项目落地运营。'},
+{id:'campus-community',name:'校园社群运营搭建',desc:'高校精准社群搭建、校园活动策划、流量变现运营。'}
+]}
+];
+
+// ===== Crypto (simple XOR + Base64) =====
+const _CK='lsjy2026secure';
+function encryptPwd(p){const e=[];for(let i=0;i<p.length;i++)e.push(p.charCodeAt(i)^_CK.charCodeAt(i%_CK.length));return btoa(e.join(','))}
+function decryptPwd(c){if(!c)return'';if(c.length<20&&c.indexOf(',')===-1)return c;try{const a=atob(c).split(',').map(Number);if(a.some(isNaN))return c;let s='';for(let i=0;i<a.length;i++)s+=String.fromCharCode(a[i]^_CK.charCodeAt(i%_CK.length));return s}catch(e){return c}}
+
+// ===== Storage =====
+function getUsers(){return JSON.parse(localStorage.getItem('lsjy3_users')||'[]')}
+function saveUsers(u){localStorage.setItem('lsjy3_users',JSON.stringify(u))}
+function getCur(){return JSON.parse(localStorage.getItem('lsjy3_cur')||'null')}
+function setCur(u){localStorage.setItem('lsjy3_cur',JSON.stringify(u))}
+function getContacts(){return JSON.parse(localStorage.getItem('lsjy3_contacts')||'[]')}
+function saveContacts(c){localStorage.setItem('lsjy3_contacts',JSON.stringify(c))}
+function getSettings(){return JSON.parse(localStorage.getItem('lsjy_settings')||'{}')}
+function getOrders(){return JSON.parse(localStorage.getItem('lsjy_admin_orders')||'[]')}
+function saveOrders(o){localStorage.setItem('lsjy_admin_orders',JSON.stringify(o))}
+function getAllCredits(){return JSON.parse(localStorage.getItem('lsjy3_credits')||'{}')}
+function saveAllCredits(c){localStorage.setItem('lsjy3_credits',JSON.stringify(c))}
+function getRecycle(){return JSON.parse(localStorage.getItem('lsjy_admin_recycle')||'[]')}
+function saveRecycle(r){localStorage.setItem('lsjy_admin_recycle',JSON.stringify(r))}
+function getLoginLog(){return JSON.parse(localStorage.getItem('lsjy_admin_loginlog')||'[]')}
+function saveLoginLog(l){localStorage.setItem('lsjy_admin_loginlog',JSON.stringify(l))}
+function getLockout(){return JSON.parse(localStorage.getItem('lsjy_admin_lockout')||'{}')}
+function saveLockout(l){localStorage.setItem('lsjy_admin_lockout',JSON.stringify(l))}
+
+// Seed admin (encrypted password)
+(function(){const u=JSON.parse(localStorage.getItem('lsjy3_users')||'[]');if(!u.length){localStorage.setItem('lsjy3_users',JSON.stringify([{username:'admin',password:encryptPwd('admin123'),nickname:'管理员',role:'admin',phone:'',qq:'',wx:'',created:new Date().toLocaleString()}]))}})();
+
+// ===== Utility =====
+function maskPhone(p){if(!p||p.length<7)return p||'-';return p.substring(0,3)+'****'+p.substring(7)}
+function maskName(n){if(!n||n.length<=2)return n||'-';return n[0]+'*'.repeat(n.length-2)+n[n.length-1]}
+function toast(m,t){const e=document.getElementById('toast');e.textContent=m;e.className='toast show'+(t?' '+t:'');clearTimeout(e._t);e._t=setTimeout(()=>e.className='toast',3000)}
+function btnLoading(el){if(!el)return;el.classList.add('loading');const t=el.textContent;el._ot=t;el.disabled=true;return{done:()=>{el.classList.remove('loading');el.disabled=false;el.textContent=el._ot||t}}}
+function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('sbOverlay').classList.toggle('show')}
+function fmtDate(s){if(!s)return'-';const d=new Date(s);if(isNaN(d))return s;return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}
+function toCSV(rows,headers){return '\uFEFF'+[headers.join(',')].concat(rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(','))).join('\n')}
+function downloadCSV(csv,name){const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name+'.csv';a.click()}
+function softDelete(type,item){const r=getRecycle();r.push({type,data:item,time:new Date().toISOString()});saveRecycle(r)}
+function filterByDateRange(arr,dateField,start,end){return arr.filter(a=>{if(!a[dateField])return true;const d=new Date(a[dateField]).getTime();return(!start||d>=start.getTime())&&(!end||d<=end.getTime())})
+}
+function filterByKeyword(arr,fields,kw){if(!kw)return arr;kw=kw.toLowerCase();return arr.filter(a=>fields.some(f=>(a[f]||'').toLowerCase().includes(kw)))}
+
+// ===== Auth =====
+function doLogin(e){
+  e.preventDefault();
+  const lo=getLockout();
+  if(lo.lockedUntil&&Date.now()<lo.lockedUntil){
+    const rem=Math.ceil((lo.lockedUntil-Date.now())/1000);
+    toast('账号已锁定，请'+Math.ceil(rem/60)+'分钟后再试','error');return;
+  }
+  const u=document.getElementById('loginUser').value.trim(),p=document.getElementById('loginPwd').value;
+  const users=getUsers();
+  const found=users.find(x=>x.username===u);
+  if(!found||decryptPwd(found.password)!==p){
+    const cnt=(lo.failCount||0)+1;
+    lo.failCount=cnt;lo.lastFail=Date.now();
+    if(cnt>=5){lo.lockedUntil=Date.now()+15*60*1000;lo.failCount=0;saveLockout(lo);updateLockoutUI();toast('连续5次登录失败，账号已锁定15分钟','error');return}
+    saveLockout(lo);toast('账号或密码错误 ('+cnt+'/5)','error');return;
+  }
+  lo.failCount=0;lo.lockedUntil=null;saveLockout(lo);
+  if(found.role!=='admin'){toast('非管理员账号，无法进入后台','error');return}
+  // Login log
+  const log=getLoginLog();log.push({username:u,time:new Date().toISOString(),ip:'-',device:navigator.userAgent.substring(0,80)});if(log.length>200)log.splice(0,log.length-200);saveLoginLog(log);
+  setCur(found);toast('登录成功','success');enterApp();
+}
+function updateLockoutUI(){
+  const lo=getLockout();
+  const box=document.getElementById('lockoutInfo');
+  if(lo.lockedUntil&&Date.now()<lo.lockedUntil){
+    box.style.display='block';
+    const rem=Math.ceil((lo.lockedUntil-Date.now())/1000);
+    box.innerHTML='<i class="fa-solid fa-lock"></i><div style="font-weight:700;margin-bottom:4px">账号已锁定</div><div>连续5次登录失败，请等待'+Math.ceil(rem/60)+'分钟后再试</div>';
+  }else{box.style.display='none'}
+}
+setInterval(updateLockoutUI,5000);
+function doLogout(){localStorage.removeItem('lsjy3_cur');document.getElementById('loginPage').style.display='';document.getElementById('app').classList.remove('active');toast('已退出登录')}
+function enterApp(){
+  document.getElementById('loginPage').style.display='none';document.getElementById('app').classList.add('active');
+  const u=getCur();document.getElementById('tbAvatar').textContent=(u.nickname||u.username)[0].toUpperCase();document.getElementById('tbName').textContent=u.nickname||u.username;
+  goPage('dashboard');
+}
+(function(){const u=getCur();if(u&&u.role==='admin')enterApp()})();
+
+// ===== Navigation =====
+const _pageTitles={dashboard:'数据看板',modules:'业务模块',services:'服务管理',users:'用户管理',messages:'留言管理',orders:'订单管理',recycle:'回收站',settings:'系统设置'};
+const _pageRenders={dashboard:renderDashboard,modules:renderModules,services:renderServices,users:renderUsers,messages:renderMessages,orders:renderOrders,recycle:renderRecycle,settings:renderSettings};
+function goPage(page,el){
+  document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
+  if(el)el.classList.add('active');
+  document.getElementById('pageTitle').textContent=_pageTitles[page]||page;
+  if(_pageRenders[page])_pageRenders[page]();
+  if(window.innerWidth<769)toggleSidebar();
+}
+
+// ===== Pagination =====
+function paginate(arr,page,size){const total=Math.ceil(arr.length/size);return{data:arr.slice((page-1)*size,page*size),page,total,allCount:arr.length}}
+function renderPagination(pg,onChangeFn){
+  if(pg.total<=1)return`<div class="pagination"><div class="pg-info">共 ${pg.allCount} 条</div></div>`;
+  let btns=`<button class="pg-btn" onclick="${onChangeFn}(${pg.page-1})" ${pg.page<=1?'disabled':''}><i class="fa-solid fa-chevron-left"></i></button>`;
+  const start=Math.max(1,pg.page-2),end=Math.min(pg.total,pg.page+2);
+  if(start>1)btns+=`<button class="pg-btn" onclick="${onChangeFn}(1)">1</button>`;
+  if(start>2)btns+=`<span style="color:var(--b)">...</span>`;
+  for(let i=start;i<=end;i++)btns+=`<button class="pg-btn${i===pg.page?' active':''}" onclick="${onChangeFn}(${i})">${i}</button>`;
+  if(end<pg.total-1)btns+=`<span style="color:var(--b)">...</span>`;
+  if(end<pg.total)btns+=`<button class="pg-btn" onclick="${onChangeFn}(${pg.total})">${pg.total}</button>`;
+  btns+=`<button class="pg-btn" onclick="${onChangeFn}(${pg.page+1})" ${pg.page>=pg.total?'disabled':''}><i class="fa-solid fa-chevron-right"></i></button>`;
+  return`<div class="pagination"><div class="pg-info">共 ${pg.allCount} 条 / 第 ${pg.page}/${pg.total} 页</div><div class="pg-btns">${btns}</div></div>`;
+}
+
+// ===== Dashboard =====
+let _dashPeriod='all';
+function renderDashboard(){
+  const users=getUsers(),contacts=getContacts(),orders=getOrders(),totalSvc=MODULES.reduce((a,m)=>a+m.services.length,0);
+  const now=new Date();
+  let filtered=contacts;
+  if(_dashPeriod!=='all'){
+    const d=new Date();if(_dashPeriod==='week')d.setDate(d.getDate()-7);else d.setDate(d.getDate()-30);
+    filtered=contacts.filter(c=>c.time&&new Date(c.time)>=d);
+  }
+  const todayStr=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+  const todayMsg=contacts.filter(c=>c.time&&c.time.includes(todayStr)).length;
+  const pendingOrders=orders.filter(o=>o.status==='pending').length;
+  const totalRevenue=orders.filter(o=>o.status==='paid').reduce((a,o)=>a+(parseFloat(o.price)||0),0);
+  const credits=getAllCredits();
+
+  document.getElementById('mainContent').innerHTML=`
+  <div class="filter-bar">
+    <span style="font-weight:600;font-size:13px"><i class="fa-solid fa-filter"></i> 时间维度:</span>
+    <button class="pg-btn${_dashPeriod==='all'?' active':''}" onclick="_dashPeriod='all';renderDashboard()">全部</button>
+    <button class="pg-btn${_dashPeriod==='week'?' active':''}" onclick="_dashPeriod='week';renderDashboard()">近7天</button>
+    <button class="pg-btn${_dashPeriod==='month'?' active':''}" onclick="_dashPeriod='month';renderDashboard()">近30天</button>
+  </div>
+  <div class="stats">
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#533afd,#7c6cf6)"><i class="fa-solid fa-cubes"></i></div><div class="stat-info"><h4>${MODULES.length}</h4><p>业务模块</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#3b82f6,#60a5fa)"><i class="fa-solid fa-wrench"></i></div><div class="stat-info"><h4>${totalSvc}</h4><p>服务项目</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#10b981,#34d399)"><i class="fa-solid fa-users"></i></div><div class="stat-info"><h4>${users.length}</h4><p>注册用户</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#f59e0b,#fbbf24)"><i class="fa-solid fa-envelope"></i></div><div class="stat-info"><h4>${contacts.length}</h4><p>客户留言 (今日${todayMsg})</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)"><i class="fa-solid fa-receipt"></i></div><div class="stat-info"><h4>${orders.length}</h4><p>订单 (待审${pendingOrders})</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#ea2261,#f96bee)"><i class="fa-solid fa-yen-sign"></i></div><div class="stat-info"><h4>${totalRevenue.toFixed(1)}</h4><p>已收款 (元)</p></div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+    <div class="card"><div class="card-header"><h3><i class="fa-solid fa-cubes" style="color:var(--p);margin-right:6px"></i>业务模块概览</h3></div><div class="card-body"><div style="display:flex;flex-direction:column;gap:10px">
+      ${MODULES.map(m=>`<div style="display:flex;align-items:center;gap:12px;padding:10px;border-radius:10px;background:var(--bg)">
+        <div style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;background:${m.gradient};color:#fff"><i class="${m.icon}"></i></div>
+        <div style="flex:1"><div style="font-size:13px;font-weight:700">${m.name}</div><div style="font-size:11px;color:var(--b)">${m.services.length} 项服务</div></div>
+        <div style="width:80px;height:6px;border-radius:3px;background:var(--bg2);overflow:hidden"><div style="height:100%;width:${Math.round(m.services.length/5*100)}%;background:${m.color};border-radius:3px"></div></div>
+      </div>`).join('')}
+    </div></div></div>
+    <div class="card"><div class="card-header"><h3><i class="fa-solid fa-envelope" style="color:var(--warn);margin-right:6px"></i>最近留言</h3><a href="javascript:void(0)" onclick="goPage('messages')">查看全部 <i class="fa-solid fa-arrow-right"></i></a></div><div class="card-body">
+      ${contacts.length?contacts.slice(-5).reverse().map(c=>`<div style="padding:10px 0;border-bottom:1px solid var(--bd)">
+        <div style="display:flex;justify-content:space-between"><span style="font-weight:600;font-size:13px"><i class="fa-solid fa-user" style="color:var(--p);margin-right:4px"></i>${maskName(c.name)}</span><span style="font-size:11px;color:var(--b)">${fmtDate(c.time)}</span></div>
+        <div style="font-size:12px;color:var(--b);margin-top:4px">${(c.message||'').substring(0,50)}${(c.message||'').length>50?'...':''}</div>
+        ${c.module?`<span class="badge badge-purple" style="margin-top:4px">${c.module}</span>`:''}
+      </div>`).join(''):'<div class="empty"><i class="fa-solid fa-envelope-open"></i><p>暂无留言</p></div>'}
+    </div></div>
+  </div>
+  <div class="card"><div class="card-header"><h3><i class="fa-solid fa-user-plus" style="color:var(--ok);margin-right:6px"></i>最新注册用户</h3></div><div class="card-body">
+    ${users.length?`<div class="table-wrap"><table><tr><th>用户名</th><th>昵称</th><th>手机号</th><th>角色</th><th>注册时间</th></tr>
+      ${users.slice(-5).reverse().map(u=>`<tr><td style="font-weight:600">${u.username}</td><td>${maskName(u.nickname)}</td><td>${maskPhone(u.phone)}</td><td>${u.role==='admin'?'<span class="badge badge-purple">管理员</span>':'<span class="badge badge-blue">用户</span>'}</td><td style="color:var(--b)">${fmtDate(u.created)}</td></tr>`).join('')}
+    </table></div>`:'<div class="empty"><i class="fa-solid fa-users"></i><p>暂无用户</p></div>'}
+  </div></div>`;
+}
+
+// ===== Modules =====
+function renderModules(){
+  document.getElementById('mainContent').innerHTML=`<div class="card"><div class="card-header"><h3><i class="fa-solid fa-cubes" style="color:var(--p);margin-right:6px"></i>六大业务模块</h3><span class="svc-count">${MODULES.length} 个模块</span></div><div class="card-body">
+    ${MODULES.map(m=>`<div class="mod-detail-card"><h4><i class="${m.icon}" style="color:${m.color}"></i>${m.name}<span class="svc-count" style="margin-left:8px">${m.services.length} 项服务</span></h4>
+      <p style="margin:8px 0 12px">${m.summary}</p>
+      <div style="font-size:12px;font-weight:600;color:var(--b);margin-bottom:8px">服务列表:</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">${m.services.map(s=>`<span class="mod-tag" style="background:${m.gradient}">${s.name}</span>`).join('')}</div>
+    </div>`).join('')}
+  </div></div>`;
+}
+
+// ===== Services =====
+function renderServices(){
+  const all=[];MODULES.forEach(m=>m.services.forEach(s=>all.push({...s,module:m})));
+  document.getElementById('mainContent').innerHTML=`<div class="card"><div class="card-header"><h3><i class="fa-solid fa-wrench" style="color:var(--info);margin-right:6px"></i>全部服务项目</h3><span class="svc-count">共 ${all.length} 项</span></div><div class="card-body">
+    <div class="table-wrap"><table><tr><th>#</th><th>服务名称</th><th>所属模块</th><th>描述</th></tr>
+      ${all.map((s,i)=>`<tr><td>${i+1}</td><td style="font-weight:600">${s.name}</td><td><span class="mod-tag" style="background:${s.module.gradient}"><i class="${s.module.icon}" style="margin-right:4px"></i>${s.module.name.split(' ')[0]}</span></td><td style="color:var(--b);max-width:300px">${s.desc}</td></tr>`).join('')}
+    </table></div>
+  </div></div>`;
+}
+
+// ===== Users =====
+let _uPage=1,_uKw='',_uSel=new Set();
+function renderUsers(p){
+  if(typeof p==='number')_uPage=p;_uSel=new Set();
+  const users=getUsers();
+  const filtered=filterByKeyword(users,['username','nickname','phone','role'],_uKw);
+  const pg=paginate(filtered,_uPage,10);
+  document.getElementById('mainContent').innerHTML=`
+  <div class="stats">
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#533afd,#7c6cf6)"><i class="fa-solid fa-users"></i></div><div class="stat-info"><h4>${users.length}</h4><p>总用户数</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#10b981,#34d399)"><i class="fa-solid fa-user-shield"></i></div><div class="stat-info"><h4>${users.filter(u=>u.role==='admin').length}</h4><p>管理员</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#3b82f6,#60a5fa)"><i class="fa-solid fa-user"></i></div><div class="stat-info"><h4>${users.filter(u=>u.role!=='admin').length}</h4><p>普通用户</p></div></div>
+  </div>
+  <div class="card"><div class="card-header"><h3><i class="fa-solid fa-users" style="color:var(--p);margin-right:6px"></i>用户列表</h3>
+    <div class="toolbar">
+      <button class="tb-btn" onclick="openAddUser()"><i class="fa-solid fa-plus"></i> 新增</button>
+      <button class="tb-btn" onclick="exportUsers()"><i class="fa-solid fa-file-csv"></i> 导出</button>
+      <button class="tb-btn" id="batchDelUsersBtn" style="display:none" onclick="batchDelUsers()"><i class="fa-solid fa-trash"></i> 批量删除</button>
+    </div>
+  </div><div class="card-body">
+    <div class="filter-bar">
+      <input type="text" placeholder="搜索用户名/昵称/手机号..." value="${_uKw}" oninput="_uKw=this.value;_uPage=1;renderUsers()">
+    </div>
+    <div id="batchBarU"></div>
+    <div class="table-wrap"><table>
+      <tr><th><input type="checkbox" onchange="toggleAllUsers(this.checked)"></th><th>用户名</th><th>昵称</th><th>手机号</th><th>角色</th><th>注册时间</th><th>操作</th></tr>
+      ${pg.data.map((u,i)=>{
+        const ri=(i+(_uPage-1)*10);
+        return`<tr><td><input type="checkbox" value="${ri}" onchange="toggleUserSel(this)"></td>
+        <td style="font-weight:600">${u.username}</td><td>${maskName(u.nickname)}</td><td>${maskPhone(u.phone)}</td>
+        <td>${u.role==='admin'?'<span class="badge badge-purple">管理员</span>':'<span class="badge badge-blue">用户</span>'}</td>
+        <td style="color:var(--b)">${fmtDate(u.created)}</td>
+        <td><button class="act-btn edit" onclick="openEditUser(${ri})"><i class="fa-solid fa-pen"></i></button>${u.username!=='admin'?`<button class="act-btn del" onclick="delUser(${ri})"><i class="fa-solid fa-trash"></i></button>`:''}</td></tr>`
+      }).join('')}
+    </table></div>
+    ${!pg.data.length?'<div class="empty"><i class="fa-solid fa-users"></i><p>暂无用户</p></div>':''}
+    ${renderPagination(pg,'renderUsers')}
+  </div></div>`;
+}
+function toggleAllUsers(checked){document.querySelectorAll('#mainContent table input[type=checkbox]').forEach((cb,i)=>{if(i>0)cb.checked=checked});updateBatchBarU()}
+function toggleUserSel(cb){updateBatchBarU()}
+function updateBatchBarU(){
+  const cbs=document.querySelectorAll('#mainContent table input[type=checkbox]:checked');
+  const bar=document.getElementById('batchBarU');
+  const btn=document.getElementById('batchDelUsersBtn');
+  if(cbs.length>0){bar.innerHTML=`<div class="batch-bar"><span class="sel-count">已选 ${cbs.length} 项</span><button class="act-btn del" onclick="batchDelUsers()"><i class="fa-solid fa-trash"></i> 批量删除</button></div>`}
+  else{bar.innerHTML=''}
+}
+function batchDelUsers(){
+  const cbs=document.querySelectorAll('#mainContent table input[type=checkbox]:checked');
+  if(!cbs.length)return;const users=getUsers();const indices=[...cbs].map(cb=>parseInt(cb.value)).sort((a,b)=>b-a);
+  if(!confirm('确认删除选中的 '+indices.length+' 个用户？将移入回收站'))return;
+  indices.forEach(i=>{if(users[i]&&users[i].username!=='admin')softDelete('user',users.splice(i,1)[0])});
+  saveUsers(users);renderUsers();toast('已删除 '+indices.length+' 个用户，可在回收站恢复','success');
+}
+function exportUsers(){
+  const users=getUsers();
+  const csv=toCSV(users.map(u=>[u.username,u.nickname||'',maskPhone(u.phone),u.role,u.created||'']),['用户名','昵称','手机号','角色','注册时间']);
+  downloadCSV(csv,'用户列表_'+new Date().toISOString().slice(0,10));toast('导出成功','success');
+}
+function openAddUser(){showMod(`<h3><i class="fa-solid fa-user-plus" style="color:var(--p)"></i> 新增用户</h3>
+  <div class="fg"><label class="fl">用户名</label><input class="fi" id="mUser" placeholder="3个字符以上"></div>
+  <div class="fg"><label class="fl">昵称</label><input class="fi" id="mNick" placeholder="选填"></div>
+  <div class="fg"><label class="fl">密码</label><input class="fi" type="password" id="mPwd" placeholder="6个字符以上"></div>
+  <div class="fg"><label class="fl">角色</label><select class="fi" id="mRole"><option value="user">普通用户</option><option value="admin">管理员</option></select></div>
+  <div class="modal-actions"><button class="m-cancel" onclick="closeModal()">取消</button><button class="m-confirm" id="addUserBtn" onclick="addUser()">创建</button></div>`)}
+function addUser(){
+  const u=document.getElementById('mUser').value.trim(),n=document.getElementById('mNick').value.trim(),p=document.getElementById('mPwd').value,r=document.getElementById('mRole').value;
+  const ld=btnLoading(document.getElementById('addUserBtn'));if(!ld)return;
+  if(u.length<3){ld.done();return toast('用户名至少3个字符','error')}
+  if(p.length<6){ld.done();return toast('密码至少6个字符','error')}
+  const users=getUsers();if(users.find(x=>x.username===u)){ld.done();return toast('用户名已存在','error')}
+  users.push({username:u,password:encryptPwd(p),nickname:n,role:r,created:new Date().toLocaleString()});
+  saveUsers(users);ld.done();closeModal();renderUsers();toast('用户创建成功','success');
+}
+function openEditUser(idx){
+  const users=getUsers(),u=users[idx];if(!u)return;
+  showMod(`<h3><i class="fa-solid fa-user-pen" style="color:var(--p)"></i> 编辑用户: ${u.username}</h3>
+    <div class="fg"><label class="fl">昵称</label><input class="fi" id="mNick" value="${u.nickname||''}"></div>
+    <div class="fg"><label class="fl">新密码（留空不修改）</label><input class="fi" type="password" id="mPwd" placeholder="留空则不修改"></div>
+    <div class="fg"><label class="fl">角色</label><select class="fi" id="mRole"><option value="user" ${u.role==='user'?'selected':''}>普通用户</option><option value="admin" ${u.role==='admin'?'selected':''}>管理员</option></select></div>
+    <div class="modal-actions"><button class="m-cancel" onclick="closeModal()">取消</button><button class="m-confirm" id="saveUserBtn" onclick="saveEditUser(${idx})">保存</button></div>`)}
+function saveEditUser(idx){
+  const ld=btnLoading(document.getElementById('saveUserBtn'));if(!ld)return;
+  const users=getUsers();const u=users[idx];
+  u.nickname=document.getElementById('mNick').value.trim();
+  const p=document.getElementById('mPwd').value;if(p){if(p.length<6){ld.done();return toast('密码至少6个字符','error')}u.password=encryptPwd(p)}
+  u.role=document.getElementById('mRole').value;saveUsers(users);ld.done();closeModal();renderUsers();toast('用户信息已更新','success');
+}
+function delUser(idx){
+  const users=getUsers(),u=users[idx];
+  showMod(`<h3><i class="fa-solid fa-triangle-exclamation" style="color:var(--err)"></i> 确认删除</h3><p style="color:var(--b)">确定要删除用户 <b>${u.username}</b> 吗？</p><p style="font-size:12px;color:var(--b)"><i class="fa-solid fa-info-circle"></i> 将移入回收站，30天内可恢复</p>
+    <div class="modal-actions"><button class="m-cancel" onclick="closeModal()">取消</button><button class="m-confirm" style="background:var(--err)" id="cfmDelBtn" onclick="cfmDelUser(${idx})">删除</button></div>`)}
+function cfmDelUser(idx){
+  const ld=btnLoading(document.getElementById('cfmDelBtn'));if(!ld)return;
+  const users=getUsers();const u=users.splice(idx,1)[0];softDelete('user',u);saveUsers(users);ld.done();closeModal();renderUsers();toast('用户已移入回收站','success');
+}
+
+// ===== Messages =====
+let _mPage=1,_mKw='',_mStatus='';
+function renderMessages(p){
+  if(typeof p==='number')_mPage=p;
+  let contacts=getContacts().map((c,i)=>({...c,_idx:i}));
+  contacts=filterByKeyword(contacts,['name','message','module'],_mKw);
+  if(_mStatus)contacts=contacts.filter(c=>(c.status||'pending')===_mStatus);
+  const pg=paginate(contacts,_mPage,10);
+  const pending=contacts.filter(c=>(c.status||'pending')==='pending').length;
+  const replied=contacts.filter(c=>c.status==='replied').length;
+
+  document.getElementById('mainContent').innerHTML=`
+  <div class="stats">
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#f59e0b,#fbbf24)"><i class="fa-solid fa-envelope"></i></div><div class="stat-info"><h4>${getContacts().length}</h4><p>总留言</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#ef4444,#f97316)"><i class="fa-solid fa-clock"></i></div><div class="stat-info"><h4>${pending}</h4><p>待处理</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#22c55e,#10b981)"><i class="fa-solid fa-check-circle"></i></div><div class="stat-info"><h4>${replied}</h4><p>已回复</p></div></div>
+  </div>
+  <div class="card"><div class="card-header"><h3><i class="fa-solid fa-envelope" style="color:var(--warn);margin-right:6px"></i>留言列表</h3>
+    <div class="toolbar">
+      <button class="tb-btn" onclick="exportMsgs()"><i class="fa-solid fa-file-csv"></i> 导出</button>
+    </div>
+  </div><div class="card-body">
+    <div class="filter-bar">
+      <input type="text" placeholder="搜索姓名/内容/模块..." value="${_mKw}" oninput="_mKw=this.value;_mPage=1;renderMessages()">
+      <select onchange="_mStatus=this.value;_mPage=1;renderMessages()">
+        <option value="" ${!_mStatus?'selected':''}>全部状态</option>
+        <option value="pending" ${_mStatus==='pending'?'selected':''}>待处理</option>
+        <option value="replied" ${_mStatus==='replied'?'selected':''}>已回复</option>
+        <option value="closed" ${_mStatus==='closed'?'selected':''}>已关闭</option>
+      </select>
+    </div>
+    <div class="table-wrap"><table>
+      <tr><th>#</th><th>姓名</th><th>电话</th><th>业务模块</th><th>留言内容</th><th>状态</th><th>时间</th><th>操作</th></tr>
+      ${pg.data.map((c,i)=>{const st=c.status||'pending';const stMap={pending:['待处理','badge-yellow'],replied:['已回复','badge-green'],closed:['已关闭','badge-gray']};const[stLabel,stCls]=stMap[st]||stMap.pending;
+        return`<tr><td>${i+1}</td><td style="font-weight:600">${maskName(c.name)}</td><td>${maskPhone(c.phone)}</td>
+        <td>${c.module?`<span class="badge badge-purple">${c.module}</span>`:'-'}</td>
+        <td style="color:var(--b);max-width:200px">${(c.message||'').substring(0,30)}${(c.message||'').length>30?'...':''}</td>
+        <td><span class="badge ${stCls}">${stLabel}</span></td>
+        <td style="color:var(--b);white-space:nowrap;font-size:12px">${fmtDate(c.time)}</td>
+        <td><button class="act-btn view" onclick="viewMsg(${c._idx})"><i class="fa-solid fa-eye"></i></button><button class="act-btn ok" onclick="replyMsg(${c._idx})"><i class="fa-solid fa-reply"></i></button><button class="act-btn del" onclick="delMsg(${c._idx})"><i class="fa-solid fa-trash"></i></button></td></tr>`}).join('')}
+    </table></div>
+    ${!pg.data.length?'<div class="empty"><i class="fa-solid fa-envelope-open"></i><p>暂无留言</p></div>':''}
+    ${renderPagination(pg,'renderMessages')}
+  </div></div>`;
+}
+function viewMsg(idx){
+  const c=getContacts()[idx];if(!c)return;
+  showMod(`<h3><i class="fa-solid fa-envelope-open" style="color:var(--p)"></i> 留言详情</h3>
+    <div class="fg"><label class="fl">姓名</label><div style="font-size:14px;font-weight:600;padding:8px 0">${maskName(c.name)}</div></div>
+    <div class="fg"><label class="fl">电话</label><div style="font-size:14px;padding:8px 0">${maskPhone(c.phone)||'未提供'}</div></div>
+    <div class="fg"><label class="fl">业务模块</label><div style="padding:8px 0">${c.module?`<span class="badge badge-purple">${c.module}</span>`:'未选择'}</div></div>
+    <div class="fg"><label class="fl">状态</label><div style="padding:8px 0">${(() => {const st=c.status||'pending';const m={pending:'待处理',replied:'已回复',closed:'已关闭'};return`<span class="badge ${st==='pending'?'badge-yellow':st==='replied'?'badge-green':'badge-gray'}">${m[st]||'待处理'}</span>`})()}</div></div>
+    ${c.reply?`<div class="fg"><label class="fl">回复内容</label><div style="font-size:14px;padding:12px;background:#dcfce7;border-radius:8px;line-height:1.8">${c.reply}</div></div>`:''}
+    <div class="fg"><label class="fl">留言内容</label><div style="font-size:14px;padding:12px;background:var(--bg);border-radius:8px;line-height:1.8">${c.message||'-'}</div></div>
+    <div class="fg"><label class="fl">提交时间</label><div style="font-size:13px;color:var(--b);padding:8px 0">${fmtDate(c.time)}</div></div>
+    <div class="modal-actions"><button class="m-cancel" onclick="closeModal()">关闭</button><button class="m-confirm" onclick="closeModal();replyMsg(${idx})"><i class="fa-solid fa-reply"></i> 回复</button></div>`)}
+function replyMsg(idx){
+  const c=getContacts()[idx];if(!c)return;
+  showMod(`<h3><i class="fa-solid fa-reply" style="color:var(--ok)"></i> 回复留言</h3>
+    <div style="padding:12px;background:var(--bg);border-radius:8px;margin-bottom:16px"><div style="font-weight:600;font-size:13px">${maskName(c.name)}: </div><div style="font-size:13px;color:var(--b);margin-top:4px">${(c.message||'').substring(0,100)}</div></div>
+    <div class="fg"><label class="fl">回复内容</label><textarea class="fi" id="msgReply" rows="3" placeholder="输入回复内容...">${c.reply||''}</textarea></div>
+    <div class="fg"><label class="fl">标记状态</label><select class="fi" id="msgStatus"><option value="replied">已回复</option><option value="closed">已关闭</option><option value="pending">待处理</option></select></div>
+    <div class="modal-actions"><button class="m-cancel" onclick="closeModal()">取消</button><button class="m-confirm" id="replyBtn" onclick="saveReply(${idx})">发送回复</button></div>`)}
+function saveReply(idx){
+  const ld=btnLoading(document.getElementById('replyBtn'));if(!ld)return;
+  const c=getContacts();c[idx].reply=document.getElementById('msgReply').value.trim();c[idx].status=document.getElementById('msgStatus').value;
+  saveContacts(c);ld.done();closeModal();renderMessages();toast('回复已保存','success');
+}
+function delMsg(idx){
+  showMod(`<h3><i class="fa-solid fa-triangle-exclamation" style="color:var(--err)"></i> 确认删除</h3><p style="color:var(--b)">确定要删除这条留言吗？将移入回收站。</p>
+    <div class="modal-actions"><button class="m-cancel" onclick="closeModal()">取消</button><button class="m-confirm" style="background:var(--err)" id="delMsgBtn" onclick="cfmDelMsg(${idx})">删除</button></div>`)}
+function cfmDelMsg(idx){
+  const ld=btnLoading(document.getElementById('delMsgBtn'));if(!ld)return;
+  const c=getContacts();const item=c.splice(idx,1)[0];softDelete('message',item);saveContacts(c);ld.done();closeModal();renderMessages();toast('留言已移入回收站','success');
+}
+function exportMsgs(){
+  const cs=getContacts();const csv=toCSV(cs.map(c=>[c.name||'',maskPhone(c.phone)||'',c.module||'',(c.message||'').replace(/,/g,'，'),c.status||'pending',fmtDate(c.time)]),['姓名','电话','模块','内容','状态','时间']);
+  downloadCSV(csv,'留言列表_'+new Date().toISOString().slice(0,10));toast('导出成功','success');
+}
+
+// ===== Orders =====
+let _oPage=1,_oKw='',_oStatus='';
+function renderOrders(p){
+  if(typeof p==='number')_oPage=p;
+  let orders=getOrders().map((o,i)=>({...o,_idx:i}));
+  orders=filterByKeyword(orders,['orderId','username','serviceName','desc'],_oKw);
+  if(_oStatus)orders=orders.filter(o=>o.status===_oStatus);
+  const pg=paginate(orders,_oPage,10);
+  const allOrders=getOrders();const pending=allOrders.filter(o=>o.status==='pending').length;const paid=allOrders.filter(o=>o.status==='paid').length;
+
+  document.getElementById('mainContent').innerHTML=`
+  <div class="stats" style="margin-bottom:20px">
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)"><i class="fa-solid fa-receipt"></i></div><div class="stat-info"><h4>${allOrders.length}</h4><p>总订单</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#f59e0b,#fbbf24)"><i class="fa-solid fa-clock"></i></div><div class="stat-info"><h4>${pending}</h4><p>待审核</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#22c55e,#10b981)"><i class="fa-solid fa-check-circle"></i></div><div class="stat-info"><h4>${paid}</h4><p>已支付</p></div></div>
+  </div>
+  <div class="card"><div class="card-header"><h3><i class="fa-solid fa-receipt" style="color:#7c3aed;margin-right:6px"></i>订单管理</h3>
+    <div class="toolbar"><button class="tb-btn" onclick="exportOrders()"><i class="fa-solid fa-file-csv"></i> 导出</button></div>
+  </div><div class="card-body">
+    <div class="filter-bar">
+      <input type="text" placeholder="搜索订单号/用户名/服务名..." value="${_oKw}" oninput="_oKw=this.value;_oPage=1;renderOrders()">
+      <select onchange="_oStatus=this.value;_oPage=1;renderOrders()">
+        <option value="" ${!_oStatus?'selected':''}>全部状态</option>
+        <option value="pending" ${_oStatus==='pending'?'selected':''}>待支付</option>
+        <option value="paid" ${_oStatus==='paid'?'selected':''}>已支付</option>
+        <option value="rejected" ${_oStatus==='rejected'?'selected':''}>已拒绝</option>
+      </select>
+    </div>
+    <div class="table-wrap"><table>
+      <tr><th>订单号</th><th>用户</th><th>服务</th><th>金额</th><th>支付方式</th><th>状态</th><th>时间</th><th>操作</th></tr>
+      ${pg.data.map(o=>{
+        const stMap={pending:['待支付','badge-yellow'],paid:['已支付','badge-green'],rejected:['已拒绝','badge-red'],done:['已完成','badge-green']};
+        const[stLabel,stCls]=stMap[o.status]||['未知','badge-gray'];
+        const payMap={'qq':'QQ支付','wx':'微信支付','alipay':'支付宝','free':'免费'};
+        return`<tr>
+          <td style="font-weight:600;font-size:12px">${o.orderId||'--'}</td>
+          <td>${o.username?`<i class="fa-solid fa-user" style="color:var(--p)"></i> ${o.username}`:'-'}</td>
+          <td style="max-width:180px">${(o.serviceName||o.desc||'--').substring(0,20)}</td>
+          <td style="font-weight:700;color:#7c3aed">&yen;${o.price||0}</td>
+          <td>${payMap[o.method]||o.method||'-'}</td>
+          <td><span class="badge ${stCls}">${stLabel}</span></td>
+          <td style="color:var(--b);white-space:nowrap;font-size:12px">${fmtDate(o.time)}</td>
+          <td>${o.status==='pending'?`<button class="act-btn ok" onclick="confirmOrder(${o._idx})"><i class="fa-solid fa-check"></i></button><button class="act-btn del" onclick="rejectOrder(${o._idx})"><i class="fa-solid fa-xmark"></i></button>`:'<span style="font-size:11px;color:var(--b)">--</span>'}</td>
+        </tr>`}).join('')}
+    </table></div>
+    ${!pg.data.length?'<div class="empty"><i class="fa-solid fa-receipt"></i><p>暂无订单</p></div>':''}
+    ${renderPagination(pg,'renderOrders')}
+  </div></div>
+  <div class="card"><div class="card-header"><h3><i class="fa-solid fa-bolt" style="color:#7c3aed;margin-right:6px"></i>算力余额一览</h3></div><div class="card-body">
+    <div class="table-wrap"><table><thead><tr style="background:#f8fafc;text-align:left"><th style="padding:10px 12px;font-size:13px">用户</th><th style="padding:10px 12px;font-size:13px">当前算力</th><th style="padding:10px 12px;font-size:13px">操作</th></tr></thead><tbody>
+      ${getUsers().map(u=>{const credits=getAllCredits();const val=credits[u.username]||0;
+        return`<tr style="border-bottom:1px solid #f1f5f9"><td style="padding:10px 12px;font-size:13px;font-weight:600">${u.username}</td><td style="padding:10px 12px;font-size:13px;font-weight:700;color:#7c3aed">${val.toLocaleString()}</td><td style="padding:10px 12px"><input id="manualCredit_${u.username}" type="number" min="0" placeholder="数量" style="width:80px;padding:4px 8px;border:1px solid #d1d5db;border-radius:4px"> <button class="act-btn ok" onclick="manualAddCredit('${u.username}')"><i class="fa-solid fa-plus"></i> 充值</button></td></tr>`}).join('')}
+    </tbody></table></div>
+  </div></div>`;
+}
+function confirmOrder(idx){
+  if(!confirm('确认已收到付款并开通服务？'))return;
+  const orders=getOrders();if(!orders[idx])return;const o=orders[idx];
+  if(o.moduleId==='credits'){
+    const targetUser=prompt('请输入充值用户名 (当前: '+(o.username||'未指定')+'):',o.username||'');
+    if(!targetUser)return;const packs=[{id:'pack1',credits:100},{id:'pack2',credits:500},{id:'pack3',credits:2000},{id:'pack4',credits:5000},{id:'pack5',credits:99999}];
+    const pack=packs.find(p=>p.id===o.serviceId);const addCredits=pack?pack.credits:0;
+    if(addCredits>0){const all=getAllCredits();all[targetUser]=(all[targetUser]||0)+addCredits;saveAllCredits(all)}
+    o.confirmedUser=targetUser;
+  }
+  o.status='paid';orders[idx]=o;saveOrders(orders);toast('订单确认成功，服务已开通！','success');renderOrders();
+}
+function rejectOrder(idx){
+  if(!confirm('确认拒绝此订单？'))return;
+  const orders=getOrders();if(!orders[idx])return;orders[idx].status='rejected';saveOrders(orders);toast('订单已拒绝','warn');renderOrders();
+}
+function manualAddCredit(username){
+  const inp=document.getElementById('manualCredit_'+username);const val=parseInt(inp.value);
+  if(!val||val<=0)return toast('请输入有效的算力数量','error');
+  if(!confirm('给 '+username+' 充值 '+val+' 算力？'))return;
+  const all=getAllCredits();all[username]=(all[username]||0)+val;saveAllCredits(all);inp.value='';toast('已为 '+username+' 充值 '+val+' 算力','success');renderOrders();
+}
+function exportOrders(){
+  const os=getOrders();const payMap={'qq':'QQ','wx':'微信','alipay':'支付宝','free':'免费'};
+  const csv=toCSV(os.map(o=>[o.orderId||'',o.username||'',o.serviceName||o.desc||'',o.price||0,payMap[o.method]||o.method||'',o.status||'',fmtDate(o.time)]),['订单号','用户','服务','金额','支付方式','状态','时间']);
+  downloadCSV(csv,'订单列表_'+new Date().toISOString().slice(0,10));toast('导出成功','success');
+}
+
+// ===== Recycle Bin =====
+let _rPage=1;
+function renderRecycle(p){if(typeof p==='number')_rPage=p;
+  const items=getRecycle();const pg=paginate(items,_rPage,10);
+  document.getElementById('mainContent').innerHTML=`
+  <div class="stats">
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#ef4444,#f97316)"><i class="fa-solid fa-trash-can"></i></div><div class="stat-info"><h4>${items.length}</h4><p>回收站项目</p></div></div>
+  </div>
+  <div class="card"><div class="card-header"><h3><i class="fa-solid fa-trash-can" style="color:var(--err);margin-right:6px"></i>回收站</h3>
+    ${items.length?`<button class="tb-btn danger" onclick="emptyRecycle()"><i class="fa-solid fa-fire"></i> 清空回收站</button>`:''}
+  </div><div class="card-body">
+    ${!items.length?'<div class="empty"><i class="fa-solid fa-recycle"></i><p>回收站为空</p></div>':
+    `<div class="table-wrap"><table><tr><th>#</th><th>类型</th><th>数据摘要</th><th>删除时间</th><th>操作</th></tr>
+    ${pg.data.map((item,i)=>{const ri=(i+(_rPage-1)*10);const summary=item.type==='user'?`用户: ${item.data.username}`:item.type==='message'?`留言: ${maskName(item.data.name)} - ${(item.data.message||'').substring(0,20)}`:item.type;
+      return`<tr><td>${ri+1}</td><td><span class="badge ${item.type==='user'?'badge-blue':'badge-purple'}">${item.type==='user'?'用户':'留言'}</span></td>
+      <td>${summary}</td><td style="color:var(--b);font-size:12px">${fmtDate(item.time)}</td>
+      <td><button class="act-btn ok" onclick="restoreItem(${ri})"><i class="fa-solid fa-rotate-left"></i></button><button class="act-btn del" onclick="permDelItem(${ri})"><i class="fa-solid fa-fire"></i></button></td></tr>`}).join('')}
+    </table></div>
+    ${renderPagination(pg,'renderRecycle')}`}
+  </div></div>`;
+}
+function restoreItem(idx){
+  const r=getRecycle();const item=r[idx];if(!item)return;
+  if(item.type==='user'){const users=getUsers();if(!users.find(u=>u.username===item.data.username)){users.push(item.data);saveUsers(users)}}
+  else if(item.type==='message'){const contacts=getContacts();contacts.push(item.data);saveContacts(contacts)}
+  r.splice(idx,1);saveRecycle(r);renderRecycle();toast('已恢复','success');
+}
+function permDelItem(idx){
+  if(!confirm('永久删除？此操作不可恢复'))return;
+  const r=getRecycle();r.splice(idx,1);saveRecycle(r);renderRecycle();toast('已永久删除','success');
+}
+function emptyRecycle(){
+  if(!confirm('确认清空回收站？所有数据将永久删除！'))return;
+  saveRecycle([]);renderRecycle();toast('回收站已清空','success');
+}
+
+// ===== Settings =====
+function renderSettings(){
+  const s=getSettings();const logs=getLoginLog().slice(-10).reverse();
+  document.getElementById('mainContent').innerHTML=`
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+    <div class="card"><div class="card-header"><h3><i class="fa-solid fa-building" style="color:var(--p);margin-right:6px"></i>公司信息</h3></div><div class="card-body">
+      <div class="fg"><label class="fl">公司全称</label><input class="fi" id="sCompany" value="${s.company||'罗圣纪元互联网科技有限责任公司'}"></div>
+      <div class="fg"><label class="fl">联系电话</label><input class="fi" id="sPhone" value="${s.phone||'18890000368'}"></div>
+      <div class="fg"><label class="fl">公司地址</label><input class="fi" id="sAddr" value="${s.address||'湖南省永州市祁阳市'}"></div>
+      <div class="fg"><label class="fl">创始人</label><input class="fi" id="sFounder" value="${s.founder||'罗凯中'}"></div>
+      <div class="fg"><label class="fl">ICP备案号</label><input class="fi" id="sIcp" value="${s.icp||''}" placeholder="例: 湘ICP备2025XXXXXX号"></div>
+      <button class="btn-p" style="margin-top:8px" id="saveSettingsBtn" onclick="saveSiteSettings()">保存设置</button>
+    </div></div>
+    <div class="card"><div class="card-header"><h3><i class="fa-solid fa-key" style="color:var(--warn);margin-right:6px"></i>修改管理员密码</h3></div><div class="card-body">
+      <div class="fg"><label class="fl">当前密码</label><input class="fi" type="password" id="sOldPwd"></div>
+      <div class="fg"><label class="fl">新密码</label><input class="fi" type="password" id="sNewPwd" placeholder="6个字符以上"></div>
+      <div class="fg"><label class="fl">确认新密码</label><input class="fi" type="password" id="sNewPwd2"></div>
+      <button class="btn-p" style="margin-top:8px" id="chgPwdBtn" onclick="chgPwd()">修改密码</button>
+    </div></div>
+  </div>
+  <div class="card"><div class="card-header"><h3><i class="fa-solid fa-link" style="color:var(--info);margin-right:6px"></i>平台访问地址</h3></div><div class="card-body">
+    <div class="fg"><label class="fl">前台访问地址</label><div style="padding:10px;background:var(--bg);border-radius:8px;font-size:13px;display:flex;align-items:center;justify-content:space-between"><a href="https://h0int.github.io/lsjy-app/" target="_blank">https://h0int.github.io/lsjy-app/</a><button class="tb-btn" onclick="navigator.clipboard.writeText('https://h0int.github.io/lsjy-app/');toast('已复制','success')"><i class="fa-solid fa-copy"></i> 复制</button></div></div>
+    <p style="font-size:12px;color:var(--b);margin-top:8px"><i class="fa-solid fa-info-circle"></i> 前台和后台共享 localStorage 数据，用户在前台注册的数据可在后台直接查看和管理。</p>
+  </div></div>
+  <div class="card"><div class="card-header"><h3><i class="fa-solid fa-clock-rotate-left" style="color:var(--ok);margin-right:6px"></i>登录日志 (最近10条)</h3></div><div class="card-body">
+    ${logs.length?`<div class="table-wrap"><table><tr><th>时间</th><th>账号</th><th>设备信息</th></tr>
+      ${logs.map(l=>`<tr><td style="font-size:12px;white-space:nowrap">${fmtDate(l.time)}</td><td style="font-weight:600">${l.username}</td><td style="font-size:11px;color:var(--b);max-width:300px">${(l.device||'-').substring(0,60)}</td></tr>`).join('')}
+    </table></div>`:'<div class="empty"><i class="fa-solid fa-list"></i><p>暂无登录记录</p></div>'}
+  </div></div>`;
+}
+function saveSiteSettings(){
+  const ld=btnLoading(document.getElementById('saveSettingsBtn'));if(!ld)return;
+  localStorage.setItem('lsjy_settings',JSON.stringify({company:document.getElementById('sCompany').value,phone:document.getElementById('sPhone').value,address:document.getElementById('sAddr').value,founder:document.getElementById('sFounder').value,icp:document.getElementById('sIcp').value}));
+  ld.done();toast('设置已保存','success');
+}
+function chgPwd(){
+  const ld=btnLoading(document.getElementById('chgPwdBtn'));if(!ld)return;
+  const o=document.getElementById('sOldPwd').value,n=document.getElementById('sNewPwd').value,n2=document.getElementById('sNewPwd2').value;
+  const u=getCur();if(decryptPwd(u.password)!==o){ld.done();return toast('当前密码错误','error')}
+  if(n.length<6){ld.done();return toast('新密码至少6个字符','error')}
+  if(n!==n2){ld.done();return toast('两次密码不一致','error')}
+  u.password=encryptPwd(n);setCur(u);const users=getUsers();const idx=users.findIndex(x=>x.username===u.username);if(idx>=0){users[idx].password=u.password;saveUsers(users)}
+  ld.done();toast('密码修改成功','success');document.getElementById('sOldPwd').value='';document.getElementById('sNewPwd').value='';document.getElementById('sNewPwd2').value='';
+}
+function openEditAdmin(){showMod(`<h3><i class="fa-solid fa-key" style="color:var(--warn)"></i> 修改管理员密码</h3>
+  <div class="fg"><label class="fl">当前密码</label><input class="fi" type="password" id="aOldPwd"></div>
+  <div class="fg"><label class="fl">新密码</label><input class="fi" type="password" id="aNewPwd" placeholder="6个字符以上"></div>
+  <div class="fg"><label class="fl">确认新密码</label><input class="fi" type="password" id="aNewPwd2"></div>
+  <div class="modal-actions"><button class="m-cancel" onclick="closeModal()">取消</button><button class="m-confirm" id="chgPwdModBtn" onclick="chgPwdModal()">修改</button></div>`)}
+function chgPwdModal(){
+  const ld=btnLoading(document.getElementById('chgPwdModBtn'));if(!ld)return;
+  const o=document.getElementById('aOldPwd').value,n=document.getElementById('aNewPwd').value,n2=document.getElementById('aNewPwd2').value;
+  const u=getCur();if(decryptPwd(u.password)!==o){ld.done();return toast('当前密码错误','error')}
+  if(n.length<6){ld.done();return toast('新密码至少6个字符','error')}
+  if(n!==n2){ld.done();return toast('两次密码不一致','error')}
+  u.password=encryptPwd(n);setCur(u);const users=getUsers();const idx=users.findIndex(x=>x.username===u.username);if(idx>=0){users[idx].password=u.password;saveUsers(users)}
+  ld.done();closeModal();toast('密码修改成功','success');
+}
+
+// ===== Modal =====
+function showMod(h){document.getElementById('modalBox').innerHTML=h;document.getElementById('modalBg').classList.add('show')}
+function closeModal(e){if(e&&e.target!==e.currentTarget)return;document.getElementById('modalBg').classList.remove('show')}
+</script>
+</body>
+</html>
