@@ -341,7 +341,7 @@ textarea.fi{resize:vertical;min-height:120px}
 <li><a href="#pricing">服务定价</a></li>
 <li><a href="#about">关于我们</a></li>
 <li><a href="#contact">联系方式</a></li>
-<li><a href="javascript:void(0)" class="nav-cta" onclick="openAuth('login')" id="navLoginBtn">登录</a></li>
+<li><a href="javascript:void(0)" class="nav-cta" onclick="openAuth('login')" id="navLoginBtn" id="navRight">登录 / 注册</a></li>
 </ul>
 <button class="mobile-toggle" onclick="toggleMobileMenu()"><span></span><span></span><span></span></button>
 </div>
@@ -592,7 +592,7 @@ textarea.fi{resize:vertical;min-height:120px}
 <div class="pay-overlay" id="payOverlay" onclick="closePay(event)">
 <div class="pay-panel">
 <div class="pay-header">
-<h3>💳 服务购买</h3>
+<div style="display:flex;align-items:center;gap:12px"><img src="logo.png" style="width:32px;height:32px;border-radius:8px" alt="Logo"><div><h3>罗圣纪元</h3><p style="font-size:11px;opacity:.7;margin-top:2px">罗圣纪元互联网科技有限责任公司</p></div></div>
 <button class="pay-close" onclick="closePay()">✕</button>
 </div>
 <div class="pay-body">
@@ -810,6 +810,8 @@ function aiImageUrl(prompt,w=512,h=512){return aiGenerateImage(prompt,w,h)}
 
 // 智能文案生成（增强版 - 带AI）
 async function generateCopy(){
+  if(!requireLogin())return;
+  if(!deductCredits(10))return;
   const input=document.getElementById('cwInput').value.trim();
   if(!input)return toast('请输入关键词或产品信息','error');
   const extra=document.getElementById('cwExtra').value.trim();
@@ -862,6 +864,8 @@ async function genHashtags(keyword){
 
 // 增强版Rewrite
 async function doRewrite(){
+  if(!requireLogin())return;
+  if(!deductCredits(5))return;
   const input=document.getElementById('rwInput').value.trim();
   if(!input)return toast('请输入原始文案','error');
   const out=document.getElementById('rwOutput');
@@ -1141,7 +1145,8 @@ e.preventDefault();
 const u=document.getElementById('authUser').value.trim(),p=document.getElementById('authPwd').value;
 const users=getUsers(),found=users.find(x=>x.username===u&&x.password===p);
 if(!found){toast('账号或密码错误','error');return}
-setCur(found);saveToken(found);closeAuth();updateNavAuth();toast('登录成功，欢迎回来！','success');
+setCur(found);saveToken(found);closeAuth();if(checkToken()){console.log("Auto-login via token")}
+updateNavAuth();toast('登录成功，欢迎回来！','success');
 }
 function doRegister(e){
 e.preventDefault();
@@ -1152,7 +1157,8 @@ if(p!==p2)return toast('两次密码不一致','error');
 const users=getUsers();
 if(users.find(x=>x.username===u))return toast('用户名已存在','error');
 const newUser={username:u,password:p,nickname:n||u,role:'user',phone:'',qq:'',wx:'',created:new Date().toLocaleString()};
-users.push(newUser);saveUsers(users);setCur(newUser);saveToken(newUser);closeAuth();updateNavAuth();toast('注册成功！','success');
+users.push(newUser);saveUsers(users);setCur(newUser);saveToken(newUser);closeAuth();if(checkToken()){console.log("Auto-login via token")}
+updateNavAuth();toast('注册成功！','success');
 }
 
 // ===== SMS Login/Register =====
@@ -1195,7 +1201,8 @@ _verifySmsCode(phone,code,'authSmsCode').then(()=>smsLoginSuccess(phone)).catch(
 function smsLoginSuccess(phone){
 const users=getUsers();let found=users.find(u=>u.phone===phone);
 if(!found){found={username:'user_'+phone.slice(-4),password:'sms_'+Date.now(),nickname:'用户'+phone.slice(-4),role:'user',phone:phone,qq:'',wx:'',created:new Date().toLocaleString()};users.push(found);saveUsers(users)}
-setCur(found);saveToken(found);closeAuth();updateNavAuth();toast('登录成功，欢迎回来！','success');
+setCur(found);saveToken(found);closeAuth();if(checkToken()){console.log("Auto-login via token")}
+updateNavAuth();toast('登录成功，欢迎回来！','success');
 }
 function doSmsRegister(){
 const phone=document.getElementById('regPhone').value.trim(),code=document.getElementById('regSmsCode').value.trim(),nick=document.getElementById('regNick').value.trim();
@@ -1206,7 +1213,8 @@ _verifySmsCode(phone,code,'regSmsCode').then(()=>smsRegSuccess(phone,nick)).catc
 function smsRegSuccess(phone,nick){
 const users=getUsers();if(users.find(u=>u.phone===phone))return toast('该手机号已注册，请直接登录','error');
 const newUser={username:'user_'+phone.slice(-4),password:'sms_'+Date.now(),nickname:nick||'用户'+phone.slice(-4),role:'user',phone:phone,qq:'',wx:'',created:new Date().toLocaleString()};
-users.push(newUser);saveUsers(users);setCur(newUser);closeAuth();updateNavAuth();toast('注册成功！','success');
+users.push(newUser);saveUsers(users);setCur(newUser);closeAuth();if(checkToken()){console.log("Auto-login via token")}
+updateNavAuth();toast('注册成功！','success');
 }
 // ===== WeChat / QQ OAuth =====
 function doWxLogin(){
@@ -1362,6 +1370,7 @@ const n=document.getElementById('editNick').value.trim();if(!n)return toast('昵
 const u=getCur();u.nickname=n;setCur(u);
 const users=getUsers();const idx=users.findIndex(x=>x.username===u.username);
 if(idx>=0){users[idx].nickname=n;saveUsers(users)}
+if(checkToken()){console.log("Auto-login via token")}
 updateNavAuth();closeAuth();toast('昵称修改成功','success');
 }
 function editProfilePwd(){
@@ -1388,21 +1397,31 @@ const users=getUsers();const idx=users.findIndex(x=>x.username===u.username);
 if(idx>=0){users[idx].password=n;saveUsers(users)}
 closeAuth();toast('密码修改成功','success');
 }
-function doLogout(){localStorage.removeItem('lsjy3_cur');updateNavAuth();closeAuth();toast('已退出登录')}
+function doLogout(){localStorage.removeItem('lsjy3_cur');if(checkToken()){console.log("Auto-login via token")}
+updateNavAuth();closeAuth();toast('已退出登录')}
 
 function updateNavAuth(){
 const btn=document.getElementById('navLoginBtn');
+const navRight=document.getElementById('navRight');
 if(isLoggedIn()){
 const u=getCur();
-btn.textContent=u.nickname||u.username;
+btn.innerHTML='<i class="fa-solid fa-user" style="margin-right:4px"></i>'+(u.nickname||u.username);
 btn.onclick=()=>showUserProfile();
 btn.classList.remove('nav-cta');
-btn.style.cssText='background:var(--ps);color:var(--p);padding:8px 18px;border-radius:8px;font-weight:600;font-size:13px';
+btn.style.cssText='background:var(--ps);color:var(--p);padding:8px 18px;border-radius:8px;font-weight:600;font-size:13px;border:none;cursor:pointer';
+// 算力显示
+if(navRight){
+  let creditEl=document.getElementById('navCredits');
+  if(!creditEl){creditEl=document.createElement('div');creditEl.id='navCredits';creditEl.style.cssText='display:inline-flex;align-items:center;gap:4px;padding:6px 14px;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#78350f;border-radius:8px;font-size:12px;font-weight:700;margin-right:8px';navRight.insertBefore(creditEl,btn)}
+  creditEl.innerHTML='<i class="fa-solid fa-bolt"></i> <span id="creditDisplay">'+getUserCredits()+'</span> 算力';
+}
 }else{
-btn.textContent='登录';
+btn.textContent='登录 / 注册';
 btn.onclick=()=>openAuth('login');
 btn.className='nav-cta';
 btn.style.cssText='';
+// 移除算力显示
+const creditEl=document.getElementById('navCredits');if(creditEl)creditEl.remove();
 }
 }
 
@@ -2673,6 +2692,7 @@ try{
   }
 }catch(e){}
 })();
+if(checkToken()){console.log("Auto-login via token")}
 updateNavAuth();
 
 // Smooth scroll for anchor links

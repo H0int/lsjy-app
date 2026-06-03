@@ -402,7 +402,7 @@ function enterApp(){
 }
 (function(){const u=getCur();const ADMIN_ROLES=['admin','super_admin','supreme_admin','boss'];if(u&&ADMIN_ROLES.includes(u.role))enterApp()})();
 // Cache bust: force reload if version mismatch
-(function(){const VER='v3.0-upgrade';const stored=localStorage.getItem('lsjy_admin_ver');if(stored!==VER){localStorage.setItem('lsjy_admin_ver',VER);if(stored){setTimeout(()=>location.reload(true),100)}}})();
+(function(){const VER='v3.1-final';const stored=localStorage.getItem('lsjy_admin_ver');if(stored!==VER){localStorage.setItem('lsjy_admin_ver',VER);if(stored){setTimeout(()=>location.reload(true),100)}}})();
 
 // ===== Navigation =====
 const _pageTitles={dashboard:'数据看板',modules:'业务模块',services:'服务管理',users:'用户管理',messages:'留言管理',leads:'线索管理',orders:'订单管理',content:'内容管理',aihub:'AI创作中心',recycle:'回收站',logs:'操作日志',settings:'系统设置'};
@@ -566,7 +566,7 @@ function batchDelUsers(){
   if(!cbs.length)return;const users=getUsers();const indices=[...cbs].map(cb=>parseInt(cb.value)).sort((a,b)=>b-a);
   if(!confirm('确认删除选中的 '+indices.length+' 个用户？将移入回收站'))return;
   indices.forEach(i=>{if(users[i]&&users[i].username!=='admin')softDelete('user',users.splice(i,1)[0])});
-  saveUsers(users);renderUsers();toast('已删除 '+indices.length+' 个用户，可在回收站恢复','success');
+  saveUsers(users);renderUsers();addOpLog('批量删除用户',indices.length+'个');toast('已删除 '+indices.length+' 个用户，可在回收站恢复','success');
 }
 function exportUsers(){
   const users=getUsers();
@@ -586,7 +586,7 @@ function addUser(){
   if(p.length<6){ld.done();return toast('密码至少6个字符','error')}
   const users=getUsers();if(users.find(x=>x.username===u)){ld.done();return toast('用户名已存在','error')}
   users.push({username:u,password:encryptPwd(p),nickname:n,role:r,created:new Date().toLocaleString()});
-  saveUsers(users);ld.done();closeModal();renderUsers();toast('用户创建成功','success');
+  saveUsers(users);ld.done();closeModal();renderUsers();addOpLog('新增用户',u);toast('用户创建成功','success');
 }
 function openEditUser(idx){
   const users=getUsers(),u=users[idx];if(!u)return;
@@ -600,7 +600,7 @@ function saveEditUser(idx){
   const users=getUsers();const u=users[idx];
   u.nickname=document.getElementById('mNick').value.trim();
   const p=document.getElementById('mPwd').value;if(p){if(p.length<6){ld.done();return toast('密码至少6个字符','error')}u.password=encryptPwd(p)}
-  u.role=document.getElementById('mRole').value;saveUsers(users);ld.done();closeModal();renderUsers();toast('用户信息已更新','success');
+  u.role=document.getElementById('mRole').value;saveUsers(users);ld.done();closeModal();renderUsers();addOpLog('编辑用户',u.username);toast('用户信息已更新','success');
 }
 function delUser(idx){
   const users=getUsers(),u=users[idx];
@@ -608,7 +608,7 @@ function delUser(idx){
     <div class="modal-actions"><button class="m-cancel" onclick="closeModal()">取消</button><button class="m-confirm" style="background:var(--err)" id="cfmDelBtn" onclick="cfmDelUser(${idx})">删除</button></div>`)}
 function cfmDelUser(idx){
   const ld=btnLoading(document.getElementById('cfmDelBtn'));if(!ld)return;
-  const users=getUsers();const u=users.splice(idx,1)[0];softDelete('user',u);saveUsers(users);ld.done();closeModal();renderUsers();toast('用户已移入回收站','success');
+  const users=getUsers();const u=users.splice(idx,1)[0];softDelete('user',u);saveUsers(users);ld.done();closeModal();renderUsers();addOpLog('删除用户',u.username);toast('用户已移入回收站','success');
 }
 
 // ===== Messages =====
@@ -866,7 +866,7 @@ function chgPwdModal(){
   if(n.length<6){ld.done();return toast('新密码至少6个字符','error')}
   if(n!==n2){ld.done();return toast('两次密码不一致','error')}
   u.password=encryptPwd(n);setCur(u);const users=getUsers();const idx=users.findIndex(x=>x.username===u.username);if(idx>=0){users[idx].password=u.password;saveUsers(users)}
-  ld.done();closeModal();toast('密码修改成功','success');
+  ld.done();closeModal();addOpLog('修改密码','管理员修改密码');toast('密码修改成功','success');
 }
 
 // ===== Leads (线索管理) =====
