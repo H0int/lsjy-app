@@ -2,6 +2,9 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
 <title>罗圣纪元 - 互联网数字化综合平台</title>
 <meta name="description" content="罗圣纪元互联网数字化综合平台 - AI赋能实体经济，6大业务板块全覆盖，算力驱动AI创作">
@@ -633,6 +636,8 @@ textarea.fi{resize:vertical;min-height:120px}
 <div class="toast" id="toast"></div>
 
 <script>
+// ===== CACHE BUSTER & VERSION CHECK =====
+(function(){const _V='v3.2-fix5';const _cv=localStorage.getItem('lsjy3_ver');if(_cv!==_V){localStorage.setItem('lsjy3_ver',_V);sessionStorage.clear();try{if('caches'in window)caches.keys().then(k=>k.forEach(n=>caches.delete(n)))}catch(e){}}else{try{const _ck=document.cookie;if(!_ck.includes('lsjy_v='+_V)){document.cookie='lsjy_v='+_V+';path=/;max-age=3600'}}catch(e){}}})();
 // ===== DATA =====
 const MODULES=[
 {id:'ai',name:'AI 人工智能',icon:'🤖',color:'#3b82f6',gradient:'linear-gradient(135deg,#3b82f6,#60a5fa)',summary:'依托自研 AI 技术面向中小商家落地数字化转型',services:[
@@ -2697,6 +2702,16 @@ document.querySelectorAll('a[href^="#"]').forEach(a=>{a.addEventListener('click'
 const target=document.querySelector(this.getAttribute('href'));
 if(target){e.preventDefault();target.scrollIntoView({behavior:'smooth',block:'start'})}
 })});
+
+// ===== JS INTEGRITY CHECK =====
+if(typeof openAuth!=='function'||typeof doLogin!=='function'){
+  const _fv='v3.2-fix5';
+  const _sv=localStorage.getItem('lsjy3_jsok');
+  if(_sv===_fv){console.error('JS integrity check failed, forcing reload...')}
+  localStorage.setItem('lsjy3_jsok',_fv);
+  window.stop&&window.stop();
+  window.location.replace(window.location.pathname+'?_r='+Date.now());
+}
 </script>
 </body>
 </html>
