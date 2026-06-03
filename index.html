@@ -333,7 +333,7 @@ textarea.fi{resize:vertical;min-height:120px}
 .ai-spinner{display:inline-block;width:40px;height:40px;border:3px solid var(--bd);border-top-color:var(--p);border-radius:50%;animation:ai-spin .8s linear infinite}
 @keyframes ai-spin{to{transform:rotate(360deg)}}
 </style>
-<script>if(localStorage.getItem('lsjy3_ver')!=='v3.4-beta5'){localStorage.setItem('lsjy3_ver','v3.4-beta5');location.reload(true)}
+<script>if(localStorage.getItem('lsjy3_ver')!=='v3.4-beta6'){localStorage.setItem('lsjy3_ver','v3.4-beta6');location.reload(true)}
 
 // ===== 卡密兑换系统 =====
 function getRedeemCodes(){return JSON.parse(localStorage.getItem('lsjy3_redeem_codes')||'[]')}
@@ -1303,7 +1303,7 @@ renderEmployeeAcct();
 
 <script>
 // ===== CACHE BUSTER & VERSION CHECK =====
-(function(){const _V='v3.4-beta5';const _cv=localStorage.getItem('lsjy3_ver');if(_cv!==_V){localStorage.setItem('lsjy3_ver',_V);sessionStorage.clear();try{if('caches'in window)caches.keys().then(k=>k.forEach(n=>caches.delete(n)))}catch(e){}try{document.cookie='lsjy3_ver=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT';document.cookie='lsjy_v=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT';document.cookie='__cf_bm=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT'}catch(e){}}})();
+(function(){const _V='v3.4-beta6';const _cv=localStorage.getItem('lsjy3_ver');if(_cv!==_V){localStorage.setItem('lsjy3_ver',_V);sessionStorage.clear();try{if('caches'in window)caches.keys().then(k=>k.forEach(n=>caches.delete(n)))}catch(e){}try{document.cookie='lsjy3_ver=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT';document.cookie='lsjy_v=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT';document.cookie='__cf_bm=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT'}catch(e){}}})();
 // ===== DATA =====
 const MODULES=[
 {id:'ai',name:'AI 人工智能',icon:'🤖',color:'#3b82f6',gradient:'linear-gradient(135deg,#3b82f6,#60a5fa)',summary:'依托自研 AI 技术面向中小商家落地数字化转型',services:[
@@ -1429,6 +1429,7 @@ function withTimeout(promise,ms){
 
 async function aiGenerateText(prompt,systemPrompt,model,retries){
   retries=retries||2;
+  let lastErr=null;
   // 优先使用豆包API
   if(DOUBAO_CONFIG.ENABLED){
     for(let i=0;i<=retries;i++){
@@ -1443,11 +1444,11 @@ async function aiGenerateText(prompt,systemPrompt,model,retries){
             {role:'user',content:prompt}
           ],max_output_tokens:4000,temperature:0.9})});
         clearTimeout(tid);
-        if(!r.ok)throw new Error('HTTP '+r.status);
+        if(!r.ok){lastErr=new Error('HTTP '+r.status);if(i<retries)await new Promise(r=>setTimeout(r,1500*(i+1)));continue;}
         const d=await r.json();
         if(d.output&&d.output.length){const msg=d.output.filter(o=>o.type==='message').pop();if(msg&&msg.content&&msg.content.length)return msg.content[0].text.trim();}
         if(i<retries)await new Promise(r=>setTimeout(r,1500*(i+1)));
-      }catch(e){console.log('Doubao err (try '+i+'):',e);if(i<retries)await new Promise(r=>setTimeout(r,1500*(i+1)))}
+      }catch(e){lastErr=e;console.log('Doubao err (try '+i+'):',e.message||e);if(i<retries)await new Promise(r=>setTimeout(r,1500*(i+1)))}
     }
   }
   // 备用：Pollinations.ai
@@ -1462,17 +1463,19 @@ async function aiGenerateText(prompt,systemPrompt,model,retries){
           {role:'user',content:prompt}
         ],max_tokens:4000,temperature:0.9})});
       clearTimeout(tid);
-      if(!r.ok)throw new Error('HTTP '+r.status);
+      if(!r.ok){lastErr=new Error('HTTP '+r.status);if(i<retries)await new Promise(r=>setTimeout(r,1500*(i+1)));continue;}
       const d=await r.json();
       if(d.choices&&d.choices[0])return d.choices[0].message.content.trim();
       if(d.error)throw new Error(d.error);
       if(i<retries)await new Promise(r=>setTimeout(r,1500*(i+1)));
     }catch(e){
+      lastErr=e;
       if(e.name==='AbortError')console.log('AI请求超时 (try '+i+')');
-      else console.log('AI Text API error (try '+i+'):',e);
+      else console.log('AI Text API error (try '+i+'):',e.message||e);
       if(i<retries)await new Promise(r=>setTimeout(r,1500*(i+1)));
     }
   }
+  if(lastErr)console.error('AI最终失败:',lastErr.message||lastErr);
   return null;
 }
 
@@ -1516,7 +1519,8 @@ async function generateCopy(){
     toast('AI文案生成成功！','success');
   }else{
     out.textContent=smartTemplates(type,input,extra);
-    toast('已使用智能模板生成（AI服务繁忙）','warn');
+    toast('AI暂时无法连接，已使用智能模板替代生成','warn');
+    console.warn('AI服务调用失败，已降级为本地模板。请检查网络或稍后重试。');
   }
 }
 
@@ -1569,7 +1573,8 @@ async function doRewrite(){
     toast('AI改写完成！','success');
   }else{
     out.textContent=input;
-    toast('已保留原文（AI服务繁忙）','warn');
+    toast('AI暂时无法连接，已保留原文','warn');
+    console.warn('改写AI调用失败，请检查网络或稍后重试。');
   }
 }
 
@@ -3479,12 +3484,39 @@ if(target){e.preventDefault();target.scrollIntoView({behavior:'smooth',block:'st
 
 // ===== JS INTEGRITY CHECK =====
 if(typeof openAuth!=='function'||typeof doLogin!=='function'||typeof openTool!=='function'||typeof toast!=='function'){
-  const _fv='v3.4-beta5';
+  const _fv='v3.4-beta6';
   const _sv=localStorage.getItem('lsjy3_jsok');
   localStorage.setItem('lsjy3_jsok',_fv);
   window.stop&&window.stop();
   window.location.replace(window.location.pathname+'?_r='+Date.now());
 }
+</script>
+
+<!-- AI连通性自检 -->
+<script>
+(function(){
+  setTimeout(async function(){
+    try{
+      if(DOUBAO_CONFIG&&DOUBAO_CONFIG.ENABLED){
+        const ctrl=new AbortController();
+        const tid=setTimeout(()=>ctrl.abort(),5000);
+        const r=await fetch(DOUBAO_CONFIG.ARK_BASE_URL+'/responses',{
+          method:'POST',signal:ctrl.signal,
+          headers:{'Content-Type':'application/json','Authorization':'Bearer '+DOUBAO_CONFIG.ARK_API_KEY},
+          body:JSON.stringify({model:DOUBAO_CONFIG.MODEL_TEXT,input:[
+            {role:'user',content:'ping'}
+          ],max_output_tokens:5})
+        });
+        clearTimeout(tid);
+        if(r.ok){console.log('✅ AI服务连通正常');window._AI_OK=true;}
+        else{console.warn('⚠️ AI服务返回HTTP '+r.status);window._AI_OK=false;}
+      }
+    }catch(e){
+      console.warn('⚠️ AI服务连通性检测失败:',e.message||e);
+      window._AI_OK=false;
+    }
+  },3000);
+})();
 </script>
 </body>
 </html>
