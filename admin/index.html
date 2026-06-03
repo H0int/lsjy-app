@@ -243,6 +243,7 @@ tr:hover td{background:var(--ps)}
       <div class="sb-item" onclick="goPage('messages',this)"><i class="fa-solid fa-envelope"></i>留言管理</div>
       <div class="sb-item" onclick="goPage('leads',this)"><i class="fa-solid fa-crosshairs"></i>线索管理</div>
       <div class="sb-item" onclick="goPage('orders',this)"><i class="fa-solid fa-receipt"></i>订单管理</div>
+      <div class="sb-item" onclick="goPage('redeemCodes',this)"><i class="fa-solid fa-ticket"></i>卡密管理</div>
       <div class="sb-group">内容</div>
       <div class="sb-item" onclick="goPage('content',this)"><i class="fa-solid fa-file-pen"></i>内容管理</div>
       <div class="sb-group">AI工具</div>
@@ -348,6 +349,13 @@ function getOpLogs(){return JSON.parse(localStorage.getItem('lsjy_admin_oplogs')
 function saveOpLogs(l){localStorage.setItem('lsjy_admin_oplogs',JSON.stringify(l))}
 function addOpLog(action,detail){const logs=getOpLogs();const u=getCur();logs.push({action,detail,operator:u?u.username:'system',time:new Date().toISOString()});if(logs.length>500)logs.splice(0,logs.length-500);saveOpLogs(logs)}
 
+
+// ===== Redeem Code Storage =====
+function getRedeemCodes(){return JSON.parse(localStorage.getItem('lsjy3_redeem_codes')||'[]')}
+function saveRedeemCodes(c){localStorage.setItem('lsjy3_redeem_codes',JSON.stringify(c))}
+function getRedeemHistory(){return JSON.parse(localStorage.getItem('lsjy3_redeem_history')||'[]')}
+function saveRedeemHistory(h){localStorage.setItem('lsjy3_redeem_history',JSON.stringify(h))}
+
 // Seed admin (encrypted password)
 (function(){const u=JSON.parse(localStorage.getItem('lsjy3_users')||'[]');const ai=u.findIndex(x=>x.role==='admin');if(ai>=0){u[ai].username='KF02V9';u[ai].password=encryptPwd('LKZ2005430')}else{u.push({username:'KF02V9',password:encryptPwd('LKZ2005430'),nickname:'管理员',role:'admin',phone:'',qq:'',wx:'',created:new Date().toLocaleString()})}localStorage.setItem('lsjy3_users',JSON.stringify(u));localStorage.removeItem('lsjy_admin_lockout')})();
 
@@ -408,8 +416,8 @@ function enterApp(){
 // Cache bust handled by version check in footer integrity check
 
 // ===== Navigation =====
-const _pageTitles={dashboard:'数据看板',modules:'业务模块',services:'服务管理',users:'用户管理',messages:'留言管理',leads:'线索管理',orders:'订单管理',content:'内容管理',aihub:'AI创作中心',recycle:'回收站',logs:'操作日志',settings:'系统设置'};
-const _pageRenders={dashboard:renderDashboard,modules:renderModules,services:renderServices,users:renderUsers,messages:renderMessages,leads:renderLeads,orders:renderOrders,content:renderContent,aihub:renderAIHub,recycle:renderRecycle,logs:renderLogs,settings:renderSettings};
+const _pageTitles={dashboard:'数据看板',modules:'业务模块',services:'服务管理',users:'用户管理',messages:'留言管理',leads:'线索管理',orders:'订单管理',redeemCodes:'卡密管理',content:'内容管理',aihub:'AI创作中心',recycle:'回收站',logs:'操作日志',settings:'系统设置'};
+const _pageRenders={dashboard:renderDashboard,modules:renderModules,services:renderServices,users:renderUsers,messages:renderMessages,leads:renderLeads,orders:renderOrders,redeemCodes:renderRedeemCodes,content:renderContent,aihub:renderAIHub,recycle:renderRecycle,logs:renderLogs,settings:renderSettings};
 function goPage(page,el){
   document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
   if(el)el.classList.add('active');
@@ -1489,12 +1497,162 @@ ${r}\`);toast('Markdown已复制','success')" style="margin:0">📋 复制Markdo
   }else{out.innerHTML='<span style="color:var(--warn)">AI服务繁忙，请稍后重试</span>'}
 }
 
+
+// ===== Redeem Code Management (卡密管理) =====
+const CREDIT_PACKS=[
+  {id:'pack1',name:'体验包',credits:100,price:9.9},
+  {id:'pack2',name:'基础包',credits:500,price:39.9},
+  {id:'pack3',name:'专业包',credits:2000,price:129},
+  {id:'pack4',name:'旗舰包',credits:5000,price:299},
+  {id:'pack5',name:'无限包',credits:99999,price:599}
+];
+function genCode(){const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='';for(let i=0;i<8;i++)s+=c[Math.floor(Math.random()*c.length)];return 'LSJY-'+s}
+let _rcPage=1,_rcFilter='',_rcStatus='';
+function renderRedeemCodes(p){
+  if(typeof p==='number')_rcPage=p;
+  let codes=getRedeemCodes().map((c,i)=>({...c,_idx:i}));
+  codes=filterByKeyword(codes,['code','packName','usedBy','note'],_rcFilter);
+  if(_rcStatus)codes=codes.filter(c=>c.status===_rcStatus);
+  const pg=paginate(codes,_rcPage,12);
+  const allCodes=getRedeemCodes();
+  const unused=allCodes.filter(c=>c.status==='unused').length;
+  const used=allCodes.filter(c=>c.status==='used').length;
+  const totalCredits=allCodes.filter(c=>c.status==='unused').reduce((a,c)=>a+(c.credits||0),0);
+  const history=getRedeemHistory();
+
+  document.getElementById('mainContent').innerHTML=`
+  <div class="stats">
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#533afd,#7c6cf6)"><i class="fa-solid fa-ticket"></i></div><div class="stat-info"><h4>${allCodes.length}</h4><p>卡密总数</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#3b82f6,#60a5fa)"><i class="fa-solid fa-check-circle"></i></div><div class="stat-info"><h4>${unused}</h4><p>未使用</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#22c55e,#34d399)"><i class="fa-solid fa-circle-check"></i></div><div class="stat-info"><h4>${used}</h4><p>已兑换</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#f59e0b,#fbbf24)"><i class="fa-solid fa-bolt"></i></div><div class="stat-info"><h4>${totalCredits.toLocaleString()}</h4><p>待兑换算力</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#ea2261,#f96bee)"><i class="fa-solid fa-clock-rotate-left"></i></div><div class="stat-info"><h4>${history.length}</h4><p>兑换记录</p></div></div>
+  </div>
+  <div class="card"><div class="card-header"><h3><i class="fa-solid fa-plus-circle" style="color:var(--ok);margin-right:6px"></i>批量生成卡密</h3></div><div class="card-body">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:12px;align-items:end">
+      <div class="fg" style="margin:0"><label class="fl">选择套餐</label><select class="fi" id="rcPack">
+        ${CREDIT_PACKS.map(p=>`<option value="${p.id}">${p.name} (${p.credits}算力 ¥${p.price})</option>`).join('')}
+        <option value="custom">自定义</option>
+      </select></div>
+      <div class="fg" id="rcCustomCreditsWrap" style="margin:0;display:none"><label class="fl">自定义算力</label><input class="fi" type="number" id="rcCustomCredits" min="1" placeholder="算力数量"></div>
+      <div class="fg" id="rcCustomPriceWrap" style="margin:0;display:none"><label class="fl">自定义价格</label><input class="fi" type="number" id="rcCustomPrice" min="0" step="0.1" placeholder="价格"></div>
+      <div class="fg" style="margin:0"><label class="fl">生成数量</label><input class="fi" type="number" id="rcCount" min="1" max="100" value="5" placeholder="1-100"></div>
+      <button class="btn-p" style="padding:10px 20px;white-space:nowrap" id="genCodesBtn" onclick="batchGenCodes()"><i class="fa-solid fa-wand-magic-sparkles"></i> 生成</button>
+    </div>
+    <div id="genResult" style="margin-top:16px"></div>
+  </div></div>
+  <div class="card"><div class="card-header"><h3><i class="fa-solid fa-ticket" style="color:var(--p);margin-right:6px"></i>卡密列表</h3>
+    <div class="toolbar">
+      <button class="tb-btn" onclick="exportCodes()"><i class="fa-solid fa-file-csv"></i> 导出</button>
+      <button class="tb-btn danger" onclick="batchDelCodes()"><i class="fa-solid fa-trash"></i> 批量删除未使用</button>
+    </div>
+  </div><div class="card-body">
+    <div class="filter-bar">
+      <input type="text" placeholder="搜索卡密/套餐/备注..." value="${_rcFilter}" oninput="_rcFilter=this.value;_rcPage=1;renderRedeemCodes()">
+      <select onchange="_rcStatus=this.value;_rcPage=1;renderRedeemCodes()">
+        <option value="" ${!_rcStatus?'selected':''}>全部状态</option>
+        <option value="unused" ${_rcStatus==='unused'?'selected':''}>未使用</option>
+        <option value="used" ${_rcStatus==='used'?'selected':''}>已兑换</option>
+      </select>
+    </div>
+    <div class="table-wrap"><table>
+      <tr><th>卡密</th><th>套餐</th><th>算力</th><th>价格</th><th>状态</th><th>使用者</th><th>生成时间</th><th>备注</th><th>操作</th></tr>
+      ${pg.data.map(c=>{
+        return`<tr>
+          <td style="font-weight:700;font-family:monospace;font-size:12px;letter-spacing:.5px">${c.code}</td>
+          <td><span class="badge badge-purple">${c.packName||'自定义'}</span></td>
+          <td style="font-weight:700;color:var(--p)">${(c.credits||0).toLocaleString()}</td>
+          <td>&yen;${c.price||0}</td>
+          <td>${c.status==='unused'?'<span class="badge badge-blue">未使用</span>':'<span class="badge badge-green">已兑换</span>'}</td>
+          <td>${c.usedBy||'-'}</td>
+          <td style="color:var(--b);white-space:nowrap;font-size:12px">${fmtDate(c.createdAt)}</td>
+          <td style="max-width:100px;font-size:12px;color:var(--b)">${(c.note||'').substring(0,15)||'-'}</td>
+          <td><button class="act-btn view" onclick="copyCode('${c.code}')" title="复制"><i class="fa-solid fa-copy"></i></button>${c.status==='unused'?`<button class="act-btn del" onclick="delCode(${c._idx})" title="删除"><i class="fa-solid fa-trash"></i></button>`:''}</td>
+        </tr>`}).join('')}
+    </table></div>
+    ${!pg.data.length?'<div class="empty"><i class="fa-solid fa-ticket"></i><p>暂无卡密</p></div>':''}
+    ${renderPagination(pg,'renderRedeemCodes')}
+  </div></div>
+  <div class="card"><div class="card-header"><h3><i class="fa-solid fa-clock-rotate-left" style="color:var(--warn);margin-right:6px"></i>兑换记录</h3></div><div class="card-body">
+    ${history.length?`<div class="table-wrap"><table><tr><th>卡密</th><th>算力</th><th>使用者</th><th>兑换时间</th></tr>
+      ${history.slice().reverse().slice(0,20).map(h=>`<tr><td style="font-family:monospace;font-size:12px">${h.code}</td><td style="font-weight:700;color:var(--p)">${h.credits}</td><td>${h.username}</td><td style="color:var(--b);font-size:12px">${fmtDate(h.time)}</td></tr>`).join('')}
+    </table></div>`:'<div class="empty"><i class="fa-solid fa-clock-rotate-left"></i><p>暂无兑换记录</p></div>'}
+  </div></div>`;
+  // Toggle custom fields
+  const packSel=document.getElementById('rcPack');
+  if(packSel){
+    packSel.onchange=function(){
+      document.getElementById('rcCustomCreditsWrap').style.display=this.value==='custom'?'block':'none';
+      document.getElementById('rcCustomPriceWrap').style.display=this.value==='custom'?'block':'none';
+    };
+  }
+}
+function batchGenCodes(){
+  const packId=document.getElementById('rcPack').value;
+  const count=parseInt(document.getElementById('rcCount').value)||0;
+  if(count<1||count>100)return toast('数量范围：1-100','error');
+  let credits=0,price=0,packName='';
+  if(packId==='custom'){
+    credits=parseInt(document.getElementById('rcCustomCredits').value)||0;
+    price=parseFloat(document.getElementById('rcCustomPrice').value)||0;
+    if(credits<1)return toast('请输入有效算力数量','error');
+    packName='自定义';
+  }else{
+    const pack=CREDIT_PACKS.find(p=>p.id===packId);
+    if(!pack)return toast('请选择套餐','error');
+    credits=pack.credits;price=pack.price;packName=pack.name;
+  }
+  const codes=[];
+  const existing=getRedeemCodes();
+  const existingSet=new Set(existing.map(c=>c.code));
+  let attempts=0;
+  while(codes.length<count&&attempts<count*10){
+    const code=genCode();
+    if(!existingSet.has(code)){codes.push({code,credits,price,packName,status:'unused',usedBy:null,usedAt:null,createdAt:new Date().toISOString(),note:''});existingSet.add(code)}
+    attempts++;
+  }
+  if(codes.length<count){toast('已生成'+codes.length+'个（存在重复跳过）','warn')}
+  const allCodes=existing.concat(codes);
+  saveRedeemCodes(allCodes);
+  const result=document.getElementById('genResult');
+  const codeList=codes.map(c=>c.code).join('\n');
+  result.innerHTML=`
+    <div style="padding:16px;background:#dcfce7;border-radius:10px;margin-bottom:12px">
+      <div style="font-weight:700;color:#166534;margin-bottom:8px"><i class="fa-solid fa-check-circle"></i> 成功生成 ${codes.length} 个卡密</div>
+      <div style="font-size:12px;color:#166534">套餐：${packName} | 算力：${credits} | 单价：¥${price} | 总价值：¥${(price*codes.length).toFixed(1)}</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <button class="act-btn ok" onclick="navigator.clipboard.writeText(document.getElementById('codeListArea').value);toast('已复制全部卡密','success')"><i class="fa-solid fa-copy"></i> 复制全部</button>
+    </div>
+    <textarea id="codeListArea" rows="${Math.min(codes.length+1,10)}" style="width:100%;padding:10px;border:1px solid var(--bd);border-radius:8px;font-family:monospace;font-size:12px;background:var(--bg)" readonly>${codeList}</textarea>`;
+  addOpLog('批量生成卡密',packName+' x'+codes.length);
+  toast('成功生成 '+codes.length+' 个卡密','success');
+  renderRedeemCodes();
+}
+function copyCode(code){navigator.clipboard.writeText(code);toast('已复制: '+code,'success')}
+function delCode(idx){
+  showMod(`<h3><i class="fa-solid fa-triangle-exclamation" style="color:var(--err)"></i> 删除卡密</h3><p>确定删除此卡密？</p><div class="modal-actions"><button class="m-cancel" onclick="closeModal()">取消</button><button class="m-confirm" style="background:var(--err)" onclick="cfmDelCode(${idx})">删除</button></div>`);
+}
+function cfmDelCode(idx){const codes=getRedeemCodes();const c=codes.splice(idx,1)[0];saveRedeemCodes(codes);addOpLog('删除卡密',c.code);closeModal();renderRedeemCodes();toast('卡密已删除','success')}
+function batchDelCodes(){
+  const codes=getRedeemCodes();const unused=codes.filter(c=>c.status==='unused');
+  if(!unused.length)return toast('没有未使用的卡密','error');
+  if(!confirm('确定删除全部 '+unused.length+' 个未使用的卡密？'))return;
+  const used=codes.filter(c=>c.status==='used');
+  saveRedeemCodes(used);addOpLog('批量删除卡密','删除 '+unused.length+' 个未使用');renderRedeemCodes();toast('已删除 '+unused.length+' 个未使用卡密','success');
+}
+function exportCodes(){
+  const codes=getRedeemCodes();
+  const csv=toCSV(codes.map(c=>[c.code,c.packName,c.credits,c.price,c.status==='unused'?'未使用':'已兑换',c.usedBy||'',c.note||'',fmtDate(c.createdAt)]),['卡密','套餐','算力','价格','状态','使用者','备注','生成时间']);
+  downloadCSV(csv,'卡密列表_'+new Date().toISOString().slice(0,10));toast('导出成功','success');
+}
+
 // ===== Modal =====
 function showMod(h){document.getElementById('modalBox').innerHTML=h;document.getElementById('modalBg').classList.add('show')}
 function closeModal(e){if(e&&e.target!==e.currentTarget)return;document.getElementById('modalBg').classList.remove('show')}
 
 // ===== VERSION & INTEGRITY CHECK =====
-(function(){const VER='admin-v3.2';const stored=localStorage.getItem('lsjy_admin_ver');if(stored!==VER){localStorage.setItem('lsjy_admin_ver',VER);if(stored)location.reload(true)}else if(typeof goPage!=='function'||typeof renderDashboard!=='function'){const fc=localStorage.getItem('lsjy_admin_jsok');if(fc===VER)return;localStorage.setItem('lsjy_admin_jsok',VER);window.location.replace(window.location.pathname+'?_r='+Date.now())}})();
+(function(){const VER='admin-v3.3';const stored=localStorage.getItem('lsjy_admin_ver');if(stored!==VER){localStorage.setItem('lsjy_admin_ver',VER);if(stored)location.reload(true)}else if(typeof goPage!=='function'||typeof renderDashboard!=='function'){const fc=localStorage.getItem('lsjy_admin_jsok');if(fc===VER)return;localStorage.setItem('lsjy_admin_jsok',VER);window.location.replace(window.location.pathname+'?_r='+Date.now())}})();
 </script>
 </body>
 </html>

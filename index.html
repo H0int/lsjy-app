@@ -333,7 +333,293 @@ textarea.fi{resize:vertical;min-height:120px}
 .ai-spinner{display:inline-block;width:40px;height:40px;border:3px solid var(--bd);border-top-color:var(--p);border-radius:50%;animation:ai-spin .8s linear infinite}
 @keyframes ai-spin{to{transform:rotate(360deg)}}
 </style>
-<script>if(localStorage.getItem('lsjy3_ver')!=='v3.2-fix7'){localStorage.setItem('lsjy3_ver','v3.2-fix7');location.reload(true)}</script>
+<script>if(localStorage.getItem('lsjy3_ver')!=='v3.2-fix8'){localStorage.setItem('lsjy3_ver','v3.2-fix8');location.reload(true)}
+
+// ===== 卡密兑换系统 =====
+function getRedeemCodes(){return JSON.parse(localStorage.getItem('lsjy3_redeem_codes')||'[]')}
+function saveRedeemCodes(c){localStorage.setItem('lsjy3_redeem_codes',JSON.stringify(c))}
+function getRedeemHistory(){return JSON.parse(localStorage.getItem('lsjy3_redeem_history')||'[]')}
+function saveRedeemHistory(h){localStorage.setItem('lsjy3_redeem_history',JSON.stringify(h))}
+
+function renderRedeemCode(){
+const history=getRedeemHistory();
+document.getElementById('toolPanel').innerHTML=`<div class="tool-header"><h3>🎫 卡密兑换</h3><button class="detail-close" onclick="closeTool()">\u2715</button></div>
+<div class="tool-body">
+<div style="padding:20px;background:linear-gradient(135deg,#f59e0b,#ef4444);border-radius:16px;color:#fff;text-align:center;margin-bottom:20px">
+<div style="font-size:13px;opacity:.8;margin-bottom:4px">当前算力余额</div>
+<div style="font-size:36px;font-weight:900">${getCredits()}</div>
+</div>
+<div class="fg"><label class="fl">🔑 输入卡密串码</label>
+<div style="display:flex;gap:8px">
+<input class="fi" id="redeemInput" placeholder="请输入卡密串码（如：LSJY-A1B2C3D4E5）" style="flex:1;font-size:15px;letter-spacing:1px;text-transform:uppercase">
+<button class="btn btn-p" onclick="doRedeemCode()" style="padding:12px 24px;white-space:nowrap">兑换</button>
+</div>
+</div>
+<div style="padding:12px;background:var(--ps);border-radius:10px;margin-bottom:20px">
+<p style="font-size:12px;color:var(--p);font-weight:600;margin-bottom:4px">💡 使用说明</p>
+<p style="font-size:11px;color:var(--b);line-height:1.6">1. 向客服购买算力卡密（联系：188-9000-0368）<br>2. 在上方输入卡密串码点击兑换<br>3. 算力即时到账，可用于AI创作功能<br>4. 每张卡密仅限使用一次</p>
+</div>
+<h4 style="font-size:14px;font-weight:700;margin-bottom:12px">📜 兑换记录</h4>
+${history.length?history.slice(0,10).map(h=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--bg);font-size:12px">
+<div><span style="font-weight:600">${h.code}</span><br><span style="color:var(--b)">${h.time}</span></div>
+<span style="font-weight:700;color:var(--ok)">+${h.credits} 算力</span>
+</div>`).join(''):'<div style="text-align:center;padding:20px;color:var(--b);font-size:13px">暂无兑换记录</div>'}
+</div>`;
+}
+
+function doRedeemCode(){
+const code=document.getElementById('redeemInput').value.trim().toUpperCase();
+if(!code)return toast('请输入卡密串码','error');
+if(code.length<8)return toast('卡密格式不正确','error');
+
+const allCodes=getRedeemCodes();
+const found=allCodes.find(c=>c.code===code&&!c.used);
+if(!found){toast('卡密无效或已被使用','error');return}
+
+// Mark as used
+found.used=true;
+found.usedBy=getCur()?getCur().username:'unknown';
+found.usedAt=new Date().toLocaleString();
+saveRedeemCodes(allCodes);
+
+// Add credits
+addCredits(found.credits);
+addCreditLog(found.credits,'卡密兑换 - '+code+' +'+found.credits+'算力');
+
+// Save history
+const history=getRedeemHistory();
+history.unshift({code:code,credits:found.credits,time:new Date().toLocaleString(),packName:found.name});
+if(history.length>50)history.length=50;
+saveRedeemHistory(history);
+
+toast('兑换成功！'+found.credits+'算力已到账','success');
+document.getElementById('redeemInput').value='';
+// Refresh UI
+renderRedeemCode();
+updateNavAuth();
+}
+
+// ===== 消耗记录 =====
+function renderCreditLogs(){
+const logs=getCreditLogs();
+document.getElementById('toolPanel').innerHTML=`<div class="tool-header"><h3>📊 消耗记录</h3><button class="detail-close" onclick="closeTool()">\u2715</button></div>
+<div class="tool-body">
+<div style="padding:20px;background:linear-gradient(135deg,#06b6d4,#0ea5e9);border-radius:16px;color:#fff;text-align:center;margin-bottom:20px">
+<div style="font-size:13px;opacity:.8;margin-bottom:4px">当前算力余额</div>
+<div style="font-size:36px;font-weight:900">${getCredits()}</div>
+<div style="font-size:12px;opacity:.7;margin-top:4px">共 ${logs.length} 条消耗记录</div>
+</div>
+<h4 style="font-size:14px;font-weight:700;margin-bottom:12px">📋 算力明细</h4>
+${logs.length?logs.map(l=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--bg);font-size:12px">
+<div style="flex:1">
+<div style="font-weight:600;color:var(--l)">${l.desc}</div>
+<div style="color:var(--b);font-size:11px;margin-top:2px">${l.time}</div>
+</div>
+<div style="text-align:right">
+<div style="font-weight:700;color:${l.amount>0?'var(--ok)':'var(--err)'};font-size:14px">${l.amount>0?'+':''}${l.amount}</div>
+<div style="color:var(--b);font-size:11px">余额: ${l.balance!==undefined?l.balance:'-'}</div>
+</div>
+</div>`).join(''):'<div style="text-align:center;padding:40px;color:var(--b)"><div style="font-size:36px;margin-bottom:8px">📊</div><p>暂无消耗记录</p><p style="font-size:12px;margin-top:4px">使用AI创作功能后，消耗记录将显示在这里</p></div>'}
+</div>`;
+}
+
+// ===== 企业知识库 =====
+function getKnowledgeBase(){
+const u=getCur();if(!u)return{basic:{},videos:[],copywriting:[]};
+return JSON.parse(localStorage.getItem('lsjy3_kb_'+u.username)||'null')||{basic:{},videos:[],copywriting:[]};
+}
+function saveKnowledgeBase(kb){
+const u=getCur();if(!u)return;
+localStorage.setItem('lsjy3_kb_'+u.username,JSON.stringify(kb));
+}
+
+function renderKnowledgeBase(){
+if(!requireLogin())return;
+const kb=getKnowledgeBase();
+document.getElementById('toolPanel').innerHTML=`<div class="tool-header"><h3>📚 企业知识库</h3><button class="detail-close" onclick="closeTool()">\u2715</button></div>
+<div class="tool-body">
+<div style="padding:16px;background:var(--ps);border-radius:12px;margin-bottom:20px">
+<p style="font-size:12px;color:var(--p);font-weight:600;margin-bottom:4px">💡 提示</p>
+<p style="font-size:11px;color:var(--b);line-height:1.6">完善企业信息后，AI创作时会自动引用您的行业、品牌、城市等信息，生成更精准的内容。</p>
+</div>
+
+<h4 style="font-size:14px;font-weight:700;margin-bottom:12px">🏢 企业基础信息</h4>
+<div class="fg"><label class="fl">行业类型</label><input class="fi" id="kbIndustry" placeholder="如：宠物医院、餐饮、教育培训..." value="${kb.basic.industry||''}"></div>
+<div class="fg"><label class="fl">品牌/店名</label><input class="fi" id="kbBrand" placeholder="如：倍加动物医院" value="${kb.basic.brand||''}"></div>
+<div class="fg"><label class="fl">所在城市</label><input class="fi" id="kbCity" placeholder="如：永州市" value="${kb.basic.city||''}"></div>
+<div class="fg"><label class="fl">补充描述（选填）</label><textarea class="fi" id="kbDesc" rows="2" placeholder="如：双人餐99元，三荤四素，羊肉串是特色">${kb.basic.desc||''}</textarea></div>
+<button class="btn btn-p" style="width:100%;margin-bottom:20px" onclick="saveKBBasic()">💾 保存基础信息</button>
+
+<h4 style="font-size:14px;font-weight:700;margin-bottom:12px">📝 文案库 (${kb.copywriting.length})</h4>
+<div class="fg"><div style="display:flex;gap:8px">
+<input class="fi" id="kbNewCopy" placeholder="添加常用文案..." style="flex:1">
+<button class="btn btn-p btn-sm" onclick="addKBCopy()">添加</button>
+</div></div>
+${kb.copywriting.length?kb.copywriting.map((c,i)=>`<div style="padding:12px;border:1px solid var(--bd);border-radius:10px;margin-top:8px;display:flex;justify-content:space-between;align-items:flex-start">
+<div style="flex:1;font-size:13px;line-height:1.6;white-space:pre-wrap">${c}</div>
+<button class="btn btn-sm" style="background:#fee2e2;color:var(--err);border:none;padding:4px 8px;flex-shrink:0" onclick="delKBCopy(${i})">\u2715</button>
+</div>`).join(''):'<p style="font-size:12px;color:var(--b);text-align:center;padding:16px">暂无文案，添加后AI创作时可引用</p>'}
+
+<h4 style="font-size:14px;font-weight:700;margin:20px 0 12px">🎬 视频素材库 (${kb.videos.length})</h4>
+<div class="fg"><div style="display:flex;gap:8px">
+<input class="fi" id="kbNewVideo" placeholder="添加视频标题/描述..." style="flex:1">
+<button class="btn btn-p btn-sm" onclick="addKBVideo()">添加</button>
+</div></div>
+${kb.videos.length?kb.videos.map((v,i)=>`<div style="padding:12px;border:1px solid var(--bd);border-radius:10px;margin-top:8px;display:flex;justify-content:space-between;align-items:center">
+<div style="font-size:13px">🎬 ${v}</div>
+<button class="btn btn-sm" style="background:#fee2e2;color:var(--err);border:none;padding:4px 8px" onclick="delKBVideo(${i})">\u2715</button>
+</div>`).join(''):'<p style="font-size:12px;color:var(--b);text-align:center;padding:16px">暂无视频素材</p>'}
+</div>`;
+}
+
+function saveKBBasic(){
+const kb=getKnowledgeBase();
+kb.basic={
+  industry:document.getElementById('kbIndustry').value.trim(),
+  brand:document.getElementById('kbBrand').value.trim(),
+  city:document.getElementById('kbCity').value.trim(),
+  desc:document.getElementById('kbDesc').value.trim()
+};
+saveKnowledgeBase(kb);
+toast('企业信息保存成功！AI创作将自动引用','success');
+}
+function addKBCopy(){
+const text=document.getElementById('kbNewCopy').value.trim();
+if(!text)return toast('请输入文案内容','error');
+const kb=getKnowledgeBase();
+kb.copywriting.push(text);
+if(kb.copywriting.length>50)kb.copywriting.shift();
+saveKnowledgeBase(kb);
+document.getElementById('kbNewCopy').value='';
+toast('文案已添加','success');
+renderKnowledgeBase();
+}
+function delKBCopy(idx){
+const kb=getKnowledgeBase();
+kb.copywriting.splice(idx,1);
+saveKnowledgeBase(kb);
+toast('已删除','success');
+renderKnowledgeBase();
+}
+function addKBVideo(){
+const text=document.getElementById('kbNewVideo').value.trim();
+if(!text)return toast('请输入视频标题','error');
+const kb=getKnowledgeBase();
+kb.videos.push(text);
+if(kb.videos.length>50)kb.videos.shift();
+saveKnowledgeBase(kb);
+document.getElementById('kbNewVideo').value='';
+toast('视频已添加','success');
+renderKnowledgeBase();
+}
+function delKBVideo(idx){
+const kb=getKnowledgeBase();
+kb.videos.splice(idx,1);
+saveKnowledgeBase(kb);
+toast('已删除','success');
+renderKnowledgeBase();
+}
+
+// ===== 员工子账号 =====
+function getEmployees(){
+const u=getCur();if(!u)return[];
+return JSON.parse(localStorage.getItem('lsjy3_emp_'+u.username)||'[]');
+}
+function saveEmployees(emps){
+const u=getCur();if(!u)return;
+localStorage.setItem('lsjy3_emp_'+u.username,JSON.stringify(emps));
+}
+
+function renderEmployeeAcct(){
+if(!requireLogin())return;
+const emps=getEmployees();
+document.getElementById('toolPanel').innerHTML=`<div class="tool-header"><h3>👥 员工子账号</h3><button class="detail-close" onclick="closeTool()">\u2715</button></div>
+<div class="tool-body">
+<div style="padding:16px;background:var(--ps);border-radius:12px;margin-bottom:20px">
+<p style="font-size:12px;color:var(--p);font-weight:600;margin-bottom:4px">💡 员工子账号说明</p>
+<p style="font-size:11px;color:var(--b);line-height:1.6">企业管理员可创建子账号分配给员工，子账号可共享企业知识库中的内容进行AI创作。子账号消耗的算力从主账号扣除。</p>
+</div>
+
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+<h4 style="font-size:14px;font-weight:700">员工列表 (${emps.length}/10)</h4>
+${emps.length<10?'<button class="btn btn-p btn-sm" onclick="showAddEmployee()">+ 添加员工</button>':''}
+</div>
+
+${emps.length?emps.map((e,i)=>`<div style="padding:16px;border:1px solid var(--bd);border-radius:12px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">
+<div style="display:flex;align-items:center;gap:12px">
+<div style="width:40px;height:40px;border-radius:50%;background:var(--ps);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:var(--p)">${e.nickname?e.nickname[0]:e.username[0]}</div>
+<div>
+<div style="font-weight:700;font-size:14px">${e.nickname||e.username}</div>
+<div style="font-size:11px;color:var(--b)">账号: ${e.username} | 角色: ${e.role}</div>
+</div>
+</div>
+<div style="display:flex;gap:6px">
+<button class="btn btn-o btn-sm" onclick="toggleEmpActive(${i})">${e.active!==false?'暂停':'启用'}</button>
+<button class="btn btn-sm" style="background:#fee2e2;color:var(--err);border:none" onclick="delEmployee(${i})">删除</button>
+</div>
+</div>`).join(''):'<div style="text-align:center;padding:40px;color:var(--b)"><div style="font-size:36px;margin-bottom:8px">👥</div><p>暂无员工子账号</p><p style="font-size:12px;margin-top:4px">点击上方按钮添加员工</p></div>'}
+</div>`;
+}
+
+function showAddEmployee(){
+const emps=getEmployees();
+if(emps.length>=10)return toast('最多创建10个子账号','error');
+document.getElementById('toolPanel').innerHTML=`<div class="tool-header"><h3>➕ 添加员工</h3><button class="detail-close" onclick="closeTool()">\u2715</button></div>
+<div class="tool-body">
+<div class="fg"><label class="fl">员工用户名</label><input class="fi" id="empUsername" placeholder="登录用户名（至少3个字符）"></div>
+<div class="fg"><label class="fl">员工姓名/昵称</label><input class="fi" id="empNickname" placeholder="显示名称"></div>
+<div class="fg"><label class="fl">初始密码</label><input class="fi" id="empPassword" type="password" placeholder="至少6个字符"></div>
+<div class="fg"><label class="fl">角色权限</label>
+<select class="fi" id="empRole">
+<option value="employee">普通员工（使用AI工具+查看知识库）</option>
+<option value="editor">内容编辑（+管理知识库）</option>
+</select></div>
+<div style="display:flex;gap:10px;margin-top:16px">
+<button class="btn btn-o" onclick="renderEmployeeAcct()" style="flex:1">取消</button>
+<button class="btn btn-p" onclick="doAddEmployee()" style="flex:1">确认添加</button>
+</div>
+</div>`;
+}
+
+function doAddEmployee(){
+const username=document.getElementById('empUsername').value.trim();
+const nickname=document.getElementById('empNickname').value.trim();
+const password=document.getElementById('empPassword').value;
+const role=document.getElementById('empRole').value;
+if(username.length<3)return toast('用户名至少3个字符','error');
+if(password.length<6)return toast('密码至少6个字符','error');
+const users=getUsers();
+if(users.find(u=>u.username===username))return toast('该用户名已被注册','error');
+const newUser={username,password,nickname:nickname||username,role:role,phone:'',qq:'',wx:'',created:new Date().toLocaleString()};
+users.push(newUser);saveUsers(users);
+const emps=getEmployees();
+emps.push({...newUser,active:true});
+saveEmployees(emps);
+toast('员工子账号创建成功！','success');
+renderEmployeeAcct();
+}
+
+function toggleEmpActive(idx){
+const emps=getEmployees();
+emps[idx].active=emps[idx].active===false?true:false;
+saveEmployees(emps);
+toast(emps[idx].active?'已启用':'已暂停','success');
+renderEmployeeAcct();
+}
+
+function delEmployee(idx){
+const emps=getEmployees();
+const removed=emps.splice(idx,1)[0];
+saveEmployees(emps);
+// Also remove from users list
+const users=getUsers();
+const uIdx=users.findIndex(u=>u.username===removed.username);
+if(uIdx>=0){users.splice(uIdx,1);saveUsers(users)}
+toast('员工已删除','success');
+renderEmployeeAcct();
+}
+
+</script>
 </head>
 <body>
 
@@ -506,6 +792,24 @@ textarea.fi{resize:vertical;min-height:120px}
 <h3>算力中心</h3>
 <p>查看算力余额、购买算力包、兑换记录，算力用于兑换AI创作功能</p>
 <div class="badge badge-purple" style="margin-top:12px">立即查看</div>
+</div>
+<div class="tool-card" onclick="openTool('redeemCode')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">🎫</div>
+<h3>卡密兑换</h3>
+<p>输入卡密串码，兑换算力资源包，算力可用于AI创作功能</p>
+<div class="badge" style="margin-top:12px;background:#fef3c7;color:#92400e">立即兑换</div>
+</div>
+<div class="tool-card" onclick="openTool('knowledgeBase')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#10b981,#34d399)">📚</div>
+<h3>企业知识库</h3>
+<p>管理企业基础信息、视频素材库、文案库，AI创作时自动引用</p>
+<div class="badge badge-green" style="margin-top:12px">登录后使用</div>
+</div>
+<div class="tool-card" onclick="openTool('creditLogs')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#06b6d4,#0ea5e9)">📊</div>
+<h3>消耗记录</h3>
+<p>查看每次AI创作功能的算力消耗明细和剩余算力变化</p>
+<div class="badge badge-blue" style="margin-top:12px">查看记录</div>
 </div>
 </div>
 </section>
@@ -1128,10 +1432,10 @@ const out=document.getElementById('cwOutput');
 out.innerHTML='<p style="color:var(--b);text-align:center">⏳ AI生成中...</p>';
 if(typeof aiGenerateText==='function'){aiGenerateText(prompt).then(text=>{out.innerHTML=`<div style="padding:16px;background:var(--bg);border-radius:12px;border:1px solid var(--bd);white-space:pre-wrap;line-height:1.8;font-size:14px">${text}</div><button class="btn btn-o btn-sm" onclick="copyText('cwOutput')" style="margin-top:8px">📋 复制文案</button>`}).catch(()=>{out.innerHTML='<p style="color:var(--err)">AI生成失败，请稍后重试</p>'})}else{out.innerHTML='<p style="color:var(--err)">AI服务未就绪</p>'}
 }
-const _TOOL_MAP={copywriter:renderCopywriter,watermark:renderWatermark,rewrite:renderRewrite,hashtag:renderHashtag,viralVideo:renderViralVideo,digitalHuman:renderDigitalHuman,voiceClone:renderVoiceClone,videoLib:renderVideoLib,aigc:renderAIGC,photoEdit:renderPhotoEdit,audioEdit:renderAudioEdit,accompaniment:renderAccompaniment,docGen:renderDocGen,credits:renderCredits};
+const _TOOL_MAP={copywriter:renderCopywriter,watermark:renderWatermark,rewrite:renderRewrite,hashtag:renderHashtag,viralVideo:renderViralVideo,digitalHuman:renderDigitalHuman,voiceClone:renderVoiceClone,videoLib:renderVideoLib,aigc:renderAIGC,photoEdit:renderPhotoEdit,audioEdit:renderAudioEdit,accompaniment:renderAccompaniment,docGen:renderDocGen,credits:renderCredits,redeemCode:renderRedeemCode,knowledgeBase:renderKnowledgeBase,creditLogs:renderCreditLogs,employeeAcct:renderEmployeeAcct};
 const _TOOL_COST={viralVideo:50,digitalHuman:100,voiceClone:30,aigc:20,photoEdit:30,audioEdit:25,accompaniment:40,docGen:35};
 function openTool(id){
-if(id==='credits'||id==='videoLib'){_TOOL_MAP[id]&&_TOOL_MAP[id]();document.getElementById('toolOverlay').classList.add('show');document.body.style.overflow='hidden';return}
+if(id==='credits'||id==='videoLib'||id==='redeemCode'||id==='knowledgeBase'||id==='creditLogs'||id==='employeeAcct'){_TOOL_MAP[id]&&_TOOL_MAP[id]();document.getElementById('toolOverlay').classList.add('show');document.body.style.overflow='hidden';return}
 if(requireLogin&&typeof requireLogin==='function'&&!isLoggedIn()){requireLogin();return}
 const cost=_TOOL_COST[id];
 if(cost&&typeof deductCredits==='function'){if(!deductCredits(cost)){return}}
@@ -1366,7 +1670,25 @@ panel.innerHTML=`<div class="auth-hero" style="position:relative">
 <button class="btn btn-o" style="width:100%;margin-bottom:10px" onclick="openBindPhone()">📱 ${u.phone?'更换手机号':'绑定手机号'}</button>
 <button class="btn btn-o" style="width:100%;margin-bottom:10px" onclick="editProfile()">✏️ 修改昵称</button>
 <button class="btn btn-o" style="width:100%;margin-bottom:10px" onclick="editProfilePwd()">🔒 修改密码</button>
-<button class="btn" style="width:100%;background:#fee2e2;color:var(--err);border:1.5px solid #fecaca" onclick="doLogout()">🚪 退出登录</button>
+<button class="btn btn-o" style="width:100%;margin-bottom:10px" onclick="editProfilePwd()">🔒 修改密码</button>
+<div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--bd)">
+<h4 style="font-size:14px;font-weight:700;margin-bottom:12px">📊 我的工作台</h4>
+<div style="display:flex;gap:10px;flex-wrap:wrap">
+<div style="flex:1;min-width:120px;padding:14px;background:var(--bg);border-radius:10px;text-align:center;cursor:pointer" onclick="closeAuth();openTool('credits')">
+<div style="font-size:22px;font-weight:900;color:var(--p)">${getCredits()}</div>
+<div style="font-size:11px;color:var(--b)">剩余算力</div>
+</div>
+<div style="flex:1;min-width:120px;padding:14px;background:var(--bg);border-radius:10px;text-align:center;cursor:pointer" onclick="closeAuth();openTool('creditLogs')">
+<div style="font-size:22px;font-weight:900;color:var(--ok)">${getCreditLogs().length}</div>
+<div style="font-size:11px;color:var(--b)">消耗记录</div>
+</div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
+<button class="btn btn-o btn-sm" onclick="closeAuth();openTool('knowledgeBase')" style="width:100%">📚 企业知识库</button>
+<button class="btn btn-o btn-sm" onclick="closeAuth();openTool('redeemCode')" style="width:100%">🎫 卡密兑换</button>
+</div>
+</div>
+<button class="btn" style="width:100%;margin-top:16px;background:#fee2e2;color:var(--err);border:1.5px solid #fecaca" onclick="doLogout()">🚪 退出登录</button>
 </div>`;
 document.getElementById('authOverlay').classList.add('show');
 document.body.style.overflow='hidden';
@@ -2770,7 +3092,7 @@ if(target){e.preventDefault();target.scrollIntoView({behavior:'smooth',block:'st
 
 // ===== JS INTEGRITY CHECK =====
 if(typeof openAuth!=='function'||typeof doLogin!=='function'||typeof openTool!=='function'||typeof toast!=='function'){
-  const _fv='v3.2-fix7';
+  const _fv='v3.2-fix8';
   const _sv=localStorage.getItem('lsjy3_jsok');
   localStorage.setItem('lsjy3_jsok',_fv);
   window.stop&&window.stop();
