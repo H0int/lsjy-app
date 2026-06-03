@@ -333,7 +333,7 @@ textarea.fi{resize:vertical;min-height:120px}
 .ai-spinner{display:inline-block;width:40px;height:40px;border:3px solid var(--bd);border-top-color:var(--p);border-radius:50%;animation:ai-spin .8s linear infinite}
 @keyframes ai-spin{to{transform:rotate(360deg)}}
 </style>
-<script>if(localStorage.getItem('lsjy3_ver')!=='v3.3-final'){localStorage.setItem('lsjy3_ver','v3.3-final');location.reload(true)}
+<script>if(localStorage.getItem('lsjy3_ver')!=='v3.4-beta1'){localStorage.setItem('lsjy3_ver','v3.4-beta1');location.reload(true)}
 
 // ===== 卡密兑换系统 =====
 function getRedeemCodes(){return JSON.parse(localStorage.getItem('lsjy3_redeem_codes')||'[]')}
@@ -450,7 +450,12 @@ if(!url)return toast('请粘贴视频链接','error');
 const result=document.getElementById('parseResult');
 result.innerHTML='<div style="text-align:center;padding:20px"><div class="ai-spinner" style="margin:0 auto"></div><p style="margin-top:12px;color:var(--b)">正在解析视频，请稍候...</p></div>';
 try{
-const resp=await fetch('https://api.douyin.wtf/api?url='+encodeURIComponent(url));
+const _parseApis=[
+  {url:'https://api.douyin.wtf/api?url='+encodeURIComponent(url),name:'主通道'},
+  {url:'https://tenapi.cn/v2/douyin?url='+encodeURIComponent(url),name:'备用通道1'},
+  {url:window._LSJY_PARSE_API?url:window._LSJY_PARSE_API+'/api/douyin?url='+encodeURIComponent(url),name:'自建通道'}
+].filter(a=>!!a.url);
+const resp=await fetch(_parseApis[0].url);
 if(!resp.ok)throw new Error('HTTP '+resp.status);
 const data=await resp.json();
 if(data&&data.video_data&&data.video_data.nwm_video_url){
@@ -1031,7 +1036,7 @@ renderEmployeeAcct();
 <div class="tool-card" onclick="openTool('copywriter')">
 <div class="tool-icon" style="background:linear-gradient(135deg,#533afd,#7c6cf6)">✍️</div>
 <h3>智能文案工具</h3>
-<p>短视频脚本、团购文案、朋友圈营销文案、小红书种草笔记等多种模板，一键生成专业文案</p>
+<p>8大专业模板：流量型/信任型/成交型人设、团购促销、爆款开头等，AI一键生成</p>
 <div class="badge badge-purple" style="margin-top:12px">登录后使用</div>
 </div>
 <div class="tool-card" onclick="openTool('watermark')">
@@ -1291,7 +1296,7 @@ renderEmployeeAcct();
 
 <script>
 // ===== CACHE BUSTER & VERSION CHECK =====
-(function(){const _V='v3.3-final';const _cv=localStorage.getItem('lsjy3_ver');if(_cv!==_V){localStorage.setItem('lsjy3_ver',_V);sessionStorage.clear();try{if('caches'in window)caches.keys().then(k=>k.forEach(n=>caches.delete(n)))}catch(e){}try{document.cookie='lsjy3_ver=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT';document.cookie='lsjy_v=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT';document.cookie='__cf_bm=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT'}catch(e){}}})();
+(function(){const _V='v3.4-beta1';const _cv=localStorage.getItem('lsjy3_ver');if(_cv!==_V){localStorage.setItem('lsjy3_ver',_V);sessionStorage.clear();try{if('caches'in window)caches.keys().then(k=>k.forEach(n=>caches.delete(n)))}catch(e){}try{document.cookie='lsjy3_ver=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT';document.cookie='lsjy_v=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT';document.cookie='__cf_bm=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT'}catch(e){}}})();
 // ===== DATA =====
 const MODULES=[
 {id:'ai',name:'AI 人工智能',icon:'🤖',color:'#3b82f6',gradient:'linear-gradient(135deg,#3b82f6,#60a5fa)',summary:'依托自研 AI 技术面向中小商家落地数字化转型',services:[
@@ -1364,7 +1369,7 @@ function requireLogin(){if(isLoggedIn())return true;openAuth('login');toast('请
 
 // ===== AI ENGINE CORE =====
 // 多模型AI引擎：支持豆包(火山引擎) + Pollinations.ai备用
-// === 配置区域（替换为真实值即可切换AI服务商） ===
+// === 豆包配置（替换为真实值即可启用） ===
 const DOUBAO_CONFIG={
   // 火山引擎方舟平台配置
   ARK_API_KEY:'YOUR_ARK_API_KEY',       // ← 替换为火山引擎方舟API Key
@@ -1372,6 +1377,20 @@ const DOUBAO_CONFIG={
   MODEL_TEXT:'doubao-pro-32k',          // 文本模型
   MODEL_IMAGE:'doubao-seedream-3-0-t2i-250415', // 图片模型
   ENABLED:false                          // 设为true启用豆包（需填入有效API Key）
+};
+// === HeyGen数字人配置 ===
+const HEYGEN_CONFIG={
+  API_KEY:'YOUR_HEYGEN_API_KEY',        // ← 替换为HeyGen API Key
+  API_URL:'https://api.heygen.com/v2',
+  ENABLED:false,                         // 设为true启用HeyGen数字人（需填入有效API Key）
+  AVATARS:[
+    {id:'default_male_01',name:'商务精英',gender:'male',style:'formal'},
+    {id:'default_female_01',name:'职业丽人',gender:'female',style:'formal'},
+    {id:'default_male_02',name:'科技达人',gender:'male',style:'casual'},
+    {id:'default_female_02',name:'知性讲师',gender:'female',style:'education'},
+    {id:'default_male_03',name:'亲和主播',gender:'male',style:'friendly'},
+    {id:'default_female_03',name:'活力女主播',gender:'female',style:'energetic'}
+  ]
 };
 const FALLBACK_AI_IMG_API='https://image.pollinations.ai/prompt/';
 const FALLBACK_AI_TEXT_API='https://text.pollinations.ai/openai';
@@ -1392,6 +1411,10 @@ const WPS_PAY_CONFIG={
 // === 短信后端配置 ===
 const SMS_API='https://your-sms-server.onrender.com'; // ← 替换为实际部署地址
 const SMS_ENABLED=false;                       // 设为true启用真实短信
+
+// === 自建短视频解析后端配置 ===
+// 部署Douyin_TikTok_Download_API到Render后，填入地址即可启用自建解析通道
+window._LSJY_PARSE_API='';  // ← 替换为自建后端地址，如 'https://lsjy-parse.onrender.com'
 
 function withTimeout(promise,ms){
   return Promise.race([promise,new Promise((_,rej)=>setTimeout(()=>rej(new Error('AI请求超时，请稍后重试')),ms))]);
@@ -1491,16 +1514,19 @@ async function generateCopy(){
 }
 
 function smartTemplates(type,input,extra){
-  const hooks=['天呐！','家人们！','谁懂啊！','刷到的有福了！','终于找到了！','必看！','太绝了！','真香警告！'];
+  const hooks=['天呐！','家人们！','谁懂啊！','刷到的有福了！','终于找到了！','必看！','太绝了！','真香警告！','不信你看！','偷偷告诉你！'];
   const h=hooks[Math.floor(Math.random()*hooks.length)];
   const t=extra||input;
+  const tag=input.split(/[,，\s]/)[0];
   switch(type){
-    case'短视频脚本':return`【${h}${input}】\n\n🔍 钩子（0-3秒）：${h}${t}你绝对想不到！\n\n💡 痛点（3-6秒）：是不是还在纠结${input}怎么选？看了这条视频就全明白了！\n\n🔥 方案（6-15秒）：实测${t}，${extra||'效果真的拉满！'}\n✅ 优势一：品质过硬，好评如潮\n✅ 优势二：性价比超高，闭眼入\n✅ 优势三：使用简单，小白也能上手\n\n🎯 CTA：关注我，了解更多！评论区扣"想要"\n\n#${input.split(/[,，\s]/)[0]} #好物推荐 #测评`;
-    case'团购文案':return`🎉【限时特惠】${input}\n${t}，错过等一年！\n\n🔥 活动力度：超值特惠进行中\n💎 品质保障：正品保证\n✅ 售后无忧：7天无理由\n⏰ 限量发售，先到先得！\n\n👇 点击链接立即抢购！\n#${input.split(/[,，\s]/)[0]} #团购 #优惠 #限时抢购`;
-    case'小红书种草':return`📖 ${input}来啦！\n\n家人们！今天必须安利${t}✨\n\n💡 为什么推荐：\n- 效果超级明显，肉眼可见\n- 价格超友好，学生党也能冲\n- 回购了无数次，闭眼入\n\n📝 使用感受：\n真的被惊艳到了，从包装到产品本身都很有质感，细节处理得特别好。\n\n🏷️ #${input.split(/[,，\s]/)[0]} #好物推荐 #种草 #必买清单 #宝藏好物 #真实分享`;
-    case'朋友圈文案':return`${h}\n${t}\n好看好用不贵，懂的自然懂🤫\n数量有限 先到先得🔥\n需要的私聊我，限时优惠中～\n\n#${input.split(/[,，\s]/)[0]}`;
-    case'广告语':return`「${input}」\n${extra||'——品质不将就，每一刻都值得。'}\n${extra||'——让选择更简单，让生活更美好。'}`;
-    case'产品介绍':return`📖【${input}】产品介绍\n\n一、产品概述\n${t}是专为追求品质生活的用户打造的产品，采用先进工艺和优质原料，确保卓越品质。\n\n二、核心优势\n• 精选材料，品质保障\n• 专业团队，匠心制造\n• 完善售后，安心无忧\n\n三、适用场景\n日常使用、礼品赠送、商务场景等多种场合。\n\n四、服务承诺\n7天无理由退换 · 全国联保 · 专属客服\n\n💬 立即咨询，了解更多详情！`;
+    case'短视频脚本':return`【${h}${input}】\n\n🔍 钩子（0-3秒）：${h}${t}你绝对想不到！\n\n💡 痛点（3-6秒）：是不是还在纠结${input}怎么选？看了这条视频就全明白了！\n\n🔥 方案（6-15秒）：实测${t}，${extra||'效果真的拉满！'}\n✅ 优势一：品质过硬，好评如潮\n✅ 优势二：性价比超高，闭眼入\n✅ 优势三：使用简单，小白也能上手\n\n🎯 CTA：关注我，了解更多！评论区扣"想要"\n\n#${tag} #好物推荐 #测评`;
+    case'流量型人设':return`🔥【流量型人设文案 - ${input}】\n\n我是谁：一个${t}的真实体验者\n人设标签：#真实测评 #不吹不黑 #亲测有效\n\n${h}\n\n今天必须跟你们说说${input}这个事儿！\n\n先说结论：真的有用。\n不是那种"有用"，是真的肉眼可见的有用。\n\n我之前也踩过坑，买过好多类似的东西，\n但${t}是我用下来最满意的一个。\n\n为什么？\n1️⃣ 效果看得见，不是智商税\n2️⃣ 价格合理，学生党也能承受\n3️⃣ 用了之后同事朋友都问我在哪买的\n\n不是我吹，是真的。不信你看评论区。\n\n#${tag} #真实测评 #亲测好用 #性价比之王 #好物分享`;
+    case'信任型人设':return`🤝【信任型人设文案 - ${input}】\n\n人设定位：${extra||'深耕行业3年的专业从业者'}\n\n说句掏心窝子的话，\n关于${input}，90%的人都理解错了。\n\n作为在${extra||'这个行业'}摸爬滚打了3年多的人，\n今天不藏着掖着，直接说点干货。\n\n关于${t}，你需要知道的3件事：\n\n📌 第一：不是所有${input}都一样\n核心差距在于——细节。\n就像看起来差不多的东西，\n用起来体验天差地别。\n\n📌 第二：便宜≠划算，贵≠值得\n关键是看适不适合你。\n我见过太多人花了冤枉钱。\n\n📌 第三：选对了一劳永逸\n${t}这个东西，选对了真的省心。\n\n💬 有什么问题评论区问我，有问必答。\n\n#${tag} #专业科普 #行业揭秘 #干货分享 #避坑指南`;
+    case'成交型人设':return`💰【成交型人设文案 - ${input}】\n\n${h}\n${input}的底价，被我拿到了！\n\n先说重点：\n🛒 原价要XXX，现在直接\n🔥 省了至少XX%\n\n我知道你在想什么——\n"这么便宜，靠谱吗？"\n\n直接告诉你为什么：\n✅ 我是源头渠道，没有中间商赚差价\n✅ 品质跟专柜/官方一模一样，可验\n✅ 已经帮XXX人买过了，好评率98%\n\n${t}这个东西我自己也在用，\n不好用我第一个不推荐。\n\n⚠️ 注意：\n这个价格只限今天，明天恢复原价。\n需要的直接评论区扣"需要"，我发你链接。\n\n#${tag} #限时福利 #源头好价 #性价比之王 #省钱攻略`;
+    case'团购促销卖货':return`🎉【限时团购】${input}\n\n📢 家人们集合！\n${t}团购来了，错过拍大腿！\n\n🔥 团购详情：\n━━━━━━━━━━━━━━\n📦 商品：${input}\n💰 原价：¥XXX\n🎁 团购价：¥XXX（省¥XX！）\n👥 已有XX人参团\n⏰ 截止时间：今天23:59\n━━━━━━━━━━━━━━\n\n✅ 承诺：\n• 正品保证，假一赔十\n• 7天无理由退换\n• 全国包邮，48小时内发货\n• 团购满XX人立即成团\n\n👇 参团方式：\n评论区扣"参团"或直接私信\n我会第一时间发你参团链接！\n\n⚠️ 限时限量，手慢无！\n#${tag} #团购 #限时特惠 #拼团优惠 #好物团购 #省钱必看`;
+    case'爆款3秒开头':return`⚡【爆款3秒开头 - ${input}】\n\n以下是为${t}设计的5个黄金3秒开头，\n任选一个直接用在视频开头：\n\n🔹 开头1（反问型）：\n"你知道${input}最大的坑是什么吗？"\n→ 制造悬念，引导观众继续看\n\n🔹 开头2（数字型）：\n"3个方法教你搞定${input}，第2个太绝了！"\n→ 数字+悬念，完播率杀手\n\n🔹 开头3（痛点型）：\n"还在花钱买${input}？你亏大了！"\n→ 直击痛点，引发共鸣\n\n🔹 开头4（利益型）：\n"学会这个${input}技巧，一天省XX块！"\n→ 直接给出利益承诺\n\n🔹 开头5（争议型）：\n"${input}？别再被骗了！"\n→ 争议性强，评论区自动吵起来=免费流量\n\n💡 使用技巧：\n• 开头语气要快、要干脆\n• 前3秒一定要有视觉冲击（特写/动作）\n• 配合BGM卡点效果翻倍\n\n#${tag} #短视频开头 #爆款脚本 #完播率`;
+    case'小红书种草笔记':return`📖 ${input}来啦！\n\n家人们！今天必须安利${t}✨\n\n💡 为什么推荐：\n- 效果超级明显，肉眼可见\n- 价格超友好，学生党也能冲\n- 回购了无数次，闭眼入\n\n📝 使用感受：\n真的被惊艳到了，从包装到产品本身都很有质感，细节处理得特别好。\n\n🏷️ #${tag} #好物推荐 #种草 #必买清单 #宝藏好物 #真实分享`;
+    case'广告文案':return`「${input}」\n${extra||'——品质不将就，每一刻都值得。'}\n${extra||'——让选择更简单，让生活更美好。'}`;
     default:return input;
   }
 }
@@ -1761,7 +1787,7 @@ function closeDetail(e){if(e&&e.target!==e.currentTarget)return;document.getElem
 function renderCopywriter(){
 document.getElementById('toolPanel').innerHTML=`<div class="tool-header"><h3>✍️ 智能文案工具</h3><button class="detail-close" onclick="closeTool()">✕</button></div>
 <div class="tool-body">
-<div class="copywriter-types">${[{e:'🎬',n:'短视频脚本'},{e:'🛍️',n:'团购文案'},{e:'📱',n:'朋友圈文案'},{e:'📕',n:'小红书种草'},{e:'📢',n:'广告文案'}].map((s,i)=>`<div class="cw-type${i===0?' active':''}" onclick="selectCwType(this,${i})">${s.e} ${s.n}</div>`).join('')}</div>
+<div class="copywriter-types" style="grid-template-columns:repeat(4,1fr)">${[{e:'🎬',n:'短视频脚本'},{e:'🔥',n:'流量型人设'},{e:'🤝',n:'信任型人设'},{e:'💰',n:'成交型人设'},{e:'🛍️',n:'团购促销卖货'},{e:'⚡',n:'爆款3秒开头'},{e:'📕',n:'小红书种草'},{e:'📢',n:'广告文案'}].map((s,i)=>`<div class="cw-type${i===0?' active':''}" onclick="selectCwType(this,${i})" title="${s.n}">${s.e} ${s.n}</div>`).join('')}</div>
 <div class="fg"><label class="fl">产品/关键词</label><input class="fi" id="cwKeyword" placeholder="请输入产品名称或关键词"></div>
 <div class="fg"><label class="fl">补充说明（选填）</label><textarea class="fi" id="cwExtra" rows="2" placeholder="卖点、目标人群、风格偏好等"></textarea></div>
 <button class="btn btn-p" style="width:100%" onclick="aiDoCopywriter()">🚀 生成文案</button>
@@ -1772,7 +1798,7 @@ window._cwType=0;
 function aiDoCopywriter(){
 const kw=document.getElementById('cwKeyword').value.trim();if(!kw)return toast('请输入关键词','error');
 const extra=document.getElementById('cwExtra').value.trim();
-const types=['短视频脚本','团购文案','朋友圈文案','小红书种草笔记','广告文案'];
+const types=['短视频脚本','流量型人设','信任型人设','成交型人设','团购促销卖货','爆款3秒开头','小红书种草笔记','广告文案'];
 const prompt=`请为"${kw}"写一段${types[window._cwType||0]}。${extra?'要求：'+extra+'。':''}风格生动吸引人，包含emoji。`;
 const out=document.getElementById('cwOutput');
 out.innerHTML='<p style="color:var(--b);text-align:center">⏳ AI生成中...</p>';
@@ -2516,27 +2542,29 @@ aiGenerateText(
 }
 
 
-// -- Digital Human Tool --
+// -- Digital Human Tool (Enhanced with HeyGen API) --
+let _dhAvatarIdx=0,_dhBgIdx=0;
 function renderDigitalHuman(){
+const isHeyGen=typeof HEYGEN_CONFIG!=='undefined'&&HEYGEN_CONFIG.ENABLED&&HEYGEN_CONFIG.API_KEY!=='YOUR_HEYGEN_API_KEY';
+const avatars=[{n:'商务精英',g:'👨',s:'formal'},{n:'职业丽人',g:'👩',s:'formal'},{n:'科技达人',g:'🧑',s:'casual'},{n:'知性讲师',g:'👩',s:'edu'},{n:'亲和主播',g:'👨',s:'friendly'},{n:'活力女主播',g:'👩',s:'energetic'}];
 document.getElementById('toolPanel').innerHTML=`<div class="tool-header"><h3>🧑‍💼 数字人口播</h3><button class="detail-close" onclick="closeTool()">✕</button></div>
 <div class="tool-body">
-<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;padding:12px;background:#dbeafe;border-radius:10px;font-size:13px;color:#1e40af;font-weight:600">⚡ 消耗100算力/次 &nbsp;|&nbsp; 当前算力: ${getCredits()}</div>
-<div class="fg"><label class="fl">选择数字人形象</label>
-<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:8px">
-<div class="cw-type active" onclick="selectDH(this,0)" style="padding:16px;text-align:center">👨‍💼<br><span style="font-size:11px">商务男</span></div>
-<div class="cw-type" onclick="selectDH(this,1)" style="padding:16px;text-align:center">👩‍💼<br><span style="font-size:11px">职业女</span></div>
-<div class="cw-type" onclick="selectDH(this,2)" style="padding:16px;text-align:center">🧑‍💻<br><span style="font-size:11px">技术达人</span></div>
-<div class="cw-type" onclick="selectDH(this,3)" style="padding:16px;text-align:center">👩‍🏫<br><span style="font-size:11px">知性讲师</span></div>
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;padding:12px;background:#dbeafe;border-radius:10px;font-size:13px;color:#1e40af;font-weight:600">⚡ 消耗100算力/次 &nbsp;|&nbsp; 当前算力: ${getCredits()} ${isHeyGen?'| <span style="color:#22c55e">✅ HeyGen已连接</span>':'| <span style="color:#f59e0b">⏳ HeyGen待配置</span>'}</div>
+${!isHeyGen?'<div style="padding:12px;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;margin-bottom:16px;font-size:12px;color:#92400e;line-height:1.6">💡 <b>HeyGen API Key</b>尚未配置，当前使用<b>AI模拟预览模式</b>。配置HeyGen Key后可生成真实数字人视频。<br>👉 获取Key：<a href="https://app.heygen.com/" target="_blank" style="color:var(--p);text-decoration:underline">app.heygen.com</a></div>':''}
+<div class="fg"><label class="fl">选择数字人形象（${avatars.length}款可选）</label>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:8px">
+${avatars.map((a,i)=>`<div class="cw-type${i===0?' active':''}" onclick="selectDH(this,${i})" style="padding:14px;text-align:center">${a.g}‍💼<br><span style="font-size:11px">${a.n}</span></div>`).join('')}
 </div></div>
-<div class="fg"><label class="fl">口播文案</label><textarea class="fi" id="dhScript" rows="4" placeholder="输入要数字人播报的文案内容..."></textarea></div>
+<div class="fg"><label class="fl">口播文案</label><textarea class="fi" id="dhScript" rows="4" placeholder="输入要数字人播报的文案内容（建议50-200字）..."></textarea></div>
 <div class="fg"><label class="fl">背景场景</label>
 <div class="copywriter-types">
-<div class="cw-type active" onclick="selectDHBg(this,0)">办公室</div>
-<div class="cw-type" onclick="selectDHBg(this,1)">演播室</div>
-<div class="cw-type" onclick="selectDHBg(this,2)">户外街景</div>
+<div class="cw-type active" onclick="selectDHBg(this,0)">🏢 办公室</div>
+<div class="cw-type" onclick="selectDHBg(this,1)">🎤 演播室</div>
+<div class="cw-type" onclick="selectDHBg(this,2)">🏙️ 户外</div>
+<div class="cw-type" onclick="selectDHBg(this,3)">🏠 书房</div>
 </div></div>
-<button class="btn btn-p" onclick="genDigitalHuman()" style="width:100%">🧑‍💼 生成数字人视频（消耗100算力）</button>
-<div class="cw-output" id="dhOutput" style="min-height:200px"></div>
+<button class="btn btn-p" onclick="genDigitalHuman()" style="width:100%">🧑‍💼 ${isHeyGen?'生成数字人视频':'AI模拟预览'}（消耗100算力）</button>
+<div id="dhOutput" style="margin-top:16px"></div>
 </div>`;
 }
 function selectDH(el,i){const grid=el.parentElement;grid.querySelectorAll('.cw-type').forEach(e=>e.classList.remove('active'));el.classList.add('active')}
@@ -3438,7 +3466,7 @@ if(target){e.preventDefault();target.scrollIntoView({behavior:'smooth',block:'st
 
 // ===== JS INTEGRITY CHECK =====
 if(typeof openAuth!=='function'||typeof doLogin!=='function'||typeof openTool!=='function'||typeof toast!=='function'){
-  const _fv='v3.3-final';
+  const _fv='v3.4-beta1';
   const _sv=localStorage.getItem('lsjy3_jsok');
   localStorage.setItem('lsjy3_jsok',_fv);
   window.stop&&window.stop();
