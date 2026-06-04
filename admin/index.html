@@ -243,6 +243,7 @@ tr:hover td{background:var(--ps)}
       <div class="sb-item" onclick="goPage('messages',this)"><i class="fa-solid fa-envelope"></i>留言管理</div>
       <div class="sb-item" onclick="goPage('leads',this)"><i class="fa-solid fa-crosshairs"></i>线索管理</div>
       <div class="sb-item" onclick="goPage('orders',this)"><i class="fa-solid fa-receipt"></i>订单管理</div>
+      <div class="sb-item" onclick="goPage('customers',this)"><i class="fa-solid fa-user-group"></i>顾客管理</div>
       <div class="sb-item" onclick="goPage('redeemCodes',this)"><i class="fa-solid fa-ticket"></i>卡密管理</div>
       <div class="sb-group">内容</div>
       <div class="sb-item" onclick="goPage('content',this)"><i class="fa-solid fa-file-pen"></i>内容管理</div>
@@ -357,7 +358,7 @@ function getRedeemHistory(){return JSON.parse(localStorage.getItem('lsjy3_redeem
 function saveRedeemHistory(h){localStorage.setItem('lsjy3_redeem_history',JSON.stringify(h))}
 
 // Seed admin (encrypted password)
-(function(){const u=JSON.parse(localStorage.getItem('lsjy3_users')||'[]');const ai=u.findIndex(x=>x.role==='admin');if(ai>=0){u[ai].username='KF02V9';u[ai].password=encryptPwd('LKZ2005430')}else{u.push({username:'KF02V9',password:encryptPwd('LKZ2005430'),nickname:'管理员',role:'admin',phone:'',qq:'',wx:'',created:new Date().toLocaleString()})}localStorage.setItem('lsjy3_users',JSON.stringify(u));localStorage.removeItem('lsjy_admin_lockout')})();
+(function(){const u=JSON.parse(localStorage.getItem('lsjy3_users')||'[]');const ai=u.findIndex(x=>x.role==='admin');if(ai<0){u.push({username:'KF02V9',password:encryptPwd('LKZ2005430'),nickname:'管理员',role:'admin',phone:'',qq:'',wx:'',created:new Date().toLocaleString()});localStorage.setItem('lsjy3_users',JSON.stringify(u))}if(localStorage.getItem('lsjy_admin_lockout'))localStorage.removeItem('lsjy_admin_lockout')})();
 
 // ===== Utility =====
 function maskPhone(p){if(!p||p.length<7)return p||'-';return p.substring(0,3)+'****'+p.substring(7)}
@@ -409,8 +410,8 @@ setInterval(updateLockoutUI,5000);updateLockoutUI();
 function doLogout(){localStorage.removeItem('lsjy3_cur');document.getElementById('loginPage').style.display='';document.getElementById('app').classList.remove('active');toast('已退出登录')}
 
 // ===== Navigation =====
-const _pageTitles={dashboard:'数据看板',modules:'业务模块',services:'服务管理',users:'用户管理',messages:'留言管理',leads:'线索管理',orders:'订单管理',redeemCodes:'卡密管理',content:'内容管理',aihub:'AI创作中心',recycle:'回收站',logs:'操作日志',settings:'系统设置'};
-const _pageRenders={dashboard:renderDashboard,modules:renderModules,services:renderServices,users:renderUsers,messages:renderMessages,leads:renderLeads,orders:renderOrders,redeemCodes:renderRedeemCodes,content:renderContent,aihub:renderAIHub,recycle:renderRecycle,logs:renderLogs,settings:renderSettings};
+const _pageTitles={dashboard:'数据看板',modules:'业务模块',services:'服务管理',users:'用户管理',messages:'留言管理',leads:'线索管理',orders:'订单管理',customers:'顾客管理',redeemCodes:'卡密管理',content:'内容管理',aihub:'AI创作中心',recycle:'回收站',logs:'操作日志',settings:'系统设置'};
+const _pageRenders={dashboard:renderDashboard,modules:renderModules,services:renderServices,users:renderUsers,messages:renderMessages,leads:renderLeads,orders:renderOrders,customers:renderCustomers,redeemCodes:renderRedeemCodes,content:renderContent,aihub:renderAIHub,recycle:renderRecycle,logs:renderLogs,settings:renderSettings};
 function goPage(page,el){
   document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
   if(el)el.classList.add('active');
@@ -1648,12 +1649,201 @@ function exportCodes(){
   downloadCSV(csv,'卡密列表_'+new Date().toISOString().slice(0,10));toast('导出成功','success');
 }
 
+
+// ===== Customer Management Center =====
+function renderCustomers(){
+  const app=document.getElementById('appContent');
+  const users=getUsers().filter(u=>u.role!=='admin');
+  const orders=JSON.parse(localStorage.getItem('lsjy3_orders')||'[]').concat(JSON.parse(localStorage.getItem('lsjy_admin_orders')||'[]'));
+  const creditLogs=JSON.parse(localStorage.getItem('lsjy3_credit_logs')||'[]');
+  const tasks=JSON.parse(localStorage.getItem('lsjy3_ai_tasks')||'[]');
+  const totalCredits=creditLogs.reduce((s,l)=>s+(l.amount>0?l.amount:0),0);
+  const totalUsed=creditLogs.reduce((s,l)=>s+(l.amount<0?l.amount:0),0);
+
+  app.innerHTML=`
+  <div class="filter-bar">
+    <input class="fi" style="max-width:240px" placeholder="搜索用户名/昵称/手机号" id="custSearch" oninput="renderCustList()">
+    <span style="font-weight:600;font-size:13px;margin-left:12px">用户: ${users.length} | 订单: ${orders.length} | AI任务: ${tasks.length}</span>
+  </div>
+  <div class="stats" style="margin-bottom:20px">
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#3b82f6,#60a5fa)"><i class="fa-solid fa-users"></i></div><div class="stat-info"><h4>${users.length}</h4><p>顾客总数</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#f59e0b,#fbbf24)"><i class="fa-solid fa-bolt"></i></div><div class="stat-info"><h4>${totalCredits}</h4><p>算力总充值</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#ef4444,#f87171)"><i class="fa-solid fa-fire"></i></div><div class="stat-info"><h4>${Math.abs(totalUsed)}</h4><p>算力总消耗</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#10b981,#34d399)"><i class="fa-solid fa-clipboard-list"></i></div><div class="stat-info"><h4>${orders.length}</h4><p>订单总量</p></div></div>
+  </div>
+  <div class="card"><div class="card-header"><h3><i class="fa-solid fa-user-group" style="color:var(--ok);margin-right:6px"></i>顾客列表</h3>
+    <div style="display:flex;gap:8px">
+      <button class="act-btn ok" onclick="adminAddCredits()"><i class="fa-solid fa-bolt"></i> 充值算力</button>
+      <button class="act-btn" onclick="adminCreateOrder()"><i class="fa-solid fa-receipt"></i> 创建订单</button>
+      <button class="act-btn" style="background:var(--warn);color:#fff" onclick="adminGenRedeemCode()"><i class="fa-solid fa-ticket"></i> 生成卡密</button>
+    </div>
+  </div><div class="card-body" id="custListBody"></div></div>
+  <div class="card"><div class="card-header"><h3><i class="fa-solid fa-robot" style="color:var(--p);margin-right:6px"></i>AI任务记录</h3>
+    <button class="act-btn" onclick="renderCustomers()"><i class="fa-solid fa-refresh"></i> 刷新</button>
+  </div><div class="card-body">
+    ${tasks.length?`<div class="table-wrap"><table><tr><th>任务ID</th><th>工具</th><th>状态</th><th>创建时间</th><th>操作</th></tr>
+      ${tasks.slice(0,20).map(t=>{const sm={pending:'<span class="badge badge-yellow">排队中</span>',processing:'<span class="badge badge-blue">生成中</span>',completed:'<span class="badge badge-green">已完成</span>',failed:'<span class="badge" style="background:#fef2f2;color:var(--err)">失败</span>'};return`<tr><td style="font-size:11px;font-family:monospace">${t.id}</td><td>${t.toolName||'-'}</td><td>${sm[t.status]||t.status}</td><td style="color:var(--b)">${fmtDate(t.created)}</td><td>${t.status==='completed'?'<button class="act-btn ok btn-sm" onclick="viewTaskResult(\''+t.id+'\')"><i class="fa-solid fa-eye"></i></button>':''}${t.status==='failed'?'<button class="act-btn btn-sm" style="background:var(--err);color:#fff" onclick="deleteTask(\''+t.id+'\')"><i class="fa-solid fa-trash"></i></button>':''}</td></tr>`}).join('')}
+    </table></div>`:'<div class="empty"><i class="fa-solid fa-robot"></i><p>暂无AI任务</p></div>'}
+  </div></div>`;
+  renderCustList();
+  addOpLog('查看顾客管理','');
+}
+
+function renderCustList(){
+  const body=document.getElementById('custListBody');
+  if(!body)return;
+  const users=getUsers().filter(u=>u.role!=='admin');
+  const orders=JSON.parse(localStorage.getItem('lsjy3_orders')||'[]').concat(JSON.parse(localStorage.getItem('lsjy_admin_orders')||'[]'));
+  const kw=(document.getElementById('custSearch')?.value||'').toLowerCase();
+  const filtered=kw?users.filter(u=>(u.username||'').toLowerCase().includes(kw)||(u.nickname||'').toLowerCase().includes(kw)||(u.phone||'').includes(kw)):users;
+  if(!filtered.length){body.innerHTML='<div class="empty"><i class="fa-solid fa-users"></i><p>暂无顾客</p></div>';return}
+  body.innerHTML=`<div class="table-wrap"><table><tr><th>用户名</th><th>昵称</th><th>手机</th><th>注册时间</th><th>订单数</th><th>操作</th></tr>
+    ${filtered.map(u=>{const uo=orders.filter(o=>o.username===u.username);return`<tr>
+      <td style="font-weight:600">${u.username}</td><td>${maskName(u.nickname)}</td><td>${maskPhone(u.phone)}</td>
+      <td style="color:var(--b)">${fmtDate(u.created)}</td><td><span class="badge badge-blue">${uo.length}</span></td>
+      <td><button class="act-btn ok btn-sm" onclick="viewCustDetail('${u.username}')"><i class="fa-solid fa-eye"></i> 详情</button>
+        <button class="act-btn btn-sm" style="background:var(--warn);color:#fff" onclick="adminCustAddCredits('${u.username}')"><i class="fa-solid fa-bolt"></i></button>
+        <button class="act-btn btn-sm" style="background:var(--err);color:#fff" onclick="adminDelUser('${u.username}')"><i class="fa-solid fa-trash"></i></button></td>
+    </tr>`}).join('')}
+  </table></div>`;
+}
+
+function viewCustDetail(username){
+  const u=getUsers().find(x=>x.username===username);if(!u)return;
+  const orders=JSON.parse(localStorage.getItem('lsjy3_orders')||'[]').concat(JSON.parse(localStorage.getItem('lsjy_admin_orders')||'[]')).filter(o=>o.username===username);
+  const logs=JSON.parse(localStorage.getItem('lsjy3_credit_logs')||'[]').filter(l=>l.user===username);
+  const tasks=JSON.parse(localStorage.getItem('lsjy3_ai_tasks')||'[]').filter(t=>t.username===username);
+  showMod(`<h3><i class="fa-solid fa-user" style="color:var(--p);margin-right:6px"></i>顾客详情 - ${u.nickname||u.username}</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px;font-size:13px">
+      <div><b>用户名:</b> ${u.username}</div><div><b>昵称:</b> ${u.nickname||'-'}</div>
+      <div><b>手机:</b> ${maskPhone(u.phone)||'-'}</div><div><b>角色:</b> ${u.role||'user'}</div>
+      <div><b>注册:</b> ${fmtDate(u.created)}</div><div><b>订单:</b> ${orders.length} 笔</div>
+    </div>
+    ${orders.length?`<h4 style="margin-top:16px">订单记录</h4><div style="max-height:200px;overflow-y:auto"><table style="font-size:12px"><tr><th>订单</th><th>服务</th><th>金额</th><th>状态</th><th>时间</th></tr>
+      ${orders.map(o=>`<tr><td>${o.orderId||'-'}</td><td>${o.serviceName||'-'}</td><td>¥${o.price||0}</td><td>${o.status||'-'}</td><td>${fmtDate(o.time)}</td></tr>`).join('')}
+    </table></div>`:''}
+    ${logs.length?`<h4 style="margin-top:16px">算力记录</h4><div style="max-height:200px;overflow-y:auto"><table style="font-size:12px"><tr><th>描述</th><th>变动</th><th>时间</th></tr>
+      ${logs.slice(-10).map(l=>`<tr><td>${l.desc||'-'}</td><td style="color:${l.amount>0?'var(--ok)':'var(--err)'}">${l.amount>0?'+':''}${l.amount}</td><td>${fmtDate(l.time)}</td></tr>`).join('')}
+    </table></div>`:''}
+    <div class="modal-actions"><button class="m-cancel" onclick="closeModal()">关闭</button></div>`);
+}
+
+function adminAddCredits(){
+  const users=getUsers().filter(u=>u.role!=='admin');
+  showMod(`<h3><i class="fa-solid fa-bolt" style="color:var(--warn);margin-right:6px"></i>充值算力</h3>
+    <div style="margin-top:16px"><div class="fg"><label class="fl">选择用户</label><select class="fi" id="creditUser">
+      ${users.map(u=>`<option value="${u.username}">${u.nickname||u.username} (${u.username})</option>`).join('')}
+    </select></div>
+    <div class="fg"><label class="fl">算力数量</label><input class="fi" type="number" id="creditAmount" value="100" min="1"></div>
+    <div class="fg"><label class="fl">备注</label><input class="fi" id="creditNote" placeholder="管理员手动充值"></div></div>
+    <div class="modal-actions"><button class="m-cancel" onclick="closeModal()">取消</button><button class="m-confirm" onclick="doAdminAddCredits()">确认充值</button></div>`);
+}
+function adminCustAddCredits(username){
+  showMod(`<h3><i class="fa-solid fa-bolt" style="color:var(--warn);margin-right:6px"></i>充值算力</h3>
+    <div style="margin-top:16px"><div class="fg"><label class="fl">用户</label><input class="fi" value="${username}" readonly></div>
+    <div class="fg"><label class="fl">算力数量</label><input class="fi" type="number" id="creditAmount" value="100" min="1"></div>
+    <div class="fg"><label class="fl">备注</label><input class="fi" id="creditNote" placeholder="管理员手动充值"></div></div>
+    <div class="modal-actions"><button class="m-cancel" onclick="closeModal()">取消</button><button class="m-confirm" onclick="doAdminAddCreditsFor('${username}')">确认充值</button></div>`);
+}
+function doAdminAddCredits(){
+  const user=document.getElementById('creditUser').value;
+  const amount=parseInt(document.getElementById('creditAmount').value);
+  const note=document.getElementById('creditNote').value||'管理员手动充值';
+  if(!amount||amount<1)return toast('请输入有效算力数量','error');
+  const credits=JSON.parse(localStorage.getItem('lsjy3_credits_'+user)||'0');
+  localStorage.setItem('lsjy3_credits_'+user,String(credits+amount));
+  const logs=JSON.parse(localStorage.getItem('lsjy3_credit_logs')||'[]');
+  logs.push({user,desc:note,amount,time:new Date().toISOString()});
+  localStorage.setItem('lsjy3_credit_logs',JSON.stringify(logs));
+  addOpLog('管理员充值算力',user+' +'+amount);
+  closeModal();renderCustomers();toast('已为 '+user+' 充值 '+amount+' 算力','success');
+}
+function doAdminAddCreditsFor(username){
+  const amount=parseInt(document.getElementById('creditAmount').value);
+  const note=document.getElementById('creditNote').value||'管理员手动充值';
+  if(!amount||amount<1)return toast('请输入有效算力数量','error');
+  const credits=JSON.parse(localStorage.getItem('lsjy3_credits_'+username)||'0');
+  localStorage.setItem('lsjy3_credits_'+username,String(credits+amount));
+  const logs=JSON.parse(localStorage.getItem('lsjy3_credit_logs')||'[]');
+  logs.push({user:username,desc:note,amount,time:new Date().toISOString()});
+  localStorage.setItem('lsjy3_credit_logs',JSON.stringify(logs));
+  addOpLog('管理员充值算力',username+' +'+amount);
+  closeModal();renderCustomers();toast('已为 '+username+' 充值 '+amount+' 算力','success');
+}
+function adminCreateOrder(){
+  const users=getUsers().filter(u=>u.role!=='admin');
+  showMod(`<h3><i class="fa-solid fa-receipt" style="color:var(--p);margin-right:6px"></i>创建订单</h3>
+    <div style="margin-top:16px"><div class="fg"><label class="fl">选择用户</label><select class="fi" id="orderUser">
+      ${users.map(u=>`<option value="${u.username}">${u.nickname||u.username} (${u.username})</option>`).join('')}
+    </select></div>
+    <div class="fg"><label class="fl">服务名称</label><input class="fi" id="orderService" placeholder="如：算力充值-至尊包"></div>
+    <div class="fg"><label class="fl">金额 (¥)</label><input class="fi" type="number" id="orderPrice" value="0" min="0"></div>
+    <div class="fg"><label class="fl">状态</label><select class="fi" id="orderStatus"><option value="completed">已完成</option><option value="pending">待审核</option><option value="cancelled">已取消</option></select></div></div>
+    <div class="modal-actions"><button class="m-cancel" onclick="closeModal()">取消</button><button class="m-confirm" onclick="doAdminCreateOrder()">创建</button></div>`);
+}
+function doAdminCreateOrder(){
+  const user=document.getElementById('orderUser').value;
+  const service=document.getElementById('orderService').value;
+  const price=parseFloat(document.getElementById('orderPrice').value);
+  const status=document.getElementById('orderStatus').value;
+  if(!service)return toast('请输入服务名称','error');
+  const order={moduleId:'custom',serviceId:'custom',serviceName:service,price,status,username:user,time:new Date().toLocaleString(),orderId:'LSJY'+Date.now().toString(36).toUpperCase(),method:'admin',operator:getCur()?.username};
+  const orders=JSON.parse(localStorage.getItem('lsjy_admin_orders')||'[]');
+  orders.push(order);localStorage.setItem('lsjy_admin_orders',JSON.stringify(orders));
+  addOpLog('管理员创建订单',user+' '+service+' ¥'+price);
+  closeModal();renderCustomers();toast('订单已创建','success');
+}
+function adminDelUser(username){
+  showMod(`<h3><i class="fa-solid fa-triangle-exclamation" style="color:var(--err)"></i> 删除用户</h3><p>确定删除用户 <b>${username}</b>？此操作不可恢复。</p>
+    <div class="modal-actions"><button class="m-cancel" onclick="closeModal()">取消</button><button class="m-confirm" style="background:var(--err)" onclick="cfmAdminDelUser('${username}')">删除</button></div>`);
+}
+function cfmAdminDelUser(username){
+  const users=getUsers().filter(u=>u.username!==username);
+  localStorage.setItem('lsjy3_users',JSON.stringify(users));
+  addOpLog('删除顾客',username);closeModal();renderCustomers();toast('用户 '+username+' 已删除','success');
+}
+function adminGenRedeemCode(){
+  showMod(`<h3><i class="fa-solid fa-ticket" style="color:var(--warn);margin-right:6px"></i>快速生成卡密</h3>
+    <div style="margin-top:16px"><div class="fg"><label class="fl">套餐</label><select class="fi" id="rcPack">
+      <option value="trial">体验包(100算力¥9.9)</option><option value="basic">基础包(500算力¥39.9)</option>
+      <option value="pro">专业包(2000算力¥129)</option><option value="flag">旗舰包(5000算力¥299)</option><option value="ultimate">至尊包(10000算力¥1000)</option>
+    </select></div>
+    <div class="fg"><label class="fl">数量</label><input class="fi" type="number" id="rcCount" value="1" min="1" max="50"></div></div>
+    <div class="modal-actions"><button class="m-cancel" onclick="closeModal()">取消</button><button class="m-confirm" onclick="doQuickGenCode()">生成</button></div>`);
+}
+function doQuickGenCode(){
+  const pack=document.getElementById('rcPack').value;
+  const count=parseInt(document.getElementById('rcCount').value)||1;
+  const packMap={trial:{name:'体验包',credits:100,price:9.9},basic:{name:'基础包',credits:500,price:39.9},pro:{name:'专业包',credits:2000,price:129},flag:{name:'旗舰包',credits:5000,price:299},ultimate:{name:'至尊包',credits:10000,price:1000}};
+  const p=packMap[pack];
+  const codes=getRedeemCodes();
+  for(let i=0;i<count;i++){
+    codes.push({code:'LSJY-'+Math.random().toString(36).substring(2,10).toUpperCase(),packName:p.name,credits:p.credits,price:p.price,status:'unused',createdAt:new Date().toISOString()});
+  }
+  saveRedeemCodes(codes);addOpLog('快速生成卡密',p.name+' x'+count);
+  closeModal();renderCustomers();toast('已生成 '+count+' 个'+p.name+'卡密','success');
+}
+function viewTaskResult(taskId){
+  const tasks=JSON.parse(localStorage.getItem('lsjy3_ai_tasks')||'[]');
+  const t=tasks.find(x=>x.id===taskId);if(!t)return;
+  showMod(`<h3><i class="fa-solid fa-robot" style="color:var(--p);margin-right:6px"></i>${t.toolName||'AI任务'}</h3>
+    <div style="margin-top:16px;font-size:13px"><div><b>状态:</b> ${t.status}</div><div><b>时间:</b> ${fmtDate(t.created)}</div></div>
+    ${t.type==='image'&&t.result?`<div style="margin-top:12px"><img src="${t.result}" style="max-width:100%;border-radius:8px" alt="AI生成结果"></div>`:''}
+    ${t.type==='text'&&t.result?`<div style="margin-top:12px;padding:12px;background:var(--bg);border-radius:8px;white-space:pre-wrap;max-height:400px;overflow-y:auto;font-size:13px">${t.result}</div>`:''}
+    <div class="modal-actions"><button class="m-cancel" onclick="closeModal()">关闭</button></div>`);
+}
+function deleteTask(taskId){
+  const tasks=JSON.parse(localStorage.getItem('lsjy3_ai_tasks')||'[]').filter(t=>t.id!==taskId);
+  localStorage.setItem('lsjy3_ai_tasks',JSON.stringify(tasks));
+  renderCustomers();toast('任务已删除','success');
+}
+
 // ===== Modal =====
 function showMod(h){document.getElementById('modalBox').innerHTML=h;document.getElementById('modalBg').classList.add('show')}
 function closeModal(e){if(e&&e.target!==e.currentTarget)return;document.getElementById('modalBg').classList.remove('show')}
 
 // ===== VERSION & INTEGRITY CHECK =====
-(function(){const VER='admin-v3.5';const stored=localStorage.getItem('lsjy_admin_ver');if(stored!==VER){localStorage.setItem('lsjy_admin_ver',VER);if(stored)location.reload(true)}else if(typeof goPage!=='function'||typeof renderDashboard!=='function'){const fc=localStorage.getItem('lsjy_admin_jsok');if(fc===VER)return;localStorage.setItem('lsjy_admin_jsok',VER);window.location.replace(window.location.pathname+'?_r='+Date.now())}})();
+(function(){const VER='admin-v3.6';const stored=localStorage.getItem('lsjy_admin_ver');if(stored!==VER){localStorage.setItem('lsjy_admin_ver',VER);if(stored)location.reload(true)}else if(typeof goPage!=='function'||typeof renderDashboard!=='function'){const fc=localStorage.getItem('lsjy_admin_jsok');if(fc===VER)return;localStorage.setItem('lsjy_admin_jsok',VER);window.location.replace(window.location.pathname+'?_r='+Date.now())}})();
 </script>
 </body>
 </html>
