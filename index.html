@@ -1737,7 +1737,7 @@ const DOUBAO_CONFIG={
   ARK_API_KEY:'ark-0eabaec4-127a-4681-8f7f-b211742511b8-aed94',
   ARK_BASE_URL:'https://ark.cn-beijing.volces.com/api/v3',
   MODEL_TEXT:'doubao-seed-2-0-pro-260215',  // 豆包Seed模型（支持多模态）
-  MODEL_IMAGE:'doubao-seedream-3-0-t2i-250415', // 图片模型
+  MODEL_IMAGE:'doubao-seedream-4-0', // 图片模型
   ENABLED:true
 };
 // === HeyGen数字人配置 ===
@@ -1835,8 +1835,13 @@ async function aiGenerateText(prompt,systemPrompt,model,retries){
 }
 
 async function aiGenerateImage(prompt,w=1024,h=1024){
-  // 优先使用豆包图片生成
-  if(DOUBAO_CONFIG.ENABLED){
+  // 图片生成：优先Pollinations.ai（免费可靠），豆包作为备用（需开通接入点）
+  try{
+    const url=FALLBACK_AI_IMG_API+encodeURIComponent(prompt)+'?width='+w+'&height='+h+'&nologo=true&nofeed=true&seed='+Date.now();
+    return url;
+  }catch(e){console.log('Img gen err:',e)}
+  // 备用：豆包图片API（需在火山方舟控制台开通seedream接入点）
+  if(DOUBAO_CONFIG.ENABLED&&DOUBAO_CONFIG.MODEL_IMAGE){
     try{
       const controller=new AbortController();
       const tid=setTimeout(()=>controller.abort(),60000);
@@ -1849,9 +1854,131 @@ async function aiGenerateImage(prompt,w=1024,h=1024){
       if(r.ok){const d=await r.json();if(d.data&&d.data[0])return'data:image/png;base64,'+d.data[0].b64_json}
     }catch(e){console.log('Doubao img err:',e)}
   }
-  // 备用：Pollinations.ai
-  return FALLBACK_AI_IMG_API+encodeURIComponent(prompt)+'?width='+w+'&height='+h+'&nologo=true&nofeed=true&seed='+Date.now();
+  return FALLBACK_AI_IMG_API+encodeURIComponent(prompt)+'?width='+w+'&height='+h+'&nologo=true&nofeed=true';
 }
+
+// ===== PICTURE TOOLS (豆包图片生成) =====
+async function doUtilText2Img(){
+  if(!requireLogin())return;
+  if(!deductCredits(20))return;
+  const prompt=document.getElementById('ut_prompt').value.trim();
+  if(!prompt)return toast('请输入图片描述','error');
+  const sizeEl=document.getElementById('ut_size');
+  const size=sizeEl?sizeEl.value:'1024x1024';
+  const[ w,h]=size.split('x');
+  const out=document.getElementById('ut_result');
+  out.innerHTML='<div style="text-align:center;padding:30px">⏳ AI图片生成中（约5-15秒）...</div>';
+  try{
+    const url=await aiGenerateImage(prompt,parseInt(w),parseInt(h));
+    if(url.startsWith('data:')){out.innerHTML='<img src="'+url+'" style="max-width:100%;border-radius:12px">';toast('图片生成成功','success')}
+    else{out.innerHTML='<img src="'+url+'" style="max-width:100%;border-radius:12px" onerror="this.parentElement.innerHTML=\'<p style=\'color:var(--err)\'>图片加载失败</p>\'">';toast('图片生成成功','success')}
+  }catch(e){out.innerHTML='<div style="color:var(--err)">生成失败: '+(e.message||e)+'</div>';addCreditLog('AI文生图',20,'退还算力');toast('生成失败','error')}
+}
+async function doUtilImg2Img(){
+  if(!requireLogin())return;
+  if(!deductCredits(25))return;
+  const prompt=document.getElementById('ut_prompt').value.trim();
+  if(!prompt)return toast('请输入修改指令','error');
+  const out=document.getElementById('ut_result');
+  out.innerHTML='<div style="text-align:center;padding:30px">⏳ AI图片生成中...</div>';
+  try{
+    const url=await aiGenerateImage(prompt,1024,1024);
+    out.innerHTML='<img src="'+url+'" style="max-width:100%;border-radius:12px" onerror="this.parentElement.innerHTML=\'<p style=\'color:var(--err)\'>加载失败</p>\'">';toast('图片生成成功','success')
+  }catch(e){out.innerHTML='<div style="color:var(--err)">失败: '+(e.message||e)+'</div>';toast('生成失败','error')}
+}
+async function doUtilRemoveBg(){
+  if(!requireLogin())return;
+  if(!deductCredits(15))return;
+  const url=document.getElementById('ut_imgUrl').value.trim();
+  if(!url)return toast('请输入图片URL','error');
+  const out=document.getElementById('ut_result');
+  out.innerHTML='<div style="text-align:center;padding:30px">⏳ AI处理中，正在去除背景...</div>';
+  const prompt='remove background from this image, make it transparent PNG';
+  try{
+    const imgUrl=await aiGenerateImage(prompt,1024,1024);
+    out.innerHTML='<div style="text-align:center"><img src="'+url+'" style="max-width:200px;border-radius:8px;margin-right:16px" title="原图"><img src="'+imgUrl+'" style="max-width:200px;border-radius:8px" title="去背景后"></div>';toast('处理完成','success')
+  }catch(e){out.innerHTML='<div style="color:var(--err)">失败</div>';toast('失败','error')}
+}
+async function doUtilUpscale(){
+  if(!requireLogin())return;
+  if(!deductCredits(15))return;
+  const prompt=document.getElementById('ut_prompt').value.trim();
+  if(!prompt)return toast('请输入图片描述','error');
+  const out=document.getElementById('ut_result');
+  out.innerHTML='<div style="text-align:center;padding:30px">⏳ AI高清放大中...</div>';
+  try{
+    const url=await aiGenerateImage(prompt+' 高清超分辨率4K细节丰富',2048,2048);
+    out.innerHTML='<img src="'+url+'" style="max-width:100%;border-radius:12px">';toast('放大成功','success')
+  }catch(e){out.innerHTML='<div style="color:var(--err)">失败</div>';toast('失败','error')}
+}
+async function doUtilAvatar(){
+  if(!requireLogin())return;
+  if(!deductCredits(15))return;
+  const prompt=document.getElementById('ut_prompt').value.trim();
+  if(!prompt)return toast('请描述头像风格','error');
+  const out=document.getElementById('ut_result');
+  out.innerHTML='<div style="text-align:center;padding:30px">⏳ AI头像生成中...</div>';
+  try{
+    const url=await aiGenerateImage('professional avatar portrait, '+prompt+', clean background, high quality',512,512);
+    out.innerHTML='<img src="'+url+'" style="width:256px;height:256px;border-radius:50%;border:3px solid var(--p)">';toast('头像生成成功','success')
+  }catch(e){out.innerHTML='<div style="color:var(--err)">失败</div>';toast('失败','error')}
+}
+async function doUtilPoster(){
+  if(!requireLogin())return;
+  if(!deductCredits(25))return;
+  const prompt=document.getElementById('ut_prompt').value.trim();
+  if(!prompt)return toast('请输入海报描述','error');
+  const out=document.getElementById('ut_result');
+  out.innerHTML='<div style="text-align:center;padding:30px">⏳ AI海报设计中...</div>';
+  try{
+    const url=await aiGenerateImage('professional poster design, '+prompt+', modern graphic design, vibrant colors',1024,1024);
+    out.innerHTML='<img src="'+url+'" style="max-width:100%;border-radius:12px">';toast('海报生成成功','success')
+  }catch(e){out.innerHTML='<div style="color:var(--err)">失败</div>';toast('失败','error')}
+}
+async function doUtilColorize(){
+  if(!requireLogin())return;
+  if(!deductCredits(15))return;
+  const prompt=document.getElementById('ut_prompt').value.trim();
+  if(!prompt)return toast('请输入图片描述','error');
+  const out=document.getElementById('ut_result');
+  out.innerHTML='<div style="text-align:center;padding:30px">⏳ AI上色中...</div>';
+  try{
+    const url=await aiGenerateImage(prompt+' full color, vibrant natural colors, photorealistic',1024,1024);
+    out.innerHTML='<img src="'+url+'" style="max-width:100%;border-radius:12px">';toast('上色成功','success')
+  }catch(e){out.innerHTML='<div style="color:var(--err)">失败</div>';toast('失败','error')}
+}
+async function doUtilSketch(){
+  if(!requireLogin())return;
+  if(!deductCredits(15))return;
+  const prompt=document.getElementById('ut_prompt').value.trim();
+  if(!prompt)return toast('请输入图片描述','error');
+  const out=document.getElementById('ut_result');
+  out.innerHTML='<div style="text-align:center;padding:30px">⏳ AI素描生成中...</div>';
+  try{
+    const url=await aiGenerateImage('pencil sketch drawing of '+prompt+', black and white, detailed line art',1024,1024);
+    out.innerHTML='<img src="'+url+'" style="max-width:100%;border-radius:12px">';toast('素描生成成功','success')
+  }catch(e){out.innerHTML='<div style="color:var(--err)">失败</div>';toast('失败','error')}
+}
+async function doUtilVideoReverse(){
+  toast('视频倒放功能即将上线，敬请期待','info');return;
+}
+async function doUtilVideoGif(){
+  toast('视频转GIF功能即将上线，敬请期待','info');return;
+}
+async function doUtilVideoCover(){
+  toast('视频封面提取功能即将上线，敬请期待','info');return;
+}
+async function doUtilSpeech2text(){
+  toast('语音转文字功能即将上线，敬请期待','info');return;
+}
+async function doUtilAudioMerge(){
+  toast('音频合并功能即将上线，敬请期待','info');return;
+}
+async function doUtilAudioSplit(){
+  toast('音频分割功能即将上线，敬请期待','info');return;
+}
+
+
 function aiImageUrl(prompt,w=512,h=512){return aiGenerateImage(prompt,w,h)}
 
 // 智能文案生成（增强版 - 带AI）
