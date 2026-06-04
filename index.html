@@ -343,7 +343,7 @@ textarea.fi{resize:vertical;min-height:120px}
 .tool-card[data-cat]{transition:all .3s}
 .tool-card.hidden{display:none}
 </style>
-<script>if(localStorage.getItem('lsjy3_ver')!=='v3.8-beta1'){localStorage.setItem('lsjy3_ver','v3.8-beta1');location.reload(true)}
+<script>(function(){if(!localStorage.getItem('lsjy3_ver')){localStorage.setItem('lsjy3_ver','v3.8-beta1')}})();
 
 // ===== 卡密兑换系统 =====
 function getRedeemCodes(){return JSON.parse(localStorage.getItem('lsjy3_redeem_codes')||'[]')}
