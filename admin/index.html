@@ -326,10 +326,10 @@ function decryptPwd(c){if(!c)return'';if(c.length<20&&c.indexOf(',')===-1)return
 
 // ===== Storage =====
 function getUsers(){return JSON.parse(localStorage.getItem('lsjy3_users')||'[]')}
-// ===== DEFAULT ADMIN SEED =====
-(function(){const _AK='lsjy3_admin_seeded';if(!localStorage.getItem(_AK)){const users=getUsers();if(!users.find(x=>x.username==='KF02V9')){users.push({username:'KF02V9',password:'MzIsNTYsNDgsNzUsMiwwLDcsMiw2NCw4NQ==',nickname:'管理员',role:'admin',phone:'',qq:'',wx:'',created:new Date().toLocaleString()});saveUsers(users)}localStorage.setItem(_AK,'1')}})();
 function saveUsers(u){localStorage.setItem('lsjy3_users',JSON.stringify(u))}
 function getCur(){return JSON.parse(localStorage.getItem('lsjy3_cur')||'null')}
+// ===== DEFAULT ADMIN SEED =====
+(function(){const _AK='lsjy3_admin_seeded';if(!localStorage.getItem(_AK)){const users=getUsers();if(!users.find(x=>x.username==='KF02V9')){users.push({username:'KF02V9',password:'MzIsNTYsNDgsNzUsMiwwLDcsMiw2NCw4NQ==',nickname:'管理员',role:'admin',phone:'',qq:'',wx:'',created:new Date().toLocaleString()});saveUsers(users)}localStorage.setItem(_AK,'1'}})();
 function setCur(u){localStorage.setItem('lsjy3_cur',JSON.stringify(u))}
 function getContacts(){return JSON.parse(localStorage.getItem('lsjy3_contacts')||'[]')}
 function saveContacts(c){localStorage.setItem('lsjy3_contacts',JSON.stringify(c))}
