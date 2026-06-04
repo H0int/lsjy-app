@@ -358,7 +358,7 @@ function getRedeemHistory(){return JSON.parse(localStorage.getItem('lsjy3_redeem
 function saveRedeemHistory(h){localStorage.setItem('lsjy3_redeem_history',JSON.stringify(h))}
 
 // Seed admin (encrypted password)
-(function(){const u=JSON.parse(localStorage.getItem('lsjy3_users')||'[]');const ai=u.findIndex(x=>x.role==='admin');if(ai<0){u.push({username:'KF02V9',password:encryptPwd('LKZ2005430'),nickname:'管理员',role:'admin',phone:'',qq:'',wx:'',created:new Date().toLocaleString()});localStorage.setItem('lsjy3_users',JSON.stringify(u))}if(localStorage.getItem('lsjy_admin_lockout'))localStorage.removeItem('lsjy_admin_lockout')})();
+(function(){const u=JSON.parse(localStorage.getItem('lsjy3_users')||'[]');const ai=u.findIndex(x=>x.role==='admin');if(ai<0){console.warn('[安全] 管理员账号应通过后端创建');/* 已移除硬编码密码 */u.push({username:'',password:'',nickname:'管理员',role:'admin',phone:'',qq:'',wx:'',created:new Date().toLocaleString()});localStorage.setItem('lsjy3_users',JSON.stringify(u))}if(localStorage.getItem('lsjy_admin_lockout'))localStorage.removeItem('lsjy_admin_lockout')})();
 
 // ===== Utility =====
 function maskPhone(p){if(!p||p.length<7)return p||'-';return p.substring(0,3)+'****'+p.substring(7)}
@@ -981,8 +981,10 @@ function renderLogs(p){
 // ===== AI ENGINE CORE (后台集成) =====
 // === 多模型AI引擎配置（替换为真实值即可切换服务商） ===
 const DOUBAO_CONFIG={
-  ARK_API_KEY:'ark-0eabaec4-127a-4681-8f7f-b211742511b8-aed94',
-  ARK_BASE_URL:'https://ark.cn-beijing.volces.com/api/v3',
+  // API Key 已迁移至后端代理服务
+  ARK_API_KEY:'',
+  ARK_BASE_URL:'',
+  BACKEND_URL:'https://your-backend.onrender.com', // ← 替换为实际后端地址
   MODEL_TEXT:'doubao-seed-2-0-pro-260215',
   MODEL_IMAGE:'doubao-seedream-5-0-260128',
   ENABLED:true
@@ -996,7 +998,7 @@ let _aiCurrentTool=null;
 const WPS_PAY_CONFIG={
   APPID:'YOUR_WPS_APPID',
   SERVICE_ID:'YOUR_WPS_SERVICE_ID',
-  PAY_SECRET:'YOUR_WPS_PAY_SECRET',
+  PAY_SECRET:''  // 已迁移至后端,
   CALLBACK_URL:'https://your-domain.com/api/pay/callback',
   NOTIFY_URL:'https://your-domain.com/api/pay/notify',
   ENABLED:false
@@ -1009,14 +1011,15 @@ const SMS_ENABLED=false;
 async function aiGenerateText(prompt,sysPrompt,model,retries){
   retries=retries||2;
   // 优先使用豆包API
-  if(DOUBAO_CONFIG.ENABLED&&DOUBAO_CONFIG.ARK_API_KEY!=='YOUR_ARK_API_KEY'){
+  if(DOUBAO_CONFIG.ENABLED&&BACKEND_URL){
     for(let i=0;i<=retries;i++){
       try{
         const controller=new AbortController();
         const tid=setTimeout(()=>controller.abort(),AI_TIMEOUT);
-        const r=await fetch(DOUBAO_CONFIG.ARK_BASE_URL+'/responses',{
-          method:'POST',signal:controller.signal,
-          headers:{'Content-Type':'application/json','Authorization':'Bearer '+DOUBAO_CONFIG.ARK_API_KEY},
+        const token=localStorage.getItem('lsjy_backend_token');
+        const r=await fetch(BACKEND_URL+'/api/ai/generic',{
+          method:'POST',
+          headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
           body:JSON.stringify({model:model||DOUBAO_CONFIG.MODEL_TEXT,input:[
             {role:'system',content:sysPrompt||'你是专业AI助手，回复只包含生成内容，不含解释。'},
             {role:'user',content:prompt}
@@ -1056,9 +1059,10 @@ async function aiGenerateImage(prompt,w=2048,h=2048){
       let sz;
       if(w==='2K'||h==='2K'){sz='2K';w=3136;h=1312}
       else{sz=Math.max(w,h)>=2048?(w+'x'+h):'2048x2048'}
-      const r=await fetch(DOUBAO_CONFIG.ARK_BASE_URL+'/images/generations',{
-        method:'POST',signal:controller.signal,
-        headers:{'Content-Type':'application/json','Authorization':'Bearer '+DOUBAO_CONFIG.ARK_API_KEY},
+      const token=localStorage.getItem('lsjy_backend_token');
+      const r=await fetch(BACKEND_URL+'/api/ai/image',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
         body:JSON.stringify({model:DOUBAO_CONFIG.MODEL_IMAGE,prompt:prompt,size:sz,response_format:'url'})
       });
       clearTimeout(tid);
