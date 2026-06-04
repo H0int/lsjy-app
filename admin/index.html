@@ -387,7 +387,8 @@ function doLogin(e){
   const u=document.getElementById('loginUser').value.trim(),p=document.getElementById('loginPwd').value;
   const users=getUsers();
   const found=users.find(x=>x.username===u);
-  if(!found||decryptPwd(found.password)!==p){
+  const pwdOk=decryptPwd(found.password)===p||found.password===btoa(p);
+  if(!found||!pwdOk){
     const cnt=(lo.failCount||0)+1;
     lo.failCount=cnt;lo.lastFail=Date.now();
     if(cnt>=5){lo.lockedUntil=Date.now()+15*60*1000;lo.failCount=0;saveLockout(lo);updateLockoutUI();toast('连续5次登录失败，账号已锁定15分钟','error');return}
