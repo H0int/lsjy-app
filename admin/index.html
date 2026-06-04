@@ -424,7 +424,7 @@ function enterApp(){
   const u=getCur();document.getElementById('tbAvatar').textContent=(u.nickname||u.username)[0].toUpperCase();document.getElementById('tbName').textContent=u.nickname||u.username;
   goPage('dashboard');
 }
-(function(){const u=getCur();const ADMIN_ROLES=['admin','super_admin','supreme_admin','boss'];if(u&&ADMIN_ROLES.includes(u.role))enterApp()})();
+setTimeout(function(){const u=getCur();const ADMIN_ROLES=['admin','super_admin','supreme_admin','boss'];if(u&&ADMIN_ROLES.includes(u.role))enterApp()},0);
 
 // ===== Pagination =====
 function paginate(arr,page,size){const total=Math.ceil(arr.length/size);return{data:arr.slice((page-1)*size,page*size),page,total,allCount:arr.length}}
