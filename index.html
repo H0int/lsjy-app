@@ -333,7 +333,7 @@ textarea.fi{resize:vertical;min-height:120px}
 .ai-spinner{display:inline-block;width:40px;height:40px;border:3px solid var(--bd);border-top-color:var(--p);border-radius:50%;animation:ai-spin .8s linear infinite}
 @keyframes ai-spin{to{transform:rotate(360deg)}}
 </style>
-<script>if(localStorage.getItem('lsjy3_ver')!=='v3.5-beta1'){localStorage.setItem('lsjy3_ver','v3.5-beta1');location.reload(true)}
+<script>if(localStorage.getItem('lsjy3_ver')!=='v3.6-beta1'){localStorage.setItem('lsjy3_ver','v3.6-beta1');location.reload(true)}
 
 // ===== 卡密兑换系统 =====
 function getRedeemCodes(){return JSON.parse(localStorage.getItem('lsjy3_redeem_codes')||'[]')}
@@ -970,7 +970,7 @@ renderEmployeeAcct();
 <div class="hero-stats">
 <div class="hero-stat"><h4>6</h4><p>核心业务板块</p></div>
 <div class="hero-stat"><h4>28</h4><p>专业服务项目</p></div>
-<div class="hero-stat"><h4>6</h4><p>AI创作工具</p></div>
+<div class="hero-stat"><h4>20</h4><p>AI创作工具</p></div>
 <div class="hero-stat"><h4>1000+</h4><p>服务客户</p></div>
 </div>
 </div>
@@ -1136,6 +1136,12 @@ renderEmployeeAcct();
 <p>上传图片，AI生成动态视频，让静态图片动起来</p>
 <div class="badge badge-purple" style="margin-top:12px">登录后使用</div>
 </div>
+<div class="tool-card" onclick="openTool('taskCenter')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">📋</div>
+<h3>AI任务中心</h3>
+<p>查看后台AI生成任务进度与结果</p>
+<div class="badge badge-green" style="margin-top:12px">实时查看</div>
+</div>
 
 </section>
 
@@ -1195,7 +1201,7 @@ renderEmployeeAcct();
 
 <!-- ===== FOOTER ===== -->
 <footer class="footer">
-<p>© 2025-2026 祁阳市祁阳市罗圣纪元互联网科技有限责任公司 &nbsp;|&nbsp; 湖南省永州市祁阳市</p>
+<p>© 2025-2026 祁阳市罗圣纪元互联网科技有限责任公司 &nbsp;|&nbsp; 湖南省永州市祁阳市</p>
 <p style="margin-top:8px">AI · 自媒体 · 电商 · 宠物 · 教育 · 伯雅校园</p>
 <p style="margin-top:12px;font-size:12px">
   <a href="privacy.html" style="color:rgba(255,255,255,.5);text-decoration:none" target="_blank">隐私政策</a>
@@ -1203,6 +1209,8 @@ renderEmployeeAcct();
   <a href="terms.html" style="color:rgba(255,255,255,.5);text-decoration:none" target="_blank">用户协议</a>
   <span style="margin:0 8px;opacity:.3">|</span>
   <a href="https://beian.miit.gov.cn/" style="color:rgba(255,255,255,.5);text-decoration:none" target="_blank" rel="nofollow noopener">湘ICP备2026XXXXXX号</a>
+  <span style="margin:0 8px;opacity:.3">|</span>
+  <a href="admin/" style="color:rgba(255,255,255,.5);text-decoration:none">管理后台</a>
 </p>
 </footer>
 
@@ -1277,7 +1285,7 @@ renderEmployeeAcct();
 
 <script>
 // ===== CACHE BUSTER & VERSION CHECK =====
-(function(){const _V='v3.5-beta1';const _cv=localStorage.getItem('lsjy3_ver');if(_cv!==_V){localStorage.setItem('lsjy3_ver',_V);sessionStorage.clear();try{if('caches'in window)caches.keys().then(k=>k.forEach(n=>caches.delete(n)))}catch(e){}try{document.cookie='lsjy3_ver=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT';document.cookie='lsjy_v=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT';document.cookie='__cf_bm=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT'}catch(e){}}})();
+(function(){const _V='v3.6-beta1';const _cv=localStorage.getItem('lsjy3_ver');if(_cv!==_V){localStorage.setItem('lsjy3_ver',_V);sessionStorage.clear();try{if('caches'in window)caches.keys().then(k=>k.forEach(n=>caches.delete(n)))}catch(e){}try{document.cookie='lsjy3_ver=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT';document.cookie='lsjy_v=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT';document.cookie='__cf_bm=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT'}catch(e){}}})();
 // ===== DATA =====
 const MODULES=[
 {id:'ai',name:'AI 人工智能',icon:'🤖',color:'#3b82f6',gradient:'linear-gradient(135deg,#3b82f6,#60a5fa)',summary:'依托自研 AI 技术面向中小商家落地数字化转型',services:[
@@ -1790,7 +1798,7 @@ const out=document.getElementById('cwOutput');
 out.innerHTML='<p style="color:var(--b);text-align:center">⏳ AI生成中...</p>';
 if(typeof aiGenerateText==='function'){aiGenerateText(prompt).then(text=>{out.innerHTML=`<div style="padding:16px;background:var(--bg);border-radius:12px;border:1px solid var(--bd);white-space:pre-wrap;line-height:1.8;font-size:14px">${text}</div><button class="btn btn-o btn-sm" onclick="copyText('cwOutput')" style="margin-top:8px">📋 复制文案</button>`}).catch(()=>{out.innerHTML='<p style="color:var(--err)">AI生成失败，请稍后重试</p>'})}else{out.innerHTML='<p style="color:var(--err)">AI服务未就绪</p>'}
 }
-const _TOOL_MAP={copywriter:renderCopywriter,watermark:renderWatermark,rewrite:renderRewrite,hashtag:renderHashtag,viralVideo:renderViralVideo,digitalHuman:renderDigitalHuman,voiceClone:renderVoiceClone,videoLib:renderVideoLib,aigc:renderAIGC,photoEdit:renderPhotoEdit,audioEdit:renderAudioEdit,accompaniment:renderAccompaniment,docGen:renderDocGen,credits:renderCredits,redeemCode:renderRedeemCode,knowledgeBase:renderKnowledgeBase,creditLogs:renderCreditLogs,videoParse:renderVideoParse,videoClip:renderVideoClip,img2video:renderImg2Video,employeeAcct:renderEmployeeAcct};
+const _TOOL_MAP={copywriter:renderCopywriter,watermark:renderWatermark,rewrite:renderRewrite,hashtag:renderHashtag,viralVideo:renderViralVideo,digitalHuman:renderDigitalHuman,voiceClone:renderVoiceClone,videoLib:renderVideoLib,aigc:renderAIGC,photoEdit:renderPhotoEdit,audioEdit:renderAudioEdit,accompaniment:renderAccompaniment,docGen:renderDocGen,credits:renderCredits,redeemCode:renderRedeemCode,knowledgeBase:renderKnowledgeBase,creditLogs:renderCreditLogs,videoParse:renderVideoParse,videoClip:renderVideoClip,img2video:renderImg2Video,employeeAcct:renderEmployeeAcct,taskCenter:renderTaskCenter};
 const _TOOL_COST={viralVideo:50,digitalHuman:100,voiceClone:30,aigc:20,photoEdit:30,audioEdit:25,accompaniment:40,docGen:35};
 function openTool(id){
 const overlay=document.getElementById('toolOverlay');
@@ -3430,23 +3438,111 @@ closePayForce();
 };
 
 
-// ===== INIT =====
-// Clean up any stale admin session from previous version
-(function(){
-try{
-  const cur=JSON.parse(localStorage.getItem('lsjy3_cur')||'null');
-  if(cur&&cur.role==='admin'){
-    // Remove admin session from frontend - admin should only login via admin panel
-    localStorage.removeItem('lsjy3_cur');
+
+// ===== AI Task Queue System (Background Generation) =====
+const LSJY_TASK_KEY='lsjy3_ai_tasks';
+function getAITasks(){return JSON.parse(localStorage.getItem(LSJY_TASK_KEY)||'[]')}
+function saveAITasks(t){localStorage.setItem(LSJY_TASK_KEY,JSON.stringify(t))}
+function addAITask(task){const tasks=getAITasks();task.id='TASK-'+Date.now().toString(36).toUpperCase();task.status='pending';task.created=new Date().toISOString();tasks.unshift(task);if(tasks.length>100)tasks.length=100;saveAITasks(tasks);return task.id}
+function updateAITask(id,updates){const tasks=getAITasks();const t=tasks.find(x=>x.id===id);if(t){Object.assign(t,updates);saveAITasks(tasks)}}
+
+// AI task notification system - notify when tasks complete
+function pollAITasks(){
+  const tasks=getAITasks().filter(t=>t.status==='completed'&& !t._notified);
+  tasks.forEach(t=>{
+    t._notified=true;
+    updateAITask(t.id,{_notified:true});
+    if('Notification' in window && Notification.permission==='granted'){
+      new Notification('AI任务完成',{body:t.toolName+' 已生成完成，点击查看',icon:'logo.png'});
+    }
+    toast('✅ '+t.toolName+' 后台生成完成！点击任务中心查看','success');
+  });
+  // Clean up _notified flags on reload
+  const allTasks=getAITasks();
+  allTasks.forEach(t=>delete t._notified);
+  saveAITasks(allTasks);
+}
+setInterval(pollAITasks,5000);
+// Request notification permission
+if('Notification' in window && Notification.permission==='default'){
+  try{Notification.requestPermission()}catch(e){}
+}
+
+// Background AI text generation wrapper
+async function aiGenerateTextBg(prompt,systemPrompt,model,retries,taskInfo){
+  const taskId=addAITask({type:'text',toolName:taskInfo?.toolName||'AI文本生成',prompt:prompt.substring(0,200),status:'processing',result:null});
+  try{
+    const result=await aiGenerateText(prompt,systemPrompt,model,retries);
+    updateAITask(taskId,{status:'completed',result:result});
+    // Also save to videos history for backward compat
+    const videos=JSON.parse(localStorage.getItem('lsjy3_videos')||'[]');
+    videos.push({type:taskInfo?.toolType||'text',title:taskInfo?.toolName||'AI生成 - '+prompt.substring(0,20),time:new Date().toLocaleString(),status:'done',taskId:taskId});
+    localStorage.setItem('lsjy3_videos',JSON.stringify(videos));
+    return result;
+  }catch(err){
+    updateAITask(taskId,{status:'failed',error:err.message||String(err)});
+    throw err;
   }
-  // Also clean up any auto-seeded admin from old version
+}
+
+// Background AI image generation wrapper
+async function aiGenerateImageBg(prompt,w,h,taskInfo){
+  const taskId=addAITask({type:'image',toolName:taskInfo?.toolName||'AI图片生成',prompt:prompt.substring(0,200),status:'processing',result:null});
+  try{
+    const url=await aiGenerateImage(prompt,w,h);
+    updateAITask(taskId,{status:'completed',result:url});
+    const videos=JSON.parse(localStorage.getItem('lsjy3_videos')||'[]');
+    videos.push({type:'image',title:taskInfo?.toolName||'AI图片 - '+prompt.substring(0,20),time:new Date().toLocaleString(),status:'done',taskId:taskId,imageUrl:url});
+    localStorage.setItem('lsjy3_videos',JSON.stringify(videos));
+    return url;
+  }catch(err){
+    updateAITask(taskId,{status:'failed',error:err.message||String(err)});
+    throw err;
+  }
+}
+
+// Render AI Task Center panel
+function renderTaskCenter(){
+  const tasks=getAITasks();
+  const statusMap={pending:'⏳ 排队中',processing:'🔄 生成中',completed:'✅ 已完成',failed:'❌ 失败'};
+  document.getElementById('toolPanel').innerHTML=`<div class="tool-header"><h3>📋 AI任务中心</h3><button class="detail-close" onclick="closeTool()">✕</button></div>
+<div class="tool-body" style="padding:20px">
+<div style="margin-bottom:16px;display:flex;gap:8px">
+<button class="btn btn-p btn-sm" onclick="renderTaskCenter()">🔄 刷新</button>
+<button class="btn btn-o btn-sm" onclick="clearCompletedTasks()">🗑️ 清除已完成</button>
+</div>
+${tasks.length===0?'<div style="text-align:center;padding:40px;color:var(--b)">暂无AI任务</div>':
+tasks.map(t=>`<div style="padding:14px;border:1.5px solid ${t.status==='completed'?'var(--ok)':t.status==='failed'?'var(--err)':'var(--bd)'};border-radius:12px;margin-bottom:10px;background:var(--w)">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+    <span style="font-weight:700;font-size:14px">${t.toolName}</span>
+    <span style="font-size:12px;font-weight:600;color:${t.status==='completed'?'var(--ok)':t.status==='failed'?'var(--err)':'var(--b)'}">${statusMap[t.status]||t.status}</span>
+  </div>
+  <div style="font-size:12px;color:var(--b);margin-bottom:8px">${t.prompt||''}</div>
+  <div style="font-size:11px;color:var(--b)">${new Date(t.created).toLocaleString()}</div>
+  ${t.status==='completed'&&t.result?(t.type==='image'?`<img src="${t.result}" style="max-width:100%;border-radius:8px;margin-top:8px" alt="AI生成结果">`:`<div style="margin-top:8px;padding:10px;background:var(--bg);border-radius:8px;font-size:13px;white-space:pre-wrap;max-height:200px;overflow-y:auto">${t.result.substring(0,500)}${t.result.length>500?'...':''}</div>`):''}
+  ${t.status==='failed'?`<div style="margin-top:8px;color:var(--err);font-size:12px">${t.error||'生成失败'}</div>`:''}
+</div>`).join('')}
+</div>`;
+}
+
+function clearCompletedTasks(){
+  const tasks=getAITasks().filter(t=>t.status!=='completed'&&t.status!=='failed');
+  saveAITasks(tasks);
+  renderTaskCenter();
+  toast('已清除已完成任务','success');
+}
+
+// Rewrite AI tool handlers to use background task mode
+// When user clicks generate, create a task and process it in background
+// ===== INIT =====
+// Only clean up truly stale admin seeds from very old versions
+(function(){try{
   const users=JSON.parse(localStorage.getItem('lsjy3_users')||'[]');
   const cleaned=users.filter(u=>!(u.role==='admin'&&u.username==='admin'&&u.password==='admin123'));
   if(cleaned.length!==users.length){
     localStorage.setItem('lsjy3_users',JSON.stringify(cleaned));
   }
-}catch(e){}
-})();
+}catch(e){})();
 if(checkToken()){console.log("Auto-login via token")}
 updateNavAuth();
 
@@ -3458,7 +3554,7 @@ if(target){e.preventDefault();target.scrollIntoView({behavior:'smooth',block:'st
 
 // ===== JS INTEGRITY CHECK =====
 if(typeof openAuth!=='function'||typeof doLogin!=='function'||typeof openTool!=='function'||typeof toast!=='function'){
-  const _fv='v3.5-beta1';
+  const _fv='v3.6-beta1';
   const _sv=localStorage.getItem('lsjy3_jsok');
   localStorage.setItem('lsjy3_jsok',_fv);
   window.stop&&window.stop();
