@@ -1737,9 +1737,9 @@ function requireLogin(){if(isLoggedIn())return true;openAuth('login');toast('请
 // 多模型AI引擎：支持豆包(火山引擎) + Pollinations.ai备用
 // === 豆包配置（替换为真实值即可启用） ===
 const DOUBAO_CONFIG={
-  // === 安全配置：所有 API Key 已迁移至后端代理服务 ===
-  // 前端不再存储任何 API Key，所有 AI 请求通过后端代理转发
-  ENABLED:true
+  ENABLED:false
+  // 豆包已迁移至后端代理服务，GitHub Pages静态部署使用Pollinations.ai免费备用
+  // 本地部署时改为ENABLED:true并启动后端即可使用豆包
 }
 
 // === 后端代理服务配置 ===
