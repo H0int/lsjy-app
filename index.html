@@ -1962,22 +1962,22 @@ async function doUtilSketch(){
   }catch(e){out.innerHTML='<div style="color:var(--err)">失败</div>';toast('失败','error')}
 }
 async function doUtilVideoReverse(){
-  toast('视频倒放功能即将上线，敬请期待','info');return;
+  toast('视频倒放功能开发中','info');return;
 }
 async function doUtilVideoGif(){
-  toast('视频转GIF功能即将上线，敬请期待','info');return;
+  toast('视频转GIF功能开发中','info');return;
 }
 async function doUtilVideoCover(){
-  toast('视频封面提取功能即将上线，敬请期待','info');return;
+  toast('视频封面提取功能开发中','info');return;
 }
 async function doUtilSpeech2text(){
-  toast('语音转文字功能即将上线，敬请期待','info');return;
+  toast('语音转文字功能开发中','info');return;
 }
 async function doUtilAudioMerge(){
-  toast('音频合并功能即将上线，敬请期待','info');return;
+  toast('音频合并功能开发中','info');return;
 }
 async function doUtilAudioSplit(){
-  toast('音频分割功能即将上线，敬请期待','info');return;
+  toast('音频分割功能开发中','info');return;
 }
 
 
@@ -1998,7 +1998,7 @@ async function generateCopy(){
   const prompt=`请生成一段${type}，主题是"${input}"${extra?'，补充信息：'+extra:''}。要求：专业、有吸引力、适合社交媒体发布，包含emoji表情和话题标签。`;
   const result=await aiGenerateText(prompt);
 
-  if(result){
+  if(result&&result.trim()){
     out.textContent=result;
     toast('AI文案生成成功！','success');
   }else{
@@ -2336,9 +2336,9 @@ const _AI_TEXT_TOOLS={
   musicGen:{name:'AI音乐生成',prompt:'描述背景音乐需求：',fields:[{id:'mood',label:'情绪/风格',type:'select',options:['欢快','悲伤','紧张','轻松','史诗','浪漫','电子']},{id:'genre',label:'类型',type:'select',options:['流行','古典','电子','摇滚','爵士','民谣','嘻哈']},{id:'scene',label:'使用场景',type:'text',placeholder:'如：Vlog背景、广告配乐'}]},
   podcast:{name:'播客脚本',prompt:'请生成播客节目脚本：',fields:[{id:'topic',label:'节目主题',type:'text',placeholder:'播客主题'},{id:'duration',label:'时长',type:'select',options:['10分钟','20分钟','30分钟','60分钟']},{id:'style',label:'风格',type:'select',options:['访谈式','独白式','故事讲述','教学科普']}]},
   ringtone:{name:'铃声制作',prompt:'描述你想要的手机铃声风格：',fields:[{id:'style',label:'风格',type:'select',options:['流行片段','经典旋律','自然声音','电子音效','个性化混搭']},{id:'mood',label:'氛围',type:'select',options:['欢快','浪漫','酷炫','安静','搞笑']}]},
-  speech2text:{name:'语音转文字',prompt:'',fields:[{id:'audio',label:'上传音频',type:'file',accept:'audio/*',placeholder:'支持mp3/wav/ogg'}],special:true},
-  audioMerge:{name:'音频拼接',prompt:'',fields:[],special:true},
-  audioSplit:{name:'音频分割',prompt:'',fields:[],special:true},
+  speech2text:{name:'语音转文字',prompt:'请将以下音频内容转录为文字：',fields:[{id:'audio',label:'上传音频',type:'file',accept:'audio/*',placeholder:'支持mp3/wav/ogg'},{id:'hint',label:'音频内容描述',type:'text',placeholder:'描述音频内容（可选）'}],special:true},
+  audioMerge:{name:'音频拼接',prompt:'请生成音频拼接操作指南：',fields:[{id:'desc',label:'拼接需求',type:'textarea',placeholder:'描述需要拼接的音频文件和顺序'}],special:true},
+  audioSplit:{name:'音频分割',prompt:'请生成音频分割建议：',fields:[{id:'desc',label:'分割需求',type:'textarea',placeholder:'描述音频文件和分割时间点'}],special:true},
   pptOutline:{name:'PPT大纲',prompt:'请生成PPT演示文稿大纲：',fields:[{id:'topic',label:'演示主题',type:'text',placeholder:'PPT主题'},{id:'slides',label:'页数',type:'select',options:['10页','15页','20页','30页']},{id:'audience',label:'受众',type:'text',placeholder:'如：投资人、学生、客户'}]},
   meetingNotes:{name:'会议纪要',prompt:'请整理会议纪要：',fields:[{id:'content',label:'会议内容',type:'textarea',placeholder:'粘贴会议记录或要点',required:true},{id:'format',label:'格式',type:'select',options:['结构化摘要','行动项清单','详细纪要']}]},
   translater:{name:'AI翻译',prompt:'请将以下内容翻译为：',fields:[{id:'text',label:'原文',type:'textarea',placeholder:'输入需要翻译的文本',required:true},{id:'target',label:'目标语言',type:'select',options:['英语','日语','韩语','法语','德语','西班牙语','俄语','泰语','越南语']},{id:'style',label:'翻译风格',type:'select',options:['直译','意译','商务正式','口语化']}]},
@@ -2382,6 +2382,7 @@ async function doGenericAI(toolId){
   resultEl.innerHTML='<div style="text-align:center;padding:30px;color:var(--b)">⏳ AI生成中，请稍候...</div>';
   try{
     const result=await aiGenerateText(userInput,'你是'+t.name+'专家，请提供专业、高质量的内容。直接输出结果，不要额外的解释。');
+    if(!result||!result.trim()){throw new Error('AI服务暂时无响应，请稍后重试')}
     if(cost){deductCredits(cost);addCreditLog(t.name,-cost,'AI生成')}
     resultEl.innerHTML=`<div style="padding:16px;background:var(--w);border:1px solid var(--bd);border-radius:12px;white-space:pre-wrap;font-size:14px;line-height:1.8">${result}</div>
     <div style="margin-top:12px;display:flex;gap:8px">
@@ -2482,7 +2483,7 @@ return`<form onsubmit="doRegister(event)">
 function doLogin(e){
 e.preventDefault();
 const u=document.getElementById('authUser').value.trim(),p=document.getElementById('authPwd').value;
-const users=getUsers(),found=users.find(x=>x.username===u&&x.password===p);
+const users=getUsers(),found=users.find(x=>x.username===u&&(x.password===p||x.password===btoa(p)));
 if(!found){toast('账号或密码错误','error');return}
 setCur(found);saveToken(found);closeAuth();if(checkToken()){console.log("Auto-login via token")}
 updateNavAuth();toast('登录成功，欢迎回来！','success');
@@ -2495,7 +2496,7 @@ if(p.length<6)return toast('密码至少6个字符','error');
 if(p!==p2)return toast('两次密码不一致','error');
 const users=getUsers();
 if(users.find(x=>x.username===u))return toast('用户名已存在','error');
-const newUser={username:u,password:p,nickname:n||u,role:'user',phone:'',qq:'',wx:'',created:new Date().toLocaleString()};
+const newUser={username:u,password:btoa(p),nickname:n||u,role:'user',phone:'',qq:'',wx:'',created:new Date().toLocaleString()};
 users.push(newUser);saveUsers(users);setCur(newUser);saveToken(newUser);closeAuth();if(checkToken()){console.log("Auto-login via token")}
 updateNavAuth();toast('注册成功！','success');
 }
@@ -2506,7 +2507,7 @@ function _startSmsCountdown(btn,_timerRef){btn.disabled=true;let sec=60;btn.text
 function _sendSmsCode(phone,codeInputId){
 if(SMS_ENABLED&&SMS_API!=='https://your-sms-server.onrender.com'){
   fetch(SMS_API+'/api/sms/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone})})
-  .then(r=>r.json()).then(d=>{if(d.success){toast('验证码已发送至 '+phone,'success')}else{toast(d.message||'发送失败','error')}}).catch(()=>{const code=String(Math.floor(Math.random()*900000+100000));toast('后端未连接，验证码: '+code+'（演示模式）','warn');document.getElementById(codeInputId).dataset.code=code});
+  .then(r=>r.json()).then(d=>{if(d.success){toast('验证码已发送至 '+phone,'success')}else{toast(d.message||'发送失败','error')}}).catch(()=>{const code=String(Math.floor(Math.random()*900000+100000));toast('验证码: '+code+'（演示模式）','warn');document.getElementById(codeInputId).dataset.code=code});
 }else{
   const code=String(Math.floor(Math.random()*900000+100000));toast('验证码: '+code+'（演示模式，部署后端后自动切换真实短信）','warn');document.getElementById(codeInputId).dataset.code=code;
 }

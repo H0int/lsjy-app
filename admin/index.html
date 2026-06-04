@@ -1100,6 +1100,14 @@ function smartTemplates(type,input,extra){
 }
 
 // ===== AI HUB RENDER =====
+
+// ===== Admin Helper Functions =====
+function isLoggedIn(){return!!getCur()}
+function getCredits(){const u=getCur();if(!u)return 0;const all=JSON.parse(localStorage.getItem('lsjy3_credits')||'{}');return all[u.username]||0}
+function deductCredits(n){const u=getCur();if(!u)return;const all=JSON.parse(localStorage.getItem('lsjy3_credits')||'{}');all[u.username]=(all[u.username]||0)-n;localStorage.setItem('lsjy3_credits',JSON.stringify(all))}
+function addCreditLog(tool,amount,desc){const key='lsjy3_credit_logs';const logs=JSON.parse(localStorage.getItem(key)||'[]');logs.unshift({tool,amount,desc,time:new Date().toLocaleString()});if(logs.length>200)logs.length=200;localStorage.setItem(key,JSON.stringify(logs))}
+function getUserCredits(){return getCredits()}
+
 const AI_TOOLS=[
   {id:'copy',icon:'✍️',title:'AI文案创作',desc:'短视频/团购/种草/朋友圈',cost:10},
   {id:'hashtag',icon:'#️⃣',title:'热门标签',desc:'AI智能匹配热门话题标签',cost:5},
@@ -1307,7 +1315,7 @@ async function aiDoVoice(){
       }
       out.innerHTML=`<div style="font-weight:700;color:var(--ok);margin-bottom:12px">✅ AI配音方案生成完成</div><div style="background:var(--ps);border-radius:12px;padding:16px;margin-bottom:12px"><div style="font-weight:700;margin-bottom:8px;color:var(--p)">🤖 豆包AI配音方案</div><div style="font-size:13px;line-height:1.8;white-space:pre-wrap">${result}</div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="ai-back" onclick="aiDoVoice()" style="margin:0">🔄 重新生成</button><button class="ai-back" style="margin:0;background:var(--ok);color:#fff" onclick="navigator.clipboard.writeText(this.previousElementSibling.previousElementSibling.textContent)">📋 复制方案</button></div>`;
       toast('AI配音方案生成完成！','success');
-    }else{throw new Error('AI服务繁忙')}
+    }else{throw new Error('AI服务暂时不可用，请稍后重试或检查网络连接')}
   }catch(e){out.innerHTML=`<div style="padding:16px;background:#fee2e2;border-radius:12px"><div style="font-weight:700;color:#991b1b">✗ AI配音失败</div><div style="font-size:13px;margin-top:8px">${e.message||'请稍后重试'}</div></div>`}
 }
 function aiStopVoice(){speechSynthesis.cancel();document.getElementById('vcOutput').innerHTML='<span style="color:var(--b)">已停止播放</span>'}
@@ -1362,6 +1370,8 @@ function aiPreviewPhoto(inp){const f=inp.files[0];if(!f)return;const r=new FileR
 async function aiDoPhoto(){
   const f=document.getElementById('photoFile');const file=f?f.files[0]:null;
   if(!file)return toast('请先上传图片','error');
+  if(!isLoggedIn())return toast('请先登录','error');
+  const credits=getCredits();if(credits<30)return toast('算力不足，需要30算力','error');
   const out=document.getElementById('photoResult');
   out.innerHTML='<div style="text-align:center;padding:20px"><div class="ai-spinner"></div><p style="margin-top:12px;color:var(--b);font-size:13px">豆包AI修图分析中...</p></div>';
   const modes=['AI智能美化','AI去水印','AI画质增强','AI背景替换','AI人像精修','AI证件照'];
@@ -1370,10 +1380,11 @@ async function aiDoPhoto(){
     const prompt='用户上传了一张图片，需要执行"'+modes[_photoMode]+'"处理。请详细描述这张图片的内容，并给出该修图操作的专业建议（如调色参数、裁剪建议、背景替换方案等）。用清晰的格式输出分析结果和操作建议。';
     const aiResult=await aiGenerateText(prompt,'你是专业AI修图师，精通图像处理和后期调色。');
     if(aiResult){
+      deductCredits(30);addCreditLog('AI修图',-30,'修图分析');
       out.innerHTML=`<div style="font-weight:700;color:var(--ok);margin-bottom:12px">✅ AI修图分析完成 <span class="badge badge-green">${modes[_photoMode]}</span></div><div style="border-radius:12px;overflow:hidden;border:1px solid var(--bd);margin-bottom:12px"><img src="${dataUrl}" style="width:100%;display:block"></div><div style="background:var(--ps);border-radius:12px;padding:16px;margin-bottom:12px"><div style="font-weight:700;margin-bottom:8px;color:var(--p)">🤖 豆包AI分析报告</div><div style="font-size:13px;line-height:1.8;white-space:pre-wrap">${aiResult}</div></div><div style="display:flex;gap:8px"><a href="${dataUrl}" download="photo_${Date.now()}.png" class="ai-back" style="margin:0;text-decoration:none;display:inline-flex">📥 下载原图</a><button class="ai-back" onclick="aiDoPhoto()" style="margin:0">🔄 重新分析</button></div>`;
       toast('AI修图分析完成！','success');
-    }else{throw new Error('AI服务繁忙')}
-  }catch(e){out.innerHTML=`<div style="padding:16px;background:#fee2e2;border-radius:12px"><div style="font-weight:700;color:#991b1b">✗ AI修图失败</div><div style="font-size:13px;color:#991b1b;margin-top:8px">${e.message||'请稍后重试'}</div></div>`}
+    }else{throw new Error('AI服务暂时不可用，请稍后重试或检查网络连接')}
+  }catch(e){out.innerHTML=`<div style="padding:16px;background:#fee2e2;border-radius:12px"><div style="font-weight:700;color:#991b1b">✗ AI修图失败</div><div style="font-size:13px;color:#991b1b;margin-top:8px">${e.message||'请稍后重试'}</div></div>`;addCreditLog('AI修图',30,'退还算力')}
 }
 
 // === Tool 9: AI智能修音 ===
@@ -1404,7 +1415,7 @@ async function aiDoAudio(){
       const dataUrl=URL.createObjectURL(file);
       out.innerHTML=`<div style="font-weight:700;color:var(--ok);margin-bottom:12px">✅ AI音频分析完成 <span class="badge badge-green">${modes[_audioMode]}</span></div><div style="background:var(--bg);border-radius:10px;padding:16px;border:1px solid var(--bd);margin-bottom:12px"><audio controls style="width:100%" src="${dataUrl}"></audio></div><div style="background:var(--ps);border-radius:12px;padding:16px;margin-bottom:12px"><div style="font-weight:700;margin-bottom:8px;color:var(--p)">🤖 豆包AI分析报告</div><div style="font-size:13px;line-height:1.8;white-space:pre-wrap">${result}</div></div><div style="display:flex;gap:8px"><button class="ai-back" onclick="aiDoAudio()" style="margin:0">🔄 重新分析</button></div>`;
       toast('AI音频分析完成！','success');
-    }else{throw new Error('AI服务繁忙')}
+    }else{throw new Error('AI服务暂时不可用，请稍后重试或检查网络连接')}
   }catch(e){out.innerHTML=`<div style="padding:16px;background:#fee2e2;border-radius:12px"><div style="font-weight:700;color:#991b1b">✗ AI分析失败</div><div style="font-size:13px;margin-top:8px">${e.message||'请稍后重试'}</div></div>`}
   return;
 }
@@ -1436,7 +1447,7 @@ async function aiDoAccomp(){
     if(result){
       out.innerHTML=`<div style="font-weight:700;color:var(--ok);margin-bottom:12px">✅ AI编曲方案完成 <span class="badge badge-green">${bpm}BPM · ${dur}秒</span></div><div style="background:var(--ps);border-radius:12px;padding:16px;margin-bottom:12px"><div style="font-weight:700;margin-bottom:8px;color:var(--p)">🤖 豆包AI编曲方案</div><div style="font-size:13px;line-height:1.8;white-space:pre-wrap">${result}</div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="ai-back" onclick="aiDoAccomp()" style="margin:0">🔄 重新生成</button><button class="ai-back" style="margin:0;background:var(--ok);color:#fff" onclick="navigator.clipboard.writeText(this.previousElementSibling.previousElementSibling.textContent)">📋 复制方案</button></div>`;
       toast('AI编曲方案生成完成！','success');
-    }else{throw new Error('AI服务繁忙')}
+    }else{throw new Error('AI服务暂时不可用，请稍后重试或检查网络连接')}
   }catch(e){out.innerHTML=`<div style="padding:16px;background:#fee2e2;border-radius:12px"><div style="font-weight:700;color:#991b1b">✗ AI编曲失败</div><div style="font-size:13px;margin-top:8px">${e.message||'请稍后重试'}</div></div>`}
 }
 
