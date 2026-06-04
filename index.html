@@ -1737,30 +1737,59 @@ function requireLogin(){if(isLoggedIn())return true;openAuth('login');toast('请
 // 多模型AI引擎：支持豆包(火山引擎) + Pollinations.ai备用
 // === 豆包配置（替换为真实值即可启用） ===
 const DOUBAO_CONFIG={
-  ENABLED:false
-  // 豆包已迁移至后端代理服务，GitHub Pages静态部署使用Pollinations.ai免费备用
-  // 本地部署时改为ENABLED:true并启动后端即可使用豆包
-}
+  ENABLED:true,
+  ARK_API_KEY:'ark-21eb820a-93fc-4379-bbc4-217498f7753b-a6876',
+  ARK_BASE_URL:'https://ark.cn-beijing.volces.com/api/v3',
+  MODEL_TEXT:'doubao-seed-2-0-pro-260215',
+  MODEL_IMAGE:'doubao-seedream-5-0-260128'
+};
 
 // === 后端代理服务配置 ===
-const BACKEND_URL=''; // ← 替换为实际部署的后端地址
+const BACKEND_URL='';
 
-// === 后端代理 API 辅助函数 ===
-async function aiProxy(endpoint, body) {
-  const token = localStorage.getItem('lsjy_backend_token');
-  if (!token) return { error: '未登录，请先登录后使用 AI 功能' };
-  try {
-    const r = await fetch(BACKEND_URL + endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-      body: JSON.stringify(body),
-    });
-    const data = await r.json();
-    if (!r.ok) return { error: data.error || 'AI 服务异常' };
-    return data;
-  } catch (e) {
-    return { error: '网络连接失败，请检查网络后重试' };
+// === 豆包直连 API（无需后端代理，前端直接调用火山引擎） ===
+async function doubaoChat(prompt, systemPrompt, model, retries) {
+  retries = retries || 2;
+  let lastErr = null;
+  for (let i = 0; i <= retries; i++) {
+    try {
+      const controller = new AbortController();
+      const tid = setTimeout(() => controller.abort(), 30000);
+      const r = await fetch(DOUBAO_CONFIG.ARK_BASE_URL + '/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + DOUBAO_CONFIG.ARK_API_KEY },
+        body: JSON.stringify({ model: model || DOUBAO_CONFIG.MODEL_TEXT, messages: [
+          { role: 'system', content: systemPrompt || '你是一个专业的AI助手，请根据用户要求生成高质量内容。回复只包含生成的内容，不要包含任何解释或说明。' },
+          { role: 'user', content: prompt }
+        ], max_tokens: 4000, temperature: 0.9 })
+      });
+      clearTimeout(tid);
+      if (!r.ok) { lastErr = new Error('HTTP ' + r.status); if (i < retries) await new Promise(r => setTimeout(r, 1500 * (i + 1))); continue; }
+      const d = await r.json();
+      if (d.choices && d.choices[0]) return d.choices[0].message.content.trim();
+      if (i < retries) await new Promise(r => setTimeout(r, 1500 * (i + 1)));
+    } catch (e) { lastErr = e; console.log('Doubao err (try ' + i + '):', e.message || e); if (i < retries) await new Promise(r => setTimeout(r, 1500 * (i + 1))) }
   }
+  if (lastErr) console.error('Doubao chat failed:', lastErr.message || lastErr);
+  return null;
+}
+
+async function doubaoImage(prompt, w, h) {
+  try {
+    const controller = new AbortController();
+    const tid = setTimeout(() => controller.abort(), 60000);
+    let sz;
+    if (w === '2K' || h === '2K') { sz = '2K'; w = 3136; h = 1312; }
+    else { sz = Math.max(w, h) >= 2048 ? (w + 'x' + h) : '2048x2048'; }
+    const r = await fetch(DOUBAO_CONFIG.ARK_BASE_URL + '/images/generations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + DOUBAO_CONFIG.ARK_API_KEY },
+      body: JSON.stringify({ model: DOUBAO_CONFIG.MODEL_IMAGE, prompt: prompt, size: sz, response_format: 'url' })
+    });
+    clearTimeout(tid);
+    if (r.ok) { const d = await r.json(); if (d.data && d.data[0] && d.data[0].url) return d.data[0].url; }
+  } catch (e) { console.log('Doubao img err:', e); }
+  return null;
 }
 
 // 短信发送（通过后端代理）
@@ -1835,27 +1864,10 @@ function withTimeout(promise,ms){
 async function aiGenerateText(prompt,systemPrompt,model,retries){
   retries=retries||2;
   let lastErr=null;
-  // 优先使用豆包API
+  // 优先使用豆包API（前端直连火山引擎）
   if(DOUBAO_CONFIG.ENABLED){
-    for(let i=0;i<=retries;i++){
-      try{
-        const controller=new AbortController();
-        const tid=setTimeout(()=>controller.abort(),AI_TIMEOUT);
-        const token=localStorage.getItem('lsjy_backend_token');
-        const r=await fetch(BACKEND_URL+'/api/ai/generic',{
-          method:'POST',
-          headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
-          body:JSON.stringify({model:model||DOUBAO_CONFIG.MODEL_TEXT,input:[
-            {role:'system',content:systemPrompt||'你是一个专业的AI助手，请根据用户要求生成高质量内容。回复只包含生成的内容，不要包含任何解释或说明。'},
-            {role:'user',content:prompt}
-          ],max_output_tokens:4000,temperature:0.9})});
-        clearTimeout(tid);
-        if(!r.ok){lastErr=new Error('HTTP '+r.status);if(i<retries)await new Promise(r=>setTimeout(r,1500*(i+1)));continue;}
-        const d=await r.json();
-        if(d.output&&d.output.length){const msg=d.output.filter(o=>o.type==='message').pop();if(msg&&msg.content&&msg.content.length)return msg.content[0].text.trim();}
-        if(i<retries)await new Promise(r=>setTimeout(r,1500*(i+1)));
-      }catch(e){lastErr=e;console.log('Doubao err (try '+i+'):',e.message||e);if(i<retries)await new Promise(r=>setTimeout(r,1500*(i+1)))}
-    }
+    const result=await doubaoChat(prompt,systemPrompt||'你是一个专业的AI助手，请根据用户要求生成高质量内容。回复只包含生成的内容，不要包含任何解释或说明。',model,retries);
+    if(result)return result;
   }
   // 备用：Pollinations.ai
   for(let i=0;i<=retries;i++){
@@ -1887,22 +1899,9 @@ async function aiGenerateText(prompt,systemPrompt,model,retries){
 
 async function aiGenerateImage(prompt,w=2048,h=2048){
   // 图片生成：优先豆包seedream-5.0，备用Pollinations.ai
-  if(DOUBAO_CONFIG.ENABLED&&DOUBAO_CONFIG.MODEL_IMAGE){
-    try{
-      const controller=new AbortController();
-      const tid=setTimeout(()=>controller.abort(),60000);
-      let sz;
-      if(w==='2K'||h==='2K'){sz='2K';w=3136;h=1312}
-      else{sz=Math.max(w,h)>=2048?(w+'x'+h):'2048x2048'}
-      const token=localStorage.getItem('lsjy_backend_token');
-      const r=await fetch(BACKEND_URL+'/api/ai/image',{
-        method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
-        body:JSON.stringify({model:DOUBAO_CONFIG.MODEL_IMAGE,prompt:prompt,size:sz,response_format:'url'})
-      });
-      clearTimeout(tid);
-      if(r.ok){const d=await r.json();if(d.data&&d.data[0]&&d.data[0].url)return d.data[0].url}
-    }catch(e){console.log('Doubao img err:',e)}
+  if(DOUBAO_CONFIG.ENABLED){
+    const url=await doubaoImage(prompt,w,h);
+    if(url)return url;
   }
   // 备用：Pollinations.ai（免费）
   return FALLBACK_AI_IMG_API+encodeURIComponent(prompt)+'?width='+w+'&height='+h+'&nologo=true&nofeed=true&seed='+Date.now();
@@ -4340,17 +4339,16 @@ if(typeof openAuth!=='function'||typeof doLogin!=='function'||typeof openTool!==
       if(DOUBAO_CONFIG&&DOUBAO_CONFIG.ENABLED){
         const ctrl=new AbortController();
         const tid=setTimeout(()=>ctrl.abort(),5000);
-        const token=localStorage.getItem('lsjy_backend_token');
-        const r=await fetch(BACKEND_URL+'/api/ai/generic',{
+        const r=await fetch(DOUBAO_CONFIG.ARK_BASE_URL+'/chat/completions',{
           method:'POST',
-          headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
-          body:JSON.stringify({model:DOUBAO_CONFIG.MODEL_TEXT,input:[
-            {role:'user',content:'ping'}
-          ],max_output_tokens:5})
+          headers:{'Content-Type':'application/json','Authorization':'Bearer '+DOUBAO_CONFIG.ARK_API_KEY},
+          body:JSON.stringify({model:DOUBAO_CONFIG.MODEL_TEXT,messages:[
+            {role:'user',content:'hi'}
+          ],max_tokens:5})
         });
         clearTimeout(tid);
-        if(r.ok){console.log('✅ AI服务连通正常');window._AI_OK=true;}
-        else{console.warn('⚠️ AI服务返回HTTP '+r.status);window._AI_OK=false;}
+        if(r.ok){console.log('AI服务连通正常');window._AI_OK=true;}
+        else{console.warn('AI服务返回HTTP '+r.status);window._AI_OK=false;}
       }
     }catch(e){
       console.warn('⚠️ AI服务连通性检测失败:',e.message||e);
