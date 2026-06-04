@@ -984,13 +984,11 @@ const DOUBAO_CONFIG={
   ARK_API_KEY:'ark-0eabaec4-127a-4681-8f7f-b211742511b8-aed94',
   ARK_BASE_URL:'https://ark.cn-beijing.volces.com/api/v3',
   MODEL_TEXT:'doubao-seed-2-0-pro-260215',
-  MODEL_IMAGE:'doubao-seedream-3-0-t2i-250415',
+  MODEL_IMAGE:'doubao-seedream-5-0-260128',
   ENABLED:true
 };
 const FALLBACK_AI_IMG_API='https://image.pollinations.ai/prompt/';
 const FALLBACK_AI_TEXT_API='https://text.pollinations.ai/openai';
-const AI_IMG_API=FALLBACK_AI_IMG_API;
-const AI_TEXT_API=DOUBAO_CONFIG.ENABLED?null:FALLBACK_AI_TEXT_API;
 const AI_TIMEOUT=30000;
 let _aiCurrentTool=null;
 
@@ -1050,9 +1048,26 @@ async function aiGenerateText(prompt,sysPrompt,model,retries){
   return null;
 }
 
-function aiImageUrl(prompt,w=512,h=512){
-  return AI_IMG_API+encodeURIComponent(prompt)+'?width='+w+'&height='+h+'&nologo=true&nofeed=true&seed='+Date.now();
+async function aiGenerateImage(prompt,w=2048,h=2048){
+  if(DOUBAO_CONFIG.ENABLED&&DOUBAO_CONFIG.MODEL_IMAGE){
+    try{
+      const controller=new AbortController();
+      const tid=setTimeout(()=>controller.abort(),60000);
+      let sz;
+      if(w==='2K'||h==='2K'){sz='2K';w=3136;h=1312}
+      else{sz=Math.max(w,h)>=2048?(w+'x'+h):'2048x2048'}
+      const r=await fetch(DOUBAO_CONFIG.ARK_BASE_URL+'/images/generations',{
+        method:'POST',signal:controller.signal,
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+DOUBAO_CONFIG.ARK_API_KEY},
+        body:JSON.stringify({model:DOUBAO_CONFIG.MODEL_IMAGE,prompt:prompt,size:sz,response_format:'url'})
+      });
+      clearTimeout(tid);
+      if(r.ok){const d=await r.json();if(d.data&&d.data[0]&&d.data[0].url)return d.data[0].url}
+    }catch(e){console.log('Doubao img err:',e)}
+  }
+  return FALLBACK_AI_IMG_API+encodeURIComponent(prompt)+'?width='+w+'&height='+h+'&nologo=true&nofeed=true&seed='+Date.now();
 }
+function aiImageUrl(prompt,w=512,h=512){return aiGenerateImage(prompt,w,h)}
 
 function audioBufferToWav(buffer){
   const numCh=buffer.numberOfChannels,sr=buffer.sampleRate,len=buffer.length;
@@ -1251,7 +1266,7 @@ async function aiDoDigital(){
   out.innerHTML='<div style="text-align:center;padding:20px"><div class="ai-spinner"></div><p style="margin-top:12px;color:var(--b);font-size:13px">AI数字人合成中...</p></div>';
   const opt=await aiGenerateText(`将以下文案优化为口播视频脚本，分段标注停顿和语气：\n"${script}"`,'你是专业口播脚本编剧。');
   const fs=opt||script;
-  const avatar=aiImageUrl('professional business person portrait, clean background, studio lighting, 4k',256,256);
+  const avatar=await aiGenerateImage('professional business person portrait, clean background, studio lighting, 4k',256,256);
   out.innerHTML=`<div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:16px"><div style="width:80px;height:80px;border-radius:50%;overflow:hidden;border:3px solid var(--p);flex-shrink:0"><img src="${avatar}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'"></div><div style="flex:1"><div style="font-weight:700;font-size:15px;margin-bottom:4px">数字人口播视频</div><div style="font-size:12px;color:var(--b)">AI已优化口播脚本 + 生成数字人形象</div><span style="display:inline-block;margin-top:6px" class="badge badge-green">已完成</span></div></div><div style="background:var(--bg);border-radius:10px;padding:16px;border:1px solid var(--bd);margin-bottom:12px"><div style="font-weight:600;font-size:13px;margin-bottom:8px">📋 口播脚本（AI优化版）</div><div style="font-size:14px;line-height:2;white-space:pre-wrap">${fs.replace(/</g,'&lt;')}</div></div><div style="display:flex;gap:8px"><button class="ai-back" onclick="navigator.clipboard.writeText(document.querySelector('#dhOutput pre,\x23dhOutput div div:last-child div:last-child').innerText);toast('已复制','success')" style="margin:0">📋 复制脚本</button></div>`;
   toast('数字人视频生成完成！','success');
 }
@@ -1298,27 +1313,29 @@ function renderAIAIGC(){
   <button class="ai-back" onclick="aiBack()"><i class="fa-solid fa-arrow-left"></i> 返回工具列表</button>
   <div class="ai-panel">
     <h3 style="margin-bottom:16px">🎨 智能文生图 <span class="ai-card-badge">20算力/次</span></h3>
-    <p style="font-size:12px;color:var(--b);margin-bottom:16px">使用Pollinations.ai大模型实时生成高清图片，支持6种艺术风格</p>
+    <p style="font-size:12px;color:var(--b);margin-bottom:16px">使用豆包大模型（seedream-5.0）生成高清图片，支持6种艺术风格，备用Pollinations.ai</p>
     <div class="fg"><label class="fl">画面描述</label><textarea class="fi" id="aigcDesc" rows="3" placeholder="描述你想生成的画面，如：一只可爱的猫咪在阳光下打盹..."></textarea></div>
     <div class="fg"><label class="fl">艺术风格</label><div class="cw-types">${styles.map((t,i)=>`<div class="cw-type${i===0?' active':''}" onclick="_aigcStyle=${i};this.parentElement.querySelectorAll('.cw-type').forEach(e=>e.classList.remove('active'));this.classList.add('active')">${t}</div>`).join('')}</div></div>
     <button class="ai-btn" onclick="aiDoAIGC()">🎨 生成图片（消耗20算力）</button>
     <div class="ai-output" id="aigcResult">描述画面，AI将实时生成高清图片...</div>
   </div>`;
 }
-function aiDoAIGC(){
+async function aiDoAIGC(){
   const desc=document.getElementById('aigcDesc').value.trim();
   if(!desc)return toast('请输入画面描述','error');
   const out=document.getElementById('aigcResult');
   const styles=['写实摄影','动漫插画','3D渲染','水彩手绘','赛博朋克','极简商务'];
-  out.innerHTML=`<div style="text-align:center;padding:20px"><div class="ai-spinner" style="width:60px;height:60px;border-width:4px"></div><p style="margin-top:16px;font-weight:600">🎨 AI正在生成图片...</p><p style="font-size:12px;color:var(--b);margin-top:4px">${styles[_aigcStyle]}风格 · 首次可能需要10-30秒</p></div>`;
+  out.innerHTML=`<div style="text-align:center;padding:20px"><div class="ai-spinner" style="width:60px;height:60px;border-width:4px"></div><p style="margin-top:16px;font-weight:600">🎨 AI正在生成图片...</p><p style="font-size:12px;color:var(--b);margin-top:4px">${styles[_aigcStyle]}风格 · 豆包大模型生成中...</p></div>`;
   const styleMap={'写实摄影':'photorealistic photography','动漫插画':'anime illustration, vibrant','3D渲染':'3D render, octane, cinema4D','水彩手绘':'watercolor painting, artistic','赛博朋克':'cyberpunk, neon, futuristic','极简商务':'minimalist business, clean'};
   const prompt=(styleMap[styles[_aigcStyle]]||'photorealistic')+', '+desc+', masterpiece, best quality, ultra detailed, 8k';
-  const url=aiImageUrl(prompt,768,768);
-  const img=new Image();
-  img.crossOrigin='anonymous';
-  img.onload=()=>{out.innerHTML=`<div style="font-weight:700;margin-bottom:12px;color:var(--ok)">✅ AI图片生成完成 <span class="badge badge-green">${styles[_aigcStyle]}</span></div><div style="border-radius:12px;overflow:hidden;border:1px solid var(--bd);margin-bottom:12px"><img src="${url}" style="width:100%;display:block" alt="AI生成"></div><div style="display:flex;gap:8px"><a href="${url}" download="ai_img_${Date.now()}.png" class="ai-back" style="margin:0;text-decoration:none;display:inline-flex">📥 下载图片</a><button class="ai-back" onclick="aiDoAIGC()" style="margin:0">🔄 重新生成</button></div>`;toast('图片生成成功！','success')};
-  img.onerror=()=>{const c=document.createElement('canvas');c.width=512;c.height=512;const ctx=c.getContext('2d');const g=ctx.createLinearGradient(0,0,512,512);const cs=[['#533afd','#7c6cf6','#3b82f6'],['#ef4444','#f97316','#fbbf24'],['#07c160','#34d399','#10b981'],['#ea2261','#f96bee','#8b5cf6'],['#06b6d4','#0ea5e9','#3b82f6'],['#1a2744','#334155','#64748b']];const cc=cs[_aigcStyle]||cs[0];g.addColorStop(0,cc[0]);g.addColorStop(0.5,cc[1]);g.addColorStop(1,cc[2]);ctx.fillStyle=g;ctx.fillRect(0,0,512,512);for(let i=0;i<20;i++){ctx.beginPath();ctx.arc(Math.random()*512,Math.random()*512,Math.random()*60+20,0,Math.PI*2);ctx.fillStyle=`rgba(255,255,255,${Math.random()*0.15+0.05})`;ctx.fill()}ctx.fillStyle='rgba(255,255,255,0.9)';ctx.font='bold 24px sans-serif';ctx.textAlign='center';const ln=desc.match(/.{1,16}/g)||[desc];ln.slice(0,6).forEach((l,i)=>ctx.fillText(l,256,180+i*36));out.innerHTML=`<div style="font-weight:700;margin-bottom:12px">🎨 AI生成完成 <span class="badge badge-green">艺术风格</span></div><div style="border-radius:12px;overflow:hidden;margin-bottom:12px"><img src="${c.toDataURL()}" style="width:100%;display:block"></div><div style="display:flex;gap:8px"><button class="ai-back" onclick="aiDoAIGC()" style="margin:0">🔄 换一版</button></div>`;toast('艺术图生成成功！','success')};
-  img.src=url;
+  try{
+    const url=await aiGenerateImage(prompt,2048,2048);
+    out.innerHTML=`<div style="font-weight:700;margin-bottom:12px;color:var(--ok)">✅ AI图片生成完成 <span class="badge badge-green">${styles[_aigcStyle]}</span></div><div style="border-radius:12px;overflow:hidden;border:1px solid var(--bd);margin-bottom:12px"><img src="${url}" style="width:100%;display:block" alt="AI生成"></div><div style="display:flex;gap:8px"><a href="${url}" download="ai_img_${Date.now()}.png" class="ai-back" style="margin:0;text-decoration:none;display:inline-flex">📥 下载图片</a><button class="ai-back" onclick="aiDoAIGC()" style="margin:0">🔄 重新生成</button></div>`;
+    toast('图片生成成功！','success');
+  }catch(e){
+    out.innerHTML=`<div style="padding:16px;background:#fee2e2;border-radius:12px"><div style="font-weight:700;color:#991b1b">✗ 图片生成失败</div><div style="font-size:13px;color:#991b1b;margin-top:8px">${e.message||'请稍后重试'}</div></div>`;
+    toast('生成失败，请重试','error');
+  }
 }
 
 // === Tool 8: AI智能修图 ===
