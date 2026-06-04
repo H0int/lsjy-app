@@ -1853,8 +1853,8 @@ function deleteTask(taskId){
 function showMod(h){document.getElementById('modalBox').innerHTML=h;document.getElementById('modalBg').classList.add('show')}
 function closeModal(e){if(e&&e.target!==e.currentTarget)return;document.getElementById('modalBg').classList.remove('show')}
 
-// ===== VERSION & INTEGRITY CHECK =====
-(function(){const VER='admin-v3.6';const stored=localStorage.getItem('lsjy_admin_ver');if(stored!==VER){localStorage.setItem('lsjy_admin_ver',VER);if(stored)location.reload(true)}else if(typeof goPage!=='function'||typeof renderDashboard!=='function'){const fc=localStorage.getItem('lsjy_admin_jsok');if(fc===VER)return;localStorage.setItem('lsjy_admin_jsok',VER);window.location.replace(window.location.pathname+'?_r='+Date.now())}})();
+// ===== VERSION =====
+(function(){if(!localStorage.getItem('lsjy_admin_ver'))localStorage.setItem('lsjy_admin_ver','admin-v3.6')})();
 </script>
 </body>
 </html>
