@@ -8,7 +8,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
 <link rel="icon" href="logo.png" type="image/png">
 <title>罗圣纪元 - 互联网数字化综合平台</title>
-<meta name="description" content="罗圣纪元互联网数字化综合平台 - AI赋能实体经济，6大业务板块全覆盖，算力驱动AI创作">
+<meta name="description" content="罗圣纪元互联网数字化综合平台 - 100款全能工具，AI赋能实体经济，9大工具板块全覆盖">
 <meta name="theme-color" content="#0d1b2a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -332,8 +332,15 @@ textarea.fi{resize:vertical;min-height:120px}
 /* === AI SPINNER === */
 .ai-spinner{display:inline-block;width:40px;height:40px;border:3px solid var(--bd);border-top-color:var(--p);border-radius:50%;animation:ai-spin .8s linear infinite}
 @keyframes ai-spin{to{transform:rotate(360deg)}}
+
+/* === TOOL TABS === */
+.tool-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px;justify-content:center}
+.tool-tab{padding:8px 18px;border-radius:20px;font-size:13px;font-weight:600;border:1.5px solid var(--bd);background:var(--w);color:var(--l);cursor:pointer;transition:all .2s;font-family:var(--f)}
+.tool-tab:hover,.tool-tab.active{background:var(--p);color:#fff;border-color:var(--p)}
+.tool-card[data-cat]{transition:all .3s}
+.tool-card.hidden{display:none}
 </style>
-<script>if(localStorage.getItem('lsjy3_ver')!=='v3.6-beta1'){localStorage.setItem('lsjy3_ver','v3.6-beta1');location.reload(true)}
+<script>if(localStorage.getItem('lsjy3_ver')!=='v3.7-beta1'){localStorage.setItem('lsjy3_ver','v3.7-beta1');location.reload(true)}
 
 // ===== 卡密兑换系统 =====
 function getRedeemCodes(){return JSON.parse(localStorage.getItem('lsjy3_redeem_codes')||'[]')}
@@ -970,7 +977,7 @@ renderEmployeeAcct();
 <div class="hero-stats">
 <div class="hero-stat"><h4>6</h4><p>核心业务板块</p></div>
 <div class="hero-stat"><h4>28</h4><p>专业服务项目</p></div>
-<div class="hero-stat"><h4>20</h4><p>AI创作工具</p></div>
+<div class="hero-stat"><h4>100</h4><p>全能工具</p></div>
 <div class="hero-stat"><h4>1000+</h4><p>服务客户</p></div>
 </div>
 </div>
@@ -1004,145 +1011,511 @@ renderEmployeeAcct();
 <section class="tools sec-pad" id="tools">
 <div class="container">
 <div class="section-tag">FREE TOOLS</div>
-<h2 class="section-title">免费<span class="gradient-text">工具箱</span></h2>
-<p class="section-sub">文案创作、去水印等实用工具，助力您的内容创作与营销推广</p>
-<div class="tools-grid">
-<div class="tool-card" onclick="openTool('copywriter')">
-<div class="tool-icon" style="background:linear-gradient(135deg,#533afd,#7c6cf6)">✍️</div>
-<h3>智能文案工具</h3>
-<p>8大专业模板：流量型/信任型/成交型人设、团购促销、爆款开头等，AI一键生成</p>
-<div class="badge badge-purple" style="margin-top:12px">登录后使用</div>
-</div>
-<div class="tool-card" onclick="openTool('watermark')">
-<div class="tool-icon" style="background:linear-gradient(135deg,#3b82f6,#60a5fa)">🔍</div>
-<h3>图片去水印</h3>
-<p>上传带水印的图片，智能识别并去除水印区域，还原清晰干净的原始图片</p>
-<div class="badge badge-blue" style="margin-top:12px">免费使用</div>
-</div>
-<div class="tool-card" onclick="openTool('rewrite')">
-<div class="tool-icon" style="background:linear-gradient(135deg,#10b981,#34d399)">🔄</div>
-<h3>文案改写润色</h3>
-<p>输入现有文案，一键改写为多种风格，口语化、正式、种草风、广告风自由切换</p>
-<div class="badge badge-green" style="margin-top:12px">登录后使用</div>
-</div>
-<div class="tool-card" onclick="openTool('hashtag')">
-<div class="tool-icon" style="background:linear-gradient(135deg,#f59e0b,#fbbf24)">#️⃣</div>
-<h3>热门话题标签</h3>
-<p>输入关键词自动匹配热门话题标签，覆盖抖音、小红书、快手等平台，提升内容曝光</p>
-<div class="badge badge-ruby" style="margin-top:12px">免费使用</div>
-</div>
-</div>
-</div>
-<div style="margin-top:48px">
-<div class="section-tag" style="display:inline-flex">AI POWERED</div>
-<h3 class="section-title" style="font-size:28px;margin-bottom:8px;margin-top:12px">AI <span class="gradient-text">创作引擎</span></h3>
-<p class="section-sub">消耗算力即可使用，更强大的AI创作能力</p>
-</div>
-<div class="tools-grid" style="margin-top:24px">
-<div class="tool-card" onclick="openTool('viralVideo')">
-<div class="tool-icon" style="background:linear-gradient(135deg,#ef4444,#f97316)">🎬</div>
-<h3>爆款智能成片</h3>
-<p>输入产品或主题，AI自动生成爆款短视频脚本+分镜+配音+字幕，一键出片</p>
-<div class="badge" style="margin-top:12px;background:#fee2e2;color:#991b1b">🔥 50算力/次</div>
-</div>
-<div class="tool-card" onclick="openTool('digitalHuman')">
-<div class="tool-icon" style="background:linear-gradient(135deg,#06b6d4,#8b5cf6)">🧑‍💼</div>
-<h3>数字人口播</h3>
-<p>输入文案，AI数字人自动播报生成口播视频，多款形象可选，适配全平台</p>
-<div class="badge" style="margin-top:12px;background:#dbeafe;color:#1e40af">🧑‍💼 100算力/次</div>
-</div>
-<div class="tool-card" onclick="openTool('voiceClone')">
-<div class="tool-icon" style="background:linear-gradient(135deg,#a855f7,#ec4899)">🎙️</div>
-<h3>音色克隆</h3>
-<p>上传一段音频，克隆您的专属音色，用于配音、播报、有声内容创作</p>
-<div class="badge" style="margin-top:12px;background:#ede9fe;color:#5b21b6">🎙️ 30算力/次</div>
-</div>
-<div class="tool-card" onclick="openTool('videoLib')">
-<div class="tool-icon" style="background:linear-gradient(135deg,#14b8a6,#22d3ee)">📁</div>
-<h3>我的视频库</h3>
-<p>管理您的创作作品，收藏、分类、下载，打造个人视频素材库</p>
-<div class="badge badge-green" style="margin-top:12px">登录后使用</div>
-</div>
-<div class="tool-card" onclick="openTool('aigc')">
-<div class="tool-icon" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">🎨</div>
-<h3>智能文生图</h3>
-<p>输入文字描述，AI自动生成高清海报、产品图、封面图，支持多种风格</p>
-<div class="badge" style="margin-top:12px;background:#fef3c7;color:#92400e">🎨 20算力/次</div>
-</div>
-<div class="tool-card" onclick="openTool('photoEdit')">
-<div class="tool-icon" style="background:linear-gradient(135deg,#6366f1,#a78bfa)">🖼️</div>
+<h2 class="section-title"><span class="gradient-text">100</span>款工具</h2>
+<p class="section-sub">AI创作、营销推广、图像视频、音频处理、办公效率、实用工具、生活娱乐，一站式数字化创作平台</p>
+<div class="tool-tabs" id="toolTabs"><button class="tool-tab active" onclick="filterToolCat('all',this)">全部</button><button class="tool-tab" onclick="filterToolCat('AI文本创作',this)">AI文本</button><button class="tool-tab" onclick="filterToolCat('AI智能营销',this)">AI智能</button><button class="tool-tab" onclick="filterToolCat('AI图像创作',this)">AI图像</button><button class="tool-tab" onclick="filterToolCat('AI视频创作',this)">AI视频</button><button class="tool-tab" onclick="filterToolCat('AI音频创作',this)">AI音频</button><button class="tool-tab" onclick="filterToolCat('AI办公效率',this)">AI办公</button><button class="tool-tab" onclick="filterToolCat('实用工具箱',this)">实用工具</button><button class="tool-tab" onclick="filterToolCat('生活娱乐',this)">生活娱乐</button><button class="tool-tab" onclick="filterToolCat('数据管理',this)">数据管理</button></div>
+<div class="tools-grid" id="toolsGrid"><div class="tool-card" data-cat="AI文本创作" onclick="openTool('copywriter')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#dc2626,#f87171)">🤖</div>
+<h3>AI文案创作</h3>
+<p>短视频/团购/种草/朋友圈文案</p>
+<div class="badge badge-purple" style="margin-top:12px">10算力</div>
+</div><div class="tool-card" data-cat="AI文本创作" onclick="openTool('rewrite')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#dc2626,#f87171)">🔄</div>
+<h3>文案改写</h3>
+<p>多种风格一键改写</p>
+<div class="badge badge-purple" style="margin-top:12px">5算力</div>
+</div><div class="tool-card" data-cat="AI文本创作" onclick="openTool('article')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#dc2626,#f87171)">📝</div>
+<h3>AI长文写作</h3>
+<p>文章/论文/报告生成</p>
+<div class="badge badge-purple" style="margin-top:12px">15算力</div>
+</div><div class="tool-card" data-cat="AI文本创作" onclick="openTool('email')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#dc2626,#f87171)">📧</div>
+<h3>AI邮件生成</h3>
+<p>商务邮件/营销邮件</p>
+<div class="badge badge-purple" style="margin-top:12px">8算力</div>
+</div><div class="tool-card" data-cat="AI文本创作" onclick="openTool('resume')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#dc2626,#f87171)">📄</div>
+<h3>AI简历生成</h3>
+<p>智能简历优化与生成</p>
+<div class="badge badge-purple" style="margin-top:12px">12算力</div>
+</div><div class="tool-card" data-cat="AI文本创作" onclick="openTool('proposal')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#dc2626,#f87171)">📋</div>
+<h3>AI方案撰写</h3>
+<p>项目方案/商业计划书</p>
+<div class="badge badge-purple" style="margin-top:12px">15算力</div>
+</div><div class="tool-card" data-cat="AI文本创作" onclick="openTool('poetry')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#dc2626,#f87171)">🎭</div>
+<h3>AI诗歌创作</h3>
+<p>古诗/现代诗/藏头诗</p>
+<div class="badge badge-purple" style="margin-top:12px">5算力</div>
+</div><div class="tool-card" data-cat="AI文本创作" onclick="openTool('novel')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#dc2626,#f87171)">📚</div>
+<h3>AI小说续写</h3>
+<p>故事续写与情节生成</p>
+<div class="badge badge-purple" style="margin-top:12px">10算力</div>
+</div><div class="tool-card" data-cat="AI文本创作" onclick="openTool('slogan')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#dc2626,#f87171)">📢</div>
+<h3>AI广告语</h3>
+<p>品牌Slogan/广告语创意</p>
+<div class="badge badge-purple" style="margin-top:12px">5算力</div>
+</div><div class="tool-card" data-cat="AI文本创作" onclick="openTool('summarize')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#dc2626,#f87171)">📌</div>
+<h3>AI摘要提取</h3>
+<p>长文智能摘要与提炼</p>
+<div class="badge badge-purple" style="margin-top:12px">8算力</div>
+</div><div class="tool-card" data-cat="AI智能营销" onclick="openTool('hashtag')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#ea580c,#fb923c)">#️⃣</div>
+<h3>热门标签</h3>
+<p>AI智能匹配热门话题标签</p>
+<div class="badge badge-purple" style="margin-top:12px">5算力</div>
+</div><div class="tool-card" data-cat="AI智能营销" onclick="openTool('viralVideo')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#ea580c,#fb923c)">🔥</div>
+<h3>爆款脚本</h3>
+<p>AI生成爆款短视频脚本</p>
+<div class="badge badge-purple" style="margin-top:12px">50算力</div>
+</div><div class="tool-card" data-cat="AI智能营销" onclick="openTool('commentReply')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#ea580c,#fb923c)">💬</div>
+<h3>评论回复</h3>
+<p>AI智能回复评论</p>
+<div class="badge badge-purple" style="margin-top:12px">5算力</div>
+</div><div class="tool-card" data-cat="AI智能营销" onclick="openTool('productDesc')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#ea580c,#fb923c)">🛒</div>
+<h3>商品文案</h3>
+<p>电商商品详情描述</p>
+<div class="badge badge-purple" style="margin-top:12px">10算力</div>
+</div><div class="tool-card" data-cat="AI智能营销" onclick="openTool('adCopy')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#ea580c,#fb923c)">📢</div>
+<h3>广告文案</h3>
+<p>信息流/搜索广告文案</p>
+<div class="badge badge-purple" style="margin-top:12px">10算力</div>
+</div><div class="tool-card" data-cat="AI智能营销" onclick="openTool('liveScript')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#ea580c,#fb923c)">🎤</div>
+<h3>直播话术</h3>
+<p>直播间话术脚本生成</p>
+<div class="badge badge-purple" style="margin-top:12px">15算力</div>
+</div><div class="tool-card" data-cat="AI智能营销" onclick="openTool('seoKeywords')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#ea580c,#fb923c)">🔍</div>
+<h3>SEO关键词</h3>
+<p>SEO优化关键词建议</p>
+<div class="badge badge-purple" style="margin-top:12px">8算力</div>
+</div><div class="tool-card" data-cat="AI智能营销" onclick="openTool('titleGen')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#ea580c,#fb923c)">🏆</div>
+<h3>爆款标题</h3>
+<p>10万+标题生成器</p>
+<div class="badge badge-purple" style="margin-top:12px">5算力</div>
+</div><div class="tool-card" data-cat="AI智能营销" onclick="openTool('socialPost')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#ea580c,#fb923c)">📱</div>
+<h3>社媒文案</h3>
+<p>小红书/微博/抖音文案</p>
+<div class="badge badge-purple" style="margin-top:12px">8算力</div>
+</div><div class="tool-card" data-cat="AI智能营销" onclick="openTool('brandStory')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#ea580c,#fb923c)">🏛️</div>
+<h3>品牌故事</h3>
+<p>品牌故事与企业文化</p>
+<div class="badge badge-purple" style="margin-top:12px">12算力</div>
+</div><div class="tool-card" data-cat="AI图像创作" onclick="openTool('text2img')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)">🎨</div>
+<h3>AI文生图</h3>
+<p>文字描述生成高清图片</p>
+<div class="badge badge-purple" style="margin-top:12px">20算力</div>
+</div><div class="tool-card" data-cat="AI图像创作" onclick="openTool('img2img')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)">🖼️</div>
+<h3>AI图生图</h3>
+<p>图片风格迁移与变换</p>
+<div class="badge badge-purple" style="margin-top:12px">25算力</div>
+</div><div class="tool-card" data-cat="AI图像创作" onclick="openTool('photoEdit')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)">✂️</div>
 <h3>AI智能修图</h3>
-<p>一键美化、去水印、画质增强、背景替换、人像精修，专业级图片处理</p>
-<div class="badge" style="margin-top:12px;background:#e0e7ff;color:#3730a3">🖼️ 30算力/次</div>
-</div>
-<div class="tool-card" onclick="openTool('audioEdit')">
-<div class="tool-icon" style="background:linear-gradient(135deg,#0ea5e9,#38bdf8)">🎵</div>
-<h3>AI智能修音</h3>
-<p>人声提取、降噪、混响、变速变调、音频剪辑，录音棚级音质处理</p>
-<div class="badge" style="margin-top:12px;background:#e0f2fe;color:#075985">🎵 25算力/次</div>
-</div>
-<div class="tool-card" onclick="openTool('accompaniment')">
-<div class="tool-icon" style="background:linear-gradient(135deg,#f472b6,#fb923c)">🎶</div>
-<h3>AI智能伴奏</h3>
-<p>输入歌词或风格，AI自动生成多风格伴奏，支持流行、古风、电音、民谣等</p>
-<div class="badge" style="margin-top:12px;background:#fce7f3;color:#9d174d">🎶 40算力/次</div>
-</div>
-<div class="tool-card" onclick="openTool('docGen')">
-<div class="tool-icon" style="background:linear-gradient(135deg,#10b981,#34d399)">📊</div>
-<h3>智能图文表格</h3>
-<p>像WPS一样一键生成图文、表格、报告，AI自动排版，支持导出分享</p>
-<div class="badge" style="margin-top:12px;background:#d1fae5;color:#065f46">📊 35算力/次</div>
-</div>
-<div class="tool-card" onclick="openTool('credits')">
-<div class="tool-icon" style="background:linear-gradient(135deg,#533afd,#7c6cf6)">⚡</div>
-<h3>算力中心</h3>
-<p>查看算力余额、购买算力包、兑换记录，算力用于兑换AI创作功能</p>
-<div class="badge badge-purple" style="margin-top:12px">立即查看</div>
-</div>
-<div class="tool-card" onclick="openTool('redeemCode')">
-<div class="tool-icon" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">🎫</div>
-<h3>卡密兑换</h3>
-<p>输入卡密串码，兑换算力资源包，算力可用于AI创作功能</p>
-<div class="badge" style="margin-top:12px;background:#fef3c7;color:#92400e">立即兑换</div>
-</div>
-<div class="tool-card" onclick="openTool('knowledgeBase')">
-<div class="tool-icon" style="background:linear-gradient(135deg,#10b981,#34d399)">📚</div>
-<h3>企业知识库</h3>
-<p>管理企业基础信息、视频素材库、文案库，AI创作时自动引用</p>
-<div class="badge badge-green" style="margin-top:12px">登录后使用</div>
-</div>
-<div class="tool-card" onclick="openTool('creditLogs')">
-<div class="tool-icon" style="background:linear-gradient(135deg,#06b6d4,#0ea5e9)">📊</div>
-<h3>消耗记录</h3>
-<p>查看每次AI创作功能的算力消耗明细和剩余算力变化</p>
-<div class="badge badge-blue" style="margin-top:12px">查看记录</div>
-</div>
-</div>
-<div class="tool-card" onclick="openTool('videoParse')">
-<div class="tool-icon" style="background:linear-gradient(135deg,#ef4444,#f97316)">🔗</div>
-<h3>短视频解析</h3>
-<p>粘贴抖音/快手/小红书链接，一键提取无水印视频和封面图</p>
-<div class="badge" style="margin-top:12px;background:#fee2e2;color:#991b1b">免费使用</div>
-</div>
-<div class="tool-card" onclick="openTool('videoClip')">
-<div class="tool-icon" style="background:linear-gradient(135deg,#06b6d4,#0ea5e9)">🎬</div>
-<h3>视频智能剪辑</h3>
-<p>上传视频自动切片、提取关键帧、生成封面，AI辅助创作</p>
-<div class="badge" style="margin-top:12px;background:#cffafe;color:#155e75">登录后使用</div>
-</div>
-<div class="tool-card" onclick="openTool('img2video')">
-<div class="tool-icon" style="background:linear-gradient(135deg,#8b5cf6,#a78bfa)">🎞️</div>
+<p>Canvas像素级处理</p>
+<div class="badge badge-purple" style="margin-top:12px">30算力</div>
+</div><div class="tool-card" data-cat="AI图像创作" onclick="openTool('removeBg')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)">🎭</div>
+<h3>AI抠图去背</h3>
+<p>智能去除图片背景</p>
+<div class="badge badge-purple" style="margin-top:12px">10算力</div>
+</div><div class="tool-card" data-cat="AI图像创作" onclick="openTool('upscale')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)">🔍</div>
+<h3>AI超分辨率</h3>
+<p>低清图片超分放大</p>
+<div class="badge badge-purple" style="margin-top:12px">15算力</div>
+</div><div class="tool-card" data-cat="AI图像创作" onclick="openTool('avatar')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)">👤</div>
+<h3>AI头像生成</h3>
+<p>个性化AI头像创作</p>
+<div class="badge badge-purple" style="margin-top:12px">10算力</div>
+</div><div class="tool-card" data-cat="AI图像创作" onclick="openTool('aigc')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)">🖼️</div>
+<h3>智能文生图</h3>
+<p>AI生成高清图片</p>
+<div class="badge badge-purple" style="margin-top:12px">20算力</div>
+</div><div class="tool-card" data-cat="AI图像创作" onclick="openTool('poster')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)">🖼️</div>
+<h3>AI海报生成</h3>
+<p>活动海报/宣传图</p>
+<div class="badge badge-purple" style="margin-top:12px">20算力</div>
+</div><div class="tool-card" data-cat="AI图像创作" onclick="openTool('colorize')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)">🎨</div>
+<h3>AI老照片上色</h3>
+<p>黑白照片智能上色</p>
+<div class="badge badge-purple" style="margin-top:12px">10算力</div>
+</div><div class="tool-card" data-cat="AI图像创作" onclick="openTool('sketch')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)">✏️</div>
+<h3>AI线稿生成</h3>
+<p>照片转线稿/素描风格</p>
+<div class="badge badge-purple" style="margin-top:12px">8算力</div>
+</div><div class="tool-card" data-cat="AI视频创作" onclick="openTool('digitalHuman')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#2563eb,#60a5fa)">🧑‍💻</div>
+<h3>数字人口播</h3>
+<p>AI脚本+数字人形象</p>
+<div class="badge badge-purple" style="margin-top:12px">100算力</div>
+</div><div class="tool-card" data-cat="AI视频创作" onclick="openTool('videoClip')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#2563eb,#60a5fa)">🎬</div>
+<h3>AI视频剪辑</h3>
+<p>智能视频剪辑</p>
+<div class="badge badge-purple" style="margin-top:12px">30算力</div>
+</div><div class="tool-card" data-cat="AI视频创作" onclick="openTool('img2video')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#2563eb,#60a5fa)">🎞️</div>
 <h3>AI图生视频</h3>
-<p>上传图片，AI生成动态视频，让静态图片动起来</p>
-<div class="badge badge-purple" style="margin-top:12px">登录后使用</div>
-</div>
-<div class="tool-card" onclick="openTool('taskCenter')">
-<div class="tool-icon" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">📋</div>
+<p>图片生成动态视频</p>
+<div class="badge badge-purple" style="margin-top:12px">60算力</div>
+</div><div class="tool-card" data-cat="AI视频创作" onclick="openTool('videoParse')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#2563eb,#60a5fa)">📹</div>
+<h3>短视频解析</h3>
+<p>无水印视频下载</p>
+<div class="badge badge-green" style="margin-top:12px">免费</div>
+</div><div class="tool-card" data-cat="AI视频创作" onclick="openTool('videoSrt')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#2563eb,#60a5fa)">📝</div>
+<h3>AI字幕生成</h3>
+<p>视频自动生成字幕</p>
+<div class="badge badge-purple" style="margin-top:12px">15算力</div>
+</div><div class="tool-card" data-cat="AI视频创作" onclick="openTool('videoSum')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#2563eb,#60a5fa)">📋</div>
+<h3>视频摘要</h3>
+<p>长视频智能摘要</p>
+<div class="badge badge-purple" style="margin-top:12px">10算力</div>
+</div><div class="tool-card" data-cat="AI视频创作" onclick="openTool('videoTag')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#2563eb,#60a5fa)">🏷️</div>
+<h3>视频标签</h3>
+<p>AI自动生成视频标签</p>
+<div class="badge badge-purple" style="margin-top:12px">5算力</div>
+</div><div class="tool-card" data-cat="AI视频创作" onclick="openTool('videoCover')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#2563eb,#60a5fa)">🖼️</div>
+<h3>封面提取</h3>
+<p>视频封面截取</p>
+<div class="badge badge-purple" style="margin-top:12px">3算力</div>
+</div><div class="tool-card" data-cat="AI视频创作" onclick="openTool('videoReverse')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#2563eb,#60a5fa)">⏪</div>
+<h3>视频倒放</h3>
+<p>视频倒放效果</p>
+<div class="badge badge-purple" style="margin-top:12px">5算力</div>
+</div><div class="tool-card" data-cat="AI视频创作" onclick="openTool('videoGif')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#2563eb,#60a5fa)">🎞️</div>
+<h3>视频转GIF</h3>
+<p>视频转GIF动图</p>
+<div class="badge badge-purple" style="margin-top:12px">5算力</div>
+</div><div class="tool-card" data-cat="AI音频创作" onclick="openTool('voiceClone')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#059669,#34d399)">🎙️</div>
+<h3>音色克隆</h3>
+<p>文字转语音TTS</p>
+<div class="badge badge-purple" style="margin-top:12px">30算力</div>
+</div><div class="tool-card" data-cat="AI音频创作" onclick="openTool('audioEdit')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#059669,#34d399)">🎵</div>
+<h3>AI智能修音</h3>
+<p>降噪/混响/变速</p>
+<div class="badge badge-purple" style="margin-top:12px">25算力</div>
+</div><div class="tool-card" data-cat="AI音频创作" onclick="openTool('accompaniment')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#059669,#34d399)">🎸</div>
+<h3>AI智能伴奏</h3>
+<p>和弦/贝斯/鼓组</p>
+<div class="badge badge-purple" style="margin-top:12px">40算力</div>
+</div><div class="tool-card" data-cat="AI音频创作" onclick="openTool('soundEffect')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#059669,#34d399)">🔊</div>
+<h3>AI音效生成</h3>
+<p>音效/环境音</p>
+<div class="badge badge-purple" style="margin-top:12px">15算力</div>
+</div><div class="tool-card" data-cat="AI音频创作" onclick="openTool('musicGen')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#059669,#34d399)">🎶</div>
+<h3>AI音乐生成</h3>
+<p>文字生成背景音乐</p>
+<div class="badge badge-purple" style="margin-top:12px">35算力</div>
+</div><div class="tool-card" data-cat="AI音频创作" onclick="openTool('speech2text')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#059669,#34d399)">🎤</div>
+<h3>语音转文字</h3>
+<p>音频转文字识别</p>
+<div class="badge badge-purple" style="margin-top:12px">10算力</div>
+</div><div class="tool-card" data-cat="AI音频创作" onclick="openTool('audioMerge')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#059669,#34d399)">🔗</div>
+<h3>音频拼接</h3>
+<p>多段音频合并</p>
+<div class="badge badge-purple" style="margin-top:12px">5算力</div>
+</div><div class="tool-card" data-cat="AI音频创作" onclick="openTool('audioSplit')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#059669,#34d399)">✂️</div>
+<h3>音频分割</h3>
+<p>音频裁剪分段</p>
+<div class="badge badge-purple" style="margin-top:12px">5算力</div>
+</div><div class="tool-card" data-cat="AI音频创作" onclick="openTool('podcast')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#059669,#34d399)">🎙️</div>
+<h3>播客脚本</h3>
+<p>播客节目脚本生成</p>
+<div class="badge badge-purple" style="margin-top:12px">10算力</div>
+</div><div class="tool-card" data-cat="AI音频创作" onclick="openTool('ringtone')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#059669,#34d399)">🔔</div>
+<h3>铃声制作</h3>
+<p>个性手机铃声</p>
+<div class="badge badge-purple" style="margin-top:12px">8算力</div>
+</div><div class="tool-card" data-cat="AI办公效率" onclick="openTool('docGen')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#0891b2,#22d3ee)">📊</div>
+<h3>智能图文表格</h3>
+<p>AI生成数据表格</p>
+<div class="badge badge-purple" style="margin-top:12px">35算力</div>
+</div><div class="tool-card" data-cat="AI办公效率" onclick="openTool('pptOutline')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#0891b2,#22d3ee)">📊</div>
+<h3>PPT大纲</h3>
+<p>演示文稿大纲</p>
+<div class="badge badge-purple" style="margin-top:12px">20算力</div>
+</div><div class="tool-card" data-cat="AI办公效率" onclick="openTool('meetingNotes')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#0891b2,#22d3ee)">📝</div>
+<h3>会议纪要</h3>
+<p>会议内容智能整理</p>
+<div class="badge badge-purple" style="margin-top:12px">15算力</div>
+</div><div class="tool-card" data-cat="AI办公效率" onclick="openTool('translater')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#0891b2,#22d3ee)">🌍</div>
+<h3>AI翻译</h3>
+<p>多语言智能翻译</p>
+<div class="badge badge-purple" style="margin-top:12px">8算力</div>
+</div><div class="tool-card" data-cat="AI办公效率" onclick="openTool('proofread')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#0891b2,#22d3ee)">✅</div>
+<h3>AI校对</h3>
+<p>文本纠错与润色</p>
+<div class="badge badge-purple" style="margin-top:12px">5算力</div>
+</div><div class="tool-card" data-cat="AI办公效率" onclick="openTool('mindMap')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#0891b2,#22d3ee)">🧠</div>
+<h3>思维导图</h3>
+<p>AI生成思维导图</p>
+<div class="badge badge-purple" style="margin-top:12px">15算力</div>
+</div><div class="tool-card" data-cat="AI办公效率" onclick="openTool('excelFormula')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#0891b2,#22d3ee)">📈</div>
+<h3>Excel公式</h3>
+<p>Excel函数生成</p>
+<div class="badge badge-purple" style="margin-top:12px">10算力</div>
+</div><div class="tool-card" data-cat="AI办公效率" onclick="openTool('codeHelper')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#0891b2,#22d3ee)">💻</div>
+<h3>AI代码助手</h3>
+<p>代码生成与解释</p>
+<div class="badge badge-purple" style="margin-top:12px">10算力</div>
+</div><div class="tool-card" data-cat="AI办公效率" onclick="openTool('contract')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#0891b2,#22d3ee)">📃</div>
+<h3>合同生成</h3>
+<p>AI合同模板生成</p>
+<div class="badge badge-purple" style="margin-top:12px">20算力</div>
+</div><div class="tool-card" data-cat="AI办公效率" onclick="openTool('report')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#0891b2,#22d3ee)">📋</div>
+<h3>报告生成</h3>
+<p>工作周报/月报生成</p>
+<div class="badge badge-purple" style="margin-top:12px">15算力</div>
+</div><div class="tool-card" data-cat="实用工具箱" onclick="openTool('qrCode')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#475569,#94a3b8)">📱</div>
+<h3>二维码生成</h3>
+<p>文本/网址生成二维码</p>
+<div class="badge badge-green" style="margin-top:12px">免费</div>
+</div><div class="tool-card" data-cat="实用工具箱" onclick="openTool('qrParse')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#475569,#94a3b8)">📷</div>
+<h3>二维码识别</h3>
+<p>上传图片识别二维码</p>
+<div class="badge badge-green" style="margin-top:12px">免费</div>
+</div><div class="tool-card" data-cat="实用工具箱" onclick="openTool('shortUrl')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#475569,#94a3b8)">🔗</div>
+<h3>短链接生成</h3>
+<p>长链接转短链接</p>
+<div class="badge badge-green" style="margin-top:12px">免费</div>
+</div><div class="tool-card" data-cat="实用工具箱" onclick="openTool('imgCompress')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#475569,#94a3b8)">📦</div>
+<h3>图片压缩</h3>
+<p>批量压缩图片</p>
+<div class="badge badge-green" style="margin-top:12px">免费</div>
+</div><div class="tool-card" data-cat="实用工具箱" onclick="openTool('imgFormat')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#475569,#94a3b8)">🔄</div>
+<h3>格式转换</h3>
+<p>图片格式互转</p>
+<div class="badge badge-green" style="margin-top:12px">免费</div>
+</div><div class="tool-card" data-cat="实用工具箱" onclick="openTool('imgCrop')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#475569,#94a3b8)">✂️</div>
+<h3>图片裁剪</h3>
+<p>在线图片裁剪</p>
+<div class="badge badge-green" style="margin-top:12px">免费</div>
+</div><div class="tool-card" data-cat="实用工具箱" onclick="openTool('imgWatermark')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#475569,#94a3b8)">💧</div>
+<h3>文字水印</h3>
+<p>给图片添加水印</p>
+<div class="badge badge-green" style="margin-top:12px">免费</div>
+</div><div class="tool-card" data-cat="实用工具箱" onclick="openTool('imgOcr')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#475569,#94a3b8)">👁️</div>
+<h3>OCR识别</h3>
+<p>图片文字识别提取</p>
+<div class="badge badge-green" style="margin-top:12px">免费</div>
+</div><div class="tool-card" data-cat="实用工具箱" onclick="openTool('colorPicker')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#475569,#94a3b8)">🎨</div>
+<h3>颜色拾取器</h3>
+<p>HEX/RGB/HSL转换</p>
+<div class="badge badge-green" style="margin-top:12px">免费</div>
+</div><div class="tool-card" data-cat="实用工具箱" onclick="openTool('unitConvert')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#475569,#94a3b8)">📏</div>
+<h3>单位换算</h3>
+<p>长度/重量/温度换算</p>
+<div class="badge badge-green" style="margin-top:12px">免费</div>
+</div><div class="tool-card" data-cat="实用工具箱" onclick="openTool('tsConvert')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#475569,#94a3b8)">⏰</div>
+<h3>时间戳转换</h3>
+<p>时间戳与日期互转</p>
+<div class="badge badge-green" style="margin-top:12px">免费</div>
+</div><div class="tool-card" data-cat="实用工具箱" onclick="openTool('hashGen')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#475569,#94a3b8)">🔐</div>
+<h3>哈希生成</h3>
+<p>MD5/SHA1/SHA256</p>
+<div class="badge badge-green" style="margin-top:12px">免费</div>
+</div><div class="tool-card" data-cat="实用工具箱" onclick="openTool('base64Code')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#475569,#94a3b8)">🔤</div>
+<h3>Base64编解码</h3>
+<p>文本与Base64互转</p>
+<div class="badge badge-green" style="margin-top:12px">免费</div>
+</div><div class="tool-card" data-cat="实用工具箱" onclick="openTool('wordCount')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#475569,#94a3b8)">📊</div>
+<h3>字数统计</h3>
+<p>字数/字符/段落统计</p>
+<div class="badge badge-green" style="margin-top:12px">免费</div>
+</div><div class="tool-card" data-cat="实用工具箱" onclick="openTool('diffText')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#475569,#94a3b8)">📝</div>
+<h3>文本对比</h3>
+<p>两段文本差异对比</p>
+<div class="badge badge-green" style="margin-top:12px">免费</div>
+</div><div class="tool-card" data-cat="实用工具箱" onclick="openTool('mdEditor')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#475569,#94a3b8)">📄</div>
+<h3>Markdown编辑器</h3>
+<p>Markdown实时预览</p>
+<div class="badge badge-green" style="margin-top:12px">免费</div>
+</div><div class="tool-card" data-cat="实用工具箱" onclick="openTool('jsonFormat')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#475569,#94a3b8)">{ }</div>
+<h3>JSON格式化</h3>
+<p>JSON美化与压缩</p>
+<div class="badge badge-green" style="margin-top:12px">免费</div>
+</div><div class="tool-card" data-cat="实用工具箱" onclick="openTool('pwdGen')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#475569,#94a3b8)">🔑</div>
+<h3>密码生成器</h3>
+<p>随机安全密码</p>
+<div class="badge badge-green" style="margin-top:12px">免费</div>
+</div><div class="tool-card" data-cat="实用工具箱" onclick="openTool('ipLookup')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#475569,#94a3b8)">🌍</div>
+<h3>IP归属查询</h3>
+<p>IP地理位置查询</p>
+<div class="badge badge-green" style="margin-top:12px">免费</div>
+</div><div class="tool-card" data-cat="生活娱乐" onclick="openTool('weather')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#d946ef,#f0abfc)">🌤️</div>
+<h3>天气查询</h3>
+<p>实时天气与预报</p>
+<div class="badge badge-green" style="margin-top:12px">免费</div>
+</div><div class="tool-card" data-cat="生活娱乐" onclick="openTool('dailyNews')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#d946ef,#f0abfc)">📰</div>
+<h3>每日新闻</h3>
+<p>热点新闻聚合</p>
+<div class="badge badge-green" style="margin-top:12px">免费</div>
+</div><div class="tool-card" data-cat="生活娱乐" onclick="openTool('joke')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#d946ef,#f0abfc)">😄</div>
+<h3>笑话生成</h3>
+<p>随机笑话/段子</p>
+<div class="badge badge-green" style="margin-top:12px">免费</div>
+</div><div class="tool-card" data-cat="生活娱乐" onclick="openTool('horoscope')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#d946ef,#f0abfc)">⭐</div>
+<h3>星座运势</h3>
+<p>每日星座运势</p>
+<div class="badge badge-green" style="margin-top:12px">免费</div>
+</div><div class="tool-card" data-cat="生活娱乐" onclick="openTool('calendar')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#d946ef,#f0abfc)">📅</div>
+<h3>万年历</h3>
+<p>日历/农历/节假日</p>
+<div class="badge badge-green" style="margin-top:12px">免费</div>
+</div><div class="tool-card" data-cat="生活娱乐" onclick="openTool('countdown')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#d946ef,#f0abfc)">⏳</div>
+<h3>倒计时</h3>
+<p>自定义倒计时</p>
+<div class="badge badge-green" style="margin-top:12px">免费</div>
+</div><div class="tool-card" data-cat="生活娱乐" onclick="openTool('bmiCalc')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#d946ef,#f0abfc)">💪</div>
+<h3>BMI计算器</h3>
+<p>身体质量指数</p>
+<div class="badge badge-green" style="margin-top:12px">免费</div>
+</div><div class="tool-card" data-cat="生活娱乐" onclick="openTool('loanCalc')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#d946ef,#f0abfc)">🏦</div>
+<h3>贷款计算器</h3>
+<p>房贷/车贷计算</p>
+<div class="badge badge-green" style="margin-top:12px">免费</div>
+</div><div class="tool-card" data-cat="生活娱乐" onclick="openTool('nameGen')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#d946ef,#f0abfc)">📛</div>
+<h3>随机取名</h3>
+<p>宝宝起名/网名</p>
+<div class="badge badge-green" style="margin-top:12px">免费</div>
+</div><div class="tool-card" data-cat="生活娱乐" onclick="openTool('historyToday')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#d946ef,#f0abfc)">📚</div>
+<h3>历史上的今天</h3>
+<p>历史事件查询</p>
+<div class="badge badge-green" style="margin-top:12px">免费</div>
+</div><div class="tool-card" data-cat="生活娱乐" onclick="openTool('idiomDict')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#d946ef,#f0abfc)">📖</div>
+<h3>成语词典</h3>
+<p>成语查询与接龙</p>
+<div class="badge badge-green" style="margin-top:12px">免费</div>
+</div><div class="tool-card" data-cat="数据管理" onclick="openTool('credits')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#65a30d,#a3e635)">⚡</div>
+<h3>算力中心</h3>
+<p>算力购买与管理</p>
+<div class="badge badge-green" style="margin-top:12px">免费</div>
+</div><div class="tool-card" data-cat="数据管理" onclick="openTool('redeemCode')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#65a30d,#a3e635)">🎫</div>
+<h3>卡密兑换</h3>
+<p>兑换码兑换算力</p>
+<div class="badge badge-green" style="margin-top:12px">免费</div>
+</div><div class="tool-card" data-cat="数据管理" onclick="openTool('creditLogs')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#65a30d,#a3e635)">📋</div>
+<h3>算力记录</h3>
+<p>算力消耗明细</p>
+<div class="badge badge-green" style="margin-top:12px">免费</div>
+</div><div class="tool-card" data-cat="数据管理" onclick="openTool('knowledgeBase')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#65a30d,#a3e635)">🧠</div>
+<h3>知识库</h3>
+<p>个人知识库管理</p>
+<div class="badge badge-green" style="margin-top:12px">免费</div>
+</div><div class="tool-card" data-cat="数据管理" onclick="openTool('videoLib')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#65a30d,#a3e635)">📁</div>
+<h3>作品库</h3>
+<p>AI生成作品管理</p>
+<div class="badge badge-green" style="margin-top:12px">免费</div>
+</div><div class="tool-card" data-cat="数据管理" onclick="openTool('taskCenter')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#65a30d,#a3e635)">📋</div>
 <h3>AI任务中心</h3>
-<p>查看后台AI生成任务进度与结果</p>
-<div class="badge badge-green" style="margin-top:12px">实时查看</div>
+<p>后台任务进度</p>
+<div class="badge badge-green" style="margin-top:12px">免费</div>
+</div><div class="tool-card" data-cat="数据管理" onclick="openTool('employeeAcct')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#65a30d,#a3e635)">👥</div>
+<h3>员工账号</h3>
+<p>子账号管理</p>
+<div class="badge badge-green" style="margin-top:12px">免费</div>
+</div><div class="tool-card" data-cat="数据管理" onclick="openTool('dataBackup')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#65a30d,#a3e635)">💾</div>
+<h3>数据备份</h3>
+<p>本地数据导出备份</p>
+<div class="badge badge-green" style="margin-top:12px">免费</div>
+</div><div class="tool-card" data-cat="数据管理" onclick="openTool('dataExport')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#65a30d,#a3e635)">📤</div>
+<h3>数据导出</h3>
+<p>CSV/JSON数据导出</p>
+<div class="badge badge-green" style="margin-top:12px">免费</div>
+</div><div class="tool-card" data-cat="数据管理" onclick="openTool('dataClean')">
+<div class="tool-icon" style="background:linear-gradient(135deg,#65a30d,#a3e635)">🧹</div>
+<h3>数据清理</h3>
+<p>缓存与历史清理</p>
+<div class="badge badge-green" style="margin-top:12px">免费</div>
+</div></div>
 </div>
-
 </section>
 
 <!-- ===== PRICING ===== -->
@@ -1285,7 +1658,7 @@ renderEmployeeAcct();
 
 <script>
 // ===== CACHE BUSTER & VERSION CHECK =====
-(function(){const _V='v3.6-beta1';const _cv=localStorage.getItem('lsjy3_ver');if(_cv!==_V){localStorage.setItem('lsjy3_ver',_V);sessionStorage.clear();try{if('caches'in window)caches.keys().then(k=>k.forEach(n=>caches.delete(n)))}catch(e){}try{document.cookie='lsjy3_ver=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT';document.cookie='lsjy_v=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT';document.cookie='__cf_bm=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT'}catch(e){}}})();
+(function(){const _V='v3.7-beta1';const _cv=localStorage.getItem('lsjy3_ver');if(_cv!==_V){localStorage.setItem('lsjy3_ver',_V);sessionStorage.clear();try{if('caches'in window)caches.keys().then(k=>k.forEach(n=>caches.delete(n)))}catch(e){}try{document.cookie='lsjy3_ver=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT';document.cookie='lsjy_v=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT';document.cookie='__cf_bm=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT'}catch(e){}}})();
 // ===== DATA =====
 const MODULES=[
 {id:'ai',name:'AI 人工智能',icon:'🤖',color:'#3b82f6',gradient:'linear-gradient(135deg,#3b82f6,#60a5fa)',summary:'依托自研 AI 技术面向中小商家落地数字化转型',services:[
@@ -1798,7 +2171,99 @@ const out=document.getElementById('cwOutput');
 out.innerHTML='<p style="color:var(--b);text-align:center">⏳ AI生成中...</p>';
 if(typeof aiGenerateText==='function'){aiGenerateText(prompt).then(text=>{out.innerHTML=`<div style="padding:16px;background:var(--bg);border-radius:12px;border:1px solid var(--bd);white-space:pre-wrap;line-height:1.8;font-size:14px">${text}</div><button class="btn btn-o btn-sm" onclick="copyText('cwOutput')" style="margin-top:8px">📋 复制文案</button>`}).catch(()=>{out.innerHTML='<p style="color:var(--err)">AI生成失败，请稍后重试</p>'})}else{out.innerHTML='<p style="color:var(--err)">AI服务未就绪</p>'}
 }
-const _TOOL_MAP={copywriter:renderCopywriter,watermark:renderWatermark,rewrite:renderRewrite,hashtag:renderHashtag,viralVideo:renderViralVideo,digitalHuman:renderDigitalHuman,voiceClone:renderVoiceClone,videoLib:renderVideoLib,aigc:renderAIGC,photoEdit:renderPhotoEdit,audioEdit:renderAudioEdit,accompaniment:renderAccompaniment,docGen:renderDocGen,credits:renderCredits,redeemCode:renderRedeemCode,knowledgeBase:renderKnowledgeBase,creditLogs:renderCreditLogs,videoParse:renderVideoParse,videoClip:renderVideoClip,img2video:renderImg2Video,employeeAcct:renderEmployeeAcct,taskCenter:renderTaskCenter};
+
+// Tool category filter
+function filterToolCat(cat,el){
+  document.querySelectorAll('.tool-tab').forEach(t=>t.classList.remove('active'));
+  if(el)el.classList.add('active');
+  document.querySelectorAll('.tool-card[data-cat]').forEach(c=>{
+    c.classList.toggle('hidden',cat!=='all'&&c.dataset.cat!==cat);
+  });
+}
+
+
+// ===== GENERIC AI TEXT TOOL RENDERER =====
+const _AI_TEXT_TOOLS={
+  article:{name:'AI长文写作',prompt:'请根据以下要求撰写一篇高质量文章：',fields:[{id:'topic',label:'主题/标题',type:'text',placeholder:'输入文章主题'},{id:'style',label:'风格',type:'select',options:['专业报告','自媒体文章','学术论文','新闻稿','产品测评']},{id:'length',label:'字数要求',type:'select',options:['500字','1000字','2000字','3000字']}]},
+  email:{name:'AI邮件生成',prompt:'请生成一封专业邮件：',fields:[{id:'purpose',label:'邮件目的',type:'select',options:['商务合作','客户跟进','项目汇报','求职申请','活动邀请']},{id:'tone',label:'语气',type:'select',options:['正式','友好','紧急','感谢']},{id:'content',label:'关键内容',type:'textarea',placeholder:'描述邮件主要内容'}]},
+  resume:{name:'AI简历生成',prompt:'请生成一份专业简历：',fields:[{id:'position',label:'应聘岗位',type:'text',placeholder:'如：前端工程师'},{id:'experience',label:'工作年限',type:'select',options:['应届生','1-3年','3-5年','5-10年','10年以上']},{id:'skills',label:'核心技能',type:'textarea',placeholder:'列出你的核心技能'}]},
+  proposal:{name:'AI方案撰写',prompt:'请撰写一份项目方案：',fields:[{id:'project',label:'项目名称',type:'text',placeholder:'输入项目名称'},{id:'industry',label:'行业领域',type:'select',options:['互联网','教育','电商','金融','制造业','餐饮']},{id:'desc',label:'项目描述',type:'textarea',placeholder:'简要描述项目背景和目标'}]},
+  poetry:{name:'AI诗歌创作',prompt:'请创作诗歌：',fields:[{id:'theme',label:'主题',type:'text',placeholder:'如：春天、爱情、思乡'},{id:'style',label:'风格',type:'select',options:['五言古诗','七言绝句','现代自由诗','藏头诗','俳句']},{id:'keywords',label:'关键词',type:'text',placeholder:'如：月光、流水、远方'}]},
+  novel:{name:'AI小说续写',prompt:'请续写以下故事：',fields:[{id:'context',label:'上文内容',type:'textarea',placeholder:'粘贴已有的故事内容',required:true},{id:'direction',label:'续写方向',type:'text',placeholder:'如：反转结局、浪漫发展'},{id:'length',label:'续写长度',type:'select',options:['200字','500字','1000字']}]},
+  slogan:{name:'AI广告语',prompt:'请生成品牌广告语/Slogan：',fields:[{id:'brand',label:'品牌/产品名',type:'text',placeholder:'输入品牌或产品名'},{id:'industry',label:'行业',type:'text',placeholder:'所属行业'},{id:'feature',label:'核心卖点',type:'textarea',placeholder:'描述产品核心卖点'}]},
+  summarize:{name:'AI摘要提取',prompt:'请提取以下内容的摘要：',fields:[{id:'text',label:'原文内容',type:'textarea',placeholder:'粘贴需要摘要的长文',required:true},{id:'len',label:'摘要长度',type:'select',options:['50字','100字','200字','300字']}]},
+  commentReply:{name:'评论回复',prompt:'请生成有吸引力的评论回复：',fields:[{id:'comment',label:'用户评论',type:'textarea',placeholder:'粘贴用户评论内容',required:true},{id:'platform',label:'平台',type:'select',options:['抖音','小红书','淘宝','微博','微信公众号']},{id:'tone',label:'回复风格',type:'select',options:['热情亲切','专业解答','幽默风趣','真诚感谢']}]},
+  productDesc:{name:'商品文案',prompt:'请生成电商商品详情文案：',fields:[{id:'product',label:'商品名称',type:'text',placeholder:'输入商品名称'},{id:'category',label:'类目',type:'select',options:['美妆护肤','数码电子','服装鞋帽','食品饮料','家居日用','母婴用品']},{id:'features',label:'商品特点',type:'textarea',placeholder:'描述商品核心卖点'}]},
+  adCopy:{name:'广告文案',prompt:'请生成广告投放文案：',fields:[{id:'product',label:'推广产品',type:'text',placeholder:'产品/服务名称'},{id:'platform',label:'投放平台',type:'select',options:['抖音信息流','微信朋友圈','百度搜索','小红书薯条','微博粉丝通']},{id:'target',label:'目标人群',type:'text',placeholder:'如：25-35岁女性'}]},
+  liveScript:{name:'直播话术',prompt:'请生成直播间话术脚本：',fields:[{id:'product',label:'带货产品',type:'text',placeholder:'商品名称'},{id:'price',label:'价格/优惠',type:'text',placeholder:'如：原价299，直播价99'},{id:'duration',label:'时长',type:'select',options:['5分钟话术','10分钟话术','30分钟话术']}]},
+  seoKeywords:{name:'SEO关键词',prompt:'请分析并推荐SEO优化关键词：',fields:[{id:'topic',label:'核心主题',type:'text',placeholder:'输入网站/文章主题'},{id:'industry',label:'行业',type:'text',placeholder:'所属行业'},{id:'goal',label:'优化目标',type:'select',options:['提升搜索排名','内容优化','竞品分析']}]},
+  titleGen:{name:'爆款标题',prompt:'请生成10万+爆款标题：',fields:[{id:'topic',label:'内容主题',type:'text',placeholder:'文章/视频主题'},{id:'platform',type:'select',label:'平台',options:['今日头条','百家号','微信公众号','小红书','抖音']},{id:'count',label:'生成数量',type:'select',options:['5个','10个','20个']}]},
+  socialPost:{name:'社媒文案',prompt:'请生成社交媒体文案：',fields:[{id:'product',label:'推广内容',type:'text',placeholder:'产品/品牌名'},{id:'platform',label:'平台',type:'select',options:['小红书种草','微博话题','抖音文案','朋友圈文案','QQ空间']},{id:'style',label:'风格',type:'select',options:['种草推荐','测评分享','日常生活','品牌宣传','搞笑互动']}]},
+  brandStory:{name:'品牌故事',prompt:'请撰写品牌故事：',fields:[{id:'brand',label:'品牌名称',type:'text',placeholder:'品牌名'},{id:'values',label:'品牌理念',type:'textarea',placeholder:'品牌核心价值观'},{id:'origin',label:'创立背景',type:'textarea',placeholder:'简述品牌创立背景'}]},
+  videoSrt:{name:'AI字幕生成',prompt:'请为以下视频内容生成字幕文本：',fields:[{id:'content',label:'视频内容/脚本',type:'textarea',placeholder:'输入视频口播或脚本内容',required:true},{id:'format',label:'字幕格式',type:'select',options:['SRT格式','逐行文本','时间轴标记']}]},
+  videoSum:{name:'视频摘要',prompt:'请生成视频内容摘要：',fields:[{id:'title',label:'视频标题',type:'text',placeholder:'视频标题'},{id:'transcript',label:'视频文字/转写',type:'textarea',placeholder:'粘贴视频文字内容'},{id:'length',label:'摘要长度',type:'select',options:['50字','100字','200字']}]},
+  videoTag:{name:'视频标签',prompt:'请为视频生成标签和分类：',fields:[{id:'desc',label:'视频描述',type:'textarea',placeholder:'描述视频内容',required:true},{id:'platform',label:'平台',type:'select',options:['抖音','B站','小红书','YouTube','快手']}]},
+  soundEffect:{name:'AI音效生成',prompt:'描述需要的音效：',fields:[{id:'desc',label:'音效描述',type:'textarea',placeholder:'如：下雨声、键盘打字声、开门声'}]},
+  musicGen:{name:'AI音乐生成',prompt:'描述背景音乐需求：',fields:[{id:'mood',label:'情绪/风格',type:'select',options:['欢快','悲伤','紧张','轻松','史诗','浪漫','电子']},{id:'genre',label:'类型',type:'select',options:['流行','古典','电子','摇滚','爵士','民谣','嘻哈']},{id:'scene',label:'使用场景',type:'text',placeholder:'如：Vlog背景、广告配乐'}]},
+  podcast:{name:'播客脚本',prompt:'请生成播客节目脚本：',fields:[{id:'topic',label:'节目主题',type:'text',placeholder:'播客主题'},{id:'duration',label:'时长',type:'select',options:['10分钟','20分钟','30分钟','60分钟']},{id:'style',label:'风格',type:'select',options:['访谈式','独白式','故事讲述','教学科普']}]},
+  ringtone:{name:'铃声制作',prompt:'描述你想要的手机铃声风格：',fields:[{id:'style',label:'风格',type:'select',options:['流行片段','经典旋律','自然声音','电子音效','个性化混搭']},{id:'mood',label:'氛围',type:'select',options:['欢快','浪漫','酷炫','安静','搞笑']}]},
+  speech2text:{name:'语音转文字',prompt:'',fields:[{id:'audio',label:'上传音频',type:'file',accept:'audio/*',placeholder:'支持mp3/wav/ogg'}],special:true},
+  audioMerge:{name:'音频拼接',prompt:'',fields:[],special:true},
+  audioSplit:{name:'音频分割',prompt:'',fields:[],special:true},
+  pptOutline:{name:'PPT大纲',prompt:'请生成PPT演示文稿大纲：',fields:[{id:'topic',label:'演示主题',type:'text',placeholder:'PPT主题'},{id:'slides',label:'页数',type:'select',options:['10页','15页','20页','30页']},{id:'audience',label:'受众',type:'text',placeholder:'如：投资人、学生、客户'}]},
+  meetingNotes:{name:'会议纪要',prompt:'请整理会议纪要：',fields:[{id:'content',label:'会议内容',type:'textarea',placeholder:'粘贴会议记录或要点',required:true},{id:'format',label:'格式',type:'select',options:['结构化摘要','行动项清单','详细纪要']}]},
+  translater:{name:'AI翻译',prompt:'请将以下内容翻译为：',fields:[{id:'text',label:'原文',type:'textarea',placeholder:'输入需要翻译的文本',required:true},{id:'target',label:'目标语言',type:'select',options:['英语','日语','韩语','法语','德语','西班牙语','俄语','泰语','越南语']},{id:'style',label:'翻译风格',type:'select',options:['直译','意译','商务正式','口语化']}]},
+  proofread:{name:'AI校对',prompt:'请校对以下文本：',fields:[{id:'text',label:'待校对文本',type:'textarea',placeholder:'粘贴需要校对的文本',required:true},{id:'focus',label:'校对重点',type:'select',options:['全面校对','语法检查','错别字','标点符号','逻辑通顺']}]},
+  mindMap:{name:'思维导图',prompt:'请生成思维导图结构：',fields:[{id:'topic',label:'中心主题',type:'text',placeholder:'思维导图核心主题'},{id:'depth',label:'层级深度',type:'select',options:['2层','3层','4层']},{id:'desc',label:'补充说明',type:'textarea',placeholder:'描述需要展开的方面'}]},
+  excelFormula:{name:'Excel公式',prompt:'请生成Excel公式：',fields:[{id:'need',label:'需求描述',type:'textarea',placeholder:'描述你需要Excel实现的功能',required:true},{id:'version',label:'Excel版本',type:'select',options:['Excel 2016+','WPS表格','Google Sheets']}]},
+  codeHelper:{name:'AI代码助手',prompt:'请生成代码：',fields:[{id:'language',label:'编程语言',type:'select',options:['JavaScript','Python','Java','HTML/CSS','SQL','TypeScript','Go']},{id:'task',label:'任务描述',type:'textarea',placeholder:'描述需要实现的功能',required:true},{id:'framework',label:'框架',type:'text',placeholder:'如React、Spring等（可选）'}]},
+  contract:{name:'合同生成',prompt:'请生成合同模板：',fields:[{id:'type',label:'合同类型',type:'select',options:['劳动合同','租赁合同','合作协议','服务合同','购销合同','保密协议']},{id:'parties',label:'甲方/乙方',type:'textarea',placeholder:'双方基本信息'},{id:'terms',label:'核心条款',type:'textarea',placeholder:'描述主要合同条款'}]},
+  report:{name:'报告生成',prompt:'请生成工作报告：',fields:[{id:'type',label:'报告类型',type:'select',options:['日报','周报','月报','季度总结','年终总结']},{id:'dept',label:'部门/岗位',type:'text',placeholder:'你的部门和岗位'},{id:'highlights',label:'本周亮点',type:'textarea',placeholder:'列出主要工作成果'}]},
+};
+
+function renderGenericAIText(toolId){
+  const t=_AI_TEXT_TOOLS[toolId];if(!t)return'<p>工具配置加载中...</p>';
+  const cost=_TOOL_COST[toolId]||0;
+  return `<div class="tool-header"><h3>${t.name}</h3><button class="detail-close" onclick="closeTool()">✕</button></div>
+<div class="tool-body" style="padding:20px">
+${cost?`<div style="padding:10px 14px;background:var(--ps);border-radius:10px;margin-bottom:16px;font-size:13px;color:var(--p)">⚡ 消耗 ${cost} 算力</div>`:''}
+${t.fields.map(f=>{
+  if(f.type==='textarea')return`<div class="fg"><label class="fl">${f.label}</label><textarea class="fi" id="gt_${f.id}" placeholder="${f.placeholder||''}" ${f.required?'required':''}></textarea></div>`;
+  if(f.type==='select')return`<div class="fg"><label class="fl">${f.label}</label><select class="fi" id="gt_${f.id}">${f.options.map(o=>`<option>${o}</option>`).join('')}</select></div>`;
+  if(f.type==='file')return`<div class="fg"><label class="fl">${f.label}</label><input class="fi" type="file" id="gt_${f.id}" accept="${f.accept||'*'}"></div>`;
+  return`<div class="fg"><label class="fl">${f.label}</label><input class="fi" type="text" id="gt_${f.id}" placeholder="${f.placeholder||''}" ${f.required?'required':''}></div>`;
+}).join('')}
+<button class="btn btn-p" style="width:100%;margin-top:8px" onclick="doGenericAI('${toolId}')">🚀 AI生成</button>
+<div id="gtResult" style="margin-top:20px"></div>
+</div>`;
+}
+
+async function doGenericAI(toolId){
+  const t=_AI_TEXT_TOOLS[toolId];if(!t)return;
+  const cost=_TOOL_COST[toolId]||0;
+  if(cost&&!isLoggedIn())return toast('请先登录','error');
+  if(cost){const c=getCredits();if(c<cost)return toast('算力不足，请先充值','error')}
+  // Build prompt from fields
+  let userInput=t.prompt+'\n';
+  t.fields.forEach(f=>{
+    const el=document.getElementById('gt_'+f.id);
+    if(el){const v=el.value.trim();if(v)userInput+=f.label+': '+v+'\n'}
+  });
+  const resultEl=document.getElementById('gtResult');
+  resultEl.innerHTML='<div style="text-align:center;padding:30px;color:var(--b)">⏳ AI生成中，请稍候...</div>';
+  try{
+    const result=await aiGenerateText(userInput,'你是'+t.name+'专家，请提供专业、高质量的内容。直接输出结果，不要额外的解释。');
+    if(cost){deductCredits(cost);addCreditLog(t.name,-cost,'AI生成')}
+    resultEl.innerHTML=`<div style="padding:16px;background:var(--w);border:1px solid var(--bd);border-radius:12px;white-space:pre-wrap;font-size:14px;line-height:1.8">${result}</div>
+    <div style="margin-top:12px;display:flex;gap:8px">
+      <button class="btn btn-p btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('gtResult pre').textContent||document.querySelector('#gtResult div').textContent);toast('已复制','success')">📋 复制</button>
+      <button class="btn btn-o btn-sm" onclick="doGenericAI('${toolId}')">🔄 重新生成</button>
+    </div>`;
+    toast(t.name+' 生成完成','success');
+  }catch(e){resultEl.innerHTML='<div style="color:var(--err);padding:16px">❌ 生成失败: '+(e.message||e)+'</div>'}
+}
+
+const _TOOL_MAP={copywriter:renderCopywriter,watermark:renderWatermark,rewrite:renderRewrite,hashtag:renderHashtag,viralVideo:renderViralVideo,digitalHuman:renderDigitalHuman,voiceClone:renderVoiceClone,videoLib:renderVideoLib,aigc:renderAIGC,photoEdit:renderPhotoEdit,audioEdit:renderAudioEdit,accompaniment:renderAccompaniment,docGen:renderDocGen,credits:renderCredits,redeemCode:renderRedeemCode,knowledgeBase:renderKnowledgeBase,creditLogs:renderCreditLogs,videoParse:renderVideoParse,videoClip:renderVideoClip,img2video:renderImg2Video,employeeAcct:renderEmployeeAcct,taskCenter:renderTaskCenter,article:()=>renderGenericAIText('article'),email:()=>renderGenericAIText('email'),resume:()=>renderGenericAIText('resume'),proposal:()=>renderGenericAIText('proposal'),poetry:()=>renderGenericAIText('poetry'),novel:()=>renderGenericAIText('novel'),slogan:()=>renderGenericAIText('slogan'),summarize:()=>renderGenericAIText('summarize'),commentReply:()=>renderGenericAIText('commentReply'),productDesc:()=>renderGenericAIText('productDesc'),adCopy:()=>renderGenericAIText('adCopy'),liveScript:()=>renderGenericAIText('liveScript'),seoKeywords:()=>renderGenericAIText('seoKeywords'),titleGen:()=>renderGenericAIText('titleGen'),socialPost:()=>renderGenericAIText('socialPost'),brandStory:()=>renderGenericAIText('brandStory'),videoSrt:()=>renderGenericAIText('videoSrt'),videoSum:()=>renderGenericAIText('videoSum'),videoTag:()=>renderGenericAIText('videoTag'),soundEffect:()=>renderGenericAIText('soundEffect'),musicGen:()=>renderGenericAIText('musicGen'),podcast:()=>renderGenericAIText('podcast'),ringtone:()=>renderGenericAIText('ringtone'),pptOutline:()=>renderGenericAIText('pptOutline'),meetingNotes:()=>renderGenericAIText('meetingNotes'),translater:()=>renderGenericAIText('translater'),proofread:()=>renderGenericAIText('proofread'),mindMap:()=>renderGenericAIText('mindMap'),excelFormula:()=>renderGenericAIText('excelFormula'),codeHelper:()=>renderGenericAIText('codeHelper'),contract:()=>renderGenericAIText('contract'),report:()=>renderGenericAIText('report'),qrCode:()=>renderUtilityTool('qrCode'),qrParse:()=>renderUtilityTool('qrParse'),shortUrl:()=>renderUtilityTool('shortUrl'),imgCompress:()=>renderUtilityTool('imgCompress'),imgFormat:()=>renderUtilityTool('imgFormat'),imgCrop:()=>renderUtilityTool('imgCrop'),imgWatermark:()=>renderUtilityTool('imgWatermark'),imgOcr:()=>renderUtilityTool('imgOcr'),colorPicker:()=>renderUtilityTool('colorPicker'),unitConvert:()=>renderUtilityTool('unitConvert'),tsConvert:()=>renderUtilityTool('tsConvert'),hashGen:()=>renderUtilityTool('hashGen'),base64Code:()=>renderUtilityTool('base64Code'),wordCount:()=>renderUtilityTool('wordCount'),diffText:()=>renderUtilityTool('diffText'),mdEditor:()=>renderUtilityTool('mdEditor'),jsonFormat:()=>renderUtilityTool('jsonFormat'),pwdGen:()=>renderUtilityTool('pwdGen'),ipLookup:()=>renderUtilityTool('ipLookup'),weather:()=>renderUtilityTool('weather'),dailyNews:()=>renderUtilityTool('dailyNews'),joke:()=>renderUtilityTool('joke'),horoscope:()=>renderUtilityTool('horoscope'),calendar:()=>renderUtilityTool('calendar'),countdown:()=>renderUtilityTool('countdown'),bmiCalc:()=>renderUtilityTool('bmiCalc'),loanCalc:()=>renderUtilityTool('loanCalc'),nameGen:()=>renderUtilityTool('nameGen'),historyToday:()=>renderUtilityTool('historyToday'),idiomDict:()=>renderUtilityTool('idiomDict'),dataBackup:()=>renderUtilityTool('dataBackup'),dataExport:()=>renderUtilityTool('dataExport'),dataClean:()=>renderUtilityTool('dataClean'),removeBg:()=>renderUtilityTool('removeBg'),upscale:()=>renderUtilityTool('upscale'),avatar:()=>renderUtilityTool('avatar'),poster:()=>renderUtilityTool('poster'),colorize:()=>renderUtilityTool('colorize'),sketch:()=>renderUtilityTool('sketch'),img2img:()=>renderUtilityTool('img2img'),text2img:()=>renderUtilityTool('text2img'),videoReverse:()=>renderUtilityTool('videoReverse'),videoGif:()=>renderUtilityTool('videoGif'),videoCover:()=>renderUtilityTool('videoCover'),speech2text:()=>renderUtilityTool('speech2text'),audioMerge:()=>renderUtilityTool('audioMerge'),audioSplit:()=>renderUtilityTool('audioSplit')};
 const _TOOL_COST={viralVideo:50,digitalHuman:100,voiceClone:30,aigc:20,photoEdit:30,audioEdit:25,accompaniment:40,docGen:35};
 function openTool(id){
 const overlay=document.getElementById('toolOverlay');
@@ -3534,6 +3999,123 @@ function clearCompletedTasks(){
 
 // Rewrite AI tool handlers to use background task mode
 // When user clicks generate, create a task and process it in background
+
+// ===== GENERIC UTILITY TOOL RENDERER =====
+const _UTIL_TOOLS={
+  qrCode:{name:'二维码生成',render:()=>`<div class="fg"><label class="fl">内容</label><textarea class="fi" id="ut_input" placeholder="输入网址或文本" rows="3"></textarea></div><div class="fg"><label class="fl">尺寸</label><select class="fi" id="ut_size"><option>200x200</option><option>300x300</option><option>400x400</option></select></div><button class="btn btn-p" style="width:100%" onclick="doUtilQrGen()">生成二维码</button><div id="ut_result" style="text-align:center;margin-top:16px"></div>`},
+  qrParse:{name:'二维码识别',render:()=>`<div style="text-align:center"><input type="file" accept="image/*" id="ut_file" onchange="doUtilQrParse()" style="display:none"><button class="btn btn-p" onclick="document.getElementById('ut_file').click()">📷 选择图片</button></div><div id="ut_result" style="margin-top:16px"></div>`},
+  shortUrl:{name:'短链接生成',render:()=>`<div class="fg"><label class="fl">长链接</label><input class="fi" id="ut_input" placeholder="https://example.com/very-long-url"></div><button class="btn btn-p" style="width:100%" onclick="doUtilShortUrl()">生成短链接</button><div id="ut_result" style="margin-top:16px"></div>`},
+  imgCompress:{name:'图片压缩',render:()=>`<input type="file" accept="image/*" id="ut_file" onchange="doUtilImgCompress()" style="display:none"><div style="text-align:center;border:2px dashed var(--bd);border-radius:12px;padding:40px;cursor:pointer" onclick="document.getElementById('ut_file').click()"><div style="font-size:48px;margin-bottom:12px">📦</div><p>点击上传图片</p><p style="font-size:12px;color:var(--b)">支持JPG/PNG/WebP</p></div><div id="ut_result" style="margin-top:16px"></div>`},
+  imgFormat:{name:'格式转换',render:()=>`<input type="file" accept="image/*" id="ut_file" onchange="doUtilImgFormat()" style="display:none"><div style="text-align:center;border:2px dashed var(--bd);border-radius:12px;padding:40px;cursor:pointer" onclick="document.getElementById('ut_file').click()"><div style="font-size:48px;margin-bottom:12px">🔄</div><p>点击上传图片</p></div><div class="fg" style="margin-top:16px"><label class="fl">目标格式</label><select class="fi" id="ut_format"><option>image/png</option><option>image/jpeg</option><option>image/webp</option></select></div><div id="ut_result" style="margin-top:16px"></div>`},
+  imgCrop:{name:'图片裁剪',render:()=>`<input type="file" accept="image/*" id="ut_file" onchange="doUtilImgCrop()" style="display:none"><div style="text-align:center;border:2px dashed var(--bd);border-radius:12px;padding:40px;cursor:pointer" onclick="document.getElementById('ut_file').click()"><div style="font-size:48px;margin-bottom:12px">✂️</div><p>点击上传图片</p></div><div class="fg" style="margin-top:16px"><label class="fl">裁剪尺寸</label><div style="display:flex;gap:8px"><input class="fi" id="ut_cw" type="number" placeholder="宽"><span style="line-height:42px">×</span><input class="fi" id="ut_ch" type="number" placeholder="高"></div></div><div id="ut_result" style="margin-top:16px"></div>`},
+  imgWatermark:{name:'文字水印',render:()=>`<input type="file" accept="image/*" id="ut_file" onchange="previewUtilImg()" style="display:none"><div style="text-align:center;border:2px dashed var(--bd);border-radius:12px;padding:40px;cursor:pointer" onclick="document.getElementById('ut_file').click()"><div style="font-size:48px;margin-bottom:12px">💧</div><p>点击上传图片</p></div><div class="fg" style="margin-top:16px"><label class="fl">水印文字</label><input class="fi" id="ut_text" placeholder="输入水印文字"></div><div class="fg"><label class="fl">透明度</label><input class="fi" type="range" id="ut_opacity" min="0" max="1" step="0.1" value="0.5"></div><button class="btn btn-p" style="width:100%;margin-top:8px" onclick="doUtilWatermark()">添加水印</button><div id="ut_result" style="margin-top:16px"></div>`},
+  imgOcr:{name:'OCR识别',render:()=>`<input type="file" accept="image/*" id="ut_file" style="display:none"><div style="text-align:center;border:2px dashed var(--bd);border-radius:12px;padding:40px;cursor:pointer" onclick="document.getElementById('ut_file').click()"><div style="font-size:48px;margin-bottom:12px">👁️</div><p>点击上传图片提取文字</p></div><div id="ut_result" style="margin-top:16px"></div>`},
+  colorPicker:{name:'颜色拾取器',render:()=>`<div style="display:flex;gap:16px;align-items:start"><div style="flex:1"><label class="fl">选择颜色</label><input type="color" id="ut_color" value="#dc2626" style="width:100%;height:60px;border:1px solid var(--bd);border-radius:12px;cursor:pointer"><div class="fg"><input class="fi" id="ut_hex" value="#dc2626" oninput="syncColorPicker('hex')"><input class="fi" id="ut_r" type="number" value="220" min="0" max="255" oninput="syncColorPicker('rgb')"><input class="fi" id="ut_g" type="number" value="38" min="0" max="255" oninput="syncColorPicker('rgb')"><input class="fi" id="ut_b" type="number" value="38" min="0" max="255" oninput="syncColorPicker('rgb')"></div></div><div style="flex:1;padding:20px;border-radius:12px;border:1px solid var(--bd)" id="ut_preview"></div></div>`},
+  unitConvert:{name:'单位换算',render:()=>`<div class="fg"><label class="fl">换算类型</label><select class="fi" id="ut_type" onchange="updateUnitOptions()"><option value="length">长度</option><option value="weight">重量</option><option value="temperature">温度</option><option value="area">面积</option><option value="volume">体积</option><option value="speed">速度</option><option value="data">数据存储</option></select></div><div style="display:flex;gap:8px;align-items:end"><div style="flex:1"><label class="fl">输入</label><input class="fi" id="ut_from" type="number" value="1" oninput="doUnitConvert()"></div><select class="fi" id="ut_fromUnit" style="width:120px" onchange="doUnitConvert()"><option>米</option></select></div><div style="text-align:center;padding:12px;font-size:24px">=</div><div style="display:flex;gap:8px;align-items:end"><div style="flex:1"><label class="fl">结果</label><input class="fi" id="ut_to" readonly></div><select class="fi" id="ut_toUnit" style="width:120px" onchange="doUnitConvert()"><option>千米</option></select></div>`},
+  tsConvert:{name:'时间戳转换',render:()=>`<div class="fg"><label class="fl">当前时间戳</label><input class="fi" id="ut_ts_now" readonly></div><div class="fg"><label class="fl">时间戳 → 日期</label><div style="display:flex;gap:8px"><input class="fi" id="ut_ts" type="number" placeholder="输入时间戳"><button class="btn btn-p btn-sm" onclick="ts2date()">转换</button></div><div id="ut_ts_result" style="margin-top:8px;font-size:14px"></div></div><div class="fg"><label class="fl">日期 → 时间戳</label><div style="display:flex;gap:8px"><input class="fi" type="datetime-local" id="ut_date"><button class="btn btn-p btn-sm" onclick="date2ts()">转换</button></div><div id="ut_date_result" style="margin-top:8px;font-size:14px"></div></div>`},
+  hashGen:{name:'哈希生成',render:()=>`<div class="fg"><label class="fl">输入文本</label><textarea class="fi" id="ut_input" placeholder="输入需要哈希的文本" rows="3"></textarea></div><div class="fg"><label class="fl">算法</label><select class="fi" id="ut_algo"><option>SHA-256</option><option>SHA-1</option><option>SHA-512</option><option>MD5</option></select></div><button class="btn btn-p" style="width:100%" onclick="doUtilHash()">生成哈希</button><div id="ut_result" style="margin-top:16px;padding:12px;background:var(--bg);border-radius:8px;font-family:monospace;font-size:12px;word-break:break-all"></div>`},
+  base64Code:{name:'Base64编解码',render:()=>`<div class="fg"><label class="fl">输入</label><textarea class="fi" id="ut_input" rows="4" placeholder="输入文本或Base64编码"></textarea></div><div style="display:flex;gap:8px"><button class="btn btn-p" style="flex:1" onclick="doBase64('encode')">编码</button><button class="btn btn-o" style="flex:1" onclick="doBase64('decode')">解码</button></div><div class="fg" style="margin-top:16px"><label class="fl">结果</label><textarea class="fi" id="ut_result" rows="4" readonly></textarea></div>`},
+  wordCount:{name:'字数统计',render:()=>`<div class="fg"><label class="fl">输入文本</label><textarea class="fi" id="ut_input" rows="6" placeholder="粘贴需要统计的文本" oninput="doWordCount()"></textarea></div><div id="ut_result" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"><div style="padding:16px;text-align:center;background:var(--bg);border-radius:12px"><div style="font-size:24px;font-weight:900;color:var(--p)" id="wc_chars">0</div><div style="font-size:12px;color:var(--b)">字符数</div></div><div style="padding:16px;text-align:center;background:var(--bg);border-radius:12px"><div style="font-size:24px;font-weight:900;color:var(--p)" id="wc_words">0</div><div style="font-size:12px;color:var(--b)">字数</div></div><div style="padding:16px;text-align:center;background:var(--bg);border-radius:12px"><div style="font-size:24px;font-weight:900;color:var(--p)" id="wc_paras">0</div><div style="font-size:12px;color:var(--b)">段落</div></div><div style="padding:16px;text-align:center;background:var(--bg);border-radius:12px"><div style="font-size:24px;font-weight:900;color:var(--p)" id="wc_lines">0</div><div style="font-size:12px;color:var(--b)">行数</div></div><div style="padding:16px;text-align:center;background:var(--bg);border-radius:12px"><div style="font-size:24px;font-weight:900;color:var(--p)" id="wc_cn">0</div><div style="font-size:12px;color:var(--b)">中文</div></div><div style="padding:16px;text-align:center;background:var(--bg);border-radius:12px"><div style="font-size:24px;font-weight:900;color:var(--p)" id="wc_en">0</div><div style="font-size:12px;color:var(--b)">英文单词</div></div></div>`},
+  diffText:{name:'文本对比',render:()=>`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div><label class="fl">原文</label><textarea class="fi" id="ut_a" rows="8" placeholder="输入原文"></textarea></div><div><label class="fl">修改后</label><textarea class="fi" id="ut_b" rows="8" placeholder="输入修改后的文本"></textarea></div></div><button class="btn btn-p" style="width:100%;margin-top:12px" onclick="doTextDiff()">对比</button><div id="ut_result" style="margin-top:16px"></div>`},
+  mdEditor:{name:'Markdown编辑器',render:()=>`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;height:400px"><div><label class="fl">编辑</label><textarea class="fi" id="ut_input" style="height:100%;resize:none;font-family:monospace" placeholder="# 标题\n## 副标题\n**粗体** *斜体*\n- 列表项" oninput="renderMdPreview()"></textarea></div><div><label class="fl">预览</label><div id="ut_result" style="height:100%;overflow-y:auto;padding:16px;background:var(--bg);border-radius:12px;border:1px solid var(--bd)"></div></div></div>`},
+  jsonFormat:{name:'JSON格式化',render:()=>`<div class="fg"><label class="fl">JSON输入</label><textarea class="fi" id="ut_input" rows="8" placeholder='粘贴JSON数据'></textarea></div><div style="display:flex;gap:8px"><button class="btn btn-p" style="flex:1" onclick="doJsonFormat('pretty')">美化</button><button class="btn btn-o" style="flex:1" onclick="doJsonFormat('minify')">压缩</button></div><div class="fg" style="margin-top:16px"><label class="fl">结果</label><textarea class="fi" id="ut_result" rows="8" readonly style="font-family:monospace;font-size:12px"></textarea></div>`},
+  pwdGen:{name:'密码生成器',render:()=>`<div class="fg"><label class="fl">长度</label><input type="range" id="ut_len" min="6" max="32" value="16" oninput="document.getElementById('ut_len_val').textContent=this.value;genPwd()"><span id="ut_len_val">16</span></div><div style="display:flex;gap:8px;flex-wrap:wrap"><label style="font-size:13px"><input type="checkbox" id="ut_upper" checked onchange="genPwd()"> 大写</label><label style="font-size:13px"><input type="checkbox" id="ut_lower" checked onchange="genPwd()"> 小写</label><label style="font-size:13px"><input type="checkbox" id="ut_num" checked onchange="genPwd()"> 数字</label><label style="font-size:13px"><input type="checkbox" id="ut_sym" checked onchange="genPwd()"> 符号</label></div><div style="margin-top:16px;padding:16px;background:var(--bg);border-radius:12px;font-family:monospace;font-size:18px;text-align:center;word-break:break-all;letter-spacing:2px" id="ut_result"></div><button class="btn btn-p btn-sm" style="margin-top:8px" onclick="navigator.clipboard.writeText(document.getElementById('ut_result').textContent);toast('已复制','success')">📋 复制</button>`},
+  ipLookup:{name:'IP归属查询',render:()=>`<div style="text-align:center;padding:20px"><div style="font-size:14px;color:var(--b);margin-bottom:8px">您的公网IP信息</div><div id="ut_result"><div style="padding:20px;color:var(--b)">查询中...</div></div></div>`},
+  weather:{name:'天气查询',render:()=>`<div class="fg"><label class="fl">城市</label><input class="fi" id="ut_city" placeholder="输入城市名" value="永州"></div><button class="btn btn-p" style="width:100%" onclick="doUtilWeather()">查询天气</button><div id="ut_result" style="margin-top:16px"></div>`},
+  dailyNews:{name:'每日新闻',render:()=>`<div id="ut_result" style="padding:20px"><div style="text-align:center;color:var(--b)">加载中...</div></div>`},
+  joke:{name:'笑话生成',render:()=>`<div id="ut_result" style="padding:20px;text-align:center"><div style="font-size:48px;margin-bottom:16px">😄</div><p style="font-size:16px;line-height:1.8" id="ut_joke_text"></p><button class="btn btn-p" style="margin-top:20px" onclick="doUtilJoke()">来一个笑话</button></div>`},
+  horoscope:{name:'星座运势',render:()=>`<div class="fg"><label class="fl">选择星座</label><select class="fi" id="ut_sign"><option>白羊座</option><option>金牛座</option><option>双子座</option><option>巨蟹座</option><option>狮子座</option><option>处女座</option><option>天秤座</option><option>天蝎座</option><option>射手座</option><option>摩羯座</option><option>水瓶座</option><option>双鱼座</option></select></div><button class="btn btn-p" style="width:100%" onclick="doUtilHoroscope()">查看运势</button><div id="ut_result" style="margin-top:16px"></div>`},
+  calendar:{name:'万年历',render:()=>`<div id="ut_result"></div>`},
+  countdown:{name:'倒计时',render:()=>`<div class="fg"><label class="fl">目标日期</label><input class="fi" type="datetime-local" id="ut_date"></div><div class="fg"><label class="fl">事件名称</label><input class="fi" id="ut_name" placeholder="如：春节"></div><button class="btn btn-p" style="width:100%" onclick="startCountdown()">开始倒计时</button><div id="ut_result" style="margin-top:16px;text-align:center"></div>`},
+  bmiCalc:{name:'BMI计算器',render:()=>`<div class="fg"><label class="fl">身高(cm)</label><input class="fi" type="number" id="ut_height" placeholder="170"></div><div class="fg"><label class="fl">体重(kg)</label><input class="fi" type="number" id="ut_weight" placeholder="65"></div><button class="btn btn-p" style="width:100%" onclick="doUtilBMI()">计算BMI</button><div id="ut_result" style="margin-top:16px"></div>`},
+  loanCalc:{name:'贷款计算器',render:()=>`<div class="fg"><label class="fl">贷款金额(万)</label><input class="fi" type="number" id="ut_amount" placeholder="100"></div><div class="fg"><label class="fl">期限(年)</label><input class="fi" type="number" id="ut_years" placeholder="30"></div><div class="fg"><label class="fl">年利率(%)</label><input class="fi" type="number" id="ut_rate" placeholder="3.85" step="0.01"></div><button class="btn btn-p" style="width:100%" onclick="doUtilLoan()">计算</button><div id="ut_result" style="margin-top:16px"></div>`},
+  nameGen:{name:'随机取名',render:()=>`<div class="fg"><label class="fl">姓氏</label><input class="fi" id="ut_surname" placeholder="如：罗"></div><div class="fg"><label class="fl">性别</label><select class="fi" id="ut_gender"><option>男</option><option>女</option><option>中性</option></select></div><div class="fg"><label class="fl">数量</label><select class="fi" id="ut_count"><option>5个</option><option>10个</option><option>20个</option></select></div><button class="btn btn-p" style="width:100%" onclick="doUtilNameGen()">生成</button><div id="ut_result" style="margin-top:16px"></div>`},
+  historyToday:{name:'历史上的今天',render:()=>`<div id="ut_result" style="padding:20px"><div style="text-align:center;color:var(--b)">加载中...</div></div>`},
+  idiomDict:{name:'成语词典',render:()=>`<div class="fg"><label class="fl">搜索成语</label><input class="fi" id="ut_input" placeholder="输入成语"></div><button class="btn btn-p" style="width:100%" onclick="doUtilIdiom()">查询</button><div id="ut_result" style="margin-top:16px"></div>`},
+  dataBackup:{name:'数据备份',render:()=>`<div style="padding:20px"><p style="margin-bottom:16px;color:var(--b)">导出所有本地数据为JSON文件</p><button class="btn btn-p" style="width:100%" onclick="doDataBackup()">💾 导出备份</button><div id="ut_result" style="margin-top:16px"></div></div>`},
+  dataExport:{name:'数据导出',render:()=>`<div style="padding:20px"><div class="fg"><label class="fl">导出类型</label><select class="fi" id="ut_export"><option value="orders">订单数据</option><option value="users">用户数据</option><option value="credits">算力记录</option><option value="videos">作品数据</option><option value="tasks">AI任务</option></select></div><div class="fg"><label class="fl">格式</label><select class="fi" id="ut_fmt"><option>JSON</option><option>CSV</option></select></div><button class="btn btn-p" style="width:100%" onclick="doDataExport()">📤 导出</button><div id="ut_result" style="margin-top:16px"></div></div>`},
+  dataClean:{name:'数据清理',render:()=>`<div style="padding:20px"><p style="margin-bottom:16px;color:var(--b)">清理缓存和历史数据</p><div style="display:flex;flex-direction:column;gap:10px"><button class="btn btn-o" onclick="cleanData('cache')">清理缓存数据</button><button class="btn btn-o" onclick="cleanData('history')">清理历史记录</button><button class="btn btn-p" style="background:var(--err)" onclick="cleanData('all')">清除全部数据</button></div><div id="ut_result" style="margin-top:16px"></div></div>`},
+  removeBg:{name:'AI抠图去背',render:()=>`<input type="file" accept="image/*" id="ut_file" style="display:none"><div style="text-align:center;border:2px dashed var(--bd);border-radius:12px;padding:40px;cursor:pointer" onclick="document.getElementById('ut_file').click()"><div style="font-size:48px;margin-bottom:12px">🎭</div><p>上传需要去背的图片</p><p style="font-size:12px;color:var(--b)">AI自动识别并去除背景</p></div><div id="ut_result" style="margin-top:16px"></div>`},
+  upscale:{name:'AI超分辨率',render:()=>`<input type="file" accept="image/*" id="ut_file" style="display:none"><div style="text-align:center;border:2px dashed var(--bd);border-radius:12px;padding:40px;cursor:pointer" onclick="document.getElementById('ut_file').click()"><div style="font-size:48px;margin-bottom:12px">🔍</div><p>上传低分辨率图片</p></div><div id="ut_result" style="margin-top:16px"></div>`},
+  avatar:{name:'AI头像生成',render:()=>`<div class="fg"><label class="fl">描述你想要的头像风格</label><textarea class="fi" id="ut_prompt" rows="3" placeholder="如：赛博朋克风格的女战士头像，霓虹色调"></textarea></div><button class="btn btn-p" style="width:100%" onclick="doUtilAvatarGen()">🎨 生成头像</button><div id="ut_result" style="margin-top:16px;text-align:center"></div>`},
+  poster:{name:'AI海报生成',render:()=>`<div class="fg"><label class="fl">海报主题</label><input class="fi" id="ut_prompt" placeholder="如：夏季促销活动海报"></div><div class="fg"><label class="fl">风格</label><select class="fi" id="ut_style"><option>简约商务</option><option>活泼创意</option><option>中国风</option><option>科技感</option><option>复古怀旧</option></select></div><button class="btn btn-p" style="width:100%" onclick="doUtilPosterGen()">🎨 生成海报</button><div id="ut_result" style="margin-top:16px;text-align:center"></div>`},
+  colorize:{name:'AI老照片上色',render:()=>`<input type="file" accept="image/*" id="ut_file" style="display:none"><div style="text-align:center;border:2px dashed var(--bd);border-radius:12px;padding:40px;cursor:pointer" onclick="document.getElementById('ut_file').click()"><div style="font-size:48px;margin-bottom:12px">🎨</div><p>上传黑白老照片</p></div><div id="ut_result" style="margin-top:16px;text-align:center"></div>`},
+  sketch:{name:'AI线稿生成',render:()=>`<input type="file" accept="image/*" id="ut_file" style="display:none"><div style="text-align:center;border:2px dashed var(--bd);border-radius:12px;padding:40px;cursor:pointer" onclick="document.getElementById('ut_file').click()"><div style="font-size:48px;margin-bottom:12px">✏️</div><p>上传照片生成线稿</p></div><div id="ut_result" style="margin-top:16px;text-align:center"></div>`},
+  img2img:{name:'AI图生图',render:()=>`<input type="file" accept="image/*" id="ut_file" style="display:none"><div style="text-align:center;border:2px dashed var(--bd);border-radius:12px;padding:40px;cursor:pointer" onclick="document.getElementById('ut_file').click()"><div style="font-size:48px;margin-bottom:12px">🖼️</div><p>上传参考图片</p></div><div class="fg" style="margin-top:16px"><label class="fl">风格描述</label><textarea class="fi" id="ut_prompt" rows="2" placeholder="如：油画风格、水彩风格、动漫风格"></textarea></div><button class="btn btn-p" style="width:100%" onclick="doUtilImg2Img()">🎨 风格迁移</button><div id="ut_result" style="margin-top:16px;text-align:center"></div>`},
+  text2img:{name:'AI文生图',render:()=>`<div class="fg"><label class="fl">图片描述</label><textarea class="fi" id="ut_prompt" rows="3" placeholder="详细描述你想要生成的图片，如：一只戴着墨镜的猫在纽约街头"></textarea></div><div class="fg"><label class="fl">尺寸</label><select class="fi" id="ut_size"><option value="1024x1024">正方形 1024×1024</option><option value="1280x720">横屏 1280×720</option><option value="720x1280">竖屏 720×1280</option></select></div><button class="btn btn-p" style="width:100%" onclick="doUtilText2Img()">🎨 生成图片</button><div id="ut_result" style="margin-top:16px;text-align:center"></div>`},
+  videoReverse:{name:'视频倒放',render:()=>`<input type="file" accept="video/*" id="ut_file" style="display:none"><div style="text-align:center;border:2px dashed var(--bd);border-radius:12px;padding:40px;cursor:pointer" onclick="document.getElementById('ut_file').click()"><div style="font-size:48px;margin-bottom:12px">⏪</div><p>上传视频</p></div><div id="ut_result" style="margin-top:16px"></div>`},
+  videoGif:{name:'视频转GIF',render:()=>`<input type="file" accept="video/*" id="ut_file" style="display:none"><div style="text-align:center;border:2px dashed var(--bd);border-radius:12px;padding:40px;cursor:pointer" onclick="document.getElementById('ut_file').click()"><div style="font-size:48px;margin-bottom:12px">🎞️</div><p>上传视频转GIF</p></div><div id="ut_result" style="margin-top:16px"></div>`},
+  videoCover:{name:'封面提取',render:()=>`<div class="fg"><label class="fl">视频链接</label><input class="fi" id="ut_url" placeholder="粘贴视频URL"></div><button class="btn btn-p" style="width:100%" onclick="doUtilVideoCover()">提取封面</button><div id="ut_result" style="margin-top:16px;text-align:center"></div>`},
+  speech2text:{name:'语音转文字',render:()=>`<input type="file" accept="audio/*" id="ut_file" style="display:none"><div style="text-align:center;border:2px dashed var(--bd);border-radius:12px;padding:40px;cursor:pointer" onclick="document.getElementById('ut_file').click()"><div style="font-size:48px;margin-bottom:12px">🎤</div><p>上传音频文件</p><p style="font-size:12px;color:var(--b)">使用浏览器Web Speech API识别</p></div><div id="ut_result" style="margin-top:16px"></div>`},
+  audioMerge:{name:'音频拼接',render:()=>`<p style="color:var(--b);text-align:center;padding:20px">上传多段音频文件，按顺序拼接合并</p><input type="file" accept="audio/*" id="ut_files" multiple style="display:none"><div style="text-align:center;border:2px dashed var(--bd);border-radius:12px;padding:30px;cursor:pointer" onclick="document.getElementById('ut_files').click()"><p>点击选择多段音频</p></div><div id="ut_result" style="margin-top:16px"></div>`},
+  audioSplit:{name:'音频分割',render:()=>`<input type="file" accept="audio/*" id="ut_file" style="display:none"><div style="text-align:center;border:2px dashed var(--bd);border-radius:12px;padding:40px;cursor:pointer" onclick="document.getElementById('ut_file').click()"><div style="font-size:48px;margin-bottom:12px">✂️</div><p>上传音频文件</p></div><div class="fg" style="margin-top:16px"><label class="fl">分割点(秒)</label><input class="fi" id="ut_split_time" type="number" placeholder="如：30表示在第30秒处分割"></div><div id="ut_result" style="margin-top:16px"></div>`},
+};
+
+function renderUtilityTool(toolId){
+  const t=_UTIL_TOOLS[toolId];
+  if(!t)return'<div class="tool-header"><h3>工具加载中</h3><button class="detail-close" onclick="closeTool()">✕</button></div>';
+  const cost=_TOOL_COST[toolId]||0;
+  return `<div class="tool-header"><h3>${t.name}</h3><button class="detail-close" onclick="closeTool()">✕</button></div>
+<div class="tool-body" style="padding:20px">
+${cost?`<div style="padding:10px 14px;background:var(--ps);border-radius:10px;margin-bottom:16px;font-size:13px;color:var(--p)">⚡ 消耗 ${cost} 算力</div>`:''}
+${t.render()}
+</div>`;
+}
+
+// ===== UTILITY TOOL IMPLEMENTATIONS =====
+async function doUtilQrGen(){
+  const text=document.getElementById('ut_input').value;if(!text)return toast('请输入内容','error');
+  const size=document.getElementById('ut_size').value.split('x')[0];
+  const url='https://api.qrserver.com/v1/create-qr-code/?size='+size+'x'+size+'&data='+encodeURIComponent(text);
+  document.getElementById('ut_result').innerHTML='<img src="'+url+'" style="max-width:300px;border-radius:8px;border:1px solid var(--bd)"><br><a href="'+url+'" download="qrcode.png" class="btn btn-p btn-sm" style="margin-top:12px">💾 下载二维码</a>';
+}
+function doUtilQrParse(){
+  toast('请直接使用手机扫码识别','success');
+}
+async function doUtilShortUrl(){
+  const url=document.getElementById('ut_input').value;if(!url)return toast('请输入链接','error');
+  try{const r=await fetch('https://tinyurl.com/api-create.php?url='+encodeURIComponent(url));const short=await r.text();document.getElementById('ut_result').innerHTML='<div style="padding:16px;background:var(--bg);border-radius:12px;display:flex;justify-content:space-between;align-items:center"><span style="word-break:break-all;font-size:14px">'+short+'</span><button class="btn btn-p btn-sm" onclick="navigator.clipboard.writeText(\''+short+'\');toast(\'已复制\',\'success\')">复制</button></div>'}catch(e){document.getElementById('ut_result').innerHTML='<div style="color:var(--err)">服务暂时不可用</div>'}
+}
+function doUtilImgCompress(){
+  const file=document.getElementById('ut_file').files[0];if(!file)return;
+  const reader=new FileReader();reader.onload=function(e){const img=new Image();img.onload=function(){const c=document.createElement('canvas');const ratio=Math.min(1,800/Math.max(img.width,img.height));c.width=img.width*ratio;c.height=img.height*ratio;const ctx=c.getContext('2d');ctx.drawImage(img,0,0,c.width,c.height);const compressed=c.toDataURL('image/jpeg',0.7);const origSize=file.size;const compSize=Math.round(compressed.length*3/4);const saved=Math.round((1-compSize/origSize)*100);document.getElementById('ut_result').innerHTML='<div style="padding:16px;background:var(--bg);border-radius:12px;margin-bottom:12px">原始: '+(origSize/1024).toFixed(1)+'KB → 压缩后: '+(compSize/1024).toFixed(1)+'KB (节省'+saved+'%)</div><img src="'+compressed+'" style="max-width:100%;border-radius:8px"><br><a href="'+compressed+'" download="compressed.jpg" class="btn btn-p btn-sm" style="margin-top:12px">💾 下载</a>'};img.src=e.target.result};reader.readAsDataURL(file);
+}
+function doUtilImgFormat(){const file=document.getElementById('ut_file').files[0];if(!file)return;const fmt=document.getElementById('ut_format').value;const reader=new FileReader();reader.onload=function(e){const img=new Image();img.onload=function(){const c=document.createElement('canvas');c.width=img.width;c.height=img.height;c.getContext('2d').drawImage(img,0,0);const converted=c.toDataURL(fmt,0.9);document.getElementById('ut_result').innerHTML='<img src="'+converted+'" style="max-width:100%;border-radius:8px"><br><a href="'+converted+'" download="converted.'+fmt.split('/')[1]+'" class="btn btn-p btn-sm" style="margin-top:12px">💾 下载</a>'};img.src=e.target.result};reader.readAsDataURL(file)}
+function doUtilImgCrop(){const file=document.getElementById('ut_file').files[0];if(!file)return;const cw=parseInt(document.getElementById('ut_cw').value)||300;const ch=parseInt(document.getElementById('ut_ch').value)||300;const reader=new FileReader();reader.onload=function(e){const img=new Image();img.onload=function(){const c=document.createElement('canvas');c.width=cw;c.height=ch;const ctx=c.getContext('2d');ctx.drawImage(img,0,0,cw,ch);const cropped=c.toDataURL('image/png');document.getElementById('ut_result').innerHTML='<img src="'+cropped+'" style="max-width:100%;border-radius:8px"><br><a href="'+cropped+'" download="cropped.png" class="btn btn-p btn-sm" style="margin-top:12px">💾 下载</a>'};img.src=e.target.result};reader.readAsDataURL(file)}
+function previewUtilImg(){}
+function doUtilWatermark(){const file=document.getElementById('ut_file').files[0];if(!file)return;const text=document.getElementById('ut_text').value||'罗圣纪元';const opacity=parseFloat(document.getElementById('ut_opacity').value);const reader=new FileReader();reader.onload=function(e){const img=new Image();img.onload=function(){const c=document.createElement('canvas');c.width=img.width;c.height=img.height;const ctx=c.getContext('2d');ctx.drawImage(img,0,0);ctx.globalAlpha=opacity;ctx.font=Math.max(img.width/20,24)+'px "Noto Sans SC"';ctx.fillStyle='#fff';ctx.textAlign='center';for(let y=img.height*0.3;y<img.height;y+=img.height/6){ctx.save();ctx.translate(img.width/2,y);ctx.rotate(-30*Math.PI/180);ctx.fillText(text,0,0);ctx.restore()}const watermarked=c.toDataURL('image/png');document.getElementById('ut_result').innerHTML='<img src="'+watermarked+'" style="max-width:100%;border-radius:8px"><br><a href="'+watermarked+'" download="watermarked.png" class="btn btn-p btn-sm" style="margin-top:12px">💾 下载</a>'};img.src=e.target.result};reader.readAsDataURL(file)}
+function syncColorPicker(src){if(src==='hex'){const hex=document.getElementById('ut_hex').value;document.getElementById('ut_color').value=hex;const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);document.getElementById('ut_r').value=r;document.getElementById('ut_g').value=g;document.getElementById('ut_b').value=b;document.getElementById('ut_preview').style.background=hex}else{const r=parseInt(document.getElementById('ut_r').value)||0,g=parseInt(document.getElementById('ut_g').value)||0,b=parseInt(document.getElementById('ut_b').value)||0;const hex='#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');document.getElementById('ut_hex').value=hex;document.getElementById('ut_color').value=hex;document.getElementById('ut_preview').style.background=hex}}
+function updateUnitOptions(){const units={length:['米','千米','厘米','毫米','英里','英尺','英寸'],weight:['千克','克','磅','盎司','吨'],temperature:['摄氏度','华氏度','开尔文'],area:['平方米','平方千米','亩','公顷','平方英尺'],volume:['升','毫升','立方米','加仑'],speed:['米/秒','千米/时','英里/时','节'],data:['B','KB','MB','GB','TB','PB']};const type=document.getElementById('ut_type').value;const u=units[type]||[];['ut_fromUnit','ut_toUnit'].forEach((id,i)=>{document.getElementById(id).innerHTML=u.map(v=>'<option>'+v+'</option>').join('')})}
+function doUnitConvert(){toast('请在工具面板中操作','success')}
+function ts2date(){const ts=parseInt(document.getElementById('ut_ts').value);if(!ts)return;document.getElementById('ut_ts_result').textContent=new Date(ts*1000).toLocaleString('zh-CN')}
+function date2ts(){const d=document.getElementById('ut_date').value;if(!d)return;document.getElementById('ut_date_result').textContent=Math.floor(new Date(d).getTime()/1000)}
+async function doUtilHash(){const text=document.getElementById('ut_input').value;if(!text)return;const algo=document.getElementById('ut_algo').value;const encoder=new TextEncoder();const data=encoder.encode(text);const hash=await crypto.subtle.digest(algo.replace('-','').toLowerCase(),data);const arr=Array.from(new Uint8Array(hash));document.getElementById('ut_result').textContent=arr.map(b=>b.toString(16).padStart(2,'0')).join('')}
+function doBase64(mode){const input=document.getElementById('ut_input').value;try{document.getElementById('ut_result').value=mode==='encode'?btoa(unescape(encodeURIComponent(input))):decodeURIComponent(escape(atob(input)))}catch(e){toast('编解码失败','error')}}
+function doWordCount(){const text=document.getElementById('ut_input').value;if(!text){['wc_chars','wc_words','wc_paras','wc_lines','wc_cn','wc_en'].forEach(id=>document.getElementById(id).textContent='0');return}document.getElementById('wc_chars').textContent=text.length;document.getElementById('wc_words').textContent=text.replace(/\s+/g,' ').trim().split(' ').filter(Boolean).length;document.getElementById('wc_paras').textContent=text.split(/\n\n+/).filter(p=>p.trim()).length||1;document.getElementById('wc_lines').textContent=text.split('\n').length;document.getElementById('wc_cn').textContent=(text.match(/[\u4e00-\u9fff]/g)||[]).length;document.getElementById('wc_en').textContent=(text.match(/[a-zA-Z]+/g)||[]).length}
+function doTextDiff(){const a=document.getElementById('ut_a').value,b=document.getElementById('ut_b').value;const linesA=a.split('\n'),linesB=b.split('\n');let html='<div style="max-height:400px;overflow-y:auto">';const maxLen=Math.max(linesA.length,linesB.length);for(let i=0;i<maxLen;i++){const la=linesA[i]||'',lb=linesB[i]||'';const cls=la===lb?'same':'diff';html+='<div style="padding:4px 8px;font-size:13px;font-family:monospace;'+(cls==='diff'?'background:#fef2f2;border-left:3px solid var(--err)':'border-left:3px solid transparent')+'">'+la+' → '+lb+'</div>'}html+='</div>';document.getElementById('ut_result').innerHTML=html}
+function renderMdPreview(){let md=document.getElementById('ut_input').value;md=md.replace(/^### (.+)$/gm,'<h3>$1</h3>').replace(/^## (.+)$/gm,'<h2>$1</h2>').replace(/^# (.+)$/gm,'<h1>$1</h1>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>').replace(/^- (.+)$/gm,'<li>$1</li>').replace(/`(.+?)`/g,'<code style="background:var(--bg);padding:2px 6px;border-radius:4px;font-size:12px">$1</code>');document.getElementById('ut_result').innerHTML=md}
+function doJsonFormat(mode){const input=document.getElementById('ut_input').value;try{const obj=JSON.parse(input);document.getElementById('ut_result').value=mode==='pretty'?JSON.stringify(obj,null,2):JSON.stringify(obj)}catch(e){toast('JSON格式错误','error')}}
+function genPwd(){const len=parseInt(document.getElementById('ut_len').value);let chars='';if(document.getElementById('ut_upper').checked)chars+='ABCDEFGHIJKLMNOPQRSTUVWXYZ';if(document.getElementById('ut_lower').checked)chars+='abcdefghijklmnopqrstuvwxyz';if(document.getElementById('ut_num').checked)chars+='0123456789';if(document.getElementById('ut_sym').checked)chars+='!@#$%^&*()_+-=[]{}|;:,.<>?';if(!chars)return;let pwd='';const arr=new Uint32Array(len);crypto.getRandomValues(arr);for(let i=0;i<len;i++)pwd+=chars[arr[i]%chars.length];document.getElementById('ut_result').textContent=pwd}
+async function doUtilWeather(){const city=document.getElementById('ut_city').value;if(!city)return toast('请输入城市','error');document.getElementById('ut_result').innerHTML='<div style="text-align:center;padding:20px;color:var(--b)">查询中...</div>';try{const r=await fetch('https://wttr.in/'+encodeURIComponent(city)+'?format=j1');const d=await r.json();const cur=d.current_condition[0];const w=d.weather[0];document.getElementById('ut_result').innerHTML='<div style="text-align:center;padding:24px;background:linear-gradient(135deg,#60a5fa,#3b82f6);border-radius:16px;color:#fff"><div style="font-size:48px">🌤️</div><div style="font-size:36px;font-weight:900;margin:12px 0">'+cur.temp_C+'°C</div><div style="font-size:14px;opacity:.8">'+w.avgtempC+'°/'+w.mintempC+'°~'+w.maxtempC+'°</div><div style="margin-top:12px;font-size:14px">'+cur.lang_zh[0]?.value||cur.weatherDesc[0]?.value+'</div><div style="margin-top:8px;font-size:12px;opacity:.7">湿度 '+cur.humidity+'% | 风速 '+cur.windspeedKmph+'km/h</div></div>'}catch(e){document.getElementById('ut_result').innerHTML='<div style="color:var(--err);text-align:center">查询失败，请稍后重试</div>'}}
+function doUtilJoke(){const jokes=['为什么程序员总是分不清万圣节和圣诞节？因为 Oct 31 == Dec 25','老师：小明，你长大想做什么？小明：我想做有钱人。老师：那你想做什么行业呢？小明：有钱的行业。','甲：你知道什么动物最容易摔倒吗？乙：什么？甲：狐狸，因为它很狡猾。','程序员最讨厌的四件事：写注释、写文档、别人不写注释、别人不写文档。','为什么电脑永远不会感冒？因为它有Windows！','老板：你被开除了！员工：为什么？老板：因为你总是把bug说成feature。'];document.getElementById('ut_joke_text').textContent=jokes[Math.floor(Math.random()*jokes.length)]}
+function doUtilHoroscope(){const signs=['白羊座','金牛座','双子座','巨蟹座','狮子座','处女座','天秤座','天蝎座','射手座','摩羯座','水瓶座','双鱼座'];const sign=document.getElementById('ut_sign').value;const idx=signs.indexOf(sign)+1;const fortunes=['大吉','中吉','小吉','吉','末吉','凶','小凶'];const today=new Date();const seed=idx*31+today.getDate()+today.getMonth()*12;const fortune=fortunes[seed%fortunes.length];const aspects=['事业运','财运','感情运','健康运','学业运'];const scores=aspects.map(a=>({name:a,score:Math.floor(Math.random()*3)+3}));document.getElementById('ut_result').innerHTML='<div style="padding:24px;background:linear-gradient(135deg,#f0e7fe,#eef2ff);border-radius:16px;text-align:center"><div style="font-size:36px;margin-bottom:8px">⭐</div><div style="font-size:20px;font-weight:900">'+sign+' 今日运势</div><div style="font-size:24px;font-weight:900;color:var(--p);margin:16px 0">'+fortune+'</div>'+scores.map(s=>'<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--bd)"><span>'+s.name+'</span><span>'+s.score+'/5 ⭐</span></div>').join('')+'</div>'}
+function doUtilBMI(){const h=parseFloat(document.getElementById('ut_height').value)/100;const w=parseFloat(document.getElementById('ut_weight').value);if(!h||!w)return;const bmi=(w/(h*h)).toFixed(1);let level,color;if(bmi<18.5){level='偏瘦';color='var(--blue)'}else if(bmi<24){level='正常';color='var(--ok)'}else if(bmi<28){level='偏胖';color='var(--warn)'}else{level='肥胖';color='var(--err)'}document.getElementById('ut_result').innerHTML='<div style="text-align:center;padding:24px;border-radius:16px;background:var(--bg)"><div style="font-size:48px;font-weight:900;color:'+color+'">'+bmi+'</div><div style="font-size:18px;font-weight:700;margin-top:8px;color:'+color+'">'+level+'</div><div style="margin-top:12px;font-size:13px;color:var(--b)">BMI 18.5-23.9 为正常范围</div></div>'}
+function doUtilLoan(){const amount=parseFloat(document.getElementById('ut_amount').value)*10000;const years=parseInt(document.getElementById('ut_years').value);const rate=parseFloat(document.getElementById('ut_rate').value)/100/12;if(!amount||!years||!rate)return;const months=years*12;const monthly=amount*rate*Math.pow(1+rate,months)/(Math.pow(1+rate,months)-1);const total=monthly*months;const interest=total-amount;document.getElementById('ut_result').innerHTML='<div style="padding:24px;background:var(--bg);border-radius:16px"><div style="text-align:center"><div style="font-size:32px;font-weight:900;color:var(--p)">¥'+monthly.toFixed(2)+'</div><div style="font-size:14px;color:var(--b)">每月还款(等额本息)</div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px"><div style="padding:12px;text-align:center;background:var(--w);border-radius:8px;border:1px solid var(--bd)"><div style="font-size:12px;color:var(--b)">贷款总额</div><div style="font-weight:700">¥'+(amount/10000).toFixed(1)+'万</div></div><div style="padding:12px;text-align:center;background:var(--w);border-radius:8px;border:1px solid var(--bd)"><div style="font-size:12px;color:var(--b)">还款总额</div><div style="font-weight:700">¥'+(total/10000).toFixed(1)+'万</div></div><div style="padding:12px;text-align:center;background:var(--w);border-radius:8px;border:1px solid var(--bd)"><div style="font-size:12px;color:var(--b)">利息总额</div><div style="font-weight:700;color:var(--err)">¥'+(interest/10000).toFixed(1)+'万</div></div><div style="padding:12px;text-align:center;background:var(--w);border-radius:8px;border:1px solid var(--bd)"><div style="font-size:12px;color:var(--b)">还款月数</div><div style="font-weight:700">'+months+'月</div></div></div></div>'}
+function doUtilNameGen(){const surname=document.getElementById('ut_surname').value||'罗';const gender=document.getElementById('ut_gender').value;const count=parseInt(document.getElementById('ut_count').value)||5;const chars=gender==='男'?['宇','轩','泽','博','浩','志','强','磊','伟','杰','明','辉','鹏','飞','龙','昊','天','瑞','峰','晨','豪','文','聪','睿','诚','毅','勇','军','宏','达']:'雅','静','欣','怡','悦','美','琳','玲','芳','萍','红','媛','琴','莉','霞','燕','云','月','雪','晴','蕾','薇','颖','诗','婷','梦','馨','慧','洁','倩'];const middle=['子','思','雨','梦','若','可','佳','一','小','嘉','沐','梓','诗','语','乐','启','启','奕','书','清'];let names=[];for(let i=0;i<count;i++){const m=middle[Math.floor(Math.random()*middle.length)];const c=chars[Math.floor(Math.random()*chars.length)];names.push(surname+m+c)}document.getElementById('ut_result').innerHTML='<div style="display:flex;flex-wrap:wrap;gap:10px">'+names.map(n=>'<div style="padding:12px 20px;background:var(--bg);border-radius:10px;font-size:16px;font-weight:700;cursor:pointer" onclick="navigator.clipboard.writeText(\''+n+'\');toast(\'已复制: '+n+'\',\'success\')">'+n+'</div>').join('')+'</div>'}
+function doDataBackup(){const keys=['lsjy3_users','lsjy3_cur','lsjy3_settings','lsjy3_orders','lsjy3_credits','lsjy3_credit_logs','lsjy3_videos','lsjy3_redeem_codes','lsjy3_redeem_history','lsjy3_ai_tasks'];const data={};let size=0;keys.forEach(k=>{const v=localStorage.getItem(k);if(v){data[k]=JSON.parse(v);size+=v.length}});const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='lsjy_backup_'+new Date().toISOString().slice(0,10)+'.json';a.click();document.getElementById('ut_result').innerHTML='<div style="color:var(--ok)">✅ 备份已导出 ('+keys.filter(k=>data[k]).length+'项数据)</div>'}
+function doDataExport(){const type=document.getElementById('ut_export').value;const keyMap={orders:'lsjy3_orders',users:'lsjy3_users',credits:'lsjy3_credit_logs',videos:'lsjy3_videos',tasks:'lsjy3_ai_tasks'};const data=JSON.parse(localStorage.getItem(keyMap[type])||'[]');if(!data.length)return toast('暂无数据','error');const fmt=document.getElementById('ut_fmt').value;if(fmt==='CSV'){const headers=Object.keys(data[0]);const csv='\uFEFF'+[headers.join(',')].concat(data.map(r=>headers.map(h=>'"'+String(r[h]||'').replace(/"/g,'""')+'"').join(','))).join('\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=type+'_export.csv';a.click()}else{const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=type+'_export.json';a.click()}toast('导出成功','success')}
+function cleanData(type){const msg={cache:'清理缓存数据？',history:'清理历史记录？',all:'确定清除全部数据？此操作不可恢复！'};if(!confirm(msg[type]))return;const keep={};if(type!=='all'){keep['lsjy3_users']='必须';keep['lsjy3_cur']='必须';keep['lsjy3_token']='必须';keep['lsjy3_credits']='必须'}const toRemove=Object.keys(localStorage).filter(k=>k.startsWith('lsjy3_')||k.startsWith('lsjy_admin_')).filter(k=>!keep[k]);toRemove.forEach(k=>localStorage.removeItem(k));document.getElementById('ut_result').innerHTML='<div style="color:var(--ok)">✅ 已清理 '+toRemove.length+' 项数据</div>';toast('数据清理完成','success')}
+
+// Init utilities that need auto-load
+(function(){
+  // Timestamp current
+  setTimeout(()=>{const el=document.getElementById('ut_ts_now');if(el)el.value=Math.floor(Date.now()/1000)},500);
+  // Color picker init
+  setTimeout(()=>{const preview=document.getElementById('ut_preview');if(preview)preview.style.background='#dc2626'},500);
+  // Unit converter init
+  setTimeout(()=>updateUnitOptions(),500);
+})();
+
 // ===== INIT =====
 // Only clean up truly stale admin seeds from very old versions
 (function(){try{
@@ -3554,7 +4136,7 @@ if(target){e.preventDefault();target.scrollIntoView({behavior:'smooth',block:'st
 
 // ===== JS INTEGRITY CHECK =====
 if(typeof openAuth!=='function'||typeof doLogin!=='function'||typeof openTool!=='function'||typeof toast!=='function'){
-  const _fv='v3.6-beta1';
+  const _fv='v3.7-beta1';
   const _sv=localStorage.getItem('lsjy3_jsok');
   localStorage.setItem('lsjy3_jsok',_fv);
   window.stop&&window.stop();
