@@ -2494,7 +2494,7 @@ document.getElementById('authContent').innerHTML=tab==='login'?renderLoginForm()
 
 function renderLoginForm(){
 return`<form onsubmit="doLogin(event)">
-<div class="fg"><label class="fl">用户名</label><input class="fi" id="authUser" placeholder="请输入用户名" required></div>
+<div class="fg"><label class="fl">账号</label><input class="fi" id="authUser" placeholder="请输入账号" required></div>
 <div class="fg"><label class="fl">密码</label><input class="fi" type="password" id="authPwd" placeholder="请输入密码" required></div>
 <button type="submit" class="btn btn-p" style="width:100%">登 录</button>
 </form>
@@ -2511,7 +2511,7 @@ return`<form onsubmit="doLogin(event)">
 
 function renderRegForm(){
 return`<form onsubmit="doRegister(event)">
-<div class="fg"><label class="fl">用户名</label><input class="fi" id="regUser" placeholder="3个字符以上" required></div>
+<div class="fg"><label class="fl">账号</label><input class="fi" id="regUser" placeholder="3个字符以上" required></div>
 <div class="fg"><label class="fl">昵称</label><input class="fi" id="regNick" placeholder="选填"></div>
 <div class="fg"><label class="fl">密码</label><input class="fi" type="password" id="regPwd" placeholder="6个字符以上" required></div>
 <div class="fg"><label class="fl">确认密码</label><input class="fi" type="password" id="regPwd2" placeholder="再次输入密码" required></div>
@@ -2643,7 +2643,7 @@ panel.innerHTML=`<div class="auth-hero" style="position:relative"><button class=
 // ===== Password Login (backup) =====
 function renderPasswordLogin(){
 return`<form onsubmit="doLogin(event)">
-<div class="fg"><label class="fl">用户名</label><input class="fi" id="authUser" placeholder="请输入用户名" required></div>
+<div class="fg"><label class="fl">账号</label><input class="fi" id="authUser" placeholder="请输入账号" required></div>
 <div class="fg"><label class="fl">密码</label><input class="fi" type="password" id="authPwd" placeholder="请输入密码" required></div>
 <button type="submit" class="btn btn-p" style="width:100%"><i class="fa-solid fa-right-to-bracket"></i> 登录</button>
 </form>
