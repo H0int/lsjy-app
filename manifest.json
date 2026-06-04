@@ -1,14 +1,1 @@
-{
-  "name": "罗圣纪元 - 业务平台",
-  "short_name": "罗圣纪元",
-  "description": "罗圣纪元互联网科技有限责任公司业务平台",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#533afd",
-  "theme_color": "#533afd",
-  "orientation": "portrait",
-  "icons": [
-    {"src": "logo.png","sizes": "192x192","type": "image/png","purpose": "any maskable"},
-    {"src": "logo.png","sizes": "512x512","type": "image/png","purpose": "any maskable"}
-  ]
-}
+ewogICJuYW1lIjogIue9l+Wco+e6quWFgyAtIOS4muWKoeW5s+WPsCIsCiAgInNob3J0X25hbWUiOiAi572X5Zyj57qq5YWDIiwKICAiZGVzY3JpcHRpb24iOiAi572X5Zyj57qq5YWD5LqS6IGU572R56eR5oqA5pyJ6ZmQ6LSj5Lu75YWs5Y+45Lia5Yqh5bmz5Y+wIiwKICAic3RhcnRfdXJsIjogIi8iLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiM1MzNhZmQiLAogICJ0aGVtZV9jb2xvciI6ICIjNTMzYWZkIiwKICAib3JpZW50YXRpb24iOiAicG9ydHJhaXQiLAogICJpY29ucyI6IFsKICAgIHsic3JjIjogImxvZ28ucG5nIiwic2l6ZXMiOiAiMTkyeDE5MiIsInR5cGUiOiAiaW1hZ2UvcG5nIiwicHVycG9zZSI6ICJhbnkgbWFza2FibGUifSwKICAgIHsic3JjIjogImxvZ28ucG5nIiwic2l6ZXMiOiAiNTEyeDUxMiIsInR5cGUiOiAiaW1hZ2UvcG5nIiwicHVycG9zZSI6ICJhbnkgbWFza2FibGUifQogIF0KfQo=
