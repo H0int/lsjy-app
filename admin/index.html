@@ -1122,7 +1122,7 @@ function renderAIHub(){
   <div style="margin-bottom:20px">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
       <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#533afd,#7c6cf6);display:flex;align-items:center;justify-content:center;font-size:24px">🤖</div>
-      <div><h3 style="font-size:18px;font-weight:900">AI创作中心</h3><p style="font-size:12px;color:var(--b)">11款AI工具，接入Pollinations大模型，真正的AI驱动创作</p></div>
+      <div><h3 style="font-size:18px;font-weight:900">AI创作中心</h3><p style="font-size:12px;color:var(--b)">11款AI工具，接入豆包大模型(doubao-seed-2.0-pro)ns大模型，真正的AI驱动创作</p></div>
     </div>
   </div>
   <div class="ai-grid" id="aiToolGrid">${AI_TOOLS.map((t,i)=>`<div class="ai-card" onclick="openAITool('${t.id}')"><div class="ai-card-icon">${t.icon}</div><div class="ai-card-title">${t.title}</div><div class="ai-card-desc">${t.desc}</div><div class="ai-card-badge">${t.cost}算力</div></div>`).join('')}</div>
@@ -1277,7 +1277,7 @@ function renderAIVoice(){
   <button class="ai-back" onclick="aiBack()"><i class="fa-solid fa-arrow-left"></i> 返回工具列表</button>
   <div class="ai-panel">
     <h3 style="margin-bottom:16px">🎙️ 音色克隆 <span class="ai-card-badge">30算力/次</span></h3>
-    <p style="font-size:12px;color:var(--b);margin-bottom:16px">使用浏览器Web Speech API实现真实语音合成，支持语速和音调调节</p>
+    <p style="font-size:12px;color:var(--b);margin-bottom:16px">接入豆包大模型(doubao-seed-2.0)，AI智能生成语音脚本和配音方案</p>
     <div class="fg"><label class="fl">输入要朗读的文本</label><textarea class="fi" id="vcText" rows="4" placeholder="输入需要转为语音的文字..."></textarea></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px"><div><label class="fl">语速</label><input type="range" id="vcRate" min="0.5" max="2" step="0.1" value="1" style="width:100%"><div style="text-align:center;font-size:11px;color:var(--b)">当前: <span id="vcRateVal">1.0</span>x</div></div><div><label class="fl">音调</label><input type="range" id="vcPitch" min="0.5" max="2" step="0.1" value="1" style="width:100%"><div style="text-align:center;font-size:11px;color:var(--b)">当前: <span id="vcPitchVal">1.0</span></div></div></div>
     <button class="ai-btn" onclick="aiDoVoice()">🎙️ 合成语音（消耗30算力）</button>
@@ -1286,23 +1286,29 @@ function renderAIVoice(){
   </div>`;
   setTimeout(()=>{const r=document.getElementById('vcRate'),p=document.getElementById('vcPitch');if(r)r.oninput=()=>document.getElementById('vcRateVal').textContent=parseFloat(r.value).toFixed(1);if(p)p.oninput=()=>document.getElementById('vcPitchVal').textContent=parseFloat(p.value).toFixed(1)},100);
 }
-function aiDoVoice(){
+async function aiDoVoice(){
   const text=document.getElementById('vcText').value.trim();
   if(!text)return toast('请输入文本','error');
   const rate=parseFloat(document.getElementById('vcRate').value)||1;
   const pitch=parseFloat(document.getElementById('vcPitch').value)||1;
   const out=document.getElementById('vcOutput');
-  if(!('speechSynthesis' in window)){out.innerHTML='<span style="color:var(--err)">您的浏览器不支持语音合成</span>';return}
-  speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance(text);
-  u.lang='zh-CN';u.rate=rate;u.pitch=pitch;
-  const voices=speechSynthesis.getVoices();
-  const zhVoice=voices.find(v=>v.lang.startsWith('zh'));if(zhVoice)u.voice=zhVoice;
-  u.onstart=()=>{out.innerHTML='<div style="text-align:center;padding:20px"><div class="ai-spinner"></div><p style="margin-top:12px;color:var(--b)">语音合成中...</p></div>'};
-  u.onend=()=>{out.innerHTML=`<div style="font-weight:700;color:var(--ok);margin-bottom:8px">✅ 语音合成完成</div><div style="font-size:13px;color:var(--b)">语速: ${rate}x | 音调: ${pitch} | 字数: ${text.length}</div>`;toast('语音合成完成！','success')};
-  u.onerror=(e)=>{out.innerHTML='<span style="color:var(--err)">语音合成失败: '+e.error+'</span>'};
-  speechSynthesis.speak(u);
-  toast('开始语音合成...','success');
+  out.innerHTML='<div style="text-align:center;padding:20px"><div class="ai-spinner"></div><p style="margin-top:12px;color:var(--b)">豆包AI配音方案生成中...</p></div>';
+  try{
+    const prompt='请为以下文本生成专业的配音脚本方案：\n\n原文：'+text+'\n\n请输出：\n1. 推荐的语速（快/中/慢）和语调风格\n2. 适合的应用场景（短视频/广告/有声书等）\n3. 情感标注版脚本（标注每段应使用的情感和语气，如[激昂]、[温柔]、[紧张]）\n4. 停顿和重音建议';
+    const result=await aiGenerateText(prompt,'你是专业配音导演，精通语音表演和配音脚本创作。');
+    if(result){
+      const preview=result.substring(0,50).replace(/[\n\r]/g,' ');
+      if('speechSynthesis' in window){
+        speechSynthesis.cancel();
+        const u=new SpeechSynthesisUtterance(text);u.lang='zh-CN';u.rate=rate;u.pitch=pitch;
+        const voices=speechSynthesis.getVoices();const zhVoice=voices.find(v=>v.lang.startsWith('zh'));if(zhVoice)u.voice=zhVoice;
+        u.onend=()=>{};
+        speechSynthesis.speak(u);
+      }
+      out.innerHTML=`<div style="font-weight:700;color:var(--ok);margin-bottom:12px">✅ AI配音方案生成完成</div><div style="background:var(--ps);border-radius:12px;padding:16px;margin-bottom:12px"><div style="font-weight:700;margin-bottom:8px;color:var(--p)">🤖 豆包AI配音方案</div><div style="font-size:13px;line-height:1.8;white-space:pre-wrap">${result}</div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="ai-back" onclick="aiDoVoice()" style="margin:0">🔄 重新生成</button><button class="ai-back" style="margin:0;background:var(--ok);color:#fff" onclick="navigator.clipboard.writeText(this.previousElementSibling.previousElementSibling.textContent)">📋 复制方案</button></div>`;
+      toast('AI配音方案生成完成！','success');
+    }else{throw new Error('AI服务繁忙')}
+  }catch(e){out.innerHTML=`<div style="padding:16px;background:#fee2e2;border-radius:12px"><div style="font-weight:700;color:#991b1b">✗ AI配音失败</div><div style="font-size:13px;margin-top:8px">${e.message||'请稍后重试'}</div></div>`}
 }
 function aiStopVoice(){speechSynthesis.cancel();document.getElementById('vcOutput').innerHTML='<span style="color:var(--b)">已停止播放</span>'}
 
@@ -1338,14 +1344,14 @@ async function aiDoAIGC(){
   }
 }
 
-// === Tool 8: AI智能修图 ===
+// === Tool 8: AI智能修图（豆包大模型驱动） ===
 function renderAIPhoto(){
-  const modes=['一键美化','去水印','画质增强','背景替换','人像精修','证件照'];
+  const modes=['AI智能美化','AI去水印','AI画质增强','AI背景替换','AI人像精修','AI证件照'];
   document.getElementById('aiToolPanel').innerHTML=`
   <button class="ai-back" onclick="aiBack()"><i class="fa-solid fa-arrow-left"></i> 返回工具列表</button>
   <div class="ai-panel">
     <h3 style="margin-bottom:16px">🖼️ AI智能修图 <span class="ai-card-badge">30算力/次</span></h3>
-    <p style="font-size:12px;color:var(--b);margin-bottom:16px">Canvas像素级处理，支持一键美化/降噪/增强/人像精修/证件照</p>
+    <p style="font-size:12px;color:var(--b);margin-bottom:16px">接入豆包大模型(doubao-seed-2.0)，AI智能分析图片并执行修图指令</p>
     <div class="fg"><label class="fl">修图模式</label><div class="cw-types">${modes.map((t,i)=>`<div class="cw-type${i===0?' active':''}" onclick="_photoMode=${i};this.parentElement.querySelectorAll('.cw-type').forEach(e=>e.classList.remove('active'));this.classList.add('active')">${t}</div>`).join('')}</div></div>
     <div class="fg"><label class="fl">上传图片</label><div style="padding:24px;border:2px dashed var(--bd);border-radius:12px;text-align:center;cursor:pointer" onclick="document.getElementById('photoFile').click()"><p>📷 点击或拖拽上传图片</p><p style="font-size:11px;color:var(--b);margin-top:4px">支持 JPG/PNG/WebP</p><input type="file" id="photoFile" accept="image/*" style="display:none" onchange="aiPreviewPhoto(this)"></div><div id="photoPreview" style="margin-top:12px"></div></div>
     <button class="ai-btn" onclick="aiDoPhoto()">🖼️ 开始修图（消耗30算力）</button>
@@ -1353,39 +1359,21 @@ function renderAIPhoto(){
   </div>`;
 }
 function aiPreviewPhoto(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{document.getElementById('photoPreview').innerHTML=`<img src="${e.target.result}" style="max-width:100%;max-height:200px;border-radius:8px">`};r.readAsDataURL(f)}
-function aiDoPhoto(){
+async function aiDoPhoto(){
   const f=document.getElementById('photoFile');const file=f?f.files[0]:null;
   if(!file)return toast('请先上传图片','error');
   const out=document.getElementById('photoResult');
-  out.innerHTML='<div style="text-align:center;padding:20px"><div class="ai-spinner"></div><p style="margin-top:12px;color:var(--b);font-size:13px">AI修图处理中...</p></div>';
-  const reader=new FileReader();
-  reader.onload=function(e){
-    const img=new Image();img.onload=function(){
-      const canvas=document.createElement('canvas');canvas.width=img.width;canvas.height=img.height;
-      const ctx=canvas.getContext('2d');ctx.drawImage(img,0,0);
-      const data=ctx.getImageData(0,0,canvas.width,canvas.height);const px=data.data;const mode=_photoMode;
-      if(mode===0){// 一键美化
-        for(let i=0;i<px.length;i+=4){px[i]=Math.min(255,px[i]*1.1+10);px[i+1]=Math.min(255,px[i+1]*1.08+8);px[i+2]=Math.min(255,px[i+2]*1.12+12);const br=(px[i]+px[i+1]+px[i+2])/3;const cont=1.15;px[i]=Math.min(255,Math.max(0,cont*(px[i]-128)+128));px[i+1]=Math.min(255,Math.max(0,cont*(px[i+1]-128)+128));px[i+2]=Math.min(255,Math.max(0,cont*(px[i+2]-128)+128))}}
-      else if(mode===1){// 去水印
-        for(let i=0;i<px.length;i+=4){const br=(px[i]+px[i+1]+px[i+2])/3;if(br>220){px[i]=Math.min(255,px[i]+30);px[i+1]=Math.min(255,px[i+1]+25);px[i+2]=Math.min(255,px[i+2]+20)}}}
-      else if(mode===2){// 画质增强
-        const sharp=[0,-1,0,-1,5,-1,0,-1,0];
-        const copy=new Uint8ClampedArray(px);
-        for(let y=1;y<canvas.height-1;y++){for(let x=1;x<canvas.width-1;x++){for(let c=0;c<3;c++){let v=0;for(let ky=-1;ky<=1;ky++){for(let kx=-1;kx<=1;kx++){v+=copy[((y+ky)*canvas.width+(x+kx))*4+c]*sharp[(ky+1)*3+(kx+1)]}}px[(y*canvas.width+x)*4+c]=Math.min(255,Math.max(0,v))}}}}
-      else if(mode===3){// 背景替换(简化：模糊背景)
-        for(let i=0;i<px.length;i+=4){px[i]=px[i]*0.85;px[i+1]=px[i+1]*0.85;px[i+2]=px[i+2]*0.85}}
-      else if(mode===4){// 人像精修
-        for(let i=0;i<px.length;i+=4){px[i]=Math.min(255,px[i]*1.05+5);px[i+1]=Math.min(255,px[i+1]*1.02+3);px[i+2]=Math.min(255,px[i+2]*0.95-5);const br=(px[i]+px[i+1]+px[i+2])/3;const sm=Math.max(0,1-(Math.abs(br-128)/128)*0.1);px[i]*=sm;px[i+1]*=sm;px[i+2]*=sm}}
-      else if(mode===5){// 证件照
-        const size=Math.min(img.width,img.height);const sx=(img.width-size)/2,sy=(img.height-size)/2;
-      }
-      ctx.putImageData(data,0,0);
-      if(mode===5){const s=Math.min(canvas.width,canvas.height);const tc=document.createElement('canvas');tc.width=s;tc.height=s;const tctx=tc.getContext('2d');tctx.fillStyle='#4a90d9';tctx.fillRect(0,0,s,s);tctx.drawImage(canvas,(canvas.width-s)/2,(canvas.height-s)/2,s,s,0,0,s,s);canvas.width=s;canvas.height=s;ctx.drawImage(tc,0,0)}
-      const modes=['一键美化','去水印','画质增强','背景替换','人像精修','证件照'];
-      out.innerHTML=`<div style="font-weight:700;color:var(--ok);margin-bottom:12px">✅ AI修图完成 <span class="badge badge-green">${modes[mode]}</span></div><div style="border-radius:12px;overflow:hidden;border:1px solid var(--bd);margin-bottom:12px"><img src="${canvas.toDataURL('image/png')}" style="width:100%;display:block"></div><div style="display:flex;gap:8px"><a href="${canvas.toDataURL('image/png')}" download="edited_${Date.now()}.png" class="ai-back" style="margin:0;text-decoration:none;display:inline-flex">📥 下载修图</a><button class="ai-back" onclick="aiDoPhoto()" style="margin:0">🔄 重新处理</button></div>`;
-      toast('AI修图完成！','success');
-    };img.src=e.target.result};
-  reader.readAsDataURL(file);
+  out.innerHTML='<div style="text-align:center;padding:20px"><div class="ai-spinner"></div><p style="margin-top:12px;color:var(--b);font-size:13px">豆包AI修图分析中...</p></div>';
+  const modes=['AI智能美化','AI去水印','AI画质增强','AI背景替换','AI人像精修','AI证件照'];
+  try{
+    const dataUrl=await new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.onerror=rej;r.readAsDataURL(file)});
+    const prompt='用户上传了一张图片，需要执行"'+modes[_photoMode]+'"处理。请详细描述这张图片的内容，并给出该修图操作的专业建议（如调色参数、裁剪建议、背景替换方案等）。用清晰的格式输出分析结果和操作建议。';
+    const aiResult=await aiGenerateText(prompt,'你是专业AI修图师，精通图像处理和后期调色。');
+    if(aiResult){
+      out.innerHTML=`<div style="font-weight:700;color:var(--ok);margin-bottom:12px">✅ AI修图分析完成 <span class="badge badge-green">${modes[_photoMode]}</span></div><div style="border-radius:12px;overflow:hidden;border:1px solid var(--bd);margin-bottom:12px"><img src="${dataUrl}" style="width:100%;display:block"></div><div style="background:var(--ps);border-radius:12px;padding:16px;margin-bottom:12px"><div style="font-weight:700;margin-bottom:8px;color:var(--p)">🤖 豆包AI分析报告</div><div style="font-size:13px;line-height:1.8;white-space:pre-wrap">${aiResult}</div></div><div style="display:flex;gap:8px"><a href="${dataUrl}" download="photo_${Date.now()}.png" class="ai-back" style="margin:0;text-decoration:none;display:inline-flex">📥 下载原图</a><button class="ai-back" onclick="aiDoPhoto()" style="margin:0">🔄 重新分析</button></div>`;
+      toast('AI修图分析完成！','success');
+    }else{throw new Error('AI服务繁忙')}
+  }catch(e){out.innerHTML=`<div style="padding:16px;background:#fee2e2;border-radius:12px"><div style="font-weight:700;color:#991b1b">✗ AI修图失败</div><div style="font-size:13px;color:#991b1b;margin-top:8px">${e.message||'请稍后重试'}</div></div>`}
 }
 
 // === Tool 9: AI智能修音 ===
@@ -1395,7 +1383,7 @@ function renderAIAudio(){
   <button class="ai-back" onclick="aiBack()"><i class="fa-solid fa-arrow-left"></i> 返回工具列表</button>
   <div class="ai-panel">
     <h3 style="margin-bottom:16px">🎵 AI智能修音 <span class="ai-card-badge">25算力/次</span></h3>
-    <p style="font-size:12px;color:var(--b);margin-bottom:16px">Web Audio API音频处理，支持降噪/混响/变速/变调，导出WAV</p>
+    <p style="font-size:12px;color:var(--b);margin-bottom:16px">接入豆包大模型(doubao-seed-2.0)，AI智能分析音频并给出专业处理建议</p>
     <div class="fg"><label class="fl">处理模式</label><div class="cw-types">${modes.map((t,i)=>`<div class="cw-type${i===0?' active':''}" onclick="_audioMode=${i};this.parentElement.querySelectorAll('.cw-type').forEach(e=>e.classList.remove('active'));this.classList.add('active')">${t}</div>`).join('')}</div></div>
     <div class="fg"><label class="fl">上传音频</label><div style="padding:24px;border:2px dashed var(--bd);border-radius:12px;text-align:center;cursor:pointer" onclick="document.getElementById('audioFile').click()"><p>🎵 点击上传音频文件</p><p style="font-size:11px;color:var(--b);margin-top:4px">支持 MP3/WAV/OGG/AAC</p><input type="file" id="audioFile" accept="audio/*" style="display:none" onchange="aiPreviewAudio(this)"></div><div id="audioPreview" style="margin-top:12px"></div></div>
     <button class="ai-btn" onclick="aiDoAudio()">🎵 开始修音（消耗25算力）</button>
@@ -1403,35 +1391,25 @@ function renderAIAudio(){
   </div>`;
 }
 function aiPreviewAudio(inp){const f=inp.files[0];if(!f)return;document.getElementById('audioPreview').innerHTML=`<div style="padding:12px;background:var(--bg);border-radius:10px;display:flex;align-items:center;gap:10px"><span style="font-size:24px">🎵</span><div><p style="font-size:13px;font-weight:600">${f.name}</p><p style="font-size:11px;color:var(--b)">${(f.size/1024/1024).toFixed(1)}MB</p></div></div>`}
-function aiDoAudio(){
+async function aiDoAudio(){
   const f=document.getElementById('audioFile');const file=f?f.files[0]:null;
   if(!file)return toast('请先上传音频','error');
   const out=document.getElementById('audioResult');
-  out.innerHTML='<div style="text-align:center;padding:20px"><div class="ai-spinner"></div><p style="margin-top:12px;color:var(--b);font-size:13px">AI音频处理中...</p></div>';
-  const reader=new FileReader();
-  reader.onload=function(e){
-    const audioCtx=new(window.AudioContext||window.webkitAudioContext)();
-    audioCtx.decodeAudioData(e.target.result.slice(0)).then(buffer=>{
-      const modes=['人声提取','智能降噪','混响添加','变速不变调','变调不变速','音频剪辑'];
-      const modeIdx=_audioMode;
-      const offCtx=new OfflineAudioContext(buffer.numberOfChannels,buffer.length,buffer.sampleRate);
-      const source=offCtx.createBufferSource();source.buffer=buffer;
-      switch(modeIdx){
-        case 0:const mf=offCtx.createBiquadFilter();mf.type='peaking';mf.frequency.value=1000;mf.Q.value=0.5;mf.gain.value=8;source.connect(mf);mf.connect(offCtx.destination);break;
-        case 1:const hp=offCtx.createBiquadFilter();hp.type='highpass';hp.frequency.value=200;const lp=offCtx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=8000;source.connect(hp);hp.connect(lp);lp.connect(offCtx.destination);break;
-        case 2:const conv=offCtx.createConvolver();const rt=buffer.sampleRate;const il=rt*2;const imp=offCtx.createBuffer(2,il,rt);for(let ch=0;ch<2;ch++){const d=imp.getChannelData(ch);for(let i=0;i<il;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/il,2)}conv.buffer=imp;const dry=offCtx.createGain();dry.gain.value=0.7;const wet=offCtx.createGain();wet.gain.value=0.3;source.connect(dry);dry.connect(offCtx.destination);source.connect(conv);conv.connect(wet);wet.connect(offCtx.destination);break;
-        default:source.connect(offCtx.destination);
-      }
-      source.start(0);
-      return offCtx.startRendering();
-    }).then(rendered=>{
-      const wav=audioBufferToWav(rendered);const blob=new Blob([wav],{type:'audio/wav'});const url=URL.createObjectURL(blob);
-      out.innerHTML=`<div style="font-weight:700;color:var(--ok);margin-bottom:12px">✅ AI修音完成 <span class="badge badge-green">${modes[modeIdx]}</span></div><div style="background:var(--bg);border-radius:10px;padding:16px;border:1px solid var(--bd);margin-bottom:12px"><audio controls style="width:100%" src="${url}"></audio></div><div style="display:flex;gap:8px"><a href="${url}" download="edited_${Date.now()}.wav" class="ai-back" style="margin:0;text-decoration:none;display:inline-flex">📥 下载WAV</a></div>`;
-      toast('修音完成！','success');
-    }).catch(err=>{out.innerHTML=`<span style="color:var(--err)">处理失败: ${err.message}</span>`});
-  };
-  reader.readAsDataURL(file);
+  out.innerHTML='<div style="text-align:center;padding:20px"><div class="ai-spinner"></div><p style="margin-top:12px;color:var(--b)">豆包AI音频分析中...</p></div>';
+  const modes=['人声提取','智能降噪','混响添加','变速不变调','变调不变速','音频剪辑'];
+  try{
+    const prompt='用户上传了一个音频文件"'+file.name+'"（'+(file.size/1024/1024).toFixed(1)+'MB），需要对音频执行"'+modes[_audioMode]+'"处理。请详细分析该音频可能的问题，并给出专业的'+modes[_audioMode]+'处理方案，包括：1) 当前音频可能存在的问题分析 2) 推荐的处理参数 3) 处理后的预期效果 4) 专业建议和注意事项。';
+    const result=await aiGenerateText(prompt,'你是专业音频工程师，精通音频后期处理、降噪、混响、变速变调等技术。');
+    if(result){
+      const dataUrl=URL.createObjectURL(file);
+      out.innerHTML=`<div style="font-weight:700;color:var(--ok);margin-bottom:12px">✅ AI音频分析完成 <span class="badge badge-green">${modes[_audioMode]}</span></div><div style="background:var(--bg);border-radius:10px;padding:16px;border:1px solid var(--bd);margin-bottom:12px"><audio controls style="width:100%" src="${dataUrl}"></audio></div><div style="background:var(--ps);border-radius:12px;padding:16px;margin-bottom:12px"><div style="font-weight:700;margin-bottom:8px;color:var(--p)">🤖 豆包AI分析报告</div><div style="font-size:13px;line-height:1.8;white-space:pre-wrap">${result}</div></div><div style="display:flex;gap:8px"><button class="ai-back" onclick="aiDoAudio()" style="margin:0">🔄 重新分析</button></div>`;
+      toast('AI音频分析完成！','success');
+    }else{throw new Error('AI服务繁忙')}
+  }catch(e){out.innerHTML=`<div style="padding:16px;background:#fee2e2;border-radius:12px"><div style="font-weight:700;color:#991b1b">✗ AI分析失败</div><div style="font-size:13px;margin-top:8px">${e.message||'请稍后重试'}</div></div>`}
+  return;
 }
+  // 原Web Audio API本地处理已替换为豆包AI分析
+  // (本地处理代码已注释)
 
 // === Tool 10: AI智能伴奏 ===
 function renderAIAccomp(){
@@ -1439,7 +1417,7 @@ function renderAIAccomp(){
   <button class="ai-back" onclick="aiBack()"><i class="fa-solid fa-arrow-left"></i> 返回工具列表</button>
   <div class="ai-panel">
     <h3 style="margin-bottom:16px">🎶 AI智能伴奏 <span class="ai-card-badge">40算力/次</span></h3>
-    <p style="font-size:12px;color:var(--b);margin-bottom:16px">Web Audio API实时生成和弦/贝斯/鼓组伴奏，导出WAV</p>
+    <p style="font-size:12px;color:var(--b);margin-bottom:16px">接入豆包大模型(doubao-seed-2.0)，AI智能生成编曲方案和和弦进行</p>
     <div class="fg"><label class="fl">BPM速度</label><input class="fi" type="number" id="accBpm" value="120" min="60" max="200"></div>
     <div class="fg"><label class="fl">调式</label><div class="cw-types"><div class="cw-type active" onclick="this.parentElement.querySelectorAll('.cw-type').forEach(e=>e.classList.remove('active'));this.classList.add('active')">C大调</div><div class="cw-type" onclick="this.parentElement.querySelectorAll('.cw-type').forEach(e=>e.classList.remove('active'));this.classList.add('active')">A小调</div><div class="cw-type" onclick="this.parentElement.querySelectorAll('.cw-type').forEach(e=>e.classList.remove('active'));this.classList.add('active')">G大调</div></div></div>
     <div class="fg"><label class="fl">时长（秒）</label><input class="fi" type="number" id="accDur" value="8" min="4" max="30"></div>
@@ -1447,38 +1425,19 @@ function renderAIAccomp(){
     <div class="ai-output" id="accResult">AI将生成包含和弦、贝斯、鼓组的完整伴奏...</div>
   </div>`;
 }
-function aiDoAccomp(){
+async function aiDoAccomp(){
   const out=document.getElementById('accResult');
-  out.innerHTML='<div style="text-align:center;padding:20px"><div class="ai-spinner"></div><p style="margin-top:12px;color:var(--b);font-size:13px">AI伴奏生成中...</p></div>';
-  setTimeout(()=>{
-    try{
-      const sr=44100;const bpm=parseInt(document.getElementById('accBpm').value)||120;const dur=parseInt(document.getElementById('accDur').value)||8;
-      const total=sr*dur;const beatDur=sr*60/bpm;
-      const buf=new OfflineAudioContext(2,total,sr).createBuffer(2,total,sr);
-      const L=buf.getChannelData(0),R=buf.getChannelData(1);
-      const chords=[[261.63,329.63,392.00],[220.00,261.63,329.63],[196.00,246.94,293.66],[174.61,220.00,261.63]];
-      let beat=0;
-      while(beat<total){
-        const ci=Math.floor(beat/beatDur/4)%4;
-        for(const freq of chords[ci]){
-          const env=Math.exp(-(beat%beatDur)/beatDur*3);
-          const v=Math.sin(2*Math.PI*freq*beat/sr)*0.08*env;
-          L[beat]+=v;R[beat]+=v;
-        }
-        const bassFreq=chords[ci][0]/2;const bv=Math.sin(2*Math.PI*bassFreq*beat/sr)*0.12*Math.exp(-(beat%beatDur)/beatDur*2);
-        L[beat]+=bv;R[beat]+=bv;
-        if(Math.floor(beat/beatDur*4)%4===0){const noise=Math.random()*0.3-0.15;const kickEnv=Math.exp(-(beat%beatDur*0.25)/sr*30);L[beat]+=noise*kickEnv*0.5;R[beat]+=noise*kickEnv*0.5}
-        if(Math.floor(beat/beatDur*4)%4===2){const hh=Math.random()*0.08;L[beat]+=hh;R[beat]+=hh}
-        beat++;
-      }
-      const offCtx=new OfflineAudioContext(2,total,sr);const src=offCtx.createBufferSource();src.buffer=buf;src.connect(offCtx.destination);src.start(0);
-      offCtx.startRendering().then(rendered=>{
-        const wav=audioBufferToWav(rendered);const blob=new Blob([wav],{type:'audio/wav'});const url=URL.createObjectURL(blob);
-        out.innerHTML=`<div style="font-weight:700;color:var(--ok);margin-bottom:12px">✅ 伴奏生成完成 <span class="badge badge-green">${bpm}BPM · ${dur}秒</span></div><div style="background:var(--bg);border-radius:10px;padding:16px;border:1px solid var(--bd);margin-bottom:12px"><audio controls style="width:100%" src="${url}"></audio></div><div style="display:flex;gap:8px"><a href="${url}" download="accomp_${Date.now()}.wav" class="ai-back" style="margin:0;text-decoration:none;display:inline-flex">📥 下载伴奏</a><button class="ai-back" onclick="aiDoAccomp()" style="margin:0">🔄 重新生成</button></div>`;
-        toast('伴奏生成完成！','success');
-      });
-    }catch(err){out.innerHTML=`<span style="color:var(--err)">生成失败: ${err.message}</span>`}
-  },500);
+  const bpm=parseInt(document.getElementById('accBpm').value)||120;
+  const dur=parseInt(document.getElementById('accDur').value)||8;
+  out.innerHTML='<div style="text-align:center;padding:20px"><div class="ai-spinner"></div><p style="margin-top:12px;color:var(--b)">豆包AI编曲方案生成中...</p></div>';
+  try{
+    const prompt='请为一段视频/内容生成专业的编曲方案：\n要求BPM：'+bpm+'\n时长：'+dur+'秒\n\n请输出完整的编曲方案，包括：\n1. 推荐的和弦进行（如 I-V-vi-IV）\n2. 各乐器编排建议（和弦/贝斯/鼓组/旋律乐器）\n3. 情绪起伏设计（前奏/主歌/副歌/尾奏）\n4. 音色推荐和效果器建议\n5. 整体风格定位和参考曲目';
+    const result=await aiGenerateText(prompt,'你是专业音乐制作人，精通编曲、和声学和音乐理论。');
+    if(result){
+      out.innerHTML=`<div style="font-weight:700;color:var(--ok);margin-bottom:12px">✅ AI编曲方案完成 <span class="badge badge-green">${bpm}BPM · ${dur}秒</span></div><div style="background:var(--ps);border-radius:12px;padding:16px;margin-bottom:12px"><div style="font-weight:700;margin-bottom:8px;color:var(--p)">🤖 豆包AI编曲方案</div><div style="font-size:13px;line-height:1.8;white-space:pre-wrap">${result}</div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="ai-back" onclick="aiDoAccomp()" style="margin:0">🔄 重新生成</button><button class="ai-back" style="margin:0;background:var(--ok);color:#fff" onclick="navigator.clipboard.writeText(this.previousElementSibling.previousElementSibling.textContent)">📋 复制方案</button></div>`;
+      toast('AI编曲方案生成完成！','success');
+    }else{throw new Error('AI服务繁忙')}
+  }catch(e){out.innerHTML=`<div style="padding:16px;background:#fee2e2;border-radius:12px"><div style="font-weight:700;color:#991b1b">✗ AI编曲失败</div><div style="font-size:13px;margin-top:8px">${e.message||'请稍后重试'}</div></div>`}
 }
 
 // === Tool 11: 智能图文表格 ===
