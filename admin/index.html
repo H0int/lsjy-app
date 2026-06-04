@@ -988,11 +988,13 @@ const DOUBAO_CONFIG={
   // API Key 已迁移至后端代理服务
   ARK_API_KEY:'',
   ARK_BASE_URL:'',
-  BACKEND_URL:'', // ← 替换为实际后端地址
   MODEL_TEXT:'doubao-seed-2-0-pro-260215',
   MODEL_IMAGE:'doubao-seedream-5-0-260128',
-  ENABLED:true
+  ENABLED:false
+  // GitHub Pages静态部署使用Pollinations.ai免费备用
+  // 本地部署改为ENABLED:true并启动后端即可用豆包
 };
+const BACKEND_URL=''; // 本地部署后端地址，GitHub Pages留空
 const FALLBACK_AI_IMG_API='https://image.pollinations.ai/prompt/';
 const FALLBACK_AI_TEXT_API='https://text.pollinations.ai/openai';
 const AI_TIMEOUT=30000;
