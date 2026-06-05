@@ -600,28 +600,52 @@ function _finBar(label,val,color){
 
 // ===== 初始化 =====
 function initV2(){
+  // ===== 补全主脚本可能缺失的全局函数 =====
+  if(typeof window.getUsers!=='function'){window.getUsers=function(){return JSON.parse(localStorage.getItem('lsjy3_users')||'[]')}}
+  if(typeof window.saveUsers!=='function'){window.saveUsers=function(u){localStorage.setItem('lsjy3_users',JSON.stringify(u))}}
+  if(typeof window.getCur!=='function'){window.getCur=function(){return JSON.parse(localStorage.getItem('lsjy3_cur')||'null')}}
+  if(typeof window.setCur!=='function'){window.setCur=function(u){localStorage.setItem('lsjy3_cur',JSON.stringify(u))}}
+  if(typeof window.encryptPwd!=='function'){(function(){var _CK='lsjy2026secure';window.encryptPwd=function(p){var e=[];for(var i=0;i<p.length;i++)e.push(p.charCodeAt(i)^_CK.charCodeAt(i%_CK.length));return btoa(e.join(','))};window.decryptPwd=function(c){if(!c)return '';if(c.length<20&&c.indexOf(',')===-1)return c;try{var a=atob(c).split(',').map(Number);if(a.some(isNaN))return c;var s='';for(var i=0;i<a.length;i++)s+=String.fromCharCode(a[i]^_CK.charCodeAt(i%_CK.length));return s}catch(e){return c}}})()}
+  if(typeof window.getLockout!=='function'){window.getLockout=function(){return JSON.parse(localStorage.getItem('lsjy_admin_lockout')||'{}')}}
+  if(typeof window.saveLockout!=='function'){window.saveLockout=function(l){localStorage.setItem('lsjy_admin_lockout',JSON.stringify(l))}}
+  if(typeof window.getLoginLog!=='function'){window.getLoginLog=function(){return JSON.parse(localStorage.getItem('lsjy_admin_loginlog')||'[]')}}
+  if(typeof window.saveLoginLog!=='function'){window.saveLoginLog=function(l){localStorage.setItem('lsjy_admin_loginlog',JSON.stringify(l))}}
+  if(typeof window.showMod!=='function'){window.showMod=function(html){var el=document.getElementById('modal');if(!el){el=document.createElement('div');el.id='modal';el.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center';var inner=document.createElement('div');inner.className='modal-box';inner.style.cssText='background:var(--card,#fff);border-radius:12px;padding:24px;max-width:520px;width:90%;max-height:80vh;overflow-y:auto';el.appendChild(inner);document.body.appendChild(el)}el.querySelector('.modal-box').innerHTML=html;el.style.display='flex'}}
+  if(typeof window.closeModal!=='function'){window.closeModal=function(){var el=document.getElementById('modal');if(el)el.style.display='none'}}
+  if(typeof window.fmtDate!=='function'){window.fmtDate=function(s){if(!s)return '-';var d=new Date(s);if(isNaN(d))return s;return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}}
+  if(typeof window.addOpLog!=='function'){window.addOpLog=function(action,detail){}}
+  if(typeof window.toast!=='function'||typeof toast==='object'){window.toast=function(m,t){var e=document.getElementById('toast');if(!e){e=document.createElement('div');e.id='toast';e.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);padding:12px 24px;border-radius:8px;font-size:14px;z-index:99999;transition:all .3s';document.body.appendChild(e)}e.textContent=m;e.style.background=t==='error'?'#ef4444':t==='success'?'#22c55e':'#3b82f6';e.style.color='#fff';e.style.display='block';e.style.opacity='1';clearTimeout(e._t);e._t=setTimeout(function(){e.style.opacity='0';setTimeout(function(){e.style.display='none'},300)},3000)}}
+  if(typeof window.enterApp!=='function'){window.enterApp=function(){var lp=document.getElementById('loginPage');var app=document.getElementById('app');if(lp)lp.style.display='none';if(app)app.classList.add('active');if(typeof renderDashboard==='function')renderDashboard()}}
+  if(typeof window.doLogin!=='function'){window.doLogin=function(ev){ev.preventDefault();var u=document.getElementById('loginUser').value.trim();var p=document.getElementById('loginPwd').value;var users=window.getUsers();var found=users.find(function(x){return x.username===u});if(!found){window.toast('账号不存在','error');return}var pwdOk=false;try{pwdOk=window.decryptPwd(found.password)===p||found.password===btoa(p)}catch(e){pwdOk=found.password===btoa(p)}if(!pwdOk){window.toast('账号或密码错误','error');return}var ADMIN_ROLES=['admin','super_admin','supreme_admin','boss'];if(!ADMIN_ROLES.includes(found.role)){window.toast('非管理员账号','error');return}window.setCur(found);window.toast('登录成功','success');window.enterApp()}}
+
+  // ===== 注入导航 =====
   if(document.querySelector('.sb-nav')){
     injectNav();
-    // 确保首页渲染
-    if(getCur()){
-      const ADMIN_ROLES=['admin','super_admin','supreme_admin','boss'];
-      if(ADMIN_ROLES.includes(getCur().role)){
-        // 后台已登录，导航已注入
-      }
-    }
   }
-  // 自动确保默认管理员账号存在（账号admin，密码admin123）
+
+  // ===== 自动确保默认管理员账号（admin/admin123）=====
   (function(){
     try{
-      var users=getUsers();
+      var users=window.getUsers();
       var hasAdmin=users.some(function(u){return u.username==='admin'});
       if(!hasAdmin){
-        var pwd=typeof encryptPwd==='function'?encryptPwd('admin123'):btoa('admin123');
+        var pwd=window.encryptPwd?window.encryptPwd('admin123'):btoa('admin123');
         users.push({username:'admin',password:pwd,nickname:'超级管理员',role:'admin',phone:'',qq:'',wx:'',created:new Date().toISOString()});
-        localStorage.setItem('lsjy3_users',JSON.stringify(users));
+        window.saveUsers(users);
         console.log('[admin-v2] 默认管理员已创建：admin / admin123');
       }
-    }catch(e){console.log('[admin-v2] 创建管理员失败:',e)}
+      // 如果已有登录态，自动恢复
+      var cur=window.getCur();
+      if(cur&&cur.username){
+        var ADMIN_ROLES=['admin','super_admin','supreme_admin','boss'];
+        if(ADMIN_ROLES.includes(cur.role)){
+          var lp=document.getElementById('loginPage');
+          if(lp&&lp.style.display!=='none'){
+            window.enterApp();
+          }
+        }
+      }
+    }catch(e){console.log('[admin-v2] init error:',e)}
   })();
 }
 
