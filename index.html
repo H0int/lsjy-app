@@ -2568,7 +2568,7 @@ ${MODULES.find(x=>x.id===m.id).services.map(s=>`<div class="price-svc-item">
 </div>`).join('')}
 </div>
 <div class="price-action">
-<button class="btn btn-p" onclick="openPayment('${m.id}','${m.id}_pack_0')">${m.featured?'立即开通':'选择套餐'}</button>
+<button class="btn btn-p" onclick="openServiceDetail('${m.id}')">查看套餐</button>
 </div>
 </div>`;
 });
@@ -4448,7 +4448,7 @@ setTimeout(function(){
       phtml+='<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px"><div style="width:40px;height:40px;border-radius:10px;background:'+m.gradient+';display:flex;align-items:center;justify-content:center;font-size:20px">'+m.icon+'</div><div><h3 style="margin:0;font-size:16px;color:#1a1a1a">'+m.name+'</h3><p style="margin:2px 0 0;font-size:12px;color:#888">'+m.packs.length+' \u4e2a\u5957\u9910\u53ef\u9009</p></div></div>';
       phtml+='<div style="margin-bottom:16px"><span style="font-size:28px;font-weight:700;color:'+m.color+'">\uffe5'+fp.price+'</span><span style="font-size:13px;color:#888">/'+fp.period+'\u8d77</span></div>';
       phtml+='<ul style="list-style:none;padding:0;margin:0 0 16px;font-size:13px;color:#555;line-height:2">'+fp.features.map(function(f){return '<li style="padding-left:16px;position:relative"><span style="position:absolute;left:0;color:'+m.color+'">\u2713</span>'+f+'</li>'}).join('')+'</ul>';
-      phtml+='<button onclick="openCreditsShop()" style="width:100%;padding:10px;border:none;border-radius:10px;background:'+m.gradient+';color:#fff;font-size:14px;font-weight:600;cursor:pointer">'+(m.featured?'\u7acb\u5373\u5f00\u901a':'\u9009\u62e9\u5957\u9910')+'</button>';
+      phtml+='<button onclick="openServiceDetail(\''+m.id+'\')" style="width:100%;padding:10px;border:none;border-radius:10px;background:'+m.gradient+';color:#fff;font-size:14px;font-weight:600;cursor:pointer">\u67e5\u770b\u5957\u9910</button>';
       phtml+='</div>';
     });
     pg.innerHTML=phtml;
@@ -4705,6 +4705,36 @@ function _updateQACards(){
   var qi=document.getElementById('qaImages');if(qi)qi.textContent=in_+' 个作品';
 }
 setTimeout(_updateQACards,1500);
+</script>
+
+<script>
+// === _SERVICE_PACKS: 6大业务模块独立服务数据 ===
+window._SERVICE_PACKS={ai:{name:'AI 人工智能',icon:'\u{1F916}',color:'#3b82f6',packs:[{name:'基础版',price:'￥299/月',priceNum:299,desc:'适合个人创作者',features:['AI文案生成 50次/月','短视频切片 10条/月','基础智能推荐','在线客服支持']},{name:'进阶版',price:'￥599/月',priceNum:599,desc:'适合小型团队',features:['AI文案生成 200次/月','短视频切片 30条/月','智能数据分析','专属客服对接','优先技术支持'],hot:true},{name:'旗舰版',price:'￥1299/月',priceNum:1299,desc:'适合中型企业',features:['AI文案生成 不限次数','短视频切片 不限条数','深度数据报告','一对一专属顾问','定制化AI模型','7x24技术保障']}]},media:{name:'自媒体',icon:'\u{1F4F1}',color:'#8b5cf6',packs:[{name:'基础版',price:'￥499/月',priceNum:499,desc:'适合个人博主',features:['单平台账号代运营','月更 15 条内容','基础数据报告','社群搭建指导']},{name:'进阶版',price:'￥899/月',priceNum:899,desc:'适合多平台运营',features:['双平台账号代运营','月更 30 条内容','深度数据分析','爆款选题策划','评论区互动管理'],hot:true},{name:'旗舰版',price:'￥1599/月',priceNum:1599,desc:'适合MCN机构',features:['全平台矩阵代运营','月更 60 条内容','品牌全案策划','直播策划执行','达人合作对接','月度复盘报告']}]},ecom:{name:'电商',icon:'\u{1F6D2}',color:'#f59e0b',packs:[{name:'基础版',price:'￥399/次',priceNum:399,desc:'适合新入驻商家',features:['拖快小店代入驻','店铺基础装修','类目报备指导','商品上架协助']},{name:'进阶版',price:'￥799/月',priceNum:799,desc:'适合成长型店铺',features:['店铺深度装修','商品详情优化','基础投流推广','客服话术培训','月度运营报告'],hot:true},{name:'旗舰版',price:'￥1999/月',priceNum:1999,desc:'适合成熟品牌',features:['全店托管运营','高端视觉设计','精准投流优化','私域流量搭建','达人分销对接','季度战略复盘']}]},pet:{name:'宠物',icon:'\u{1F43E}',color:'#10b981',packs:[{name:'基础版',price:'￥299/月',priceNum:299,desc:'适合宠物店主',features:['单平台店铺优化','月更 10 条内容','团购策划 1个/月','基础运营指导']},{name:'进阶版',price:'￥699/月',priceNum:699,desc:'适合多店连锁',features:['多平台店铺优化','月更 25 条内容','直播带货策划','宠物社群运营','会员体系搭建'],hot:true},{name:'旗舰版',price:'￥1399/月',priceNum:1399,desc:'适合宠物品牌',features:['全渠道品牌运营','直播常态化代播','私域流量搭建','供应链资源对接','品牌联名策划','月度数据复盘']}]},edu:{name:'教育',icon:'\u{1F4DA}',color:'#ef4444',packs:[{name:'基础版',price:'￥299/月',priceNum:299,desc:'适合个人教师',features:['课程大纲设计','教案生成 10份/月','在线直播课程脚本','基础课件美化']},{name:'进阶版',price:'￥699/月',priceNum:699,desc:'适合培训机构',features:['课程体系设计','教案生成 不限量','直播课+录播课脚本','互动环节设计','学员数据分析'],hot:true},{name:'旗舰版',price:'￥1299/月',priceNum:1299,desc:'适合教育品牌',features:['全套课程开发','定制化教学系统','品牌课程包装','招生文案全案','家长社群运营','季度教学评估']}]},campus:{name:'伯雅校园',icon:'\u{1F393}',color:'#6366f1',packs:[{name:'基础版',price:'￥199/月',priceNum:199,desc:'适合在校大学生',features:['创业计划书生成','竞赛方案策划','简历优化','面试辅导']},{name:'进阶版',price:'￥499/月',priceNum:499,desc:'适合学生团队',features:['创业全案策划','竞赛全程指导','团队简历定制','实习内推对接','项目路演辅导'],hot:true},{name:'旗舰版',price:'￥999/月',priceNum:999,desc:'适合创业团队',features:['创业深度孵化','商业计划书精修','投资人对接','品牌全案策划','法务财税咨询','持续跟踪辅导']}]}};
+
+// === serviceDetailModal ===
+(function(){
+  var m=document.createElement('div');m.id='serviceDetailModal';
+  m.style.cssText='display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:10000;justify-content:center;align-items:center;';
+  m.innerHTML='<div style="background:#fff;border-radius:20px;max-width:780px;width:92%;max-height:85vh;overflow-y:auto;padding:0;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.3)"><button onclick="document.getElementById(\'serviceDetailModal\').style.display=\'none\'" style="position:absolute;top:16px;right:16px;background:#f3f4f6;border:none;width:32px;height:32px;border-radius:50%;font-size:18px;cursor:pointer;z-index:10;color:#666">\u2715</button><div id="serviceDetailBody"></div></div>';
+  m.addEventListener('click',function(e){if(e.target===m)m.style.display='none';});
+  document.body.appendChild(m);
+})();
+
+// === openServiceDetail function ===
+window.openServiceDetail=function(catId){
+  var d=window._SERVICE_PACKS[catId];
+  if(!d){alert('服务数据加载中');return;}
+  var h='<div style="padding:32px 32px 0;text-align:center"><div style="font-size:40px;margin-bottom:8px">'+d.icon+'</div><h2 style="margin:0 0 6px;font-size:22px;color:#1a1a1a">'+d.name+'</h2><p style="margin:0 0 24px;font-size:14px;color:#888">选择适合您的服务套餐，开启数字化之旅</p></div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding:0 32px 32px">';
+  d.packs.forEach(function(p){
+    var isHot=p.hot||false,bc=isHot?d.color:'#e8e8e8',badge=isHot?'<div style="position:absolute;top:-1px;right:16px;background:'+d.color+';color:#fff;font-size:11px;padding:3px 10px;border-radius:0 0 8px 8px">推荐</div>':'';
+    h+='<div style="background:#fff;border:1px solid '+bc+';border-radius:16px;padding:24px 20px;position:relative;transition:all .3s">'+badge+'<h3 style="margin:0 0 4px;font-size:17px;color:#1a1a1a">'+p.name+'</h3><p style="margin:0 0 16px;font-size:12px;color:#888">'+p.desc+'</p><div style="margin-bottom:16px"><span style="font-size:28px;font-weight:700;color:'+d.color+'">'+p.price+'</span></div><ul style="list-style:none;padding:0;margin:0 0 20px;font-size:13px;color:#555;line-height:2.2">';
+    p.features.forEach(function(f){h+='<li style="padding-left:18px;position:relative"><span style="position:absolute;left:0;color:'+d.color+'">✓</span>'+f+'</li>';});
+    h+='</ul><button onclick="alert(\'正在为您跳转到'+d.name+' - '+p.name+'支付页面，请稍候...\')" style="width:100%;padding:10px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;background:'+(isHot?d.color:'#f3f4f6')+';color:'+(isHot?'#fff':'#333')+'">立即开通</button></div>';
+  });
+  h+='</div>';
+  document.getElementById('serviceDetailBody').innerHTML=h;
+  document.getElementById('serviceDetailModal').style.display='flex';
+};
 </script>
 </body>
 </html>
