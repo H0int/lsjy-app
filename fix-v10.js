@@ -111,25 +111,46 @@ var input=parts.join(' | ');if(!input){alert('\u8bf7\u81f3\u5c11\u586b\u5199\u4e
 var cur=_getCur();if(!cur){alert('\u8bf7\u5148\u767b\u5f55');openAuth('login');return}
 var cr=_getCredits();if((cr[cur.username]||0)<cost){openCreditsShop();return}
 var btn=document.getElementById('aiGenBtn'),st=document.getElementById('genStatus');
-btn.disabled=true;btn.textContent='\u23f3 \u5904\u7406\u4e2d...';btn.style.opacity='0.7';
+btn.disabled=true;btn.textContent='\u23f3 AI\u751f\u6210\u4e2d...';btn.style.opacity='0.7';
 cr[cur.username]=(cr[cur.username]||0)-cost;localStorage.setItem('lsjy3_credits',JSON.stringify(cr));_updateCreditsUI();
-var model=isImg?'doubao-seedream-5-0-260128':'doubao-seed-2-0-pro-260215';
-var body=isImg?{model:model,messages:[{role:'user',content:input}],size:'1024x1024'}:{model:model,messages:[{role:'system',content:'\u4f60\u662f\u4e13\u4e1a\u7684\u300c'+toolName+'\u300d\u52a9\u624b\u3002\u76f4\u63a5\u8f93\u51fa\u7ed3\u679c\u3002'},{role:'user',content:input}],max_tokens:2000,temperature:0.7};
-fetch('https://ark.cn-beijing.volces.com/api/v3/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer ark-21eb820a-93fc-4379-bbc4-217498f7753b-a6876'},body:JSON.stringify(body)})
-.then(function(r){return r.json()})
-.then(function(data){
-btn.disabled=false;btn.textContent=isImg||isVid?'\ud83d\ude80 \u63d0\u4ea4\u751f\u6210':'\ud83d\ude80 AI \u751f\u6210';btn.style.opacity='1';
-if(data.error){st.style.display='block';st.innerHTML='<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px;color:#dc2626;font-size:13px">\u274c \u5931\u8d25: '+data.error.message+'</div>';cr[cur.username]=(cr[cur.username]||0)+cost;localStorage.setItem('lsjy3_credits',JSON.stringify(cr));_updateCreditsUI();return}
-if(isImg||isVid){
-var url=data.data&&data.data[0]&&data.data[0].url||'';_addMedia({type:isImg?'image':'video',tool:toolName,input:input,url:url});
-st.style.display='block';st.innerHTML='<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px;color:#16a34a;font-size:13px">\u2705 \u751f\u6210\u5b8c\u6210\uff01\u5df2\u4fdd\u5b58\u5230'+(isImg?'\u56fe\u6587\u5e93':'\u89c6\u9891\u5e93')+'<br><a href="javascript:void(0)" onclick="openMediaLib()" style="color:#2563eb;text-decoration:underline">\u67e5\u770b</a></div>';
-}else{
-var txt=data.choices[0].message.content;_addMedia({type:'text',tool:toolName,input:input,content:txt});
-document.getElementById('aiResultText').textContent=txt;document.getElementById('aiResult').style.display='block';
-st.style.display='block';st.innerHTML='<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px;color:#16a34a;font-size:13px">\u2705 \u751f\u6210\u6210\u529f\uff01</div>';
+if(isVid){
+btn.disabled=false;btn.textContent='\ud83d\ude80 \u63d0\u4ea4\u751f\u6210';btn.style.opacity='1';
+st.style.display='block';st.innerHTML='<div style="background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:12px;color:#92400e;font-size:13px">\u26a0\ufe0f \u89c6\u9891\u751f\u6210\u529f\u80fd\u5347\u7ea7\u4e2d\uff0c\u6682\u65f6\u65e0\u6cd5\u4f7f\u7528\u3002\u7b97\u529b\u5df2\u9000\u8fd8\u3002</div>';
+cr[cur.username]=(cr[cur.username]||0)+cost;localStorage.setItem('lsjy3_credits',JSON.stringify(cr));_updateCreditsUI();return;
 }
+if(isImg){
+var model='doubao-seedream-5-0-260128';
+var body={model:model,prompt:input,size:'1024x1024',n:1};
+fetch('https://ark.cn-beijing.volces.com/api/v3/images/generations',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer ark-21eb820a-93fc-4379-bbc4-217498f7753b-a6876'},body:JSON.stringify(body)})
+.then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json()})
+.then(function(data){
+btn.disabled=false;btn.textContent='\ud83d\ude80 \u63d0\u4ea4\u751f\u6210';btn.style.opacity='1';
+if(data.error){st.style.display='block';st.innerHTML='<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px;color:#dc2626;font-size:13px">\u274c \u751f\u6210\u5931\u8d25: '+(data.error.message||JSON.stringify(data.error))+'</div>';cr[cur.username]=(cr[cur.username]||0)+cost;localStorage.setItem('lsjy3_credits',JSON.stringify(cr));_updateCreditsUI();return;}
+var imgData=data.data&&data.data[0]||{};
+var url=imgData.url||'';
+if(!url&&imgData.b64_json){url='data:image/png;base64,'+imgData.b64_json;}
+if(url){_addMedia({type:'image',tool:toolName,input:input,url:url})}
+st.style.display='block';st.innerHTML='<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px;color:#16a34a;font-size:13px">\u2705 \u56fe\u7247\u5df2\u751f\u6210\uff0c\u5df2\u4fdd\u5b58\u5230\u56fe\u6587\u5e93\uff01</div>';
+setTimeout(function(){var mp=document.getElementById('toolModal2');if(mp)mp.style.display='none';},1500);
 })
-.catch(function(e){btn.disabled=false;btn.textContent='\ud83d\ude80 AI \u751f\u6210';btn.style.opacity='1';st.style.display='block';st.innerHTML='<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px;color:#dc2626;font-size:13px">\u274c \u7f51\u7edc\u9519\u8bef</div>';cr[cur.username]=(cr[cur.username]||0)+cost;localStorage.setItem('lsjy3_credits',JSON.stringify(cr));_updateCreditsUI()});
+.catch(function(e){btn.disabled=false;btn.textContent='\ud83d\ude80 \u63d0\u4ea4\u751f\u6210';btn.style.opacity='1';st.style.display='block';st.innerHTML='<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px;color:#dc2626;font-size:13px">\u274c \u751f\u6210\u5931\u8d25: '+e.message+'</div>';cr[cur.username]=(cr[cur.username]||0)+cost;localStorage.setItem('lsjy3_credits',JSON.stringify(cr));_updateCreditsUI()});
+return;
+}
+var model='doubao-seed-2-0-pro-260215';
+var body={model:model,messages:[{role:'system',content:'\u4f60\u662f\u4e13\u4e1a\u7684\u300c'+toolName+'\u300d\u52a9\u624b\u3002\u76f4\u63a5\u8f93\u51fa\u7ed3\u679c\u3002'},{role:'user',content:input}],max_tokens:2000,temperature:0.7};
+fetch('https://ark.cn-beijing.volces.com/api/v3/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer ark-21eb820a-93fc-4379-bbc4-217498f7753b-a6876'},body:JSON.stringify(body)})
+.then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json()})
+.then(function(data){
+btn.disabled=false;btn.textContent='\ud83d\ude80 AI \u751f\u6210';btn.style.opacity='1';
+if(data.error){st.style.display='block';st.innerHTML='<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px;color:#dc2626;font-size:13px">\u274c \u5931\u8d25: '+(data.error.message||JSON.stringify(data.error))+'</div>';cr[cur.username]=(cr[cur.username]||0)+cost;localStorage.setItem('lsjy3_credits',JSON.stringify(cr));_updateCreditsUI();return;}
+var txt=data.choices&&data.choices[0]&&data.choices[0].message?data.choices[0].message.content:'';
+if(!txt){st.style.display='block';st.innerHTML='<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px;color:#dc2626;font-size:13px">\u274c AI\u672a\u8fd4\u56de\u6709\u6548\u5185\u5bb9\uff0c\u7b97\u529b\u5df2\u9000\u8fd8</div>';cr[cur.username]=(cr[cur.username]||0)+cost;localStorage.setItem('lsjy3_credits',JSON.stringify(cr));_updateCreditsUI();return;}
+_addMedia({type:'text',tool:toolName,input:input,content:txt});
+var art=document.getElementById('aiResultText');if(art)art.textContent=txt;
+var ars=document.getElementById('aiResult');if(ars)ars.style.display='block';
+st.style.display='block';st.innerHTML='<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px;color:#16a34a;font-size:13px">\u2705 \u751f\u6210\u6210\u529f\uff01\u5df2\u4fdd\u5b58\u5230\u56fe\u6587\u5e93</div>';
+})
+.catch(function(e){btn.disabled=false;btn.textContent='\ud83d\ude80 AI \u751f\u6210';btn.style.opacity='1';st.style.display='block';st.innerHTML='<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px;color:#dc2626;font-size:13px">\u274c \u7f51\u7edc\u9519\u8bef: '+e.message+'</div>';cr[cur.username]=(cr[cur.username]||0)+cost;localStorage.setItem('lsjy3_credits',JSON.stringify(cr));_updateCreditsUI()});
 };
 
 // ===== 8. CREDITS SHOP =====
