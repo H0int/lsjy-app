@@ -1,227 +1,398 @@
-// lsjy-app fix v8 - Final production fix
-// Fixes: genForm Chinese name, doAuth auto-init admin, event binding, tool card click
+
+// lsjy-app interaction layer v9 - INLINE (bypasses CDN caching)
 try {
 
-// 1. Credits system (lsjy3_ namespace)
-var _cr=localStorage.getItem('lsjy3_credits');var _c;
+// ===== 1. CREDITS & USERS SYSTEM =====
+var _cr=localStorage.getItem('lsjy3_credits'),_c;
 try{_c=JSON.parse(_cr)}catch(e){_c=null}
 if(!_c||typeof _c!=='object'){_c={'KF02V9':10000};localStorage.setItem('lsjy3_credits',JSON.stringify(_c))}
 else if(!_c['KF02V9']){_c['KF02V9']=10000;localStorage.setItem('lsjy3_credits',JSON.stringify(_c))}
 
-// 1b. Users system - auto-create admin account
 var _users=JSON.parse(localStorage.getItem('lsjy3_users')||'[]');
-var _adminExists=_users.some(function(u){return u.username==='KF02V9'});
-if(!_adminExists){_users.push({username:'KF02V9',password:btoa('LKZ2005430'),role:'admin'});localStorage.setItem('lsjy3_users',JSON.stringify(_users))}
+if(!_users.some(function(u){return u.username==='KF02V9'})){_users.push({username:'KF02V9',password:btoa('LKZ2005430'),role:'admin',display:'管理员'});localStorage.setItem('lsjy3_users',JSON.stringify(_users))}
 
 window._getCredits=function(){try{return JSON.parse(localStorage.getItem('lsjy3_credits'))||{}}catch(e){return{}}};
 window._getCur=function(){try{return JSON.parse(localStorage.getItem('lsjy3_cur'))}catch(e){return null}};
-window._getUserCredits=function(){var u=window._getCur();return u?(_getCredits()[u.username]||0):0};
-window._updateCreditsUI=function(){var el=document.getElementById('creditDisplay');if(el)el.textContent=_getUserCredits()};
+window._getUserCredits=function(){var u=_getCur();return u?(_getCredits()[u.username]||0):0};
+window._updateCreditsUI=function(){
+var el=document.getElementById('creditDisplay');if(el)el.textContent=_getUserCredits();
+var nc=document.getElementById('navCredits');
+if(nc){nc.style.display=_getCur()?'inline-flex':'none'}
+};
 window.getCredits=_getCredits;window.getCur=_getCur;window.getUserCredits=_getUserCredits;window.updateCreditsUI=_updateCreditsUI;
 
-// 2. Build tool-name map: englishID -> Chinese name (from DOM)
+// ===== 2. BUILD TOOL NAME MAP FROM DOM =====
 var _nameMap={};
 document.querySelectorAll('.tool-card[data-name]').forEach(function(c){
-    var dn=c.getAttribute('data-name');
-    if(dn&&!/[a-z]/.test(dn.charAt(0))){ // Chinese name detected
-        // Also check for onclick or data-id attribute
-        var cid=c.getAttribute('onclick')||'';
-        var m=cid.match(/openTool\(['"]([^'"]+)['"]\)/);
-        if(m) _nameMap[m[1]]=dn;
-        // Also check data-id
-        var did=c.getAttribute('data-id');
-        if(did) _nameMap[did]=dn;
-    }
+var dn=c.getAttribute('data-name');
+var onclick=c.getAttribute('onclick')||'';
+var m=onclick.match(/openTool\(['"]([^'"]+)['"]\)/);
+if(m)_nameMap[m[1]]=dn;
+var did=c.getAttribute('data-id');
+if(did)_nameMap[did]=dn;
+_nameMap[dn]=dn;
 });
-// Fallback: also scan all tool-card innerText for name extraction
-if(Object.keys(_nameMap).length<100){
-    document.querySelectorAll('.tool-card').forEach(function(c){
-        var dn=c.getAttribute('data-name');
-        if(dn&&dn.indexOf(' ')>=0){
-            var id=dn.replace(/\s+/g,'_');
-            _nameMap[id]=dn;
-        }
-    });
-}
 
-// 3. Create toolOverlay2
+// ===== 3. PROFESSIONAL TOOL FORMS (per-category) =====
+var _CATEGORY_FORMS={
+'宠物':{
+fields:[
+{id:'f_species',label:'🐾 宠物类型',type:'select',opts:['犬类','猫类','鸟类','鱼类','爬行类','小型哺乳类','其他']},
+{id:'f_breed',label:'🏷️ 品种',type:'text',ph:'如：金毛、英短、柯基等'},
+{id:'f_age',label:'📅 年龄/阶段',type:'select',opts:['幼年期(0-1岁)','青年期(1-3岁)','成年期(3-7岁)','老年期(7岁以上)','不确定']},
+{id:'f_issue',label:'❓ 具体问题/需求',type:'textarea',ph:'详细描述宠物的症状、行为或您的需求'}
+],
+style:'专业正式'
+},
+'AI人工智能':{
+fields:[
+{id:'f_scene',label:'🎯 使用场景',type:'select',opts:['社交媒体','电商详情页','品牌宣传','营销推广','内容创作','办公文档','学术论文','创意设计','数据分析']},
+{id:'f_platform',label:'📱 目标平台',type:'select',opts:['通用','微信朋友圈','小红书','抖音/快手','微博','公众号','淘宝/京东','B站','知乎','LinkedIn']},
+{id:'f_audience',label:'👥 目标人群',type:'select',opts:['年轻人(18-25)','都市白领(25-35)','宝妈群体','中老年群体','Z世代学生','职场精英','大众消费者','B端客户']},
+{id:'f_tone',label:'📝 基调要求',type:'textarea',ph:'品牌调性、语言风格、参考案例等补充要求'}
+]
+},
+'自媒体':{
+fields:[
+{id:'f_platform',label:'📱 发布平台',type:'select',opts:['抖音','快手','小红书','微信视频号','B站','微博','公众号','知乎']},
+{id:'f_content_type',label:'🎬 内容类型',type:'select',opts:['种草笔记','测评分享','教程干货','生活Vlog','探店打卡','挑战赛','剧情类','知识科普']},
+{id:'f_target',label:'🎯 目标效果',type:'select',opts:['涨粉','提升互动','品牌曝光','带货转化','打造IP','内容破圈']},
+{id:'f_detail',label:'✏️ 具体要求',type:'textarea',ph:'选题方向、参考对标账号、特殊要求等'}
+]
+},
+'电商':{
+fields:[
+{id:'f_product',label:'📦 商品类型',type:'select',opts:['服装鞋帽','美妆护肤','食品生鲜','数码家电','家居日用','母婴用品','运动户外','虚拟产品','其他']},
+{id:'f_platform',label:'🛒 销售平台',type:'select',opts:['淘宝/天猫','京东','拼多多','抖音小店','快手小店','微信小程序','小红书店铺']},
+{id:'f_goal',label:'🎯 营销目标',type:'select',opts:['提升转化','打造爆款','清仓促销','新品推广','品牌种草','复购促活']},
+{id:'f_detail',label:'✏️ 补充说明',type:'textarea',ph:'商品卖点、价格区间、竞品参考等'}
+]
+},
+'教育':{
+fields:[
+{id:'f_subject',label:'📚 学科/领域',type:'select',opts:['语文','数学','英语','物理','化学','生物','历史','地理','政治','计算机','音乐','美术','体育','综合']},
+{id:'f_level',label:'🎓 学段',type:'select',opts:['小学','初中','高中','大学','职业教育','成人教育','考研/考公','兴趣培训']},
+{id:'f_purpose',label:'📝 用途',type:'select',opts:['课堂教学','作业设计','考试出题','课程开发','教案编写','学习辅导','知识梳理','家校沟通']},
+{id:'f_detail',label:'✏️ 详细要求',type:'textarea',ph:'知识点范围、难度要求、输出格式等'}
+]
+},
+'伯雅校园':{
+fields:[
+{id:'f_role',label:'👤 角色',type:'select',opts:['大学生','研究生','高中生','社团负责人','学生会','创业者','求职者','辅导员']},
+{id:'f_need',label:'🎯 需求类型',type:'select',opts:['创业规划','职业发展','学术写作','校园活动','竞赛准备','实习求职','社团运营','社交技能']},
+{id:'f_detail',label:'✏️ 具体需求',type:'textarea',ph:'详细描述您的情况和目标'}
+]
+}
+};
+
+// ===== 4. EXTENDED STYLE OPTIONS =====
+var _STYLES=['专业正式','轻松活泼','简洁明了','创意脑洞','温暖走心','数据驱动','幽默风趣','文艺清新','硬核技术','商业精英','年轻人潮语','小红书爆款风','抖音爆款体','知乎高赞体','小红书种草风','高级感','真诚走心','权威专家','邻家亲切'];
+
+// ===== 5. CREATE DOM ELEMENTS =====
+// Tool overlay
 if(!document.getElementById('toolOverlay2')){
 var d=document.createElement('div');d.id='toolOverlay2';
 d.style.cssText='display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10000;justify-content:center;align-items:center;';
-d.innerHTML='<div id="toolPanel2" style="background:#fff;border-radius:16px;max-width:600px;width:90%;max-height:85vh;overflow-y:auto;padding:24px;position:relative;"></div><button id="closeBtn2" style="position:absolute;top:12px;right:16px;font-size:24px;background:none;border:none;cursor:pointer;color:#666;z-index:10001;">\u00d7</button>';
+d.innerHTML='<div id="toolPanel2" style="background:#fff;border-radius:16px;max-width:640px;width:92%;max-height:85vh;overflow-y:auto;padding:28px;position:relative;box-shadow:0 25px 60px rgba(0,0,0,0.3)"></div><button id="closeBtn2" style="position:absolute;top:16px;right:20px;font-size:28px;background:none;border:none;cursor:pointer;color:#666;z-index:10001;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%">&#215;</button>';
 document.body.appendChild(d);
 document.getElementById('closeBtn2').onclick=function(){d.style.display='none';document.body.style.overflow=''};
 d.onclick=function(e){if(e.target===d){d.style.display='none';document.body.style.overflow=''}};
 }
 
-// 4. Create authModal2
+// Auth modal
 if(!document.getElementById('authModal2')){
 var am=document.createElement('div');am.id='authModal2';
 am.style.cssText='display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10001;justify-content:center;align-items:center;';
-am.innerHTML='<div style="background:#fff;border-radius:16px;padding:32px;max-width:420px;width:90%;position:relative;"><button id="closeAuth2" style="position:absolute;top:12px;right:16px;font-size:24px;background:none;border:none;cursor:pointer;color:#666;">\u00d7</button><div id="authContent2"></div></div>';
+am.innerHTML='<div style="background:#fff;border-radius:16px;padding:36px;max-width:440px;width:92%;position:relative;box-shadow:0 25px 60px rgba(0,0,0,0.3)"><button id="closeAuth2" style="position:absolute;top:14px;right:18px;font-size:26px;background:none;border:none;cursor:pointer;color:#666;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:50%">&#215;</button><div id="authContent2"></div></div>';
 am.onclick=function(e){if(e.target===am)am.style.display='none'};
 document.body.appendChild(am);
 document.getElementById('closeAuth2').onclick=function(){am.style.display='none'};
 }
 
-// 5. filterToolCat
+// ===== 6. CORE FUNCTIONS =====
+// filterToolCat
 window.filterToolCat=function(cat){
 document.querySelectorAll('.tool-card').forEach(function(c){c.style.display=(cat==='\u5168\u90e8'||c.getAttribute('data-cat')===cat)?'':'none'});
 document.querySelectorAll('#toolCats button,.tool-cat-btn').forEach(function(b){b.classList.remove('active');if(b.textContent.trim()===cat)b.classList.add('active')});
 };
 
-// 6. searchTools
+// searchTools
 window.searchTools=function(kw){
 kw=(kw||'').toLowerCase().trim();
 document.querySelectorAll('.tool-card').forEach(function(c){if(!kw){c.style.display='';return}var n=(c.getAttribute('data-name')||'').toLowerCase(),d=(c.getAttribute('data-desc')||'').toLowerCase();c.style.display=(n.indexOf(kw)>=0||d.indexOf(kw)>=0)?'':'none'});
 };
 
-// 7. openTool - use Chinese data-name directly from card click
+// openTool
 window.openTool=function(id){
-// If id is already Chinese (contains Chinese chars), use as-is
-if(/[\u4e00-\u9fff]/.test(id)){
-    showToolForm(id);
-    return;
-}
-// If id is snake_case, convert to camelCase
-if(id.indexOf('_')>=0&&!/^[a-z]+[A-Z]/.test(id)){
-    var p=id.split('_');id=p[0]+p.slice(1).map(function(s){return s[0].toUpperCase()+s.slice(1)}).join('');
-}
-// Try to find Chinese name
 var cn=_nameMap[id]||id;
+if(/[\u4e00-\u9fff]/.test(id))cn=id;
 showToolForm(cn,id);
 };
 
-function showToolForm(chineseName,englishId){
+function showToolForm(name,eid){
 var d=document.getElementById('toolOverlay2'),tp=document.getElementById('toolPanel2');
 if(!d||!tp)return;
-// If old _TOOL_MAP exists and has handler for this tool, use it
-if(englishId&&window._TOOL_MAP&&window._TOOL_MAP[englishId]&&typeof window._TOOL_MAP[englishId]==='function'){
-    tp.innerHTML='';var r=window._TOOL_MAP[englishId]();if(typeof r==='string')tp.innerHTML=r;
+if(eid&&window._TOOL_MAP&&window._TOOL_MAP[eid]&&typeof window._TOOL_MAP[eid]==='function'){
+tp.innerHTML='';var r=window._TOOL_MAP[eid]();if(typeof r==='string')tp.innerHTML=r;
 }else{
-    tp.innerHTML=genForm(chineseName,englishId);
+tp.innerHTML=genProForm(name,eid);
 }
 d.style.display='flex';document.body.style.overflow='hidden';
 }
 
-// 8. genForm - generates form from Chinese name
-function genForm(name,eid){
-var h='<div style="padding:4px">';
-h+='<h3 style="text-align:center;color:#1a1a1a;font-size:18px;margin:0 0 4px">'+name+'</h3>';
-// Get description from tool-card
+// genProForm - professional form per category
+function genProForm(name,eid){
 var card=document.querySelector('.tool-card[data-name="'+name+'"]');
 var desc=card?card.getAttribute('data-desc')||'':'';
-if(desc)h+='<p style="text-align:center;color:#888;font-size:13px;margin:0 0 16px">'+desc+'</p>';
-h+='<div style="margin-bottom:14px"><label style="display:block;font-size:13px;color:#555;margin-bottom:4px;font-weight:500">\ud83d\udcdd \u4e3b\u9898/\u9700\u6c42</label><input id="f_topic" type="text" placeholder="\u63cf\u8ff0\u4f60\u7684\u9700\u6c42" style="width:100%;padding:10px 14px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;box-sizing:border-box"></div>';
-h+='<div style="margin-bottom:14px"><label style="display:block;font-size:13px;color:#555;margin-bottom:4px;font-weight:500">\ud83d\udd0d \u8be6\u7ec6\u8981\u6c42</label><textarea id="f_detail" placeholder="\u8865\u5145\u8bf4\u660e\uff1a\u76ee\u6807\u4eba\u7fa4\u3001\u98ce\u683c\u3001\u5b57\u6570\u7b49" style="width:100%;padding:10px 14px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;box-sizing:border-box;min-height:80px;resize:vertical"></textarea></div>';
-h+='<div style="margin-bottom:14px"><label style="display:block;font-size:13px;color:#555;margin-bottom:4px;font-weight:500">\ud83c\udfa8 \u98ce\u683c</label><select id="f_style" style="width:100%;padding:10px 14px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;box-sizing:border-box;background:#fff"><option>\u4e13\u4e1a\u6b63\u5f0f</option><option>\u8f7b\u677e\u6d3b\u6cfc</option><option>\u7b80\u6d01\u660e\u4e86</option><option>\u521b\u610f\u8111\u6d1e</option><option>\u6e29\u6696\u8d70\u5fc3</option><option>\u6570\u636e\u9a71\u52a8</option></select></div>';
-h+='<button id="aiGenBtn" onclick="doGen8(\''+name.replace(/'/g,"\\'")+'\')" style="width:100%;padding:12px;background:linear-gradient(135deg,#e53e3e,#c53030);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">\ud83d\ude80 AI \u751f\u6210</button>';
-h+='<div id="aiResult" style="margin-top:16px;display:none"><div id="aiResultText" style="background:#f8f9fa;border-radius:8px;padding:16px;white-space:pre-wrap;font-size:14px;line-height:1.7;color:#333;max-height:400px;overflow-y:auto"></div><button onclick="var t=document.getElementById(\'aiResultText\');navigator.clipboard.writeText(t.textContent).then(function(){alert(\'\u5df2\u590d\u5236\')})" style="margin-top:8px;padding:8px 16px;background:#4299e1;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer">\ud83d\udccb \u590d\u5236</button></div>';
+var cat=card?card.getAttribute('data-cat')||'':'';
+var costMatch=name.match(/(\d+)算力/);
+var cost=costMatch?parseInt(costMatch[1]):5;
+var costEl=card?card.querySelector('.badge'):null;
+if(costEl){var ct=costEl.textContent.match(/(\d+)/);if(ct)cost=parseInt(ct[1])}
+
+var cfg=_CATEGORY_FORMS[cat]||null;
+var h='<div style="padding:2px 0">';
+h+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px"><h3 style="text-align:left;color:#1a1a1a;font-size:18px;margin:0;font-weight:700">'+name+'</h3><span style="background:linear-gradient(135deg,#fee2e2,#fecaca);color:#dc2626;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">'+cost+'算力</span></div>';
+if(desc)h+='<p style="color:#888;font-size:13px;margin:0 0 20px;line-height:1.5">'+desc+'</p>';
+
+if(cfg){
+cfg.fields.forEach(function(f){
+h+='<div style="margin-bottom:14px">';
+h+='<label style="display:block;font-size:13px;color:#555;margin-bottom:5px;font-weight:600">'+f.label+'</label>';
+if(f.type==='select'){
+h+='<select id="'+f.id+'" style="width:100%;padding:10px 14px;border:1px solid #e5e7eb;border-radius:10px;font-size:14px;box-sizing:border-box;background:#fff;color:#333">';
+f.opts.forEach(function(o){h+='<option>'+o+'</option>'});
+h+='</select>';
+}else if(f.type==='textarea'){
+h+='<textarea id="'+f.id+'" placeholder="'+(f.ph||'')+'" style="width:100%;padding:10px 14px;border:1px solid #e5e7eb;border-radius:10px;font-size:14px;box-sizing:border-box;min-height:80px;resize:vertical"></textarea>';
+}else{
+h+='<input id="'+f.id+'" type="text" placeholder="'+(f.ph||'请输入')+'" style="width:100%;padding:10px 14px;border:1px solid #e5e7eb;border-radius:10px;font-size:14px;box-sizing:border-box">';
+}
+h+='</div>';
+});
+}else{
+h+='<div style="margin-bottom:14px"><label style="display:block;font-size:13px;color:#555;margin-bottom:5px;font-weight:600">\ud83d\udcdd 主题/需求</label><input id="f_topic" type="text" placeholder="描述你的需求" style="width:100%;padding:10px 14px;border:1px solid #e5e7eb;border-radius:10px;font-size:14px;box-sizing:border-box"></div>';
+h+='<div style="margin-bottom:14px"><label style="display:block;font-size:13px;color:#555;margin-bottom:5px;font-weight:600">\ud83d\udd0d 详细要求</label><textarea id="f_detail" placeholder="补充说明：目标人群、风格、字数等" style="width:100%;padding:10px 14px;border:1px solid #e5e7eb;border-radius:10px;font-size:14px;box-sizing:border-box;min-height:80px;resize:vertical"></textarea></div>';
+}
+
+h+='<div style="margin-bottom:18px"><label style="display:block;font-size:13px;color:#555;margin-bottom:5px;font-weight:600">\ud83c\udfa8 风格</label><select id="f_style" style="width:100%;padding:10px 14px;border:1px solid #e5e7eb;border-radius:10px;font-size:14px;box-sizing:border-box;background:#fff;color:#333">';
+_STYLES.forEach(function(s){h+='<option>'+s+'</option>'});
+h+='</select></div>';
+
+h+='<button id="aiGenBtn" onclick="doGen9(\''+name.replace(/'/g,"\\'")+'\','+cost+')" style="width:100%;padding:14px;background:linear-gradient(135deg,#e53e3e,#c53030);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;letter-spacing:1px;transition:opacity .2s">\ud83d\ude80 AI 生成</button>';
+h+='<div id="aiResult" style="margin-top:18px;display:none"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:13px;color:#888;font-weight:600">\ud83d\udcca 生成结果</span><button onclick="var t=document.getElementById(\'aiResultText\');navigator.clipboard.writeText(t.textContent).then(function(){this.textContent=\'\u5df2\u590d\u5236\';setTimeout(function(){this.textContent=\'\ud83d\udccb \u590d\u5236\'}.bind(this),1500)}.bind(this))" style="padding:6px 14px;background:#4299e1;color:#fff;border:none;border-radius:8px;font-size:12px;cursor:pointer">\ud83d\udccb 复制</button></div><div id="aiResultText" style="background:#f8f9fa;border-radius:12px;padding:18px;white-space:pre-wrap;font-size:14px;line-height:1.8;color:#333;max-height:400px;overflow-y:auto;border:1px solid #e5e7eb"></div></div>';
 return h+'</div>';
 }
 
-// 9. doGen8 - AI generation with doubao
-window.doGen8=function(toolName){
-var topic=document.getElementById('f_topic').value.trim();
-var detail=document.getElementById('f_detail').value.trim();
-var style=document.getElementById('f_style').value;
-var input=[topic,detail,'\u98ce\u683c:'+style].filter(Boolean).join(' | ');
-if(!input){alert('\u8bf7\u586b\u5199\u4e3b\u9898');return}
-var cur=window._getCur();if(!cur){alert('\u8bf7\u5148\u767b\u5f55');window.openAuth('login');return}
-var cost=5,cr=window._getCredits();if((cr[cur.username]||0)<cost){alert('\u7b97\u529b\u4e0d\u8db3');return}
-var btn=document.getElementById('aiGenBtn');btn.disabled=true;btn.textContent='\u23f3 AI\u751f\u6210\u4e2d...';
-fetch('https://ark.cn-beijing.volces.com/api/v3/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer ark-21eb820a-93fc-4379-bbc4-217498f7753b-a6876'},body:JSON.stringify({model:'doubao-seed-2-0-pro-260215',messages:[{role:'system',content:'\u4f60\u662f\u4e13\u4e1a\u7684\u300c'+toolName+'\u300d\u52a9\u624b\u3002\u6839\u636e\u7528\u6237\u9700\u6c42\u751f\u6210\u9ad8\u8d28\u91cf\u5185\u5bb9\u3002\u76f4\u63a5\u8f93\u51fa\u7ed3\u679c\u3002'},{role:'user',content:input}],max_tokens:2000,temperature:0.7})})
-.then(function(r){return r.json()}).then(function(data){btn.disabled=false;btn.textContent='\ud83d\ude80 AI \u751f\u6210';if(data.choices&&data.choices[0]){document.getElementById('aiResultText').textContent=data.choices[0].message.content;document.getElementById('aiResult').style.display='block';cr[cur.username]=(cr[cur.username]||0)-cost;localStorage.setItem('lsjy3_credits',JSON.stringify(cr));window._updateCreditsUI()}else{alert('\u751f\u6210\u5931\u8d25: '+(data.error||{}).message||'\u672a\u77e5\u9519\u8bef')}})
-.catch(function(e){btn.disabled=false;btn.textContent='\ud83d\ude80 AI \u751f\u6210';alert('\u7f51\u7edc\u9519\u8bef:'+e.message)});
+// doGen9 - AI generation
+window.doGen9=function(toolName,cost){
+var fields={};
+var selects=document.querySelectorAll('#toolPanel2 select[id^="f_"]');
+selects.forEach(function(s){fields[s.id]=s.value});
+var inputs=document.querySelectorAll('#toolPanel2 input[id^="f_"]');
+inputs.forEach(function(i){if(i.value.trim())fields[i.id]=i.value.trim()});
+var textareas=document.querySelectorAll('#toolPanel2 textarea[id^="f_"]');
+textareas.forEach(function(t){if(t.value.trim())fields[t.id]=t.value.trim()});
+
+var inputParts=[];
+if(fields.f_topic)inputParts.push('主题:'+fields.f_topic);
+if(fields.f_breed)inputParts.push('品种:'+fields.f_breed);
+if(fields.f_species)inputParts.push('类型:'+fields.f_species);
+if(fields.f_age)inputParts.push('阶段:'+fields.f_age);
+if(fields.f_issue)inputParts.push('问题:'+fields.f_issue);
+if(fields.f_scene)inputParts.push('场景:'+fields.f_scene);
+if(fields.f_platform)inputParts.push('平台:'+fields.f_platform);
+if(fields.f_audience)inputParts.push('人群:'+fields.f_audience);
+if(fields.f_tone)inputParts.push('基调:'+fields.f_tone);
+if(fields.f_content_type)inputParts.push('内容类型:'+fields.f_content_type);
+if(fields.f_target)inputParts.push('目标:'+fields.f_target);
+if(fields.f_detail)inputParts.push('要求:'+fields.f_detail);
+if(fields.f_product)inputParts.push('商品:'+fields.f_product);
+if(fields.f_goal)inputParts.push('营销目标:'+fields.f_goal);
+if(fields.f_subject)inputParts.push('学科:'+fields.f_subject);
+if(fields.f_level)inputParts.push('学段:'+fields.f_level);
+if(fields.f_purpose)inputParts.push('用途:'+fields.f_purpose);
+if(fields.f_role)inputParts.push('角色:'+fields.f_role);
+if(fields.f_need)inputParts.push('需求:'+fields.f_need);
+var style=document.getElementById('f_style');
+if(style)inputParts.push('风格:'+style.value);
+
+var input=inputParts.join(' | ');
+if(!input){alert('请至少填写一个字段');return}
+
+var cur=_getCur();if(!cur){alert('请先登录');openAuth('login');return}
+var cr=_getCredits();if((cr[cur.username]||0)<cost){alert('算力不足，当前'+(cr[cur.username]||0)+'算力，需要'+cost+'算力');return}
+
+var btn=document.getElementById('aiGenBtn');btn.disabled=true;btn.textContent='\u23f3 AI\u751f\u6210\u4e2d...';btn.style.opacity='0.7';
+
+fetch('https://ark.cn-beijing.volces.com/api/v3/chat/completions',{
+method:'POST',
+headers:{'Content-Type':'application/json','Authorization':'Bearer ark-21eb820a-93fc-4379-bbc4-217498f7753b-a6876'},
+body:JSON.stringify({
+model:'doubao-seed-2-0-pro-260215',
+messages:[
+{role:'system',content:'你是专业的「'+toolName+'」助手。根据用户的具体需求和场景，生成高质量、有针对性的专业内容。直接输出结果，不需要额外解释。'},
+{role:'user',content:input}
+],
+max_tokens:2000,
+temperature:0.7
+})
+}).then(function(r){return r.json()})
+.then(function(data){
+btn.disabled=false;btn.textContent='\ud83d\ude80 AI 生成';btn.style.opacity='1';
+if(data.choices&&data.choices[0]){
+document.getElementById('aiResultText').textContent=data.choices[0].message.content;
+document.getElementById('aiResult').style.display='block';
+cr[cur.username]=(cr[cur.username]||0)-cost;
+localStorage.setItem('lsjy3_credits',JSON.stringify(cr));
+_updateCreditsUI();
+}else{
+alert('生成失败: '+(data.error||{}).message||'请稍后重试');
+}
+}).catch(function(e){
+btn.disabled=false;btn.textContent='\ud83d\ude80 AI 生成';btn.style.opacity='1';
+alert('网络错误: '+e.message);
+});
 };
 
 window.closeTool=function(){var d=document.getElementById('toolOverlay2');if(d){d.style.display='none';document.body.style.overflow=''}};
 
-// 10. Auth system
+// ===== 7. AUTH SYSTEM (Enhanced) =====
 window.openAuth=function(mode){
-var am=document.getElementById('authModal2'),ac=document.getElementById('authContent2');if(!am||!ac)return;
+var am=document.getElementById('authModal2'),ac=document.getElementById('authContent2');
+if(!am||!ac)return;
 var isLogin=mode==='login';
-ac.innerHTML='<h3 style="text-align:center;margin:0 0 20px;color:#1a1a1a">'+(isLogin?'\u8d26\u53f7\u767b\u5f55':'\u6ce8\u518c\u8d26\u53f7')+'</h3>'
-+'<div style="margin-bottom:12px"><label style="display:block;font-size:13px;color:#666;margin-bottom:4px">\u8d26\u53f7</label><input id="au" type="text" placeholder="\u8bf7\u8f93\u5165\u8d26\u53f7" style="width:100%;padding:10px 14px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;box-sizing:border-box"></div>'
-+'<div style="margin-bottom:20px"><label style="display:block;font-size:13px;color:#666;margin-bottom:4px">\u5bc6\u7801</label><input id="ap" type="password" placeholder="\u8bf7\u8f93\u5165\u5bc6\u7801" style="width:100%;padding:10px 14px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;box-sizing:border-box"></div>'
-+'<button id="authBtn" style="width:100%;padding:12px;background:linear-gradient(135deg,#e53e3e,#c53030);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">'+(isLogin?'\u767b\u5f55':'\u6ce8\u518c')+'</button>'
-+'<p style="text-align:center;margin-top:12px;font-size:13px;color:#888">'+(isLogin?'\u6ca1\u6709\u8d26\u53f7\uff1f<a href="javascript:void(0)" id="authSwitch">\u7acb\u5373\u6ce8\u518c</a>':'\u5df2\u6709\u8d26\u53f7\uff1f<a href="javascript:void(0)" id="authSwitch">\u7acb\u5373\u767b\u5f55</a>')+'</p>';
-document.getElementById('authBtn').onclick=function(){doAuth8(mode)};
+ac.innerHTML=
+'<div style="text-align:center;margin-bottom:24px"><div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#e53e3e,#c53030);margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff">'+(isLogin?'\ud83d\udd11':'\u270d\ufe0f')+'</div><h3 style="margin:0;color:#1a1a1a;font-size:20px;font-weight:700">'+(isLogin?'欢迎回来':'创建账号')+'</h3><p style="margin:4px 0 0;color:#888;font-size:13px">'+(isLogin?'登录您的罗圣纪元账号':'注册成为罗圣纪元用户')+'</p></div>'
++(isLogin?''
+:'<div style="margin-bottom:14px"><label style="display:block;font-size:13px;color:#555;margin-bottom:5px;font-weight:600">\ud83c\udfa8 昵称</label><input id="ar_name" type="text" placeholder="您的显示名称" style="width:100%;padding:10px 14px;border:1px solid #e5e7eb;border-radius:10px;font-size:14px;box-sizing:border-box"></div>'
++'<div style="margin-bottom:14px"><label style="display:block;font-size:13px;color:#555;margin-bottom:5px;font-weight:600">\ud83d\udcf7 头像</label><div style="display:flex;align-items:center;gap:12px"><div id="regAvatar" style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#e53e3e,#c53030);display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;flex-shrink:0;cursor:pointer" onclick="document.getElementById(\'avatarInput\').click()">\ud83d\udc64</div><div style="flex:1"><input id="avatarInput" type="file" accept="image/*" style="display:none" onchange="handleAvatar(this)"><p style="font-size:12px;color:#999;margin:0">点击选择自定义头像</p></div></div></div>')
++'<div style="margin-bottom:14px"><label style="display:block;font-size:13px;color:#555;margin-bottom:5px;font-weight:600">\ud83d\udccb 账号</label><input id="au" type="text" placeholder="请输入账号" style="width:100%;padding:10px 14px;border:1px solid #e5e7eb;border-radius:10px;font-size:14px;box-sizing:border-box"></div>'
++'<div style="margin-bottom:20px"><label style="display:block;font-size:13px;color:#555;margin-bottom:5px;font-weight:600">\ud83d\udd12 密码</label><input id="ap" type="password" placeholder="请输入密码" style="width:100%;padding:10px 14px;border:1px solid #e5e7eb;border-radius:10px;font-size:14px;box-sizing:border-box"></div>'
++'<button id="authBtn" style="width:100%;padding:13px;background:linear-gradient(135deg,#e53e3e,#c53030);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:1px">'+(isLogin?'\u767b \u5f55':'\u6ce8 \u518c')+'</button>'
++'<p style="text-align:center;margin-top:14px;font-size:13px;color:#888">'+(isLogin?'没有账号？<a href="javascript:void(0)" id="authSwitch" style="color:var(--p);font-weight:600;text-decoration:none">立即注册</a>':'已有账号？<a href="javascript:void(0)" id="authSwitch" style="color:var(--p);font-weight:600;text-decoration:none">立即登录</a>')+'</p>';
+document.getElementById('authBtn').onclick=function(){doAuth9(mode)};
 document.getElementById('authSwitch').onclick=function(){openAuth(isLogin?'register':'login')};
 am.style.display='flex';
 };
 
-window.doAuth=function(mode){doAuth8(mode)};
+window.handleAvatar=function(input){
+if(input.files&&input.files[0]){
+var reader=new FileReader();
+reader.onload=function(e){
+var av=document.getElementById('regAvatar');
+if(av){av.innerHTML='<img src="'+e.target.result+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover">';av._custom=true}
+};
+reader.readAsDataURL(input.files[0]);
+}
+};
 
-function doAuth8(mode){
+window.doAuth=function(mode){doAuth9(mode)};
+
+function doAuth9(mode){
 var user=document.getElementById('au').value.trim(),pass=document.getElementById('ap').value.trim();
-if(!user||!pass){alert('\u8bf7\u586b\u5199\u8d26\u53f7\u548c\u5bc6\u7801');return}
+if(!user||!pass){alert('请填写账号和密码');return}
 var users=JSON.parse(localStorage.getItem('lsjy3_users')||'[]');
 if(mode==='register'){
-if(users.find(function(u){return u.username===user})){alert('\u8d26\u53f7\u5df2\u5b58\u5728');return}
-users.push({username:user,password:btoa(pass),role:'user'});localStorage.setItem('lsjy3_users',JSON.stringify(users));
-var cr=window._getCredits();if(!cr[user])cr[user]=100;localStorage.setItem('lsjy3_credits',JSON.stringify(cr));
-alert('\u6ce8\u518c\u6210\u529f\uff01\u8d60\u9001100\u7b97\u529b');openAuth('login');return;
+if(users.find(function(u){return u.username===user})){alert('账号已存在');return}
+if(users.find(function(u){return u.username===user})){alert('账号已存在');return}
+var displayName=document.getElementById('ar_name')?document.getElementById('ar_name').value.trim():user;
+var avEl=document.getElementById('regAvatar');
+var hasCustomAvatar=avEl&&avEl._custom;
+users.push({username:user,password:btoa(pass),role:'user',display:displayName,avatar:hasCustomAvatar});
+localStorage.setItem('lsjy3_users',JSON.stringify(users));
+var cr=_getCredits();if(!cr[user])cr[user]=100;localStorage.setItem('lsjy3_credits',JSON.stringify(cr));
+alert('注册成功！赠送100算力');
+openAuth('login');return;
 }
 var found=users.find(function(u){return u.username===user});
-if(!found){alert('\u8d26\u53f7\u4e0d\u5b58\u5728');return}
-if(atob(found.password)!==pass){alert('\u5bc6\u7801\u9519\u8bef');return}
-localStorage.setItem('lsjy3_cur',JSON.stringify({username:found.username,role:found.role||'user'}));
-document.getElementById('authModal2').style.display='none';updateNav8();window._updateCreditsUI();
+if(!found){alert('账号不存在，请先注册');return}
+if(atob(found.password)!==pass){alert('密码错误');return}
+localStorage.setItem('lsjy3_cur',JSON.stringify({username:found.username,role:found.role||'user',display:found.display||found.username}));
+document.getElementById('authModal2').style.display='none';
+updateNav9();_updateCreditsUI();
 }
 
-function updateNav8(){
-var cur=window._getCur(),lr=document.getElementById('navLoginBtn'),nr=document.getElementById('navRight');
+function updateNav9(){
+var cur=_getCur(),lr=document.getElementById('navLoginBtn'),nr=document.getElementById('navRight');
 if(cur){
-if(lr){lr.textContent=cur.username;lr.onclick=function(){localStorage.removeItem('lsjy3_cur');updateNav8();_updateCreditsUI()};lr.removeAttribute('data-target');lr.removeAttribute('data-toggle')}
+var displayName=cur.display||cur.username;
+if(lr){lr.textContent=displayName;lr.style.cssText='padding:6px 16px;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#78350f;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer';
+lr.onclick=function(){if(confirm('确定退出登录？')){localStorage.removeItem('lsjy3_cur');updateNav9();_updateCreditsUI()}};lr.removeAttribute('data-target')}
 var cr=document.getElementById('navCredits');
-if(!cr&&nr){var cd=document.createElement('div');cd.id='navCredits';cd.style.cssText='display:inline-flex;align-items:center;gap:4px;padding:6px 14px;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#78350f;border-radius:8px;font-size:12px;font-weight:700;margin-right:8px';cd.innerHTML='\u26a1 <span id="creditDisplay">'+window._getUserCredits()+'</span> \u7b97\u529b';nr.insertBefore(cd,nr.firstChild)}
-else if(cr){document.getElementById('creditDisplay').textContent=window._getUserCredits()}
+if(!cr&&nr){var cd=document.createElement('div');cd.id='navCredits';cd.style.cssText='display:inline-flex;align-items:center;gap:4px;padding:6px 14px;background:linear-gradient(135deg,#dbeafe,#bfdbfe);color:#1e40af;border-radius:8px;font-size:12px;font-weight:700;margin-right:8px';cd.innerHTML='\u26a1 <span id="creditDisplay">'+_getUserCredits()+'</span> \u7b97\u529b';nr.insertBefore(cd,nr.firstChild)}
+else if(cr){document.getElementById('creditDisplay').textContent=_getUserCredits()}
 }else{
-if(lr){lr.textContent='\u767b\u5f55 / \u6ce8\u518c';lr.onclick=function(){openAuth('login')}}
+if(lr){lr.textContent='\u767b\u5f55 / \u6ce8\u518c';lr.style.cssText='';lr.onclick=function(){openAuth('login')}}
+var cr=document.getElementById('navCredits');if(cr)cr.style.display='none';
 }
-window.updateNavUI=updateNav8;
-window.doLogout=function(){localStorage.removeItem('lsjy3_cur');updateNav8();window._updateCreditsUI()};
+window.updateNavUI=updateNav9;
+window.doLogout=function(){localStorage.removeItem('lsjy3_cur');updateNav9();_updateCreditsUI()};
 }
 
-// 11. Bind events (using _v8 marker to prevent double-binding)
-// Search input
+// ===== 8. BIND EVENTS =====
 var si=document.querySelector('input[placeholder*="\u641c\u7d22"]');
-if(si&&!si._v8){si.addEventListener('input',function(){searchTools(this.value)});si._v8=true}
+if(si&&!si._v9){si.addEventListener('input',function(){searchTools(this.value)});si._v9=true}
 
-// Category buttons
 document.querySelectorAll('#toolCats button,.tool-cat-btn').forEach(function(b){
-if(!b._v8){b.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();filterToolCat(this.textContent.trim())});b._v8=true}
+if(!b._v9){b.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();filterToolCat(this.textContent.trim())});b._v9=true}
 });
 
-// Tool card click - bind on multiple possible containers
-var _bindToolClick=function(el){
-if(!el||el._v8)return;
+var _bindTC=function(el){
+if(!el||el._v9)return;
 el.addEventListener('click',function(e){
 var card=e.target.closest('.tool-card');
-if(card){
-e.preventDefault();e.stopPropagation();
-var tid=card.getAttribute('data-name')||'';
-if(tid)openTool(tid);
-}
+if(card){e.preventDefault();e.stopPropagation();var tid=card.getAttribute('data-name')||'';if(tid)openTool(tid)}
 });
-el._v8=true;
+el._v9=true;
 };
-_bindToolClick(document.getElementById('tools'));
-_bindToolClick(document.querySelector('.tools-grid'));
+_bindTC(document.getElementById('tools'));
+_bindTC(document.querySelector('.tools-grid'));
 
-// Login button
 var lb=document.getElementById('navLoginBtn');
-if(lb&&!lb._v8){lb.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();if(window._getCur()){localStorage.removeItem('lsjy3_cur');updateNav8();window._updateCreditsUI()}else{openAuth('login')}});lb._v8=true}
+if(lb&&!lb._v9){lb.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();if(_getCur()){if(confirm('确定退出登录？')){localStorage.removeItem('lsjy3_cur');updateNav9();_updateCreditsUI()}}else{openAuth('login')}});lb._v9=true}
 
-// Hide admin link on frontend
 var al=document.querySelector('a[href="admin/"]');
 if(al&&al.textContent.trim()==='\u7ba1\u7406\u540e\u53f0')al.style.display='none';
 
-// 12. Init
-updateNav8();window._updateCreditsUI();
-window._v8Applied=true;
+// ===== 9. INIT =====
+updateNav9();_updateCreditsUI();
+window._v9Applied=true;
+console.log('[lsjy-interact v9] All systems loaded. Tools:'+document.querySelectorAll('.tool-card').length);
 
-console.log('[fix-v8] All interactions loaded successfully. Tool cards: '+document.querySelectorAll('.tool-card').length+', Name map entries: '+Object.keys(_nameMap).length);
+} catch(e) { console.error('[lsjy-interact] Error:', e); }
 
-} catch(e) { console.error('[fix-v8] Error:', e); }
+
+// ===== 10. FIX: Remove phone link, add email =====
+(function(){
+var phoneLinks=document.querySelectorAll('a[href="tel:18890000368"]');
+phoneLinks.forEach(function(a){a.outerHTML='<div class="btn" style="background:#fff;color:var(--n);border-radius:12px;cursor:default;padding:12px 24px">\ud83d\udce7 contact@lsjy.com</div>'});
+})();
+
+// ===== 11. FIX: Add contact info cards =====
+(function(){
+var ci=document.querySelector('.contact-info');
+if(ci&&!ci.querySelector('.cv-website')){
+var last=ci.lastElementChild;
+var d1=document.createElement('div');d1.className='contact-item';
+d1.innerHTML='<span class="ci">\ud83c\udf10</span><span class="cv cv-website">www.lsjy-app.com</span>';
+ci.appendChild(d1);
+var d2=document.createElement('div');d2.className='contact-item';
+d2.innerHTML='<span class="ci">\u23f0</span><span class="cv">工作日 9:00-18:00 在线服务</span>';
+ci.appendChild(d2);
+}
+})();
+
+// ===== 12. FIX: Render pricing if grid is empty =====
+(function(){
+var g=document.getElementById('pricingGrid');
+if(g&&!g.innerHTML.trim()){
+try{if(typeof renderPricing==='function')renderPricing()}catch(e){console.error('Pricing render error:',e)}
+}
+})();
+
+// ===== 13. Hide admin link =====
+(function(){
+var al=document.querySelector('a[href="admin/"]');
+if(al)al.style.display='none';
+})();
