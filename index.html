@@ -4643,7 +4643,7 @@ console.log('[v10] All systems loaded. Tools:'+document.querySelectorAll('.tool-
 // Update quick action card counts
 function _updateQACards(){
   var c=typeof getCredits==='function'?getCredits():0;
-  if(typeof c==='object'&&c!==null)c=c.count||c.value||c.credits||0;
+  if(typeof c==='object'&&c!==null){var u=typeof _getCur==='function'?_getCur():null;var un=u?(u.username||u.u||(typeof u==='string'?u:Object.keys(u)[0])):'';c=un?(c[un]||0):(Object.keys(c).length>0?c[Object.keys(c)[0]]:0);}
   if(typeof c!=='number')c=parseInt(c)||0;
   var qa=document.getElementById('qaCredits');if(qa)qa.textContent=c+' 算力';
   var ml=typeof _getMediaLib==='function'?_getMediaLib():[];
