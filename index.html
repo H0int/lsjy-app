@@ -4420,7 +4420,7 @@ setTimeout(function(){
     ];
     var mhtml='';
     _M.forEach(function(m){
-      mhtml+='<div class="mod-card" onclick="filterToolCat(\''+m.id+'\')" style="background:#fff;border:1px solid #e8e8e8;border-radius:16px;padding:32px 24px;transition:all .3s;cursor:pointer;overflow:hidden" onmouseover="this.style.transform=\'translateY(-4px)\';this.style.boxShadow=\'0 12px 30px rgba(0,0,0,.08)\'" onmouseout="this.style.transform=\'\';this.style.boxShadow=\'\'">';
+      mhtml+='<div class="mod-card" onclick="openServiceDetail(m.id)" style="background:#fff;border:1px solid #e8e8e8;border-radius:16px;padding:32px 24px;transition:all .3s;cursor:pointer;overflow:hidden" onmouseover="this.style.transform=\'translateY(-4px)\';this.style.boxShadow=\'0 12px 30px rgba(0,0,0,.08)\'" onmouseout="this.style.transform=\'\';this.style.boxShadow=\'\'">';
       mhtml+='<div style="width:48px;height:48px;border-radius:12px;background:'+m.gradient+';display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:16px">'+m.icon+'</div>';
       mhtml+='<h3 style="margin:0 0 8px;font-size:18px;color:#1a1a1a">'+m.name+'</h3>';
       mhtml+='<p style="margin:0;font-size:13px;color:#888;line-height:1.6">'+m.summary+'</p>';
