@@ -1732,14 +1732,14 @@ function saveContacts(c){localStorage.setItem('lsjy3_contacts',JSON.stringify(c)
 function isLoggedIn(){return!!getCur()}
 function getOrders(){return JSON.parse(localStorage.getItem('lsjy3_orders')||'[]')}
 function saveOrders(o){localStorage.setItem('lsjy3_orders',JSON.stringify(o))}
-function getCredits(){return JSON.parse(localStorage.getItem('lsjy3_credits')||'{}')}
+function getCredits(){try{var d=JSON.parse(localStorage.getItem('lsjy3_credits'));if(typeof d==='object'&&d!==null)return d}catch(e){}return{}}
 function saveCredits(c){localStorage.setItem('lsjy3_credits',JSON.stringify(c))}
 function getUserCredits(){const u=getCur();if(!u)return 0;const c=getCredits();return c[u.username]||0}
 function addCredits(username,amount){const c=getCredits();c[username]=(c[username]||0)+amount;saveCredits(c);const u=getCur();if(u&&u.username===username)updateCreditsUI()}
 function deductCredits(cost){const u=getCur();if(!u)return false;const c=getCredits();const bal=(c[u.username]||0)-cost;if(bal<0)return false;c[u.username]=bal;saveCredits(c);updateCreditsUI();return true}
 function updateCreditsUI(){const el=document.getElementById('creditDisplay');if(el)el.textContent=getUserCredits()}
 // 7天免登录token
-function checkToken(){const t=localStorage.getItem('lsjy3_token');if(!t)return false;try{const d=JSON.parse(t);if(d.exp>Date.now()){const users=getUsers();const found=users.find(u=>u.username===d.username);if(found){setCur(found);return true}}}catch(e){}return false}
+function checkToken(){const t=localStorage.getItem('lsjy3_token');if(!t)return false;try{const d=JSON.parse(t);if(d.exp>Date.now()){const users=getUsers();const found=users.find(u=>u.username===d.username);if(found){setCur(found);if(typeof updateCreditsUI==='function')updateCreditsUI();return true}}}catch(e){}return false}
 function saveToken(u){localStorage.setItem('lsjy3_token',JSON.stringify({username:u.username,exp:Date.now()+7*24*60*60*1000}))}
 // 检查登录状态（用于受保护功能）
 function requireLogin(){if(isLoggedIn())return true;openAuth('login');toast('请先登录后再使用','warn');return false}
@@ -2550,7 +2550,7 @@ const u=document.getElementById('authUser').value.trim(),p=document.getElementBy
 const users=getUsers(),found=users.find(x=>x.username===u&&(x.password===p||x.password===btoa(p)));
 if(!found){toast('账号或密码错误','error');return}
 setCur(found);saveToken(found);closeAuth();if(checkToken()){console.log('Auto-login via token')}
-updateNavAuth();toast('登录成功，欢迎回来！','success');
+updateNavAuth();if(typeof updateCreditsUI==='function')updateCreditsUI();toast('登录成功，欢迎回来！','success');
 
 }
 function doRegister(e){
@@ -2607,7 +2607,7 @@ function smsLoginSuccess(phone){
 const users=getUsers();let found=users.find(u=>u.phone===phone);
 if(!found){found={username:'user_'+phone.slice(-4),password:'sms_'+Date.now(),nickname:'用户'+phone.slice(-4),role:'user',phone:phone,qq:'',wx:'',created:new Date().toLocaleString()};users.push(found);saveUsers(users)}
 setCur(found);saveToken(found);closeAuth();if(checkToken()){console.log("Auto-login via token")}
-updateNavAuth();toast('登录成功，欢迎回来！','success');
+updateNavAuth();if(typeof updateCreditsUI==='function')updateCreditsUI();toast('登录成功，欢迎回来！','success');
 }
 function doSmsRegister(){
 const phone=document.getElementById('regPhone').value.trim(),code=document.getElementById('regSmsCode').value.trim(),nick=document.getElementById('regNick').value.trim();
