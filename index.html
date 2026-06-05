@@ -3,18 +3,23 @@
 <head>
 <script>
 (function(){
+    // Fix corrupted credits
     var r=localStorage.getItem('lsjy3_credits');
     var c;try{c=JSON.parse(r)}catch(e){c=null}
-    if(typeof c!=='object'||c===null){
-        c={'KF02V9':10000};
-        try{
-            var u=JSON.parse(localStorage.getItem('lsjy3_users')||'[]');
-            for(var i=0;i<u.length;i++){if(!c[u[i].username])c[u[i].username]=100}
-        }catch(e){}
-        localStorage.setItem('lsjy3_credits',JSON.stringify(c));
-    }else{
-        if(!c['KF02V9']){c['KF02V9']=10000;localStorage.setItem('lsjy3_credits',JSON.stringify(c))}
-    }
+    if(typeof c!=='object'||c===null){c={'KF02V9':10000};try{var u=JSON.parse(localStorage.getItem('lsjy3_users')||'[]');for(var i=0;i<u.length;i++){if(!c[u[i].username])c[u[i].username]=100}}catch(e){}localStorage.setItem('lsjy3_credits',JSON.stringify(c));}
+    else{if(!c['KF02V9']){c['KF02V9']=10000;localStorage.setItem('lsjy3_credits',JSON.stringify(c))}}
+    // Override getUserCredits to always return correct value
+    document.addEventListener('DOMContentLoaded',function(){
+        var origGetCredits=window.getCredits;
+        if(origGetCredits){
+            window.getCredits=function(){try{var d=JSON.parse(localStorage.getItem('lsjy3_credits'));if(typeof d==='object'&&d!==null)return d}catch(e){}return{}};
+            window.getUserCredits=function(){var u=window.getCur?window.getCur():null;if(!u)return 0;var all=window.getCredits();return all[u.username]||0};
+            window.updateCreditsUI=function(){var el=document.getElementById('creditDisplay');if(el)el.textContent=window.getUserCredits()};
+        }
+        // Force update credits UI if user is logged in
+        var cur=localStorage.getItem('lsjy3_cur');
+        if(cur){try{var u=JSON.parse(cur);if(u.username){var all=JSON.parse(localStorage.getItem('lsjy3_credits')||'{}');var val=all[u.username]||0;setTimeout(function(){var el=document.getElementById('creditDisplay');if(el)el.textContent=val},500)}}catch(e){}}
+    });
 })();
 </script>
 <meta charset="UTF-8">
