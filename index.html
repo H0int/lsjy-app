@@ -2042,6 +2042,10 @@ _TOOL_MAP['voiceover']=_TOOL_MAP['voiceClone'];
 })();
 const _TOOL_COST={viralVideo:50,digitalHuman:100,voiceClone:30,aigc:20,photoEdit:30,audioEdit:25,accompaniment:40,docGen:35};
 function openTool(id){
+// snake_case -> camelCase auto-convert
+if(!/^[a-z]+[A-Z]/.test(id)&&/_/.test(id)){var p=id.split('_');id=p[0]+p.slice(1).map(function(s){return s[0].toUpperCase()+s.slice(1)}).join('')}
+var _FIX={txt2img:'text2img',bg_remove:'removeBg',super_res:'upscale',logo_gen:'avatar',video_edit:'videoClip',video_parse:'videoParse',video_reverse:'videoReverse',video2gif:'videoGif',cover_extract:'videoCover',subtitle:'videoSrt',video_summary:'videoSum',video_tag:'videoTag',video_desc:'videoTag',tts:'voiceClone',audio_fix:'audioEdit',voiceover:'voiceClone',trending_music:'trendingMusic',script:'viralVideo',tags:'hashtag',work_report:'report',translate:'translater',summary:'summarize',xiaohongshu:'socialPost',brand_story:'brandStory',product_desc:'productDesc',meeting_notes:'meetingNotes',ppt_outline:'pptOutline',headline_gen:'titleGen',seo_keyword:'seoKeywords',comment_reply:'commentReply',social_post:'socialPost',live_script:'liveScript',ad_copy:'adCopy'};
+if(_FIX[id])id=_FIX[id];
 const overlay=document.getElementById('toolOverlay');
 const panel=document.getElementById('toolPanel');
 if(!overlay||!panel)return;
