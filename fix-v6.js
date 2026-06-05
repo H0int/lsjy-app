@@ -258,6 +258,48 @@ var _P={symptomCheck:{name:'症状自查',prompt:'你是宠物兽医。分析症
 if(!window._AI_TEXT_TOOLS)window._AI_TEXT_TOOLS={};
 var k=Object.keys(_P);for(var i=0;i<k.length;i++){window._AI_TEXT_TOOLS[k[i]]=_P[k[i]];}
 
+
+
+// === 8b. Universal AI text tool fallback for ALL tools ===
+// Auto-generate config for any tool not in _AI_TEXT_TOOLS
+function setupUniversalTools(){
+    // Collect all tool cards data-name attributes
+    var cards=document.querySelectorAll('.tool-card[data-name]');
+    cards.forEach(function(card){
+        var id=card.getAttribute('data-name');
+        if(!id||window._AI_TEXT_TOOLS[id])return;
+        var name=card.getAttribute('data-name')||'';
+        var desc=card.getAttribute('data-desc')||'';
+        // Convert id to camelCase for display
+        var displayName=name.replace(/_/g,' ').replace(/\b\w/g,function(c){return c.toUpperCase()});
+        window._AI_TEXT_TOOLS[id]={
+            name:displayName,
+            prompt:'你是专业的'+displayName+'AI助手。根据用户输入，生成高质量、专业、实用的'+displayName+'内容。要求：1)结构清晰 2)内容专业 3)实用性强 4)语言精练。直接输出结果，不需要解释。',
+            fields:[
+                {id:'topic',label:'\ud83d\udcdd 主题/需求',type:'text',placeholder:'请描述你的需求，如产品名称、行业、目标等'},
+                {id:'detail',label:'\ud83d\udd0d 详细要求',type:'textarea',placeholder:'补充说明：目标人群、风格偏好、字数要求等'},
+                {id:'style',label:'\ud83c\udfa8 风格',type:'select',options:['专业正式','轻松活泼','简洁明了','创意脑洞','温暖走心','数据驱动']}
+            ]
+        };
+    });
+    // Also scan for _TOOL_MAP entries
+    if(window._TOOL_MAP){
+        var keys=Object.keys(window._TOOL_MAP);
+        keys.forEach(function(k){if(!window._AI_TEXT_TOOLS[k]){
+            var displayName=k.replace(/([A-Z])/g,' $1').replace(/^./,function(s){return s.toUpperCase()});
+            window._AI_TEXT_TOOLS[k]={name:displayName,prompt:'你是专业的'+displayName+'AI助手。根据用户输入，生成高质量内容。',fields:[
+                {id:'topic',label:'\ud83d\udcdd 主题',type:'text',placeholder:'描述你的需求'},
+                {id:'detail',label:'\ud83d\udd0d 要求',type:'textarea',placeholder:'补充说明'}
+            ]};
+        }});
+    }
+}
+setupUniversalTools();
+// Re-run after a delay to catch dynamically rendered cards
+setTimeout(setupUniversalTools,500);
+setTimeout(setupUniversalTools,1500);
+setTimeout(setupUniversalTools,3000);
+
 // === 12. Admin button removal ===
 function cleanAdmin(){
     var btn=document.getElementById('navAdminBtn');if(btn&&btn.parentNode)btn.parentNode.removeChild(btn);
