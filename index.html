@@ -14,7 +14,7 @@
         if(origGetCredits){
             window.getCredits=function(){try{var d=JSON.parse(localStorage.getItem('lsjy3_credits'));if(typeof d==='object'&&d!==null)return d}catch(e){}return{}};
             window.getUserCredits=function(){var u=window.getCur?window.getCur():null;if(!u)return 0;var all=window.getCredits();return all[u.username]||0};
-            window.updateCreditsUI=function(){var el=document.getElementById('creditDisplay');if(el)el.textContent=window.getUserCredits()};
+            window.updateCreditsUI=function(){var el=document.getElementById('creditDisplay');if(el){el.textContent=window.getUserCredits();el.style.transition='color .3s'}};window._creditsTimer=setInterval(function(){var el=document.getElementById('creditDisplay');if(el)el.textContent=window.getUserCredits()},2000);
         }
         // Force update credits UI if user is logged in
         var cur=localStorage.getItem('lsjy3_cur');
