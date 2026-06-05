@@ -5018,6 +5018,22 @@ console.log('[CDN FIX] doGen10, buyPlan, _addMedia, openMediaLib loaded successf
 
 <script>
 // === COMPREHENSIVE FIX v2: 背景优化 + 点击事件 + 导航展开 ===
+  // 0. 品牌色背景注入（确保在CDN环境下也能生效）
+  (function(){
+    var s = document.createElement('style');
+    s.id = 'brand-bg-fix';
+    s.textContent = [
+      'body{background:linear-gradient(180deg,#e8f0fe 0%,#f5f0ff 25%,#fef3e2 50%,#e8f8f0 75%,#f0e8ff 100%)!important;background-attachment:fixed!important}',
+      'body::before{content:\'\';position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at 20% 20%,rgba(59,130,246,.08) 0%,transparent 50%),radial-gradient(ellipse at 80% 20%,rgba(139,92,246,.08) 0%,transparent 50%),radial-gradient(ellipse at 50% 80%,rgba(16,185,129,.06) 0%,transparent 50%),radial-gradient(ellipse at 20% 80%,rgba(241,118,46,.06) 0%,transparent 50%);pointer-events:none;z-index:-1}',
+      '.navbar{background:rgba(255,255,255,.75)!important;backdrop-filter:blur(20px)!important;-webkit-backdrop-filter:blur(20px)!important}',
+      '.hero{background:linear-gradient(135deg,#dbeafe 0%,#ede9fe 30%,#fef3c7 60%,#d1fae5 100%)!important}',
+      '.modules{background:rgba(255,255,255,.55)!important;backdrop-filter:blur(10px)!important;-webkit-backdrop-filter:blur(10px)!important}',
+      '.tools{background:rgba(255,255,255,.45)!important;backdrop-filter:blur(10px)!important;-webkit-backdrop-filter:blur(10px)!important}',
+      '.pricing{background:rgba(255,255,255,.55)!important;backdrop-filter:blur(10px)!important;-webkit-backdrop-filter:blur(10px)!important}',
+      '.mod-card{background:rgba(255,255,255,.85)!important;backdrop-filter:blur(10px)!important;-webkit-backdrop-filter:blur(10px)!important}'
+    ].join('\n');
+    document.head.appendChild(s);
+  })();
 (function(){
   // 1. 修复业务板块卡片的点击事件
   // Fallback渲染中的 onclick="openServiceDetail(m.id)" 变量引用问题
