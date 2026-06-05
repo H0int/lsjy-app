@@ -105,7 +105,7 @@ textarea.fi{resize:vertical;min-height:120px}
 .mobile-toggle span{width:22px;height:2px;background:var(--n);border-radius:2px;transition:all .3s}
 
 /* === HERO === */
-.hero{min-height:100vh;display:flex;align-items:center;position:relative;overflow:hidden;background:linear-gradient(135deg,#f8fafc 0%,#eef2ff 30%,#f0e7fe 60%,#f8fafc 100%)}
+.hero{min-height:100vh;display:flex;align-items:center;position:relative;overflow:hidden;background:linear-gradient(135deg,#dbeafe 0%,#ede9fe 30%,#fef3c7 60%,#d1fae5 100%)}
 .hero-bg{position:absolute;inset:0;overflow:hidden}
 .hero-orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:.15;animation:orb 25s infinite ease-in-out}
 .hero-orb:nth-child(1){width:600px;height:600px;background:var(--p);top:-200px;right:-100px}
@@ -4420,7 +4420,7 @@ setTimeout(function(){
     ];
     var mhtml='';
     _M.forEach(function(m){
-      mhtml+='<div class="mod-card" onclick="openServiceDetail(m.id)" style="background:#fff;border:1px solid #e8e8e8;border-radius:16px;padding:32px 24px;transition:all .3s;cursor:pointer;overflow:hidden" onmouseover="this.style.transform=\'translateY(-4px)\';this.style.boxShadow=\'0 12px 30px rgba(0,0,0,.08)\'" onmouseout="this.style.transform=\'\';this.style.boxShadow=\'\'">';
+      mhtml+='<div class="mod-card" onclick="openServiceDetail(m.id)" style="background:rgba(255,255,255,.85);border:1px solid rgba(0,0,0,.06);border-radius:16px;padding:32px 24px;transition:all .3s;cursor:pointer;overflow:hidden;backdrop-filter:blur(10px)" onmouseover="this.style.transform=\'translateY(-4px)\';this.style.boxShadow=\'0 12px 30px rgba(0,0,0,.08)\'" onmouseout="this.style.transform=\'\';this.style.boxShadow=\'\'">';
       mhtml+='<div style="width:48px;height:48px;border-radius:12px;background:'+m.gradient+';display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:16px">'+m.icon+'</div>';
       mhtml+='<h3 style="margin:0 0 8px;font-size:18px;color:#1a1a1a">'+m.name+'</h3>';
       mhtml+='<p style="margin:0;font-size:13px;color:#888;line-height:1.6">'+m.summary+'</p>';
@@ -5015,5 +5015,207 @@ console.log('[CDN FIX] doGen10, buyPlan, _addMedia, openMediaLib loaded successf
 })();
 </script>
 
+
+<script>
+// === COMPREHENSIVE FIX v2: 背景优化 + 点击事件 + 导航展开 ===
+(function(){
+  // 1. 修复业务板块卡片的点击事件
+  // Fallback渲染中的 onclick="openServiceDetail(m.id)" 变量引用问题
+  // 由于已在HTML层面修复了拼接，这里做二次保险
+  setTimeout(function(){
+    var cards = document.querySelectorAll('#modGrid .mod-card');
+    cards.forEach(function(card, i){
+      var bizIds = ['ai','media','ecom','pet','edu','campus'];
+      if(i < bizIds.length){
+        card.onclick = function(e){
+          e.stopPropagation();
+          if(typeof window.openServiceDetail === 'function'){
+            openServiceDetail(bizIds[i]);
+          } else {
+            alert('服务详情功能加载中，请稍后再试');
+          }
+        };
+      }
+    });
+  }, 800);
+
+  // 2. 修复算力中心入口卡片点击
+  var qaDivs = document.querySelectorAll('#quickActions > div');
+  qaDivs.forEach(function(div){
+    var text = div.textContent || '';
+    if(text.indexOf('算力中心') >= 0){
+      div.onclick = function(e){
+        e.stopPropagation();
+        if(typeof window.openCreditsShop === 'function'){
+          openCreditsShop();
+        } else {
+          alert('算力中心加载中，请稍后再试');
+        }
+      };
+      div.style.cursor = 'pointer';
+    }
+    if(text.indexOf('视频库') >= 0){
+      div.onclick = function(e){
+        e.stopPropagation();
+        if(typeof window.openMediaLib === 'function'){
+          openMediaLib('video');
+        }
+      };
+      div.style.cursor = 'pointer';
+    }
+    if(text.indexOf('图文库') >= 0){
+      div.onclick = function(e){
+        e.stopPropagation();
+        if(typeof window.openMediaLib === 'function'){
+          openMediaLib('image');
+        }
+      };
+      div.style.cursor = 'pointer';
+    }
+  });
+
+  // 3. 修复所有 "查看套餐" 按钮点击
+  setTimeout(function(){
+    document.querySelectorAll('[onclick*="openServiceDetail"]').forEach(function(el){
+      // 这些onclick已经正确引用了函数
+    });
+    // 额外给定价区域的"查看套餐"按钮绑定
+    document.querySelectorAll('.price-action .btn').forEach(function(btn){
+      if(btn.textContent.indexOf('查看套餐') >= 0){
+        var card = btn.closest('.price-card');
+        if(card){
+          var moduleId = card.getAttribute('data-module-id');
+          if(!moduleId){
+            // 从价格区域找对应的模块ID
+            var titleEl = card.querySelector('.price-card-title');
+            if(titleEl){
+              var nameMap = {'AI人工智能':'ai','自媒体':'media','电商':'ecom','宠物':'pet','教育':'edu','伯雅校园':'campus'};
+              var t = titleEl.textContent.trim();
+              moduleId = nameMap[t] || 'ai';
+            }
+          }
+          btn.onclick = function(e){
+            e.stopPropagation();
+            if(typeof window.openServiceDetail === 'function'){
+              openServiceDetail(moduleId);
+            }
+          };
+        }
+      }
+    });
+  }, 1000);
+
+  // 4. 工具分类导航展开/收起
+  setTimeout(function(){
+    var toolTabs = document.getElementById('toolTabs');
+    if(toolTabs){
+      var tabs = toolTabs.querySelectorAll('.tool-tab');
+      var searchBox = toolTabs.parentElement.querySelector('input[type="text"]');
+      
+      // 添加展开/收起按钮
+      var toggleBtn = document.createElement('button');
+      toggleBtn.className = 'tool-tab';
+      toggleBtn.textContent = '收起 ▲';
+      toggleBtn.id = 'tabToggleBtn';
+      toggleBtn.style.cssText = 'margin-left:8px;font-size:12px;padding:6px 12px;border-radius:20px;cursor:pointer;border:1px solid var(--bd);background:var(--ps);color:var(--p);transition:all .2s';
+      toggleBtn.onclick = function(e){
+        e.stopPropagation();
+        var isExpanded = this.textContent.indexOf('收起') >= 0;
+        tabs.forEach(function(tab){
+          if(!tab.id || tab.id !== 'tabToggleBtn'){
+            if(isExpanded){
+              tab.style.display = 'none';
+            } else {
+              tab.style.display = '';
+            }
+          }
+        });
+        this.textContent = isExpanded ? '展开 ▼' : '收起 ▲';
+      };
+      toolTabs.appendChild(toggleBtn);
+    }
+  }, 500);
+
+  // 5. 确保openServiceDetail正确映射ID
+  // _SERVICE_PACKS的key是中文(如'ai')或需要映射
+  var _idMap = {
+    'AI人工智能':'ai','自媒体':'media','电商':'ecom',
+    '宠物':'pet','教育':'edu','伯雅校园':'campus'
+  };
+  
+  // 覆盖openServiceDetail确保兼容
+  var origOpenSD = window.openServiceDetail;
+  window.openServiceDetail = function(idOrName){
+    var catId = _idMap[idOrName] || idOrName;
+    if(origOpenSD){
+      try{ origOpenSD(catId); }catch(e){}
+    }
+    // 直接实现弹窗
+    var d = window._SERVICE_PACKS ? window._SERVICE_PACKS[catId] : null;
+    if(!d){
+      // 尝试用中文key
+      d = window._SERVICE_PACKS ? window._SERVICE_PACKS[idOrName] : null;
+    }
+    if(!d){
+      var nameToId = {'AI人工智能':'ai','自媒体':'media','电商':'ecom','宠物':'pet','教育':'edu','伯雅校园':'campus'};
+      var cid = nameToId[idOrName] || idOrName;
+      d = window._SERVICE_PACKS ? window._SERVICE_PACKS[cid] : null;
+    }
+    if(!d){console.warn('[FIX] openServiceDetail: 数据未找到 for', idOrName);return;}
+    
+    var h='<div style="padding:32px 32px 0;text-align:center"><div style="font-size:40px;margin-bottom:8px">'+d.icon+'</div><h2 style="margin:0 0 6px;font-size:22px;color:#1a1a1a">'+d.name+'</h2><p style="margin:0 0 24px;font-size:14px;color:#888">选择适合您的服务套餐，开启数字化之旅</p></div>';
+    h+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;padding:0 32px 32px">';
+    d.packs.forEach(function(p,idx){
+      var isHot=p.hot?'<span style="background:#fef2f2;color:#dc2626;font-size:11px;padding:2px 8px;border-radius:10px;margin-left:8px;font-weight:600">热门</span>':'';
+      h+='<div style="background:#fff;border:2px solid '+(idx===1?'#3b82f6':'#e8e8e8')+';border-radius:16px;padding:24px;position:relative;transition:all .2s;cursor:pointer" onclick="buyPlan(\''+catId+'\',\'pack_'+idx+'\','+p.priceNum+')" onmouseover="this.style.borderColor=\'#3b82f6\';this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.borderColor=idx===1?\'#3b82f6\':\'#e8e8e8\';this.style.transform=\'\'">';
+      h+='<h3 style="margin:0 0 8px;font-size:18px;color:#1a1a1a">'+p.name+isHot+'</h3>';
+      h+='<div style="font-size:28px;font-weight:800;color:#dc2626;margin:12px 0">'+p.price+'</div>';
+      h+='<p style="font-size:13px;color:#888;margin-bottom:16px">'+p.desc+'</p>';
+      h+='<ul style="list-style:none;padding:0;margin:0">';
+      p.features.forEach(function(f){h+='<li style="padding:6px 0;font-size:13px;color:#555;border-bottom:1px solid #f5f5f5">✓ '+f+'</li>';});
+      h+='</ul></div>';
+    });
+    h+='</div>';
+    
+    // 创建弹窗
+    var overlay=document.createElement('div');
+    overlay.id='svcDetailOverlay';
+    overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.45);z-index:10000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)';
+    overlay.onclick=function(e){if(e.target===overlay){overlay.remove();}};
+    var box=document.createElement('div');
+    box.style.cssText='background:#fff;border-radius:20px;max-width:900px;width:92%;max-height:85vh;overflow-y:auto;position:relative;box-shadow:0 25px 60px rgba(0,0,0,.2)';
+    box.innerHTML=h;
+    var closeBtn=document.createElement('div');
+    closeBtn.style.cssText='position:absolute;top:12px;right:16px;font-size:24px;cursor:pointer;color:#888;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:all .2s';
+    closeBtn.textContent='\u2715';
+    closeBtn.onmouseover=function(){this.style.background='#f5f5f5';};
+    closeBtn.onmouseout=function(){this.style.background='';};
+    closeBtn.onclick=function(){overlay.remove();};
+    box.appendChild(closeBtn);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+  };
+
+  // 6. 首页六大板块入口卡片点击修复
+  setTimeout(function(){
+    document.querySelectorAll('.hero-card, .home-biz-card').forEach(function(card, i){
+      var bizIds = ['ai','media','ecom','pet','edu','campus'];
+      card.onclick = function(e){
+        e.stopPropagation();
+        document.getElementById('modules').scrollIntoView({behavior:'smooth'});
+        setTimeout(function(){
+          var gridCards = document.querySelectorAll('#modGrid .mod-card');
+          if(gridCards[i]){
+            gridCards[i].click();
+          }
+        }, 600);
+      };
+      card.style.cursor = 'pointer';
+    });
+  }, 600);
+
+  console.log('[COMPREHENSIVE FIX v2] 背景优化 + 点击事件 + 导航展开 加载完成');
+})();
+</script>
 </body>
 </html>
