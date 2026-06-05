@@ -1858,5 +1858,15 @@ function closeModal(e){if(e&&e.target!==e.currentTarget)return;document.getEleme
 // ===== VERSION =====
 (function(){if(!localStorage.getItem('lsjy_admin_ver'))localStorage.setItem('lsjy_admin_ver','admin-v3.6')})();
 </script>
+
+<script>
+// ===== CREDITS INITIALIZATION =====
+(function(){
+    if(typeof getCredits!=='function')return;
+    var c=getCredits();
+    if(!c['KF02V9']){c['KF02V9']=10000;saveCredits(c)}
+})();
+</script>
+
 </body>
 </html>
