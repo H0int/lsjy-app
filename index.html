@@ -1013,12 +1013,12 @@ renderEmployeeAcct();
 <div class="hero-card">
 <h3>🔍 六大业务板块</h3>
 <div class="hero-card-grid">
-<div class="hero-card-item" onclick="openMod('ai')"><div class="ci">🤖</div><div class="cn">AI</div></div>
-<div class="hero-card-item" onclick="openMod('media')"><div class="ci">📱</div><div class="cn">自媒体</div></div>
-<div class="hero-card-item" onclick="openMod('ecom')"><div class="ci">🛒</div><div class="cn">电商</div></div>
-<div class="hero-card-item" onclick="openMod('pet')"><div class="ci">🐾</div><div class="cn">宠物</div></div>
-<div class="hero-card-item" onclick="openMod('edu')"><div class="ci">📚</div><div class="cn">教育</div></div>
-<div class="hero-card-item" onclick="openMod('campus')"><div class="ci">🏫</div><div class="cn">伯雅校园</div></div>
+<div class="hero-card-item" onclick="event.stopPropagation();event.preventDefault();openMod('ai')"><div class="ci">🤖</div><div class="cn">AI</div></div>
+<div class="hero-card-item" onclick="event.stopPropagation();event.preventDefault();openMod('media')"><div class="ci">📱</div><div class="cn">自媒体</div></div>
+<div class="hero-card-item" onclick="event.stopPropagation();event.preventDefault();openMod('ecom')"><div class="ci">🛒</div><div class="cn">电商</div></div>
+<div class="hero-card-item" onclick="event.stopPropagation();event.preventDefault();openMod('pet')"><div class="ci">🐾</div><div class="cn">宠物</div></div>
+<div class="hero-card-item" onclick="event.stopPropagation();event.preventDefault();openMod('edu')"><div class="ci">📚</div><div class="cn">教育</div></div>
+<div class="hero-card-item" onclick="event.stopPropagation();event.preventDefault();openMod('campus')"><div class="ci">🏫</div><div class="cn">伯雅校园</div></div>
 </div>
 </div>
 </div>
@@ -1043,7 +1043,7 @@ renderEmployeeAcct();
 <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px"><div><h2 class="section-title" style="margin:0"><span class="gradient-text">205</span>款工具</h2></div><button onclick="toggleSection('toolsGrid',this)" style="background:none;border:1px solid var(--bd);border-radius:8px;padding:6px 14px;font-size:12px;color:var(--b);cursor:pointer;transition:all .2s">收起工具</button></div>
 <p class="section-sub">覆盖AI人工智能、自媒体、电商、宠物、教育、伯雅校园六大业务模块，一站式数字化综合平台</p>
 <div id="quickActions" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:28px;margin-bottom:24px">
-<div onclick="openCreditsPanel()" style="background:linear-gradient(135deg,#fef3c7,#fde68a);border:1px solid #f59e0b;border-radius:16px;padding:24px 20px;cursor:pointer;transition:all .3s;position:relative;overflow:hidden" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 12px 30px rgba(245,158,11,.25)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+<div onclick="try{if(typeof openCreditsShop==='function'){openCreditsShop();return;}if(typeof openTool==='function'){openTool('credits');return}}catch(e){alert('算力中心错误:'+e.message)}" style="background:linear-gradient(135deg,#fef3c7,#fde68a);border:1px solid #f59e0b;border-radius:16px;padding:24px 20px;cursor:pointer;transition:all .3s;position:relative;overflow:hidden" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 12px 30px rgba(245,158,11,.25)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
 <div style="position:absolute;top:-10px;right:-10px;width:60px;height:60px;background:rgba(255,255,255,.3);border-radius:50%"></div>
 <div style="font-size:36px;margin-bottom:8px">⚡</div>
 <div style="font-size:16px;font-weight:700;color:#92400e;margin-bottom:4px">算力中心</div>
@@ -5382,7 +5382,7 @@ if(nc){
 }
 
 console.log('[FIX v3] 算力中心/六大板块/立即开通 全部修复完成');
-},1000);
+},3000);
 })();
 </script>
 
