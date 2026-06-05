@@ -1062,7 +1062,7 @@ renderEmployeeAcct();
 </div>
 </div>
 <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:24px">
-<div class="tool-tabs" id="toolTabs"><button class="tool-tab active" onclick="filterToolCat('all',this)">全部</button><button class="tool-tab" onclick="filterToolCat('AI人工智能',this)">🤖 AI人工智能</button><button class="tool-tab" onclick="filterToolCat('自媒体',this)">📱 自媒体</button><button class="tool-tab" onclick="filterToolCat('电商',this)">🛒 电商</button><button class="tool-tab" onclick="filterToolCat('教育',this)">📚 教育</button><button class="tool-tab" onclick="filterToolCat('宠物',this)">🐾 宠物</button><button class="tool-tab" onclick="filterToolCat('伯雅校园',this)">🎓 伯雅校园</button></div>
+<div class="tool-tabs" id="toolTabs"><button class="tool-tab active" onclick="openServiceDetail('all',this)">全部</button><button class="tool-tab" onclick="openServiceDetail('AI人工智能',this)">🤖 AI人工智能</button><button class="tool-tab" onclick="openServiceDetail('自媒体',this)">📱 自媒体</button><button class="tool-tab" onclick="openServiceDetail('电商',this)">🛒 电商</button><button class="tool-tab" onclick="openServiceDetail('教育',this)">📚 教育</button><button class="tool-tab" onclick="openServiceDetail('宠物',this)">🐾 宠物</button><button class="tool-tab" onclick="openServiceDetail('伯雅校园',this)">🎓 伯雅校园</button></div>
 <div style="position:relative;flex:1;min-width:220px;max-width:400px">
 <input type="text" id="toolSearch" placeholder="🔍 搜索工具名称或功能..." style="width:100%;padding:10px 16px;border:2px solid #e5e7eb;border-radius:12px;font-size:14px;outline:none;transition:border .3s" onfocus="this.style.borderColor='#dc2626'" onblur="this.style.borderColor='#e5e7eb'" oninput="searchTools(this.value)">
 <div id="searchCount" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:12px;color:#9ca3af"></div>
@@ -4424,7 +4424,7 @@ setTimeout(function(){
       mhtml+='<div style="width:48px;height:48px;border-radius:12px;background:'+m.gradient+';display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:16px">'+m.icon+'</div>';
       mhtml+='<h3 style="margin:0 0 8px;font-size:18px;color:#1a1a1a">'+m.name+'</h3>';
       mhtml+='<p style="margin:0;font-size:13px;color:#888;line-height:1.6">'+m.summary+'</p>';
-      mhtml+='<div style="margin-top:16px;font-size:12px;color:'+m.color+';font-weight:600">'+m.svc+' \u9879\u670d\u52a1 \u2192</div>';
+      mhtml+='<div style="margin-top:16px;font-size:12px;color:'+m.color+';font-weight:600">'+m.svc+' \u9879\u670d\u52a1 \u2192 \u67e5\u770b\u5957\u9910</div>';
       mhtml+='</div>';
     });
     mg.innerHTML=mhtml;
@@ -4729,11 +4729,33 @@ window.openServiceDetail=function(catId){
     var isHot=p.hot||false,bc=isHot?d.color:'#e8e8e8',badge=isHot?'<div style="position:absolute;top:-1px;right:16px;background:'+d.color+';color:#fff;font-size:11px;padding:3px 10px;border-radius:0 0 8px 8px">推荐</div>':'';
     h+='<div style="background:#fff;border:1px solid '+bc+';border-radius:16px;padding:24px 20px;position:relative;transition:all .3s">'+badge+'<h3 style="margin:0 0 4px;font-size:17px;color:#1a1a1a">'+p.name+'</h3><p style="margin:0 0 16px;font-size:12px;color:#888">'+p.desc+'</p><div style="margin-bottom:16px"><span style="font-size:28px;font-weight:700;color:'+d.color+'">'+p.price+'</span></div><ul style="list-style:none;padding:0;margin:0 0 20px;font-size:13px;color:#555;line-height:2.2">';
     p.features.forEach(function(f){h+='<li style="padding-left:18px;position:relative"><span style="position:absolute;left:0;color:'+d.color+'">✓</span>'+f+'</li>';});
-    h+='</ul><button onclick="alert(\'正在为您跳转到'+d.name+' - '+p.name+'支付页面，请稍候...\')" style="width:100%;padding:10px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;background:'+(isHot?d.color:'#f3f4f6')+';color:'+(isHot?'#fff':'#333')+'">立即开通</button></div>';
+    h+='</ul><button onclick="showPayModal(d.name+' '+p.name,p.price)" style="width:100%;padding:10px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;background:'+(isHot?d.color:'#f3f4f6')+';color:'+(isHot?'#fff':'#333')+'">立即开通</button></div>';
   });
   h+='</div>';
   document.getElementById('serviceDetailBody').innerHTML=h;
   document.getElementById('serviceDetailModal').style.display='flex';
+};
+</script>
+
+<script>
+// === 支付弹窗 ===
+(function(){
+  var pm=document.createElement('div');pm.id='payModal';
+  pm.style.cssText='display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:10001;justify-content:center;align-items:center;';
+  pm.innerHTML='<div style="background:#fff;border-radius:20px;max-width:420px;width:90%;max-height:85vh;overflow-y:auto;padding:0;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.3)"><button onclick="document.getElementById(\'payModal\').style.display=\'none\'" style="position:absolute;top:12px;right:16px;background:#f3f4f6;border:none;width:30px;height:30px;border-radius:50%;font-size:16px;cursor:pointer;z-index:10;color:#666">\u2715</button><div id="payModalBody"></div></div>';
+  pm.addEventListener('click',function(e){if(e.target===pm)pm.style.display='none';});
+  document.body.appendChild(pm);
+})();
+
+window.showPayModal=function(name,price){
+  var body=document.getElementById('payModalBody');
+  body.innerHTML='<div style="padding:28px 24px 20px;text-align:center"><div style="width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#fbbf24,#f59e0b);margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:22px">\ud83d\udcb0</div><h3 style="margin:0 0 6px;font-size:18px;color:#1a1a1a">\u8d2d\u4e70 '+(name||'\u670d\u52a1')+'</h3><p style="margin:0 0 20px;font-size:14px;color:#888">\u8bf7\u9009\u62e9\u652f\u4ed8\u65b9\u5f0f\uff0c\u626b\u7801\u5b8c\u6210\u652f\u4ed8\u540e\u7b97\u529b\u81ea\u52a8\u5230\u8d26</p><div style="font-size:24px;font-weight:800;color:#ef4444;margin-bottom:20px">'+(price||'')+'</div></div><div style="display:flex;gap:12px;padding:0 24px 24px;justify-content:center"><div style="flex:1;text-align:center"><div style="border:1px solid #1677ff;border-radius:12px;padding:12px 8px"><div style="font-size:12px;color:#1677ff;font-weight:700;margin-bottom:8px">\u652f\u4ed8\u5b9d</div><img src="https://raw.githubusercontent.com/H0int/lsjy-app/main/pay-alipay.jpg" style="width:100%;max-width:150px;border-radius:8px" onerror="this.style.display=\'none\'"><p style="margin:6px 0 0;font-size:11px;color:#888">\u626b\u7801\u652f\u4ed8</p></div></div><div style="flex:1;text-align:center"><div style="border:1px solid #07c160;border-radius:12px;padding:12px 8px"><div style="font-size:12px;color:#07c160;font-weight:700;margin-bottom:8px">\u5fae\u4fe1\u652f\u4ed8</div><img src="https://raw.githubusercontent.com/H0int/lsjy-app/main/pay-wechat.png" style="width:100%;max-width:150px;border-radius:8px" onerror="this.style.display=\'none\'"><p style="margin:6px 0 0;font-size:11px;color:#888">\u626b\u7801\u652f\u4ed8</p></div></div><div style="flex:1;text-align:center"><div style="border:1px solid #12b7f5;border-radius:12px;padding:12px 8px"><div style="font-size:12px;color:#12b7f5;font-weight:700;margin-bottom:8px">QQ\u94b1\u5305</div><img src="https://raw.githubusercontent.com/H0int/lsjy-app/main/pay-qq.jpg" style="width:100%;max-width:150px;border-radius:8px" onerror="this.style.display=\'none\'"><p style="margin:6px 0 0;font-size:11px;color:#888">\u626b\u7801\u652f\u4ed8</p></div></div></div><div style="padding:0 24px 24px"><button onclick="confirmPaid(\''+(name||'\')+'\')" style="width:100%;padding:12px;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff">\u2705 \u6211\u5df2\u5b8c\u6210\u652f\u4ed8</button><p style="text-align:center;margin-top:10px;font-size:11px;color:#aaa">\u652f\u4ed8\u5b8c\u6210\u540e\u70b9\u51fb\u4e0a\u65b9\u6309\u94ae\uff0c\u7ba1\u7406\u5458\u4f1a\u572824\u5c0f\u65f6\u5185\u786e\u8ba4\u5e76\u5230\u8d26</p></div>';
+  document.getElementById('payModal').style.display='flex';
+};
+
+window.confirmPaid=function(name){
+  document.getElementById('payModal').style.display='none';
+  alert('\u652f\u4ed8\u786e\u8ba4\u5df2\u63d0\u4ea4\uff01\u8ba2\u5355\uff1a'+name+'\n\n\u7ba1\u7406\u5458\u5c06\u572824\u5c0f\u65f6\u5185\u786e\u8ba4\u652f\u4ed8\u5e76\u4e3a\u60a8\u5230\u8d26\u7b97\u529b/\u670d\u52a1\u3002\n\u5982\u6709\u7591\u95ee\u8bf7\u8054\u7cfb\u5ba2\u670d\u3002');
 };
 </script>
 </body>
