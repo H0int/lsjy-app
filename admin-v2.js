@@ -610,6 +610,19 @@ function initV2(){
       }
     }
   }
+  // 自动确保默认管理员账号存在（账号admin，密码admin123）
+  (function(){
+    try{
+      var users=getUsers();
+      var hasAdmin=users.some(function(u){return u.username==='admin'});
+      if(!hasAdmin){
+        var pwd=typeof encryptPwd==='function'?encryptPwd('admin123'):btoa('admin123');
+        users.push({username:'admin',password:pwd,nickname:'超级管理员',role:'admin',phone:'',qq:'',wx:'',created:new Date().toISOString()});
+        localStorage.setItem('lsjy3_users',JSON.stringify(users));
+        console.log('[admin-v2] 默认管理员已创建：admin / admin123');
+      }
+    }catch(e){console.log('[admin-v2] 创建管理员失败:',e)}
+  })();
 }
 
 // DOM ready
