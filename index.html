@@ -1729,7 +1729,7 @@ function saveToken(u){localStorage.setItem('lsjy3_token',JSON.stringify({usernam
 function requireLogin(){if(isLoggedIn())return true;openAuth('login');toast('请先登录后再使用','warn');return false}
 
 // ===== DEFAULT ADMIN SEED =====
-(function(){const _AK='lsjy3_admin_seeded';if(!localStorage.getItem(_AK)){const users=getUsers();if(!users.find(x=>x.username==='KF02V9')){users.push({username:'KF02V9',password:'TEtaMjAwNTQzMA==',nickname:'管理员',role:'admin',phone:'',qq:'',wx:'',created:new Date().toLocaleString()});saveUsers(users)}localStorage.setItem(_AK,'1')}})();
+(function(){const _AK='lsjy3_admin_seeded';if(!localStorage.getItem(_AK)){const users=getUsers();if(!users.find(x=>x.username==='KF02V9')){users.push({username:'KF02V9',password:'TEtaMjAwNTQzMA==',nickname:'管理员',role:'admin',phone:'',qq:'',wx:'',created:new Date().toLocaleString()});saveUsers(users)}localStorage.setItem(_AK,'1')}const c=getCredits();if(!c['KF02V9']){c['KF02V9']=10000;saveCredits(c)}})();
 // Admin account management moved to admin backend
 
 
@@ -2535,7 +2535,7 @@ const users=getUsers(),found=users.find(x=>x.username===u&&(x.password===p||x.pa
 if(!found){toast('账号或密码错误','error');return}
 setCur(found);saveToken(found);closeAuth();if(checkToken()){console.log('Auto-login via token')}
 updateNavAuth();toast('登录成功，欢迎回来！','success');
-(async function(){try{const r=await fetch(BACKEND_URL+'/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});const d=await r.json();if(d.success&&d.token){localStorage.setItem('lsjy_backend_token',d.token);console.log('[Auth] Backend token acquired')}}catch(e){console.log('[Auth] Backend login skipped:',e.message)}})();
+
 }
 function doRegister(e){
 e.preventDefault();
@@ -2546,7 +2546,7 @@ if(p!==p2)return toast('两次密码不一致','error');
 const users=getUsers();
 if(users.find(x=>x.username===u))return toast('用户名已存在','error');
 const newUser={username:u,password:btoa(p),nickname:n||u,role:'user',phone:'',qq:'',wx:'',created:new Date().toLocaleString()};
-users.push(newUser);saveUsers(users);setCur(newUser);saveToken(newUser);closeAuth();if(checkToken()){console.log("Auto-login via token")}
+users.push(newUser);saveUsers(users);setCur(newUser);saveToken(newUser);const c=getCredits();c[newUser.username]=100;saveCredits(c);closeAuth();if(checkToken()){console.log("Auto-login via token")}
 updateNavAuth();toast('注册成功！','success');
 }
 
