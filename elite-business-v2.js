@@ -720,19 +720,38 @@ window.doEliteTool = function(id,power,name){
   var output = document.getElementById('eliteOutput_'+id);
   output.innerHTML = '<div style="text-align:center;padding:20px"><div class="ai-spinner" style="margin:0 auto"></div><p style="margin-top:12px;color:#6B7280">AI正在生成'+name+'...</p></div>';
   
-  setTimeout(function(){
-    output.innerHTML = `
-    <div style="padding:16px;background:#D1FAE5;border-radius:12px;margin-bottom:16px">
-      <div style="font-weight:700;color:#065F46">&#x2705; ${name}生成完成</div>
-      <div style="font-size:12px;color:#065F46;margin-top:4px">消耗${power}算力</div>
-    </div>
-    <div class="cw-output" style="min-height:200px">${name}内容将基于您输入的需求：\n\n"${input.value.trim().substring(0,100)}..."\n\n进行专业分析生成。\n\n完整版本需连接后端AI服务。\n\n---\n专业提示：\n1. 描述越详细，生成结果越精准\n2. 可多次生成对比选择最佳版本\n3. 建议结合行业模型获得更专业的内容</div>
-    <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
-      <button class="btn btn-o btn-sm" onclick="navigator.clipboard.writeText(document.querySelector('#eliteOutput_${id} .cw-output').textContent);toast('已复制','success')">复制</button>
-      <button class="btn btn-p btn-sm" onclick="doEliteTool('${id}',${power},'${name}')">重新生成</button>
-    </div>`;
-    if(typeof toast==='function')toast(name+'生成成功','success');
-  },1500);
+  var userText = input.value.trim();
+  var aiPrompt = '请作为'+name+'专业顾问，根据以下用户需求生成高质量的专业内容。要求：内容专业、结构清晰、可直接使用。\n\n用户需求：'+userText;
+  if(typeof aiGenerateText==='function'){
+    aiGenerateText(aiPrompt,'你是'+name+'领域的资深专家，请提供专业、详实、可落地的内容。使用markdown格式，包含标题和小标题。').then(function(text){
+      if(!text){
+        output.innerHTML='<div style="padding:16px;background:#FEF2F2;border-radius:12px;color:#DC2626">AI生成失败，请稍后重试或检查网络连接。算力已退还。</div>';
+        if(typeof refundCredits==='function')refundCredits(power);
+        if(typeof toast==='function')toast('AI生成失败，算力已退还','error');
+        return;
+      }
+      var safeText = text.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+      output.innerHTML = `
+      <div style="padding:16px;background:#D1FAE5;border-radius:12px;margin-bottom:16px">
+        <div style="font-weight:700;color:#065F46">&#x2705; ${name}生成完成</div>
+        <div style="font-size:12px;color:#065F46;margin-top:4px">消耗${power}算力 | 豆包AI生成</div>
+      </div>
+      <div class="cw-output" style="min-height:200px;line-height:1.8">${safeText}</div>
+      <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
+        <button class="btn btn-o btn-sm" onclick="navigator.clipboard.writeText(document.querySelector('#eliteOutput_${id} .cw-output').textContent);toast('已复制','success')">复制</button>
+        <button class="btn btn-p btn-sm" onclick="doEliteTool('${id}',${power},'${name}')">重新生成</button>
+      </div>`;
+      if(typeof toast==='function')toast(name+'生成成功','success');
+    }).catch(function(err){
+      output.innerHTML='<div style="padding:16px;background:#FEF2F2;border-radius:12px;color:#DC2626">AI调用异常：'+err.message+'。算力已退还。</div>';
+      if(typeof refundCredits==='function')refundCredits(power);
+      if(typeof toast==='function')toast('AI调用异常','error');
+    });
+  } else {
+    output.innerHTML='<div style="padding:16px;background:#FEF3C7;border-radius:12px;color:#92400e">AI服务暂不可用，请刷新页面重试。算力已退还。</div>';
+    if(typeof refundCredits==='function')refundCredits(power);
+    if(typeof toast==='function')toast('AI服务暂不可用','warn');
+  }
 };
 
 // ===== 17. 精英模式下的表单暗色适配补充 =====
