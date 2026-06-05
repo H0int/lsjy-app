@@ -36,7 +36,7 @@ function initTeamData(){
       plan:'basic', // basic/pro/enterprise
       masterUsername: null,
       members: [],
-      creditPool: 100000,
+      creditPool: 0,
       roles: {admin:[],editor:[],viewer:[]},
       createdAt: new Date().toISOString(),
       settings: {industry:'ecom',brandName:'',city:'',desc:''}
