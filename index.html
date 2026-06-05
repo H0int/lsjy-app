@@ -2008,37 +2008,38 @@ async function doGenericAI(toolId){
   }catch(e){resultEl.innerHTML='<div style="color:var(--err);padding:16px">❌ 生成失败: '+(e.message||e)+'</div>'}
 }
 
-const _TOOL_MAP={copywriter:renderCopywriter,watermark:renderWatermark,rewrite:renderRewrite,hashtag:renderHashtag,viralVideo:renderViralVideo,digitalHuman:renderDigitalHuman,voiceClone:renderVoiceClone,videoLib:renderVideoLib,aigc:renderAIGC,photoEdit:renderPhotoEdit,audioEdit:renderAudioEdit,accompaniment:renderAccompaniment,docGen:renderDocGen,credits:renderCredits,redeemCode:renderRedeemCode,knowledgeBase:renderKnowledgeBase,creditLogs:renderCreditLogs,videoParse:renderVideoParse,videoClip:renderVideoClip,img2video:renderImg2Video,employeeAcct:renderEmployeeAcct,taskCenter:renderTaskCenter,article:()=>renderGenericAIText('article'),email:()=>renderGenericAIText('email'),resume:()=>renderGenericAIText('resume'),proposal:()=>renderGenericAIText('proposal'),poetry:()=>renderGenericAIText('poetry'),novel:()=>renderGenericAIText('novel'),slogan:()=>renderGenericAIText('slogan'),summarize:()=>renderGenericAIText('summarize'),commentReply:()=>renderGenericAIText('commentReply'),productDesc:()=>renderGenericAIText('productDesc'),adCopy:()=>renderGenericAIText('adCopy'),liveScript:()=>renderGenericAIText('liveScript'),seoKeywords:()=>renderGenericAIText('seoKeywords'),titleGen:()=>renderGenericAIText('titleGen'),socialPost:()=>renderGenericAIText('socialPost'),brandStory:()=>renderGenericAIText('brandStory'),videoSrt:()=>renderGenericAIText('videoSrt'),videoSum:()=>renderGenericAIText('videoSum'),videoTag:()=>renderGenericAIText('videoTag'),soundEffect:()=>renderGenericAIText('soundEffect'),musicGen:()=>renderGenericAIText('musicGen'),podcast:()=>renderGenericAIText('podcast'),ringtone:()=>renderGenericAIText('ringtone'),pptOutline:()=>renderGenericAIText('pptOutline'),meetingNotes:()=>renderGenericAIText('meetingNotes'),translater:()=>renderGenericAIText('translater'),proofread:()=>renderGenericAIText('proofread'),mindMap:()=>renderGenericAIText('mindMap'),excelFormula:()=>renderGenericAIText('excelFormula'),codeHelper:()=>renderGenericAIText('codeHelper'),contract:()=>renderGenericAIText('contract'),report:()=>renderGenericAIText('report'),qrCode:()=>renderUtilityTool('qrCode'),qrParse:()=>renderUtilityTool('qrParse'),shortUrl:()=>renderUtilityTool('shortUrl'),imgCompress:()=>renderUtilityTool('imgCompress'),imgFormat:()=>renderUtilityTool('imgFormat'),imgCrop:()=>renderUtilityTool('imgCrop'),imgWatermark:()=>renderUtilityTool('imgWatermark'),imgOcr:()=>renderUtilityTool('imgOcr'),colorPicker:()=>renderUtilityTool('colorPicker'),unitConvert:()=>renderUtilityTool('unitConvert'),tsConvert:()=>renderUtilityTool('tsConvert'),hashGen:()=>renderUtilityTool('hashGen'),base64Code:()=>renderUtilityTool('base64Code'),wordCount:()=>renderUtilityTool('wordCount'),diffText:()=>renderUtilityTool('diffText'),mdEditor:()=>renderUtilityTool('mdEditor'),jsonFormat:()=>renderUtilityTool('jsonFormat'),pwdGen:()=>renderUtilityTool('pwdGen'),ipLookup:()=>renderUtilityTool('ipLookup'),weather:()=>renderUtilityTool('weather'),dailyNews:()=>renderUtilityTool('dailyNews'),joke:()=>renderUtilityTool('joke'),horoscope:()=>renderUtilityTool('horoscope'),calendar:()=>renderUtilityTool('calendar'),countdown:()=>renderUtilityTool('countdown'),bmiCalc:()=>renderUtilityTool('bmiCalc'),loanCalc:()=>renderUtilityTool('loanCalc'),nameGen:()=>renderUtilityTool('nameGen'),historyToday:()=>renderUtilityTool('historyToday'),idiomDict:()=>renderUtilityTool('idiomDict'),dataBackup:()=>renderUtilityTool('dataBackup'),dataExport:()=>renderUtilityTool('dataExport'),dataClean:()=>renderUtilityTool('dataClean'),removeBg:()=>renderUtilityTool('removeBg'),upscale:()=>renderUtilityTool('upscale'),avatar:()=>renderUtilityTool('avatar'),poster:()=>renderUtilityTool('poster'),colorize:()=>renderUtilityTool('colorize'),sketch:()=>renderUtilityTool('sketch'),img2img:()=>renderUtilityTool('img2img'),text2img:()=>renderUtilityTool('text2img'),videoReverse:()=>renderUtilityTool('videoReverse'),videoGif:()=>renderUtilityTool('videoGif'),videoCover:()=>renderUtilityTool('videoCover'),speech2text:()=>renderUtilityTool('speech2text'),audioMerge:()=>renderUtilityTool('audioMerge'),audioSplit:()=>renderUtilityTool('audioSplit')}
+const _TOOL_MAP={copywriter:renderCopywriter,watermark:renderWatermark,rewrite:renderRewrite,hashtag:renderHashtag,viralVideo:renderViralVideo,digitalHuman:renderDigitalHuman,voiceClone:renderVoiceClone,videoLib:renderVideoLib,aigc:renderAIGC,photoEdit:renderPhotoEdit,audioEdit:renderAudioEdit,accompaniment:renderAccompaniment,docGen:renderDocGen,credits:renderCredits,redeemCode:renderRedeemCode,knowledgeBase:renderKnowledgeBase,creditLogs:renderCreditLogs,videoParse:renderVideoParse,videoClip:renderVideoClip,img2video:renderImg2Video,employeeAcct:renderEmployeeAcct,taskCenter:renderTaskCenter,article:()=>renderGenericAIText('article'),email:()=>renderGenericAIText('email'),resume:()=>renderGenericAIText('resume'),proposal:()=>renderGenericAIText('proposal'),poetry:()=>renderGenericAIText('poetry'),novel:()=>renderGenericAIText('novel'),slogan:()=>renderGenericAIText('slogan'),summarize:()=>renderGenericAIText('summarize'),commentReply:()=>renderGenericAIText('commentReply'),productDesc:()=>renderGenericAIText('productDesc'),adCopy:()=>renderGenericAIText('adCopy'),liveScript:()=>renderGenericAIText('liveScript'),seoKeywords:()=>renderGenericAIText('seoKeywords'),titleGen:()=>renderGenericAIText('titleGen'),socialPost:()=>renderGenericAIText('socialPost'),brandStory:()=>renderGenericAIText('brandStory'),videoSrt:()=>renderGenericAIText('videoSrt'),videoSum:()=>renderGenericAIText('videoSum'),videoTag:()=>renderGenericAIText('videoTag'),soundEffect:()=>renderGenericAIText('soundEffect'),musicGen:()=>renderGenericAIText('musicGen'),podcast:()=>renderGenericAIText('podcast'),ringtone:()=>renderGenericAIText('ringtone'),pptOutline:()=>renderGenericAIText('pptOutline'),meetingNotes:()=>renderGenericAIText('meetingNotes'),translater:()=>renderGenericAIText('translater'),proofread:()=>renderGenericAIText('proofread'),mindMap:()=>renderGenericAIText('mindMap'),excelFormula:()=>renderGenericAIText('excelFormula'),codeHelper:()=>renderGenericAIText('codeHelper'),contract:()=>renderGenericAIText('contract'),report:()=>renderGenericAIText('report'),qrCode:()=>renderUtilityTool('qrCode'),qrParse:()=>renderUtilityTool('qrParse'),shortUrl:()=>renderUtilityTool('shortUrl'),imgCompress:()=>renderUtilityTool('imgCompress'),imgFormat:()=>renderUtilityTool('imgFormat'),imgCrop:()=>renderUtilityTool('imgCrop'),imgWatermark:()=>renderUtilityTool('imgWatermark'),imgOcr:()=>renderUtilityTool('imgOcr'),colorPicker:()=>renderUtilityTool('colorPicker'),unitConvert:()=>renderUtilityTool('unitConvert'),tsConvert:()=>renderUtilityTool('tsConvert'),hashGen:()=>renderUtilityTool('hashGen'),base64Code:()=>renderUtilityTool('base64Code'),wordCount:()=>renderUtilityTool('wordCount'),diffText:()=>renderUtilityTool('diffText'),mdEditor:()=>renderUtilityTool('mdEditor'),jsonFormat:()=>renderUtilityTool('jsonFormat'),pwdGen:()=>renderUtilityTool('pwdGen'),ipLookup:()=>renderUtilityTool('ipLookup'),weather:()=>renderUtilityTool('weather'),dailyNews:()=>renderUtilityTool('dailyNews'),joke:()=>renderUtilityTool('joke'),horoscope:()=>renderUtilityTool('horoscope'),calendar:()=>renderUtilityTool('calendar'),countdown:()=>renderUtilityTool('countdown'),bmiCalc:()=>renderUtilityTool('bmiCalc'),loanCalc:()=>renderUtilityTool('loanCalc'),nameGen:()=>renderUtilityTool('nameGen'),historyToday:()=>renderUtilityTool('historyToday'),idiomDict:()=>renderUtilityTool('idiomDict'),dataBackup:()=>renderUtilityTool('dataBackup'),dataExport:()=>renderUtilityTool('dataExport'),dataClean:()=>renderUtilityTool('dataClean'),removeBg:()=>renderUtilityTool('removeBg'),upscale:()=>renderUtilityTool('upscale'),avatar:()=>renderUtilityTool('avatar'),poster:()=>renderUtilityTool('poster'),colorize:()=>renderUtilityTool('colorize'),sketch:()=>renderUtilityTool('sketch'),img2img:()=>renderUtilityTool('img2img'),text2img:()=>renderUtilityTool('text2img'),videoReverse:()=>renderUtilityTool('videoReverse'),videoGif:()=>renderUtilityTool('videoGif'),videoCover:()=>renderUtilityTool('videoCover'),speech2text:()=>renderUtilityTool('speech2text'),audioMerge:()=>renderUtilityTool('audioMerge'),audioSplit:()=>renderUtilityTool('audioSplit')};
 // === 205工具ID桥接 ===
 (function(){
-  _TOOL_MAP['ad_copy']=()=>renderGenericAIText('adCopy');
-  _TOOL_MAP['audio_fix']=_TOOL_MAP['audioEdit'];
-  _TOOL_MAP['bg_remove']=_TOOL_MAP['removeBg'];
-  _TOOL_MAP['brand_story']=()=>renderGenericAIText('brandStory');
-  _TOOL_MAP['comment_reply']=()=>renderGenericAIText('commentReply');
-  _TOOL_MAP['cover_extract']=_TOOL_MAP['videoCover'];
-  _TOOL_MAP['digital_human']=_TOOL_MAP['digitalHuman'];
-  _TOOL_MAP['img_edit']=_TOOL_MAP['photoEdit'];
-  _TOOL_MAP['live_script']=()=>renderGenericAIText('liveScript');
-  _TOOL_MAP['logo_gen']=_TOOL_MAP['avatar'];
-  _TOOL_MAP['meeting_notes']=()=>renderGenericAIText('meetingNotes');
-  _TOOL_MAP['music_gen']=_TOOL_MAP['musicGen'];
-  _TOOL_MAP['ppt_outline']=()=>renderGenericAIText('pptOutline');
-  _TOOL_MAP['product_desc']=()=>renderGenericAIText('productDesc');
-  _TOOL_MAP['sfx']=_TOOL_MAP['soundEffect'];
-  _TOOL_MAP['social_post']=()=>renderGenericAIText('socialPost');
-  _TOOL_MAP['subtitle']=_TOOL_MAP['videoSrt'];
-  _TOOL_MAP['super_res']=_TOOL_MAP['upscale'];
-  _TOOL_MAP['tts']=_TOOL_MAP['voiceClone'];
-  _TOOL_MAP['txt2img']=_TOOL_MAP['text2img'];
-  _TOOL_MAP['video2gif']=_TOOL_MAP['videoGif'];
-  _TOOL_MAP['video_edit']=_TOOL_MAP['videoClip'];
-  _TOOL_MAP['video_parse']=_TOOL_MAP['videoParse'];
-  _TOOL_MAP['video_reverse']=_TOOL_MAP['videoReverse'];
-  _TOOL_MAP['video_summary']=_TOOL_MAP['videoSum'];
-  _TOOL_MAP['video_tag']=_TOOL_MAP['videoTag'];
+_TOOL_MAP['ad_copy']=()=>renderGenericAIText('adCopy');
+_TOOL_MAP['audio_fix']=_TOOL_MAP['audioEdit'];
+_TOOL_MAP['bg_remove']=_TOOL_MAP['removeBg'];
+_TOOL_MAP['brand_story']=()=>renderGenericAIText('brandStory');
+_TOOL_MAP['comment_reply']=()=>renderGenericAIText('commentReply');
+_TOOL_MAP['cover_extract']=_TOOL_MAP['videoCover'];
+_TOOL_MAP['digital_human']=_TOOL_MAP['digitalHuman'];
+_TOOL_MAP['img_edit']=_TOOL_MAP['photoEdit'];
+_TOOL_MAP['live_script']=()=>renderGenericAIText('liveScript');
+_TOOL_MAP['logo_gen']=_TOOL_MAP['avatar'];
+_TOOL_MAP['meeting_notes']=()=>renderGenericAIText('meetingNotes');
+_TOOL_MAP['music_gen']=_TOOL_MAP['musicGen'];
+_TOOL_MAP['ppt_outline']=()=>renderGenericAIText('pptOutline');
+_TOOL_MAP['product_desc']=()=>renderGenericAIText('productDesc');
+_TOOL_MAP['sfx']=_TOOL_MAP['soundEffect'];
+_TOOL_MAP['social_post']=()=>renderGenericAIText('socialPost');
+_TOOL_MAP['subtitle']=_TOOL_MAP['videoSrt'];
+_TOOL_MAP['super_res']=_TOOL_MAP['upscale'];
+_TOOL_MAP['tts']=_TOOL_MAP['voiceClone'];
+_TOOL_MAP['txt2img']=_TOOL_MAP['text2img'];
+_TOOL_MAP['video2gif']=_TOOL_MAP['videoGif'];
+_TOOL_MAP['video_desc']=_TOOL_MAP['videoTag'];
+_TOOL_MAP['video_edit']=_TOOL_MAP['videoClip'];
+_TOOL_MAP['video_parse']=_TOOL_MAP['videoParse'];
+_TOOL_MAP['video_reverse']=_TOOL_MAP['videoReverse'];
+_TOOL_MAP['video_summary']=_TOOL_MAP['videoSum'];
+_TOOL_MAP['video_tag']=_TOOL_MAP['videoTag'];
+_TOOL_MAP['voiceover']=_TOOL_MAP['voiceClone'];
 })();
-;
 const _TOOL_COST={viralVideo:50,digitalHuman:100,voiceClone:30,aigc:20,photoEdit:30,audioEdit:25,accompaniment:40,docGen:35};
 function openTool(id){
 const overlay=document.getElementById('toolOverlay');
