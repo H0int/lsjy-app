@@ -38,6 +38,9 @@ body{font-family:'Inter','Noto Sans SC',-apple-system,'PingFang SC','Microsoft Y
 /* ===== 商业精英版专属样式 ===== */
 .elite-toggle-btn{background:linear-gradient(135deg,#EAB308,#CA8A04);color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 2px 12px rgba(234,179,8,.35);transition:all .3s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .elite-toggle-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(234,179,8,.45)}
+.credit-center-btn{background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#78350f;border:none;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(251,191,36,.3);transition:all .2s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.credit-center-btn:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(251,191,36,.4)}
+body.elite-mode .credit-center-btn{background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#0F172A}
 .elite-fab{position:fixed;bottom:24px;right:24px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#EAB308,#CA8A04);color:#fff;border:none;font-size:20px;cursor:pointer;box-shadow:0 4px 20px rgba(234,179,8,.4);z-index:9999;display:flex;align-items:center;justify-content:center;transition:all .3s}
 .elite-fab:hover{transform:scale(1.1);box-shadow:0 6px 30px rgba(234,179,8,.5)}
 .elite-fab-pulse{animation:elitePulse 2s infinite}

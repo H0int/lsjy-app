@@ -16,25 +16,21 @@ if(pricingEl&&pricingEl.nextElementSibling){
   while(tmp.firstChild) pricingEl.parentNode.insertBefore(tmp.firstChild,pricingEl.nextElementSibling);
 }
 
-// 3. Hero区域添加商业精英版按钮
-var heroActions=document.querySelector('.hero-actions');
-if(heroActions){
-  var eliteBtn=document.createElement('button');
-  eliteBtn.className='elite-toggle-btn';
-  eliteBtn.innerHTML='<span>♦</span> 商业精英版';
-  eliteBtn.onclick=function(e){e.stopPropagation();toggleEliteMode()};
-  heroActions.appendChild(eliteBtn);
-}
+// 3. Hero区域不再重复注入精英版按钮
 
-// 4. 导航栏右侧添加商业精英版按钮
+// 4. 导航栏右侧添加算力中心按钮
 var navRight=document.getElementById('navRight');
 if(navRight){
-  var navEliteBtn=document.createElement('button');
-  navEliteBtn.className='elite-toggle-btn';
-  navEliteBtn.style.cssText='font-size:12px;padding:6px 14px';
-  navEliteBtn.innerHTML='<span>♦</span> 精英版';
-  navEliteBtn.onclick=function(){toggleEliteMode()};
-  navRight.insertBefore(navEliteBtn,navRight.firstChild);
+  var navCreditBtn=document.createElement('button');
+  navCreditBtn.className='credit-center-btn';
+  navCreditBtn.style.cssText='font-size:12px;padding:6px 14px;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#78350f;border:none;border-radius:8px;cursor:pointer;font-weight:600;box-shadow:0 2px 8px rgba(251,191,36,.3);transition:all .2s';
+  navCreditBtn.innerHTML='<span>\u26A1</span> 算力中心';
+  navCreditBtn.id='navCreditCenterBtn';
+  navCreditBtn.onclick=function(){
+    if(typeof showUserProfile==='function') showUserProfile();
+    else document.getElementById('navLoginBtn')?.click();
+  };
+  navRight.insertBefore(navCreditBtn,navRight.firstChild);
 }
 
 // 5. 悬浮按钮
