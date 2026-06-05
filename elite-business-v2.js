@@ -475,9 +475,9 @@ setTimeout(function(){
   // 在个人中心区域添加企业管理入口
   var userProfileBtn = document.querySelector('#navRight a:last-of-type');
   if(userProfileBtn && userProfileBtn.textContent.indexOf('登录')>=0){
-    var teamBtn = document.createElement('button');
-    teamBtn.className = 'elite-toggle-btn';
-    teamBtn.style.cssText = 'font-size:11px;padding:5px 10px';
+    var teamBtn = document.createElement('a');
+    teamBtn.className = 'nav-link';
+    teamBtn.style.cssText = 'font-size:12px;padding:4px 8px;color:#6B7280;cursor:pointer;font-weight:500';
     teamBtn.innerHTML = '&#x1F3E2; 企业';
     teamBtn.onclick = function(){openTeamPanel()};
     userProfileBtn.parentNode.insertBefore(teamBtn,userProfileBtn);
