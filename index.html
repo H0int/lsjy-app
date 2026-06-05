@@ -622,9 +622,10 @@ document.getElementById('toolPanel').innerHTML=`
 <div class="tool-body">
 <div style="padding:20px;background:linear-gradient(135deg,#8b5cf6,#a78bfa);border-radius:16px;color:#fff;text-align:center;margin-bottom:20px">
 <div style="font-size:36px;margin-bottom:8px">🎞️</div>
-<div style="font-weight:900;font-size:18px">AI图生视频</div>
-<div style="opacity:.8;margin-top:4px">上传图片，AI生成动态效果视频</div>
+<div style="font-weight:900;font-size:18px">图片动态视频生成</div>
+<div style="opacity:.8;margin-top:4px">上传静态图片，一键生成带动态效果的视频（zoom/平移/旋转/Ken Burns）</div>
 <div class="badge" style="background:rgba(255,255,255,.2);color:#fff;margin-top:8px">60算力/次</div>
+<div style="margin-top:8px;font-size:11px;opacity:.7">输出 .webm 格式视频，可直接下载分享</div>
 </div>
 <div style="margin-bottom:16px">
 <label style="font-size:12px;font-weight:600;color:var(--b);display:block;margin-bottom:6px">上传图片</label>
@@ -698,7 +699,8 @@ const blob=new Blob(blobs,{type:'video/webm'});
 const url=URL.createObjectURL(blob);
 output.innerHTML=`<div style="padding:16px;background:#dcfce7;border-radius:12px;margin-bottom:16px">
 <div style="font-weight:700;color:#166534"><i class="fa-solid fa-check-circle"></i> 动态视频生成完成</div>
-<div style="font-size:12px;color:#166534;margin-top:4px">效果: ${_i2vEffect} | 时长: ${_i2vDur}秒</div>
+<div style="font-size:12px;color:#166534;margin-top:4px">效果: ${_i2vEffect} | 时长: ${_i2vDur}秒 | 格式: WebM</div>
+<div style="font-size:11px;color:#166534;margin-top:2px;opacity:.8">视频已可直接下载或嵌入其他平台使用</div>
 </div>
 <video controls style="width:100%;border-radius:12px;margin-bottom:12px;max-height:400px" src="${url}" loop autoplay></video>
 <div style="display:flex;gap:8px"><a href="${url}" download="i2v_${Date.now()}.webm" class="act-btn ok" style="padding:10px 20px;text-decoration:none"><i class="fa-solid fa-download"></i> 下载视频</a>
@@ -4101,6 +4103,7 @@ var nc=document.getElementById('navCredits');
 if(nc){nc.style.display=_getCur()?'inline-flex':'none'}
 };
 window.getCredits=_getCredits;window.getCur=_getCur;window.getUserCredits=_getUserCredits;window.updateCreditsUI=_updateCreditsUI;
+window.refundCredits=function(cost){var u=_getCur();if(!u)return;var c=_getCredits();c[u.username]=(c[u.username]||0)+cost;localStorage.setItem('lsjy3_credits',JSON.stringify(c));_updateCreditsUI();};
 
 // ===== 2. BUILD TOOL NAME MAP FROM DOM =====
 var _nameMap={};
@@ -4613,7 +4616,7 @@ btn.disabled=true;btn.textContent='\u23f3 AI\u751f\u6210\u4e2d...';btn.style.opa
 cr[cur.username]=(cr[cur.username]||0)-cost;localStorage.setItem('lsjy3_credits',JSON.stringify(cr));_updateCreditsUI();
 if(isVid){
 btn.disabled=false;btn.textContent='\ud83d\ude80 \u63d0\u4ea4\u751f\u6210';btn.style.opacity='1';
-st.style.display='block';st.innerHTML='<div style="background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:12px;color:#92400e;font-size:13px">\u26a0\ufe0f \u89c6\u9891\u751f\u6210\u529f\u80fd\u5347\u7ea7\u4e2d\uff0c\u6682\u65f6\u65e0\u6cd5\u4f7f\u7528\u3002\u7b97\u529b\u5df2\u9000\u8fd8\u3002</div>';
+st.style.display='block';st.innerHTML='<div style="background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:12px;color:#92400e;font-size:13px">\u2139\ufe0f AI\u89c6\u9891\u751f\u6210\u6b63\u5728\u5347\u7ea7\u4e2d\uff0c\u8bf7\u4f7f\u7528\u300c\u56fe\u7247\u52a8\u6001\u89c6\u9891\u751f\u6210\u300d\u5de5\u5177\uff0c\u652f\u6301\u7f29\u653e/\u5e73\u79fb/\u65cb\u8f6c/Ken Burns\u7b49\u52a8\u753b\u6548\u679c\u3002</div>';
 cr[cur.username]=(cr[cur.username]||0)+cost;localStorage.setItem('lsjy3_credits',JSON.stringify(cr));_updateCreditsUI();return;
 }
 if(isImg){
@@ -4993,7 +4996,7 @@ if(typeof _updateCreditsUI==='function')_updateCreditsUI();
 
 if(isVid){
 if(btn){btn.disabled=false;btn.textContent='\ud83d\ude80 \u63d0\u4ea4\u751f\u6210';btn.style.opacity='1';}
-if(st){st.style.display='block';st.innerHTML='<div style="background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:12px;color:#92400e;font-size:13px">\u26a0\ufe0f \u89c6\u9891\u751f\u6210\u529f\u80fd\u5347\u7ea7\u4e2d\uff0c\u6682\u65f6\u65e0\u6cd5\u4f7f\u7528\u3002\u7b97\u529b\u5df2\u9000\u8fd8\u3002</div>';}
+if(st){st.style.display='block';st.innerHTML='<div style="background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:12px;color:#92400e;font-size:13px">\u2139\ufe0f AI\u89c6\u9891\u751f\u6210\u6b63\u5728\u5347\u7ea7\u4e2d\uff0c\u8bf7\u4f7f\u7528\u300c\u56fe\u7247\u52a8\u6001\u89c6\u9891\u751f\u6210\u300d\u5de5\u5177\uff0c\u652f\u6301\u7f29\u653e/\u5e73\u79fb/\u65cb\u8f6c/Ken Burns\u7b49\u52a8\u753b\u6548\u679c\u3002</div>';}
 cr[cur.username]=(cr[cur.username]||0)+cost;localStorage.setItem('lsjy3_credits',JSON.stringify(cr));
 if(typeof _updateCreditsUI==='function')_updateCreditsUI();return;
 }
