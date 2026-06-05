@@ -1,0 +1,91 @@
+/* ===== ELITE BUSINESS VERSION V2.0 - SUPPLEMENTARY CSS ===== */
+/* 零破坏性原则：仅新增和优化样式，不修改原有元素 */
+
+/* ===== 几何线条纹理背景 ===== */
+body::after {
+  content:'';position:fixed;top:0;left:0;width:100%;height:100%;
+  background-image:
+    linear-gradient(30deg,rgba(185,28,28,.02) 12%,transparent 12.5%,transparent 87%,rgba(185,28,28,.02) 87.5%,rgba(185,28,28,.02)),
+    linear-gradient(150deg,rgba(185,28,28,.02) 12%,transparent 12.5%,transparent 87%,rgba(185,28,28,.02) 87.5%,rgba(185,28,28,.02)),
+    linear-gradient(30deg,rgba(185,28,28,.02) 12%,transparent 12.5%,transparent 87%,rgba(185,28,28,.02) 87.5%,rgba(185,28,28,.02)),
+    linear-gradient(150deg,rgba(185,28,28,.02) 12%,transparent 12.5%,transparent 87%,rgba(185,28,28,.02) 87.5%,rgba(185,28,28,.02)),
+    linear-gradient(60deg,rgba(234,179,8,.015) 25%,transparent 25.5%,transparent 75%,rgba(234,179,8,.015) 75%,rgba(234,179,8,.015)),
+    linear-gradient(60deg,rgba(234,179,8,.015) 25%,transparent 25.5%,transparent 75%,rgba(234,179,8,.015) 75%,rgba(234,179,8,.015));
+  background-size:80px 140px;
+  background-position:0 0,0 0,40px 70px,40px 70px,0 0,40px 70px;
+  pointer-events:none;z-index:-1;opacity:.6
+}
+body.elite-mode::after {
+  background-image:
+    linear-gradient(30deg,rgba(234,179,8,.03) 12%,transparent 12.5%,transparent 87%,rgba(234,179,8,.03) 87.5%,rgba(234,179,8,.03)),
+    linear-gradient(150deg,rgba(234,179,8,.03) 12%,transparent 12.5%,transparent 87%,rgba(234,179,8,.03) 87.5%,rgba(234,179,8,.03)),
+    linear-gradient(30deg,rgba(59,130,246,.02) 12%,transparent 12.5%,transparent 87%,rgba(59,130,246,.02) 87.5%,rgba(59,130,246,.02)),
+    linear-gradient(150deg,rgba(59,130,246,.02) 12%,transparent 12.5%,transparent 87%,rgba(59,130,246,.02) 87.5%,rgba(59,130,246,.02));
+  background-size:80px 140px;background-position:0 0,0 0,40px 70px,40px 70px
+}
+
+/* ===== 企业管理面板内组件暗色适配 ===== */
+body.elite-mode .team-main-panel{background:#1E293B!important}
+body.elite-mode .team-main-panel h2,body.elite-mode .team-main-panel h3,body.elite-mode .team-main-panel h4{color:#F1F5F9!important}
+body.elite-mode .team-main-panel p{color:#94A3B8!important}
+body.elite-mode .team-main-panel [style*="border:1px solid #E5E7EB"],
+body.elite-mode .team-main-panel [style*="border: 1px solid #E5E7EB"]{border-color:rgba(255,255,255,.1)!important;background:rgba(30,41,59,.8)!important}
+body.elite-mode .team-main-panel [style*="border:2px dashed #E5E7EB"],
+body.elite-mode .team-main-panel [style*="border: 2px dashed #E5E7EB"]{border-color:rgba(255,255,255,.15)!important;background:rgba(30,41,59,.6)!important}
+body.elite-mode .team-main-panel input,
+body.elite-mode .team-main-panel select{background:rgba(30,41,59,.8)!important;border-color:rgba(255,255,255,.15)!important;color:#E2E8F0!important}
+body.elite-mode .team-main-panel button:not([class*="elite"]){background:rgba(255,255,255,.1)!important;border-color:rgba(255,255,255,.15)!important;color:#E2E8F0!important}
+body.elite-mode .team-main-panel button:hover:not([class*="elite"]){background:rgba(255,255,255,.15)!important}
+body.elite-mode .exit-popup h2{color:#F1F5F9!important}
+body.elite-mode .exit-popup p{color:#94A3B8!important}
+body.elite-mode .exit-popup input{background:rgba(30,41,59,.8)!important;border-color:rgba(255,255,255,.15)!important;color:#E2E8F0!important}
+
+/* ===== 表单暗色适配 ===== */
+body.elite-mode .fi,body.elite-mode textarea,body.elite-mode select{background:rgba(30,41,59,.8)!important;border-color:rgba(255,255,255,.15)!important;color:#E2E8F0!important}
+body.elite-mode .fi:focus{border-color:rgba(234,179,8,.5)!important;box-shadow:0 0 0 3px rgba(234,179,8,.1)!important}
+body.elite-mode .tool-panel,body.elite-mode .detail-panel{background:#1E293B!important;border:1px solid rgba(255,255,255,.1)!important}
+body.elite-mode .tool-header,body.elite-mode .detail-header{background:#1E293B!important;border-color:rgba(255,255,255,.08)!important}
+body.elite-mode .tool-header h3,body.elite-mode .tool-body{color:#E2E8F0!important}
+body.elite-mode .tool-body .fl{color:#94A3B8!important}
+body.elite-mode .pay-panel{background:#1E293B!important}
+body.elite-mode .auth-panel{background:#1E293B!important}
+body.elite-mode .auth-hero{background:linear-gradient(135deg,#EAB308,#CA8A04)!important}
+body.elite-mode .hero-card::before{background:linear-gradient(90deg,#EAB308,#CA8A04)!important}
+
+/* ===== 精英版定价卡片暗色适配 ===== */
+body.elite-mode .elite-price-card{color:#E2E8F0!important}
+body.elite-mode .elite-price-card li{color:#CBD5E1!important;border-color:rgba(255,255,255,.08)!important}
+body.elite-mode .elite-price-card div{color:#94A3B8!important}
+
+/* ===== 案例卡片暗色适配 ===== */
+body.elite-mode .case-card h3{color:#F1F5F9!important}
+body.elite-mode .case-card p{color:#94A3B8!important}
+body.elite-mode .case-card span{color:#CBD5E1!important}
+
+/* ===== 支付相关暗色适配 ===== */
+body.elite-mode .pay-order{background:rgba(30,41,59,.6)!important}
+body.elite-mode .pay-order-row{color:#CBD5E1!important;border-color:rgba(255,255,255,.08)!important}
+body.elite-mode .pay-method{background:rgba(30,41,59,.6)!important;border-color:rgba(255,255,255,.15)!important}
+body.elite-mode .pay-method .pm-name{color:#CBD5E1!important}
+
+/* ===== 工具增强提示徽章 ===== */
+#toolsGrid .tool-card > span[title*="精英版"] {
+  position:absolute;bottom:8px;left:12px;
+  background:linear-gradient(135deg,#FEF9C3,#FEF08A);
+  color:#A16207;padding:2px 8px;border-radius:6px;
+  font-size:10px;font-weight:600;opacity:.85;
+  pointer-events:none
+}
+
+/* ===== 管理后台企业面板样式 ===== */
+@media(max-width:768px){
+  body.elite-mode .team-main-panel{width:100%!important;max-width:100%!important;border-radius:16px 16px 0 0!important;max-height:90vh!important}
+}
+
+/* ===== 滚动条优化 ===== */
+body.elite-mode ::-webkit-scrollbar-track{background:rgba(15,23,42,.5)}
+body.elite-mode ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:3px}
+body.elite-mode ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.25)}
+
+/* ===== 加载动画增强 ===== */
+@keyframes mIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}

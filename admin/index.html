@@ -251,6 +251,10 @@ tr:hover td{background:var(--ps)}
       <div class="sb-item" onclick="goPage('content',this)"><i class="fa-solid fa-file-pen"></i>内容管理</div>
       <div class="sb-group">AI工具</div>
       <div class="sb-item" onclick="goPage('aihub',this)"><i class="fa-solid fa-wand-magic-sparkles"></i>AI创作中心</div>
+      <div class="sb-group">商业精英版</div>
+      <div class="sb-item" onclick="goPage('elite',this)"><i class="fa-solid fa-building"></i>企业管理</div>
+      <div class="sb-item" onclick="goPage('elite_tools',this)"><i class="fa-solid fa-toolbox"></i>企业工具管理</div>
+      <div class="sb-item" onclick="goPage('elite_billing',this)"><i class="fa-solid fa-file-invoice-dollar"></i>企业计费</div>
       <div class="sb-group">系统</div>
       <div class="sb-item" onclick="goPage('recycle',this)"><i class="fa-solid fa-trash-can"></i>回收站</div>
       <div class="sb-item" onclick="goPage('logs',this)"><i class="fa-solid fa-clock-rotate-left"></i>操作日志</div>
@@ -417,8 +421,8 @@ setInterval(updateLockoutUI,5000);updateLockoutUI();
 function doLogout(){localStorage.removeItem('lsjy3_cur');document.getElementById('loginPage').style.display='';document.getElementById('app').classList.remove('active');toast('已退出登录')}
 
 // ===== Navigation =====
-const _pageTitles={dashboard:'数据看板',modules:'业务模块',services:'服务管理',users:'用户管理',messages:'留言管理',leads:'线索管理',orders:'订单管理',customers:'顾客管理',redeemCodes:'卡密管理',content:'内容管理',aihub:'AI创作中心',recycle:'回收站',logs:'操作日志',settings:'系统设置'};
-const _pageRenders={dashboard:renderDashboard,modules:renderModules,services:renderServices,users:renderUsers,messages:renderMessages,leads:renderLeads,orders:renderOrders,customers:renderCustomers,redeemCodes:renderRedeemCodes,content:renderContent,aihub:renderAIHub,recycle:renderRecycle,logs:renderLogs,settings:renderSettings};
+const _pageTitles={dashboard:'数据看板',modules:'业务模块',services:'服务管理',users:'用户管理',messages:'留言管理',leads:'线索管理',orders:'订单管理',customers:'顾客管理',redeemCodes:'卡密管理',content:'内容管理',aihub:'AI创作中心',recycle:'回收站',logs:'操作日志',settings:'系统设置',elite:'企业管理',elite_tools:'企业工具管理',elite_billing:'企业计费'};
+const _pageRenders={dashboard:renderDashboard,modules:renderModules,services:renderServices,users:renderUsers,messages:renderMessages,leads:renderLeads,orders:renderOrders,customers:renderCustomers,redeemCodes:renderRedeemCodes,content:renderContent,aihub:renderAIHub,recycle:renderRecycle,logs:renderLogs,settings:renderSettings,elite:renderElitePage,elite_tools:renderEliteToolsPage,elite_billing:renderEliteBillingPage};
 function goPage(page,el){
   document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
   if(el)el.classList.add('active');
@@ -1854,6 +1858,71 @@ function deleteTask(taskId){
 // ===== Modal =====
 function showMod(h){document.getElementById('modalBox').innerHTML=h;document.getElementById('modalBg').classList.add('show')}
 function closeModal(e){if(e&&e.target!==e.currentTarget)return;document.getElementById('modalBg').classList.remove('show')}
+
+// ===== ELITE BUSINESS ADMIN PAGES =====
+function renderElitePage(){
+  const team=JSON.parse(localStorage.getItem('lsjy3_elite_team')||'null')||{members:[],creditPool:0};
+  const totalUsed=team.members.reduce((s,m)=>s+(m.usedCredits||0),0);
+  document.getElementById('mainContent').innerHTML=`
+  <div class="stats">
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#EAB308,#CA8A04)">&#x2666;</div><div class="stat-info"><h4>${team.plan==='enterprise'?'企业版':team.plan==='pro'?'专业版':'基础版'}</h4><p>当前套餐</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#3B82F6,#60A5FA)">&#x1F465;</div><div class="stat-info"><h4>${team.members.length}</h4><p>团队成员</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#10B981,#34D399)">&#x26A1;</div><div class="stat-info"><h4>${team.creditPool.toLocaleString()}</h4><p>算力池总量</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#8B5CF6,#A78BFA)">&#x1F4CA;</div><div class="stat-info"><h4>${totalUsed.toLocaleString()}</h4><p>已使用算力</p></div></div>
+  </div>
+  <div class="card"><div class="card-header"><h3>企业版概览</h3></div><div class="card-body">
+    <p style="color:var(--b);font-size:13px">商业精英版企业管理面板。当前可用算力: <b style="color:var(--ok)">${(team.creditPool-totalUsed).toLocaleString()}</b></p>
+    <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn-p" style="width:auto;padding:8px 20px" onclick="adminAddCredits()">补充算力池</button>
+      <button class="btn-p" style="width:auto;padding:8px 20px;background:var(--info)" onclick="adminUpgradePlan()">升级套餐</button>
+    </div>
+  </div></div>
+  <div class="card"><div class="card-header"><h3>团队成员</h3></div><div class="card-body"><div class="table-wrap"><table>
+    <tr><th>名称</th><th>角色</th><th>算力额度</th><th>已使用</th><th>加入时间</th><th>操作</th></tr>
+    ${team.members.length?team.members.map((m,i)=>`<tr><td><b>${m.name}</b></td><td><span class="badge badge-${m.role==='admin'?'red':m.role==='editor'?'blue':'gray'}">${m.role==='admin'?'管理员':m.role==='editor'?'编辑':'查看者'}</span></td><td>${m.creditLimit||'无限'}</td><td>${m.usedCredits||0}</td><td>${m.joinedAt?new Date(m.joinedAt).toLocaleDateString():'-'}</td><td><button class="act-btn del" onclick="adminRemoveMember(${i})">移除</button></td></tr>`).join(''):'<tr><td colspan="6" class="empty">暂无团队成员</td></tr>'}
+  </table></div></div></div>`;
+}
+function renderEliteToolsPage(){
+  document.getElementById('mainContent').innerHTML=`
+  <div class="card"><div class="card-header"><h3>企业专属工具管理</h3><span class="badge badge-amber">20款</span></div><div class="card-body"><p style="color:var(--b);font-size:13px">管理20款商业精英版专属工具的配置和使用权限</p>
+    <div class="table-wrap"><table>
+      <tr><th>工具名称</th><th>分类</th><th>算力消耗</th><th>状态</th><th>操作</th></tr>
+      <tr><td>商业计划书生成</td><td><span class="badge badge-blue">战略决策</span></td><td>30</td><td><span class="badge badge-green">启用</span></td><td><button class="act-btn edit">配置</button></td></tr>
+      <tr><td>竞品深度分析</td><td><span class="badge badge-blue">战略决策</span></td><td>25</td><td><span class="badge badge-green">启用</span></td><td><button class="act-btn edit">配置</button></td></tr>
+      <tr><td>财务预测模型</td><td><span class="badge badge-blue">战略决策</span></td><td>35</td><td><span class="badge badge-green">启用</span></td><td><button class="act-btn edit">配置</button></td></tr>
+      <tr><td>风险评估报告</td><td><span class="badge badge-blue">战略决策</span></td><td>20</td><td><span class="badge badge-green">启用</span></td><td><button class="act-btn edit">配置</button></td></tr>
+      <tr><td>SWOT分析</td><td><span class="badge badge-blue">战略决策</span></td><td>15</td><td><span class="badge badge-green">启用</span></td><td><button class="act-btn edit">配置</button></td></tr>
+      <tr><td>智能会议纪要</td><td><span class="badge badge-purple">运营管理</span></td><td>25</td><td><span class="badge badge-green">启用</span></td><td><button class="act-btn edit">配置</button></td></tr>
+      <tr><td>合同智能审核</td><td><span class="badge badge-purple">运营管理</span></td><td>30</td><td><span class="badge badge-green">启用</span></td><td><button class="act-btn edit">配置</button></td></tr>
+      <tr><td>员工绩效考核</td><td><span class="badge badge-purple">运营管理</span></td><td>15</td><td><span class="badge badge-green">启用</span></td><td><button class="act-btn edit">配置</button></td></tr>
+      <tr><td>项目管理看板</td><td><span class="badge badge-purple">运营管理</span></td><td>20</td><td><span class="badge badge-green">启用</span></td><td><button class="act-btn edit">配置</button></td></tr>
+      <tr><td>全案营销方案</td><td><span class="badge badge-orange">营销增长</span></td><td>40</td><td><span class="badge badge-green">启用</span></td><td><button class="act-btn edit">配置</button></td></tr>
+      <tr><td>投放策略优化</td><td><span class="badge badge-orange">营销增长</span></td><td>25</td><td><span class="badge badge-green">启用</span></td><td><button class="act-btn edit">配置</button></td></tr>
+      <tr><td>客户转化话术</td><td><span class="badge badge-orange">营销增长</span></td><td>15</td><td><span class="badge badge-green">启用</span></td><td><button class="act-btn edit">配置</button></td></tr>
+      <tr><td>销售漏斗分析</td><td><span class="badge badge-orange">营销增长</span></td><td>20</td><td><span class="badge badge-green">启用</span></td><td><button class="act-btn edit">配置</button></td></tr>
+      <tr><td>私域运营方案</td><td><span class="badge badge-orange">营销增长</span></td><td>25</td><td><span class="badge badge-green">启用</span></td><td><button class="act-btn edit">配置</button></td></tr>
+      <tr><td>品牌故事撰写</td><td><span class="badge badge-rose">品牌公关</span></td><td>15</td><td><span class="badge badge-green">启用</span></td><td><button class="act-btn edit">配置</button></td></tr>
+      <tr><td>新闻稿生成</td><td><span class="badge badge-rose">品牌公关</span></td><td>15</td><td><span class="badge badge-green">启用</span></td><td><button class="act-btn edit">配置</button></td></tr>
+      <tr><td>危机公关话术</td><td><span class="badge badge-rose">品牌公关</span></td><td>20</td><td><span class="badge badge-green">启用</span></td><td><button class="act-btn edit">配置</button></td></tr>
+      <tr><td>媒体投放方案</td><td><span class="badge badge-rose">品牌公关</span></td><td>25</td><td><span class="badge badge-green">启用</span></td><td><button class="act-btn edit">配置</button></td></tr>
+      <tr><td>活动策划方案</td><td><span class="badge badge-rose">品牌公关</span></td><td>30</td><td><span class="badge badge-green">启用</span></td><td><button class="act-btn edit">配置</button></td></tr>
+      <tr><td>批量数据导出</td><td><span class="badge badge-gray">数据管理</span></td><td>10</td><td><span class="badge badge-green">启用</span></td><td><button class="act-btn edit">配置</button></td></tr>
+    </table></div></div></div>`;
+}
+function renderEliteBillingPage(){
+  const team=JSON.parse(localStorage.getItem('lsjy3_elite_team')||'null')||{};
+  const plans=[{id:'basic',name:'基础版',price:999,accounts:10,credits:'10万',period:'月'},{id:'pro',name:'专业版',price:3999,accounts:50,credits:'50万',period:'月'},{id:'enterprise',name:'企业版',price:'定制',accounts:'无限',credits:'无限',period:'月'}];
+  document.getElementById('mainContent').innerHTML=`
+  <div class="card"><div class="card-header"><h3>商业精英版计费管理</h3></div><div class="card-body">
+    <div style="padding:16px;background:var(--ps);border-radius:12px;margin-bottom:20px"><p style="font-size:13px;color:var(--p);font-weight:600">当前套餐: <b>${team.plan||'basic'}</b> | 下次续费: ${team.nextBilling?new Date(team.nextBilling).toLocaleDateString():'未设置'}</p></div>
+    <div class="ai-grid">${plans.map(p=>`<div class="ai-card" style="text-align:left"><div class="ai-card-badge" style="background:${team.plan===p.id?'var(--ok)':'var(--ps)'};color:${team.plan===p.id?'#fff':'var(--p)'}">${team.plan===p.id?'当前':'-'}</div><div style="font-size:20px;font-weight:800;color:var(--n)">${typeof p.price==='number'?'\u00A5':''}${p.price}${typeof p.price==='number'?''}</div><div style="font-size:12px;color:var(--b)">${p.period}</div><div style="margin-top:12px;font-size:12px;color:var(--l)"><div>${p.accounts} 子账号</div><div>${p.credits} 算力</div></div></div>`).join('')}</div>
+  </div></div>`;
+}
+function adminAddCredits(){showMod(`<h3>补充算力池</h3><div class="fg"><label class="fl">补充数量</label><input class="fi" type="number" id="addCreditsAmt" value="50000" min="1000"></div><div class="modal-actions"><button class="m-cancel" onclick="closeModal()">取消</button><button class="m-confirm" onclick="doAdminAddCredits()">确认补充</button></div>`)}
+function doAdminAddCredits(){const amt=parseInt(document.getElementById('addCreditsAmt').value)||0;const team=JSON.parse(localStorage.getItem('lsjy3_elite_team')||'{}');team.creditPool=(team.creditPool||0)+amt;localStorage.setItem('lsjy3_elite_team',JSON.stringify(team));addOpLog('补充算力池','+'+amt);closeModal();renderElitePage();toast('已补充 '+amt.toLocaleString()+' 算力','success')}
+function adminRemoveMember(idx){const team=JSON.parse(localStorage.getItem('lsjy3_elite_team')||'{}');const name=team.members[idx]?.name;team.members.splice(idx,1);localStorage.setItem('lsjy3_elite_team',JSON.stringify(team));addOpLog('移除团队成员',name);renderElitePage();toast('已移除 '+name,'success')}
+function adminUpgradePlan(){showMod(`<h3>升级套餐</h3><div class="fg"><label class="fl">选择套餐</label><select class="fi" id="upgradePlan"><option value="basic">基础版 - ¥999/月</option><option value="pro">专业版 - ¥3999/月</option><option value="enterprise">企业版 - 定制报价</option></select></div><div class="modal-actions"><button class="m-cancel" onclick="closeModal()">取消</button><button class="m-confirm" onclick="doAdminUpgradePlan()">确认升级</button></div>`)}
+function doAdminUpgradePlan(){const plan=document.getElementById('upgradePlan').value;const team=JSON.parse(localStorage.getItem('lsjy3_elite_team')||'{}');team.plan=plan;const limits={basic:10,pro:50,enterprise:999};team.creditPool={basic:100000,pro:500000,enterprise:9999999}[plan];team.nextBilling=new Date(Date.now()+30*24*60*60*1000).toISOString();localStorage.setItem('lsjy3_elite_team',JSON.stringify(team));addOpLog('升级套餐',plan);closeModal();renderElitePage();toast('套餐已升级','success')}
 
 // ===== VERSION =====
 (function(){if(!localStorage.getItem('lsjy_admin_ver'))localStorage.setItem('lsjy_admin_ver','admin-v3.6')})();
