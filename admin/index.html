@@ -1129,7 +1129,7 @@ function smartTemplates(type,input,extra){
 
 // ===== Admin Helper Functions =====
 function isLoggedIn(){return!!getCur()}
-function getCredits(){const u=getCur();if(!u)return 0;const all=JSON.parse(localStorage.getItem('lsjy3_credits')||'{}');return all[u.username]||0}
+function getCredits(){try{var u=getCur();if(!u)return 0;var all=JSON.parse(localStorage.getItem('lsjy3_credits'));if(typeof all==='object'&&all!==null)return all[u.username]||0}catch(e){}return 0}
 function deductCredits(n){const u=getCur();if(!u)return;const all=JSON.parse(localStorage.getItem('lsjy3_credits')||'{}');all[u.username]=(all[u.username]||0)-n;localStorage.setItem('lsjy3_credits',JSON.stringify(all))}
 function addCreditLog(tool,amount,desc){const key='lsjy3_credit_logs';const logs=JSON.parse(localStorage.getItem(key)||'[]');logs.unshift({tool,amount,desc,time:new Date().toLocaleString()});if(logs.length>200)logs.length=200;localStorage.setItem(key,JSON.stringify(logs))}
 function getUserCredits(){return getCredits()}
