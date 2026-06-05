@@ -1468,7 +1468,7 @@ async function doUtilText2Img(){
   const prompt=document.getElementById('ut_prompt').value.trim();
   if(!prompt)return toast('请输入图片描述','error');
   const sizeEl=document.getElementById('ut_size');
-  const size=sizeEl?sizeEl.value:'1024x1024';
+  const size=sizeEl?sizeEl.value:'2048x2048';
   const[ w,h]=size.split('x');
   const out=document.getElementById('ut_result');
   out.innerHTML='<div style="text-align:center;padding:30px">⏳ AI图片生成中（约5-15秒）...</div>';
@@ -4579,7 +4579,7 @@ cr[cur.username]=(cr[cur.username]||0)+cost;localStorage.setItem('lsjy3_credits'
 }
 if(isImg){
 var model='doubao-seedream-5-0-260128';
-var body={model:model,prompt:input,size:'1024x1024',n:1};
+var body={model:model,prompt:input,size:'2048x2048',n:1};
 fetch('https://ark.cn-beijing.volces.com/api/v3/images/generations',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer ark-21eb820a-93fc-4379-bbc4-217498f7753b-a6876'},body:JSON.stringify(body)})
 .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json()})
 .then(function(data){
@@ -4959,7 +4959,7 @@ if(typeof _updateCreditsUI==='function')_updateCreditsUI();return;
 }
 
 if(isImg){
-fetch('https://ark.cn-beijing.volces.com/api/v3/images/generations',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer ark-21eb820a-93fc-4379-bbc4-217498f7753b-a6876'},body:JSON.stringify({model:'doubao-seedream-5-0-260128',prompt:input,size:'1024x1024',n:1})})
+fetch('https://ark.cn-beijing.volces.com/api/v3/images/generations',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer ark-21eb820a-93fc-4379-bbc4-217498f7753b-a6876'},body:JSON.stringify({model:'doubao-seedream-5-0-260128',prompt:input,size:'2048x2048',n:1})})
 .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json()})
 .then(function(data){
 if(btn){btn.disabled=false;btn.textContent='\ud83d\ude80 \u63d0\u4ea4\u751f\u6210';btn.style.opacity='1';}
