@@ -149,9 +149,7 @@ document.getElementById('creditsShopModal').style.display='flex';
 };
 window.buyPlan=function(id){
 var p=_PLANS.find(function(x){return x.id===id});if(!p)return;var cur=_getCur();if(!cur){alert('\u8bf7\u5148\u767b\u5f55');openAuth('login');return}
-if(confirm('\u8d2d\u4e70 '+p.name+'\uff08'+p.credits+'\u7b97\u529b\uff09\n\n\u4ef7\u683c\uff1a\xa5'+p.price+'\n\n\u652f\u4ed8\u5f00\u53d1\u4e2d\uff0c\u6682\u514d\u8d39\u8d60\u9001\uff01')){
-var cr=_getCredits();cr[cur.username]=(cr[cur.username]||0)+p.credits;localStorage.setItem('lsjy3_credits',JSON.stringify(cr));_updateCreditsUI();
-alert('\u606d\u559c\uff01\u83b7\u5f97 '+p.credits+' \u7b97\u529b');openCreditsShop();}
+showPayModal(p.name+'\uff08'+p.credits+'\u7b97\u529b\uff09','\xa5'+p.price);
 };
 
 // ===== 9. MEDIA LIBRARY =====
