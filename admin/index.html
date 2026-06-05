@@ -338,7 +338,7 @@ function saveContacts(c){localStorage.setItem('lsjy3_contacts',JSON.stringify(c)
 function getSettings(){return JSON.parse(localStorage.getItem('lsjy_settings')||'{}')}
 function getOrders(){return JSON.parse(localStorage.getItem('lsjy_admin_orders')||'[]')}
 function saveOrders(o){localStorage.setItem('lsjy_admin_orders',JSON.stringify(o))}
-function getAllCredits(){return JSON.parse(localStorage.getItem('lsjy3_credits')||'{}')}
+function getAllCredits(){try{var d=JSON.parse(localStorage.getItem('lsjy3_credits'));if(typeof d==='object'&&d!==null)return d}catch(e){}return{}}
 function saveAllCredits(c){localStorage.setItem('lsjy3_credits',JSON.stringify(c))}
 function getRecycle(){return JSON.parse(localStorage.getItem('lsjy_admin_recycle')||'[]')}
 function saveRecycle(r){localStorage.setItem('lsjy_admin_recycle',JSON.stringify(r))}
@@ -1130,7 +1130,7 @@ function smartTemplates(type,input,extra){
 // ===== Admin Helper Functions =====
 function isLoggedIn(){return!!getCur()}
 function getCredits(){try{var u=getCur();if(!u)return 0;var all=JSON.parse(localStorage.getItem('lsjy3_credits'));if(typeof all==='object'&&all!==null)return all[u.username]||0}catch(e){}return 0}
-function deductCredits(n){const u=getCur();if(!u)return;const all=JSON.parse(localStorage.getItem('lsjy3_credits')||'{}');all[u.username]=(all[u.username]||0)-n;localStorage.setItem('lsjy3_credits',JSON.stringify(all))}
+function deductCredits(n){const u=getCur();if(!u)return;var all=getAllCredits();all[u.username]=(all[u.username]||0)-n;saveAllCredits(all))}
 function addCreditLog(tool,amount,desc){const key='lsjy3_credit_logs';const logs=JSON.parse(localStorage.getItem(key)||'[]');logs.unshift({tool,amount,desc,time:new Date().toLocaleString()});if(logs.length>200)logs.length=200;localStorage.setItem(key,JSON.stringify(logs))}
 function getUserCredits(){return getCredits()}
 
