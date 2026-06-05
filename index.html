@@ -958,7 +958,7 @@ renderEmployeeAcct();
 }
 
 </script>
-<!-- cache-bust: 2e670f25 -->
+<!-- cache-bust: 9ac4e4ce -->
 </head>
 <body>
 
@@ -5063,8 +5063,8 @@ console.log('[CDN FIX] doGen10, buyPlan, _addMedia, openMediaLib loaded successf
     if(text.indexOf('算力中心') >= 0){
       div.onclick = function(e){
         e.stopPropagation();
-        if(typeof window.openCreditsShop === 'function'){
-          openCreditsShop();
+        if(typeof window.openTool === 'function'){
+          openTool('credits');
         } else {
           alert('算力中心加载中，请稍后再试');
         }
