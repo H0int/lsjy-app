@@ -1217,7 +1217,7 @@ renderEmployeeAcct();
 // ===== CACHE BUSTER & VERSION CHECK =====
 (function(){const _V='v3.8-beta1';const _cv=localStorage.getItem('lsjy3_ver');if(_cv!==_V){localStorage.setItem('lsjy3_ver',_V);sessionStorage.clear();try{if('caches'in window)caches.keys().then(k=>k.forEach(n=>caches.delete(n)))}catch(e){}try{document.cookie='lsjy3_ver=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT';document.cookie='lsjy_v=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT';document.cookie='__cf_bm=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT'}catch(e){}}})();
 // ===== DATA =====
-const MODULES=[
+window.MODULES=[
 {id:'ai',name:'AI 人工智能',icon:'🤖',color:'#3b82f6',gradient:'linear-gradient(135deg,#3b82f6,#60a5fa)',summary:'依托自研 AI 技术面向中小商家落地数字化转型',services:[
 {id:'ai-clip',name:'AI 短视频批量切片',desc:'一键拆分长素材产出多条短视频，适配全平台分发。基于 AI 智能识别精彩片段，自动生成多规格短视频，覆盖抖音、快手、小红书等主流平台格式要求，大幅提升内容产出效率。'},
 {id:'ai-copy',name:'智能文案生成',desc:'短视频脚本、团购文案、店铺宣传文案 AI 自动化创作。输入关键词即可生成多风格文案，支持团购促销、品牌宣传、产品种草等多种场景，一键改写优化。'},
@@ -2492,7 +2492,7 @@ const adminEl=document.getElementById('navAdminBtn');if(adminEl)adminEl.remove()
 
 
 // ===== PRICING DATA =====
-const PRICING=[
+window.PRICING=[
 {id:'ai',name:'AI 人工智能',icon:'🤖',gradient:'linear-gradient(135deg,#3b82f6,#60a5fa)',color:'#3b82f6',featured:true,
  packs:[
   {name:'基础版',price:299,period:'月',desc:'适合个人用户和小微商家',features:['AI文案生成 50次/月','短视频切片 10条/月','基础智能推荐','在线客服支持']},
@@ -2532,7 +2532,7 @@ const PRICING=[
 ];
 
 // Service individual pricing
-const SVC_PRICES={
+window.SVC_PRICES={
 'ai-clip':99,'ai-copy':29,'ai-customer':199,'ai-api':599,'ai-digital':899,
 'media-ops':799,'media-explore':399,'media-ip':1299,'media-copywriting':199,'media-matrix':599,
 'ecom-shop':299,'ecom-deal':199,'ecom-supply':0,'ecom-ops':999,'ecom-traffic':499,
@@ -2542,7 +2542,7 @@ const SVC_PRICES={
 };
 
 // ===== RENDER PRICING =====
-(function renderPricing(){
+(window.renderPricing= renderPricing(){
 const grid=document.getElementById('pricingGrid');
 let html='';
 PRICING.forEach(m=>{
