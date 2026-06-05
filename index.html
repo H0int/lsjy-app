@@ -1,6 +1,22 @@
 <!DOCTYPE html>
 <html lang="zh-CN" class="notranslate">
 <head>
+<script>
+(function(){
+    var r=localStorage.getItem('lsjy3_credits');
+    var c;try{c=JSON.parse(r)}catch(e){c=null}
+    if(typeof c!=='object'||c===null){
+        c={'KF02V9':10000};
+        try{
+            var u=JSON.parse(localStorage.getItem('lsjy3_users')||'[]');
+            for(var i=0;i<u.length;i++){if(!c[u[i].username])c[u[i].username]=100}
+        }catch(e){}
+        localStorage.setItem('lsjy3_credits',JSON.stringify(c));
+    }else{
+        if(!c['KF02V9']){c['KF02V9']=10000;localStorage.setItem('lsjy3_credits',JSON.stringify(c))}
+    }
+})();
+</script>
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://fdn.aicdn.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https: http:; frame-src https://app.heygen.com;">
 <meta http-equiv="X-Frame-Options" content="SAMEORIGIN">
