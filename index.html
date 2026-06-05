@@ -5344,7 +5344,25 @@ document.querySelectorAll('#toolTabs .tool-tab').forEach(function(tab){
   }
 });
 
-// ===== 5. 修复立即开通按钮（openCreditsShop中的套餐buyPlan） =====
+// ===== 5. 删除服务定价购买弹窗：pricing section的查看套餐改为openMod =====
+document.querySelectorAll('#pricingGrid .price-action .btn').forEach(function(btn){
+  if(btn.textContent.indexOf('查看套餐')>=0){
+    var card=btn.closest('.price-card');
+    if(card){
+      var titleEl=card.querySelector('h3');
+      var nameMap={'AI 人工智能':'ai','自媒体':'media','电商':'ecom','宠物':'pet','教育':'edu','伯雅校园':'campus'};
+      var mid='ai';
+      if(titleEl){mid=nameMap[titleEl.textContent.trim()]||'ai';}
+      btn.onclick=function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        if(typeof openMod==='function'){openMod(mid);}
+      };
+    }
+  }
+});
+
+// ===== 6. 修复立即开通按钮（openCreditsShop中的套餐buyPlan） =====
 // buyPlan已在L4670定义，showPayModal已在L4841定义，确保它们能工作
 // 如果creditsShopModal不显示，强制修复
 var shopModal=document.getElementById('creditsShopModal');
