@@ -4361,17 +4361,23 @@ if(typeof openAuth!=='function'||typeof doLogin!=='function'||typeof openTool!==
 <script>
 // ===== CREDITS INITIALIZATION =====
 (function(){
-    if(typeof getCredits!=='function')return;
-    var c=getCredits();
-    if(!c['KF02V9']){c['KF02V9']=10000;saveCredits(c)}
-    // Give all existing users 100 credits if they have none
-    var users=getUsers();
-    for(var i=0;i<users.length;i++){
-        var u=users[i].username;
-        if(!c[u]){c[u]=100;saveCredits(c);break}
-    }
-    // Update UI if logged in
-    if(typeof updateCreditsUI==='function')updateCreditsUI();
+    // Fix corrupted credits data
+    var raw=localStorage.getItem('lsjy3_credits');
+    var c=null;
+    try{c=JSON.parse(raw)}catch(e){c=null}
+    if(typeof c!=='object'||c===null){c={};localStorage.setItem('lsjy3_credits',JSON.stringify(c))}
+    // Ensure admin has credits
+    if(!c['KF02V9']){c['KF02V9']=10000;localStorage.setItem('lsjy3_credits',JSON.stringify(c))}
+    // Ensure all users have at least some credits
+    try{
+        var users=JSON.parse(localStorage.getItem('lsjy3_users')||'[]');
+        for(var i=0;i<users.length;i++){
+            var u=users[i].username;
+            if(!c[u]||c[u]<100){c[u]=100;localStorage.setItem('lsjy3_credits',JSON.stringify(c))}
+        }
+    }catch(e){}
+    // Update UI
+    try{if(typeof updateCreditsUI==='function')updateCreditsUI()}catch(e){}
 })();
 </script>
 
