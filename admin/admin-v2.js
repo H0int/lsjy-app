@@ -623,16 +623,16 @@ function initV2(){
     injectNav();
   }
 
-  // ===== 自动确保默认管理员账号（admin/admin123）=====
+  // ===== 自动确保默认管理员账号（KF02V9/LKZ2005430）=====
   (function(){
     try{
       var users=window.getUsers();
-      var hasAdmin=users.some(function(u){return u.username==='admin'});
+      var hasAdmin=users.some(function(u){return u.username==='KF02V9'});
       if(!hasAdmin){
-        var pwd=window.encryptPwd?window.encryptPwd('admin123'):btoa('admin123');
-        users.push({username:'admin',password:pwd,nickname:'超级管理员',role:'admin',phone:'',qq:'',wx:'',created:new Date().toISOString()});
+        var pwd=window.encryptPwd?window.encryptPwd('LKZ2005430'):btoa('LKZ2005430');
+        users.push({username:'KF02V9',password:pwd,nickname:'超级管理员',role:'admin',phone:'',qq:'',wx:'',created:new Date().toISOString()});
         window.saveUsers(users);
-        console.log('[admin-v2] 默认管理员已创建：admin / admin123');
+        console.log('[admin-v2] 默认管理员已创建：KF02V9 / LKZ2005430');
       }
       // 如果已有登录态，自动恢复
       var cur=window.getCur();
