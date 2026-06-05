@@ -4207,11 +4207,7 @@ document.querySelectorAll('.tool-card').forEach(function(c){if(!kw){c.style.disp
 };
 
 // openTool
-window.openTool=function(id){
-var cn=_nameMap[id]||id;
-if(/[\u4e00-\u9fff]/.test(id))cn=id;
-showToolForm(cn,id);
-};
+window.openTool=function(id){if(typeof _TOOL_MAP==='object'&&_TOOL_MAP[id]&&typeof _TOOL_MAP[id]==='function'){var ov=document.getElementById('toolOverlay'),pn=document.getElementById('toolPanel');if(ov&&pn){ov.classList.add('show');document.body.style.overflow='hidden';var r=_TOOL_MAP[id]();if(typeof r==='string'&&r.length>0)pn.innerHTML=r}return}var cn=_nameMap[id]||id;if(/[\u4e00-\u9fff]/.test(id))cn=id;showToolForm(cn,id);};
 
 function showToolForm(name,eid){
 var d=document.getElementById('toolOverlay2'),tp=document.getElementById('toolPanel2');
@@ -4578,7 +4574,7 @@ document.getElementById('closeMedia').onclick=function(){document.getElementById
 // ===== 6. CORE FUNCTIONS =====
 window.filterToolCat=function(cat){document.querySelectorAll('.tool-card').forEach(function(c){c.style.display=(cat==='\u5168\u90e8'||c.getAttribute('data-cat')===cat)?'':'none'});document.querySelectorAll('#toolCats button,.tool-cat-btn').forEach(function(b){b.classList.remove('active');if(b.textContent.trim()===cat)b.classList.add('active')})};
 window.searchTools=function(kw){kw=(kw||'').toLowerCase().trim();document.querySelectorAll('.tool-card').forEach(function(c){if(!kw){c.style.display='';return}var n=(c.getAttribute('data-name')||'').toLowerCase(),d=(c.getAttribute('data-desc')||'').toLowerCase();c.style.display=(n.indexOf(kw)>=0||d.indexOf(kw)>=0)?'':'none'})};
-window.openTool=function(id){var cn=_nameMap[id]||id;if(/[\u4e00-\u9fff]/.test(id))cn=id;_sf(cn,id)};
+window.openTool=function(id){if(typeof _TOOL_MAP==='object'&&_TOOL_MAP[id]&&typeof _TOOL_MAP[id]==='function'){var ov=document.getElementById('toolOverlay'),pn=document.getElementById('toolPanel');if(ov&&pn){ov.classList.add('show');document.body.style.overflow='hidden';var r=_TOOL_MAP[id]();if(typeof r==='string'&&r.length>0)pn.innerHTML=r}return}var cn=_nameMap[id]||id;if(/[\u4e00-\u9fff]/.test(id))cn=id;_sf(cn,id)};
 window.closeTool=function(){var d=document.getElementById('toolOverlay2');if(d){d.style.display='none';document.body.style.overflow=''}};
 
 function _sf(name,eid){var d=document.getElementById('toolOverlay2'),tp=document.getElementById('toolPanel2');if(!d||!tp)return;tp.innerHTML=_gf(name);d.style.display='flex';document.body.style.overflow='hidden'}
