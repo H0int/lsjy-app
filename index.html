@@ -4759,32 +4759,86 @@ document.addEventListener('click',function(e){
 </script>
 
 <script>
-// === \u652f\u4ed8\u5f39\u7a97 ===
+// === 支付弹窗（分步选择模式）===
 (function(){
+  // 注入hover样式
+  var s=document.createElement('style');
+  s.textContent='.pay-method-card{transition:background .2s,transform .15s}.pay-method-card:hover{transform:translateX(4px)}.pay-method-card[data-pay-id="alipay"]:hover{background:#1677ff10}.pay-method-card[data-pay-id="wechat"]:hover{background:#07c16010}.pay-method-card[data-pay-id="qq"]:hover{background:#12b7f510}';
+  document.head.appendChild(s);
+  // 创建弹窗容器
   var pm=document.createElement('div');pm.id='payModal';
   pm.style.cssText='display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:10001;justify-content:center;align-items:center;';
-  pm.innerHTML='<div style="background:#fff;border-radius:20px;max-width:420px;width:90%;max-height:85vh;overflow-y:auto;padding:0;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.3)"><button class="pay-close-btn" style="position:absolute;top:12px;right:16px;background:#f3f4f6;border:none;width:30px;height:30px;border-radius:50%;font-size:16px;cursor:pointer;z-index:10;color:#666">\u2715</button><div id="payModalBody"></div></div>';
+  pm.innerHTML='<div style="background:#fff;border-radius:20px;max-width:440px;width:92%;max-height:85vh;overflow-y:auto;padding:0;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.3)"><button class="pay-close-btn" style="position:absolute;top:12px;right:16px;background:#f3f4f6;border:none;width:30px;height:30px;border-radius:50%;font-size:16px;cursor:pointer;z-index:10;color:#666">\u2715</button><div id="payModalBody"></div></div>';
   pm.addEventListener('click',function(e){if(e.target===pm)pm.style.display='none';});
   document.body.appendChild(pm);
 })();
 
+var _PAY_METHODS=[
+  {id:'alipay',name:'\u652f\u4ed8\u5b9d',color:'#1677ff',icon:'\ud83d\udc4b',img:'https://raw.githubusercontent.com/H0int/lsjy-app/main/pay-alipay.jpg',tip:'\u6253\u5f00\u652f\u4ed8\u5b9d \u2192 \u626b\u4e00\u626b'},
+  {id:'wechat',name:'\u5fae\u4fe1\u652f\u4ed8',color:'#07c160',icon:'\ud83d\udc4d',img:'https://raw.githubusercontent.com/H0int/lsjy-app/main/pay-wechat.png',tip:'\u6253\u5f00\u5fae\u4fe1 \u2192 \u626b\u4e00\u626b'},
+  {id:'qq',name:'QQ\u94b1\u5305',color:'#12b7f5',icon:'\ud83d\udc4a',img:'https://raw.githubusercontent.com/H0int/lsjy-app/main/pay-qq.jpg',tip:'\u6253\u5f00QQ \u2192 \u626b\u4e00\u626b'}
+];
+
 window.showPayModal=function(name,price){
   var body=document.getElementById('payModalBody');
-  body.innerHTML='<div style="padding:28px 24px 20px;text-align:center"><div style="width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#fbbf24,#f59e0b);margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:22px">\ud83d\udcb0</div><h3 style="margin:0 0 6px;font-size:18px;color:#1a1a1a">\u8d2d\u4e70 '+(name||'\u670d\u52a1')+'</h3><p style="margin:0 0 20px;font-size:14px;color:#888">\u8bf7\u9009\u62e9\u652f\u4ed8\u65b9\u5f0f\uff0c\u626b\u7801\u5b8c\u6210\u652f\u4ed8\u540e\u7b97\u529b\u81ea\u52a8\u5230\u8d26</p><div style="font-size:24px;font-weight:800;color:#ef4444;margin-bottom:20px">'+(price||'')+'</div></div><div style="display:flex;gap:12px;padding:0 24px 24px;justify-content:center"><div style="flex:1;text-align:center"><div style="border:1px solid #1677ff;border-radius:12px;padding:12px 8px"><div style="font-size:12px;color:#1677ff;font-weight:700;margin-bottom:8px">\u652f\u4ed8\u5b9d</div><img src="https://raw.githubusercontent.com/H0int/lsjy-app/main/pay-alipay.jpg" style="width:100%;max-width:150px;border-radius:8px" onerror="this.style.display=\'none\'"><p style="margin:6px 0 0;font-size:11px;color:#888">\u626b\u7801\u652f\u4ed8</p></div></div><div style="flex:1;text-align:center"><div style="border:1px solid #07c160;border-radius:12px;padding:12px 8px"><div style="font-size:12px;color:#07c160;font-weight:700;margin-bottom:8px">\u5fae\u4fe1\u652f\u4ed8</div><img src="https://raw.githubusercontent.com/H0int/lsjy-app/main/pay-wechat.png" style="width:100%;max-width:150px;border-radius:8px" onerror="this.style.display=\'none\'"><p style="margin:6px 0 0;font-size:11px;color:#888">\u626b\u7801\u652f\u4ed8</p></div></div><div style="flex:1;text-align:center"><div style="border:1px solid #12b7f5;border-radius:12px;padding:12px 8px"><div style="font-size:12px;color:#12b7f5;font-weight:700;margin-bottom:8px">QQ\u94b1\u5305</div><img src="https://raw.githubusercontent.com/H0int/lsjy-app/main/pay-qq.jpg" style="width:100%;max-width:150px;border-radius:8px" onerror="this.style.display=\'none\'"><p style="margin:6px 0 0;font-size:11px;color:#888">\u626b\u7801\u652f\u4ed8</p></div></div></div><div style="padding:0 24px 24px"><button class="pay-confirm-btn" style="width:100%;padding:12px;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff">\u2705 \u6211\u5df2\u5b8c\u6210\u652f\u4ed8</button><p style="text-align:center;margin-top:10px;font-size:11px;color:#aaa">\u652f\u4ed8\u5b8c\u6210\u540e\u70b9\u51fb\u4e0a\u65b9\u6309\u94ae\uff0c\u7ba1\u7406\u5458\u4f1a\u572824\u5c0f\u65f6\u5185\u786e\u8ba4\u5e76\u5230\u8d26</p></div>';
+  var h='<div style="padding:28px 24px 20px;text-align:center"><div style="width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#fbbf24,#f59e0b);margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:22px">\ud83d\udcb0</div><h3 style="margin:0 0 6px;font-size:18px;color:#1a1a1a">\u8d2d\u4e70 '+(name||'\u670d\u52a1')+'</h3><p style="margin:0 0 16px;font-size:14px;color:#888">\u8bf7\u9009\u62e9\u60a8\u4e60\u60ef\u7684\u652f\u4ed8\u65b9\u5f0f</p><div style="font-size:24px;font-weight:800;color:#ef4444;margin-bottom:20px">'+(price||'')+'</div></div>';
+  h+='<div style="padding:0 24px 24px;display:flex;flex-direction:column;gap:12px">';
+  _PAY_METHODS.forEach(function(m){
+    h+='<div class="pay-method-card" data-pay-id="'+m.id+'" data-pay-name="'+(name||'')+'" data-pay-price="'+(price||'')+'" style="display:flex;align-items:center;gap:14px;padding:14px 18px;border:1.5px solid '+m.color+';border-radius:14px;cursor:pointer;background:#fff"><div style="width:44px;height:44px;border-radius:12px;background:'+m.color+';display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;flex-shrink:0">'+m.icon+'</div><div style="flex:1"><div style="font-size:15px;font-weight:700;color:#1a1a1a">'+m.name+'</div><div style="font-size:12px;color:#888;margin-top:2px">'+m.tip+'</div></div><div style="color:'+m.color+';font-size:20px">\u203a</div></div>';
+  });
+  h+='</div><div style="padding:0 24px 8px;text-align:center"><p style="font-size:11px;color:#bbb">\u70b9\u51fb\u4e0a\u65b9\u652f\u4ed8\u65b9\u5f0f\uff0c\u626b\u7801\u6216\u4fdd\u5b58\u4e8c\u7ef4\u7801\u5b8c\u6210\u652f\u4ed8</p></div>';
+  body.innerHTML=h;
   document.getElementById('payModal').style.display='flex';
 };
 
-// === \u4e8b\u4ef6\u59d4\u6258: \u652f\u4ed8\u786e\u8ba4\u6309\u94ae ===
+window._showPayQR=function(methodId,payName,payPrice){
+  var m=_PAY_METHODS.filter(function(x){return x.id===methodId;})[0];
+  if(!m) return;
+  var body=document.getElementById('payModalBody');
+  var h='<div style="padding:24px 24px 16px;text-align:center"><div style="display:flex;align-items:center;gap:10px;justify-content:center;margin-bottom:4px"><button class="pay-back-btn" style="background:none;border:none;font-size:20px;cursor:pointer;color:#888;padding:4px 8px">\u2190</button><div style="width:36px;height:36px;border-radius:10px;background:'+m.color+';display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff">'+m.icon+'</div><h3 style="margin:0;font-size:17px;color:#1a1a1a">'+m.name+'</h3></div><p style="margin:6px 0 0;font-size:13px;color:#888">\u8d2d\u4e70 '+(payName||'')+' \u00b7 '+(payPrice||'')+'</p></div>';
+  h+='<div style="padding:8px 32px 16px;text-align:center"><div style="display:inline-block;padding:16px;background:#fafafa;border-radius:16px;border:1px solid #eee"><img src="'+m.img+'" style="width:200px;height:200px;object-fit:contain;border-radius:8px"></div></div>';
+  h+='<div style="padding:8px 32px;text-align:center"><p style="margin:0 0 16px;font-size:14px;color:#666;font-weight:600">'+m.tip+'</p>';
+  h+='<div style="display:flex;gap:10px;justify-content:center"><button class="pay-save-btn" style="flex:1;padding:12px;border:1.5px solid '+m.color+';border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;background:#fff;color:'+m.color+'">\ud83d\udcbe \u4fdd\u5b58\u4e8c\u7ef4\u7801</button><button class="pay-done-btn" style="flex:1;padding:12px;border:none;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;background:'+m.color+';color:#fff">\u2705 \u6211\u5df2\u5b8c\u6210\u652f\u4ed8</button></div>';
+  h+='<p style="margin-top:12px;font-size:11px;color:#bbb">\u652f\u4ed8\u5b8c\u6210\u540e\u70b9\u51fb\u201c\u6211\u5df2\u5b8c\u6210\u652f\u4ed8\u201d\uff0c\u7ba1\u7406\u5458\u4f1a\u572824\u5c0f\u65f6\u5185\u786e\u8ba4\u5e76\u5230\u8d26</p></div>';
+  body.innerHTML=h;
+};
+
+// === 事件委托：支付相关按钮 ===
 document.addEventListener('click',function(e){
-  if(e.target.closest('.pay-confirm-btn')){
+  var methodCard=e.target.closest('.pay-method-card');
+  if(methodCard){
+    _showPayQR(
+      methodCard.getAttribute('data-pay-id'),
+      methodCard.getAttribute('data-pay-name'),
+      methodCard.getAttribute('data-pay-price')
+    );
+    return;
+  }
+  if(e.target.closest('.pay-back-btn')){
+    var ptxt=document.querySelector('#payModalBody p');
+    var txt=ptxt?ptxt.textContent:'';
+    var parts=txt.replace(/购买 /,'').split(' · ');
+    showPayModal(parts[0]||'',parts[1]||'');
+    return;
+  }
+  if(e.target.closest('.pay-save-btn')){
+    var img=document.querySelector('#payModalBody img');
+    if(img&&img.src){
+      var a=document.createElement('a');
+      a.href=img.src;a.download='lsjy-pay-qrcode.png';a.target='_blank';
+      document.body.appendChild(a);a.click();document.body.removeChild(a);
+    }
+    return;
+  }
+  if(e.target.closest('.pay-done-btn')){
     var modal=document.getElementById('payModal');
-    if(modal)modal.style.display='none';
-    alert('\u652f\u4ed8\u786e\u8ba4\u5df2\u63d0\u4ea4\uff01\u7ba1\u7406\u5458\u5c06\u572824\u5c0f\u65f6\u5185\u786e\u8ba4\u652f\u4ed8\u5e76\u4e3a\u60a8\u5230\u8d26\u7b97\u529b/\u670d\u52a1\u3002\u5982\u6709\u7591\u95ee\u8bf7\u8054\u7cfb\u5ba2\u670d\u3002');
+    if(modal) modal.style.display='none';
+    alert('支付确认已提交！管理员将在24小时内确认支付并为您到账算力/服务。如有疑问请联系客服。');
     return;
   }
   if(e.target.closest('.pay-close-btn')){
     var modal2=document.getElementById('payModal');
-    if(modal2)modal2.style.display='none';
+    if(modal2) modal2.style.display='none';
   }
 });
 </script>
