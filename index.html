@@ -5276,5 +5276,96 @@ console.log('[CDN FIX] doGen10, buyPlan, _addMedia, openMediaLib loaded successf
 <script>function openCreditsPanel(){var ov=document.getElementById('toolOverlay'),pn=document.getElementById('toolPanel');if(!ov||!pn){if(typeof openTool==='function')openTool('credits');return}ov.classList.add('show');document.body.style.overflow='hidden';if(typeof _TOOL_MAP==='object'&&_TOOL_MAP.credits&&typeof _TOOL_MAP.credits==='function'){var r=_TOOL_MAP.credits();if(typeof r==='string')pn.innerHTML=r}}</script>
 <script src="elite-patch.js"></script>
 <script src="elite-business-v2.js"></script>
+<script>
+// === FIX v3: 修复算力中心/删除定价购买弹窗/立即开通/六大板块介绍 ===
+(function(){
+setTimeout(function(){
+
+// ===== 1. 修复算力中心点击：直接用openCreditsShop =====
+var qaDivs=document.querySelectorAll('#quickActions > div');
+qaDivs.forEach(function(div){
+  var t=div.textContent||'';
+  if(t.indexOf('算力中心')>=0){
+    div.onclick=function(e){e.stopPropagation();e.preventDefault();
+      if(typeof window.openCreditsShop==='function'){openCreditsShop();}
+      else{toast('算力中心加载中','info');}
+    };
+    div.style.cursor='pointer';
+  }
+  if(t.indexOf('视频库')>=0){
+    div.onclick=function(e){e.stopPropagation();if(typeof window.openMediaLib==='function')openMediaLib('video');};
+  }
+  if(t.indexOf('图文库')>=0){
+    div.onclick=function(e){e.stopPropagation();if(typeof window.openMediaLib==='function')openMediaLib('image');};
+  }
+});
+
+// ===== 2. 修复六大板块：hero-card-item直接openMod展示介绍 =====
+document.querySelectorAll('.hero-card-item').forEach(function(card){
+  var ids=['ai','media','ecom','pet','edu','campus'];
+  var items=document.querySelectorAll('.hero-card-item');
+  items.forEach(function(item,i){
+    if(i<ids.length){
+      item.onclick=function(e){
+        e.stopPropagation();
+        e.preventDefault();
+        if(typeof openMod==='function'){openMod(ids[i]);}
+      };
+    }
+  });
+});
+
+// ===== 3. 修复mod-card点击：改为openMod展示介绍，不弹购买页面 =====
+document.querySelectorAll('#modGrid .mod-card').forEach(function(card){
+  var allCards=document.querySelectorAll('#modGrid .mod-card');
+  var ids=['ai','media','ecom','pet','edu','campus'];
+  allCards.forEach(function(c,i){
+    if(i<ids.length){
+      c.onclick=function(e){
+        e.stopPropagation();
+        e.preventDefault();
+        if(typeof openMod==='function'){openMod(ids[i]);}
+      };
+    }
+  });
+});
+
+// ===== 4. 修复工具栏tab（AI人工智能/自媒体等）点击：改为openMod展示介绍 =====
+document.querySelectorAll('#toolTabs .tool-tab').forEach(function(tab){
+  var nameMap={'AI人工智能':'ai','自媒体':'media','电商':'ecom','教育':'edu','宠物':'pet','伯雅校园':'campus'};
+  var text=tab.textContent.trim();
+  var mid=nameMap[text];
+  if(mid){
+    tab.onclick=function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      if(typeof openMod==='function'){openMod(mid);}
+    };
+  }
+});
+
+// ===== 5. 修复立即开通按钮（openCreditsShop中的套餐buyPlan） =====
+// buyPlan已在L4670定义，showPayModal已在L4841定义，确保它们能工作
+// 如果creditsShopModal不显示，强制修复
+var shopModal=document.getElementById('creditsShopModal');
+if(shopModal){
+  // 确保modal可见性正常
+  shopModal.style.zIndex='10000';
+  shopModal.style.background='rgba(0,0,0,0.6)';
+}
+
+// ===== 6. 确保navCredits点击打开算力中心 =====
+var nc=document.getElementById('navCredits');
+if(nc){
+  nc.onclick=function(e){
+    e.stopPropagation();
+    if(typeof window.openCreditsShop==='function'){openCreditsShop();}
+  };
+}
+
+console.log('[FIX v3] 算力中心/六大板块/立即开通 全部修复完成');
+},1000);
+})();
+</script>
 
 </body>
