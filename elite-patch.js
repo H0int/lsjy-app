@@ -210,18 +210,7 @@ setTimeout(function(){
   });
 },500);
 
-// 12. 退出挽留弹窗
-var exitShown=false;
-document.addEventListener('mouseout',function(e){
-  if(e.clientY<5 && !exitShown && !isEliteMode){
-    exitShown=true;
-    var overlay=document.createElement('div');
-    overlay.className='exit-overlay';overlay.id='exitOverlay';
-    overlay.innerHTML='<div class="exit-popup"><h2 style="margin:0 0 12px;font-size:22px;color:#1F2937">📦 免费领取《企业AI数字化转型白皮书》</h2><p style="margin:0 0 20px;font-size:14px;color:#6B7280;line-height:1.6">涵盖6大行业AI应用案例、ROI分析方法和落地实施指南</p><div style="display:flex;flex-direction:column;gap:10px"><input type="email" placeholder="输入企业邮箱" style="padding:12px 16px;border:1px solid #E5E7EB;border-radius:8px;font-size:14px;width:100%;box-sizing:border-box"><button class="elite-toggle-btn" style="width:100%;justify-content:center;padding:12px" onclick="document.getElementById(\'exitOverlay\').remove();showToast(\'白皮书将在24小时内发送到您的邮箱\')">免费领取</button><a href="javascript:void(0)" style="font-size:13px;color:#6B7280;text-decoration:none" onclick="document.getElementById(\'exitOverlay\').remove()">暂不需要</a></div></div>';
-    overlay.onclick=function(e){if(e.target===overlay)overlay.remove()};
-    document.body.appendChild(overlay);
-  }
-});
+// 12. 退出挽留弹窗（已移除）
 
 // 13. 案例区域响应式
 var casesGridStyle=document.createElement('style');
