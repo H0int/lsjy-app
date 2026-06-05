@@ -18,20 +18,30 @@ if(pricingEl&&pricingEl.nextElementSibling){
 
 // 3. Hero区域不再重复注入精英版按钮
 
-// 4. 导航栏右侧添加算力中心按钮
-var navRight=document.getElementById('navRight');
-if(navRight){
+// 4. 导航栏右侧添加算力中心按钮（仅已登录且有算力时显示）
+setTimeout(function(){
+  var navRight=document.getElementById('navRight');
+  if(!navRight)return;
+  var isLoggedIn=typeof isLoggedIn==='function'&&isLoggedIn();
+  var hasCredits=false;
+  if(isLoggedIn){
+    var cur=typeof getCur==='function'?getCur():null;
+    if(cur){
+      var all=typeof getCredits==='function'?getCredits():{};
+      hasCredits=(all[cur.username]||0)>0;
+    }
+  }
+  if(!isLoggedIn||!hasCredits)return;
   var navCreditBtn=document.createElement('button');
   navCreditBtn.className='credit-center-btn';
   navCreditBtn.style.cssText='font-size:12px;padding:6px 14px;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#78350f;border:none;border-radius:8px;cursor:pointer;font-weight:600;box-shadow:0 2px 8px rgba(251,191,36,.3);transition:all .2s';
   navCreditBtn.innerHTML='<span>\u26A1</span> 算力中心';
   navCreditBtn.id='navCreditCenterBtn';
   navCreditBtn.onclick=function(){
-    if(typeof showUserProfile==='function') showUserProfile();
-    else document.getElementById('navLoginBtn')?.click();
+    if(typeof openTool==='function') openTool('credits');
   };
   navRight.insertBefore(navCreditBtn,navRight.firstChild);
-}
+},800);
 
 // 5. 悬浮按钮
 var fab=document.createElement('button');
