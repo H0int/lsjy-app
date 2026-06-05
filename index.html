@@ -1029,6 +1029,7 @@ renderEmployeeAcct();
 <div class="section-tag">BUSINESS MODULES</div>
 <h2 class="section-title">六大业务板块</h2>
 <p class="section-sub">覆盖 AI、新媒体、电商、宠物、教育、校园全链路，为实体经济提供数字化流量赋能</p>
+<div style="text-align:right;margin-bottom:16px"><button onclick="toggleSection('modGrid',this)" style="background:none;border:1px solid var(--bd);border-radius:8px;padding:6px 14px;font-size:12px;color:var(--b);cursor:pointer;transition:all .2s">收起板块</button></div>
 <div class="mod-grid" id="modGrid"></div>
 </div>
 </section>
@@ -1037,10 +1038,10 @@ renderEmployeeAcct();
 <section class="tools sec-pad" id="tools">
 <div class="container">
 <div class="section-tag">FREE TOOLS</div>
-<h2 class="section-title"><span class="gradient-text">205</span>款工具</h2>
+<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px"><div><h2 class="section-title" style="margin:0"><span class="gradient-text">205</span>款工具</h2></div><button onclick="toggleSection('toolsGrid',this)" style="background:none;border:1px solid var(--bd);border-radius:8px;padding:6px 14px;font-size:12px;color:var(--b);cursor:pointer;transition:all .2s">收起工具</button></div>
 <p class="section-sub">覆盖AI人工智能、自媒体、电商、宠物、教育、伯雅校园六大业务模块，一站式数字化综合平台</p>
 <div id="quickActions" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:28px;margin-bottom:24px">
-<div onclick="typeof openCreditsShop==='function'&&openCreditsShop()" style="background:linear-gradient(135deg,#fef3c7,#fde68a);border:1px solid #f59e0b;border-radius:16px;padding:24px 20px;cursor:pointer;transition:all .3s;position:relative;overflow:hidden" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 12px 30px rgba(245,158,11,.25)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+<div onclick="typeof openTool==='function'&&openTool('credits')" style="background:linear-gradient(135deg,#fef3c7,#fde68a);border:1px solid #f59e0b;border-radius:16px;padding:24px 20px;cursor:pointer;transition:all .3s;position:relative;overflow:hidden" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 12px 30px rgba(245,158,11,.25)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
 <div style="position:absolute;top:-10px;right:-10px;width:60px;height:60px;background:rgba(255,255,255,.3);border-radius:50%"></div>
 <div style="font-size:36px;margin-bottom:8px">⚡</div>
 <div style="font-size:16px;font-weight:700;color:#92400e;margin-bottom:4px">算力中心</div>
@@ -1079,6 +1080,7 @@ renderEmployeeAcct();
 <div class="section-tag">PRICING</div>
 <h2 class="section-title">服务<span class="gradient-text">定价方案</span></h2>
 <p class="section-sub">按需选择，灵活付费。支持微信支付、QQ支付、支付宝，开通即用</p>
+<div style="text-align:right;margin-bottom:16px"><button onclick="toggleSection('pricingGrid',this)" style="background:none;border:1px solid var(--bd);border-radius:8px;padding:6px 14px;font-size:12px;color:var(--b);cursor:pointer;transition:all .2s">收起定价</button></div>
 <div class="pricing-grid" id="pricingGrid"></div>
 <div style="text-align:center;margin-top:32px">
 <p style="font-size:13px;color:var(--b)">所有套餐均含免费咨询 + 7天无理由退款保障 &nbsp;|&nbsp; 定制化需求请<a href="#contact" style="color:var(--p);font-weight:600;text-decoration:none">联系我们</a>获取专属报价</p>
@@ -1091,22 +1093,49 @@ renderEmployeeAcct();
 <div class="container" style="text-align:center">
 <div class="section-tag">ABOUT US</div>
 <h2 class="section-title">关于<span class="gradient-text">罗圣纪元</span></h2>
-<p class="section-sub" style="margin:0 auto 40px">祁阳市罗圣纪元互联网科技有限责任公司，总部位于湖南省永州市祁阳市，是一家聚焦 AI 赋能实体经济的科技企业。</p>
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px;max-width:900px;margin:0 auto">
-<div style="padding:28px;border:1px solid var(--bd);border-radius:var(--radius)">
+<p class="section-sub" style="margin:0 auto 40px">祁阳市罗圣纪元互联网科技有限责任公司，成立于2026年，注册资本52万元，总部位于湖南省永州市祁阳市。我们是一家聚焦 AI 赋能实体经济的科技创新企业，致力于为中小商家和创业者提供一站式数字化转型解决方案。</p>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px;max-width:900px;margin:0 auto 48px">
+<div style="padding:28px;border:1px solid var(--bd);border-radius:var(--radius);transition:all .3s" onmouseover="this.style.borderColor='var(--pl)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.06)'" onmouseout="this.style.borderColor='var(--bd)';this.style.boxShadow='none'">
 <div style="font-size:36px;margin-bottom:12px">🎯</div>
 <h3 style="font-size:16px;font-weight:700;margin-bottom:8px">企业使命</h3>
-<p style="font-size:13px;color:var(--b);line-height:1.7">用技术打破传统获客壁垒，打造可复制、高转化的本地商家增长闭环</p>
+<p style="font-size:13px;color:var(--b);line-height:1.7">用 AI 科技打破传统获客壁垒，为中小商家打造可复制、高转化的数字化增长闭环，让每一家实体门店都能享受技术红利。</p>
 </div>
-<div style="padding:28px;border:1px solid var(--bd);border-radius:var(--radius)">
+<div style="padding:28px;border:1px solid var(--bd);border-radius:var(--radius);transition:all .3s" onmouseover="this.style.borderColor='var(--pl)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.06)'" onmouseout="this.style.borderColor='var(--bd)';this.style.boxShadow='none'">
 <div style="font-size:36px;margin-bottom:12px">💡</div>
 <h3 style="font-size:16px;font-weight:700;margin-bottom:8px">核心优势</h3>
-<p style="font-size:13px;color:var(--b);line-height:1.7">AI 自研技术 + 实战运营经验，覆盖短视频、电商、私域全链路</p>
+<p style="font-size:13px;color:var(--b);line-height:1.7">AI 自研技术 + 实战运营经验，覆盖短视频运营、电商落地、私域搭建全链路，技术驱动与运营深耕双引擎并行。</p>
 </div>
-<div style="padding:28px;border:1px solid var(--bd);border-radius:var(--radius)">
+<div style="padding:28px;border:1px solid var(--bd);border-radius:var(--radius);transition:all .3s" onmouseover="this.style.borderColor='var(--pl)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.06)'" onmouseout="this.style.borderColor='var(--bd)';this.style.boxShadow='none'">
 <div style="font-size:36px;margin-bottom:12px">🤝</div>
 <h3 style="font-size:16px;font-weight:700;margin-bottom:8px">合作理念</h3>
-<p style="font-size:13px;color:var(--b);line-height:1.7">以客户增长为核心目标，长期陪伴式服务，共创商业价值</p>
+<p style="font-size:13px;color:var(--b);line-height:1.7">以客户增长为核心目标，提供长期陪伴式服务。不追求短期收割，而是与客户共创可持续的商业价值，实现共赢发展。</p>
+</div>
+</div>
+<!-- 发展历程 + 数据亮点 -->
+<div style="max-width:900px;margin:0 auto 48px">
+<h3 style="font-size:18px;font-weight:800;margin-bottom:24px;color:var(--n)">📊 平台数据</h3>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px">
+<div style="padding:24px;background:linear-gradient(135deg,#fef2f2,#fee2e2);border-radius:16px;text-align:center"><div style="font-size:32px;font-weight:900;color:#dc2626">6</div><div style="font-size:13px;color:#991b1b;margin-top:4px;font-weight:600">核心业务板块</div></div>
+<div style="padding:24px;background:linear-gradient(135deg,#eff6ff,#dbeafe);border-radius:16px;text-align:center"><div style="font-size:32px;font-weight:900;color:#2563eb">28</div><div style="font-size:13px;color:#1e40af;margin-top:4px;font-weight:600">专业服务项目</div></div>
+<div style="padding:24px;background:linear-gradient(135deg,#f0fdf4,#dcfce7);border-radius:16px;text-align:center"><div style="font-size:32px;font-weight:900;color:#16a34a">205</div><div style="font-size:13px;color:#166534;margin-top:4px;font-weight:600">全能AI工具</div></div>
+<div style="padding:24px;background:linear-gradient(135deg,#fefce8,#fef9c3);border-radius:16px;text-align:center"><div style="font-size:32px;font-weight:900;color:#ca8a04">1000+</div><div style="font-size:13px;color:#92400e;margin-top:4px;font-weight:600">累计服务客户</div></div>
+</div>
+</div>
+<div style="max-width:900px;margin:0 auto 48px">
+<h3 style="font-size:18px;font-weight:800;margin-bottom:24px;color:var(--n)">🏢 资质信息</h3>
+<div style="padding:24px;background:var(--bg);border-radius:16px;border:1px solid var(--bd);text-align:left;line-height:2.2;font-size:13px;color:var(--l)">
+<div style="display:grid;grid-template-columns:120px 1fr;gap:4px 16px"><span style="font-weight:700;color:var(--n)">公司全称</span><span>祁阳市罗圣纪元互联网科技有限责任公司</span><span style="font-weight:700;color:var(--n)">统一社会信用代码</span><span>91431121MAKD052H05</span><span style="font-weight:700;color:var(--n)">注册资本</span><span>52万元</span><span style="font-weight:700;color:var(--n)">成立日期</span><span>2026年05月12日</span><span style="font-weight:700;color:var(--n)">企业类型</span><span>有限责任公司（自然人独资）</span><span style="font-weight:700;color:var(--n)">注册地址</span><span>湖南省永州市祁阳市长虹街道盘龙西路329号7楼</span><span style="font-weight:700;color:var(--n)">经营范围</span><span>互联网信息服务、互联网销售、教育咨询服务、宠物销售、个人互联网直播服务、技术服务/开发/咨询/交流/转让/推广</span><span style="font-weight:700;color:var(--n)">创始人</span><span>罗凯中</span></div>
+</div>
+</div>
+<div style="max-width:900px;margin:0 auto">
+<h3 style="font-size:18px;font-weight:800;margin-bottom:24px;color:var(--n)">🌍 六大业务板块</h3>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px">
+<div style="padding:20px;background:linear-gradient(135deg,#eff6ff,#dbeafe);border-radius:14px;text-align:center"><div style="font-size:28px;margin-bottom:8px">🤖</div><div style="font-size:13px;font-weight:700;color:#1e40af">AI 人工智能</div></div>
+<div style="padding:20px;background:linear-gradient(135deg,#fdf2f8,#fce7f3);border-radius:14px;text-align:center"><div style="font-size:28px;margin-bottom:8px">📱</div><div style="font-size:13px;font-weight:700;color:#9d174d">自媒体</div></div>
+<div style="padding:20px;background:linear-gradient(135deg,#f5f3ff,#ede9fe);border-radius:14px;text-align:center"><div style="font-size:28px;margin-bottom:8px">🛒</div><div style="font-size:13px;font-weight:700;color:#5b21b6">电商</div></div>
+<div style="padding:20px;background:linear-gradient(135deg,#fff7ed,#ffedd5);border-radius:14px;text-align:center"><div style="font-size:28px;margin-bottom:8px">🐾</div><div style="font-size:13px;font-weight:700;color:#9a3412">宠物</div></div>
+<div style="padding:20px;background:linear-gradient(135deg,#ecfdf5,#d1fae5);border-radius:14px;text-align:center"><div style="font-size:28px;margin-bottom:8px">📚</div><div style="font-size:13px;font-weight:700;color:#065f46">教育</div></div>
+<div style="padding:20px;background:linear-gradient(135deg,#eef2ff,#e0e7ff);border-radius:14px;text-align:center"><div style="font-size:28px;margin-bottom:8px">🏫</div><div style="font-size:13px;font-weight:700;color:#3730a3">伯雅校园</div></div>
 </div>
 </div>
 </div>
@@ -1216,7 +1245,7 @@ renderEmployeeAcct();
 
 <script>
 // ===== CACHE BUSTER & VERSION CHECK =====
-(function(){const _V='v3.8-beta1';const _cv=localStorage.getItem('lsjy3_ver');if(_cv!==_V){localStorage.setItem('lsjy3_ver',_V);sessionStorage.clear();try{if('caches'in window)caches.keys().then(k=>k.forEach(n=>caches.delete(n)))}catch(e){}try{document.cookie='lsjy3_ver=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT';document.cookie='lsjy_v=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT';document.cookie='__cf_bm=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT'}catch(e){}}})();
+(function(){const _V='v3.9-beta1';const _cv=localStorage.getItem('lsjy3_ver');if(_cv!==_V){localStorage.setItem('lsjy3_ver',_V);sessionStorage.clear();try{if('caches'in window)caches.keys().then(k=>k.forEach(n=>caches.delete(n)))}catch(e){}try{document.cookie='lsjy3_ver=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT';document.cookie='lsjy_v=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT';document.cookie='__cf_bm=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT'}catch(e){}}})();
 // ===== DATA =====
 window.MODULES=[
 {id:'ai',name:'AI 人工智能',icon:'🤖',color:'#3b82f6',gradient:'linear-gradient(135deg,#3b82f6,#60a5fa)',summary:'依托自研 AI 技术面向中小商家落地数字化转型',services:[
@@ -1881,6 +1910,8 @@ document.getElementById('detailOverlay').classList.add('show');
 document.body.style.overflow='hidden';
 }
 function closeDetail(e){if(e&&e.target!==e.currentTarget)return;document.getElementById('detailOverlay').classList.remove('show');document.body.style.overflow=''}
+// ===== Section Collapse/Expand =====
+function toggleSection(gridId,btn){var grid=document.getElementById(gridId);if(!grid)return;var isHidden=grid.style.display==='none';if(isHidden){grid.style.display='';grid.style.animation='slideUp .3s ease';btn.textContent='收起'+btn.textContent.replace('展开','');}else{grid.style.display='none';btn.textContent='展开'+btn.textContent.replace('收起','');}}''}
 
 // ===== TOOL PANEL =====
 function renderCopywriter(){
@@ -2138,6 +2169,13 @@ function closeAuth(e){
 if(e&&e.target!==e.currentTarget)return;
 document.getElementById('authOverlay').classList.remove('show');
 document.body.style.overflow='';
+// 同时关闭可能残留的工具面板和弹窗
+var to2=document.getElementById('toolOverlay2');if(to2)to2.style.display='none';
+var to1=document.getElementById('toolOverlay');if(to1)to1.classList.remove('show');
+var det=document.getElementById('detailOverlay');if(det)det.classList.remove('show');
+var pay=document.getElementById('payOverlay');if(pay)pay.style.display='none';
+var svc=document.getElementById('svcDetailOverlay');if(svc)svc.remove();
+var team=document.getElementById('teamOverlay');if(team)team.remove();
 }
 function switchAuthTab(tab){
 document.querySelectorAll('.auth-tab').forEach((t,i)=>t.classList.toggle('active',tab==='login'?i===0:i===1));
@@ -4261,10 +4299,10 @@ var style=document.getElementById('f_style');
 if(style)inputParts.push('风格:'+style.value);
 
 var input=inputParts.join(' | ');
-if(!input){alert('请至少填写一个字段');return}
+if(!input){toast('请至少填写一个字段','warn');return}
 
-var cur=_getCur();if(!cur){alert('请先登录');openAuth('login');return}
-var cr=_getCredits();if((cr[cur.username]||0)<cost){alert('算力不足，当前'+(cr[cur.username]||0)+'算力，需要'+cost+'算力');return}
+var cur=_getCur();if(!cur){toast('请先登录','warn');openAuth('login');return}
+var cr=_getCredits();if((cr[cur.username]||0)<cost){toast('算力不足，当前'+(cr[cur.username]||0)+'算力，需要'+cost+'算力','warn');return}
 
 var btn=document.getElementById('aiGenBtn');btn.disabled=true;btn.textContent='\u23f3 AI\u751f\u6210\u4e2d...';btn.style.opacity='0.7';
 
@@ -4290,11 +4328,11 @@ cr[cur.username]=(cr[cur.username]||0)-cost;
 localStorage.setItem('lsjy3_credits',JSON.stringify(cr));
 _updateCreditsUI();
 }else{
-alert('生成失败: '+(data.error||{}).message||'请稍后重试');
+toast('生成失败: '+(data.error&&data.error.message||'请稍后重试'),'error');
 }
 }).catch(function(e){
 btn.disabled=false;btn.textContent='\ud83d\ude80 AI 生成';btn.style.opacity='1';
-alert('网络错误: '+e.message);
+toast('网络错误: '+e.message,'error');
 });
 };
 
@@ -4334,23 +4372,23 @@ window.doAuth=function(mode){doAuth9(mode)};
 
 function doAuth9(mode){
 var user=document.getElementById('au').value.trim(),pass=document.getElementById('ap').value.trim();
-if(!user||!pass){alert('请填写账号和密码');return}
+if(!user||!pass){toast('请填写账号和密码','warn');return}
 var users=JSON.parse(localStorage.getItem('lsjy3_users')||'[]');
 if(mode==='register'){
-if(users.find(function(u){return u.username===user})){alert('账号已存在');return}
-if(users.find(function(u){return u.username===user})){alert('账号已存在');return}
+if(users.find(function(u){return u.username===user})){toast('账号已存在','error');return}
+if(users.find(function(u){return u.username===user})){toast('账号已存在','error');return}
 var displayName=document.getElementById('ar_name')?document.getElementById('ar_name').value.trim():user;
 var avEl=document.getElementById('regAvatar');
 var hasCustomAvatar=avEl&&avEl._custom;
 users.push({username:user,password:btoa(pass),role:'user',display:displayName,avatar:hasCustomAvatar});
 localStorage.setItem('lsjy3_users',JSON.stringify(users));
 var cr=_getCredits();if(!cr[user])cr[user]=100;localStorage.setItem('lsjy3_credits',JSON.stringify(cr));
-alert('注册成功！赠送100算力');
+toast('注册成功！赠送100算力','success');
 openAuth('login');return;
 }
 var found=users.find(function(u){return u.username===user});
-if(!found){alert('账号不存在，请先注册');return}
-if(atob(found.password)!==pass){alert('密码错误');return}
+if(!found){toast('账号不存在，请先注册','error');return}
+if(atob(found.password)!==pass){toast('密码错误','error');return}
 localStorage.setItem('lsjy3_cur',JSON.stringify({username:found.username,role:found.role||'user',display:found.display||found.username}));
 document.getElementById('authModal2').style.display='none';
 updateNav9();_updateCreditsUI();
@@ -4567,8 +4605,8 @@ document.querySelectorAll('#toolPanel2 textarea[id^="f_"]').forEach(function(t){
 var labels={'f_topic':'\u4e3b\u9898','f_breed':'\u54c1\u79cd','f_species':'\u7c7b\u578b','f_age':'\u9636\u6bb5','f_issue':'\u95ee\u9898','f_scene':'\u573a\u666f','f_platform':'\u5e73\u53f0','f_audience':'\u4eba\u7fa4','f_tone':'\u57fa\u8c03','f_content_type':'\u5185\u5bb9\u7c7b\u578b','f_target':'\u76ee\u6807','f_detail':'\u8981\u6c42','f_product':'\u5546\u54c1','f_goal':'\u76ee\u6807','f_subject':'\u5b66\u79d1','f_level':'\u5b66\u6bb5','f_purpose':'\u7528\u9014','f_role':'\u89d2\u8272','f_need':'\u9700\u6c42'};
 var parts=[];Object.keys(fields).forEach(function(k){parts.push((labels[k]||k)+':'+fields[k])});
 var sty=document.getElementById('f_style');if(sty)parts.push('\u98ce\u683c:'+sty.value);
-var input=parts.join(' | ');if(!input){alert('\u8bf7\u81f3\u5c11\u586b\u5199\u4e00\u4e2a\u5b57\u6bb5');return}
-var cur=_getCur();if(!cur){alert('\u8bf7\u5148\u767b\u5f55');openAuth('login');return}
+var input=parts.join(' | ');if(!input){toast('请至少填写一个字段','warn');return}
+var cur=_getCur();if(!cur){toast('请先登录','warn');openAuth('login');return}
 var cr=_getCredits();if((cr[cur.username]||0)<cost){openCreditsShop();return}
 var btn=document.getElementById('aiGenBtn'),st=document.getElementById('genStatus');
 btn.disabled=true;btn.textContent='\u23f3 AI\u751f\u6210\u4e2d...';btn.style.opacity='0.7';
@@ -4631,8 +4669,8 @@ sc.innerHTML+='</div><p style="text-align:center;margin-top:16px;font-size:12px;
 document.getElementById('creditsShopModal').style.display='flex';
 };
 window.buyPlan=function(id){
-var p=_PLANS.find(function(x){return x.id===id});if(!p)return;var cur=_getCur();if(!cur){alert('\u8bf7\u5148\u767b\u5f55');openAuth('login');return}
-if(typeof showPayModal==='function'){showPayModal(p.name+'('+p.credits+'\u7b97\u529b)','\xa5'+p.price)}else{alert('\u8bf7\u5148\u52a0\u8f7d\u652f\u4ed8\u7ec4\u4ef6')}
+var p=_PLANS.find(function(x){return x.id===id});if(!p)return;var cur=_getCur();if(!cur){toast('请先登录','warn');openAuth('login');return}
+if(typeof showPayModal==='function'){showPayModal(p.name+'('+p.credits+'\u7b97\u529b)','\xa5'+p.price)}else{toast('请先加载支付组件','info')}
 };
 
 // ===== 9. MEDIA LIBRARY =====
@@ -4676,15 +4714,15 @@ document.getElementById('authModal2').style.display='flex';
 window.handleAvatar=function(inp){if(inp.files&&inp.files[0]){var r=new FileReader();r.onload=function(e){var a=document.getElementById('regAvatar');if(a){a.innerHTML='<img src="'+e.target.result+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover">';a._custom=true}};r.readAsDataURL(inp.files[0])}};
 window.doAuth=function(mode){_doAuth10(mode)};
 function _doAuth10(mode){
-var u=document.getElementById('au').value.trim(),p=document.getElementById('ap').value.trim();if(!u||!p){alert('\u586b\u5199\u8d26\u53f7\u548c\u5bc6\u7801');return}
+var u=document.getElementById('au').value.trim(),p=document.getElementById('ap').value.trim();if(!u||!p){toast('请填写账号和密码','warn');return}
 var users=JSON.parse(localStorage.getItem('lsjy3_users')||'[]');
-if(mode==='register'){if(users.find(function(x){return x.username===u})){alert('\u8d26\u53f7\u5df2\u5b58\u5728');return}
+if(mode==='register'){if(users.find(function(x){return x.username===u})){toast('账号已存在','error');return}
 var dn=document.getElementById('ar_name')?document.getElementById('ar_name').value.trim():u;
 users.push({username:u,password:btoa(p),role:'user',display:dn});localStorage.setItem('lsjy3_users',JSON.stringify(users));
 var cr=_getCredits();if(!cr[u])cr[u]=100;localStorage.setItem('lsjy3_credits',JSON.stringify(cr));
-alert('\u6ce8\u518c\u6210\u529f\uff01\u8d60\u9001100\u7b97\u529b');openAuth('login');return}
-var found=users.find(function(x){return x.username===u});if(!found){alert('\u8d26\u53f7\u4e0d\u5b58\u5728\uff0c\u8bf7\u5148\u6ce8\u518c');return}
-if(atob(found.password)!==p){alert('\u5bc6\u7801\u9519\u8bef');return}
+toast('注册成功！赠送100算力','success');openAuth('login');return}
+var found=users.find(function(x){return x.username===u});if(!found){toast('账号不存在，请先注册','error');return}
+if(atob(found.password)!==p){toast('密码错误','error');return}
 localStorage.setItem('lsjy3_cur',JSON.stringify({username:found.username,role:found.role||'user',display:found.display||found.username}));
 document.getElementById('authModal2').style.display='none';_updateNav();_updateCreditsUI();
 }
@@ -4745,7 +4783,7 @@ window._SERVICE_PACKS={ai:{name:'AI \u4eba\u5de5\u667a\u80fd',icon:'\ud83e\udd16
 // === openServiceDetail - \u4f7f\u7528\u4e8b\u4ef6\u59d4\u6258\u907f\u514d\u5f15\u53f7\u5d4c\u5957 ===
 window.openServiceDetail=function(catId){
   var d=window._SERVICE_PACKS[catId];
-  if(!d){alert('\u670d\u52a1\u6570\u636e\u52a0\u8f7d\u4e2d');return;}
+  if(!d){toast('服务数据加载中','info');return;}
   var h='<div style="padding:32px 32px 0;text-align:center"><div style="font-size:40px;margin-bottom:8px">'+d.icon+'</div><h2 style="margin:0 0 6px;font-size:22px;color:#1a1a1a">'+d.name+'</h2><p style="margin:0 0 24px;font-size:14px;color:#888">\u9009\u62e9\u9002\u5408\u60a8\u7684\u670d\u52a1\u5957\u9910\uff0c\u5f00\u542f\u6570\u5b57\u5316\u4e4b\u65c5</p></div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding:0 32px 32px">';
   d.packs.forEach(function(p){
     var isHot=p.hot||false,bc=isHot?d.color:'#e8e8e8',badge=isHot?'<div style="position:absolute;top:-1px;right:16px;background:'+d.color+';color:#fff;font-size:11px;padding:3px 10px;border-radius:0 0 8px 8px">\u63a8\u8350</div>':'';
@@ -4768,7 +4806,7 @@ document.addEventListener('click',function(e){
     if(typeof window.showPayModal==='function'){
       showPayModal(n+' '+p,pr);
     }else{
-      alert('\u8bf7\u5148\u52a0\u8f7d\u652f\u4ed8\u7ec4\u4ef6');
+      toast('请先加载支付组件','info');
     }
     return;
   }
@@ -4855,7 +4893,8 @@ document.addEventListener('click',function(e){
   if(e.target.closest('.pay-done-btn')){
     var modal=document.getElementById('payModal');
     if(modal) modal.style.display='none';
-    alert('支付确认已提交！管理员将在24小时内确认支付并为您到账算力/服务。如有疑问请联系客服。');
+    if(typeof setElitePurchased==='function') setElitePurchased(true);
+    toast('支付确认已提交！管理员将在24小时内确认支付并为您到账算力/服务。企业版功能已开通。','success');
     return;
   }
   if(e.target.closest('.pay-close-btn')){
@@ -4930,9 +4969,9 @@ window.buyPlan=function(id){
 var p=window._PLANS&&window._PLANS.find(function(x){return x.id===id});
 if(!p)return;
 var cur=typeof _getCur==='function'?_getCur():null;
-if(!cur){alert('\u8bf7\u5148\u767b\u5f55');return;}
-if(typeof showPayModal==='function'){showPayModal(p.name+'('+p.credits+'\u7b97\u529b)','\xa5'+p.price);}
-else{alert('\u652f\u4ed8\u7ec4\u4ef6\u52a0\u8f7d\u4e2d\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5');}
+if(!cur){toast('请先登录','warn');return;}
+if(typeof showPayModal==='function'){showPayModal(p.name+'('+p.credits+'算力)','¥'+p.price);}
+else{toast('支付组件加载中，请稍后重试','info');}
 };
 
 // Override doGen10
@@ -4944,9 +4983,9 @@ document.querySelectorAll('#toolPanel2 textarea[id^="f_"]').forEach(function(t){
 var labels={'f_topic':'\u4e3b\u9898','f_breed':'\u54c1\u79cd','f_species':'\u7c7b\u578b','f_age':'\u9636\u6bb5','f_issue':'\u95ee\u9898','f_scene':'\u573a\u666f','f_platform':'\u5e73\u53f0','f_audience':'\u4eba\u7fa4','f_tone':'\u57fa\u8c03','f_content_type':'\u5185\u5bb9\u7c7b\u578b','f_target':'\u76ee\u6807','f_detail':'\u8981\u6c42','f_product':'\u5546\u54c1','f_goal':'\u76ee\u6807','f_subject':'\u5b66\u79d1','f_level':'\u5b66\u6bb5','f_purpose':'\u7528\u9014','f_role':'\u89d2\u8272','f_need':'\u9700\u6c42'};
 var parts=[];Object.keys(fields).forEach(function(k){parts.push((labels[k]||k)+':'+fields[k])});
 var sty=document.getElementById('f_style');if(sty)parts.push('\u98ce\u683c:'+sty.value);
-var input=parts.join(' | ');if(!input){alert('\u8bf7\u81f3\u5c11\u586b\u5199\u4e00\u4e2a\u5b57\u6bb5');return}
-var cur=typeof _getCur==='function'?_getCur():null;if(!cur){alert('\u8bf7\u5148\u767b\u5f55');return}
-var cr=typeof _getCredits==='function'?_getCredits():{};if((cr[cur.username]||0)<cost){if(typeof openCreditsShop==='function')openCreditsShop();return}
+var input=parts.join(' | ');if(!input){toast('请至少填写一个字段','warn');return}
+var cur=typeof _getCur==='function'?_getCur():null;if(!cur){toast('请先登录','warn');openAuth('login');return}
+var cr=typeof _getCredits==='function'?_getCredits():{};if((cr[cur.username]||0)<cost){toast('算力不足，请先充值','warn');if(typeof openTool==='function')openTool('credits');return}
 var btn=document.getElementById('aiGenBtn'),st=document.getElementById('genStatus');
 if(btn){btn.disabled=true;btn.textContent='\u23f3 AI\u751f\u6210\u4e2d...';btn.style.opacity='0.7';}
 cr[cur.username]=(cr[cur.username]||0)-cost;localStorage.setItem('lsjy3_credits',JSON.stringify(cr));

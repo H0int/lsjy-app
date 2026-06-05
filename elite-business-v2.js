@@ -25,7 +25,29 @@ background-size:80px 140px;background-position:0 0,0 0,40px 70px,40px 70px}
 `;
 document.head.appendChild(geoStyle);
 
-// ===== 2. 企业团队管理系统 =====
+// ===== 2. 购买状态检查 =====
+var ELITE_PURCHASED_KEY = 'lsjy3_elite_purchased';
+function hasEliteAccess(){
+  try{ return JSON.parse(localStorage.getItem(ELITE_PURCHASED_KEY))===true; }catch(e){ return false; }
+}
+function setElitePurchased(val){ localStorage.setItem(ELITE_PURCHASED_KEY, JSON.stringify(!!val)); }
+// 也检查企业版是否有算力池
+function hasTeamCredits(){ var td=getTeamData(); return td && td.creditPool > 0; }
+window.hasEliteAccess = hasEliteAccess;
+
+// ===== 2b. 企业功能访问门控 =====
+window.requireElite = function(callback){
+  if(hasEliteAccess() || hasTeamCredits()){
+    if(typeof callback==='function') callback();
+    return true;
+  }
+  // 未购买，显示试用弹窗
+  if(typeof openFreeTrial==='function') openFreeTrial();
+  if(typeof toast==='function') toast('企业版功能需购买后使用，或开启7天免费试用','warn');
+  return false;
+};
+
+// ===== 3. 企业团队管理系统 =====
 // localStorage-based team management
 var TEAM_KEY = 'lsjy3_elite_team';
 function getTeamData(){ try{return JSON.parse(localStorage.getItem(TEAM_KEY))||null}catch(e){return null} }
@@ -47,6 +69,7 @@ initTeamData();
 
 // ===== 3. 企业管理面板 =====
 window.openTeamPanel = function(){
+  if(!requireElite()) return;
   var overlay = document.createElement('div');
   overlay.id = 'teamOverlay';
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px)';
@@ -148,7 +171,7 @@ window.addTeamMember = function(){
   var name = document.getElementById('tmName').value.trim();
   var role = document.getElementById('tmRole').value;
   var credits = parseInt(document.getElementById('tmCredits').value)||0;
-  if(!name){alert('请输入成员名称');return}
+  if(!name){toast('请输入成员名称','warn');return}
   var td = getTeamData();
   td.members.push({name:name,role:role,creditLimit:credits||0,usedCredits:0,joinedAt:new Date().toISOString()});
   saveTeamData(td);
@@ -381,6 +404,7 @@ window.selectIndustry = function(industryId){
 
 // ===== 8. 专属服务功能 =====
 window.openEliteService = function(){
+  if(!requireElite()) return;
   var overlay = document.createElement('div');
   overlay.id = 'eliteServiceOverlay';
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px)';
@@ -442,8 +466,8 @@ window.openFreeTrial = function(){
       </div>
     </div>
     <div style="display:flex;gap:10px">
-      <button onclick="document.getElementById('freeTrialOverlay').remove();if(typeof openAuth==='function')openAuth('register')" style="flex:1;padding:14px;background:linear-gradient(135deg,#EAB308,#CA8A04);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer">立即开始试用</button>
-      <button onclick="document.getElementById('freeTrialOverlay').remove();if(typeof openAuth==='function')openAuth('login')" style="flex:1;padding:14px;background:linear-gradient(135deg,#1E293B,#0F172A);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer">预约1对1演示</button>
+      <button onclick="document.getElementById('freeTrialOverlay').remove();(function(){if(typeof isLoggedIn==='function'&&isLoggedIn()){if(typeof openTeamPanel==='function')openTeamPanel();if(typeof toast==='function')toast('欢迎使用商业精英版！','success');}else if(typeof openAuth==='function')openAuth('register')})()" style="flex:1;padding:14px;background:linear-gradient(135deg,#EAB308,#CA8A04);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer">立即开始试用</button>
+      <button onclick="document.getElementById('freeTrialOverlay').remove();(function(){if(typeof isLoggedIn==='function'&&isLoggedIn()){if(typeof openTeamPanel==='function')openTeamPanel();}else if(typeof openAuth==='function')openAuth('login')})()" style="flex:1;padding:14px;background:linear-gradient(135deg,#1E293B,#0F172A);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer">预约1对1演示</button>
     </div>
     <a href="javascript:void(0)" onclick="document.getElementById('freeTrialOverlay').remove()" style="display:block;margin-top:12px;font-size:13px;color:#6B7280;text-decoration:none">暂不需要，稍后再说</a>
   </div>`;

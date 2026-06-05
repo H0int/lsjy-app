@@ -191,7 +191,7 @@ setTimeout(function(){
     if(text.indexOf('算力中心')>=0){
       div.onclick=function(){
         if(typeof window.openCreditsShop==='function') openCreditsShop();
-        else alert('算力中心加载中');
+        else toast('算力中心加载中','info');
       };
       div.style.cursor='pointer';
     }
