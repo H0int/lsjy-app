@@ -2070,11 +2070,16 @@ async function doGenericAI(toolId){
   const cost=_TOOL_COST[toolId]||0;
   if(cost&&!isLoggedIn())return toast('请先登录','error');
   if(cost){const c=getCredits();if(c<cost)return toast('算力不足，请先充值','error')}
-  // Build prompt from fields
+  // Build prompt from fields (auto-fill defaults if empty)
   let userInput=t.prompt+'\n';
   t.fields.forEach(f=>{
     const el=document.getElementById('gt_'+f.id);
-    if(el){const v=el.value.trim();if(v)userInput+=f.label+': '+v+'\n'}
+    if(el){
+      let v=el.value.trim();
+      if(!v&&f.type==='select'&&f.options&&f.options.length>0){v=f.options[0];el.value=v}
+      if(!v&&f.placeholder){v=f.placeholder}
+      if(v)userInput+=f.label+': '+v+'\n'
+    }
   });
   const resultEl=document.getElementById('gtResult');
   resultEl.innerHTML='<div style="text-align:center;padding:30px;color:var(--b)">⏳ AI生成中，请稍候...</div>';
@@ -2142,7 +2147,7 @@ const result=_TOOL_MAP[id]();
 if(typeof result==='string'&&result.length>0){panel.innerHTML=result}
 }
 }
-function closeTool(e){if(e&&e.target!==e.currentTarget)return;document.getElementById('toolOverlay').classList.remove('show');document.body.style.overflow='';if(typeof aiStopVoice==='function')aiStopVoice()}
+function closeTool(e){if(e&&e.target!==e.currentTarget)return;var to1=document.getElementById('toolOverlay');if(to1)to1.classList.remove('show');var to2=document.getElementById('toolOverlay2');if(to2)to2.style.display='none';document.body.style.overflow='';if(typeof aiStopVoice==='function')aiStopVoice()}
 
 // ===== COPYWRITER TYPE SELECT =====
 function selectCwType(el,i){el.parentElement.querySelectorAll('.cw-type').forEach(e=>e.classList.remove('active'));el.classList.add('active');window._cwType=i}
@@ -4212,10 +4217,9 @@ function showToolForm(name,eid){
 var d=document.getElementById('toolOverlay2'),tp=document.getElementById('toolPanel2');
 if(!d||!tp)return;
 if(eid&&window._TOOL_MAP&&window._TOOL_MAP[eid]&&typeof window._TOOL_MAP[eid]==='function'){
-tp.innerHTML='';var r=window._TOOL_MAP[eid]();if(typeof r==='string')tp.innerHTML=r;
-}else{
-tp.innerHTML=genProForm(name,eid);
+tp.innerHTML='';var r=window._TOOL_MAP[eid]();if(typeof r==='string'&&r.length>0){tp.innerHTML=r;d.style.display='flex';document.body.style.overflow='hidden';return;}
 }
+tp.innerHTML=genProForm(name,eid);
 d.style.display='flex';document.body.style.overflow='hidden';
 }
 
