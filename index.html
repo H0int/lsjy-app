@@ -1619,7 +1619,7 @@ const DEEPSEEK_CONFIG={
 const BACKEND_URL='';
 
 // === 豆包直连 API（无需后端代理，前端直接调用火山引擎） ===
-async async function doubaoChat(prompt, systemPrompt, model, retries) {
+async function doubaoChat(prompt, systemPrompt, model, retries) {
   retries = retries || 2;
   let lastErr = null;
   for (let i = 0; i <= retries; i++) {
@@ -1846,7 +1846,7 @@ document.getElementById('toolPanel').innerHTML=`
 </div>
 </div>`}
 
-async async function hubSendMessage(modelId,modelName){
+async function hubSendMessage(modelId,modelName){
 const input=document.getElementById('hubInput');
 const msg=input.value.trim();if(!msg)return;
 input.value='';
