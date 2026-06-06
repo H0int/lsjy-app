@@ -1155,8 +1155,7 @@ renderEmployeeAcct();
 <div class="contact-item"><span class="ci">📍</span><span class="cv">湖南省永州市祁阳市</span></div>
 <div class="contact-item"><span class="ci">🏢</span><span class="cv">祁阳市罗圣纪元互联网科技有限责任公司</span></div>
 <div class="contact-item"><span class="ci">👤</span><span class="cv">创始人：罗凯中</span></div>
-<div class="contact-item"><span class="ci">🌐</span><span class="cv">www.lsjy-app.com</span></div>
-<div class="contact-item"><span class="ci">⏰</span><span class="cv">工作日 9:00-18:00 在线服务</span></div>
+
 
 </div>
 </section>
@@ -1164,7 +1163,7 @@ renderEmployeeAcct();
 <!-- ===== FOOTER ===== -->
 <footer class="footer">
 <p>© 2025-2026 祁阳市罗圣纪元互联网科技有限责任公司 &nbsp;|&nbsp; 湖南省永州市祁阳市</p>
-<p style="margin-top:8px">AI · 自媒体 · 电商 · 宠物 · 教育 · 伯雅校园</p>
+<p style="margin-top:8px">AI · 自媒体 · 电商 · 宠物 · 教育</p>
 <p style="margin-top:12px;font-size:12px">
   <a href="privacy.html" style="color:rgba(255,255,255,.5);text-decoration:none" target="_blank">隐私政策</a>
   <span style="margin:0 8px;opacity:.3">|</span>
@@ -4739,7 +4738,7 @@ var lb=document.getElementById('navLoginBtn');if(lb&&!lb._v10){lb.addEventListen
 
 // ===== 12. FIXES =====
 (function(){var ph=document.querySelectorAll('a[href="tel:18890000368"]');ph.forEach(function(a){a.outerHTML='<div class="btn" style="background:#fff;color:var(--n);border-radius:12px;cursor:default;padding:12px 24px">\ud83d\udce7 contact@lsjy.com</div>'})})();
-(function(){var ci=document.querySelector('.contact-info');if(ci&&!ci.querySelector('.cv-website')){ci.innerHTML+='<div class="contact-item"><span class="ci">\ud83c\udf10</span><span class="cv cv-website">www.lsjy-app.com</span></div><div class="contact-item"><span class="ci">\u23f0</span><span class="cv">\u5de5\u4f5c\u65e5 9:00-18:00</span></div>'}})();
+// (removed duplicate contact-info injection)
 (function(){var g=document.getElementById('pricingGrid');if(g&&!g.innerHTML.trim()){try{if(typeof renderPricing==='function')renderPricing()}catch(e){}}})();
 (function(){var al=document.querySelector('a[href="admin/"]');if(al)al.style.display='none'})();
 _updateNav();_updateCreditsUI();window._v10Applied=true;

@@ -173,11 +173,8 @@ setTimeout(function(){
     var bizIds=['ai','media','ecom','pet','edu','campus'];
     card.onclick=function(e){
       e.stopPropagation();
-      document.getElementById('modules').scrollIntoView({behavior:'smooth'});
-      setTimeout(function(){
-        var gridCards=document.querySelectorAll('#modGrid .mod-card');
-        if(gridCards[i]) gridCards[i].click();
-      },600);
+      if(typeof window.openMod==='function'){openMod(bizIds[i]);}
+      else{document.getElementById('modules').scrollIntoView({behavior:'smooth'});}
     };
     card.style.cursor='pointer';
   });
@@ -290,7 +287,8 @@ setTimeout(function(){
     if(i<bizIds.length){
       card.onclick=function(e){
         e.stopPropagation();
-        openServiceDetail(bizIds[i]);
+        if(typeof window.openMod==='function'){openMod(bizIds[i]);}
+        else{document.getElementById('modules').scrollIntoView({behavior:'smooth'});}
       };
       card.style.cursor='pointer';
     }
