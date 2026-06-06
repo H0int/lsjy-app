@@ -4675,7 +4675,7 @@ if(typeof showPayModal==='function'){showPayModal(p.name+'('+p.credits+'\u7b97\u
 // ===== 9. MEDIA LIBRARY =====
 window.openMediaLib=function(type){
 var mc=document.getElementById('mediaContent');if(!mc)return;var lib=_getMediaLib();
-var f=type?lib.filter(function(m){return m.type===type||m.type==='text'}):lib;
+var f=type?lib.filter(function(m){return m.type===type}):lib;
 mc.innerHTML='<div style="text-align:center;margin-bottom:20px"><h3 style="margin:0;color:#1a1a1a;font-size:20px;font-weight:700">\ud83d\udcda \u4f5c\u54c1\u5e93</h3><p style="margin:4px 0 0;color:#888;font-size:13px">\u5171 '+lib.length+' \u4e2a\u4f5c\u54c1</p></div>';
 mc.innerHTML+='<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">';
 mc.innerHTML+='<button onclick="openMediaLib()" style="padding:6px 14px;border-radius:20px;font-size:12px;border:1px solid #e5e7eb;background:'+( !type?'var(--p)':'#fff')+';color:'+( !type?'#fff':'#666')+';cursor:pointer">\u5168\u90e8</button>';
