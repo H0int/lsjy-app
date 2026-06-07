@@ -1478,45 +1478,36 @@ renderEmployeeAcct();
 (function(){const _V='v3.9-beta1';const _cv=localStorage.getItem('lsjy3_ver');if(_cv!==_V){localStorage.setItem('lsjy3_ver',_V);sessionStorage.clear();try{if('caches'in window)caches.keys().then(k=>k.forEach(n=>caches.delete(n)))}catch(e){}try{document.cookie='lsjy3_ver=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT';document.cookie='lsjy_v=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT';document.cookie='__cf_bm=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT'}catch(e){}}})();
 // ===== DATA =====
 window.MODULES=[
-{id:'ai',name:'AI 人工智能',icon:'🤖',color:'#3b82f6',gradient:'linear-gradient(135deg,#3b82f6,#60a5fa)',summary:'依托自研 AI 技术面向中小商家落地数字化转型',services:[
-{id:'ai-clip',name:'AI 短视频批量切片',desc:'一键拆分长素材产出多条短视频，适配全平台分发。基于 AI 智能识别精彩片段，自动生成多规格短视频，覆盖抖音、快手、小红书等主流平台格式要求，大幅提升内容产出效率。'},
-{id:'ai-copy',name:'智能文案生成',desc:'短视频脚本、团购文案、店铺宣传文案 AI 自动化创作。输入关键词即可生成多风格文案，支持团购促销、品牌宣传、产品种草等多种场景，一键改写优化。'},
-{id:'ai-customer',name:'商家 AI 获客系统',desc:'本地实体门店智能引流工具，精准抓取同城客源。基于地理位置和用户画像，智能匹配潜在客户，自动化触达和转化，让实体门店告别传统地推获客模式。'},
-{id:'ai-api',name:'行业定制化 API 开发',desc:'根据门店、企业需求定制专属 AI 接口。提供智能推荐、图像识别、语音交互、文本分析等能力，支持快速集成到企业现有系统。'},
-{id:'ai-digital',name:'企业数字化搭建',desc:'中小企业线上管理系统、私域数字化架构搭建。从 CRM 客户管理到私域流量运营，为企业提供完整的数字化转型方案。'}
+{id:'ai',name:'AI 人工智能',icon:'🤖',color:'#3b82f6',gradient:'linear-gradient(135deg,#3b82f6,#60a5fa)',summary:'AI软件研发与开发 · 智能工具落地应用 · 人工智能技术服务',services:[
+{id:'ai-dev',name:'AI 软件研发与开发',desc:'为企业量身定制AI软件系统，涵盖智能客服、推荐引擎、自动化办公等核心研发，从需求分析到部署上线全流程服务。'},
+{id:'ai-tool',name:'智能工具落地应用',desc:'将AI大模型能力转化为可落地的实用工具，包括智能文案生成、图像识别、语音交互等，帮助企业降本增效。'},
+{id:'ai-service',name:'人工智能技术服务',desc:'提供AI技术咨询、模型训练调优、私有化部署等服务，支持企业构建专属AI能力，赋能业务智能化升级。'}
 ]},
-{id:'media',name:'自媒体',icon:'📱',color:'#ea2261',gradient:'linear-gradient(135deg,#ea2261,#f96bee)',summary:'深耕短视频全域运营，赋能实体与个人 IP 变现',services:[
-{id:'media-ops',name:'全平台账号代运营',desc:'抖音、快手、小红书账号全托管，日常更新 + 数据优化。专业团队制定内容策略，持续输出高质量内容，实现粉丝增长和变现转化。'},
-{id:'media-explore',name:'探店短视频全案策划',desc:'实体门店探店脚本、拍摄、剪辑、发布一站式服务。从探店创意策划到成品发布，全流程专业把控，帮助门店打造爆款探店视频。'},
-{id:'media-ip',name:'达人 IP 孵化',desc:'素人打造垂直领域博主，从定位到变现全周期扶持。提供人设策划、内容指导、平台运营、商业对接等全链路服务。'},
-{id:'media-copywriting',name:'图文内容代撰',desc:'公众号、小红书图文、朋友圈营销文案定制。专业文案团队操刀，精准触达目标受众，提升品牌传播效果。'},
-{id:'media-matrix',name:'短视频矩阵搭建',desc:'多账号布局，实现品牌全域流量裂变。帮助企业构建多平台内容矩阵，实现流量倍增和品牌全域覆盖。'}
+{id:'media',name:'自媒体',icon:'📱',color:'#ea2261',gradient:'linear-gradient(135deg,#ea2261,#f96bee)',summary:'全平台账号运营 · 图文/短视频内容创作 · 个人&品牌IP孵化 · 流量运营与商业变现',services:[
+{id:'media-ops',name:'全平台账号运营',desc:'抖音、快手、小红书、视频号等全平台账号代运营，涵盖内容策划、日常更新、数据优化全链路，实现粉丝增长与品牌曝光。'},
+{id:'media-content',name:'图文/短视频内容创作',desc:'专业团队产出高质量图文笔记、短视频脚本与拍摄剪辑，适配各平台算法推荐逻辑，提升内容传播力和互动率。'},
+{id:'media-ip',name:'个人&品牌IP孵化',desc:'从人设定位到变现闭环全周期扶持，提供个人IP打造与品牌IP孵化服务，涵盖策划、内容、运营、商业对接全链路。'},
+{id:'media-traffic',name:'流量运营与商业变现',desc:'基于数据分析的精准投流策略，结合私域搭建与社群运营，打通流量获取到商业变现的完整链路，最大化ROI。'}
 ]},
-{id:'ecom',name:'电商',icon:'🛒',color:'#8b5cf6',gradient:'linear-gradient(135deg,#8b5cf6,#a78bfa)',summary:'聚焦短视频电商落地，打通开店到变现全链路',services:[
-{id:'ecom-shop',name:'抖快小店代入驻',desc:'营业执照报备、类目开通、店铺基础装修代办。全程无忧代办，快速开通抖音、快手小店，让您专注经营产品。'},
-{id:'ecom-deal',name:'团购上架运营',desc:'实体门店套餐上架、套餐定价优化、团购活动策划。结合门店实际情况设计高转化团购产品，持续优化定价策略。'},
-{id:'ecom-supply',name:'货源对接',desc:'日用、宠物、教育类优质货源供应链资源匹配。精选优质供应商，一件代发模式降低库存风险，助力快速开店。'},
-{id:'ecom-ops',name:'店铺全托管运营',desc:'商品上架、客服打理、订单售后一站式代管。专业电商运营团队全程打理，让您轻松做甩手掌柜。'},
-{id:'ecom-traffic',name:'电商引流投流',desc:'短视频随心推、千川投放优化，精准提升店铺成交额。数据驱动的投流策略，让每一分广告费都花在刀刃上。'}
+{id:'ecom',name:'电商',icon:'🛒',color:'#8b5cf6',gradient:'linear-gradient(135deg,#8b5cf6,#a78bfa)',summary:'线上店铺运营 · 直播带货/商品分销 · 选品/供应链及售后服务',services:[
+{id:'ecom-shop',name:'线上店铺运营',desc:'抖音、快手、淘宝等平台店铺从零搭建到全托管运营，涵盖装修、上架、客服、售后一站式服务，让商家专注产品本身。'},
+{id:'ecom-live',name:'直播带货/商品分销',desc:'专业主播培训、直播间搭建、选品排品策略，结合分销裂变模式，通过直播+短视频双引擎驱动销量增长。'},
+{id:'ecom-supply',name:'选品/供应链及售后服务',desc:'优质货源供应链对接、一件代发、仓储物流管理，以及标准化售后服务体系搭建，保障用户体验与口碑。'}
 ]},
-{id:'pet',name:'宠物',icon:'🐾',color:'#fb923c',gradient:'linear-gradient(135deg,#fb923c,#fbbf24)',summary:'专注宠物实体店线上数字化运营',services:[
-{id:'pet-ops',name:'宠物医院全域线上运营',desc:'美团、抖音、大众点评店铺优化托管。全方位提升宠物医院线上曝光度，优化店铺评分和排名，吸引更多本地养宠客户。'},
-{id:'pet-deal',name:'疫苗绝育团购策划',desc:'定制高转化医疗套餐，设计线上引流团购产品。结合季节和节日策划促销活动，提升宠物医院到店率和客单价。'},
-{id:'pet-video',name:'门店短视频引流',desc:'宠物门店实拍短视频制作，同城精准曝光获客。利用宠物天然的内容吸引力，制作高互动短视频实现同城引流。'},
-{id:'pet-dist',name:'宠物用品分销带货',desc:'对接品牌宠物粮、保健品，帮门店线上分销盈利。零库存模式，门店通过短视频和私域即可获得额外收入。'},
-{id:'pet-grow',name:'宠物店线上拓客',desc:'私域社群搭建、会员储值活动策划。建立门店私域流量池，通过会员体系和活动策划提升客户复购率和忠诚度。'}
+{id:'pet',name:'宠物',icon:'🐾',color:'#fb923c',gradient:'linear-gradient(135deg,#fb923c,#fbbf24)',summary:'宠物用品售卖 · 萌宠内容创作与分享 · 宠物生活服务/周边产品',services:[
+{id:'pet-shop',name:'宠物用品售卖',desc:'精选宠物粮、保健品、玩具用品等优质商品，线上线下多渠道售卖，一件代发模式降低库存风险，满足宠物主一站式采购需求。'},
+{id:'pet-content',name:'萌宠内容创作与分享',desc:'萌宠短视频、图文笔记、宠物日常内容创作与多平台分发，打造高互动萌宠账号，实现内容引流与粉丝变现。'},
+{id:'pet-service',name:'宠物生活服务/周边产品',desc:'涵盖宠物洗护美容、寄养托运、健康管理等生活服务，以及宠物周边文创产品开发，全方位满足养宠生活需求。'}
 ]},
-{id:'edu',name:'教育',icon:'📚',color:'#10b981',gradient:'linear-gradient(135deg,#10b981,#34d399)',summary:'围绕成人职业与创业打造实用型教育培训',services:[
-{id:'edu-course',name:'职业技能线上课程研发',desc:'自媒体运营、电商开店、AI 实操系列网课开发。紧跟行业趋势，开发实战型在线课程，学员学完即可上手操作。'},
-{id:'edu-biz',name:'创业知识培训',desc:'实体开店、短视频创业系统化线下 + 线上授课。从市场分析到运营实操，系统化培训助力创业者少走弯路。'},
-{id:'edu-school',name:'校企合作资源对接',desc:'职校、高校校企项目落地，实习就业资源联动。搭建学校与企业之间的桥梁，实现人才培养与产业需求的精准对接。'},
-{id:'edu-side',name:'成人副业实训课',desc:'低成本副业实操教学，手把手落地变现项目。涵盖短视频带货、自媒体运营、电商开店等热门副业方向。'}
+{id:'edu',name:'教育',icon:'📚',color:'#10b981',gradient:'linear-gradient(135deg,#10b981,#34d399)',summary:'线上线下课程培训 · 知识科普与教辅服务 · 学习资源/教学配套服务',services:[
+{id:'edu-course',name:'线上线下课程培训',desc:'AI实操、自媒体运营、电商开店等职业技能课程，线上线下双模式授课，学完即可上手操作，打造实战型培训体系。'},
+{id:'edu-content',name:'知识科普与教辅服务',desc:'行业知识科普内容生产、教辅资料开发，结合短视频和图文形式传播专业知识，降低学习门槛。'},
+{id:'edu-resource',name:'学习资源/教学配套服务',desc:'提供课程教案、学习资料、配套练习等教学资源，以及学习社群答疑、学习计划定制等配套服务，全方位保障学习效果。'}
 ]},
-{id:'campus',name:'伯雅校园',icon:'🏫',color:'#533afd',gradient:'linear-gradient(135deg,#533afd,#7c6cf6)',summary:'主打高校本地化创业项目，布局全国校园渠道',services:[
-{id:'campus-partner',name:'校区合伙人招商',desc:'全国各高校招募校区经理，标准化加盟扶持体系。提供完整的运营手册和培训体系，让大学生也能轻松创业。'},
-{id:'campus-incubate',name:'大学生创业扶持',desc:'在校学生创业项目孵化、资源对接、启动指导。为有创业梦想的大学生提供资金、资源和导师支持。'},
-{id:'campus-local',name:'校园本地化项目落地',desc:'校园商超、校园服务、校园新媒体项目落地运营。深入校园场景，打造贴合学生需求的本地化服务。'},
-{id:'campus-community',name:'校园社群运营搭建',desc:'高校精准社群搭建、校园活动策划、流量变现运营。帮助品牌精准触达大学生群体，实现校园流量高效转化。'}
+{id:'campus',name:'伯雅校园',icon:'🏫',color:'#533afd',gradient:'linear-gradient(135deg,#533afd,#7c6cf6)',summary:'校园资讯与内容传播 · 校园活动策划执行 · 校园综合配套服务',services:[
+{id:'campus-news',name:'校园资讯与内容传播',desc:'高校新闻、活动资讯、校园热点内容的采集创作与多平台传播，打造校园专属信息流，精准触达大学生群体。'},
+{id:'campus-event',name:'校园活动策划执行',desc:'校园迎新、社团招新、文艺晚会、体育赛事等活动的全案策划与落地执行，提供场地布置、宣传推广、现场统筹一站式服务。'},
+{id:'campus-support',name:'校园综合配套服务',desc:'涵盖校园快递代取、打印复印、驾校报名、兼职对接等综合配套服务，解决大学生日常刚需，构建校园生活服务生态。'}
 ]}
 ];
 
@@ -1716,15 +1707,16 @@ async function seedancePollUntilDone(taskId, onStatus, interval) {
 // === 大模型中心（多模型AI对话） ===
 function renderModelHub(){
 var vendors=[...new Set(MODEL_REGISTRY.map(function(m){return m.vendor}))];
-var textModels=MODEL_REGISTRY.filter(function(m){return m.type==='text'});
-var imgModels=MODEL_REGISTRY.filter(function(m){return m.type==='image'});
-var vidModels=MODEL_REGISTRY.filter(function(m){return m.type==='video'});
-var d3Models=MODEL_REGISTRY.filter(function(m){return m.type==='3d'});
+var activeModels=MODEL_REGISTRY.filter(function(m){return!m.disabled});var textModels=activeModels.filter(function(m){return m.type==='text'});
+var imgModels=activeModels.filter(function(m){return m.type==='image'});
+var vidModels=activeModels.filter(function(m){return m.type==='video'});
+var d3Models=activeModels.filter(function(m){return m.type==='3d'});
 var vendorColors={'豆包':'#dc2626','即梦':'#2563eb','DeepSeek':'#0891b2','智谱':'#4f46e5','三方':'#059669'};
 var typeColors={'text':'#1e1b4b','image':'#1e40af','video':'#7c3aed','3d':'#059669','embedding':'#6d28d9'};
 var typeIcons={'text':'📝','image':'🎨','video':'🎬','3d':'🧊','embedding':'🔎'};
 function vb(v){var c=vendorColors[v]||'#6b7280';return '<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;color:#fff;background:'+c+'">'+v+'</span>'}
 function mc(m){
+if(m.disabled){var dis='<div style="padding:16px 18px;border:1px solid #f0f0f0;border-radius:14px;margin-bottom:10px;opacity:0.5;cursor:not-allowed;background:#f9fafb">';dis+='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">';dis+='<span style="font-size:20px">'+(typeIcons[m.type]||'🤖')+'</span>';dis+=vb(m.vendor).replace(m.vendor,'<span style="padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;color:#fff;background:#9ca3af">'+m.vendor+'</span>');dis+='<span style="font-weight:700;font-size:14px;color:#6b7280">'+m.name+'</span>';dis+='<span style="padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700;color:#fff;background:#9ca3af">未开通</span>';dis+='<span style="margin-left:auto;font-size:11px;color:#d1d5db">'+(m.ctx!=='-'?m.ctx:'')+'</span></div>';dis+='<div style="font-size:12px;color:#9ca3af;line-height:1.5">'+m.ability+'</div>';dis+='<div style="margin-top:8px;display:flex;align-items:center;gap:6px;color:#9ca3af;font-size:12px;font-weight:600"><span style="width:6px;height:6px;border-radius:50%;background:#9ca3af"></span>需在方舟控制台开通<span style="margin-left:auto;font-size:11px">🔒</span></div></div>';return dis}
 var bc=typeColors[m.type]||'#374151';
 var tagH=m.tag?'<span style="padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700;color:#fff;background:'+bc+'">'+m.tag+'</span>':'';
 var ctxH=m.ctx!=='-'?'<span style="font-size:11px;color:#9ca3af;background:#f3f4f6;padding:2px 8px;border-radius:6px">'+m.ctx+'</span>':'';
@@ -1749,7 +1741,7 @@ document.getElementById('toolPanel').innerHTML=`
 <div style="background:linear-gradient(135deg,#1e40af,#3b82f6);border-radius:12px;padding:14px 10px;text-align:center"><div style="font-size:24px;font-weight:900;color:#fff">${imgModels.length}</div><div style="font-size:11px;color:rgba(255,255,255,.7);margin-top:2px">图片模型</div></div>
 <div style="background:linear-gradient(135deg,#7c3aed,#a855f7);border-radius:12px;padding:14px 10px;text-align:center"><div style="font-size:24px;font-weight:900;color:#fff">${vidModels.length}</div><div style="font-size:11px;color:rgba(255,255,255,.7);margin-top:2px">视频模型</div></div>
 <div style="background:linear-gradient(135deg,#059669,#10b981);border-radius:12px;padding:14px 10px;text-align:center"><div style="font-size:24px;font-weight:900;color:#fff">${d3Models.length}</div><div style="font-size:11px;color:rgba(255,255,255,.7);margin-top:2px">3D模型</div></div>
-<div style="background:linear-gradient(135deg,#6d28d9,#8b5cf6);border-radius:12px;padding:14px 10px;text-align:center"><div style="font-size:24px;font-weight:900;color:#fff">${MODEL_REGISTRY.length}</div><div style="font-size:11px;color:rgba(255,255,255,.7);margin-top:2px">模型总数</div></div>
+<div style="background:linear-gradient(135deg,#6d28d9,#8b5cf6);border-radius:12px;padding:14px 10px;text-align:center"><div style="font-size:24px;font-weight:900;color:#fff">${activeModels.length}</div><div style="font-size:11px;color:rgba(255,255,255,.7);margin-top:2px">可用模型</div></div>
 </div>
 <div id="hubFilter" style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap">
 <button class="hub-filter-btn active" onclick="hubFilterModels2('all',this)" style="padding:8px 16px;border:none;border-radius:8px;font-size:12px;background:#1e1b4b;color:#fff;cursor:pointer;transition:all .2s;font-weight:600">全部(${MODEL_REGISTRY.length})</button>
@@ -1773,6 +1765,7 @@ var typeColors={'text':'#1e1b4b','image':'#1e40af','video':'#7c3aed','3d':'#0596
 var typeIcons={'text':'📝','image':'🎨','video':'🎬','3d':'🧊','embedding':'🔎'};
 function vb(v){var c=vendorColors[v]||'#6b7280';return '<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;color:#fff;background:'+c+'">'+v+'</span>'}
 function mc(m){
+if(m.disabled){var dis='<div style="padding:16px 18px;border:1px solid #f0f0f0;border-radius:14px;margin-bottom:10px;opacity:0.5;cursor:not-allowed;background:#f9fafb">';dis+='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">';dis+='<span style="font-size:20px">'+(typeIcons[m.type]||'🤖')+'</span>';dis+=vb(m.vendor).replace(m.vendor,'<span style="padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;color:#fff;background:#9ca3af">'+m.vendor+'</span>');dis+='<span style="font-weight:700;font-size:14px;color:#6b7280">'+m.name+'</span>';dis+='<span style="padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700;color:#fff;background:#9ca3af">未开通</span>';dis+='<span style="margin-left:auto;font-size:11px;color:#d1d5db">'+(m.ctx!=='-'?m.ctx:'')+'</span></div>';dis+='<div style="font-size:12px;color:#9ca3af;line-height:1.5">'+m.ability+'</div>';dis+='<div style="margin-top:8px;display:flex;align-items:center;gap:6px;color:#9ca3af;font-size:12px;font-weight:600"><span style="width:6px;height:6px;border-radius:50%;background:#9ca3af"></span>需在方舟控制台开通<span style="margin-left:auto;font-size:11px">🔒</span></div></div>';return dis}
 var bc=typeColors[m.type]||'#374151';
 var tagH=m.tag?'<span style="padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700;color:#fff;background:'+bc+'">'+m.tag+'</span>':'';
 var ctxH=m.ctx!=='-'?'<span style="font-size:11px;color:#9ca3af;background:#f3f4f6;padding:2px 8px;border-radius:6px">'+m.ctx+'</span>':'';
@@ -1820,7 +1813,9 @@ document.getElementById('hubModelList2').innerHTML=models.map(mc).join('');
 }
 
 function hubSelectModel(id,name,type){
-if(type==='text'||type==='embedding'){renderModelChat(id,name)}
+var m=MODEL_REGISTRY.find(function(x){return x.id===id});
+if(m&&m.disabled){toast('该模型暂未开通，请在火山方舟控制台激活后使用','warn');return}
+if(type==='text'){renderModelChat(id,name)}
 else if(type==='image'){renderHubImageGen(id,name)}
 else if(type==='video'){renderHubVideoGen(id,name)}
 else if(type==='3d'){toast('3D生成功能即将上线，敬请期待','info');return}
