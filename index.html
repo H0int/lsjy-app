@@ -396,7 +396,7 @@ textarea.fi{resize:vertical;min-height:120px}
 .ls-agent-modelbar.collapsed .ls-agent-modelbar-inner{display:none}
 .ls-agent-modelbar.collapsed .ls-agent-toggle::after{content:''}
 .ls-msg-actions{display:flex;gap:2px;margin-top:8px;padding-top:8px;border-top:1px dashed #e5e7eb;flex-wrap:wrap;opacity:.5;transition:opacity .2s}.ls-msg:hover .ls-msg-actions,.ls-msg-ai:hover .ls-msg-actions{opacity:1}
-.ls-msg-act{width:28px;height:28px;border-radius:8px;border:none;background:transparent;color:#9ca3af;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .15s;position:relative}
+.ls-msg-act{width:24px;height:24px;border-radius:6px;border:none;background:transparent;color:#9ca3af;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all .15s;position:relative}
 .ls-msg-act:hover{background:#f1f5f9;color:#374151}
 .ls-msg-act.liked{color:#3b82f6;background:#eff6ff}
 .ls-msg-act.disliked{color:#ef4444;background:#fef2f2}
@@ -6337,9 +6337,7 @@ function lsMsgActionsHtml(){
     +'<button class="ls-msg-act" data-tip="朗读" onclick="lsReadBubble(this)">&#x1f50a;</button>'
     +'<button class="ls-msg-act" data-tip="喜欢" onclick="lsLikeBubble(this)">&#x1f44d;</button>'
     +'<button class="ls-msg-act" data-tip="不喜欢" onclick="lsDislikeBubble(this)">&#x1f44e;</button>'
-    +'<button class="ls-msg-act" data-tip="分享" onclick="lsShareBubble(this)">&#x21aa;</button>'
-    +'<button class="ls-msg-act" data-tip="重新生成" onclick="lsRegenBubble(this)">&#x1f504;</button>'
-    +'<button class="ls-msg-act" data-tip="更多" onclick="lsMoreBubble(this)" style="position:relative">&#x22ef;<div class="ls-msg-more-menu"><button class="ls-msg-more-item" onclick="lsCollectBubble(this)">&#x1f4c1 收藏</button><button class="ls-msg-more-item" onclick="lsDeleteBubble(this)">&#x1f5d1; 删除</button><button class="ls-msg-more-item danger" onclick="lsReportBubble(this)">&#x26a0; 反馈举报</button></div></button>'
+    +'<button class="ls-msg-act" data-tip="更多" onclick="lsMoreBubble(this)" style="position:relative">&#x22ef;<div class="ls-msg-more-menu"><button class="ls-msg-more-item" onclick="lsShareBubble(this)">&#x21aa; 分享</button><button class="ls-msg-more-item" onclick="lsRegenBubble(this)">&#x1f504; 重新生成</button><button class="ls-msg-more-item" onclick="lsCollectBubble(this)">&#x1f4c1 收藏</button><button class="ls-msg-more-item" onclick="lsDeleteBubble(this)">&#x1f5d1; 删除</button><button class="ls-msg-more-item danger" onclick="lsReportBubble(this)">&#x26a0; 反馈举报</button></div></button>'
     +'</div>';
 }
 function lsGetBubbleContent(btn){var msg=btn.closest('.ls-msg');var bubble=msg?msg.querySelector('.ls-msg-bubble'):null;return bubble?bubble.textContent:''}
