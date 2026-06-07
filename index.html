@@ -1567,7 +1567,7 @@ const MODEL_REGISTRY=[
   {id:'doubao-seed-1-6-vision-250815',name:'豆包Seed 1.6 Vision',vendor:'豆包',type:'text',ability:'深度思考+GUI任务+多模态',ctx:'256K',tag:'视觉',color:'#dc2626'},
   {id:'doubao-seed-1-6-flash-250615',name:'豆包Seed 1.6 Flash(旧)',vendor:'豆包',type:'text',ability:'深度思考+多模态+工具调用',ctx:'256K',tag:'往期',color:'#dc2626'},
   {id:'doubao-seed-character-251128',name:'豆包Seed 角色扮演',vendor:'豆包',type:'text',ability:'角色扮演增强+工具调用',ctx:'128K',tag:'角色',color:'#dc2626'},
-  {id:'doubao-seed-translation-250915',name:'豆包翻译专精',vendor:'豆包',type:'text',ability:'翻译增强',ctx:'4K',tag:'翻译',color:'#dc2626'},
+  {id:'doubao-seed-translation-250915',name:'豆包翻译专精',vendor:'豆包',type:'text',ability:'翻译增强',ctx:'4K',tag:'翻译',color:'#dc2626',disabled:true},
   {id:'doubao-1-5-pro-32k-250115',name:'豆包1.5 Pro',vendor:'豆包',type:'text',ability:'文本生成+工具调用',ctx:'128K',tag:'往期',color:'#dc2626'},
   {id:'doubao-1-5-vision-pro-32k-250115',name:'豆包1.5 Vision Pro',vendor:'豆包',type:'text',ability:'图片理解+工具调用',ctx:'32K',tag:'视觉',color:'#dc2626'},
   // -- 豆包图片生成（即梦） --
@@ -1576,14 +1576,14 @@ const MODEL_REGISTRY=[
   {id:'doubao-seedream-4-5-251128',name:'Seedream 4.5',vendor:'即梦',type:'image',ability:'文生图+图生图',ctx:'-',tag:'往期',color:'#2563eb'},
   {id:'doubao-seedream-4-0-250828',name:'Seedream 4.0',vendor:'即梦',type:'image',ability:'文生图+图生图',ctx:'-',tag:'往期',color:'#2563eb'},
   // -- 豆包视频生成（即梦Seedance） --
-  {id:'doubao-seedance-2-0-260128',name:'Seedance 2.0',vendor:'即梦',type:'video',ability:'文生视频+图生视频+视频编辑+延长',ctx:'-',tag:'旗舰',color:'#7c3aed'},
-  {id:'doubao-seedance-2-0-fast-260128',name:'Seedance 2.0 Fast',vendor:'即梦',type:'video',ability:'文生视频+图生视频+视频编辑+延长',ctx:'-',tag:'快速',color:'#7c3aed'},
-  {id:'doubao-seedance-1-5-pro-251215',name:'Seedance 1.5 Pro',vendor:'即梦',type:'video',ability:'文生视频+图生视频(首帧/首尾帧)',ctx:'-',tag:'往期',color:'#7c3aed'},
-  {id:'doubao-seedance-1-0-pro-250528',name:'Seedance 1.0 Pro',vendor:'即梦',type:'video',ability:'文生视频+图生视频',ctx:'-',tag:'往期',color:'#7c3aed'},
+  {id:'doubao-seedance-2-0-260128',name:'Seedance 2.0',vendor:'即梦',disabled:true,type:'video',ability:'文生视频+图生视频+视频编辑+延长',ctx:'-',tag:'旗舰',color:'#7c3aed'},
+  {id:'doubao-seedance-2-0-fast-260128',name:'Seedance 2.0 Fast',vendor:'即梦',disabled:true,type:'video',ability:'文生视频+图生视频+视频编辑+延长',ctx:'-',tag:'快速',color:'#7c3aed'},
+  {id:'doubao-seedance-1-5-pro-251215',name:'Seedance 1.5 Pro',vendor:'即梦',disabled:true,type:'video',ability:'文生视频+图生视频(首帧/首尾帧)',ctx:'-',tag:'往期',color:'#7c3aed'},
+  {id:'doubao-seedance-1-0-pro-250528',name:'Seedance 1.0 Pro',vendor:'即梦',disabled:true,type:'video',ability:'文生视频+图生视频',ctx:'-',tag:'往期',color:'#7c3aed'},
   // -- 豆包3D生成 --
-  {id:'doubao-seed3d-2-0-260328',name:'Seed3D 2.0',vendor:'豆包',type:'3d',ability:'图生3D(PBR材质)',ctx:'-',tag:'3D',color:'#059669'},
-  {id:'hyper3d-gen2-260112',name:'Hyper3D Gen2',vendor:'三方',type:'3d',ability:'文生3D+图生3D(多规格)',ctx:'-',tag:'3D',color:'#059669'},
-  {id:'hitem3d-2-0-251223',name:'HITeM3D 2.0',vendor:'三方',type:'3d',ability:'图生3D(白模/纹理/高精)',ctx:'-',tag:'3D',color:'#059669'},
+  {id:'doubao-seed3d-2-0-260328',name:'Seed3D 2.0',vendor:'豆包',disabled:true,type:'3d',ability:'图生3D(PBR材质)',ctx:'-',tag:'3D',color:'#059669'},
+  {id:'hyper3d-gen2-260112',name:'Hyper3D Gen2',vendor:'三方',disabled:true,type:'3d',ability:'文生3D+图生3D(多规格)',ctx:'-',tag:'3D',color:'#059669'},
+  {id:'hitem3d-2-0-251223',name:'HITeM3D 2.0',vendor:'三方',disabled:true,type:'3d',ability:'图生3D(白模/纹理/高精)',ctx:'-',tag:'3D',color:'#059669'},
   // -- DeepSeek（火山方舟） --
   {id:'deepseek-v4-pro-260425',name:'DeepSeek V4 Pro',vendor:'DeepSeek',type:'text',ability:'深度思考+文本生成+工具调用',ctx:'1024K',tag:'旗舰',color:'#0891b2'},
   {id:'deepseek-v4-flash-260425',name:'DeepSeek V4 Flash',vendor:'DeepSeek',type:'text',ability:'深度思考+文本生成+工具调用',ctx:'1024K',tag:'快速',color:'#0891b2'},
@@ -1591,7 +1591,7 @@ const MODEL_REGISTRY=[
   // -- GLM（智谱） --
   {id:'glm-4-7-251222',name:'GLM 4.7',vendor:'智谱',type:'text',ability:'深度思考+文本生成+工具调用',ctx:'200K',tag:'旗舰',color:'#4f46e5'},
   // -- 豆包向量化 --
-  {id:'doubao-embedding-vision-251215',name:'豆包多模态向量',vendor:'豆包',type:'embedding',ability:'视频/文本/图片向量化',ctx:'128K',tag:'向量',color:'#6d28d9'}
+  {id:'doubao-embedding-vision-251215',name:'豆包多模态向量',vendor:'豆包',type:'embedding',disabled:true,ability:'视频/文本/图片向量化',ctx:'128K',tag:'向量',color:'#6d28d9'}
 ];
 
 // DeepSeek独立API配置（可选，用户需自行申请）
