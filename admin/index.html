@@ -251,6 +251,7 @@ tr:hover td{background:var(--ps)}
       <div class="sb-item" onclick="goPage('content',this)"><i class="fa-solid fa-file-pen"></i>内容管理</div>
       <div class="sb-group">AI工具</div>
       <div class="sb-item" onclick="goPage('aihub',this)"><i class="fa-solid fa-wand-magic-sparkles"></i>AI创作中心</div>
+<div class="sb-item" onclick="goPage('luosheng_ai',this)"><i class="fa-solid fa-robot"></i>罗圣AI助手</div>
       <div class="sb-group">商业精英版</div>
       <div class="sb-item" onclick="goPage('elite',this)"><i class="fa-solid fa-building"></i>企业管理</div>
       <div class="sb-item" onclick="goPage('elite_tools',this)"><i class="fa-solid fa-toolbox"></i>企业工具管理</div>
@@ -421,8 +422,8 @@ setInterval(updateLockoutUI,5000);updateLockoutUI();
 function doLogout(){localStorage.removeItem('lsjy3_cur');document.getElementById('loginPage').style.display='';document.getElementById('app').classList.remove('active');toast('已退出登录')}
 
 // ===== Navigation =====
-const _pageTitles={dashboard:'数据看板',modules:'业务模块',services:'服务管理',users:'用户管理',messages:'留言管理',leads:'线索管理',orders:'订单管理',customers:'顾客管理',redeemCodes:'卡密管理',content:'内容管理',aihub:'AI创作中心',recycle:'回收站',logs:'操作日志',settings:'系统设置',elite:'企业管理',elite_tools:'企业工具管理',elite_billing:'企业计费'};
-const _pageRenders={dashboard:renderDashboard,modules:renderModules,services:renderServices,users:renderUsers,messages:renderMessages,leads:renderLeads,orders:renderOrders,customers:renderCustomers,redeemCodes:renderRedeemCodes,content:renderContent,aihub:renderAIHub,recycle:renderRecycle,logs:renderLogs,settings:renderSettings,elite:renderElitePage,elite_tools:renderEliteToolsPage,elite_billing:renderEliteBillingPage};
+const _pageTitles={dashboard:'数据看板',modules:'业务模块',services:'服务管理',users:'用户管理',messages:'留言管理',leads:'线索管理',orders:'订单管理',customers:'顾客管理',redeemCodes:'卡密管理',content:'内容管理',aihub:'AI创作中心',luosheng_ai:'罗圣AI助手',recycle:'回收站',logs:'操作日志',settings:'系统设置',elite:'企业管理',elite_tools:'企业工具管理',elite_billing:'企业计费'};
+const _pageRenders={dashboard:renderDashboard,modules:renderModules,services:renderServices,users:renderUsers,messages:renderMessages,leads:renderLeads,orders:renderOrders,customers:renderCustomers,redeemCodes:renderRedeemCodes,content:renderContent,aihub:renderAIHub,luosheng_ai:renderLuoshengAI,recycle:renderRecycle,logs:renderLogs,settings:renderSettings,elite:renderElitePage,elite_tools:renderEliteToolsPage,elite_billing:renderEliteBillingPage};
 function goPage(page,el){
   document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
   if(el)el.classList.add('active');
@@ -1926,6 +1927,114 @@ function doAdminUpgradePlan(){const plan=document.getElementById('upgradePlan').
 
 // ===== VERSION =====
 (function(){if(!localStorage.getItem('lsjy_admin_ver'))localStorage.setItem('lsjy_admin_ver','admin-v3.6')})();
+
+/* ===== 罗圣AI助手（后台免费版） ===== */
+var _adminAIChat=[];
+var _adminAIModel='doubao-seed-2-0-pro-260215';
+var _adminAISending=false;
+function renderLuoshengAI(){
+  var main=document.getElementById('mainContent');
+  main.innerHTML=`<div style="height:calc(100vh - var(--topbar));display:flex;flex-direction:column;padding:0">
+    <div style="background:#fff;border-bottom:1px solid var(--bd);padding:12px 20px;display:flex;align-items:center;gap:12px;flex-shrink:0">
+      <span style="font-size:20px">🤖</span>
+      <div><div style="font-weight:700;font-size:15px;color:var(--n)">罗圣AI助手</div><div style="font-size:11px;color:var(--b)">后台专用 · 免费无限使用 · 28+大模型</div></div>
+    </div>
+    <div id="adminAIChat" style="flex:1;overflow-y:auto;padding:20px;background:var(--bg)"></div>
+    <div style="background:#fff;border-top:1px solid var(--bd);padding:12px 20px;display:flex;gap:10px;align-items:center;flex-shrink:0">
+      <input id="adminAIInput" style="flex:1;padding:10px 14px;border:1.5px solid var(--bd);border-radius:10px;font-size:14px;outline:none" placeholder="向罗圣AI提问..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();adminAISend()}">
+      <button onclick="adminAISend()" style="padding:10px 20px;background:var(--p);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer">发送</button>
+      <button onclick="adminAIClear()" style="padding:10px 16px;background:var(--bg);border:1.5px solid var(--bd);border-radius:10px;font-size:13px;cursor:pointer;color:var(--b)">清空</button>
+    </div>
+  </div>`;
+  _adminAIChat=[];
+  adminAIRender();
+}
+function adminAIRender(){
+  var chat=document.getElementById('adminAIChat');
+  if(!chat)return;
+  if(_adminAIChat.length===0){
+    chat.innerHTML='<div style="text-align:center;padding:60px 20px;color:var(--b)"><div style="font-size:48px;margin-bottom:16px">🤖</div><div style="font-size:16px;font-weight:600;color:var(--n);margin-bottom:8px">你好，我是罗圣AI助手</div><div style="font-size:13px">我是罗圣纪元互联网科技有限责任公司研发的全能型AI助手<br>可以为您提供文案创作、商业分析、编程开发等服务</div></div>';
+    return;
+  }
+  var html='';
+  for(var i=0;i<_adminAIChat.length;i++){
+    var m=_adminAIChat[i];
+    if(m.role==='user'){
+      html+='<div style="display:flex;justify-content:flex-end;margin-bottom:16px"><div style="background:var(--p);color:#fff;padding:10px 14px;border-radius:12px 12px 4px 12px;max-width:70%;font-size:13px;line-height:1.6;white-space:pre-wrap">'+m.content.replace(/</g,'&lt;').replace(/\n/g,'<br>')+'</div></div>';
+    }else{
+      html+='<div style="display:flex;justify-content:flex-start;margin-bottom:16px;gap:8px"><div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#533afd,#7c6cf6);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-size:14px">🤖</div><div style="background:#fff;padding:10px 14px;border-radius:12px 12px 12px 4px;max-width:70%;font-size:13px;line-height:1.6;white-space:pre-wrap;box-shadow:var(--shadow);border:1px solid var(--bd)" id="adminAIMsg_'+i+'">'+m.content.replace(/</g,'&lt;').replace(/\n/g,'<br>')+'</div></div>';
+    }
+  }
+  chat.innerHTML=html;
+  chat.scrollTop=chat.scrollHeight;
+}
+function adminAISend(){
+  if(_adminAISending)return;
+  var input=document.getElementById('adminAIInput');
+  var text=input.value.trim();
+  if(!text)return;
+  _adminAIChat.push({role:'user',content:text});
+  input.value='';
+  adminAIRender();
+  _adminAISending=true;
+  var sysPrompt='你是罗圣纪元互联网科技有限责任公司研发的全能型AI助手，名为罗圣AI。你的创造者是公司创始人兼CEO罗凯中。公司全称：祁阳市罗圣纪元互联网科技有限责任公司。统一社会信用代码：91431121MAKD052H05。你提供文案创作、商业分析、编程开发、教育咨询、电商运营等多领域服务。请用简洁专业的中文回答。';
+  var messages=[{role:'system',content:sysPrompt}];
+  for(var i=Math.max(0,_adminAIChat.length-20);i<_adminAIChat.length;i++){
+    messages.push({role:_adminAIChat[i].role,content:_adminAIChat[i].content});
+  }
+  var chat=document.getElementById('adminAIChat');
+  var loadId='adminAIMsg_load';
+  chat.innerHTML+='<div id="'+loadId+'" style="display:flex;justify-content:flex-start;margin-bottom:16px;gap:8px"><div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#533afd,#7c6cf6);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-size:14px">🤖</div><div style="background:#fff;padding:10px 14px;border-radius:12px;font-size:13px;box-shadow:var(--shadow)"><div class="ai-spinner" style="width:20px;height:20px;border-width:2px"></div> 思考中...</div></div>';
+  chat.scrollTop=chat.scrollHeight;
+  fetch('https://ark.cn-beijing.volces.com/api/v3/chat/completions',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer ark-21eb820a-93fc-4379-bbc4-217498f7753b-a6876'},
+    body:JSON.stringify({model:_adminAIModel,messages:messages,stream:true})
+  }).then(function(r){
+    if(!r.ok)throw new Error('API错误 '+r.status);
+    var el=document.getElementById(loadId);
+    if(el)el.remove();
+    _adminAIChat.push({role:'assistant',content:''});
+    adminAIRender();
+    return r.body.getReader();
+  }).then(function(reader){
+    var decoder=new TextDecoder();
+    function read(){
+      reader.read().then(function(result){
+        if(result.done){
+          _adminAISending=false;
+          return;
+        }
+        var chunk=decoder.decode(result.value,{stream:true});
+        var lines=chunk.split('\n');
+        for(var li=0;li<lines.length;li++){
+          var line=lines[li].trim();
+          if(line.startsWith('data:')){
+            var data=line.slice(5).trim();
+            if(data==='[DONE]'){_adminAISending=false;return}
+            try{
+              var json=JSON.parse(data);
+              if(json.choices&&json.choices[0]&&json.choices[0].delta&&json.choices[0].delta.content){
+                _adminAIChat[_adminAIChat.length-1].content+=json.choices[0].delta.content;
+                adminAIRender();
+              }
+            }catch(e){}
+          }
+        }
+        read();
+      });
+    }
+    read();
+  }).catch(function(err){
+    _adminAISending=false;
+    var el=document.getElementById(loadId);
+    if(el)el.innerHTML='<span style="color:var(--err)">请求失败: '+err.message+'</span>';
+  });
+}
+function adminAIClear(){
+  _adminAIChat=[];
+  adminAIRender();
+}
 </script>
 
 <script>
