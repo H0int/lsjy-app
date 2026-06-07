@@ -1604,6 +1604,15 @@ function requireLogin(){if(isLoggedIn())return true;openAuth('login');toast('请
 // ===== AI ENGINE CORE =====
 // 多模型AI引擎：支持豆包(火山引擎) + Pollinations.ai备用
 // === 豆包配置（替换为真实值即可启用） ===
+// === 多平台API配置 ===
+const PLATFORMS={
+  volcengine:{name:'火山引擎/豆包',base:'https://ark.cn-beijing.volces.com/api/v3',defaultKey:'ark-21eb820a-93fc-4379-bbc4-217498f7753b-a6876',icon:'\u{1F525}'},
+  deepseek:{name:'DeepSeek深度求索',base:'https://api.deepseek.com/v1',defaultKey:'',icon:'\u{1F9E0}'},
+  aliyun:{name:'阿里通义千问',base:'https://dashscope.aliyuncs.com/compatible-mode/v1',defaultKey:'',icon:'\u{2601}'},
+  tencent:{name:'腾讯混元',base:'https://api.hunyuan.cloud.tencent.com/v1',defaultKey:'',icon:'\u{1F4AC}'}
+};
+function getPlatformKey(pid){var k=localStorage.getItem('ai_platform_key_'+pid)||PLATFORMS[pid].defaultKey||'';return k;}
+function setPlatformKey(pid,key){localStorage.setItem('ai_platform_key_'+pid,key);if(PLATFORMS[pid])PLATFORMS[pid].defaultKey=key;}
 const DOUBAO_CONFIG={
   ENABLED:true,
   ARK_API_KEY:'ark-21eb820a-93fc-4379-bbc4-217498f7753b-a6876',
@@ -1616,42 +1625,43 @@ const DOUBAO_CONFIG={
 
 // === 全部可用大模型注册表 ===
 const MODEL_REGISTRY=[
-  // -- 豆包Seed 2.0 系列（推荐） --
-  {id:'doubao-seed-2-0-pro-260215',name:'豆包Seed 2.0 Pro',vendor:'豆包',type:'text',ability:'深度思考+多模态+工具调用',ctx:'256K',tag:'旗舰',color:'#dc2626'},
-  {id:'doubao-seed-2-0-lite-260428',name:'豆包Seed 2.0 Lite',vendor:'豆包',type:'text',ability:'深度思考+多模态+工具调用+结构化输出',ctx:'256K',tag:'推荐',color:'#dc2626'},
-  {id:'doubao-seed-2-0-mini-260428',name:'豆包Seed 2.0 Mini',vendor:'豆包',type:'text',ability:'深度思考+多模态+工具调用+结构化输出',ctx:'256K',tag:'轻量',color:'#dc2626'},
-  {id:'doubao-seed-2-0-code-preview-260215',name:'豆包Seed 2.0 Code',vendor:'豆包',type:'text',ability:'深度思考+编程增强+多模态',ctx:'256K',tag:'编程',color:'#dc2626'},
-  {id:'doubao-seed-2-0-lite-260215',name:'豆包Seed 2.0 Lite',vendor:'豆包',type:'text',ability:'深度思考+多模态+工具调用+结构化输出',ctx:'256K',tag:'',color:'#dc2626'},
-  {id:'doubao-seed-2-0-mini-260215',name:'豆包Seed 2.0 Mini',vendor:'豆包',type:'text',ability:'深度思考+多模态+工具调用+结构化输出',ctx:'256K',tag:'',color:'#dc2626'},
-  // -- 豆包Seed 1.x 系列 --
-  {id:'doubao-seed-1-8-251228',name:'豆包Seed 1.8',vendor:'豆包',type:'text',ability:'深度思考+多模态+工具调用+结构化输出',ctx:'256K',tag:'往期',color:'#dc2626'},
-  {id:'doubao-seed-1-6-251015',name:'豆包Seed 1.6',vendor:'豆包',type:'text',ability:'深度思考+多模态+工具调用+结构化输出',ctx:'256K',tag:'往期',color:'#dc2626'},
-  {id:'doubao-seed-1-6-250615',name:'豆包Seed 1.6(旧)',vendor:'豆包',type:'text',ability:'深度思考+多模态+工具调用+结构化输出',ctx:'256K',tag:'往期',color:'#dc2626'},
-  {id:'doubao-seed-1-6-flash-250828',name:'豆包Seed 1.6 Flash',vendor:'豆包',type:'text',ability:'深度思考+视觉定位+多模态+结构化输出',ctx:'256K',tag:'快速',color:'#dc2626'},
-  {id:'doubao-seed-1-6-vision-250815',name:'豆包Seed 1.6 Vision',vendor:'豆包',type:'text',ability:'深度思考+GUI任务+多模态+结构化输出',ctx:'256K',tag:'视觉',color:'#dc2626'},
-  {id:'doubao-seed-1-6-flash-250615',name:'豆包Seed 1.6 Flash(旧)',vendor:'豆包',type:'text',ability:'深度思考+视觉定位+多模态+工具调用',ctx:'256K',tag:'往期',color:'#dc2626'},
-  {id:'doubao-seed-code-preview-251028',name:'豆包Seed Code Preview',vendor:'豆包',type:'text',ability:'深度思考+编程增强+多模态',ctx:'256K',tag:'编程',color:'#dc2626'},
-  // -- 豆包特色模型 --
-  {id:'doubao-seed-character-251128',name:'豆包Seed 角色扮演',vendor:'豆包',type:'text',ability:'角色扮演增强+工具调用',ctx:'128K',tag:'角色',color:'#dc2626'},
-  // -- 豆包1.5 系列 --
-  {id:'doubao-1-5-pro-32k-250115',name:'豆包1.5 Pro',vendor:'豆包',type:'text',ability:'文本生成+工具调用',ctx:'128K',tag:'往期',color:'#dc2626'},
-  {id:'doubao-1-5-pro-32k-character-250715',name:'豆包1.5 Pro 角色扮演',vendor:'豆包',type:'text',ability:'文本生成+角色扮演场景增强',ctx:'32K',tag:'角色',color:'#dc2626'},
-  {id:'doubao-1-5-lite-32k-250115',name:'豆包1.5 Lite',vendor:'豆包',type:'text',ability:'文本生成+工具调用',ctx:'32K',tag:'往期',color:'#dc2626'},
-  {id:'doubao-1-5-vision-pro-32k-250115',name:'豆包1.5 Vision Pro',vendor:'豆包',type:'text',ability:'图片理解+工具调用',ctx:'32K',tag:'视觉',color:'#dc2626'},
-  // -- 图片生成（即梦 Seedream） --
-  {id:'doubao-seedream-5-0-260128',name:'Seedream 5.0',vendor:'即梦',type:'image',ability:'文生图+图生图+组图生成',ctx:'-',tag:'旗舰',color:'#2563eb'},
-  {id:'doubao-seedream-5-0-lite-260128',name:'Seedream 5.0 Lite',vendor:'即梦',type:'image',ability:'文生图+图生图',ctx:'-',tag:'轻量',color:'#2563eb'},
-  {id:'doubao-seedream-4-5-251128',name:'Seedream 4.5',vendor:'即梦',type:'image',ability:'文生图+图生图',ctx:'-',tag:'往期',color:'#2563eb'},
-  {id:'doubao-seedream-4-0-250828',name:'Seedream 4.0',vendor:'即梦',type:'image',ability:'文生图+图生图',ctx:'-',tag:'往期',color:'#2563eb'},
-  // -- 视频生成（即梦 Seedance） --
-  {id:'doubao-seedance-2-0-260128',name:'Seedance 2.0',vendor:'即梦',type:'video',ability:'文生视频+图生视频+视频编辑+延长',ctx:'-',tag:'旗舰',color:'#7c3aed'},
-  {id:'doubao-seedance-2-0-fast-260128',name:'Seedance 2.0 Fast',vendor:'即梦',type:'video',ability:'文生视频+图生视频+视频编辑+延长',ctx:'-',tag:'快速',color:'#7c3aed'},
-  // -- DeepSeek（火山方舟） --
-  {id:'deepseek-v4-pro-260425',name:'DeepSeek V4 Pro',vendor:'DeepSeek',type:'text',ability:'深度思考+文本生成+工具调用',ctx:'1024K',tag:'旗舰',color:'#0891b2'},
-  {id:'deepseek-v4-flash-260425',name:'DeepSeek V4 Flash',vendor:'DeepSeek',type:'text',ability:'深度思考+文本生成+工具调用',ctx:'1024K',tag:'快速',color:'#0891b2'},
-  {id:'deepseek-v3-2-251201',name:'DeepSeek V3.2',vendor:'DeepSeek',type:'text',ability:'深度思考+文本生成+工具调用',ctx:'128K',tag:'往期',color:'#0891b2'},
-  // -- GLM（智谱） --
-  {id:'glm-4-7-251222',name:'GLM 4.7',vendor:'智谱',type:'text',ability:'深度思考+文本生成+工具调用',ctx:'200K',tag:'旗舰',color:'#4f46e5'}
+  // ========== 火山引擎 / 豆包（通过火山方舟） ==========
+  // -- 豆包Seed 2.0 系列 --
+  {id:'doubao-seed-2-0-pro-260215',name:'豆包Seed 2.0 Pro',vendor:'豆包',platform:'volcengine',type:'text',ability:'深度思考+多模态+工具调用',ctx:'256K',tag:'旗舰',color:'#dc2626'},
+  {id:'doubao-seed-2-0-lite-260428',name:'豆包Seed 2.0 Lite',vendor:'豆包',platform:'volcengine',type:'text',ability:'深度思考+多模态+结构化输出',ctx:'256K',tag:'推荐',color:'#dc2626'},
+  {id:'doubao-seed-2-0-mini-260428',name:'豆包Seed 2.0 Mini',vendor:'豆包',platform:'volcengine',type:'text',ability:'深度思考+多模态+轻量',ctx:'256K',tag:'轻量',color:'#dc2626'},
+  {id:'doubao-seed-2-0-code-preview-260215',name:'豆包Seed 2.0 Code',vendor:'豆包',platform:'volcengine',type:'text',ability:'编程增强+深度思考',ctx:'256K',tag:'编程',color:'#dc2626'},
+  {id:'doubao-seed-1-8-251228',name:'豆包Seed 1.8',vendor:'豆包',platform:'volcengine',type:'text',ability:'深度思考+多模态',ctx:'256K',tag:'',color:'#dc2626'},
+  {id:'doubao-seed-1-6-flash-250828',name:'豆包Seed 1.6 Flash',vendor:'豆包',platform:'volcengine',type:'text',ability:'快速推理+视觉',ctx:'256K',tag:'快速',color:'#dc2626'},
+  {id:'doubao-seed-1-6-vision-250815',name:'豆包Seed 1.6 Vision',vendor:'豆包',platform:'volcengine',type:'text',ability:'GUI任务+视觉理解',ctx:'256K',tag:'视觉',color:'#dc2626'},
+  {id:'doubao-seed-code-preview-251028',name:'豆包Seed Code',vendor:'豆包',platform:'volcengine',type:'text',ability:'编程增强',ctx:'256K',tag:'编程',color:'#dc2626'},
+  // -- DeepSeek（通过火山方舟） --
+  {id:'deepseek-v4-pro-260425',name:'DeepSeek V4 Pro',vendor:'DeepSeek',platform:'volcengine',type:'text',ability:'MoE旗舰+深度推理+百万上下文',ctx:'1024K',tag:'旗舰',color:'#0891b2'},
+  {id:'deepseek-v4-flash-260425',name:'DeepSeek V4 Flash',vendor:'DeepSeek',platform:'volcengine',type:'text',ability:'MoE快速+深度推理',ctx:'1024K',tag:'快速',color:'#0891b2'},
+  {id:'deepseek-v3-2-251201',name:'DeepSeek V3.2',vendor:'DeepSeek',platform:'volcengine',type:'text',ability:'深度推理+工具调用',ctx:'128K',tag:'',color:'#0891b2'},
+  // -- GLM智谱（通过火山方舟） --
+  {id:'glm-4-7-251222',name:'GLM 4.7',vendor:'智谱',platform:'volcengine',type:'text',ability:'深度思考+工具调用',ctx:'200K',tag:'旗舰',color:'#4f46e5'},
+  // ========== 即梦 / 图片生成（通过火山方舟） ==========
+  {id:'doubao-seedream-5-0-260128',name:'Seedream 5.0',vendor:'即梦',platform:'volcengine',type:'image',ability:'文生图+图生图+组图生成',ctx:'-',tag:'旗舰',color:'#2563eb'},
+  {id:'doubao-seedream-5-0-lite-260128',name:'Seedream 5.0 Lite',vendor:'即梦',platform:'volcengine',type:'image',ability:'文生图+图生图',ctx:'-',tag:'轻量',color:'#2563eb'},
+  {id:'doubao-seedream-4-5-251128',name:'Seedream 4.5',vendor:'即梦',platform:'volcengine',type:'image',ability:'文生图+图生图',ctx:'-',tag:'',color:'#2563eb'},
+  {id:'doubao-seedream-4-0-250828',name:'Seedream 4.0',vendor:'即梦',platform:'volcengine',type:'image',ability:'文生图+图生图',ctx:'-',tag:'',color:'#2563eb'},
+  // ========== Seedance / 视频生成（通过火山方舟） ==========
+  {id:'doubao-seedance-2-0-260128',name:'Seedance 2.0',vendor:'即梦',platform:'volcengine',type:'video',ability:'文生视频+图生视频+编辑',ctx:'-',tag:'旗舰',color:'#7c3aed'},
+  {id:'doubao-seedance-2-0-fast-260128',name:'Seedance 2.0 Fast',vendor:'即梦',platform:'volcengine',type:'video',ability:'文生视频+快速',ctx:'-',tag:'快速',color:'#7c3aed'},
+  // ========== DeepSeek（独立API） ==========
+  {id:'deepseek-chat',name:'DeepSeek V3 Chat',vendor:'DeepSeek',platform:'deepseek',type:'text',ability:'深度推理+通用对话+工具调用',ctx:'128K',tag:'推荐',color:'#0891b2'},
+  {id:'deepseek-reasoner',name:'DeepSeek R1 推理',vendor:'DeepSeek',platform:'deepseek',type:'text',ability:'深度推理+链式思维',ctx:'128K',tag:'旗舰',color:'#0891b2'},
+  // ========== 阿里通义千问 ==========
+  {id:'qwen-max',name:'Qwen Max',vendor:'通义千问',platform:'aliyun',type:'text',ability:'旗舰模型+深度思考+多模态',ctx:'128K',tag:'旗舰',color:'#ff6a00'},
+  {id:'qwen-plus',name:'Qwen Plus',vendor:'通义千问',platform:'aliyun',type:'text',ability:'全能模型+性价比高',ctx:'128K',tag:'推荐',color:'#ff6a00'},
+  {id:'qwen-turbo',name:'Qwen Turbo',vendor:'通义千问',platform:'aliyun',type:'text',ability:'快速响应+高吞吐',ctx:'128K',tag:'快速',color:'#ff6a00'},
+  {id:'qwen-vl-max',name:'Qwen VL Max',vendor:'通义千问',platform:'aliyun',type:'text',ability:'视觉理解+图片分析',ctx:'128K',tag:'视觉',color:'#ff6a00'},
+  {id:'qwen-coder-plus',name:'Qwen Coder Plus',vendor:'通义千问',platform:'aliyun',type:'text',ability:'代码生成+编程增强',ctx:'128K',tag:'编程',color:'#ff6a00'},
+  // ========== 腾讯混元 ==========
+  {id:'hunyuan-turbo',name:'混元 Turbo',vendor:'混元',platform:'tencent',type:'text',ability:'高性能+多模态',ctx:'128K',tag:'推荐',color:'#006eff'},
+  {id:'hunyuan-pro',name:'混元 Pro',vendor:'混元',platform:'tencent',type:'text',ability:'旗舰模型+深度推理',ctx:'128K',tag:'旗舰',color:'#006eff'},
+  {id:'hunyuan-standard',name:'混元 Standard',vendor:'混元',platform:'tencent',type:'text',ability:'通用对话+轻量',ctx:'128K',tag:'轻量',color:'#006eff'}
 ];
 
 // DeepSeek独立API配置（可选，用户需自行申请）
@@ -1695,6 +1705,97 @@ async function doubaoChat(prompt, systemPrompt, model, retries) {
   if (lastErr) console.error('Doubao chat failed:', lastErr.message || lastErr);
   return null;
 }
+
+// === 多平台统一聊天函数 ===
+async function multiPlatformChat(prompt, systemPrompt, model, platform) {
+  var retries = 2;
+  var lastErr = null;
+  for (var i = 0; i <= retries; i++) {
+    try {
+      var apiKey = getPlatformKey(platform);
+      if (!apiKey) {
+        console.warn('No API key for platform:', platform);
+        return null;
+      }
+      var baseUrl = PLATFORMS[platform].base;
+      var controller = new AbortController();
+      var tid = setTimeout(function() { controller.abort(); }, 60000);
+      var r = await fetch(baseUrl + '/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
+        body: JSON.stringify({
+          model: model,
+          messages: [
+            { role: 'system', content: systemPrompt || '\u4F60\u662F\u7F57\u5723AI\uFF0C\u7F57\u5723\u7EAA\u5143\u4E92\u8054\u7F51\u79D1\u6280\u6709\u9650\u8D23\u4EFB\u516C\u53F8\u7684\u667A\u80FD\u4F53\u3002\u8BF7\u7528\u4E2D\u6587\u56DE\u7B54\u3002' },
+            { role: 'user', content: prompt }
+          ],
+          max_tokens: 4000,
+          temperature: 0.9
+        })
+      });
+      clearTimeout(tid);
+      if (!r.ok) {
+        var errText = '';
+        try { var errJson = await r.json(); errText = errJson.error ? errJson.error.message : JSON.stringify(errJson); } catch(e) { errText = 'HTTP ' + r.status; }
+        lastErr = new Error(errText);
+        console.log('API err (try ' + i + '):', errText);
+        if (i < retries) await new Promise(function(r) { setTimeout(r, 1500 * (i + 1)); });
+        continue;
+      }
+      var d = await r.json();
+      if (d.choices && d.choices[0]) return d.choices[0].message.content.trim();
+      lastErr = new Error('No response choices');
+      if (i < retries) await new Promise(function(r) { setTimeout(r, 1500 * (i + 1)); });
+    } catch (e) {
+      lastErr = e;
+      console.log('Chat err (try ' + i + '):', e.message || e);
+      if (i < retries) await new Promise(function(r) { setTimeout(r, 1500 * (i + 1)); });
+    }
+  }
+  if (lastErr) console.error('Chat failed:', lastErr.message || lastErr);
+  return null;
+}
+
+// === API Key 管理弹窗 ===
+function openApiKeyManager() {
+  var existing = document.getElementById('apiKeyOverlay');
+  if (existing) { existing.remove(); return; }
+  var overlay = document.createElement('div');
+  overlay.id = 'apiKeyOverlay';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:100001;display:flex;align-items:center;justify-content:center;';
+  var box = document.createElement('div');
+  box.style.cssText = 'background:#fff;border-radius:16px;padding:28px;max-width:520px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);';
+  var h = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px"><h3 style="margin:0;font-size:18px;color:#1e1b4b">\u2699\uFE0F API Key \u7BA1\u7406</h3><button style="background:none;border:none;font-size:20px;cursor:pointer;color:#6b7280" onclick="document.getElementById(\'apiKeyOverlay\').remove()">\u2715</button></div>';
+  h += '<p style="font-size:13px;color:#6b7280;margin:0 0 16px;padding:0">\u914D\u7F6E\u5404\u5E73\u53F0API Key\u540E\u5373\u53EF\u4F7F\u7528\u5BF9\u5E94\u5E73\u53F0\u7684\u6A21\u578B\u3002Key\u5B89\u5168\u5B58\u50A8\u5728\u6D4F\u89C8\u5668localStorage\u4E2D\u3002</p>';
+  var pids = ['volcengine','deepseek','aliyun','tencent'];
+  for (var p = 0; p < pids.length; p++) {
+    var pid = pids[p];
+    var pl = PLATFORMS[pid];
+    var savedKey = getPlatformKey(pid) || '';
+    var hasKey = savedKey.length > 0;
+    h += '<div style="margin-bottom:14px;padding:14px;border-radius:10px;border:1px solid #e5e7eb;background:#f9fafb">';
+    h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="font-size:18px">' + pl.icon + '</span><strong style="font-size:14px;color:#1e1b4b">' + pl.name + '</strong>';
+    h += '<span style="margin-left:auto;font-size:11px;padding:3px 8px;border-radius:99px;background:' + (hasKey ? '#dcfce7;color:#166534' : '#fef2f2;color:#991b1b') + '">' + (hasKey ? '\u2713 \u5DF2\u914D\u7F6E' : '\u672A\u914D\u7F6E') + '</span></div>';
+    h += '<input type="password" id="keyInput_' + pid + '" value="' + savedKey.replace(/"/g, '&quot;') + '" placeholder="\u8BF7\u8F93\u5165API Key..." style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box;font-family:monospace">';
+    h += '<div style="font-size:11px;color:#9ca3af;margin-top:4px">API Base: ' + pl.base + '</div></div>';
+  }
+  h += '<button style="width:100%;padding:12px;background:linear-gradient(135deg,#4338ca,#7c3aed);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;margin-top:4px" onclick="saveApiKeys()">\u{1F514} \u4FDD\u5B58\u914D\u7F6E</button>';
+  box.innerHTML = h;
+  overlay.appendChild(box);
+  overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+}
+
+function saveApiKeys() {
+  var pids = ['volcengine','deepseek','aliyun','tencent'];
+  for (var i = 0; i < pids.length; i++) {
+    var inp = document.getElementById('keyInput_' + pids[i]);
+    if (inp) setPlatformKey(pids[i], inp.value.trim());
+  }
+  toast('API Key\u914D\u7F6E\u5DF2\u4FDD\u5B58', 'success');
+  document.getElementById('apiKeyOverlay').remove();
+}
+
 
 async function doubaoImage(prompt, w, h, model) {
   try {
@@ -6238,7 +6339,9 @@ async function lsSendMessage(){
     var result;
     if(_lsModelType==='text'){
       var sysPrompt='你是罗圣AI，罗圣纪元互联网科技有限责任公司的智能体。你是一个全能型AI助手，擅长文案创作、商业分析、编程开发、教育咨询、电商运营等领域。请用中文回答，风格专业、清晰、有条理。如果用户问及罗圣纪元平台功能，你可以介绍平台的六大业务模块：AI人工智能、自媒体、电商、宠物、教育、伯雅校园。';
-      result=await doubaoChat(msg,sysPrompt,_lsModel);
+      var _lsModelInfo=MODEL_REGISTRY.find(function(m){return m.id===_lsModel});
+      var _lsPlatform=(_lsModelInfo&&_lsModelInfo.platform)||'volcengine';
+      if(_lsPlatform==='volcengine'){result=await doubaoChat(msg,sysPrompt,_lsModel)}else{result=await multiPlatformChat(msg,sysPrompt,_lsModel,_lsPlatform)};
       if(result){
         result=result.replace(/</g,'&lt;').replace(/\n/g,'<br>');
       }else{result='抱歉，未获得回复，请重试。'}
