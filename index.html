@@ -1280,7 +1280,7 @@ renderEmployeeAcct();
 <li><a href="#pricing">服务定价</a></li>
 <li><a href="#about">关于我们</a></li>
 <li><a href="#contact">联系方式</a></li>
-</ul><div style="display:inline-flex;align-items:center;gap:8px"><a href="javascript:void(0)" style="display:inline-flex;align-items:center;gap:4px;padding:8px 16px;border-radius:10px;background:linear-gradient(135deg,#1e1b4b,#4338ca);color:#fff;font-size:13px;font-weight:700;cursor:pointer;transition:all .25s;border:none;text-decoration:none;box-shadow:0 2px 10px rgba(30,27,75,.3)" onclick="openLuoshengAgent()" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 4px 14px rgba(30,27,75,.4)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 10px rgba(30,27,75,.3)'">🤖 罗圣AI</a><a href="javascript:void(0)" style="display:inline-flex;align-items:center;gap:4px;padding:8px 16px;border-radius:10px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-size:13px;font-weight:700;cursor:pointer;transition:all .25s;border:none;text-decoration:none;box-shadow:0 2px 10px rgba(217,119,6,.3)" onclick="openLuoshengAgent()" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 4px 14px rgba(217,119,6,.4)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 10px rgba(217,119,6,.3)'">🏢 企业版</a></div><div id="navRight" style="display:inline-flex;align-items:center;gap:8px"><a href="javascript:void(0)" class="nav-cta" onclick="openAuth('login')" id="navLoginBtn">登录 / 注册</a></div>
+</ul><div style="display:inline-flex;align-items:center;gap:8px"><a href="javascript:void(0)" style="display:inline-flex;align-items:center;gap:4px;padding:8px 16px;border-radius:10px;background:linear-gradient(135deg,#1e1b4b,#4338ca);color:#fff;font-size:13px;font-weight:700;cursor:pointer;transition:all .25s;border:none;text-decoration:none;box-shadow:0 2px 10px rgba(30,27,75,.3)" onclick="openLuoshengAgent()" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 4px 14px rgba(30,27,75,.4)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 10px rgba(30,27,75,.3)'">🤖 罗圣AI</a><a href="javascript:void(0)" style="display:inline-flex;align-items:center;gap:4px;padding:8px 16px;border-radius:10px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-size:13px;font-weight:700;cursor:pointer;transition:all .25s;border:none;text-decoration:none;box-shadow:0 2px 10px rgba(217,119,6,.3)" onclick="openEnterprise()" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 4px 14px rgba(217,119,6,.4)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 10px rgba(217,119,6,.3)'">🏢 企业版</a></div><div id="navRight" style="display:inline-flex;align-items:center;gap:8px"><a href="javascript:void(0)" class="nav-cta" onclick="openAuth('login')" id="navLoginBtn">登录 / 注册</a></div>
 <button class="mobile-toggle" onclick="toggleMobileMenu()"><span></span><span></span><span></span></button>
 </div>
 </nav>
@@ -5167,7 +5167,7 @@ var cur=_getCur(),lr=document.getElementById('navLoginBtn'),nr=document.getEleme
 if(cur){
 var displayName=cur.display||cur.username;
 if(lr){lr.textContent=displayName;lr.style.cssText='padding:6px 16px;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#78350f;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer';
-lr.onclick=function(){if(confirm('确定退出登录？')){localStorage.removeItem('lsjy3_cur');updateNav9();_updateCreditsUI()}};lr.removeAttribute('data-target')}
+lr.onclick=function(){openAccountPanel()};lr.removeAttribute('data-target')}
 var cr=document.getElementById('navCredits');
 if(!cr&&nr){var cd=document.createElement('div');cd.id='navCredits';cd.style.cssText='display:inline-flex;align-items:center;gap:4px;padding:6px 14px;background:linear-gradient(135deg,#dbeafe,#bfdbfe);color:#1e40af;border-radius:8px;font-size:12px;font-weight:700;margin-right:8px';cd.innerHTML='\u26a1 <span id="creditDisplay">'+_getUserCredits()+'</span> \u7b97\u529b';nr.insertBefore(cd,nr.firstChild)}
 else if(cr){document.getElementById('creditDisplay').textContent=_getUserCredits()}
@@ -5199,7 +5199,7 @@ _bindTC(document.getElementById('tools'));
 _bindTC(document.querySelector('.tools-grid'));
 
 var lb=document.getElementById('navLoginBtn');
-if(lb&&!lb._v9){lb.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();if(_getCur()){if(confirm('确定退出登录？')){localStorage.removeItem('lsjy3_cur');updateNav9();_updateCreditsUI()}}else{openAuth('login')}});lb._v9=true}
+if(lb&&!lb._v9){lb.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();if(_getCur()){openAccountPanel()}else{openAuth('login')}});lb._v9=true}
 
 var al=document.querySelector('a[href="admin/"]');
 if(al&&al.textContent.trim()==='\u7ba1\u7406\u540e\u53f0')al.style.display='none';
@@ -6192,6 +6192,136 @@ function closeLuoshengAgent(){
   document.body.style.overflow='';
   if(typeof aiStopVoice==='function')aiStopVoice();
   if(window._lsSpeech){speechSynthesis.cancel();window._lsSpeech=null}
+}
+
+/* ===== 企业版弹窗 ===== */
+function openEnterprise(){
+  var o=document.getElementById('entOverlay');
+  if(!o){
+    o=document.createElement('div');
+    o.id='entOverlay';
+    o.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:10001;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s';
+    o.onclick=function(e){if(e.target===this)closeEnterprise()};
+    o.innerHTML=`<div style="background:#fff;border-radius:16px;max-width:600px;width:92%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2);position:relative" id="entBox">
+      <div style="background:linear-gradient(135deg,#f59e0b,#d97706);padding:28px 32px;border-radius:16px 16px 0 0;color:#fff">
+        <button onclick="closeEnterprise()" style="position:absolute;top:12px;right:16px;background:rgba(255,255,255,.2);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px;line-height:28px">&times;</button>
+        <h2 style="font-size:24px;font-weight:900;margin-bottom:4px">🏢 罗圣纪元 · 企业版</h2>
+        <p style="font-size:13px;opacity:.85;margin:0">为企业客户提供一站式AI数字化解决方案</p>
+      </div>
+      <div style="padding:28px 32px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
+          <div style="background:linear-gradient(135deg,#fef3c7,#fde68a);border-radius:12px;padding:20px;text-align:center">
+            <div style="font-size:36px;margin-bottom:8px">🤖</div>
+            <h3 style="font-size:15px;font-weight:700;color:#92400e;margin-bottom:4px">AI智能对话</h3>
+            <p style="font-size:12px;color:#a16207;margin:0">28+大模型动态切换<br>无限次对话</p>
+          </div>
+          <div style="background:linear-gradient(135deg,#dbeafe,#bfdbfe);border-radius:12px;padding:20px;text-align:center">
+            <div style="font-size:36px;margin-bottom:8px">🎨</div>
+            <h3 style="font-size:15px;font-weight:700;color:#1e3a8a;margin-bottom:4px">AI绘图创作</h3>
+            <p style="font-size:12px;color:#1d4ed8;margin:0">智能文生图<br>高清素材一键生成</p>
+          </div>
+          <div style="background:linear-gradient(135deg,#dcfce7,#bbf7d0);border-radius:12px;padding:20px;text-align:center">
+            <div style="font-size:36px;margin-bottom:8px">📊</div>
+            <h3 style="font-size:15px;font-weight:700;color:#166534;margin-bottom:4px">数据分析</h3>
+            <p style="font-size:12px;color:#15803d;margin:0">智能报表生成<br>商业洞察决策支持</p>
+          </div>
+          <div style="background:linear-gradient(135deg,#fce7f3,#fbcfe8);border-radius:12px;padding:20px;text-align:center">
+            <div style="font-size:36px;margin-bottom:8px">🎬</div>
+            <h3 style="font-size:15px;font-weight:700;color:#9d174d;margin-bottom:4px">视频生成</h3>
+            <p style="font-size:12px;color:#be185d;margin:0">Seedance视频模型<br>AI短视频自动创作</p>
+          </div>
+        </div>
+        <div style="background:#f9fafb;border-radius:12px;padding:20px;margin-bottom:20px">
+          <h3 style="font-size:15px;font-weight:700;color:#111;margin-bottom:12px">📋 企业版专属特权</h3>
+          <ul style="list-style:none;padding:0;margin:0;font-size:13px;color:#374151;line-height:2.2">
+            <li>✅ 专属客服经理 1对1 服务</li>
+            <li>✅ API接口开放 · 对接企业系统</li>
+            <li>✅ 私有化部署方案可选</li>
+            <li>✅ 定制模型微调服务</li>
+            <li>✅ 不限算力 · 按月付费</li>
+            <li>✅ 团队账号管理 & 权限分配</li>
+            <li>✅ SLA 99.9% 可用性保障</li>
+          </ul>
+        </div>
+        <div style="display:flex;gap:12px;justify-content:center">
+          <button onclick="closeEnterprise();openAuth('login')" style="padding:12px 32px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(217,119,6,.3)">立即开通</button>
+          <button onclick="closeEnterprise()" style="padding:12px 32px;background:#f3f4f6;color:#374151;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer">稍后再说</button>
+        </div>
+      </div>
+    </div>`;
+    document.body.appendChild(o);
+  }
+  o.style.opacity='1';o.style.pointerEvents='auto';
+  document.body.style.overflow='hidden';
+}
+function closeEnterprise(){
+  var o=document.getElementById('entOverlay');
+  if(o){o.style.opacity='0';o.style.pointerEvents='none'}
+  document.body.style.overflow='';
+}
+
+/* ===== 账号详情面板 ===== */
+function openAccountPanel(){
+  var cur=window._getCur?window._getCur():(window.getCur?window.getCur():null);
+  if(!cur)return;
+  var panel=document.getElementById('accountPanel');
+  if(!panel){
+    panel=document.createElement('div');
+    panel.id='accountPanel';
+    panel.style.cssText='position:fixed;top:60px;right:16px;width:320px;background:#fff;border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.15);z-index:10002;display:none;overflow:hidden';
+    document.body.appendChild(panel);
+  }
+  panel.style.display='block';
+  panel.innerHTML=`
+    <div style="background:linear-gradient(135deg,#533afd,#7c6cf6);padding:20px;color:#fff;position:relative">
+      <button onclick="closeAccountPanel()" style="position:absolute;top:8px;right:12px;background:rgba(255,255,255,.2);border:none;color:#fff;width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:14px;line-height:24px">&times;</button>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900">${(cur.display||cur.username).charAt(0).toUpperCase()}</div>
+        <div>
+          <div style="font-size:16px;font-weight:700">${cur.display||cur.username}</div>
+          <div style="font-size:12px;opacity:.8">ID: ${cur.username}</div>
+        </div>
+      </div>
+    </div>
+    <div style="padding:16px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+        <div style="background:#f3f4f6;border-radius:10px;padding:14px;text-align:center">
+          <div style="font-size:22px;font-weight:900;color:#533afd">${typeof getUserCredits==='function'?getUserCredits():'--'}</div>
+          <div style="font-size:11px;color:#6b7280;margin-top:2px">算力余额</div>
+        </div>
+        <div style="background:#f3f4f6;border-radius:10px;padding:14px;text-align:center">
+          <div style="font-size:22px;font-weight:900;color:#f59e0b">${cur.role==='admin'?'管理员':'普通用户'}</div>
+          <div style="font-size:11px;color:#6b7280;margin-top:2px">账号角色</div>
+        </div>
+      </div>
+      <div style="border-top:1px solid #e5e7eb;padding-top:12px">
+        <a href="javascript:void(0)" onclick="closeAccountPanel();openLuoshengAgent()" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;color:#374151;text-decoration:none;font-size:13px;transition:background .15s" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">
+          <i class="fa-solid fa-robot" style="color:#533afd;width:18px;text-align:center"></i>打开罗圣AI
+        </a>
+        <a href="javascript:void(0)" onclick="closeAccountPanel()" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;color:#374151;text-decoration:none;font-size:13px;transition:background .15s" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">
+          <i class="fa-solid fa-receipt" style="color:#f59e0b;width:18px;text-align:center"></i>消费记录
+        </a>
+        <a href="javascript:void(0)" onclick="closeAccountPanel()" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;color:#374151;text-decoration:none;font-size:13px;transition:background .15s" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">
+          <i class="fa-solid fa-gear" style="color:#6b7280;width:18px;text-align:center"></i>账号设置
+        </a>
+        <a href="javascript:void(0)" onclick="closeAccountPanel();doLogout()" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;color:#ef4444;text-decoration:none;font-size:13px;transition:background .15s" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background=''">
+          <i class="fa-solid fa-right-from-bracket" style="width:18px;text-align:center"></i>退出登录
+        </a>
+      </div>
+    </div>`;
+  setTimeout(function(){
+    document.addEventListener('click',_closeAccOutside);
+  },10);
+}
+function _closeAccOutside(e){
+  var panel=document.getElementById('accountPanel');
+  var btn=document.getElementById('navLoginBtn');
+  if(panel&&!panel.contains(e.target)&&btn&&btn!==e.target){closeAccountPanel()}
+}
+function closeAccountPanel(){
+  var panel=document.getElementById('accountPanel');
+  if(panel)panel.style.display='none';
+  document.removeEventListener('click',_closeAccOutside);
 }
 
 function renderLuoshengChat(){
