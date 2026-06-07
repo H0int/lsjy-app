@@ -6172,7 +6172,7 @@ function lsClearChat(){
 }
 function lsExportChat(){
   if(_lsMsgs.length===0){toast('暂无对话记录','warn');return}
-  let txt='\u7f57\u5723AI \u5bf9\u8bdd\u8bb0\u5f55\n'+new Date().toLocaleString()+'\n'+('='repeat(40))+'\n';
+  let txt='\u7f57\u5723AI \u5bf9\u8bdd\u8bb0\u5f55\n'+new Date().toLocaleString()+'\n'+('='.repeat(40))+'\n';
   _lsMsgs.forEach(function(m){
     txt+=(m.role==='user'?'\u3010\u4f60\u3011':'\u3010\u7f57\u5723AI\u3011')+m.content+'\n\n';
   });
