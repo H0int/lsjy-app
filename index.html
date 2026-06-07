@@ -6035,17 +6035,11 @@ console.log('[FIX v3] 算力中心/六大板块/立即开通 全部修复完成'
 
 
 // ===== 罗圣AI智能体 =====
-let _lsMsgs=[];
-let _lsModel='doubao-seed-2-0-pro-260215';
-let _lsModelType='text';
-let _lsSending=false;
-
-// 圣点定价策略（成本+利润）
-const LS_PRICING={
-  text:5,       // 文本对话：5圣点/次
-  image:20,     // 图片生成：20圣点/次
-  video:80      // 视频生成：80圣点/次
-};
+var _lsMsgs=[];
+var _lsModel='doubao-seed-2-0-pro-260215';
+var _lsModelType='text';
+var _lsSending=false;
+var LS_PRICING={text:5,image:20,video:80};
 
 function openLuoshengAgent(){
   if(!requireLogin()){return}
@@ -6053,206 +6047,243 @@ function openLuoshengAgent(){
   _lsModel='doubao-seed-2-0-pro-260215';
   _lsModelType='text';
   _lsSending=false;
-  const o=document.getElementById('lsOverlay')||createLuoshengOverlay();
+  var o=document.getElementById('lsOverlay');
+  if(!o){
+    o=document.createElement('div');
+    o.id='lsOverlay';
+    o.className='ls-agent-overlay';
+    o.onclick=function(e){if(e.target===this)closeLuoshengAgent()};
+    o.innerHTML='<div class="ls-agent" id="lsAgent"></div>';
+    document.body.appendChild(o);
+  }
   o.classList.add('show');
   document.body.style.overflow='hidden';
   renderLuoshengChat();
 }
+
 function closeLuoshengAgent(){
-  const o=document.getElementById('lsOverlay');
+  var o=document.getElementById('lsOverlay');
   if(o)o.classList.remove('show');
   document.body.style.overflow='';
   if(typeof aiStopVoice==='function')aiStopVoice();
 }
-function createLuoshengOverlay(){
-  const div=document.createElement('div');
-  div.id='lsOverlay';
-  div.className='ls-agent-overlay';
-  div.onclick=function(e){if(e.target===this)closeLuoshengAgent()};
-  div.innerHTML='<div class="ls-agent" id="lsAgent"></div>';
-  document.body.appendChild(div);
-  return div;
-}
+
 function renderLuoshengChat(){
-  const textModels=MODEL_REGISTRY.filter(function(m){return m.type==='text'&&!m.disabled});
-  const imgModels=MODEL_REGISTRY.filter(function(m){return m.type==='image'&&!m.disabled});
-  const vidModels=MODEL_REGISTRY.filter(function(m){return m.type==='video'&&!m.disabled});
-  const cost=LS_PRICING[_lsModelType]||5;
-  
-  let modelOpts='';
-  textModels.forEach(function(m){
-    modelOpts+='<button class="ls-agent-model-opt'+(_lsModel===m.id&&_lsModelType==='text'?' active':'')+'" onclick="lsSelectModel(\''+m.id+'\',\''+m.type+'\')" title="'+m.name+'">'+m.name+'</button>';
-  });
-  modelOpts+='<span style="width:1px;height:20px;background:#e5e7eb;margin:0 2px;flex-shrink:0"></span>';
-  imgModels.forEach(function(m){
-    modelOpts+='<button class="ls-agent-model-opt img-opt'+(_lsModel===m.id&&_lsModelType==='image'?' active':'')+'" onclick="lsSelectModel(\''+m.id+'\',\''+m.type+'\')" title="图片生成">'+m.name+'</button>';
-  });
-  modelOpts+='<span style="width:1px;height:20px;background:#e5e7eb;margin:0 2px;flex-shrink:0"></span>';
-  vidModels.forEach(function(m){
-    modelOpts+='<button class="ls-agent-model-opt vid-opt'+(_lsModel===m.id&&_lsModelType==='video'?' active':'')+'" onclick="lsSelectModel(\''+m.id+'\',\''+m.type+'\')" title="视频生成">'+m.name+'</button>';
-  });
+  var textModels=MODEL_REGISTRY.filter(function(m){return m.type==='text'&&!m.disabled});
+  var imgModels=MODEL_REGISTRY.filter(function(m){return m.type==='image'&&!m.disabled});
+  var vidModels=MODEL_REGISTRY.filter(function(m){return m.type==='video'&&!m.disabled});
+  var cost=LS_PRICING[_lsModelType]||5;
 
-  const typeLabel=_lsModelType==='text'?'文本对话':_lsModelType==='image'?'图片生成':'视频生成';
+  var modelOpts='';
+  var i,m;
+  for(i=0;i<textModels.length;i++){
+    m=textModels[i];
+    modelOpts+='<button class="ls-agent-model-opt'+(_lsModel===m.id&&_lsModelType==='text'?' active':'')+'" data-mid="'+m.id+'" data-mtype="text" title="'+m.name+'">'+m.name+'</button>';
+  }
+  modelOpts+='<span style="width:1px;height:20px;background:#e5e7eb;margin:0 2px;flex-shrink:0"></span>';
+  for(i=0;i<imgModels.length;i++){
+    m=imgModels[i];
+    modelOpts+='<button class="ls-agent-model-opt img-opt'+(_lsModel===m.id&&_lsModelType==='image'?' active':'')+'" data-mid="'+m.id+'" data-mtype="image" title="图片生成">'+m.name+'</button>';
+  }
+  modelOpts+='<span style="width:1px;height:20px;background:#e5e7eb;margin:0 2px;flex-shrink:0"></span>';
+  for(i=0;i<vidModels.length;i++){
+    m=vidModels[i];
+    modelOpts+='<button class="ls-agent-model-opt vid-opt'+(_lsModel===m.id&&_lsModelType==='video'?' active':'')+'" data-mid="'+m.id+'" data-mtype="video" title="视频生成">'+m.name+'</button>';
+  }
 
-  const agent=document.getElementById('lsAgent');
+  var typeLabel=_lsModelType==='text'?'文本对话':_lsModelType==='image'?'图片生成':'视频生成';
+  var phText=_lsModelType==='text'?'向罗圣AI提问...':_lsModelType==='image'?'描述你想生成的图片...':'描述你想生成的视频...';
+
+  var agent=document.getElementById('lsAgent');
   agent.innerHTML=
     '<div class="ls-agent-head">'+
       '<button class="ls-agent-close" onclick="closeLuoshengAgent()">\u2715</button>'+
       '<div class="ls-agent-head-row">'+
         '<div class="ls-agent-avatar">\ud83d\ude0e</div>'+
-        '<div class="ls-agent-head-info"><h3>\u7f57\u5723AI</h3><p>\u7f57\u5723\u7eaa\u5143\u667a\u80fd\u4f53 \xb7 '+MODEL_REGISTRY.length+'\u6a21\u578b\u52a8\u6001\u5207\u6362</p></div>'+
+        '<div class="ls-agent-head-info"><h3>罗圣AI</h3><p>罗圣纪元智能体 \xb7 '+MODEL_REGISTRY.length+'模型动态切换</p></div>'+
       '</div>'+
       '<div class="ls-agent-features">'+
-        '<span class="ls-agent-feat">\ud83d\udcdd \u667a\u80fd\u5bf9\u8bdd</span>'+
-        '<span class="ls-agent-feat">\ud83c\udfa8 AI\u7ed8\u753b</span>'+
-        '<span class="ls-agent-feat">\ud83c\udfac \u89c6\u9891\u751f\u6210</span>'+
-        '<span class="ls-agent-feat">\ud83d\udd0d \u6df1\u5ea6\u601d\u8003</span>'+
-        '<span class="ls-agent-feat">\ud83d\udcbb \u7f16\u7a0b\u52a9\u624b</span>'+
+        '<span class="ls-agent-feat">\ud83d\udcdd 智能对话</span>'+
+        '<span class="ls-agent-feat">\ud83c\udfa8 AI绘画</span>'+
+        '<span class="ls-agent-feat">\ud83c\udfac 视频生成</span>'+
+        '<span class="ls-agent-feat">\ud83d\udd0d 深度思考</span>'+
+        '<span class="ls-agent-feat">\ud83d\udcbb 编程助手</span>'+
       '</div>'+
     '</div>'+
-    '<div class="ls-agent-modelbar">'+modelOpts+
-      '<span class="ls-agent-cost-hint">'+typeLabel+' <b>'+cost+'\u5723\u70b9/\u6b21</b></span>'+
+    '<div class="ls-agent-modelbar" id="lsModelBar">'+modelOpts+
+      '<span class="ls-agent-cost-hint">'+typeLabel+' <b>'+cost+'圣点/次</b></span>'+
     '</div>'+
     '<div class="ls-agent-chat" id="lsChat"></div>'+
     '<div class="ls-agent-actions">'+
-      '<button class="ls-agent-act" onclick="lsClearChat()">\ud83d\uddd1 \u6e05\u7a7a\u5bf9\u8bdd</button>'+
-      '<button class="ls-agent-act" onclick="lsExportChat()">\ud83d\udcbe \u5bfc\u51fa\u8bb0\u5f55</button>'+
+      '<button class="ls-agent-act" id="lsClearBtn">\ud83d\uddd1 清空对话</button>'+
+      '<button class="ls-agent-act" id="lsExportBtn">\ud83d\udcbe 导出记录</button>'+
       '<span style="flex:1"></span>'+
-      '<span style="font-size:11px;color:#9ca3af">\u7b97\u529b\u4f59\u989d: <b style="color:#dc2626">'+getUserCredits()+'</b></span>'+
+      '<span id="lsCreditsHint" style="font-size:11px;color:#9ca3af">算力余额: <b style="color:#dc2626">'+getUserCredits()+'</b></span>'+
     '</div>'+
     '<div class="ls-agent-input">'+
       '<div class="ls-agent-input-row">'+
-        '<textarea id="lsInput" placeholder="'+(_lsModelType==='text'?'\u5411\u7f57\u5723AI\u63d0\u95ee...':_lsModelType==='image'?'\u63cf\u8ff0\u4f60\u60f3\u751f\u6210\u7684\u56fe\u7247...':'\u63cf\u8ff0\u4f60\u60f3\u751f\u6210\u7684\u89c6\u9891...')+'" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();lsSendMessage()}"></textarea>'+
-        '<button class="ls-agent-send" id="lsSendBtn" onclick="lsSendMessage()">\u27a4</button>'+
+        '<textarea id="lsInput" placeholder="'+phText+'"></textarea>'+
+        '<button class="ls-agent-send" id="lsSendBtn">\u27a4</button>'+
       '</div>'+
     '</div>';
 
-  // Show welcome message
-  const chat=document.getElementById('lsChat');
-  chat.innerHTML='<div class="ls-welcome">'+
-    '<div class="ls-welcome-icon">\ud83d\ude0e</div>'+
-    '<h4>\u4f60\u597d\uff0c\u6211\u662f\u7f57\u5723AI</h4>'+
-    '<p>\u96c6\u6210\u706b\u5c71\u5f15\u64ce'+MODEL_REGISTRY.length+'\u6b3e\u5927\u6a21\u578b\uff0c\u652f\u6301\u6587\u672c\u5bf9\u8bdd\u3001\u56fe\u7247\u751f\u6210\u3001\u89c6\u9891\u521b\u4f5c\u3002\u4f7f\u7528\u524d\u8bf7\u9009\u62e9\u6a21\u578b\u7c7b\u578b\uff0c\u6bcf\u6b21\u5c06\u6d88\u8017\u5bf9\u5e94\u5723\u70b9\u3002</p>'+
-    '<div class="ls-welcome-chips">'+
-      '<span class="ls-welcome-chip" onclick="lsQuickAsk('\u5e2e\u6211\u5199\u4e00\u6bb5\u54c1\u724c\u6545\u4e8b')">\ud83d\udcdd \u5199\u54c1\u724c\u6545\u4e8b</span>'+
-      '<span class="ls-welcome-chip" onclick="lsQuickAsk('\u5206\u6790\u4e00\u4e0b\u5f53\u524d\u7535\u5546\u8d8b\u52bf')">\ud83d\udcca \u7535\u5546\u8d8b\u52bf</span>'+
-      '<span class="ls-welcome-chip" onclick="lsQuickAsk('\u751f\u6210\u4e00\u53ea\u53ef\u7231\u7684\u6a58\u732b\uff0c\u6c34\u5f69\u98ce\u683c')">\ud83c\udfa8 \u751f\u6210\u56fe\u7247</span>'+
-      '<span class="ls-welcome-chip" onclick="lsQuickAsk('\u89e3\u91ca\u4e00\u4e0b\u4eba\u5de5\u667a\u80fd\u7684\u672a\u6765')">\ud83d\udc1d \u79d1\u6280\u524d\u6cbf</span>'+
-    '</div>'+
-  '</div>';
+  document.getElementById('lsSendBtn').onclick=lsSendMessage;
+  document.getElementById('lsClearBtn').onclick=lsClearChat;
+  document.getElementById('lsExportBtn').onclick=lsExportChat;
+  document.getElementById('lsInput').onkeydown=function(e){
+    if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();lsSendMessage()}
+  };
+
+  var modelBtns=document.querySelectorAll('#lsModelBar .ls-agent-model-opt');
+  for(i=0;i<modelBtns.length;i++){
+    modelBtns[i].onclick=function(){
+      lsSelectModel(this.getAttribute('data-mid'),this.getAttribute('data-mtype'));
+    };
+  }
+
+  var chat=document.getElementById('lsChat');
+  chat.innerHTML=
+    '<div class="ls-welcome">'+
+      '<div class="ls-welcome-icon">\ud83d\ude0e</div>'+
+      '<h4>你好，我是罗圣AI</h4>'+
+      '<p>集成火山引擎'+MODEL_REGISTRY.length+'款大模型，支持文本对话、图片生成、视频创作。选择模型类型后开始对话，每次将消耗对应圣点。</p>'+
+      '<div class="ls-welcome-chips">'+
+        '<span class="ls-welcome-chip" data-q="帮我写一段品牌故事">\ud83d\udcdd 写品牌故事</span>'+
+        '<span class="ls-welcome-chip" data-q="分析一下当前电商趋势">\ud83d\udcca 电商趋势</span>'+
+        '<span class="ls-welcome-chip" data-q="生成一只可爱的橘猫，水彩风格">\ud83c\udfa8 生成图片</span>'+
+        '<span class="ls-welcome-chip" data-q="解释一下人工智能的未来">\ud83d\udc1d 科技前沿</span>'+
+      '</div>'+
+    '</div>';
+
+  var chips=chat.querySelectorAll('.ls-welcome-chip');
+  for(i=0;i<chips.length;i++){
+    chips[i].onclick=function(){
+      var q=this.getAttribute('data-q');
+      var inp=document.getElementById('lsInput');
+      if(inp){inp.value=q;lsSendMessage()}
+    };
+  }
 }
 
 function lsSelectModel(id,type){
   _lsModel=id;
   _lsModelType=type;
   renderLuoshengChat();
-  // Restore messages
   if(_lsMsgs.length>0){
-    const chat=document.getElementById('lsChat');
-    let html='<div class="ls-welcome" style="display:none"></div>';
-    _lsMsgs.forEach(function(m){
+    var chat=document.getElementById('lsChat');
+    var html='';
+    for(var i=0;i<_lsMsgs.length;i++){
+      var m=_lsMsgs[i];
       if(m.role==='user'){
         html+='<div class="ls-msg ls-msg-user"><div class="ls-msg-avatar">\ud83d\ude0e</div><div class="ls-msg-bubble">'+m.content.replace(/</g,'&lt;').replace(/\n/g,'<br>')+'</div></div>';
       }else{
         html+='<div class="ls-msg ls-msg-ai"><div class="ls-msg-avatar">\ud83e\udd16</div><div class="ls-msg-bubble">'+m.content.replace(/</g,'&lt;').replace(/\n/g,'<br>')+'</div></div>';
       }
-    });
-    chat.innerHTML=html;
+    }
+    var welcome=chat.querySelector('.ls-welcome');
+    if(welcome)welcome.remove();
+    chat.innerHTML+=html;
     chat.scrollTop=chat.scrollHeight;
   }
 }
-function lsQuickAsk(q){
-  const inp=document.getElementById('lsInput');
-  if(inp){inp.value=q;lsSendMessage()}
-}
+
 function lsClearChat(){
   _lsMsgs=[];
   renderLuoshengChat();
   toast('对话已清空','success');
 }
+
 function lsExportChat(){
   if(_lsMsgs.length===0){toast('暂无对话记录','warn');return}
-  let txt='\u7f57\u5723AI \u5bf9\u8bdd\u8bb0\u5f55\n'+new Date().toLocaleString()+'\n'+('='.repeat(40))+'\n';
-  _lsMsgs.forEach(function(m){
-    txt+=(m.role==='user'?'\u3010\u4f60\u3011':'\u3010\u7f57\u5723AI\u3011')+m.content+'\n\n';
-  });
-  const blob=new Blob([txt],{type:'text/plain;charset=utf-8'});
-  const a=document.createElement('a');
+  var lines=['罗圣AI 对话记录',new Date().toLocaleString(),'========================================'];
+  for(var i=0;i<_lsMsgs.length;i++){
+    var m=_lsMsgs[i];
+    lines.push((m.role==='user'?'【你】':'【罗圣AI】')+m.content);
+    lines.push('');
+  }
+  var blob=new Blob([lines.join('\n')],{type:'text/plain;charset=utf-8'});
+  var a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
-  a.download='\u7f57\u5723AI_\u5bf9\u8bdd_'+Date.now()+'.txt';
+  a.download='罗圣AI_对话_'+Date.now()+'.txt';
   a.click();
   toast('导出成功','success');
 }
 
 async function lsSendMessage(){
   if(_lsSending)return;
-  const inp=document.getElementById('lsInput');
-  const msg=inp.value.trim();
+  var inp=document.getElementById('lsInput');
+  var msg=inp.value.trim();
   if(!msg)return;
   if(!requireLogin())return;
 
-  const cost=LS_PRICING[_lsModelType]||5;
-  if(!deductCredits(cost)){toast('\u7b97\u529b\u4e0d\u8db3\uff0c\u8bf7\u5148\u5145\u503c','error');return}
+  var cost=LS_PRICING[_lsModelType]||5;
+  if(!deductCredits(cost)){toast('算力不足，请先充值','error');return}
 
   inp.value='';
   _lsSending=true;
   document.getElementById('lsSendBtn').disabled=true;
-  
-  const chat=document.getElementById('lsChat');
-  // Remove welcome if present
-  const welcome=chat.querySelector('.ls-welcome');
+
+  var chat=document.getElementById('lsChat');
+  var welcome=chat.querySelector('.ls-welcome');
   if(welcome)welcome.remove();
 
-  // Add user message
-  chat.innerHTML+='<div class="ls-msg ls-msg-user"><div class="ls-msg-avatar">\ud83d\ude0e</div><div class="ls-msg-bubble">'+msg.replace(/</g,'&lt;').replace(/\n/g,'<br>')+'</div></div>';
+  var safeMsg=msg.replace(/</g,'&lt;').replace(/\n/g,'<br>');
+  chat.innerHTML+='<div class="ls-msg ls-msg-user"><div class="ls-msg-avatar">\ud83d\ude0e</div><div class="ls-msg-bubble">'+safeMsg+'</div></div>';
   _lsMsgs.push({role:'user',content:msg});
 
-  // Show typing
   chat.innerHTML+='<div class="ls-msg ls-msg-ai" id="lsTyping"><div class="ls-msg-avatar">\ud83e\udd16</div><div class="ls-msg-typing"><span></span><span></span><span></span></div></div>';
   chat.scrollTop=chat.scrollHeight;
 
   try{
-    let result;
+    var result;
     if(_lsModelType==='text'){
-      const sysPrompt='\u4f60\u662f\u7f57\u5723AI\uff0c\u7f57\u5723\u7eaa\u5143\u4e92\u8054\u7f51\u79d1\u6280\u6709\u9650\u516c\u53f8\u7684\u667a\u80fd\u4f53\u3002\u4f60\u662f\u4e00\u4e2a\u5168\u80fd\u578bAI\u52a9\u624b\uff0c\u64c5\u957f\u6587\u6848\u521b\u4f5c\u3001\u5546\u4e1a\u5206\u6790\u3001\u7f16\u7a0b\u5f00\u53d1\u3001\u6559\u80b2\u54a8\u8be2\u3001\u7535\u5546\u8fd0\u8425\u7b49\u9886\u57df\u3002\u8bf7\u7528\u4e2d\u6587\u56de\u7b54\uff0c\u98ce\u683c\u4e13\u4e1a\u3001\u6e05\u6670\u3001\u6709\u6761\u7406\u3002\u5982\u679c\u7528\u6237\u95ee\u53ca\u7f57\u5723\u7eaa\u5143\u5e73\u53f0\u529f\u80fd\uff0c\u4f60\u53ef\u4ee5\u4ecb\u7ecd\u5e73\u53f0\u7684\u516d\u5927\u4e1a\u52a1\u6a21\u5757\uff1aAI\u4eba\u5de5\u667a\u80fd\u3001\u81ea\u5a92\u4f53\u3001\u7535\u5546\u3001\u5ba0\u7269\u3001\u6559\u80b2\u3001\u4f2f\u96c5\u6821\u56ed\u3002';
+      var sysPrompt='你是罗圣AI，罗圣纪元互联网科技有限责任公司的智能体。你是一个全能型AI助手，擅长文案创作、商业分析、编程开发、教育咨询、电商运营等领域。请用中文回答，风格专业、清晰、有条理。如果用户问及罗圣纪元平台功能，你可以介绍平台的六大业务模块：AI人工智能、自媒体、电商、宠物、教育、伯雅校园。';
       result=await doubaoChat(msg,sysPrompt,_lsModel);
       if(result){
         result=result.replace(/</g,'&lt;').replace(/\n/g,'<br>');
-      }else{result='\u62b1\u6b49\uff0c\u672a\u83b7\u5f97\u56de\u590d\uff0c\u8bf7\u91cd\u8bd5\u3002'}
+      }else{result='抱歉，未获得回复，请重试。'}
     }else if(_lsModelType==='image'){
-      const url=await doubaoImage(msg,2048,2048,_lsModel);
+      var url=await doubaoImage(msg,2048,2048,_lsModel);
       if(url){
-        result='<img src="'+url+'" onclick="window.open(this.src)" alt="AI\u751f\u6210\u56fe\u7247"><br><a href="'+url+'" download="lsjy_'+Date.now()+'.png" style="color:#4338ca;font-size:12px;font-weight:600">\ud83d\udcbe \u4e0b\u8f7d\u56fe\u7247</a>';
-      }else{result='\u56fe\u7247\u751f\u6210\u5931\u8d25\uff0c\u8bf7\u68c0\u67e5\u63cf\u8ff0\u540e\u91cd\u8bd5\u3002'}
+        result='<img src="'+url+'" onclick="window.open(this.src)" alt="AI生成图片"><br><a href="'+url+'" download="lsjy_'+Date.now()+'.png" style="color:#4338ca;font-size:12px;font-weight:600">\ud83d\udcbe 下载图片</a>';
+      }else{result='图片生成失败，请检查描述后重试。'}
     }else if(_lsModelType==='video'){
-      const taskId=await seedanceCreateTask([{type:'text',text:msg}],{model:_lsModel,ratio:'16:9',duration:5,watermark:false});
-      // Update typing to show progress
-      const typingEl=document.getElementById('lsTyping');
-      if(typingEl){typingEl.querySelector('.ls-msg-typing').innerHTML='<span style="font-size:12px;color:#6b7280;white-space:nowrap">\u89c6\u9891\u751f\u6210\u4e2d...\u4efb\u52a1ID: '+taskId.substring(0,12)+'</span>';}
-      const videoResult=await seedancePollUntilDone(taskId);
+      var taskId=await seedanceCreateTask([{type:'text',text:msg}],{model:_lsModel,ratio:'16:9',duration:5,watermark:false});
+      var typingEl=document.getElementById('lsTyping');
+      if(typingEl){
+        var pEl=typingEl.querySelector('.ls-msg-typing');
+        if(pEl)pEl.innerHTML='<span style="font-size:12px;color:#6b7280;white-space:nowrap">视频生成中...任务ID: '+taskId.substring(0,12)+'</span>';
+      }
+      var videoResult=await seedancePollUntilDone(taskId);
       if(videoResult&&videoResult.status==='succeeded'&&videoResult.content){
-        const videoContent=videoResult.content.find(function(c){return c.type==='video'});
+        var videoContent=null;
+        for(var vi=0;vi<videoResult.content.length;vi++){
+          if(videoResult.content[vi].type==='video'){videoContent=videoResult.content[vi];break}
+        }
         if(videoContent&&videoContent.url){
-          result='<video controls src="'+videoContent.url+'" style="max-width:100%;border-radius:8px"></video><br><a href="'+videoContent.url+'" download="lsjy_'+Date.now()+'.mp4" style="color:#7c3aed;font-size:12px;font-weight:600">\ud83d\udcbe \u4e0b\u8f7d\u89c6\u9891</a>';
-        }else{result='\u89c6\u9891\u751f\u6210\u5b8c\u6210\u4f46\u672a\u83b7\u53d6\u5230\u89c6\u9891\u5730\u5740\u3002'}
-      }else{result='\u89c6\u9891\u751f\u6210\u5931\u8d25: '+(videoResult&&videoResult.error?videoResult.error.message:'\u8bf7\u91cd\u8bd5')+'\u3002'}
-    }else{result='\u6682\u4e0d\u652f\u6301\u6b64\u6a21\u578b\u7c7b\u578b\u3002'}
+          result='<video controls src="'+videoContent.url+'" style="max-width:100%;border-radius:8px"></video><br><a href="'+videoContent.url+'" download="lsjy_'+Date.now()+'.mp4" style="color:#7c3aed;font-size:12px;font-weight:600">\ud83d\udcbe 下载视频</a>';
+        }else{result='视频生成完成但未获取到视频地址。'}
+      }else{
+        var errMsg=(videoResult&&videoResult.error)?videoResult.error.message:'请重试';
+        result='视频生成失败: '+errMsg+'。';
+      }
+    }else{result='暂不支持此模型类型。'}
 
-    const typing=document.getElementById('lsTyping');
+    var typing=document.getElementById('lsTyping');
     if(typing)typing.remove();
     chat.innerHTML+='<div class="ls-msg ls-msg-ai"><div class="ls-msg-avatar">\ud83e\udd16</div><div class="ls-msg-bubble">'+result+'</div></div>';
     _lsMsgs.push({role:'ai',content:result.replace(/<[^>]+>/g,'')});
-    addCreditLog('\u7f57\u5723AI',(_lsModelType==='text'?'\u6587\u672c\u5bf9\u8bdd':_lsModelType==='image'?'\u56fe\u7247\u751f\u6210':'\u89c6\u9891\u751f\u6210')+' -'+cost+'\u5723\u70b9',cost);
+    var desc=_lsModelType==='text'?'文本对话':_lsModelType==='image'?'图片生成':'视频生成';
+    addCreditLog('罗圣AI',desc+' -'+cost+'圣点',cost);
   }catch(e){
-    const typing=document.getElementById('lsTyping');
+    var typing=document.getElementById('lsTyping');
     if(typing)typing.remove();
-    chat.innerHTML+='<div class="ls-msg ls-msg-ai"><div class="ls-msg-avatar">\ud83e\udd16</div><div class="ls-msg-bubble" style="color:#ef4444">\u8bf7\u6c42\u5931\u8d25: '+e.message+'</div></div>';
+    chat.innerHTML+='<div class="ls-msg ls-msg-ai"><div class="ls-msg-avatar">\ud83e\udd16</div><div class="ls-msg-bubble" style="color:#ef4444">请求失败: '+e.message+'</div></div>';
   }
   chat.scrollTop=chat.scrollHeight;
   _lsSending=false;
   document.getElementById('lsSendBtn').disabled=false;
-  // Update credits display
-  const costHint=document.querySelector('.ls-agent-cost-hint b');
+  var costHint=document.querySelector('#lsCreditsHint b');
   if(costHint)costHint.textContent=getUserCredits();
 }
 
