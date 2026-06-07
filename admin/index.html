@@ -1932,22 +1932,82 @@ function doAdminUpgradePlan(){const plan=document.getElementById('upgradePlan').
 var _adminAIChat=[];
 var _adminAIModel='doubao-seed-2-0-pro-260215';
 var _adminAISending=false;
+var _adminAITab='chat';
+var _ARK_BASE='https://ark.cn-beijing.volces.com/api/v3';
+var _ARK_KEY='ark-21eb820a-93fc-4379-bbc4-217498f7753b-a6876';
 function renderLuoshengAI(){
   var main=document.getElementById('mainContent');
   main.innerHTML=`<div style="height:calc(100vh - var(--topbar));display:flex;flex-direction:column;padding:0">
-    <div style="background:#fff;border-bottom:1px solid var(--bd);padding:12px 20px;display:flex;align-items:center;gap:12px;flex-shrink:0">
+    <div style="background:#fff;border-bottom:1px solid var(--bd);padding:10px 20px;display:flex;align-items:center;gap:12px;flex-shrink:0">
       <span style="font-size:20px">🤖</span>
-      <div><div style="font-weight:700;font-size:15px;color:var(--n)">罗圣AI助手</div><div style="font-size:11px;color:var(--b)">后台专用 · 免费无限使用 · 28+大模型</div></div>
+      <div style="flex:1"><div style="font-weight:700;font-size:15px;color:var(--n)">罗圣AI助手</div><div style="font-size:11px;color:var(--b)">后台专用 · 免费无限使用</div></div>
     </div>
-    <div id="adminAIChat" style="flex:1;overflow-y:auto;padding:20px;background:var(--bg)"></div>
-    <div style="background:#fff;border-top:1px solid var(--bd);padding:12px 20px;display:flex;gap:10px;align-items:center;flex-shrink:0">
+    <div id="adminAITabs" style="background:#fff;border-bottom:1px solid var(--bd);display:flex;padding:0 20px;gap:4px;flex-shrink:0">
+      <button onclick="adminAITabSwitch('chat')" id="adminAITab_chat" class="adminAI-tab active" style="padding:8px 18px;border:none;background:var(--p);color:#fff;border-radius:8px 8px 0 0;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s">💬 智能对话</button>
+      <button onclick="adminAITabSwitch('img')" id="adminAITab_img" class="adminAI-tab" style="padding:8px 18px;border:none;background:transparent;color:var(--b);border-radius:8px 8px 0 0;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s">🎨 AI绘图</button>
+      <button onclick="adminAITabSwitch('video')" id="adminAITab_video" class="adminAI-tab" style="padding:8px 18px;border:none;background:transparent;color:var(--b);border-radius:8px 8px 0 0;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s">🎬 视频生成</button>
+    </div>
+    <div id="adminAIBody" style="flex:1;overflow:hidden;position:relative"></div>
+  </div>`;
+  _adminAIChat=[];
+  adminAITabSwitch('chat');
+}
+function adminAITabSwitch(tab){
+  _adminAITab=tab;
+  document.querySelectorAll('.adminAI-tab').forEach(function(b){b.style.background='transparent';b.style.color='var(--b)'});
+  var active=document.getElementById('adminAITab_'+tab);
+  if(active){active.style.background='var(--p)';active.style.color='#fff'}
+  var body=document.getElementById('adminAIBody');
+  if(tab==='chat'){
+    body.innerHTML=`<div id="adminAIChat" style="height:100%;overflow-y:auto;padding:20px;background:var(--bg)"></div>
+    <div style="background:#fff;border-top:1px solid var(--bd);padding:12px 20px;display:flex;gap:10px;align-items:center;flex-shrink:0;position:absolute;bottom:0;left:0;right:0">
       <input id="adminAIInput" style="flex:1;padding:10px 14px;border:1.5px solid var(--bd);border-radius:10px;font-size:14px;outline:none" placeholder="向罗圣AI提问..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();adminAISend()}">
       <button onclick="adminAISend()" style="padding:10px 20px;background:var(--p);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer">发送</button>
       <button onclick="adminAIClear()" style="padding:10px 16px;background:var(--bg);border:1.5px solid var(--bd);border-radius:10px;font-size:13px;cursor:pointer;color:var(--b)">清空</button>
-    </div>
-  </div>`;
-  _adminAIChat=[];
-  adminAIRender();
+    </div>`;
+    adminAIRender();
+  }else if(tab==='img'){
+    body.innerHTML=`<div style="height:100%;overflow-y:auto;padding:20px;background:var(--bg)">
+      <div style="max-width:600px;margin:0 auto">
+        <div style="background:#fff;border-radius:14px;padding:24px;box-shadow:var(--shadow)">
+          <h3 style="margin:0 0 16px;font-size:16px;color:var(--n)">🎨 AI文生图</h3>
+          <p style="font-size:12px;color:var(--b);margin:0 0 16px">描述你想要的图片，AI为你生成高清大图</p>
+          <div style="margin-bottom:12px"><textarea id="adminImgPrompt" rows="4" style="width:100%;padding:12px;border:1.5px solid var(--bd);border-radius:10px;font-size:14px;resize:vertical;outline:none;font-family:inherit" placeholder="例如：一只戴着墨镜的猫在纽约街头，赛博朋克风格，霓虹灯光..." onfocus="this.style.borderColor='var(--p)'" onblur="this.style.borderColor='var(--bd)'"></textarea></div>
+          <div style="margin-bottom:16px"><label style="font-size:12px;color:var(--b);margin-bottom:4px;display:block">图片尺寸</label>
+          <select id="adminImgSize" style="width:100%;padding:10px 12px;border:1.5px solid var(--bd);border-radius:10px;font-size:14px;outline:none">
+            <option value="1024x1024">正方形 1024×1024</option>
+            <option value="1280x720">横屏 1280×720</option>
+            <option value="720x1280">竖屏 720×1280</option>
+            <option value="2048x2048">高清 2048×2048</option>
+          </select></div>
+          <button onclick="adminDoImgGen()" style="width:100%;padding:12px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer">🚀 开始生成</button>
+          <div id="adminImgResult" style="margin-top:16px"></div>
+        </div>
+      </div>
+    </div>`;
+  }else if(tab==='video'){
+    body.innerHTML=`<div style="height:100%;overflow-y:auto;padding:20px;background:var(--bg)">
+      <div style="max-width:600px;margin:0 auto">
+        <div style="background:#fff;border-radius:14px;padding:24px;box-shadow:var(--shadow)">
+          <h3 style="margin:0 0 16px;font-size:16px;color:var(--n)">🎬 AI文生视频</h3>
+          <p style="font-size:12px;color:var(--b);margin:0 0 16px">描述视频内容，AI为你自动生成短视频</p>
+          <div style="margin-bottom:12px"><textarea id="adminVidPrompt" rows="4" style="width:100%;padding:12px;border:1.5px solid var(--bd);border-radius:10px;font-size:14px;resize:vertical;outline:none;font-family:inherit" placeholder="例如：一只橘猫在花园里追蝴蝶，阳光明媚的春天..." onfocus="this.style.borderColor='var(--p)'" onblur="this.style.borderColor='var(--bd)'"></textarea></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+            <div><label style="font-size:12px;color:var(--b);margin-bottom:4px;display:block">时长</label>
+              <select id="adminVidDuration" style="width:100%;padding:10px;border:1.5px solid var(--bd);border-radius:10px;font-size:13px;outline:none">
+                <option value="5">5秒</option><option value="10" selected>10秒</option>
+              </select></div>
+            <div><label style="font-size:12px;color:var(--b);margin-bottom:4px;display:block">比例</label>
+              <select id="adminVidRatio" style="width:100%;padding:10px;border:1.5px solid var(--bd);border-radius:10px;font-size:13px;outline:none">
+                <option value="16:9">16:9 横屏</option><option value="9:16">9:16 竖屏</option><option value="1:1">1:1 正方</option>
+              </select></div>
+          </div>
+          <button onclick="adminDoVidGen()" id="adminVidBtn" style="width:100%;padding:12px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer">🚀 开始生成视频</button>
+          <div id="adminVidResult" style="margin-top:16px"></div>
+        </div>
+      </div>
+    </div>`;
+  }
 }
 function adminAIRender(){
   var chat=document.getElementById('adminAIChat');
@@ -2034,6 +2094,104 @@ function adminAISend(){
 function adminAIClear(){
   _adminAIChat=[];
   adminAIRender();
+}
+
+/* ===== 后台AI绘图 ===== */
+function adminDoImgGen(){
+  var prompt=document.getElementById('adminImgPrompt');
+  var text=prompt.value.trim();
+  if(!text){alert('请输入图片描述');return}
+  var sizeEl=document.getElementById('adminImgSize');
+  var size=sizeEl?sizeEl.value:'1024x1024';
+  var parts=size.split('x');
+  var w=parseInt(parts[0]),h=parseInt(parts[1]);
+  var out=document.getElementById('adminImgResult');
+  out.innerHTML='<div style="text-align:center;padding:30px"><div class="ai-spinner" style="width:32px;height:32px;border-width:3px;margin:0 auto"></div><p style="margin-top:12px;color:var(--b);font-size:13px">AI正在生成图片，请稍候（约5-15秒）...</p></div>';
+  fetch(_ARK_BASE+'/images/generations',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+_ARK_KEY},
+    body:JSON.stringify({model:'doubao-seedream-5-0-260128',prompt:text,size:size,response_format:'url'})
+  }).then(function(r){
+    if(!r.ok)return r.json().then(function(e){throw new Error(e.error&&e.error.message?e.error.message:'HTTP '+r.status)});
+    return r.json();
+  }).then(function(data){
+    if(data.data&&data.data[0]&&data.data[0].url){
+      var url=data.data[0].url;
+      out.innerHTML='<div style="text-align:center"><img src="'+url+'" style="max-width:100%;border-radius:12px;box-shadow:var(--shadow);cursor:pointer" onclick="window.open(this.src)" onerror="this.parentElement.innerHTML=\'<p style=\'color:var(--err)\'>图片加载失败，可能已过期</p>\'" ><div style="margin-top:12px"><a href="'+url+'" target="_blank" download="lsjy_ai_img_'+Date.now()+'.png" style="padding:8px 20px;background:var(--p);color:#fff;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600">📥 下载图片</a></div></div>';
+    }else{
+      out.innerHTML='<p style="color:var(--err);text-align:center">生成失败：未返回图片</p>';
+    }
+  }).catch(function(e){
+    out.innerHTML='<div style="text-align:center;padding:20px;background:#fef2f2;border-radius:12px"><p style="color:#ef4444;font-weight:600">生成失败</p><p style="color:#6b7280;font-size:12px;margin-top:4px">'+(e.message||'未知错误')+'</p></div>';
+  });
+}
+
+/* ===== 后台AI视频生成 ===== */
+var _adminVidPolling=false;
+function adminDoVidGen(){
+  if(_adminVidPolling)return;
+  var prompt=document.getElementById('adminVidPrompt');
+  var text=prompt.value.trim();
+  if(!text){alert('请输入视频描述');return}
+  var duration=document.getElementById('adminVidDuration').value;
+  var ratio=document.getElementById('adminVidRatio').value;
+  var out=document.getElementById('adminVidResult');
+  var btn=document.getElementById('adminVidBtn');
+  btn.disabled=true;btn.textContent='生成中...';btn.style.opacity='.6';
+  out.innerHTML='<div style="text-align:center;padding:30px"><div class="ai-spinner" style="width:32px;height:32px;border-width:3px;margin:0 auto"></div><p style="margin-top:12px;color:var(--b);font-size:13px">正在提交视频生成任务...</p></div>';
+  fetch(_ARK_BASE+'/contents/generations/tasks',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+_ARK_KEY},
+    body:JSON.stringify({model:'doubao-seedance-2-0-260128',content:[{type:'text',text:text}],ratio:ratio,duration:parseInt(duration),watermark:false})
+  }).then(function(r){
+    if(!r.ok)return r.json().then(function(e){throw new Error(e.error&&e.error.message?e.error.message:'HTTP '+r.status)});
+    return r.json();
+  }).then(function(data){
+    if(!data.id)throw new Error('未返回任务ID');
+    var taskId=data.id;
+    out.innerHTML='<div style="text-align:center;padding:30px"><div class="ai-spinner" style="width:32px;height:32px;border-width:3px;margin:0 auto"></div><p style="margin-top:12px;color:var(--b);font-weight:600">视频生成中（约1-3分钟）</p><p style="font-size:12px;color:#aaa;margin-top:4px">任务ID: '+taskId.substring(0,16)+'...</p><div id="adminVidProgress" style="margin-top:12px;font-size:12px;color:var(--b)">正在轮询任务状态...</div></div>';
+    _adminVidPolling=true;
+    var attempts=0;
+    var pollTimer=setInterval(function(){
+      attempts++;
+      fetch(_ARK_BASE+'/contents/generations/tasks/'+taskId,{
+        headers:{'Authorization':'Bearer '+_ARK_KEY}
+      }).then(function(r){return r.json()}).then(function(result){
+        var prog=document.getElementById('adminVidProgress');
+        if(prog)prog.textContent='第'+attempts+'次查询 · 状态: '+(result.status||'unknown');
+        if(result.status==='succeeded'){
+          clearInterval(pollTimer);_adminVidPolling=false;
+          btn.disabled=false;btn.textContent='🚀 开始生成视频';btn.style.opacity='1';
+          var videoUrl=null;
+          if(result.content){
+            for(var i=0;i<result.content.length;i++){
+              if(result.content[i].type==='video'){videoUrl=result.content[i].video_url||result.content[i].url;break}
+            }
+          }
+          if(videoUrl){
+            out.innerHTML='<div style="text-align:center"><video controls autoplay loop style="width:100%;border-radius:12px;box-shadow:var(--shadow);max-height:400px;background:#000" src="'+videoUrl+'"></video><div style="margin-top:12px;display:flex;gap:8px;justify-content:center"><a href="'+videoUrl+'" download="lsjy_ai_video_'+Date.now()+'.mp4" target="_blank" style="padding:8px 20px;background:#7c3aed;color:#fff;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600">📥 下载视频</a><button onclick="adminDoVidGen()" style="padding:8px 20px;background:var(--bg);border:1.5px solid var(--bd);border-radius:8px;font-size:13px;cursor:pointer">🔄 重新生成</button></div></div>';
+          }else{
+            out.innerHTML='<p style="color:var(--err);text-align:center">视频生成完成但未返回视频地址</p>';
+          }
+        }else if(result.status==='failed'){
+          clearInterval(pollTimer);_adminVidPolling=false;
+          btn.disabled=false;btn.textContent='🚀 开始生成视频';btn.style.opacity='1';
+          out.innerHTML='<div style="text-align:center;padding:20px;background:#fef2f2;border-radius:12px"><p style="color:#ef4444;font-weight:600">视频生成失败</p><p style="color:#6b7280;font-size:12px;margin-top:4px">'+(result.error&&result.error.message||'请检查火山引擎控制台是否已开通Seedance模型')+'</p></div>';
+        }
+      }).catch(function(e){
+        if(attempts>30){
+          clearInterval(pollTimer);_adminVidPolling=false;
+          btn.disabled=false;btn.textContent='🚀 开始生成视频';btn.style.opacity='1';
+          var prog=document.getElementById('adminVidProgress');
+          if(prog)prog.textContent='查询异常: '+e.message;
+        }
+      });
+    },10000);
+  }).catch(function(e){
+    _adminVidPolling=false;
+    btn.disabled=false;btn.textContent='🚀 开始生成视频';btn.style.opacity='1';
+    out.innerHTML='<div style="text-align:center;padding:20px;background:#fef2f2;border-radius:12px"><p style="color:#ef4444;font-weight:600">提交失败</p><p style="color:#6b7280;font-size:12px;margin-top:4px">'+(e.message||'请检查火山引擎控制台是否已开通Seedance模型')+'</p></div>';
+  });
 }
 </script>
 
