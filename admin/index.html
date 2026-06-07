@@ -203,9 +203,33 @@ tr:hover td{background:var(--ps)}
 }
 .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:199}
 .sidebar-overlay.show{display:block}
+/* ===== 增强功能CSS（后台版）===== */
+#pageLoader{position:fixed;inset:0;background:#fff;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .5s}#pageLoader.hide{opacity:0;pointer-events:none}#pageLoader .loader-logo{font-size:28px;font-weight:900;color:var(--p);margin-bottom:16px}#pageLoader .loader-bar{width:200px;height:4px;background:#e5e7eb;border-radius:2px;overflow:hidden}#pageLoader .loader-bar-inner{height:100%;width:0;background:linear-gradient(90deg,var(--p),#f59e0b);border-radius:2px;animation:loaderFill 1.5s ease forwards}@keyframes loaderFill{to{width:100%}}#pageLoader .loader-text{margin-top:10px;font-size:13px;color:var(--b)}
+.hearts-bg{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}.heart-float{position:absolute;bottom:-60px;font-size:20px;animation:heartRise linear forwards;opacity:0}@keyframes heartRise{0%{opacity:0;transform:translateY(0) scale(.5) rotate(0deg)}10%{opacity:.7}90%{opacity:.5}100%{opacity:0;transform:translateY(-110vh) scale(1.2) rotate(25deg)}}
+.love-burst .heart-burst-item{position:fixed;pointer-events:none;z-index:99998;font-size:24px;animation:burstUp 2s ease-out forwards}@keyframes burstUp{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-300px) scale(.3)}}
+body.dark-mode{--bg:#0f0f1a!important;--card-bg:#1a1a2e!important;--n:#e0e0e0!important;--b:#9ca3af!important;--bd:#2d2d44!important;--p:#7c6cf6!important;--shadow:0 4px 20px rgba(0,0,0,.4)!important;--err:#ef4444!important}.dark-mode .sidebar{background:#0f0f1a!important;border-color:#2d2d44!important}.dark-mode .sidebar .sb-item:hover,.dark-mode .sidebar .sb-item.active{background:#1a1a2e!important}
+.theme-toggle-admin{position:fixed;bottom:20px;right:20px;z-index:10000;width:44px;height:44px;border-radius:50%;border:none;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,.15);transition:transform .2s;background:linear-gradient(135deg,#f3f4f6,#e5e7eb);color:#374151}.theme-toggle-admin:hover{transform:scale(1.1)}
+.visitor-bar-admin{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--b);padding:3px 10px;background:rgba(0,0,0,.04);border-radius:16px;margin-left:auto}.visitor-bar-admin .dot{width:5px;height:5px;border-radius:50%;background:#22c55e;animation:pulse 2s infinite}@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.love-module{background:var(--card-bg,var(--card-bg,#fff));border-radius:16px;padding:28px;box-shadow:var(--shadow);text-align:center}.love-module h3{font-size:20px;font-weight:900;margin-bottom:8px;color:var(--n)}.love-module p{color:var(--b);font-size:13px;margin-bottom:20px}.love-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}.love-btn{padding:12px 28px;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;transition:transform .2s}.love-btn:hover{transform:translateY(-2px)}.love-btn.decline{background:var(--bg);color:var(--n)}.love-btn.accept{background:linear-gradient(135deg,#ec4899,#f43f5e);color:#fff;box-shadow:0 4px 14px rgba(236,72,153,.3)}
+.love-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99998;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s}.love-modal-overlay.show{opacity:1;pointer-events:auto}.love-modal{background:var(--card-bg,#fff);border-radius:16px;padding:32px;max-width:400px;width:90%;text-align:center;transform:scale(.9);transition:transform .3s;color:var(--n)}.love-modal-overlay.show .love-modal{transform:scale(1)}.love-modal .modal-text{font-size:16px;line-height:1.8;margin-bottom:20px}
+.anni-section,.qrcode-section,.textbeautify-section,.page-assistant-section{background:var(--card-bg,#fff);border-radius:16px;padding:28px;box-shadow:var(--shadow)}.anni-section h3,.qrcode-section h3,.textbeautify-section h3,.page-assistant-section h3{font-size:18px;font-weight:900;margin-bottom:8px;color:var(--n)}.anni-section p,.qrcode-section p,.textbeautify-section p,.page-assistant-section p{color:var(--b);font-size:13px;margin-bottom:16px}
+.anni-input{padding:10px 14px;border:1.5px solid var(--bd);border-radius:10px;font-size:14px;outline:none;color:var(--n);background:var(--card-bg)}.anni-result{font-size:48px;font-weight:900;color:#ec4899;margin-top:16px}
+.enhance-grid-admin{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:20px;padding:20px}
+.beautify-area{width:100%;min-height:100px;padding:12px;border:1.5px solid var(--bd);border-radius:10px;font-size:13px;resize:vertical;outline:none;font-family:inherit;line-height:1.8;color:var(--n);background:var(--card-bg)}.beautify-output{background:var(--bg);border-radius:10px;padding:14px;white-space:pre-wrap;line-height:2;font-size:13px;min-height:40px;margin-top:10px;border:1px solid var(--bd);color:var(--n)}
+.pa-chat{height:250px;overflow-y:auto;padding:14px;background:var(--bg);border-radius:10px;margin-bottom:10px;font-size:13px;border:1px solid var(--bd)}.pa-msg{margin-bottom:10px;padding:8px 12px;border-radius:10px;max-width:85%}.pa-msg.user{background:var(--p);color:#fff;margin-left:auto;text-align:right}.pa-msg.bot{background:var(--card-bg);border:1px solid var(--bd);color:var(--n)}
 </style>
 </head>
 <body>
+
+<!-- 加载动画 -->
+<div id="pageLoader"><div class="loader-logo">罗圣纪元 · 后台</div><div class="loader-bar"><div class="loader-bar-inner"></div></div><div class="loader-text">正在加载管理后台...</div></div>
+
+<!-- 爱心飘动背景 -->
+<div class="hearts-bg" id="heartsBg"></div>
+
+<!-- 主题切换 -->
+<button class="theme-toggle-admin" id="themeToggleAdmin" onclick="toggleAdminTheme()" title="切换明暗主题">🌙</button>
+
 <div class="toast" id="toast"></div>
 
 <!-- ===== LOGIN ===== -->
@@ -252,6 +276,7 @@ tr:hover td{background:var(--ps)}
       <div class="sb-group">AI工具</div>
       <div class="sb-item" onclick="goPage('aihub',this)"><i class="fa-solid fa-wand-magic-sparkles"></i>AI创作中心</div>
 <div class="sb-item" onclick="goPage('luosheng_ai',this)"><i class="fa-solid fa-robot"></i>罗圣AI助手</div>
+<div class="sb-item" onclick="goPage('enhance_tools',this)"><i class="fa-solid fa-wand-magic-sparkles"></i>增强工具</div>
       <div class="sb-group">商业精英版</div>
       <div class="sb-item" onclick="goPage('elite',this)"><i class="fa-solid fa-building"></i>企业管理</div>
       <div class="sb-item" onclick="goPage('elite_tools',this)"><i class="fa-solid fa-toolbox"></i>企业工具管理</div>
@@ -270,6 +295,7 @@ tr:hover td{background:var(--ps)}
       <h3 id="pageTitle">数据看板</h3>
     </div>
     <div class="tb-right">
+      <div class="visitor-bar-admin" id="adminVisitorBar"><span class="dot"></span><span id="adminVisitorCount">访客: 0</span><span style="color:var(--bd)">|</span><span id="adminVisitTime">--</span></div>
       <div class="tb-user"><div class="tb-avatar" id="tbAvatar">A</div><span id="tbName">Admin</span></div>
       <button class="tb-btn" onclick="openEditAdmin()"><i class="fa-solid fa-key"></i> 修改密码</button>
       <button class="tb-btn danger" onclick="doLogout()"><i class="fa-solid fa-right-from-bracket"></i> 退出</button>
@@ -2204,5 +2230,44 @@ function adminDoVidGen(){
 })();
 </script>
 <script src="admin-v2.js"></script>
+
+<!-- ===== 后台增强功能模块 ===== -->
+<div id="adminLoveModal" class="love-modal-overlay"><div class="love-modal"><p class="modal-text" id="adminLoveModalText"></p><button onclick="closeAdminLoveModal()" style="padding:10px 28px;background:var(--p);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">我知道了</button></div></div>
+<script>
+/* ===== 加载动画 ===== */
+window.addEventListener('load',function(){setTimeout(function(){var ld=document.getElementById('pageLoader');if(ld)ld.classList.add('hide');setTimeout(function(){if(ld)ld.remove()},600)},1200)});
+/* ===== 爱心飘动 ===== */
+(function(){var bg=document.getElementById('heartsBg');if(!bg)return;var hearts=['❤️','💕','💖','💗','💓','🩷'];function spawnHeart(){var h=document.createElement('span');h.className='heart-float';h.textContent=hearts[Math.floor(Math.random()*hearts.length)];h.style.left=Math.random()*100+'%';h.style.fontSize=(14+Math.random()*16)+'px';h.style.animationDuration=(6+Math.random()*8)+'s';h.style.animationDelay=(Math.random()*4)+'s';bg.appendChild(h);h.addEventListener('animationend',function(){h.remove()})}setInterval(spawnHeart,1000);for(var i=0;i<4;i++)setTimeout(spawnHeart,i*400)})();
+/* ===== 主题切换 ===== */
+(function(){if(localStorage.getItem('admin_theme')==='dark'){document.body.classList.add('dark-mode');var tb=document.getElementById('themeToggleAdmin');if(tb){tb.textContent='☀️';tb.style.background='linear-gradient(135deg,#312e81,#4338ca)';tb.style.color='#fff'}}})();
+function toggleAdminTheme(){var body=document.body;var tb=document.getElementById('themeToggleAdmin');if(body.classList.contains('dark-mode')){body.classList.remove('dark-mode');localStorage.setItem('admin_theme','light');tb.textContent='🌙';tb.style.background='linear-gradient(135deg,#f3f4f6,#e5e7eb)';tb.style.color='#374151'}else{body.classList.add('dark-mode');localStorage.setItem('admin_theme','dark');tb.textContent='☀️';tb.style.background='linear-gradient(135deg,#312e81,#4338ca)';tb.style.color='#fff'}}
+/* ===== 访客统计 ===== */
+(function(){var c=parseInt(localStorage.getItem('admin_visitors')||'0')+1;localStorage.setItem('admin_visitors',c);var now=new Date();var ts=now.getFullYear()+'/'+String(now.getMonth()+1).padStart(2,'0')+'/'+String(now.getDate()).padStart(2,'0')+' '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');var vc=document.getElementById('adminVisitorCount');var vt=document.getElementById('adminVisitTime');if(vc)vc.textContent='访客: '+c;if(vt)vt.textContent=ts})();
+/* ===== 告白互动 ===== */
+var _aLoveIdx=0;var _aLoveTexts=['你再想想嘛，不要这么快拒绝我呀~','人家真的很珍惜这段感情的...','你忍心让我一个人吗？再给次机会吧~','好啦好啦，我错了还不行嘛！别生气了好不好~','世界上最远的距离不是天涯海角，而是你不在我身边...','我愿意为你改变，真的！再考虑一下？','哪怕全世界都反对，我也只想和你在一起~','你不在的日子，连空气都是灰色的...回来吧~'];
+function adminLoveDecline(){var modal=document.getElementById('adminLoveModal');var text=document.getElementById('adminLoveModalText');text.textContent=_aLoveTexts[_aLoveIdx%_aLoveTexts.length];_aLoveIdx++;modal.classList.add('show')}
+function closeAdminLoveModal(){document.getElementById('adminLoveModal').classList.remove('show')}
+function adminLoveAccept(){var modal=document.getElementById('adminLoveModal');var text=document.getElementById('adminLoveModalText');text.innerHTML='<div style="font-size:40px;margin-bottom:12px">🎉💕</div><div style="font-size:20px;font-weight:900;color:#ec4899;margin-bottom:8px">太好了！和好吧！</div><div style="color:var(--b)">愿你们的每一天都充满甜蜜与幸福~</div>';modal.classList.add('show');adminBurstHearts()}
+function adminBurstHearts(){var emojis=['❤️','💕','💖','💗','💓','🩷'];for(var i=0;i<20;i++){(function(idx){setTimeout(function(){var h=document.createElement('span');h.className='heart-burst-item';h.textContent=emojis[idx%emojis.length];h.style.left=(20+Math.random()*60)+'vw';h.style.bottom='30vh';h.style.animationDuration=(1.5+Math.random()*1.5)+'s';document.body.appendChild(h);h.addEventListener('animationend',function(){h.remove()})},idx*100)})(i)}}
+/* ===== 纪念日 ===== */
+function adminCalcAnni(){var d=document.getElementById('adminAnniDate');var out=document.getElementById('adminAnniResult');if(!d||!d.value){alert('请选择日期');return}var start=new Date(d.value);var now=new Date();var diff=Math.floor((now-start)/(1000*60*60*24));if(diff<0)diff=0;out.innerHTML='<span style="font-size:48px;font-weight:900;color:#ec4899">'+diff+'</span><br><small style="color:var(--b)">天的美好时光</small>'}
+/* ===== 二维码 ===== */
+var _adminQRLoaded=false;function adminGenQR(){var text=document.getElementById('adminQrInput');var out=document.getElementById('adminQrResult');if(!text||!text.value.trim()){alert('请输入内容');return}if(!_adminQRLoaded){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js';s.onload=function(){_adminQRLoaded=true;adminDoGenQR()};document.head.appendChild(s)}else{adminDoGenQR()}}
+function adminDoGenQR(){var text=document.getElementById('adminQrInput').value.trim();var out=document.getElementById('adminQrResult');out.innerHTML='';new QRCode(out,{text:text,width:200,height:200,colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H})}
+/* ===== 文案美化 ===== */
+function adminBeautifyText(){var ta=document.getElementById('adminBeautifyInput');var out=document.getElementById('adminBeautifyOutput');if(!ta||!ta.value.trim()){alert('请输入文案');return}var raw=ta.value.trim();var final=raw.replace(/([。！？；])/g,'$1\n').replace(/(\n{3,})/g,'\n\n').trim();final=final.replace(/^(?!✨)/gm,'✨ ');final=final.replace(/([！?])\s*/g,'$1\n');out.textContent=final;out.style.display='block'}
+/* ===== 网页智能操控 ===== */
+var _adminPaHist=[];function adminPaSend(){var input=document.getElementById('adminPaInput');var text=input.value.trim();if(!text)return;_adminPaHist.push({role:'user',text:text});input.value='';adminPaRender();adminPaExec(text)}
+function adminPaRender(){var chat=document.getElementById('adminPaChat');if(!chat)return;var html='';for(var i=0;i<_adminPaHist.length;i++){var m=_adminPaHist[i];html+='<div class="pa-msg '+(m.role==='user'?'user':'bot')+'">'+m.text+'</div>'}chat.innerHTML=html;chat.scrollTop=chat.scrollHeight}
+function adminPaExec(cmd){var resp='';cmd=cmd.toLowerCase();if(cmd.includes('罗圣ai')||cmd.includes('助手')){resp='已为您打开罗圣AI助手！';goPage('luosheng_ai',document.querySelector('[onclick*=luosheng_ai]'))}else if(cmd.includes('创作')||cmd.includes('ai工具')){resp='已为您打开AI创作中心！';goPage('aihub',document.querySelector('[onclick*=aihub]'))}else if(cmd.includes('看板')||cmd.includes('概览')){resp='已为您打开数据看板！';goPage('dashboard',document.querySelector('[onclick*=dashboard]'))}else if(cmd.includes('暗')||cmd.includes('黑')||cmd.includes('模式')){resp='已为您切换主题！';toggleAdminTheme()}else{resp='试试说：\n• "打开罗圣AI"\n• "打开AI创作中心"\n• "查看数据看板"\n• "切换暗黑模式"'}
+_adminPaHist.push({role:'bot',text:resp});adminPaRender()}
+/* ===== 添加增强功能页面到后台 ===== */
+_pageTitles['enhance_tools']='增强工具';
+_pageRenders['enhance_tools']=function(){
+  var mc=document.getElementById('mainContent');
+  mc.innerHTML='<div style="height:calc(100vh - var(--topbar));overflow-y:auto;padding:24px"><h2 style="font-size:22px;font-weight:900;color:var(--n);margin-bottom:16px">🛠️ 增强工具中心</h2><p style="font-size:13px;color:var(--b);margin-bottom:20px">后台专用 · 免费无限使用</p><div class="enhance-grid-admin"><div class="love-module"><h3>💕 告白互动</h3><p>点击按钮，看看会发生什么~</p><div class="love-btns"><button class="love-btn decline" onclick="adminLoveDecline()">暂时不想</button><button class="love-btn accept" onclick="adminLoveAccept()">我愿意和好</button></div></div><div class="anni-section"><h3>📅 纪念日计算</h3><p>选择日期，一键计算相处天数</p><input type="date" class="anni-input" id="adminAnniDate"><button onclick="adminCalcAnni()" style="margin:12px 0;padding:10px 24px;background:linear-gradient(135deg,#ec4899,#f43f5e);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">计算相处天数</button><div id="adminAnniResult"></div></div><div class="qrcode-section"><h3>📱 二维码生成</h3><p>输入文字或网址，一键生成二维码</p><input type="text" id="adminQrInput" placeholder="输入文字或网址..." style="width:100%;padding:10px 14px;border:1.5px solid var(--bd);border-radius:10px;font-size:13px;outline:none;margin:8px 0;background:var(--card-bg);color:var(--n)"><button onclick="adminGenQR()" style="padding:10px 24px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">立即生成</button><div id="adminQrResult" style="margin-top:12px"></div></div><div class="textbeautify-section"><h3>✍️ 文案美化</h3><p>粘贴文案，一键排版美化</p><textarea class="beautify-area" id="adminBeautifyInput" placeholder="在这里粘贴或输入你的文案..."></textarea><button onclick="adminBeautifyText()" style="margin-top:10px;padding:10px 24px;background:linear-gradient(135deg,#059669,#10b981);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">开始美化</button><div class="beautify-output" id="adminBeautifyOutput" style="display:none"></div></div><div class="page-assistant-section"><h3>🤖 网页智能操控</h3><p>文字指挥助手操作后台页面</p><div class="pa-chat" id="adminPaChat"><div class="pa-msg bot">你好！我是后台页面助手。试试说：\n• "打开罗圣AI"\n• "打开AI创作中心"\n• "查看数据看板"\n• "切换暗黑模式"</div></div><div style="display:flex;gap:8px"><input id="adminPaInput" style="flex:1;padding:10px 14px;border:1.5px solid var(--bd);border-radius:10px;font-size:13px;outline:none;background:var(--card-bg);color:var(--n)" placeholder="输入指令..." onkeydown="if(event.key===\'Enter\')adminPaSend()"><button onclick="adminPaSend()" style="padding:10px 16px;background:var(--p);color:#fff;border:none;border-radius:10px;font-size:13px;cursor:pointer">发送</button></div></div></div></div>';
+};
+</script>
+
 </body>
 </html>
