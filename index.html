@@ -964,6 +964,39 @@ to{opacity:1;transform:translateY(0) scale(1)}}
 .tools-grid .tool-card::after{content:'\2764';position:absolute;top:10px;right:10px;font-size:14px;color:transparent;cursor:pointer;transition:all .2s}
 .tools-grid .tool-card:hover::after{color:rgba(0,245,255,.3)}
 .tools-grid .tool-card.favorited::after{color:#f43f5e}
+
+/* === 表单验证提示 === */
+.fi.error{border-color:var(--err)!important;box-shadow:0 0 0 3px rgba(244,63,94,.12)!important}
+.fi.success{border-color:var(--ok)!important;box-shadow:0 0 0 3px rgba(16,185,129,.12)!important}
+.form-hint{font-size:11px;color:var(--nd);margin-top:4px;display:none}
+.form-hint.error{color:var(--err)!important;display:block}
+.form-hint.success{color:var(--ok)!important;display:block}
+
+/* === 工具详情页 === */
+.tool-detail-overlay{display:none;position:fixed;inset:0;background:rgba(10,14,23,.8);z-index:2500;backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:24px}
+.tool-detail-overlay.show{display:flex}
+.tool-detail-panel{background:rgba(15,22,35,.98);border:1px solid rgba(0,245,255,.15);border-radius:20px;width:100%;max-width:600px;max-height:80vh;overflow-y:auto;animation:slideUp .3s ease}
+.tool-detail-header{padding:24px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:16px;position:sticky;top:0;background:rgba(15,22,35,.98);z-index:1;border-radius:20px 20px 0 0}
+.tool-detail-header .td-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;background:rgba(0,245,255,.08);border:1px solid rgba(0,245,255,.15)}
+.tool-detail-header h3{font-size:20px;font-weight:700;color:#e2e8f0}
+.tool-detail-header p{font-size:12px;color:#64748b;margin-top:2px}
+.tool-detail-close{position:absolute;top:16px;right:16px;width:40px;height:40px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;color:#94a3b8;transition:all .2s}
+.tool-detail-close:hover{background:rgba(244,63,94,.15);border-color:rgba(244,63,94,.3);color:#f43f5e}
+.tool-detail-body{padding:24px}
+.tool-detail-desc{font-size:14px;color:#94a3b8;line-height:1.8;margin-bottom:20px}
+.tool-detail-features{list-style:none;padding:0}
+.tool-detail-features li{padding:10px 0;font-size:13px;color:#e2e8f0;display:flex;align-items:flex-start;gap:8px;border-bottom:1px solid rgba(255,255,255,.04)}
+.tool-detail-features li:last-child{border:none}
+.tool-detail-features li::before{content:'\25b8';color:#00f5ff;font-weight:700;font-size:12px;flex-shrink:0;margin-top:2px}
+.tool-detail-actions{padding:16px 24px 24px;display:flex;gap:12px}
+
+/* === 下拉刷新 === */
+.pull-refresh-indicator{position:fixed;top:-50px;left:50%;transform:translateX(-50%);width:40px;height:40px;border-radius:50%;border:2px solid rgba(0,245,255,.2);border-top-color:#00f5ff;z-index:9999}
+
+/* === 数据统计 === */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+@media(max-width:768px){.stats-grid{grid-template-columns:repeat(2,1fr)!important}}
+
 </style>
 <style <style id="v52-color-fix">
 /* V5.2 赛博朋克配色强制覆盖 */
