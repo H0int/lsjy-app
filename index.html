@@ -443,10 +443,10 @@ textarea.fi{resize:vertical;min-height:120px}
 
 /* ===== 增强功能CSS ===== */
 #pageLoader{position:fixed;inset:0;background:#fff;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .5s}#pageLoader.hide{opacity:0;pointer-events:none}#pageLoader .loader-logo{font-size:28px;font-weight:900;color:#533afd;margin-bottom:16px}#pageLoader .loader-bar{width:200px;height:4px;background:#e5e7eb;border-radius:2px;overflow:hidden}#pageLoader .loader-bar-inner{height:100%;width:0;background:linear-gradient(90deg,#533afd,#f59e0b);border-radius:2px;animation:loaderFill 1.5s ease forwards}@keyframes loaderFill{to{width:100%}}#pageLoader .loader-text{margin-top:10px;font-size:13px;color:#6b7280}
-.hearts-bg{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}.heart-float{position:absolute;bottom:-60px;font-size:20px;animation:heartRise linear forwards;opacity:0}@keyframes heartRise{0%{opacity:0;transform:translateY(0) scale(.5) rotate(0deg)}10%{opacity:.7}90%{opacity:.5}100%{opacity:0;transform:translateY(-110vh) scale(1.2) rotate(25deg)}}
-.love-burst .heart-burst-item{position:fixed;pointer-events:none;z-index:99998;font-size:24px;animation:burstUp 2s ease-out forwards}@keyframes burstUp{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-300px) scale(.3)}}
-.dark-mode,body.dark-mode{--bg:#0f0f1a!important;--card-bg:#1a1a2e!important;--text:#e0e0e0!important;--text2:#9ca3af!important;--bd:#2d2d44!important;--p:#7c6cf6!important;--shadow:0 4px 20px rgba(0,0,0,.4)!important}.dark-mode .nav{background:rgba(15,15,26,.85)!important}.dark-mode .ls-agent{background:#1a1a2e!important;border-color:#2d2d44!important}.dark-mode .ls-msg-ai .ls-msg-bubble{background:#1a1a2e!important;border-color:#2d2d44!important;color:#e0e0e0!important}.dark-mode .ls-agent-modelbar button{background:#1a1a2e!important;color:#e0e0e0!important;border-color:#2d2d44!important}.dark-mode .ls-agent-input-wrap input{background:#1a1a2e!important;color:#e0e0e0!important;border-color:#2d2d44!important}.dark-mode .ls-agent-foot{color:#9ca3af!important}
-.theme-toggle{position:fixed;bottom:20px;left:20px;z-index:10000;width:44px;height:44px;border-radius:50%;border:none;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,.15);transition:transform .2s}.theme-toggle:hover{transform:scale(1.1)}
+
+
+
+
 .visitor-bar{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text2,#6b7280);padding:4px 12px;background:rgba(0,0,0,.04);border-radius:20px}.visitor-bar .dot{width:6px;height:6px;border-radius:50%;background:#22c55e;animation:pulse 2s infinite}@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 .voice-btn{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;border:1.5px solid var(--bd,#e5e7eb);background:#fff;cursor:pointer;font-size:14px;color:var(--text,#374151);transition:all .2s}.voice-btn.recording{background:#ef4444;color:#fff;border-color:#ef4444;animation:recPulse 1s infinite}@keyframes recPulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.4)}50%{box-shadow:0 0 0 8px rgba(239,68,68,0)}}
 .ai-chat-voice{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;border:1.5px solid var(--bd,#e5e7eb);background:#fff;cursor:pointer;font-size:14px;color:var(--text,#374151);transition:all .2s;flex-shrink:0}.ai-chat-voice.recording{background:#ef4444;color:#fff;border-color:#ef4444;animation:recPulse 1s infinite}
@@ -1283,10 +1283,8 @@ renderEmployeeAcct();
 <div id="pageLoader"><div class="loader-logo">罗圣纪元</div><div class="loader-bar"><div class="loader-bar-inner"></div></div><div class="loader-text">正在加载资源...</div></div>
 
 <!-- ===== 爱心飘动背景 ===== -->
-<div class="hearts-bg" id="heartsBg"></div>
 
 <!-- ===== 主题切换按钮 ===== -->
-<button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" style="background:linear-gradient(135deg,#f3f4f6,#e5e7eb);color:#374151" title="切换明暗主题">🌙</button>
 
 <!-- ===== NAVIGATION ===== -->
 <nav class="nav glass" id="nav">
@@ -6684,12 +6682,7 @@ async function lsSendMessage(){
 
 <script>
 /* ===== 页面加载动画 ===== */
-window.addEventListener('load',function(){setTimeout(function(){var ld=document.getElementById('pageLoader');if(ld)ld.classList.add('hide');setTimeout(function(){if(ld)ld.remove()},600)},1500)});
-/* ===== 爱心飘动背景 ===== */
-(function(){var bg=document.getElementById('heartsBg');if(!bg)return;var hearts=['❤️','💕','💖','💗','💓','🩷'];function spawnHeart(){var h=document.createElement('span');h.className='heart-float';h.textContent=hearts[Math.floor(Math.random()*hearts.length)];h.style.left=Math.random()*100+'%';h.style.fontSize=(14+Math.random()*16)+'px';h.style.animationDuration=(6+Math.random()*8)+'s';h.style.animationDelay=(Math.random()*4)+'s';bg.appendChild(h);h.addEventListener('animationend',function(){h.remove()})}setInterval(spawnHeart,800);for(var i=0;i<5;i++)setTimeout(spawnHeart,i*300)})();
-/* ===== 明暗主题切换 ===== */
-(function(){if(localStorage.getItem('lsjy3_theme')==='dark'){document.body.classList.add('dark-mode');var tb=document.getElementById('themeToggle');if(tb){tb.textContent='☀️';tb.style.background='linear-gradient(135deg,#312e81,#4338ca)';tb.style.color='#fff'}}})();
-function toggleTheme(){var body=document.body;var tb=document.getElementById('themeToggle');if(body.classList.contains('dark-mode')){body.classList.remove('dark-mode');localStorage.setItem('lsjy3_theme','light');tb.textContent='🌙';tb.style.background='linear-gradient(135deg,#f3f4f6,#e5e7eb)';tb.style.color='#374151'}else{body.classList.add('dark-mode');localStorage.setItem('lsjy3_theme','dark');tb.textContent='☀️';tb.style.background='linear-gradient(135deg,#312e81,#4338ca)';tb.style.color='#fff'}}
+function hideLoader(){var ld=document.getElementById('pageLoader');if(ld){ld.classList.add('hide');setTimeout(function(){if(ld)ld.remove()},600)}}window.addEventListener('load',function(){setTimeout(hideLoader,800)});document.addEventListener('DOMContentLoaded',function(){setTimeout(hideLoader,3000)});
 /* ===== 访客统计 ===== */
 (function(){var c=parseInt(localStorage.getItem('lsjy3_visitors')||'0')+1;localStorage.setItem('lsjy3_visitors',c);var now=new Date();var ts=now.getFullYear()+'/'+(now.getMonth()+1).toString().padStart(2,'0')+'/'+now.getDate().toString().padStart(2,'0')+' '+now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');var vc=document.getElementById('visitorCount');var vt=document.getElementById('visitTime');if(vc)vc.textContent='访客: '+c;if(vt)vt.textContent='访问时间: '+ts})();
 
