@@ -994,8 +994,25 @@ to{opacity:1;transform:translateY(0) scale(1)}}
 .pull-refresh-indicator{position:fixed;top:-50px;left:50%;transform:translateX(-50%);width:40px;height:40px;border-radius:50%;border:2px solid rgba(0,245,255,.2);border-top-color:#00f5ff;z-index:9999}
 
 /* === 数据统计 === */
-.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
-@media(max-width:768px){.stats-grid{grid-template-columns:repeat(2,1fr)!important}}
+
+/* === 卡片内容垂直居中 === */
+.stat-card,.dash-card,.hero-card-item,.pricing-card,.mod-card,.tool-card{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center
+}
+.stat-card .stat-icon,.stat-card .stat-info{align-items:center}
+.hero-card-grid{align-items:center;justify-items:center}
+
+/* === 统一按钮效果 === */
+.btn,.btn-p,.btn-o,.nav-cta,.pg-btn,.glass-btn,.social-btn,.cta-section button,.tool-detail-actions button{
+  border-radius:8px!important;
+  transition:all .2s ease!important;
+}
+.btn:hover,.btn-p:hover,.btn-o:hover,.nav-cta:hover,.pg-btn:hover,.glass-btn:hover,.social-btn:hover{
+  transform:translateY(-2px)!important;
+}
+.btn:active,.btn-p:active,.btn-o:active,.nav-cta:active,.pg-btn:active,.glass-btn:active{
+  transform:translateY(0)!important;
+}
 
 </style>
 <style <style id="v52-color-fix">
@@ -1897,7 +1914,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 <li><a href="#tools">工具箱</a></li>
 <li><a href="#pricing">服务定价</a></li>
 <li><a href="#about">关于我们</a></li>
-<li><a href="#contact">联系方式</a></li>
+<li><a href="#contact">联系我们</a></li>
 </ul><div style="display:inline-flex;align-items:center;gap:8px"><a href="javascript:void(0)" style="display:inline-flex;align-items:center;gap:4px;padding:8px 16px;border-radius:10px;background:linear-gradient(135deg,#1e1b4b,#4338ca);color:#e2e8f0;font-size:13px;font-weight:700;cursor:pointer;transition:all .25s;border:none;text-decoration:none;box-shadow:0 2px 10px rgba(30,27,75,.3)" onclick="openLuoshengAgent()" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 4px 14px rgba(30,27,75,.4)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 10px rgba(30,27,75,.3)'">🤖 罗圣AI</a><a href="javascript:void(0)" style="display:inline-flex;align-items:center;gap:4px;padding:8px 16px;border-radius:10px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#e2e8f0;font-size:13px;font-weight:700;cursor:pointer;transition:all .25s;border:none;text-decoration:none;box-shadow:0 2px 10px rgba(217,119,6,.3)" onclick="openEnterprise()" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 4px 14px rgba(217,119,6,.4)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 10px rgba(217,119,6,.3)'">🏢 企业版</a></div><div id="navRight" style="display:inline-flex;align-items:center;gap:8px"><a href="javascript:void(0)" class="nav-cta" onclick="openAuth('login')" id="navLoginBtn">登录 / 注册</a></div>
 <button class="mobile-toggle" onclick="toggleMobileMenu()"><span></span><span></span><span></span></button>
 </div>
@@ -2078,12 +2095,9 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 <div class="btn" style="background:#0a0e17;color:var(--n);border-radius:12px;cursor:default">📧 contact@lsjy.com</div>
 <button class="btn" style="background:var(--p);color:#e2e8f0;border-radius:12px" onclick="openAuth('login')">立即注册</button>
 </div>
-<div class="contact-info">
-<div class="contact-item"><span class="ci">📍</span><span class="cv">湖南省永州市祁阳市</span></div>
-<div class="contact-item"><span class="ci">🏢</span><span class="cv">祁阳市罗圣纪元互联网科技有限责任公司</span></div>
-<div class="contact-item"><span class="ci">👤</span><span class="cv">创始人：罗凯中</span></div>
-
-
+<div class="contact-info" style="max-width:400px;margin:24px auto 0">
+<div class="contact-item"><span class="ci">📧</span><span class="cv">contact@lsjy.com</span></div>
+<div class="contact-item"><span class="ci">📍</span><span class="cv">湖南省永州市祁阳市长虹街道盘龙西路329号7楼</span></div>
 </div>
 </section>
 
@@ -3442,6 +3456,36 @@ function toggleMobileMenu(){document.getElementById('mobileMenu').classList.togg
 function closeMobileMenu(){document.getElementById('mobileMenu').classList.remove('show')}
 
 // ===== DETAIL MODAL =====
+function openServiceDetail(modId){
+  // 跳转到定价section并高亮对应模块
+  var pricingSection=document.getElementById('pricing');
+  if(pricingSection){
+    pricingSection.scrollIntoView({behavior:'smooth'});
+    // 高亮对应定价卡片
+    setTimeout(function(){
+      var cards=pricingSection.querySelectorAll('.pricing-card,[style*="border-radius:16px"]');
+      cards.forEach(function(c){
+        c.style.borderColor='rgba(0,245,255,.12)';
+        c.style.boxShadow='';
+      });
+      // 找到匹配的卡片
+      var target=null;
+      cards.forEach(function(c){
+        if(c.textContent&&c.textContent.includes(modId==='ai'?'AI':modId==='media'?'自媒体':modId==='ecom'?'电商':modId==='pet'?'宠物':modId==='edu'?'教育':'伯雅')){
+          target=c;
+        }
+      });
+      if(target){
+        target.style.borderColor='rgba(0,245,255,.4)';
+        target.style.boxShadow='0 0 20px rgba(0,245,255,.2)';
+        setTimeout(function(){target.style.borderColor='rgba(0,245,255,.12)';target.style.boxShadow=''},3000);
+      }
+    },600);
+  }else{
+    // 如果定价section不存在，用openMod打开
+    if(typeof openMod==='function')openMod(modId);
+  }
+}
 function openMod(modId){
 const m=MODULES.find(x=>x.id===modId);if(!m)return;
 document.getElementById('detailIcon').textContent=m.icon;
@@ -6020,9 +6064,9 @@ setTimeout(function(){
     _M.forEach(function(m){
       mhtml+='<div class="mod-card" onclick="openServiceDetail(m.id)" style="background:rgba(255,255,255,.85);border:1px solid rgba(0,0,0,.06);border-radius:16px;padding:32px 24px;transition:all .3s;cursor:pointer;overflow:hidden;backdrop-filter:blur(10px)" onmouseover="this.style.transform=\'translateY(-4px)\';this.style.boxShadow=\'0 12px 30px rgba(0,0,0,.08)\'" onmouseout="this.style.transform=\'\';this.style.boxShadow=\'\'">';
       mhtml+='<div style="width:48px;height:48px;border-radius:12px;background:'+m.gradient+';display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:16px">'+m.icon+'</div>';
-      mhtml+='<h3 style="margin:0 0 8px;font-size:18px;color:#1a1a1a">'+m.name+'</h3>';
-      mhtml+='<p style="margin:0;font-size:13px;color:#888;line-height:1.6">'+m.summary+'</p>';
-      mhtml+='<div style="margin-top:16px;font-size:12px;color:'+m.color+';font-weight:600">'+m.svc+' \u9879\u670d\u52a1 \u2192 \u67e5\u770b\u5957\u9910</div>';
+      mhtml+='<h3 style="margin:0 0 8px;font-size:18px;color:#e2e8f0">'+m.name+'</h3>';
+      mhtml+='<p style="margin:0;font-size:13px;color:#94a3b8;line-height:1.6">'+m.summary+'</p>';
+      mhtml+='<div style="margin-top:16px;display:flex;align-items:center;gap:8px;font-size:12px"><span style="color:'+m.color+';font-weight:600">'+m.svc+' 项服务</span><span style="margin-left:auto;color:var(--p);font-weight:600">查看套餐 →</span></div>';
       mhtml+='</div>';
     });
     mg.innerHTML=mhtml;
