@@ -21,16 +21,16 @@
 :root{
   --p:#00f0ff;--ph:#00c8d9;--pl:#80f8ff;--ps:rgba(0,240,255,.08);
   --p2:#8b5cf6;--p2h:#7c3aed;--p2l:#c4b5fd;--p2s:rgba(139,92,246,.08);
-  --n:#0a0e17;--b:#94a3b8;--l:#cbd5e1;--bd:rgba(255,255,255,.1);
+  --n:#0a0e17;--b:#cbd5e1;--l:#cbd5e1;--bd:rgba(255,255,255,.18);
   --bg:#0a0e17;--bg2:#111827;--bg3:#1e293b;
   --w:#f8fafc;--w2:#e2e8f0;
   --err:#ef4444;--ok:#10b981;--warn:#f59e0b;--info:#3b82f6;
   --sidebar:240px;--topbar:56px;
-  --f:'Noto Sans SC',-apple-system,sans-serif;
+  --f:'Inter',system-ui,-apple-system,'PingFang SC',sans-serif;
   --shadow:0 1px 3px rgba(0,0,0,.3),0 1px 2px rgba(0,0,0,.2);
   --shadow-lg:0 10px 25px rgba(0,0,0,.4);
   --radius:12px;
-  --glass:rgba(255,255,255,.05);--glass-b:rgba(255,255,255,.1);
+  --glass:rgba(10,14,23,0.85);--glass-b:rgba(255,255,255,.18);
   --glow:0 0 20px rgba(0,240,255,.15),0 0 60px rgba(139,92,246,.1);
 }
 html{font-size:14px}
@@ -80,7 +80,7 @@ input,select,textarea,button{font-family:var(--f)}
 .app.active{display:grid;grid-template-columns:var(--sidebar) 1fr;grid-template-rows:var(--topbar) 1fr}
 
 .sidebar{grid-row:1/-1;background:var(--n);color:var(--w);overflow-y:auto;display:flex;flex-direction:column;transition:transform .3s;z-index:200}
-.sb-header{padding:20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sb-header{padding:20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.14)}
 .sb-header img{width:40px;height:40px;border-radius:50%;border:2px solid rgba(255,255,255,.2)}
 .sb-header h2{font-size:15px;font-weight:700}
 .sb-header span{font-size:11px;opacity:.6;display:block;margin-top:2px}
@@ -90,7 +90,7 @@ input,select,textarea,button{font-family:var(--f)}
 .sb-item:hover{background:rgba(255,255,255,.06);color:var(--w)}
 .sb-item.active{background:rgba(83,58,253,.3);color:var(--w);border-left-color:var(--pl)}
 .sb-item i{font-size:16px;width:20px;text-align:center}
-.sb-footer{padding:16px 20px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;opacity:.4;text-align:center}
+.sb-footer{padding:16px 20px;border-top:1px solid rgba(255,255,255,.14);font-size:11px;opacity:.4;text-align:center}
 
 .topbar{background:var(--w);border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;padding:0 24px;grid-column:2}
 .tb-left{display:flex;align-items:center;gap:16px}
@@ -200,30 +200,30 @@ tr:hover td{background:var(--ps)}
 
 
 /* ===== 后端科技感样式 ===== */
-html{scrollbar-color:rgba(255,255,255,.1) rgba(255,255,255,.02)}
+html{scrollbar-color:rgba(255,255,255,.18) rgba(255,255,255,.02)}
 ::-webkit-scrollbar{width:6px}
 ::-webkit-scrollbar-track{background:rgba(255,255,255,.02)}
-::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:3px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border-radius:3px}
 ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.2)}
 
 .sidebar .sb-item:hover{background:rgba(0,240,255,.1)!important;color:#00f0ff!important}
 .sidebar .sb-item.active{background:rgba(0,240,255,.12)!important;color:#00f0ff!important;border-left:3px solid #00f0ff!important}
 
-.card{backdrop-filter:blur(8px)!important;background:rgba(255,255,255,.04)!important;border:1px solid rgba(255,255,255,.08)!important;border-radius:12px!important;transition:all .3s ease!important}
+.card{backdrop-filter:blur(8px)!important;background:rgba(255,255,255,.04)!important;border:1px solid rgba(255,255,255,.14)!important;border-radius:12px!important;transition:all .3s ease!important}
 .card:hover{border-color:rgba(0,240,255,.15)!important;box-shadow:0 0 20px rgba(0,240,255,.08)!important}
 
-.stat-card{backdrop-filter:blur(8px);background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;transition:all .3s ease}
+.stat-card{backdrop-filter:blur(8px);background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.14);border-radius:12px;transition:all .3s ease}
 .stat-card:hover{transform:translateY(-2px);box-shadow:0 0 20px rgba(0,240,255,.1)}
 
-.btn,.btn-primary{background:linear-gradient(135deg,rgba(0,240,255,.2),rgba(139,92,246,.2))!important;border:1px solid rgba(0,240,255,.2)!important;color:#00f0ff!important;transition:all .3s ease!important;cursor:pointer}
+.btn,.btn-primary{background:linear-gradient(135deg,rgba(0,240,255,.2),rgba(139,92,246,.2))!important;border:1px solid rgba(0,240,255,.2)!important;color:#fff!important;font-weight:600;transition:all .3s ease!important;cursor:pointer}
 .btn:hover,.btn-primary:hover{background:linear-gradient(135deg,rgba(0,240,255,.3),rgba(139,92,246,.3))!important;box-shadow:0 0 20px rgba(0,240,255,.15)!important;transform:translateY(-1px)}
 .btn:active{transform:scale(.98)!important}
 
 .btn-danger{background:rgba(239,68,68,.15)!important;border-color:rgba(239,68,68,.3)!important;color:#ef4444!important}
 .btn-danger:hover{background:rgba(239,68,68,.25)!important;box-shadow:0 0 15px rgba(239,68,68,.15)!important}
 
-.login-box{backdrop-filter:blur(16px)!important;background:rgba(255,255,255,.04)!important;border:1px solid rgba(255,255,255,.08)!important;border-radius:16px!important;box-shadow:0 25px 50px rgba(0,0,0,.5)!important}
-.login-box input{background:rgba(255,255,255,.05)!important;border:1px solid rgba(255,255,255,.1)!important;color:#f8fafc!important;border-radius:10px!important}
+.login-box{backdrop-filter:blur(16px)!important;background:rgba(255,255,255,.04)!important;border:1px solid rgba(255,255,255,.14)!important;border-radius:16px!important;box-shadow:0 25px 50px rgba(0,0,0,.5)!important}
+.login-box input{background:rgba(255,255,255,.05)!important;border:1px solid rgba(255,255,255,.18)!important;color:#f8fafc!important;border-radius:10px!important}
 .login-box input:focus{border-color:rgba(0,240,255,.3)!important;box-shadow:0 0 15px rgba(0,240,255,.1)!important;outline:none!important}
 
 .topbar{border-bottom:1px solid rgba(255,255,255,.06)!important}
@@ -234,13 +234,13 @@ th{background:rgba(255,255,255,.05)!important;color:#f8fafc!important;border-col
 td{color:#cbd5e1!important;border-color:rgba(255,255,255,.04)!important}
 
 .modal-overlay{background:rgba(0,0,0,.6)!important;backdrop-filter:blur(4px)}
-.modal-box{backdrop-filter:blur(16px)!important;background:rgba(15,20,30,.95)!important;border:1px solid rgba(255,255,255,.1)!important;border-radius:16px!important;box-shadow:0 25px 50px rgba(0,0,0,.5)!important}
+.modal-box{backdrop-filter:blur(16px)!important;background:rgba(15,20,30,.95)!important;border:1px solid rgba(255,255,255,.18)!important;border-radius:16px!important;box-shadow:0 25px 50px rgba(0,0,0,.5)!important}
 
-.ai-card{backdrop-filter:blur(8px);background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px}
+.ai-card{backdrop-filter:blur(8px);background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.14);border-radius:12px}
 .ai-card:hover{border-color:rgba(0,240,255,.2);box-shadow:0 0 20px rgba(0,240,255,.1);transform:translateY(-2px)}
 .ai-card.active{border-color:#00f0ff;background:rgba(0,240,255,.1)}
 
-.filter-bar input,.filter-bar select{background:rgba(255,255,255,.05)!important;border:1px solid rgba(255,255,255,.1)!important;color:#f8fafc!important;border-radius:10px!important}
+.filter-bar input,.filter-bar select{background:rgba(255,255,255,.05)!important;border:1px solid rgba(255,255,255,.18)!important;color:#f8fafc!important;border-radius:10px!important}
 .filter-bar input:focus,.filter-bar select:focus{border-color:rgba(0,240,255,.3)!important;outline:none!important}
 
 /* 后端页面标题渐变 */
@@ -344,7 +344,7 @@ body.admin-light .modal-box{background:rgba(255,255,255,.95);border-color:rgba(0
 <!-- ===== LOGIN ===== -->
 <div id="loginPage" class="login-wrap">
   <div class="login-box">
-    <div class="login-logo">
+    <div class="login-logo"><span style="font-size:11px;color:rgba(0,240,255,.6);display:block;margin-bottom:4px">V5.2</span>
       <img src="logo.png" alt="Logo">
       <h1>罗圣纪元</h1>
       <p>后台管理系统</p>
@@ -554,8 +554,8 @@ function doLogin(e){
   const ADMIN_ROLES=['admin','super_admin','supreme_admin','boss'];if(!ADMIN_ROLES.includes(found.role)){toast('非管理员账号，无法进入后台','error');return}
   // Login log
   const log=getLoginLog();log.push({username:u,time:new Date().toISOString(),ip:'-',device:navigator.userAgent.substring(0,80)});if(log.length>200)log.splice(0,log.length-200);saveLoginLog(log);
-  setCur(found);toast('登录成功','success');enterApp();
-  (async function(){try{const r=await fetch(BACKEND_URL+'/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});const d=await r.json();if(d.success&&d.token){localStorage.setItem('lsjy_backend_token',d.token);console.log('[Auth] Backend token acquired')}}catch(e){console.log('[Auth] Backend login skipped:',e.message)}})();
+  setCur(found);hideLoader();toast('登录成功','success');enterApp();
+  try{const r=await new Promise((resolve,reject)=>{var xhr=new XMLHttpRequest();xhr.open('POST',BACKEND_URL+'/api/auth/login',true);xhr.setRequestHeader('Content-Type','application/json');xhr.onload=function(){try{resolve(JSON.parse(xhr.responseText))}catch(e){reject(e)}};xhr.onerror=function(){reject(new Error('Network error'))};xhr.send(JSON.stringify({username:u,password:p}))});if(r.success&&r.token){localStorage.setItem('lsjy_backend_token',r.token)}}catch(e){}
   
 }
 function updateLockoutUI(){
@@ -592,6 +592,7 @@ function goPage(page,el){
   if(window.innerWidth<769)toggleSidebar();
 }
 function enterApp(){
+  hideLoader();
   document.getElementById('loginPage').style.display='none';document.getElementById('app').classList.add('active');
   const u=getCur();document.getElementById('tbAvatar').textContent=(u.nickname||u.username)[0].toUpperCase();document.getElementById('tbName').textContent=u.nickname||u.username;
   goPage('dashboard');
@@ -694,7 +695,7 @@ function renderDashboard(){
     }
     var maxV=Math.max.apply(null,msgData.concat(userData))*1.2||10;
     // 坐标轴
-    ctx.strokeStyle='rgba(255,255,255,0.1)';ctx.lineWidth=1;
+    ctx.strokeStyle='rgba(255,255,255,0.18)';ctx.lineWidth=1;
     ctx.fillStyle='rgba(255,255,255,0.4)';ctx.font='11px sans-serif';
     for(var i=0;i<=4;i++){
       var y=pad.top+ch-(ch/4)*i;
