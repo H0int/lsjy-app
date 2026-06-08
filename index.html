@@ -146,7 +146,7 @@ textarea.fi{resize:vertical;min-height:120px}
 /* === MODULES === */
 .modules{background:var(--bg)}
 .mod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px}
-.mod-card{background:rgba(255,255,255,0.15);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(26,29,55,.08);border-radius:var(--radius-lg);padding:32px 24px;transition:all .3s;cursor:pointer;position:relative;overflow:hidden}
+.mod-card{background:rgba(15,22,35,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(0,245,255,.12);border-radius:var(--radius-lg);padding:32px 24px;transition:all .3s;cursor:pointer;position:relative;overflow:hidden}
 .mod-card:hover{transform:translateY(-4px);box-shadow:var(--glow);border-color:rgba(0,245,255,0.4)}
 .mod-card::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;opacity:0;transition:opacity .3s}
 .mod-card:hover::after{opacity:1}
@@ -366,6 +366,8 @@ textarea.fi{resize:vertical;min-height:120px}
 @media(max-width:768px){
   /* 导航汉堡菜单 */
   .nav-links{display:none!important}
+  /* 移动端隐藏导航栏右侧按钮，避免与品牌名重叠 */
+  .nav-inner>div:nth-child(3),.nav-inner>div:nth-child(4){display:none!important}
   .mobile-toggle{display:flex!important;width:40px;height:40px;align-items:center;justify-content:center;cursor:pointer;border-radius:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1)}
   .mobile-toggle span{display:block;width:18px;height:2px;background:#e2e8f0;border-radius:2px;position:relative;transition:all .3s}
   .mobile-toggle span::before,.mobile-toggle span::after{content:'';position:absolute;width:18px;height:2px;background:#e2e8f0;border-radius:2px;left:0;transition:all .3s}
@@ -615,7 +617,7 @@ textarea.fi{resize:vertical;min-height:120px}
 .hero{background:radial-gradient(ellipse at 20% 50%,rgba(0,245,255,.08) 0%,transparent 50%),radial-gradient(ellipse at 80% 20%,rgba(139,92,246,.15) 0%,transparent 50%),#0a0e17!important;position:relative!important}
 
 /* 模块卡片玻璃态 */
-.mod-card{backdrop-filter:blur(16px) saturate(150%)!important;background:rgba(0,245,255,0.1)!important;border:1px solid rgba(0,245,255,0.15)!important;box-shadow:0 8px 32px rgba(0,0,0,0.2)!important;transition:all .3s ease!important}
+.mod-card{backdrop-filter:blur(16px) saturate(150%)!important;background:rgba(15,22,35,.92)!important;border:1px solid rgba(0,245,255,0.15)!important;box-shadow:0 8px 32px rgba(0,0,0,0.2)!important;transition:all .3s ease!important}
 .mod-card:hover{border-color:rgba(0,245,255,.2)!important;box-shadow:0 0 30px rgba(0,245,255,.2)!important;transform:translateY(-4px)!important}
 
 /* Footer暗色 */
@@ -1925,8 +1927,10 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 <a href="#tools" onclick="closeMobileMenu()">工具箱</a>
 <a href="#pricing" onclick="closeMobileMenu()">服务定价</a>
 <a href="#about" onclick="closeMobileMenu()">关于我们</a>
-<a href="#contact" onclick="closeMobileMenu()">联系方式</a>
+<a href="#contact" onclick="closeMobileMenu()">联系我们</a>
 <a href="javascript:void(0)" onclick="closeMobileMenu();openAuth('login')">登录 / 注册</a>
+<a href="javascript:void(0)" onclick="closeMobileMenu();openLuoshengAgent()" style="display:flex;align-items:center;gap:6px;padding:12px 0;color:#94a3b8;text-decoration:none;border-bottom:1px solid rgba(26,29,55,.06)">🤖 罗圣AI</a>
+<a href="javascript:void(0)" onclick="closeMobileMenu();openEnterprise()" style="display:flex;align-items:center;gap:6px;padding:12px 0;color:#94a3b8;text-decoration:none">🏢 企业版</a>
 </div>
 
 <!-- ===== HERO ===== -->
@@ -2091,14 +2095,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 <section class="cta-section" id="contact">
 <h2>开启您的数字化转型之旅</h2>
 <p>无论您是实体商家、创业者还是内容创作者，罗圣纪元都能为您提供量身定制的解决方案</p>
-<div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
-<div class="btn" style="background:#0a0e17;color:var(--n);border-radius:12px;cursor:default">📧 contact@lsjy.com</div>
-<button class="btn" style="background:var(--p);color:#e2e8f0;border-radius:12px" onclick="openAuth('login')">立即注册</button>
-</div>
-<div class="contact-info" style="max-width:400px;margin:24px auto 0">
-<div class="contact-item"><span class="ci">📧</span><span class="cv">contact@lsjy.com</span></div>
-<div class="contact-item"><span class="ci">📍</span><span class="cv">湖南省永州市祁阳市长虹街道盘龙西路329号7楼</span></div>
-</div>
+<button class="btn btn-p" onclick="openAuth('login')">立即注册</button>
 </section>
 
 
