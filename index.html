@@ -1647,7 +1647,7 @@ function getPlatformKey(pid){var k=localStorage.getItem('ai_platform_key_'+pid)|
 function setPlatformKey(pid,key){localStorage.setItem('ai_platform_key_'+pid,key);if(PLATFORMS[pid])PLATFORMS[pid].defaultKey=key;}
 const DOUBAO_CONFIG={
   ENABLED:true,
-  ARK_API_KEY:'ark-21eb820a-93fc-4379-bbc4-217498f7753b-a6876',
+  ARK_API_KEY:'',
   ARK_BASE_URL:'https://ark.cn-beijing.volces.com/api/v3',
   MODEL_TEXT:'doubao-seed-2-0-pro-260215',
   MODEL_IMAGE:'doubao-seedream-5-0-260128',
@@ -1721,7 +1721,7 @@ async function doubaoChat(prompt, systemPrompt, model, retries) {
       const tid = setTimeout(() => controller.abort(), 30000);
       const r = await fetch(DOUBAO_CONFIG.ARK_BASE_URL + '/chat/completions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + DOUBAO_CONFIG.ARK_API_KEY },
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getDoubaoApiKey() },
         body: JSON.stringify({ model: model || DOUBAO_CONFIG.MODEL_TEXT, messages: [
           { role: 'system', content: systemPrompt || '你是一个专业的AI助手，请根据用户要求生成高质量内容。回复只包含生成的内容，不要包含任何解释或说明。' },
           { role: 'user', content: prompt }
@@ -1809,6 +1809,7 @@ function openApiKeyManager() {
     h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="font-size:18px">' + pl.icon + '</span><strong style="font-size:14px;color:#1e1b4b">' + pl.name + '</strong>';
     h += '<span style="margin-left:auto;font-size:11px;padding:3px 8px;border-radius:99px;background:' + (hasKey ? '#dcfce7;color:#166534' : '#fef2f2;color:#991b1b') + '">' + (hasKey ? '\u2713 \u5DF2\u914D\u7F6E' : '\u672A\u914D\u7F6E') + '</span></div>';
     h += '<input type="password" id="keyInput_' + pid + '" value="' + savedKey.replace(/"/g, '&quot;') + '" placeholder="\u8BF7\u8F93\u5165API Key..." style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box;font-family:monospace">';
+    if(pid==='tencent'){var savedSk=localStorage.getItem('ai_platform_secret_tencent')||'';h+='<input type="password" id="keyInput_tencent_sk" value="'+savedSk.replace(/"/g,'&quot;')+'" placeholder="\u8BF7\u8F93\u5165SecretKey..." style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box;font-family:monospace;margin-top:8px">';}
     h += '<div style="font-size:11px;color:#9ca3af;margin-top:4px">API Base: ' + pl.base + '</div></div>';
   }
   h += '<button style="width:100%;padding:12px;background:linear-gradient(135deg,#4338ca,#7c3aed);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;margin-top:4px" onclick="saveApiKeys()">\u{1F514} \u4FDD\u5B58\u914D\u7F6E</button>';
@@ -1824,6 +1825,11 @@ function saveApiKeys() {
     var inp = document.getElementById('keyInput_' + pids[i]);
     if (inp) setPlatformKey(pids[i], inp.value.trim());
   }
+  var tsk = document.getElementById('keyInput_tencent_sk');
+  if(tsk) localStorage.setItem('ai_platform_secret_tencent', tsk.value.trim());
+  // 同步更新DOUBAO_CONFIG的ARK_API_KEY（火山引擎）
+  var vk = getPlatformKey('volcengine');
+  if(vk) getDoubaoApiKey() = vk;
   toast('API Key\u914D\u7F6E\u5DF2\u4FDD\u5B58', 'success');
   document.getElementById('apiKeyOverlay').remove();
 }
@@ -1843,7 +1849,7 @@ async function doubaoImage(prompt, w, h, model) {
     const useModel = model || DOUBAO_CONFIG.MODEL_IMAGE;
     const r = await fetch(DOUBAO_CONFIG.ARK_BASE_URL + '/images/generations', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + DOUBAO_CONFIG.ARK_API_KEY },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getDoubaoApiKey() },
       body: JSON.stringify({ model: useModel, prompt: prompt, size: sz, response_format: 'url' })
     });
     clearTimeout(tid);
@@ -1866,7 +1872,7 @@ async function seedanceCreateTask(content, options) {
   try {
     const r = await fetch(DOUBAO_CONFIG.ARK_BASE_URL + '/contents/generations/tasks', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + DOUBAO_CONFIG.ARK_API_KEY },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getDoubaoApiKey() },
       body: JSON.stringify(body)
     });
     if (!r.ok) { const err = await r.json().catch(() => ({})); throw new Error(err.error?.message || 'HTTP ' + r.status); }
@@ -1880,7 +1886,7 @@ async function seedanceQueryTask(taskId) {
   try {
     const r = await fetch(DOUBAO_CONFIG.ARK_BASE_URL + '/contents/generations/tasks/' + taskId, {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + DOUBAO_CONFIG.ARK_API_KEY }
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getDoubaoApiKey() }
     });
     if (!r.ok) throw new Error('HTTP ' + r.status);
     return await r.json();
@@ -4828,7 +4834,7 @@ if(typeof openAuth!=='function'||typeof doLogin!=='function'||typeof openTool!==
         const tid=setTimeout(()=>ctrl.abort(),5000);
         const r=await fetch(DOUBAO_CONFIG.ARK_BASE_URL+'/chat/completions',{
           method:'POST',
-          headers:{'Content-Type':'application/json','Authorization':'Bearer '+DOUBAO_CONFIG.ARK_API_KEY},
+          headers:{'Content-Type':'application/json','Authorization':'Bearer '+getDoubaoApiKey()},
           body:JSON.stringify({model:DOUBAO_CONFIG.MODEL_TEXT,messages:[
             {role:'user',content:'hi'}
           ],max_tokens:5})
@@ -4846,6 +4852,9 @@ if(typeof openAuth!=='function'||typeof doLogin!=='function'||typeof openTool!==
 </script>
 
 <script>
+
+// ===== API KEY INIT (从localStorage恢复DOUBAO_CONFIG) =====
+(function(){var vk=localStorage.getItem('ai_platform_key_volcengine')||'';if(vk)getDoubaoApiKey()=vk;})();
 // ===== CREDITS INITIALIZATION =====
 (function(){
     // Fix corrupted credits data
@@ -5093,7 +5102,7 @@ var btn=document.getElementById('aiGenBtn');btn.disabled=true;btn.textContent='\
 
 fetch('https://ark.cn-beijing.volces.com/api/v3/chat/completions',{
 method:'POST',
-headers:{'Content-Type':'application/json','Authorization':'Bearer ark-21eb820a-93fc-4379-bbc4-217498f7753b-a6876'},
+headers:{'Content-Type':'application/json','Authorization':'Bearer '+getDoubaoApiKey()},
 body:JSON.stringify({
 model:'doubao-seed-2-0-pro-260215',
 messages:[
@@ -5403,7 +5412,7 @@ cr[cur.username]=(cr[cur.username]||0)+cost;localStorage.setItem('lsjy3_credits'
 if(isImg){
 var model='doubao-seedream-5-0-260128';
 var body={model:model,prompt:input,size:'2048x2048',n:1};
-fetch('https://ark.cn-beijing.volces.com/api/v3/images/generations',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer ark-21eb820a-93fc-4379-bbc4-217498f7753b-a6876'},body:JSON.stringify(body)})
+fetch('https://ark.cn-beijing.volces.com/api/v3/images/generations',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+getDoubaoApiKey()},body:JSON.stringify(body)})
 .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json()})
 .then(function(data){
 btn.disabled=false;btn.textContent='\ud83d\ude80 \u63d0\u4ea4\u751f\u6210';btn.style.opacity='1';
@@ -5420,7 +5429,7 @@ return;
 }
 var model='doubao-seed-2-0-pro-260215';
 var body={model:model,messages:[{role:'system',content:'\u4f60\u662f\u4e13\u4e1a\u7684\u300c'+toolName+'\u300d\u52a9\u624b\u3002\u76f4\u63a5\u8f93\u51fa\u7ed3\u679c\u3002'},{role:'user',content:input}],max_tokens:2000,temperature:0.7};
-fetch('https://ark.cn-beijing.volces.com/api/v3/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer ark-21eb820a-93fc-4379-bbc4-217498f7753b-a6876'},body:JSON.stringify(body)})
+fetch('https://ark.cn-beijing.volces.com/api/v3/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+getDoubaoApiKey()},body:JSON.stringify(body)})
 .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json()})
 .then(function(data){
 btn.disabled=false;btn.textContent='\ud83d\ude80 AI \u751f\u6210';btn.style.opacity='1';
@@ -5779,7 +5788,7 @@ if(typeof _updateCreditsUI==='function')_updateCreditsUI();return;
 }
 
 if(isImg){
-fetch('https://ark.cn-beijing.volces.com/api/v3/images/generations',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer ark-21eb820a-93fc-4379-bbc4-217498f7753b-a6876'},body:JSON.stringify({model:'doubao-seedream-5-0-260128',prompt:input,size:'2048x2048',n:1})})
+fetch('https://ark.cn-beijing.volces.com/api/v3/images/generations',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+getDoubaoApiKey()},body:JSON.stringify({model:'doubao-seedream-5-0-260128',prompt:input,size:'2048x2048',n:1})})
 .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json()})
 .then(function(data){
 if(btn){btn.disabled=false;btn.textContent='\ud83d\ude80 \u63d0\u4ea4\u751f\u6210';btn.style.opacity='1';}
@@ -5803,7 +5812,7 @@ if(typeof _updateCreditsUI==='function')_updateCreditsUI();
 return;
 }
 
-fetch('https://ark.cn-beijing.volces.com/api/v3/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer ark-21eb820a-93fc-4379-bbc4-217498f7753b-a6876'},body:JSON.stringify({model:'doubao-seed-2-0-pro-260215',messages:[{role:'system',content:'\u4f60\u662f\u4e13\u4e1a\u7684\u300c'+toolName+'\u300d\u52a9\u624b\u3002\u76f4\u63a5\u8f93\u51fa\u7ed3\u679c\u3002'},{role:'user',content:input}],max_tokens:2000,temperature:0.7})})
+fetch('https://ark.cn-beijing.volces.com/api/v3/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+getDoubaoApiKey()},body:JSON.stringify({model:'doubao-seed-2-0-pro-260215',messages:[{role:'system',content:'\u4f60\u662f\u4e13\u4e1a\u7684\u300c'+toolName+'\u300d\u52a9\u624b\u3002\u76f4\u63a5\u8f93\u51fa\u7ed3\u679c\u3002'},{role:'user',content:input}],max_tokens:2000,temperature:0.7})})
 .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json()})
 .then(function(data){
 if(btn){btn.disabled=false;btn.textContent='\ud83d\ude80 AI \u751f\u6210';btn.style.opacity='1';}
