@@ -447,8 +447,19 @@ setInterval(updateLockoutUI,5000);updateLockoutUI();
 function doLogout(){localStorage.removeItem('lsjy3_cur');document.getElementById('loginPage').style.display='';document.getElementById('app').classList.remove('active');toast('已退出登录')}
 
 // ===== Navigation =====
-const _pageTitles={dashboard:'数据看板',modules:'业务模块',services:'服务管理',users:'用户管理',messages:'留言管理',leads:'线索管理',orders:'订单管理',customers:'顾客管理',redeemCodes:'卡密管理',content:'内容管理',aihub:'AI创作中心',luosheng_ai:'罗圣AI助手',recycle:'回收站',logs:'操作日志',settings:'系统设置',elite:'企业管理',elite_tools:'企业工具管理',elite_billing:'企业计费'};
-const _pageRenders={dashboard:renderDashboard,modules:renderModules,services:renderServices,users:renderUsers,messages:renderMessages,leads:renderLeads,orders:renderOrders,customers:renderCustomers,redeemCodes:renderRedeemCodes,content:renderContent,aihub:renderAIHub,luosheng_ai:renderLuoshengAI,recycle:renderRecycle,logs:renderLogs,settings:renderSettings,elite:renderElitePage,elite_tools:renderEliteToolsPage,elite_billing:renderEliteBillingPage};
+const _pageTitles={dashboard:'数据看板',modules:'业务模块',services:'服务管理',users:'用户管理',messages:'留言管理',leads:'线索管理',orders:'订单管理',customers:'顾客管理',redeemCodes:'卡密管理',content:'内容管理',aihub:'AI创作中心',luosheng_ai:'罗圣AI助手',recycle:'回收站',logs:'操作日志',settings:'系统设置',elite:'企业管理',elite_tools:'企业工具管理',elite_billing:'企业计费',enhance_tools:'增强工具'};
+
+function renderEnhanceTools(){
+  var ct=document.getElementById('content');
+  ct.innerHTML='<div style="padding:32px;max-width:900px;margin:0 auto"><h2 style="font-size:20px;font-weight:700;margin-bottom:20px;color:var(--t)">增强工具</h2>'+
+  '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px">'+
+  '<div class="ai-card" style="padding:20px;border-radius:12px;border:1px solid var(--bd);cursor:pointer" onclick="toast(\'JSON格式化工具开发中\',\'info\')"><div style="font-size:24px;margin-bottom:8px">\u{1F4C4}</div><div style="font-weight:600;color:var(--t)">JSON格式化</div><div style="font-size:12px;color:var(--m);margin-top:4px">在线JSON解析与格式化</div></div>'+
+  '<div class="ai-card" style="padding:20px;border-radius:12px;border:1px solid var(--bd);cursor:pointer" onclick="toast(\'Base64编解码开发中\',\'info\')"><div style="font-size:24px;margin-bottom:8px">\u{1F510}</div><div style="font-weight:600;color:var(--t)">Base64编解码</div><div style="font-size:12px;color:var(--m);margin-top:4px">文本与Base64互转</div></div>'+
+  '<div class="ai-card" style="padding:20px;border-radius:12px;border:1px solid var(--bd);cursor:pointer" onclick="toast(\'二维码生成开发中\',\'info\')"><div style="font-size:24px;margin-bottom:8px">\u{1F4F1}</div><div style="font-weight:600;color:var(--t)">二维码生成</div><div style="font-size:12px;color:var(--m);margin-top:4px">输入文字生成二维码</div></div>'+
+  '<div class="ai-card" style="padding:20px;border-radius:12px;border:1px solid var(--bd);cursor:pointer" onclick="toast(\'颜色提取器开发中\',\'info\')"><div style="font-size:24px;margin-bottom:8px">\u{1F308}</div><div style="font-weight:600;color:var(--t)">颜色提取器</div><div style="font-size:12px;color:var(--m);margin-top:4px">图片颜色值提取</div></div>'+
+  '</div></div>';
+}
+const _pageRenders={dashboard:renderDashboard,modules:renderModules,services:renderServices,users:renderUsers,messages:renderMessages,leads:renderLeads,orders:renderOrders,customers:renderCustomers,redeemCodes:renderRedeemCodes,content:renderContent,aihub:renderAIHub,luosheng_ai:renderLuoshengAI,enhance_tools:renderEnhanceTools,recycle:renderRecycle,logs:renderLogs,settings:renderSettings,elite:renderElitePage,elite_tools:renderEliteToolsPage,elite_billing:renderEliteBillingPage};
 function goPage(page,el){
   document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
   if(el)el.classList.add('active');
