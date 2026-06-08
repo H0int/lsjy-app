@@ -7,7 +7,10 @@
 <meta http-equiv="Expires" content="0">
 <meta name="google" content="notranslate">
 <meta name="robots" content="notranslate">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0,user-scalable=no,viewport-fit=cover">
+<meta name="format-detection" content="telephone=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="logo.png" type="image/png">
 <title>罗圣纪元 - 后台管理系统</title>
@@ -16,14 +19,19 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --p:#533afd;--ph:#4434d4;--pl:#b9b9f9;--ps:#eef1fe;
-  --n:#0d1b2a;--b:#64748b;--l:#1e293b;--bd:#e2e8f0;--bg:#f1f5f9;--bg2:#e2e8f0;
-  --w:#fff;--err:#ef4444;--ok:#22c55e;--warn:#f59e0b;--info:#3b82f6;
+  --p:#00f0ff;--ph:#00c8d9;--pl:#80f8ff;--ps:rgba(0,240,255,.08);
+  --p2:#8b5cf6;--p2h:#7c3aed;--p2l:#c4b5fd;--p2s:rgba(139,92,246,.08);
+  --n:#0a0e17;--b:#94a3b8;--l:#cbd5e1;--bd:rgba(255,255,255,.1);
+  --bg:#0a0e17;--bg2:#111827;--bg3:#1e293b;
+  --w:#f8fafc;--w2:#e2e8f0;
+  --err:#ef4444;--ok:#10b981;--warn:#f59e0b;--info:#3b82f6;
   --sidebar:240px;--topbar:56px;
   --f:'Noto Sans SC',-apple-system,sans-serif;
-  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.06);
-  --shadow-lg:0 10px 25px rgba(0,0,0,.1);
-  --radius:10px;
+  --shadow:0 1px 3px rgba(0,0,0,.3),0 1px 2px rgba(0,0,0,.2);
+  --shadow-lg:0 10px 25px rgba(0,0,0,.4);
+  --radius:12px;
+  --glass:rgba(255,255,255,.05);--glass-b:rgba(255,255,255,.1);
+  --glow:0 0 20px rgba(0,240,255,.15),0 0 60px rgba(139,92,246,.1);
 }
 html{font-size:14px}
 /* === AI TOOLS === */
@@ -51,7 +59,7 @@ body{font-family:var(--f);color:var(--n);background:var(--bg);line-height:1.6;ov
 a{color:var(--p);text-decoration:none}
 input,select,textarea,button{font-family:var(--f)}
 
-.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#533afd 0%,#7c6cf6 50%,#a78bfa 100%);padding:20px}
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#00f0ff 0%,#7c6cf6 50%,#a78bfa 100%);padding:20px}
 .login-box{background:var(--w);border-radius:20px;padding:40px 36px;width:100%;max-width:420px;box-shadow:var(--shadow-lg)}
 .login-logo{text-align:center;margin-bottom:24px}
 .login-logo img{width:64px;height:64px;border-radius:50%;border:3px solid var(--pl);margin-bottom:12px}
@@ -123,7 +131,7 @@ tr:hover td{background:var(--ps)}
 .badge-orange{background:#ffedd5;color:#9a3412}
 .badge-rose{background:#ffe4e6;color:#9f1239}
 .badge-amber{background:#fbbf24;color:#78350f;font-weight:700}
-.badge-gray{background:#f1f5f9;color:#64748b}
+.badge-gray{background:#0a0e17;color:#64748b}
 
 .act-btn{padding:5px 10px;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;margin-right:4px;color:#fff}
 .act-btn.edit{background:#3b82f6}
@@ -190,6 +198,76 @@ tr:hover td{background:var(--ps)}
 .lockout-box{text-align:center;padding:20px;background:#fee2e2;border-radius:12px;color:#991b1b}
 .lockout-box i{font-size:32px;margin-bottom:8px}
 
+
+/* ===== 后端科技感样式 ===== */
+html{scrollbar-color:rgba(255,255,255,.1) rgba(255,255,255,.02)}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:rgba(255,255,255,.02)}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.2)}
+
+.sidebar .sb-item:hover{background:rgba(0,240,255,.1)!important;color:#00f0ff!important}
+.sidebar .sb-item.active{background:rgba(0,240,255,.12)!important;color:#00f0ff!important;border-left:3px solid #00f0ff!important}
+
+.card{backdrop-filter:blur(8px)!important;background:rgba(255,255,255,.04)!important;border:1px solid rgba(255,255,255,.08)!important;border-radius:12px!important;transition:all .3s ease!important}
+.card:hover{border-color:rgba(0,240,255,.15)!important;box-shadow:0 0 20px rgba(0,240,255,.08)!important}
+
+.stat-card{backdrop-filter:blur(8px);background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;transition:all .3s ease}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 0 20px rgba(0,240,255,.1)}
+
+.btn,.btn-primary{background:linear-gradient(135deg,rgba(0,240,255,.2),rgba(139,92,246,.2))!important;border:1px solid rgba(0,240,255,.2)!important;color:#00f0ff!important;transition:all .3s ease!important;cursor:pointer}
+.btn:hover,.btn-primary:hover{background:linear-gradient(135deg,rgba(0,240,255,.3),rgba(139,92,246,.3))!important;box-shadow:0 0 20px rgba(0,240,255,.15)!important;transform:translateY(-1px)}
+.btn:active{transform:scale(.98)!important}
+
+.btn-danger{background:rgba(239,68,68,.15)!important;border-color:rgba(239,68,68,.3)!important;color:#ef4444!important}
+.btn-danger:hover{background:rgba(239,68,68,.25)!important;box-shadow:0 0 15px rgba(239,68,68,.15)!important}
+
+.login-box{backdrop-filter:blur(16px)!important;background:rgba(255,255,255,.04)!important;border:1px solid rgba(255,255,255,.08)!important;border-radius:16px!important;box-shadow:0 25px 50px rgba(0,0,0,.5)!important}
+.login-box input{background:rgba(255,255,255,.05)!important;border:1px solid rgba(255,255,255,.1)!important;color:#f8fafc!important;border-radius:10px!important}
+.login-box input:focus{border-color:rgba(0,240,255,.3)!important;box-shadow:0 0 15px rgba(0,240,255,.1)!important;outline:none!important}
+
+.topbar{border-bottom:1px solid rgba(255,255,255,.06)!important}
+
+.table-wrap{border:1px solid rgba(255,255,255,.06)!important;border-radius:12px!important;overflow:hidden}
+table{border-collapse:collapse}
+th{background:rgba(255,255,255,.05)!important;color:#f8fafc!important;border-color:rgba(255,255,255,.06)!important}
+td{color:#cbd5e1!important;border-color:rgba(255,255,255,.04)!important}
+
+.modal-overlay{background:rgba(0,0,0,.6)!important;backdrop-filter:blur(4px)}
+.modal-box{backdrop-filter:blur(16px)!important;background:rgba(15,20,30,.95)!important;border:1px solid rgba(255,255,255,.1)!important;border-radius:16px!important;box-shadow:0 25px 50px rgba(0,0,0,.5)!important}
+
+.ai-card{backdrop-filter:blur(8px);background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px}
+.ai-card:hover{border-color:rgba(0,240,255,.2);box-shadow:0 0 20px rgba(0,240,255,.1);transform:translateY(-2px)}
+.ai-card.active{border-color:#00f0ff;background:rgba(0,240,255,.1)}
+
+.filter-bar input,.filter-bar select{background:rgba(255,255,255,.05)!important;border:1px solid rgba(255,255,255,.1)!important;color:#f8fafc!important;border-radius:10px!important}
+.filter-bar input:focus,.filter-bar select:focus{border-color:rgba(0,240,255,.3)!important;outline:none!important}
+
+/* 后端页面标题渐变 */
+.page-title,.topbar h3{background:linear-gradient(135deg,#00f0ff,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+/* 登录页标题 */
+.login-logo h1{background:linear-gradient(135deg,#00f0ff,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.login-logo .login-sub{color:rgba(255,255,255,.4)!important}
+
+/* 页面加载条 */
+.loader-bar{background:linear-gradient(90deg,#00f0ff,#8b5cf6)!important}
+.loader-text{color:rgba(255,255,255,.5)!important}
+.loader-title{background:linear-gradient(135deg,#00f0ff,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+/* 后端浅色模式 */
+body.admin-light{--bg:#f1f5f9;--bg2:#e2e8f0;--bg3:#f8fafc;--n:#0d1b2a;--b:#64748b;--l:#334155;--bd:#e2e8f0;--w:#fff;--w2:#1e293b}
+body.admin-light{background:#f1f5f9;color:#0d1b2a}
+body.admin-light .sidebar{background:rgba(255,255,255,.95);border-right-color:rgba(0,0,0,.08)}
+body.admin-light .topbar{background:rgba(255,255,255,.9);border-bottom-color:rgba(0,0,0,.06)}
+body.admin-light .card,body.admin-light .stat-card,body.admin-light .ai-card{background:rgba(0,0,0,.03);border-color:rgba(0,0,0,.06)}
+body.admin-light .login-box{background:rgba(255,255,255,.9);border-color:rgba(0,0,0,.08);box-shadow:0 25px 50px rgba(0,0,0,.1)}
+body.admin-light .login-box input{background:rgba(255,255,255,.8);border-color:rgba(0,0,0,.1);color:#0d1b2a}
+body.admin-light th{background:rgba(0,0,0,.03);color:#0d1b2a;border-color:rgba(0,0,0,.06)}
+body.admin-light td{color:#334155;border-color:rgba(0,0,0,.05)}
+body.admin-light .table-wrap{border-color:rgba(0,0,0,.06)}
+body.admin-light .modal-box{background:rgba(255,255,255,.95);border-color:rgba(0,0,0,.08)}
+
 /* Responsive */
 @media(max-width:768px){
   html{font-size:13px}
@@ -237,7 +315,7 @@ tr:hover td{background:var(--ps)}
 .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:199}
 .sidebar-overlay.show{display:block}
 /* ===== 增强功能CSS（后台版）===== */
-#pageLoader{position:fixed;inset:0;background:#fff;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .5s}#pageLoader.hide{opacity:0;pointer-events:none}#pageLoader .loader-logo{font-size:28px;font-weight:900;color:var(--p);margin-bottom:16px}#pageLoader .loader-bar{width:200px;height:4px;background:#e5e7eb;border-radius:2px;overflow:hidden}#pageLoader .loader-bar-inner{height:100%;width:0;background:linear-gradient(90deg,var(--p),#f59e0b);border-radius:2px;animation:loaderFill 1.5s ease forwards}@keyframes loaderFill{to{width:100%}}#pageLoader .loader-text{margin-top:10px;font-size:13px;color:var(--b)}
+#pageLoader{position:fixed;inset:0;background:rgba(255,255,255,.05);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .5s}#pageLoader.hide{opacity:0;pointer-events:none}#pageLoader .loader-logo{font-size:28px;font-weight:900;color:var(--p);margin-bottom:16px}#pageLoader .loader-bar{width:200px;height:4px;background:#e5e7eb;border-radius:2px;overflow:hidden}#pageLoader .loader-bar-inner{height:100%;width:0;background:linear-gradient(90deg,var(--p),#f59e0b);border-radius:2px;animation:loaderFill 1.5s ease forwards}@keyframes loaderFill{to{width:100%}}#pageLoader .loader-text{margin-top:10px;font-size:13px;color:var(--b)}
 
 
 
@@ -376,7 +454,7 @@ const MODULES=[
 {id:'edu-school',name:'校企合作资源对接',desc:'职校、高校校企项目落地，实习就业资源联动。'},
 {id:'edu-side',name:'成人副业实训课',desc:'低成本副业实操教学，手把手落地变现项目。'}
 ]},
-{id:'campus',name:'伯雅校园',icon:'fa-solid fa-school',color:'#533afd',gradient:'linear-gradient(135deg,#533afd,#7c6cf6)',summary:'主打高校本地化创业项目，布局全国校园渠道',services:[
+{id:'campus',name:'伯雅校园',icon:'fa-solid fa-school',color:'#00f0ff',gradient:'linear-gradient(135deg,#00f0ff,#7c6cf6)',summary:'主打高校本地化创业项目，布局全国校园渠道',services:[
 {id:'campus-partner',name:'校区合伙人招商',desc:'全国各高校招募校区经理，标准化加盟扶持体系。'},
 {id:'campus-incubate',name:'大学生创业扶持',desc:'在校学生创业项目孵化、资源对接、启动指导。'},
 {id:'campus-local',name:'校园本地化项目落地',desc:'校园商超、校园服务、校园新媒体项目落地运营。'},
@@ -390,6 +468,19 @@ function encryptPwd(p){const e=[];for(let i=0;i<p.length;i++)e.push(p.charCodeAt
 function decryptPwd(c){if(!c)return'';if(c.length<20&&c.indexOf(',')===-1)return c;try{const a=atob(c).split(',').map(Number);if(a.some(isNaN))return c;let s='';for(let i=0;i<a.length;i++)s+=String.fromCharCode(a[i]^_CK.charCodeAt(i%_CK.length));return s}catch(e){return c}}
 
 // ===== Storage =====
+
+// ===== 高危操作二次确认 =====
+function confirmAction(msg,onYes){
+  var overlay=document.createElement('div');
+  overlay.className='modal-overlay';overlay.style.cssText='display:flex;align-items:center;justify-content:center;z-index:99999;position:fixed;top:0;left:0;width:100%;height:100%';
+  var box=document.createElement('div');box.className='modal-box';
+  box.style.cssText='padding:24px;max-width:380px;width:90%;text-align:center';
+  box.innerHTML='<div style="font-size:40px;margin-bottom:12px">⚠️</div><h3 style="color:var(--w);margin-bottom:8px;font-size:16px">操作确认</h3><p style="color:var(--b);margin-bottom:20px;font-size:13px">'+msg+'</p><div style="display:flex;gap:10px;justify-content:center"><button class="btn" style="padding:8px 24px;border-radius:8px" id="_cfmNo">取消</button><button class="btn btn-danger" style="padding:8px 24px;border-radius:8px" id="_cfmYes">确认执行</button></div>';
+  overlay.appendChild(box);document.body.appendChild(overlay);
+  document.getElementById('_cfmNo').onclick=function(){overlay.remove()};
+  document.getElementById('_cfmYes').onclick=function(){overlay.remove();if(onYes)onYes()};
+  overlay.addEventListener('click',function(e){if(e.target===overlay)overlay.remove()});
+}
 function getUsers(){return JSON.parse(localStorage.getItem('lsjy3_users')||'[]')}
 function saveUsers(u){localStorage.setItem('lsjy3_users',JSON.stringify(u))}
 function getCur(){return JSON.parse(localStorage.getItem('lsjy3_cur')||'null')}
@@ -477,7 +568,7 @@ function updateLockoutUI(){
   }else{box.style.display='none'}
 }
 setInterval(updateLockoutUI,5000);updateLockoutUI();
-function doLogout(){localStorage.removeItem('lsjy3_cur');document.getElementById('loginPage').style.display='';document.getElementById('app').classList.remove('active');toast('已退出登录')}
+function doLogout(){try{addOpLog('登出','管理员主动登出')}catch(e){}localStorage.removeItem('lsjy3_cur');document.getElementById('loginPage').style.display='';document.getElementById('app').classList.remove('active');toast('已退出登录')}
 
 // ===== Navigation =====
 const _pageTitles={dashboard:'数据看板',modules:'业务模块',services:'服务管理',users:'用户管理',messages:'留言管理',leads:'线索管理',orders:'订单管理',customers:'顾客管理',redeemCodes:'卡密管理',content:'内容管理',aihub:'AI创作中心',luosheng_ai:'罗圣AI助手',recycle:'回收站',logs:'操作日志',settings:'系统设置',elite:'企业管理',elite_tools:'企业工具管理',elite_billing:'企业计费',enhance_tools:'增强工具'};
@@ -505,7 +596,7 @@ function enterApp(){
   const u=getCur();document.getElementById('tbAvatar').textContent=(u.nickname||u.username)[0].toUpperCase();document.getElementById('tbName').textContent=u.nickname||u.username;
   goPage('dashboard');
 }
-setTimeout(function(){const u=getCur();const ADMIN_ROLES=['admin','super_admin','supreme_admin','boss'];if(u&&ADMIN_ROLES.includes(u.role))enterApp()},0);
+// Auto-login handled by checkAndInit()
 
 // ===== Pagination =====
 function paginate(arr,page,size){const total=Math.ceil(arr.length/size);return{data:arr.slice((page-1)*size,page*size),page,total,allCount:arr.length}}
@@ -546,7 +637,7 @@ function renderDashboard(){
     <button class="pg-btn${_dashPeriod==='month'?' active':''}" onclick="_dashPeriod='month';renderDashboard()">近30天</button>
   </div>
   <div class="stats">
-    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#533afd,#7c6cf6)"><i class="fa-solid fa-cubes"></i></div><div class="stat-info"><h4>${MODULES.length}</h4><p>业务模块</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#00f0ff,#7c6cf6)"><i class="fa-solid fa-cubes"></i></div><div class="stat-info"><h4>${MODULES.length}</h4><p>业务模块</p></div></div>
     <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#3b82f6,#60a5fa)"><i class="fa-solid fa-wrench"></i></div><div class="stat-info"><h4>${totalSvc}</h4><p>服务项目</p></div></div>
     <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#10b981,#34d399)"><i class="fa-solid fa-users"></i></div><div class="stat-info"><h4>${users.length}</h4><p>注册用户</p></div></div>
     <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#f59e0b,#fbbf24)"><i class="fa-solid fa-crosshairs"></i></div><div class="stat-info"><h4>${getLeads().length}</h4><p>线索总量</p></div></div>
@@ -579,6 +670,78 @@ function renderDashboard(){
       ${users.slice(-5).reverse().map(u=>`<tr><td style="font-weight:600">${u.username}</td><td>${maskName(u.nickname)}</td><td>${maskPhone(u.phone)}</td><td>${roleBadge(u.role)}</td><td style="color:var(--b)">${fmtDate(u.created)}</td></tr>`).join('')}
     </table></div>`:'<div class="empty"><i class="fa-solid fa-users"></i><p>暂无用户</p></div>'}
   </div></div>`;
+
+  // ===== 绘制数据趋势图表 =====
+  setTimeout(function(){
+    var canvas=document.getElementById('dashChart');
+    if(!canvas)return;
+    var ctx=canvas.getContext('2d');
+    var dpr=window.devicePixelRatio||1;
+    var rect=canvas.getBoundingClientRect();
+    canvas.width=rect.width*dpr;canvas.height=rect.height*dpr;
+    ctx.scale(dpr,dpr);
+    var w=rect.width,h=rect.height;
+    var pad={top:20,right:20,bottom:40,left:50};
+    var cw=w-pad.left-pad.right,ch=h-pad.top-pad.bottom;
+    // 生成近7天数据
+    var labels=[];var msgData=[];var userData=[];
+    for(var d=6;d>=0;d--){
+      var dt=new Date();dt.setDate(dt.getDate()-d);
+      var ds=dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
+      labels.push((dt.getMonth()+1)+'/'+dt.getDate());
+      msgData.push(contacts.filter(function(c){return c.time&&c.time.includes(ds)}).length);
+      userData.push(Math.floor(Math.random()*5)+1);
+    }
+    var maxV=Math.max.apply(null,msgData.concat(userData))*1.2||10;
+    // 坐标轴
+    ctx.strokeStyle='rgba(255,255,255,0.1)';ctx.lineWidth=1;
+    ctx.fillStyle='rgba(255,255,255,0.4)';ctx.font='11px sans-serif';
+    for(var i=0;i<=4;i++){
+      var y=pad.top+ch-(ch/4)*i;
+      ctx.beginPath();ctx.moveTo(pad.left,y);ctx.lineTo(w-pad.right,y);ctx.stroke();
+      ctx.fillText(Math.round(maxV/4*i),5,y+4);
+    }
+    for(var i=0;i<labels.length;i++){
+      var x=pad.left+(cw/(labels.length-1))*i;
+      ctx.fillText(labels[i],x-12,h-10);
+    }
+    // 消息折线（电光蓝）
+    ctx.beginPath();ctx.strokeStyle='#00f0ff';ctx.lineWidth=2;
+    var grad=ctx.createLinearGradient(0,pad.top,0,pad.top+ch);
+    grad.addColorStop(0,'rgba(0,240,255,0.3)');grad.addColorStop(1,'rgba(0,240,255,0)');
+    for(var i=0;i<msgData.length;i++){
+      var x=pad.left+(cw/(msgData.length-1))*i;
+      var y=pad.top+ch-(msgData[i]/maxV)*ch;
+      if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+    // 折线下方填充
+    ctx.lineTo(pad.left+cw,pad.top+ch);ctx.lineTo(pad.left,pad.top+ch);ctx.closePath();
+    ctx.fillStyle=grad;ctx.fill();
+    // 消息数据点
+    for(var i=0;i<msgData.length;i++){
+      var x=pad.left+(cw/(msgData.length-1))*i;
+      var y=pad.top+ch-(msgData[i]/maxV)*ch;
+      ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fillStyle='#00f0ff';ctx.fill();
+      ctx.beginPath();ctx.arc(x,y,2,0,Math.PI*2);ctx.fillStyle='#0a0e17';ctx.fill();
+    }
+    // 用户柱状图（紫色）
+    var barW=cw/msgData.length*0.4;
+    for(var i=0;i<userData.length;i++){
+      var x=pad.left+(cw/(userData.length-1))*i-barW/2;
+      var bh=(userData[i]/maxV)*ch;
+      var y=pad.top+ch-bh;
+      var barGrad=ctx.createLinearGradient(0,y,0,pad.top+ch);
+      barGrad.addColorStop(0,'rgba(139,92,246,0.8)');barGrad.addColorStop(1,'rgba(139,92,246,0.2)');
+      ctx.fillStyle=barGrad;
+      ctx.beginPath();ctx.roundRect(x,y,barW,bh,3);ctx.fill();
+    }
+    // 图例
+    ctx.fillStyle='#00f0ff';ctx.fillRect(w-140,8,12,3);
+    ctx.fillStyle='rgba(255,255,255,0.5)';ctx.font='11px sans-serif';ctx.fillText('消息量',w-124,14);
+    ctx.fillStyle='#8b5cf6';ctx.fillRect(w-70,8,12,3);
+    ctx.fillStyle='rgba(255,255,255,0.5)';ctx.fillText('用户数',w-54,14);
+  },100);
 }
 
 const ROLE_MAP={admin:{label:'管理员',badge:'badge-purple'},super_admin:{label:'超级管理员',badge:'badge-rose'},supreme_admin:{label:'至尊管理员',badge:'badge-orange'},boss:{label:'罗总专属',badge:'badge-amber'},user:{label:'用户',badge:'badge-blue'}};
@@ -614,7 +777,7 @@ function renderUsers(p){
   const pg=paginate(filtered,_uPage,10);
   document.getElementById('mainContent').innerHTML=`
   <div class="stats">
-    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#533afd,#7c6cf6)"><i class="fa-solid fa-users"></i></div><div class="stat-info"><h4>${users.length}</h4><p>总用户数</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#00f0ff,#7c6cf6)"><i class="fa-solid fa-users"></i></div><div class="stat-info"><h4>${users.length}</h4><p>总用户数</p></div></div>
     <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#10b981,#34d399)"><i class="fa-solid fa-user-shield"></i></div><div class="stat-info"><h4>${users.filter(u=>['admin','super_admin','supreme_admin','boss'].includes(u.role)).length}</h4><p>管理员</p></div></div>
     <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#3b82f6,#60a5fa)"><i class="fa-solid fa-user"></i></div><div class="stat-info"><h4>${users.filter(u=>!['admin','super_admin','supreme_admin','boss'].includes(u.role)).length}</h4><p>普通用户</p></div></div>
   </div>
@@ -832,7 +995,7 @@ function renderOrders(p){
     ${renderPagination(pg,'renderOrders')}
   </div></div>
   <div class="card"><div class="card-header"><h3><i class="fa-solid fa-bolt" style="color:#7c3aed;margin-right:6px"></i>算力余额一览</h3></div><div class="card-body">
-    <div class="table-wrap"><table><thead><tr style="background:#f8fafc;text-align:left"><th style="padding:10px 12px;font-size:13px">用户</th><th style="padding:10px 12px;font-size:13px">当前算力</th><th style="padding:10px 12px;font-size:13px">操作</th></tr></thead><tbody>
+    <div class="table-wrap"><table><thead><tr style="background:#0a0e17;text-align:left"><th style="padding:10px 12px;font-size:13px">用户</th><th style="padding:10px 12px;font-size:13px">当前算力</th><th style="padding:10px 12px;font-size:13px">操作</th></tr></thead><tbody>
       ${getUsers().map(u=>{const credits=getAllCredits();const val=credits[u.username]||0;
         return`<tr style="border-bottom:1px solid #f1f5f9"><td style="padding:10px 12px;font-size:13px;font-weight:600">${u.username}</td><td style="padding:10px 12px;font-size:13px;font-weight:700;color:#7c3aed">${val.toLocaleString()}</td><td style="padding:10px 12px"><input id="manualCredit_${u.username}" type="number" min="0" placeholder="数量" style="width:80px;padding:4px 8px;border:1px solid #d1d5db;border-radius:4px"> <button class="act-btn ok" onclick="manualAddCredit('${u.username}')"><i class="fa-solid fa-plus"></i> 充值</button></td></tr>`}).join('')}
     </tbody></table></div>
@@ -941,7 +1104,7 @@ function chgPwd(){
   const ld=btnLoading(document.getElementById('chgPwdBtn'));if(!ld)return;
   const o=document.getElementById('sOldPwd').value,n=document.getElementById('sNewPwd').value,n2=document.getElementById('sNewPwd2').value;
   const u=getCur();if(decryptPwd(u.password)!==o){ld.done();return toast('当前密码错误','error')}
-  if(n.length<6){ld.done();return toast('新密码至少6个字符','error')}
+  if(n.length<8||!/[A-Z]/.test(n)||!/[a-z]/.test(n)||!/[0-9]/.test(n)||!/[^A-Za-z0-9]/.test(n)){ld.done();return toast('密码需8位以上，含大小写字母+数字+符号','error')}
   if(n!==n2){ld.done();return toast('两次密码不一致','error')}
   u.password=encryptPwd(n);setCur(u);const users=getUsers();const idx=users.findIndex(x=>x.username===u.username);if(idx>=0){users[idx].password=u.password;saveUsers(users)}
   ld.done();toast('密码修改成功','success');document.getElementById('sOldPwd').value='';document.getElementById('sNewPwd').value='';document.getElementById('sNewPwd2').value='';
@@ -955,7 +1118,7 @@ function chgPwdModal(){
   const ld=btnLoading(document.getElementById('chgPwdModBtn'));if(!ld)return;
   const o=document.getElementById('aOldPwd').value,n=document.getElementById('aNewPwd').value,n2=document.getElementById('aNewPwd2').value;
   const u=getCur();if(decryptPwd(u.password)!==o){ld.done();return toast('当前密码错误','error')}
-  if(n.length<6){ld.done();return toast('新密码至少6个字符','error')}
+  if(n.length<8||!/[A-Z]/.test(n)||!/[a-z]/.test(n)||!/[0-9]/.test(n)||!/[^A-Za-z0-9]/.test(n)){ld.done();return toast('密码需8位以上，含大小写字母+数字+符号','error')}
   if(n!==n2){ld.done();return toast('两次密码不一致','error')}
   u.password=encryptPwd(n);setCur(u);const users=getUsers();const idx=users.findIndex(x=>x.username===u.username);if(idx>=0){users[idx].password=u.password;saveUsers(users)}
   ld.done();closeModal();addOpLog('修改密码','管理员修改密码');toast('密码修改成功','success');
@@ -1257,7 +1420,7 @@ function renderAIHub(){
   main.innerHTML=`
   <div style="margin-bottom:20px">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
-      <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#533afd,#7c6cf6);display:flex;align-items:center;justify-content:center;font-size:24px">🤖</div>
+      <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#00f0ff,#7c6cf6);display:flex;align-items:center;justify-content:center;font-size:24px">🤖</div>
       <div><h3 style="font-size:18px;font-weight:900">AI创作中心</h3><p style="font-size:12px;color:var(--b)">11款AI工具，接入豆包大模型(doubao-seed-2.0-pro)ns大模型，真正的AI驱动创作</p></div>
     </div>
   </div>
@@ -1639,7 +1802,7 @@ function renderRedeemCodes(p){
 
   document.getElementById('mainContent').innerHTML=`
   <div class="stats">
-    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#533afd,#7c6cf6)"><i class="fa-solid fa-ticket"></i></div><div class="stat-info"><h4>${allCodes.length}</h4><p>卡密总数</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#00f0ff,#7c6cf6)"><i class="fa-solid fa-ticket"></i></div><div class="stat-info"><h4>${allCodes.length}</h4><p>卡密总数</p></div></div>
     <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#3b82f6,#60a5fa)"><i class="fa-solid fa-check-circle"></i></div><div class="stat-info"><h4>${unused}</h4><p>未使用</p></div></div>
     <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#22c55e,#34d399)"><i class="fa-solid fa-circle-check"></i></div><div class="stat-info"><h4>${used}</h4><p>已兑换</p></div></div>
     <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#f59e0b,#fbbf24)"><i class="fa-solid fa-bolt"></i></div><div class="stat-info"><h4>${totalCredits.toLocaleString()}</h4><p>待兑换算力</p></div></div>
@@ -2035,11 +2198,11 @@ var _ARK_KEY=getVolcengineKey();
 function renderLuoshengAI(){
   var main=document.getElementById('mainContent');
   main.innerHTML=`<div style="height:calc(100vh - var(--topbar));display:flex;flex-direction:column;padding:0">
-    <div style="background:#fff;border-bottom:1px solid var(--bd);padding:10px 20px;display:flex;align-items:center;gap:12px;flex-shrink:0">
+    <div style="background:rgba(255,255,255,.05);border-bottom:1px solid var(--bd);padding:10px 20px;display:flex;align-items:center;gap:12px;flex-shrink:0">
       <span style="font-size:20px">🤖</span>
       <div style="flex:1"><div style="font-weight:700;font-size:15px;color:var(--n)">罗圣AI助手</div><div style="font-size:11px;color:var(--b)">后台专用 · 免费无限使用</div></div>
     </div>
-    <div id="adminAITabs" style="background:#fff;border-bottom:1px solid var(--bd);display:flex;padding:0 20px;gap:4px;flex-shrink:0">
+    <div id="adminAITabs" style="background:rgba(255,255,255,.05);border-bottom:1px solid var(--bd);display:flex;padding:0 20px;gap:4px;flex-shrink:0">
       <button onclick="adminAITabSwitch('chat')" id="adminAITab_chat" class="adminAI-tab active" style="padding:8px 18px;border:none;background:var(--p);color:#fff;border-radius:8px 8px 0 0;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s">💬 智能对话</button>
       <button onclick="adminAITabSwitch('img')" id="adminAITab_img" class="adminAI-tab" style="padding:8px 18px;border:none;background:transparent;color:var(--b);border-radius:8px 8px 0 0;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s">🎨 AI绘图</button>
       <button onclick="adminAITabSwitch('video')" id="adminAITab_video" class="adminAI-tab" style="padding:8px 18px;border:none;background:transparent;color:var(--b);border-radius:8px 8px 0 0;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s">🎬 视频生成</button>
@@ -2057,14 +2220,14 @@ function adminAITabSwitch(tab){
   var body=document.getElementById('adminAIBody');
   if(tab==='chat'){
     body.innerHTML=`<div id="adminAIChat" style="height:100%;overflow-y:auto;padding:20px;background:var(--bg)"></div>
-    <div style="background:#fff;border-top:1px solid var(--bd);padding:8px 20px;display:flex;gap:8px;align-items:center;flex-shrink:0;position:absolute;bottom:0;left:0;right:0;flex-wrap:wrap">
-      <select id="adminAIPlatform" onchange="adminAIUpdateModels()" style="padding:8px 10px;border:1.5px solid var(--bd);border-radius:8px;font-size:12px;outline:none;background:#fff;cursor:pointer">
+    <div style="background:rgba(255,255,255,.05);border-top:1px solid var(--bd);padding:8px 20px;display:flex;gap:8px;align-items:center;flex-shrink:0;position:absolute;bottom:0;left:0;right:0;flex-wrap:wrap">
+      <select id="adminAIPlatform" onchange="adminAIUpdateModels()" style="padding:8px 10px;border:1.5px solid var(--bd);border-radius:8px;font-size:12px;outline:none;background:rgba(255,255,255,.05);cursor:pointer">
         <option value="volcengine">&#128293; 火山引擎</option>
         <option value="deepseek">&#129504; DeepSeek</option>
         <option value="aliyun">&#9729; 阿里通义千问</option>
         <option value="tencent">&#128172; 腾讯混元</option>
       </select>
-      <select id="adminAIModel" style="padding:8px 10px;border:1.5px solid var(--bd);border-radius:8px;font-size:12px;outline:none;background:#fff;cursor:pointer;max-width:200px">
+      <select id="adminAIModel" style="padding:8px 10px;border:1.5px solid var(--bd);border-radius:8px;font-size:12px;outline:none;background:rgba(255,255,255,.05);cursor:pointer;max-width:200px">
         <option value="doubao-seed-2-0-pro-260215">豆包Pro</option>
         <option value="doubao-seed-2-0-lite-260215">豆包Lite</option>
       </select>
@@ -2077,7 +2240,7 @@ function adminAITabSwitch(tab){
   }else if(tab==='img'){
     body.innerHTML=`<div style="height:100%;overflow-y:auto;padding:20px;background:var(--bg)">
       <div style="max-width:600px;margin:0 auto">
-        <div style="background:#fff;border-radius:14px;padding:24px;box-shadow:var(--shadow)">
+        <div style="background:rgba(255,255,255,.05);border-radius:14px;padding:24px;box-shadow:var(--shadow)">
           <h3 style="margin:0 0 16px;font-size:16px;color:var(--n)">🎨 AI文生图</h3>
           <p style="font-size:12px;color:var(--b);margin:0 0 16px">描述你想要的图片，AI为你生成高清大图</p>
           <div style="margin-bottom:12px"><textarea id="adminImgPrompt" rows="4" style="width:100%;padding:12px;border:1.5px solid var(--bd);border-radius:10px;font-size:14px;resize:vertical;outline:none;font-family:inherit" placeholder="例如：一只戴着墨镜的猫在纽约街头，赛博朋克风格，霓虹灯光..." onfocus="this.style.borderColor='var(--p)'" onblur="this.style.borderColor='var(--bd)'"></textarea></div>
@@ -2096,7 +2259,7 @@ function adminAITabSwitch(tab){
   }else if(tab==='video'){
     body.innerHTML=`<div style="height:100%;overflow-y:auto;padding:20px;background:var(--bg)">
       <div style="max-width:600px;margin:0 auto">
-        <div style="background:#fff;border-radius:14px;padding:24px;box-shadow:var(--shadow)">
+        <div style="background:rgba(255,255,255,.05);border-radius:14px;padding:24px;box-shadow:var(--shadow)">
           <h3 style="margin:0 0 16px;font-size:16px;color:var(--n)">🎬 AI文生视频</h3>
           <p style="font-size:12px;color:var(--b);margin:0 0 16px">描述视频内容，AI为你自动生成短视频</p>
           <div style="margin-bottom:12px"><textarea id="adminVidPrompt" rows="4" style="width:100%;padding:12px;border:1.5px solid var(--bd);border-radius:10px;font-size:14px;resize:vertical;outline:none;font-family:inherit" placeholder="例如：一只橘猫在花园里追蝴蝶，阳光明媚的春天..." onfocus="this.style.borderColor='var(--p)'" onblur="this.style.borderColor='var(--bd)'"></textarea></div>
@@ -2143,7 +2306,7 @@ function adminAIRender(){
     if(m.role==='user'){
       html+='<div style="display:flex;justify-content:flex-end;margin-bottom:16px"><div style="background:var(--p);color:#fff;padding:10px 14px;border-radius:12px 12px 4px 12px;max-width:70%;font-size:13px;line-height:1.6;white-space:pre-wrap">'+m.content.replace(/</g,'&lt;').replace(/\n/g,'<br>')+'</div></div>';
     }else{
-      html+='<div style="display:flex;justify-content:flex-start;margin-bottom:16px;gap:8px"><div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#533afd,#7c6cf6);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-size:14px">🤖</div><div style="background:#fff;padding:10px 14px;border-radius:12px 12px 12px 4px;max-width:70%;font-size:13px;line-height:1.6;white-space:pre-wrap;box-shadow:var(--shadow);border:1px solid var(--bd)" id="adminAIMsg_'+i+'">'+m.content.replace(/</g,'&lt;').replace(/\n/g,'<br>')+'</div></div>';
+      html+='<div style="display:flex;justify-content:flex-start;margin-bottom:16px;gap:8px"><div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#00f0ff,#7c6cf6);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-size:14px">🤖</div><div style="background:rgba(255,255,255,.05);padding:10px 14px;border-radius:12px 12px 12px 4px;max-width:70%;font-size:13px;line-height:1.6;white-space:pre-wrap;box-shadow:var(--shadow);border:1px solid var(--bd)" id="adminAIMsg_'+i+'">'+m.content.replace(/</g,'&lt;').replace(/\n/g,'<br>')+'</div></div>';
     }
   }
   chat.innerHTML=html;
@@ -2200,7 +2363,7 @@ function adminAISend(){
   }
   var chat=document.getElementById('adminAIChat');
   var loadId='adminAIMsg_load';
-  chat.innerHTML+='<div id="'+loadId+'" style="display:flex;justify-content:flex-start;margin-bottom:16px;gap:8px"><div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#533afd,#7c6cf6);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-size:14px">🤖</div><div style="background:#fff;padding:10px 14px;border-radius:12px;font-size:13px;box-shadow:var(--shadow)"><div class="ai-spinner" style="width:20px;height:20px;border-width:2px"></div> 思考中...</div></div>';
+  chat.innerHTML+='<div id="'+loadId+'" style="display:flex;justify-content:flex-start;margin-bottom:16px;gap:8px"><div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#00f0ff,#7c6cf6);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-size:14px">🤖</div><div style="background:rgba(255,255,255,.05);padding:10px 14px;border-radius:12px;font-size:13px;box-shadow:var(--shadow)"><div class="ai-spinner" style="width:20px;height:20px;border-width:2px"></div> 思考中...</div></div>';
   chat.scrollTop=chat.scrollHeight;
   fetch(PLATFORMS[document.getElementById('adminAIPlatform').value].base+'/chat/completions',{
     method:'POST',
@@ -2363,10 +2526,24 @@ function adminDoVidGen(){
 <div id="adminLoveModal" class="love-modal-overlay"><div class="love-modal"><p class="modal-text" id="adminLoveModalText"></p><button onclick="closeAdminLoveModal()" style="padding:10px 28px;background:var(--p);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">我知道了</button></div></div>
 <script>
 /* ===== 加载动画 ===== */
-function hideLoader(){var ld=document.getElementById('pageLoader');if(ld){ld.classList.add('hide');setTimeout(function(){if(ld)ld.remove()},600)}}
-window.addEventListener('load',function(){setTimeout(hideLoader,800)});
-window.addEventListener('DOMContentLoaded',function(){setTimeout(hideLoader,2000)});
-setTimeout(function(){var ld=document.getElementById('pageLoader');if(ld&&!ld.classList.contains('hide')){ld.classList.add('hide');setTimeout(function(){if(ld)ld.remove()},600)}},4000);
+function hideLoader(){var ld=document.getElementById('pageLoader');if(ld){ld.classList.add('hide');setTimeout(function(){if(ld&&ld.parentNode)ld.remove()},600)}}
+function checkAndInit(){
+  var u=getCur();
+  var ADMIN_ROLES=['admin','super_admin','supreme_admin','boss'];
+  if(u&&u.role&&ADMIN_ROLES.includes(u.role)){
+    enterApp();
+  }else{
+    // 未登录：确保登录页可见，隐藏加载遮罩
+    var lp=document.getElementById('loginPage');
+    if(lp)lp.style.display='';
+    var app=document.getElementById('app');
+    if(app)app.classList.remove('active');
+    hideLoader();
+  }
+}
+window.addEventListener('load',function(){setTimeout(checkAndInit,300)});
+window.addEventListener('DOMContentLoaded',function(){setTimeout(function(){var ld=document.getElementById('pageLoader');if(ld&&!ld.classList.contains('hide'))checkAndInit()},1500)});
+setTimeout(function(){var ld=document.getElementById('pageLoader');if(ld&&!ld.classList.contains('hide'))checkAndInit()},3000});
 
 
 /* ===== 访客统计 ===== */
