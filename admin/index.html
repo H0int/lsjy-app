@@ -30,6 +30,65 @@
   --shadow:0 4px 12px rgba(0,0,0,.3);
   --sidebar-bg:#060a12;--sidebar-active:rgba(0,245,255,.12);
 }
+body.theme-light{
+  --p:#0088cc;--ph:#0077b5;--pl:#48cae4;--ps:rgba(0,136,204,.08);
+  --p2:#7c3aed;--p2h:#6d28d9;--p2l:#a78bfa;--p2s:rgba(124,58,237,.08);
+  --n:#1e293b;--nd:#64748b;--b:#94a3b8;--l:#cbd5e1;--bd:rgba(0,0,0,.08);
+  --bg:#f8fafc;--bg2:#ffffff;--bg3:#f1f5f9;
+  --w:#1e293b;--w2:rgba(0,0,0,.05);
+  --card:rgba(255,255,255,.9);--card-hover:rgba(255,255,255,1);
+  --glass:rgba(255,255,255,.8);--glass-b:rgba(0,136,204,.15);
+  --shadow:0 4px 12px rgba(0,0,0,.08);
+  --sidebar-bg:#fff;--sidebar-active:rgba(0,136,204,.12);
+  color:#1e293b;
+}
+body.theme-enterprise{
+  --p:#f59e0b;--ph:#d97706;--pl:#fbbf24;--ps:rgba(245,158,11,.08);
+  --p2:#ef4444;--p2h:#dc2626;--p2l:#f87171;--p2s:rgba(239,68,68,.1);
+  --n:#e8e8f0;--nd:#a0a0b8;--b:#888;--l:#666;--bd:rgba(245,158,11,.15);
+  --bg:#0d0d1a;--bg2:#12122a;--bg3:#1a1a35;
+  --w:#e8e8f0;--w2:rgba(255,255,255,.04);
+  --card:rgba(245,158,11,.04);--card-hover:rgba(245,158,11,.08);
+  --glass:rgba(255,255,255,.06);--glass-b:rgba(245,158,11,.15);
+  --shadow:0 4px 16px rgba(0,0,0,.4);
+  --sidebar-bg:#08081a;--sidebar-active:rgba(245,158,11,.15);
+}
+
+/* 表格斑马纹 */
+table tbody tr:nth-child(even){background:var(--card)}
+table tbody tr:hover{background:var(--card-hover)}
+table{width:100%;border-collapse:collapse}
+table th,table td{padding:12px 16px;border-bottom:1px solid var(--bd);font-size:14px;color:var(--n)}
+/* 登录居中 */
+.login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh}
+.login-box{width:100%;max-width:380px;text-align:center;padding:32px}
+.login-box h2{font-size:22px;font-weight:700;margin-bottom:6px}
+.login-box .sub{font-size:13px;color:var(--nd);margin-bottom:24px}
+.login-box label{display:block;text-align:left;font-size:13px;color:var(--nd);margin-bottom:6px}
+.login-box input{width:100%;height:44px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--n);padding:0 14px;font-size:14px;box-sizing:border-box;margin-bottom:14px;transition:border .2s}
+.login-box input:focus{outline:none;border-color:var(--p);box-shadow:0 0 0 3px var(--ps)}
+.login-box .btn-login{width:100%;height:46px;border:none;border-radius:10px;background:var(--p);color:var(--bg);font-size:15px;font-weight:600;cursor:pointer;margin-top:4px}
+.login-box .btn-login:hover{opacity:.9}
+/* 数据看板对称 */
+.dash-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}
+.dash-card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:20px;text-align:center}
+.dash-card:hover{border-color:var(--glass-b);transform:translateY(-2px);transition:all .2s}
+.dash-card .num{font-size:28px;font-weight:800;color:var(--p)}
+.dash-card .lbl{font-size:12px;color:var(--nd);margin-top:4px}
+/* 手机端后端 */
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%);position:fixed;z-index:999}
+  .sidebar.open{transform:translateX(0)}
+  .main-area{margin-left:0!important}
+  .dash-grid{grid-template-columns:repeat(2,1fr)!important}
+  table{font-size:12px;min-width:600px}
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .login-box{padding:24px 20px}
+  .login-box input{height:56px;font-size:16px}
+  .login-box .btn-login{height:50px;font-size:16px}
+  body{padding-bottom:env(safe-area-inset-bottom)}
+}
+
 /* === AI TOOLS === */
 .ai-spinner{display:inline-block;width:40px;height:40px;border:3px solid var(--bd);border-top-color:var(--p);border-radius:50%;animation:ai-spin .8s linear infinite}
 @keyframes ai-spin{to{transform:rotate(360deg)}}
@@ -2573,6 +2632,17 @@ function aiMarketingTool(type){
   document.getElementById('aiMarketingOutput').style.display='block';
   toast('AI营销助手已生成结果','success');
 }
+
+// === 三大主题切换 ===
+function switchAdminTheme(t){document.body.classList.remove('theme-light','theme-enterprise');if(t!=='dark')document.body.classList.add('theme-'+t);localStorage.setItem('lsjy-admin-theme',t);addLog('切换主题',t)}
+(function(){var t=localStorage.getItem('lsjy-admin-theme')||'dark';switchAdminTheme(t)})();
+// === 密码修改 ===
+function changePwd(){var o=document.getElementById('oldPwd'),n=document.getElementById('newPwd'),c=document.getElementById('cfmPwd');if(!o.value||!n.value){showToast('请填写完整');return}if(n.value!==c.value){showToast('两次密码不一致');return}if(n.value.length<6){showToast('密码至少6位');return}localStorage.setItem('lsjy_pwd',n.value);addLog('修改密码','成功');showToast('密码修改成功')}
+// === 数据导出 ===
+function exportCSV(id){var tbl=document.querySelector('#'+id+' table');if(!tbl){showToast('无数据');return}var rows=tbl.querySelectorAll('tr'),csv=[];rows.forEach(function(r){var c=[];r.querySelectorAll('td,th').forEach(function(d){c.push('"'+d.textContent.trim().replace(/"/g,'""')+'"')});csv.push(c.join(','))});var blob=new Blob(['﻿'+csv.join('
+')],{type:'text/csv;charset=utf-8'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=id+'.csv';a.click();showToast('导出成功')}
+// === 操作日志 ===
+function addLog(action,detail){var logs=JSON.parse(localStorage.getItem('lsjy_admin_logs')||'[]');logs.unshift({time:new Date().toLocaleString(),action:action,detail:detail||''});if(logs.length>100)logs.length=100;localStorage.setItem('lsjy_admin_logs',JSON.stringify(logs))}
 </script>
 
 
