@@ -380,7 +380,7 @@ body.admin-light .modal-box{background:rgba(255,255,255,.95);border-color:rgba(0
       <div class="sb-group">AI工具</div>
       <div class="sb-item" onclick="goPage('aihub',this)"><i class="fa-solid fa-wand-magic-sparkles"></i>AI创作中心</div>
 <div class="sb-item" onclick="goPage('luosheng_ai',this)"><i class="fa-solid fa-robot"></i>罗圣AI助手</div>
-<div class="sb-item" onclick="goPage('enhance_tools',this)"><i class="fa-solid fa-wand-magic-sparkles"></i>增强工具</div>
+<div class="sb-item" onclick="goPage('ai_marketing',this)"><i class="fa-solid fa-bullhorn"></i>AI营销助手</div>
 
       <div class="sb-group">商业精英版</div>
       <div class="sb-item" onclick="goPage('elite',this)"><i class="fa-solid fa-building"></i>企业管理</div>
@@ -2541,19 +2541,9 @@ setTimeout(function(){var ld=document.getElementById('pageLoader');if(ld&&!ld.cl
 
 /* ===== 访客统计 ===== */
 (function(){var c=parseInt(localStorage.getItem('admin_visitors')||'0')+1;localStorage.setItem('admin_visitors',c);var now=new Date();var ts=now.getFullYear()+'/'+String(now.getMonth()+1).padStart(2,'0')+'/'+String(now.getDate()).padStart(2,'0')+' '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');var vc=document.getElementById('adminVisitorCount');var vt=document.getElementById('adminVisitTime');if(vc)vc.textContent='访客: '+c;if(vt)vt.textContent=ts})();
-/* ===== 告白互动 ===== */
-var _aLoveIdx=0;var _aLoveTexts=['你再想想嘛，不要这么快拒绝我呀~','人家真的很珍惜这段感情的...','你忍心让我一个人吗？再给次机会吧~','好啦好啦，我错了还不行嘛！别生气了好不好~','世界上最远的距离不是天涯海角，而是你不在我身边...','我愿意为你改变，真的！再考虑一下？','哪怕全世界都反对，我也只想和你在一起~','你不在的日子，连空气都是灰色的...回来吧~'];
-function adminLoveDecline(){var modal=document.getElementById('adminLoveModal');var text=document.getElementById('adminLoveModalText');text.textContent=_aLoveTexts[_aLoveIdx%_aLoveTexts.length];_aLoveIdx++;modal.classList.add('show')}
-function closeAdminLoveModal(){document.getElementById('adminLoveModal').classList.remove('show')}
-function adminLoveAccept(){var modal=document.getElementById('adminLoveModal');var text=document.getElementById('adminLoveModalText');text.innerHTML='<div style="font-size:40px;margin-bottom:12px">🎉💕</div><div style="font-size:20px;font-weight:900;color:#ec4899;margin-bottom:8px">太好了！和好吧！</div><div style="color:var(--b)">愿你们的每一天都充满甜蜜与幸福~</div>';modal.classList.add('show');adminBurstHearts()}
-function adminBurstHearts(){var emojis=['❤️','💕','💖','💗','💓','🩷'];for(var i=0;i<20;i++){(function(idx){setTimeout(function(){var h=document.createElement('span');h.className='heart-burst-item';h.textContent=emojis[idx%emojis.length];h.style.left=(20+Math.random()*60)+'vw';h.style.bottom='30vh';h.style.animationDuration=(1.5+Math.random()*1.5)+'s';document.body.appendChild(h);h.addEventListener('animationend',function(){h.remove()})},idx*100)})(i)}}
-/* ===== 纪念日 ===== */
-function adminCalcAnni(){var d=document.getElementById('adminAnniDate');var out=document.getElementById('adminAnniResult');if(!d||!d.value){alert('请选择日期');return}var start=new Date(d.value);var now=new Date();var diff=Math.floor((now-start)/(1000*60*60*24));if(diff<0)diff=0;out.innerHTML='<span style="font-size:48px;font-weight:900;color:#ec4899">'+diff+'</span><br><small style="color:var(--b)">天的美好时光</small>'}
 /* ===== 二维码 ===== */
 var _adminQRLoaded=false;function adminGenQR(){var text=document.getElementById('adminQrInput');var out=document.getElementById('adminQrResult');if(!text||!text.value.trim()){alert('请输入内容');return}if(!_adminQRLoaded){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js';s.onload=function(){_adminQRLoaded=true;adminDoGenQR()};document.head.appendChild(s)}else{adminDoGenQR()}}
 function adminDoGenQR(){var text=document.getElementById('adminQrInput').value.trim();var out=document.getElementById('adminQrResult');out.innerHTML='';new QRCode(out,{text:text,width:200,height:200,colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H})}
-/* ===== 文案美化 ===== */
-function adminBeautifyText(){var ta=document.getElementById('adminBeautifyInput');var out=document.getElementById('adminBeautifyOutput');if(!ta||!ta.value.trim()){alert('请输入文案');return}var raw=ta.value.trim();var final=raw.replace(/([。！？；])/g,'$1\n').replace(/(\n{3,})/g,'\n\n').trim();final=final.replace(/^(?!✨)/gm,'✨ ');final=final.replace(/([！?])\s*/g,'$1\n');out.textContent=final;out.style.display='block'}
 /* ===== 网页智能操控 ===== */
 var _adminPaHist=[];function adminPaSend(){var input=document.getElementById('adminPaInput');var text=input.value.trim();if(!text)return;_adminPaHist.push({role:'user',text:text});input.value='';adminPaRender();adminPaExec(text)}
 function adminPaRender(){var chat=document.getElementById('adminPaChat');if(!chat)return;var html='';for(var i=0;i<_adminPaHist.length;i++){var m=_adminPaHist[i];html+='<div class="pa-msg '+(m.role==='user'?'user':'bot')+'">'+m.text+'</div>'}chat.innerHTML=html;chat.scrollTop=chat.scrollHeight}
@@ -2565,6 +2555,23 @@ _pageRenders['enhance_tools']=function(){
   var mc=document.getElementById('mainContent');
   mc.innerHTML='<div style="height:calc(100vh - var(--topbar));overflow-y:auto;padding:24px"><h2 style="font-size:22px;font-weight:900;color:#1a1d37;margin-bottom:16px">🛠️ 增强工具中心</h2><p style="font-size:13px;color:var(--b);margin-bottom:20px">后台专用 · 免费无限使用</p><div class="enhance-grid-admin"><div class="love-module"><h3>💕 告白互动</h3><p>点击按钮，看看会发生什么~</p><div class="love-btns"><button class="love-btn decline" onclick="adminLoveDecline()">暂时不想</button><button class="love-btn accept" onclick="adminLoveAccept()">我愿意和好</button></div></div><div class="anni-section"><h3>📅 纪念日计算</h3><p>选择日期，一键计算相处天数</p><input type="date" class="anni-input" id="adminAnniDate"><button onclick="adminCalcAnni()" style="margin:12px 0;padding:10px 24px;background:linear-gradient(135deg,#ec4899,#f43f5e);color:#1a1d37;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">计算相处天数</button><div id="adminAnniResult"></div></div><div class="qrcode-section"><h3>📱 二维码生成</h3><p>输入文字或网址，一键生成二维码</p><input type="text" id="adminQrInput" placeholder="输入文字或网址..." style="width:100%;padding:10px 14px;border:1.5px solid var(--bd);border-radius:10px;font-size:13px;outline:none;margin:8px 0;background:var(--card-bg);color:#1a1d37"><button onclick="adminGenQR()" style="padding:10px 24px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#1a1d37;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">立即生成</button><div id="adminQrResult" style="margin-top:12px"></div></div><div class="textbeautify-section"><h3>✍️ 文案美化</h3><p>粘贴文案，一键排版美化</p><textarea class="beautify-area" id="adminBeautifyInput" placeholder="在这里粘贴或输入你的文案..."></textarea><button onclick="adminBeautifyText()" style="margin-top:10px;padding:10px 24px;background:linear-gradient(135deg,#059669,#10b981);color:#1a1d37;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">开始美化</button><div class="beautify-output" id="adminBeautifyOutput" style="display:none"></div></div><div class="page-assistant-section"><h3>🤖 网页智能操控</h3><p>文字指挥助手操作后台页面</p><div class="pa-chat" id="adminPaChat"><div class="pa-msg bot">你好！我是后台页面助手。试试说：\n• "打开罗圣AI"\n• "打开AI创作中心"\n• "查看数据看板"\n• "切换暗黑模式"</div></div><div style="display:flex;gap:8px"><input id="adminPaInput" style="flex:1;padding:10px 14px;border:1.5px solid var(--bd);border-radius:10px;font-size:13px;outline:none;background:var(--card-bg);color:#1a1d37" placeholder="输入指令..." onkeydown="if(event.key===\'Enter\')adminPaSend()"><button onclick="adminPaSend()" style="padding:10px 16px;background:var(--p);color:#1a1d37;border:none;border-radius:10px;font-size:13px;cursor:pointer">发送</button></div></div></div></div>';
 };
+
+/* ===== AI营销助手 ===== */
+function aiMarketingTool(type){
+  var titles={hotTopic:'🔥 热点追踪',competitor:'🕵️ 竞品分析',contentPlan:'📅 内容日历',review:'⭐ 好评生成',seo:'🔍 SEO优化',liveScript:'🎬 直播话术'};
+  var results={
+    hotTopic:'【今日热门话题推荐】\n\n1. 📱 #AI改变生活# - 互动量2800w+\n   → 蹭热度文案："AI时代的普通人，如何用技术红利改变命运？从零到一的数字化转型之路 🚀"\n\n2. 💼 #搞钱思路# - 互动量1500w+\n   → 蹭热度文案："2026年最值得尝试的副业方向，零基础也能月入过万的秘密武器 💰"\n\n3. 🎯 #创业避坑# - 互动量900w+\n   → 蹭热度文案："我花了50万才明白的创业真相，这些坑你一定要避开！新手必看 ⚡"',
+    competitor:'【竞品分析报告】\n\n📊 对标账号：XXX旗舰店\n📱 主营平台：抖音/小红书\n\n✅ 优势分析：\n• 日更频率稳定（2-3条/天）\n• 短视频+直播双线运营\n• 私域社群活跃度高（转化率约8%）\n\n⚠️ 痛点发现：\n• 内容同质化严重，缺乏差异化\n• 客服响应慢（平均回复>2小时）\n• 售后评价管理薄弱\n\n💡 差异化策略：\n1. 打造"真人+AI"混合内容，区别于纯搬运\n2. 建立30分钟快速响应机制\n3. 每周用户回访+专属福利体系',
+    contentPlan:'【本周内容日历 - 第24周】\n\n📅 周一（6/8）：产品种草日\n   上午10:00 - 产品测评短视频\n   下午15:00 - 小红书种草笔记\n\n📅 周二（6/9）：互动引流日\n   上午10:00 - 话题互动帖\n   下午16:00 - 直播间答疑\n\n📅 周三（6/10）：干货输出日\n   上午10:00 - 行业干货文章\n   下午15:00 - 图文教程\n\n📅 周四（6/11）：用户故事日\n   全天 - 客户案例/好评展示\n\n📅 周五（6/12）：促销转化日\n   上午10:00 - 限时优惠活动\n   晚上20:00 - 直播带货',
+    review:'【好评文案批量生成】\n\n⭐⭐⭐⭐⭐ 五星好评：\n\n1. "真的超出预期！客服态度特别好，有问必答。产品质量也没得说，用了几天效果很明显，已经推荐给朋友了！"^_^\n\n2. "对比了好几家，最终选了这家，果然没让我失望。发货速度快，包装精美，关键是效果真的看得见。回购回购！"^_^\n\n3. "第一次买就爱上了！客服小姐姐特别耐心教我怎么用，售后也很靠谱。这个价位能买到这种品质，性价比太高了！"^_^\n\n4. "老客户了，每次回购都不失望。产品一直很稳定，而且他们家的活动力度很大，算下来比别家划算很多。强烈推荐！"^_^\n\n5. "被闺蜜种草来的，来了就不想走了。从下单到收货体验都很好，关键是东西真的有用！已经开始第二单了~"^_^',
+    seo:'【SEO优化方案】\n\n🔑 关键词策略：\n• 核心词：AI营销工具、数字化转型、智能运营\n• 长尾词：2026年AI营销神器、中小企业数字化转型方案\n• LSI词：内容营销、私域运营、短视频运营、直播带货\n\n📝 标题优化：\n• 原标题：AI营销平台\n• 优化后：2026最值得用的AI营销神器|中小企业数字化转型首选（日曝光预估+300%）\n\n📋 描述优化：\n• 字数控制在120-160字符\n• 包含核心关键词+行动召唤\n• 优化后："罗圣纪元AI营销平台，一站式覆盖AI文案、短视频、电商运营等205+智能工具。助力中小企业零门槛数字化转型，已服务1000+商家，7天无理由退款。立即免费试用！"',
+    liveScript:'【直播间话术脚本】\n\n🎬 开场话术（0-5分钟）：\n"欢迎各位来到直播间！今天给大家带来的是我们爆卖了5000+的单品，老粉都知道这个品质有多绝！新来的宝宝点点关注不迷路~"\n\n🔥 互动话术（持续穿插）：\n"刚刚进来的宝宝扣个1让我看到你！""觉得好的宝宝点个小心心""想要优惠的扣想要，我看看有多少人"\n\n💡 产品话术（10-20分钟）：\n"这个产品我自用了3个月，说实话效果真的让我惊艳。大家看我演示一下...看到没有？就这么简单，一键搞定！原价299，今天直播间专属价只要199！"\n\n⚡ 逼单话术（最后5分钟）：\n"最后50单！卖完恢复原价！""已经拍了300单了，只剩最后不到50单！""3分钟后截单，没抢到的宝宝私聊我备注回粉"\n\n📋 下播话术：\n"感谢今天的宝宝们，没抢到的关注我，明天下午3点继续！记得加粉丝群，群里有专属福利~"'
+  };
+  document.getElementById('aiMarketingTitle').textContent=titles[type]||'AI营销助手';
+  document.getElementById('aiMarketingResult').textContent=results[type]||'功能开发中...';
+  document.getElementById('aiMarketingOutput').style.display='block';
+  toast('AI营销助手已生成结果','success');
+}
 </script>
 
 
