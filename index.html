@@ -1639,9 +1639,9 @@ function requireLogin(){if(isLoggedIn())return true;openAuth('login');toast('请
 // === 多平台API配置 ===
 const PLATFORMS={
   volcengine:{name:'火山引擎/豆包',base:'https://ark.cn-beijing.volces.com/api/v3',defaultKey:'ark-21eb820a-93fc-4379-bbc4-217498f7753b-a6876',icon:'\u{1F525}'},
-  deepseek:{name:'DeepSeek深度求索',base:'https://api.deepseek.com/v1',defaultKey:'',icon:'\u{1F9E0}'},
-  aliyun:{name:'阿里通义千问',base:'https://dashscope.aliyuncs.com/compatible-mode/v1',defaultKey:'',icon:'\u{2601}'},
-  tencent:{name:'腾讯混元',base:'https://api.hunyuan.cloud.tencent.com/v1',defaultKey:'',icon:'\u{1F4AC}'}
+  deepseek:{name:'DeepSeek深度求索',base:'https://api.deepseek.com/v1',defaultKey:'sk-fd5e2ca936f3440686e6b206d5bf868d',icon:'\u{1F9E0}'},
+  aliyun:{name:'阿里通义千问',base:'https://dashscope.aliyuncs.com/compatible-mode/v1',defaultKey:'sk-4c3ea7a7752e41f3b4b056287216c938',icon:'\u{2601}'},
+  tencent:{name:'腾讯混元',base:'https://api.hunyuan.cloud.tencent.com/v1',defaultKey:'AKIDk8KI3bv2vjQukQsFWdXGM6em6EHNnXav4G',icon:'\u{1F4AC}'}
 };
 function getPlatformKey(pid){var k=localStorage.getItem('ai_platform_key_'+pid)||PLATFORMS[pid].defaultKey||'';return k;}
 function setPlatformKey(pid,key){localStorage.setItem('ai_platform_key_'+pid,key);if(PLATFORMS[pid])PLATFORMS[pid].defaultKey=key;}
