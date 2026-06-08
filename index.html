@@ -99,12 +99,12 @@ textarea.fi{resize:vertical;min-height:120px}
 /* === NAV === */
 .nav{position:fixed;top:0;left:0;right:0;z-index:1000;transition:all .3s;background:rgba(255,255,255,0.15);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid rgba(0,0,0,0.06)}
 .nav.scrolled{box-shadow:var(--sh)}
-.nav-inner{max-width:1200px;margin:0 auto;padding:0 24px;height:68px;display:flex;align-items:center;justify-content:space-between}
+.nav-inner{max-width:1200px;margin:0 auto;padding:0 24px;height:68px;display:flex;overflow:hidden;align-items:center;justify-content:space-between}
 .nav-left{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--n)}
 .nav-logo{width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid rgba(0,245,255,.2)}
 .nav-brand{font-size:17px;font-weight:800;letter-spacing:-.3px}
 .nav-brand em{font-style:normal;color:#00f5ff;text-shadow:0 0 8px rgba(0,245,255,0.4)}
-.nav-links{display:flex;align-items:center;gap:8px;list-style:none}
+.nav-links{display:flex;align-items:center;gap:8px;list-style:none;white-space:nowrap}
 .nav-links a{text-decoration:none;color:var(--l);font-size:13px;font-weight:500;padding:8px 16px;border-radius:8px;transition:all .2s}
 .nav-links a:hover,.nav-links a.active{color:#00f5ff;background:rgba(0,245,255,.06);font-weight:600}
 .nav-cta{background:var(--p)!important;color:#e2e8f0!important;padding:8px 20px;border-radius:10px;font-weight:700;font-size:13px;letter-spacing:.3px;border:none;box-shadow:0 2px 10px rgba(0,245,255,.25);cursor:pointer;transition:all .25s}
@@ -1906,7 +1906,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 <!-- ===== NAVIGATION ===== -->
 <nav class="nav glass" id="nav">
 <div class="nav-inner">
-<a href="#" class="nav-left" onclick="scrollTo({top:0,behavior:'smooth'})"><svg class="nav-logo" viewBox="0 0 80 80" style="width:40px;height:40px;border-radius:50%;border:2px solid rgba(0,245,255,.2)">
+<a href="javascript:void(0)" class="nav-left" onclick="scrollTo({top:0,behavior:'smooth'})"><svg class="nav-logo" viewBox="0 0 80 80" style="width:40px;height:40px;border-radius:50%;border:2px solid rgba(0,245,255,.2)">
   <defs><linearGradient id="lg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#00f5ff"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs>
   <circle cx="40" cy="40" r="38" fill="#0a0e17"/>
   <text x="40" y="52" text-anchor="middle" font-size="28" font-weight="900" fill="url(#lg)" font-family="sans-serif">LS</text>
@@ -2094,9 +2094,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 <!-- ===== CTA / CONTACT ===== -->
 <section class="cta-section" id="contact">
 <h2>开启您的数字化转型之旅</h2>
-<p>无论您是实体商家、创业者还是内容创作者，罗圣纪元都能为您提供量身定制的解决方案</p>
-<button class="btn btn-p" onclick="openAuth('login')">立即注册</button>
-</section>
+<p>无论您是实体商家、创业者还是内容创作者，罗圣纪元都能为您提供量身定制的解决方案</p></section>
 
 
 <!-- ===== 工具详情页 ===== -->
@@ -6068,7 +6066,7 @@ setTimeout(function(){
       mhtml+='<div style="width:48px;height:48px;border-radius:12px;background:'+m.gradient+';display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:16px">'+m.icon+'</div>';
       mhtml+='<h3 style="margin:0 0 8px;font-size:18px;color:#e2e8f0">'+m.name+'</h3>';
       mhtml+='<p style="margin:0;font-size:13px;color:#94a3b8;line-height:1.6">'+m.summary+'</p>';
-      mhtml+='<div style="margin-top:16px;display:flex;align-items:center;gap:8px;font-size:12px"><span style="color:'+m.color+';font-weight:600">'+m.svc+' 项服务</span><span style="margin-left:auto;color:var(--p);font-weight:600">查看套餐 →</span></div>';
+      mhtml+='<div style="margin-top:16px;display:flex;align-items:center;gap:8px;font-size:12px"><span style="color:'+m.color+';font-weight:600">'+m.svc+' 项服务</span><span style="margin-left:auto;color:var(--p);font-weight:600;cursor:pointer;padding:4px 12px;border-radius:6px;background:rgba(0,245,255,.12);border:1px solid rgba(0,245,255,.2)" onclick="openServiceDetail('+m.id+')" onmouseover="this.style.background='rgba(0,245,255,.2)'" onmouseout="this.style.background='rgba(0,245,255,.12)'">查看套餐</span></div>';
       mhtml+='</div>';
     });
     mg.innerHTML=mhtml;
