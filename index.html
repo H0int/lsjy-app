@@ -548,18 +548,18 @@ to{opacity:1;transform:translateY(0) scale(1)}}
 .ls-agent-features{display:flex;gap:0;margin-top:0;padding:0 24px}
 .ls-agent-feat{padding:8px 16px;border-radius:10px;font-size:13px;font-weight:500;background:none;border:none;color:#666;cursor:pointer;transition:all .2s;position:relative}
 .ls-agent-feat:hover{color:#333;background:#f5f5f5}
-.ls-agent-feat.active{color:#111;font-weight:600;background:#f0f0f0}
-.ls-agent-feat.active::after{content:'';position:absolute;bottom:-1px;left:16px;right:16px;height:2px;background:#111;border-radius:1px}
+.ls-agent-feat.active{color:#7c3aed;font-weight:600;background:#f5f0ff}
+.ls-agent-feat.active::after{content:'';position:absolute;bottom:-1px;left:16px;right:16px;height:2px;background:#7c3aed;border-radius:1px}
 .ls-agent-modelbar{display:flex;gap:6px;padding:10px 16px;background:#fafafa;border-bottom:1px solid #f0f0f0;flex-shrink:0;overflow-x:auto;align-items:center;-webkit-overflow-scrolling:touch}
 .ls-agent-modelbar::-webkit-scrollbar{display:none}
 .ls-agent-modelbar label{font-size:12px;font-weight:600;color:#999;white-space:nowrap;margin-right:2px}
 .ls-agent-model-opt{flex-shrink:0;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;border:1px solid #e5e5e5;background:#fff;color:#555;white-space:nowrap}
 .ls-agent-model-opt:hover{border-color:#ccc;background:#f9f9f9}
-.ls-agent-model-opt.active{border-color:#111;background:#111;color:#fff}
+.ls-agent-model-opt.active{border-color:#7c3aed;background:#7c3aed;color:#fff}
 .ls-agent-model-opt.img-opt.active{border-color:#2563eb;background:#2563eb;color:#fff}
 .ls-agent-model-opt.vid-opt.active{border-color:#7c3aed;background:#7c3aed;color:#fff}
 .ls-agent-cost-hint{font-size:11px;color:#bbb;margin-left:auto;white-space:nowrap;flex-shrink:0}
-.ls-agent-cost-hint b{color:#e53935;font-weight:600}
+.ls-agent-cost-hint b{color:#f59e0b;font-weight:600}
 .ls-agent-toggle{display:none}
 .ls-msg{display:flex;gap:10px;margin-bottom:20px;animation:lsMsgIn .3s ease}
 @keyframes lsMsgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
@@ -567,12 +567,12 @@ to{opacity:1;transform:translateY(0) scale(1)}}
 .ls-msg-avatar{width:28px;height:28px;border-radius:10px;flex-shrink:0;overflow:hidden}
 .ls-msg-ai .ls-msg-avatar img,.ls-msg-user .ls-msg-avatar img{width:100%;height:100%;object-fit:cover}
 .ls-msg-bubble{max-width:78%;padding:12px 16px;border-radius:16px;font-size:14px;line-height:1.75;word-break:break-word}
-.ls-msg-ai .ls-msg-bubble{background:#f5f5f5;border:none;border-top-left-radius:4px;color:#333;font-size:13px}
-.ls-msg-user .ls-msg-bubble{background:#111;color:#fff;border-top-right-radius:4px}
+.ls-msg-ai .ls-msg-bubble{background:#fff;border:1px solid #e8e8f0;border-top-left-radius:4px;color:#333;font-size:13px}
+.ls-msg-user .ls-msg-bubble{background:#e8e0f7;color:#1a1a2e;border-top-right-radius:4px}
 .ls-msg-bubble img{max-width:100%;border-radius:12px;margin-top:8px;cursor:pointer;transition:transform .2s}
 .ls-msg-bubble img:hover{transform:scale(1.01)}
 .ls-msg-bubble video{max-width:100%;border-radius:12px;margin-top:8px}
-.ls-msg-typing{display:flex;gap:5px;padding:12px 16px;background:#f5f5f5;border-radius:16px;border-top-left-radius:4px;align-items:center}
+.ls-msg-typing{display:flex;gap:5px;padding:12px 16px;background:#fff;border:1px solid #e8e8f0;border-radius:16px;border-top-left-radius:4px;align-items:center}
 .ls-msg-typing span{width:7px;height:7px;border-radius:50%;background:#bbb;animation:lsBounce .6s infinite alternate}
 .ls-msg-typing span:nth-child(2){animation-delay:.15s}
 .ls-msg-typing span:nth-child(3){animation-delay:.3s}
@@ -595,7 +595,7 @@ to{opacity:1;transform:translateY(0) scale(1)}}
 .ls-msg-actions{display:flex;gap:4px;margin-top:10px;opacity:0;transition:opacity .2s}
 .ls-msg:hover .ls-msg-actions{opacity:1}
 .ls-msg-act{width:28px;height:28px;border-radius:8px;border:none;background:transparent;color:#bbb;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .15s}
-.ls-msg-act:hover{background:#f0f0f0;color:#666}
+.ls-msg-act:hover{background:#f0eeff;color:#7c3aed}
 .ls-msg-act.liked{color:#3b82f6;background:#eff6ff}
 .ls-msg-act.disliked{color:#ef4444;background:#fef2f2}
 .ls-msg-more-menu{position:fixed;background:#fff;border:1px solid #eee;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:9999;display:none;min-width:120px;padding:4px}
@@ -6545,19 +6545,12 @@ function renderLuoshengChat(){
 
   var modelOpts='';
   var i,m;
-  for(i=0;i<textModels.length;i++){
-    m=textModels[i];
-    modelOpts+='<button class="ls-agent-model-opt'+(_lsModel===m.id&&_lsModelType==='text'?' active':'')+'" data-mid="'+m.id+'" data-mtype="text" title="'+m.name+'">'+m.name+'</button>';
-  }
-  modelOpts+='<span style="width:1px;height:20px;background:#e5e7eb;margin:0 2px;flex-shrink:0"></span>';
-  for(i=0;i<imgModels.length;i++){
-    m=imgModels[i];
-    modelOpts+='<button class="ls-agent-model-opt img-opt'+(_lsModel===m.id&&_lsModelType==='image'?' active':'')+'" data-mid="'+m.id+'" data-mtype="image" title="图片生成">'+m.name+'</button>';
-  }
-  modelOpts+='<span style="width:1px;height:20px;background:#e5e7eb;margin:0 2px;flex-shrink:0"></span>';
-  for(i=0;i<vidModels.length;i++){
-    m=vidModels[i];
-    modelOpts+='<button class="ls-agent-model-opt vid-opt'+(_lsModel===m.id&&_lsModelType==='video'?' active':'')+'" data-mid="'+m.id+'" data-mtype="video" title="视频生成">'+m.name+'</button>';
+  var currentModels=_lsModelType==='text'?textModels:_lsModelType==='image'?imgModels:vidModels;
+  var modelTypeLabel=_lsModelType==='text'?'对话模型':_lsModelType==='image'?'绘图模型':'视频模型';
+  modelOpts+='<span style="font-size:11px;color:#999;margin-right:6px;flex-shrink:0">'+modelTypeLabel+'</span>';
+  for(i=0;i<currentModels.length;i++){
+    m=currentModels[i];
+    modelOpts+='<button class="ls-agent-model-opt'+(_lsModel===m.id?' active':'')+ '" data-mid="'+m.id+'" data-mtype="'+_lsModelType+'" title="'+m.name+'">'+m.name+'</button>';
   }
 
   var typeLabel=_lsModelType==='text'?'文本对话':_lsModelType==='image'?'图片生成':'视频生成';
@@ -6580,7 +6573,7 @@ function renderLuoshengChat(){
       '</div>'+
     '</div>'+
     '<div class="ls-agent-modelbar" id="lsModelBar"><button class="ls-agent-toggle" id="lsModelToggle" title="收缩">\u25BC</button><div class="ls-agent-modelbar-inner" id="lsModelBarInner">'+modelOpts+
-      '</div><span class="ls-agent-cost-hint">'+typeLabel+' <b>'+cost+'次</b></span></div>'+
+      '</div><span class="ls-agent-cost-hint">'+typeLabel+' <b>'+cost+'</b> 圣点/次</span></div>'+
     '<div class="ls-agent-chat" id="lsChat"></div>'+
     '<div class="ls-agent-actions">'+
       '<button class="ls-agent-act" id="lsClearBtn">\ud83d\uddd1 清空对话</button>'+
@@ -6641,12 +6634,12 @@ function renderLuoshengChat(){
       '<div class="ls-welcome">'+
         '<div class="ls-welcome-icon">🤖</div>'+
         '<h4>有什么可以帮你的？</h4>'+
-        '<p>集成火山引擎'+MODEL_REGISTRY.length+'款大模型，支持文本对话、图片生成、视频创作。选择模型类型后开始对话，每次将消耗对应圣点。</p>'+
+        '<p>支持文本对话、图片生成、视频创作。点击上方功能标签切换模式。</p>'+
         '<div class="ls-welcome-chips">'+
           '<span class="ls-welcome-chip" data-q="帮我写一段品牌故事">📝 写品牌故事</span>'+
           '<span class="ls-welcome-chip" data-q="分析一下当前电商趋势">📊 电商趋势</span>'+
           '<span class="ls-welcome-chip" data-q="生成一只可爱的橘猫，水彩风格">🎨 生成图片</span>'+
-          '<span class="ls-welcome-chip" data-q="解释一下人工智能的未来">🧠 科技前沿</span>'+
+          '<span class="ls-welcome-chip" data-q="做一段10秒边牧大战金毛的搞笑视频">🧠 生成视频</span>'+
         '</div>'+
       '</div>';
     var chips=chat.querySelectorAll('.ls-welcome-chip');
@@ -6829,7 +6822,7 @@ async function lsSendMessage(){
         result='<img src="'+url+'" onclick="window.open(this.src)" alt="AI生成图片"><br><a href="'+url+'" download="lsjy_'+Date.now()+'.png" style="color:#4338ca;font-size:12px;font-weight:600">\ud83d\udcbe 下载图片</a>';
       }else{result='图片生成失败，请检查描述后重试。'}
     }else if(_lsModelType==='video'){
-      var taskId=await seedanceCreateTask([{type:'text',text:msg}],{model:_lsModel,ratio:'16:9',duration:5,watermark:false});
+      var taskId=await seedanceCreateTask([{type:'text',text:msg}],{model:_lsModel,ratio:'16:9',duration:10,watermark:false});
       var typingEl=document.getElementById('lsTyping');
       if(typingEl){
         var pEl=typingEl.querySelector('.ls-msg-typing');
@@ -6854,7 +6847,7 @@ async function lsSendMessage(){
         }
         if(videoContent&&videoContent.url){
           result='<video controls src="'+videoContent.url+'" style="max-width:100%;border-radius:8px"></video><br><a href="'+videoContent.url+'" download="lsjy_'+Date.now()+'.mp4" style="color:#7c3aed;font-size:12px;font-weight:600">\ud83d\udcbe 下载视频</a>';
-        }else{result='视频生成完成但未获取到视频地址。'}
+        }else{result='视频已生成但暂未返回有效地址，请稍后在火山方舟控制台查看，或尝试重新生成。'}
       }else{
         var errMsg=(videoResult&&videoResult.error)?videoResult.error.message:'请重试';
         if(errMsg.indexOf('has not activated')>-1){
