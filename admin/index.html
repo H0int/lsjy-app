@@ -19,67 +19,62 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --p:#00f0ff;--ph:#00c8d9;--pl:#80f8ff;--ps:rgba(0,240,255,.08);
-  --p2:#8b5cf6;--p2h:#7c3aed;--p2l:#c4b5fd;--p2s:rgba(139,92,246,.08);
-  --n:#ffffff;--b:#e2e8f0;--l:#e2e8f0;--bd:rgba(255,255,255,0.2);
-  --bg:#16213e;--bg2:#1a1a2e;--bg3:#0f3460;
-  --w:#f8fafc;--w2:#e2e8f0;
-  --err:#ef4444;--ok:#10b981;--warn:#f59e0b;--info:#3b82f6;
-  --sidebar:240px;--topbar:56px;
-  --f:'Inter',system-ui,-apple-system,'PingFang SC',sans-serif;
-  --shadow:0 1px 3px rgba(0,0,0,.3),0 1px 2px rgba(0,0,0,.2);
-  --shadow-lg:0 10px 25px rgba(0,0,0,.4);
-  --radius:12px;
-  --glass:rgba(255,255,255,0.1);--glass-b:rgba(255,255,255,0.2);
-  --glow:0 0 20px rgba(0,240,255,.15),0 0 60px rgba(139,92,246,.1);
-}
+  --p:#dc2626;--ph:#b91c1c;--pl:#fca5a5;--ps:rgba(220,38,38,.06);
+  --p2:#2563eb;--p2h:#1d4ed8;--p2l:#93c5fd;--p2s:rgba(37,99,235,.08);
+  --n:#1a1d37;--nd:#334155;--b:#64748b;--l:#475569;--bd:rgba(26,29,55,.1);
+  --bg:#eef2f7;--bg2:#f5f7fb;--bg3:#dbeafe;
+  --w:#1a1d37;--w2:rgba(26,29,55,.06);
+  --card:#ffffff;--card-hover:#f8fafc;
+  --glass:rgba(255,255,255,.82);--glass-b:rgba(26,29,55,.08);
+  --err:#dc2626;--ok:#10b981;--warn:#f59e0b;
+  --shadow:0 4px 12px rgba(26,29,55,.08);
 html{font-size:14px}
 /* === AI TOOLS === */
 .ai-spinner{display:inline-block;width:40px;height:40px;border:3px solid var(--bd);border-top-color:var(--p);border-radius:50%;animation:ai-spin .8s linear infinite}
 @keyframes ai-spin{to{transform:rotate(360deg)}}
 .ai-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;margin-bottom:24px}
-.ai-card{background:rgba(255,255,255,0.1);border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:all .2s;border:2px solid var(--bd);position:relative;overflow:hidden}
+.ai-card{background:rgba(26,29,55,0.06);border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:all .2s;border:2px solid var(--bd);position:relative;overflow:hidden}
 .ai-card:hover{border-color:var(--p);transform:translateY(-2px);box-shadow:var(--shadow-lg)}
 .ai-card.active{border-color:var(--p);background:var(--ps)}
 .ai-card-icon{font-size:36px;margin-bottom:10px}
-.ai-card-title{font-weight:700;font-size:14px;margin-bottom:4px;color:#ffffff}
+.ai-card-title{font-weight:700;font-size:14px;margin-bottom:4px;color:#1a1d37}
 .ai-card-desc{font-size:11px;color:var(--b)}
 .ai-card-badge{position:absolute;top:8px;right:8px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;background:var(--ps);color:var(--p)}
-.ai-panel{background:rgba(255,255,255,0.1);border-radius:12px;padding:24px;box-shadow:var(--shadow)}
-.ai-output{min-height:200px;padding:16px;background:#16213e;border-radius:10px;border:1px solid var(--bd);margin-top:16px;font-size:14px;line-height:1.8;white-space:pre-wrap;word-break:break-word}
+.ai-panel{background:rgba(26,29,55,0.06);border-radius:12px;padding:24px;box-shadow:var(--shadow)}
+.ai-output{min-height:200px;padding:16px;background:#eef2f7;border-radius:10px;border:1px solid var(--bd);margin-top:16px;font-size:14px;line-height:1.8;white-space:pre-wrap;word-break:break-word}
 .cw-types{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
-.cw-type{padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--bd);background:rgba(255,255,255,0.1);color:var(--b);transition:all .15s}
+.cw-type{padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--bd);background:rgba(26,29,55,0.06);color:var(--b);transition:all .15s}
 .cw-type:hover{border-color:var(--p);color:var(--p)}
 .cw-type.active{background:var(--p);color:var(--w);border-color:var(--p)}
 .ai-btn{width:100%;padding:12px;background:var(--p);color:var(--w);border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
 .ai-btn:hover{background:var(--ph)}
-.ai-back{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#16213e;border:1.5px solid var(--bd);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;color:var(--b);transition:all .15s;margin-bottom:16px}
+.ai-back{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#eef2f7;border:1.5px solid var(--bd);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;color:var(--b);transition:all .15s;margin-bottom:16px}
 .ai-back:hover{border-color:var(--p);color:var(--p)}
-body{font-family:var(--f);color:#ffffff;background:#16213e;line-height:1.6;overflow-x:hidden}
+body{font-family:var(--f);color:#1a1d37;background:var(--bg);line-height:1.6;overflow-x:hidden}
 a{color:var(--p);text-decoration:none}
 input,select,textarea,button{font-family:var(--f)}
 
-.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#00f0ff 0%,#7c6cf6 50%,#a78bfa 100%);padding:20px}
-.login-box{background:rgba(255,255,255,0.1);border-radius:20px;padding:40px 36px;width:100%;max-width:420px;box-shadow:var(--shadow-lg)}
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#dc2626 0%,#7c6cf6 50%,#a78bfa 100%);padding:20px}
+.login-box{background:rgba(26,29,55,0.06);border-radius:20px;padding:40px 36px;width:100%;max-width:420px;box-shadow:var(--shadow-lg)}
 .login-logo{text-align:center;margin-bottom:24px}
 .login-logo img{width:64px;height:64px;border-radius:50%;border:3px solid var(--pl);margin-bottom:12px}
-.login-logo h1{font-size:22px;font-weight:900;color:#ffffff}
+.login-logo h1{font-size:22px;font-weight:900;color:#1a1d37}
 .login-logo p{font-size:13px;color:var(--b);margin-top:4px}
 .login-box h2{font-size:18px;font-weight:700;margin-bottom:24px;text-align:center}
 .fg{margin-bottom:16px}
 .fl{display:block;font-size:12px;font-weight:600;color:var(--b);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
-.fi{width:100%;padding:11px 14px;border:1.5px solid var(--bd);border-radius:var(--radius);font-size:14px;color:#ffffff;background:rgba(255,255,255,0.1);outline:none;transition:all .2s}
+.fi{width:100%;padding:11px 14px;border:1.5px solid var(--bd);border-radius:var(--radius);font-size:14px;color:#1a1d37;background:rgba(26,29,55,0.06);outline:none;transition:all .2s}
 .fi:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(83,58,253,.12)}
 .btn-p{width:100%;padding:12px;background:var(--p);color:var(--w);border:none;border-radius:var(--radius);font-size:15px;font-weight:600;cursor:pointer;transition:all .2s;position:relative}
 .btn-p:hover{background:var(--ph)}
 .btn-p.loading{pointer-events:none;opacity:.7}
-.btn-p.loading::after{content:'';position:absolute;right:16px;top:50%;margin-top:-8px;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
+.btn-p.loading::after{content:'';position:absolute;right:16px;top:50%;margin-top:-8px;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#1a1d37;border-radius:50%;animation:spin .6s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 .app{display:none;height:100vh;overflow:hidden}
 .app.active{display:grid;grid-template-columns:var(--sidebar) 1fr;grid-template-rows:var(--topbar) 1fr}
 
-.sidebar{grid-row:1/-1;background:var(--n);color:var(--w);overflow-y:auto;display:flex;flex-direction:column;transition:transform .3s;z-index:200}
+.sidebar{grid-row:1/-1;background:#1a1d37;color:#ffffff;overflow-y:auto;display:flex;flex-direction:column;transition:transform .3s;z-index:200}
 .sb-header{padding:20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.14)}
 .sb-header img{width:40px;height:40px;border-radius:50%;border:2px solid rgba(255,255,255,.2)}
 .sb-header h2{font-size:15px;font-weight:700}
@@ -92,34 +87,34 @@ input,select,textarea,button{font-family:var(--f)}
 .sb-item i{font-size:16px;width:20px;text-align:center}
 .sb-footer{padding:16px 20px;border-top:1px solid rgba(255,255,255,.14);font-size:11px;opacity:.4;text-align:center}
 
-.topbar{background:rgba(255,255,255,0.1);border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;padding:0 24px;grid-column:2}
+.topbar{background:rgba(26,29,55,0.06);border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;padding:0 24px;grid-column:2}
 .tb-left{display:flex;align-items:center;gap:16px}
 .tb-left h3{font-size:16px;font-weight:700}
 .tb-right{display:flex;align-items:center;gap:12px}
 .tb-user{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--l)}
 .tb-avatar{width:32px;height:32px;border-radius:50%;background:var(--ps);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--p)}
-.tb-btn{padding:6px 14px;border:1.5px solid var(--bd);background:rgba(255,255,255,0.1);border-radius:8px;font-size:12px;font-weight:500;color:var(--b);cursor:pointer;transition:all .15s}
+.tb-btn{padding:6px 14px;border:1.5px solid var(--bd);background:rgba(26,29,55,0.06);border-radius:8px;font-size:12px;font-weight:500;color:var(--b);cursor:pointer;transition:all .15s}
 .tb-btn:hover{border-color:var(--p);color:var(--p)}
 .tb-btn.danger:hover{border-color:var(--err);color:var(--err)}
-.tb-toggle{display:none;padding:6px 10px;border:1.5px solid var(--bd);background:rgba(255,255,255,0.1);border-radius:8px;cursor:pointer;font-size:16px;color:var(--b)}
+.tb-toggle{display:none;padding:6px 10px;border:1.5px solid var(--bd);background:rgba(26,29,55,0.06);border-radius:8px;cursor:pointer;font-size:16px;color:var(--b)}
 
-.main{grid-column:2;overflow-y:auto;padding:24px;background:#16213e}
+.main{grid-column:2;overflow-y:auto;padding:24px;background:var(--bg)}
 
-.card{background:rgba(255,255,255,0.1);border-radius:12px;box-shadow:var(--shadow);margin-bottom:20px;overflow:hidden}
+.card{background:rgba(26,29,55,0.06);border-radius:12px;box-shadow:var(--shadow);margin-bottom:20px;overflow:hidden}
 .card-header{padding:16px 20px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
 .card-header h3{font-size:15px;font-weight:700}
 .card-body{padding:20px}
 
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:20px}
-.stat-card{background:rgba(255,255,255,0.1);border-radius:12px;box-shadow:var(--shadow);padding:20px;display:flex;align-items:center;gap:16px;transition:transform .15s}
+.stat-card{background:rgba(26,29,55,0.06);border-radius:12px;box-shadow:var(--shadow);padding:20px;display:flex;align-items:center;gap:16px;transition:transform .15s}
 .stat-card:hover{transform:translateY(-2px)}
-.stat-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;color:#fff}
+.stat-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;color:#1a1d37}
 .stat-info h4{font-size:24px;font-weight:900;line-height:1.2}
 .stat-info p{font-size:12px;color:var(--b);margin-top:2px}
 
 .table-wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse}
-th{background:#16213e;padding:10px 14px;text-align:left;font-size:12px;font-weight:600;color:var(--b);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--bd);white-space:nowrap}
+th{background:#eef2f7;padding:10px 14px;text-align:left;font-size:12px;font-weight:600;color:var(--b);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--bd);white-space:nowrap}
 td{padding:12px 14px;border-bottom:1px solid var(--bd);font-size:13px;vertical-align:middle}
 tr:hover td{background:var(--ps)}
 .badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600}
@@ -131,9 +126,9 @@ tr:hover td{background:var(--ps)}
 .badge-orange{background:#ffedd5;color:#9a3412}
 .badge-rose{background:#ffe4e6;color:#9f1239}
 .badge-amber{background:#fbbf24;color:#78350f;font-weight:700}
-.badge-gray{background:#0a0e17;color:#64748b}
+.badge-gray{background:#f0f4f8;color:#64748b}
 
-.act-btn{padding:5px 10px;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;margin-right:4px;color:#fff}
+.act-btn{padding:5px 10px;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;margin-right:4px;color:#1a1d37}
 .act-btn.edit{background:#3b82f6}
 .act-btn.del{background:#ef4444}
 .act-btn.view{background:#7c3aed}
@@ -141,22 +136,22 @@ tr:hover td{background:var(--ps)}
 .act-btn:hover{opacity:.8;transform:translateY(-1px)}
 .act-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
 
-.mod-tag{display:inline-block;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:600;color:#fff}
+.mod-tag{display:inline-block;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:600;color:#1a1d37}
 .empty{text-align:center;padding:60px 20px;color:var(--b)}
 .empty i{font-size:48px;margin-bottom:12px;display:block;color:var(--bd)}
 
-.toast{position:fixed;top:20px;right:20px;background:var(--n);color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;z-index:9999;opacity:0;transform:translateY(-10px);transition:all .3s;pointer-events:none;max-width:360px;box-shadow:var(--shadow-lg)}
+.toast{position:fixed;top:20px;right:20px;background:var(--n);color:#1a1d37;padding:12px 20px;border-radius:10px;font-size:13px;z-index:9999;opacity:0;transform:translateY(-10px);transition:all .3s;pointer-events:none;max-width:360px;box-shadow:var(--shadow-lg)}
 .toast.show{opacity:1;transform:translateY(0)}
 .toast.success{background:var(--ok)}.toast.error{background:var(--err)}.toast.warning{background:var(--warn)}
 
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:999;align-items:center;justify-content:center;padding:20px}
 .modal-bg.show{display:flex}
-.modal-box{background:rgba(255,255,255,0.1);border-radius:16px;padding:24px;width:100%;max-width:500px;max-height:80vh;overflow-y:auto;animation:mIn .2s ease}
+.modal-box{background:rgba(26,29,55,0.06);border-radius:16px;padding:24px;width:100%;max-width:500px;max-height:80vh;overflow-y:auto;animation:mIn .2s ease}
 @keyframes mIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
 .modal-box h3{font-size:17px;font-weight:700;margin-bottom:16px}
 .modal-actions{display:flex;gap:10px;margin-top:20px}
 .modal-actions button{flex:1;padding:10px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:var(--f)}
-.m-cancel{background:#16213e;color:#ffffff}.m-confirm{background:var(--p);color:var(--w)}
+.m-cancel{background:#eef2f7;color:#1a1d37}.m-confirm{background:var(--p);color:var(--w)}
 
 .mod-detail-card{border:1px solid var(--bd);border-radius:12px;padding:20px;margin-bottom:16px}
 .mod-detail-card h4{font-size:15px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px}
@@ -164,7 +159,7 @@ tr:hover td{background:var(--ps)}
 .svc-count{display:inline-flex;align-items:center;justify-content:center;background:var(--ps);color:var(--p);font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px}
 
 /* Filters */
-.filter-bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px;padding:12px;background:#16213e;border-radius:var(--radius)}
+.filter-bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px;padding:12px;background:#eef2f7;border-radius:var(--radius)}
 .filter-bar input,.filter-bar select{padding:8px 12px;border:1px solid var(--bd);border-radius:8px;font-size:13px;outline:none}
 .filter-bar input:focus,.filter-bar select:focus{border-color:var(--p)}
 .filter-bar input{flex:1;min-width:160px}
@@ -173,14 +168,14 @@ tr:hover td{background:var(--ps)}
 .pagination{display:flex;align-items:center;justify-content:space-between;padding:12px 0;flex-wrap:wrap;gap:8px}
 .pagination .pg-info{font-size:12px;color:var(--b)}
 .pagination .pg-btns{display:flex;gap:4px}
-.pg-btn{padding:6px 12px;border:1px solid var(--bd);background:rgba(255,255,255,0.1);border-radius:6px;font-size:12px;cursor:pointer;transition:all .15s;color:#ffffff}
+.pg-btn{padding:6px 12px;border:1px solid var(--bd);background:rgba(26,29,55,0.06);border-radius:6px;font-size:12px;cursor:pointer;transition:all .15s;color:#1a1d37}
 .pg-btn:hover{border-color:var(--p);color:var(--p)}
-.pg-btn.active{background:var(--p);color:#fff;border-color:var(--p)}
+.pg-btn.active{background:var(--p);color:#1a1d37;border-color:var(--p)}
 .pg-btn:disabled{opacity:.4;cursor:not-allowed}
 
 /* Status flow */
 .status-flow{display:flex;align-items:center;gap:4px;margin:8px 0}
-.status-step{display:flex;align-items:center;gap:4px;font-size:11px;padding:4px 8px;border-radius:6px;background:#16213e;color:var(--b)}
+.status-step{display:flex;align-items:center;gap:4px;font-size:11px;padding:4px 8px;border-radius:6px;background:#eef2f7;color:var(--b)}
 .status-step.done{background:#dcfce7;color:#166534}
 .status-step.current{background:#dbeafe;color:#1e40af;font-weight:600}
 .status-step.rejected{background:#fee2e2;color:#991b1b}
@@ -206,17 +201,17 @@ html{scrollbar-color:rgba(255,255,255,.18) rgba(255,255,255,.02)}
 ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border-radius:3px}
 ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.2)}
 
-.sidebar .sb-item:hover{background:rgba(0,240,255,.1)!important;color:#00f0ff!important}
-.sidebar .sb-item.active{background:rgba(0,240,255,.12)!important;color:#00f0ff!important;border-left:3px solid #00f0ff!important}
+.sidebar .sb-item:hover{background:rgba(220,38,38,.12)!important;color:#dc2626!important}
+.sidebar .sb-item.active{background:rgba(220,38,38,.15)!important;color:#dc2626!important;border-left:3px solid #dc2626!important}
 
 .card{backdrop-filter:blur(8px)!important;background:rgba(255,255,255,.04)!important;border:1px solid rgba(255,255,255,.14)!important;border-radius:12px!important;transition:all .3s ease!important}
-.card:hover{border-color:rgba(0,240,255,.15)!important;box-shadow:0 0 20px rgba(0,240,255,.08)!important}
+.card:hover{border-color:rgba(220,38,38,.15)!important;box-shadow:0 0 20px rgba(220,38,38,.08)!important}
 
 .stat-card{backdrop-filter:blur(8px);background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.14);border-radius:12px;transition:all .3s ease}
-.stat-card:hover{transform:translateY(-2px);box-shadow:0 0 20px rgba(0,240,255,.1)}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 0 20px rgba(220,38,38,.1)}
 
-.btn,.btn-primary{background:linear-gradient(135deg,rgba(0,240,255,.2),rgba(139,92,246,.2))!important;border:1px solid rgba(0,240,255,.2)!important;color:#fff!important;font-weight:600;transition:all .3s ease!important;cursor:pointer}
-.btn:hover,.btn-primary:hover{background:linear-gradient(135deg,rgba(0,240,255,.3),rgba(139,92,246,.3))!important;box-shadow:0 0 20px rgba(0,240,255,.15)!important;transform:translateY(-1px)}
+.btn,.btn-primary{background:linear-gradient(135deg,rgba(220,38,38,.2),rgba(139,92,246,.2))!important;border:1px solid rgba(220,38,38,.2)!important;color:#1a1d37!important;font-weight:600;transition:all .3s ease!important;cursor:pointer}
+.btn:hover,.btn-primary:hover{background:linear-gradient(135deg,rgba(220,38,38,.3),rgba(139,92,246,.3))!important;box-shadow:0 0 20px rgba(220,38,38,.15)!important;transform:translateY(-1px)}
 .btn:active{transform:scale(.98)!important}
 
 .btn-danger{background:rgba(239,68,68,.15)!important;border-color:rgba(239,68,68,.3)!important;color:#ef4444!important}
@@ -224,36 +219,36 @@ html{scrollbar-color:rgba(255,255,255,.18) rgba(255,255,255,.02)}
 
 .login-box{backdrop-filter:blur(16px)!important;background:rgba(255,255,255,.04)!important;border:1px solid rgba(255,255,255,.14)!important;border-radius:16px!important;box-shadow:0 25px 50px rgba(0,0,0,.5)!important}
 .login-box input{background:rgba(255,255,255,.05)!important;border:1px solid rgba(255,255,255,.18)!important;color:#f8fafc!important;border-radius:10px!important}
-.login-box input:focus{border-color:rgba(0,240,255,.3)!important;box-shadow:0 0 15px rgba(0,240,255,.1)!important;outline:none!important}
+.login-box input:focus{border-color:rgba(220,38,38,.3)!important;box-shadow:0 0 15px rgba(220,38,38,.1)!important;outline:none!important}
 
 .topbar{border-bottom:1px solid rgba(255,255,255,.06)!important}
 
 .table-wrap{border:1px solid rgba(255,255,255,.06)!important;border-radius:12px!important;overflow:hidden}
 table{border-collapse:collapse}
 th{background:rgba(255,255,255,.05)!important;color:#f8fafc!important;border-color:rgba(255,255,255,.06)!important}
-td{color:#cbd5e1!important;border-color:rgba(255,255,255,.04)!important}
+td{color:#64748b!important;border-color:rgba(255,255,255,.04)!important}
 
 .modal-overlay{background:rgba(0,0,0,.6)!important;backdrop-filter:blur(4px)}
 .modal-box{backdrop-filter:blur(16px)!important;background:rgba(15,20,30,.95)!important;border:1px solid rgba(255,255,255,.18)!important;border-radius:16px!important;box-shadow:0 25px 50px rgba(0,0,0,.5)!important}
 
 .ai-card{backdrop-filter:blur(8px);background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.14);border-radius:12px}
-.ai-card:hover{border-color:rgba(0,240,255,.2);box-shadow:0 0 20px rgba(0,240,255,.1);transform:translateY(-2px)}
-.ai-card.active{border-color:#00f0ff;background:rgba(0,240,255,.1)}
+.ai-card:hover{border-color:rgba(220,38,38,.2);box-shadow:0 0 20px rgba(220,38,38,.1);transform:translateY(-2px)}
+.ai-card.active{border-color:#dc2626;background:rgba(220,38,38,.1)}
 
 .filter-bar input,.filter-bar select{background:rgba(255,255,255,.05)!important;border:1px solid rgba(255,255,255,.18)!important;color:#f8fafc!important;border-radius:10px!important}
-.filter-bar input:focus,.filter-bar select:focus{border-color:rgba(0,240,255,.3)!important;outline:none!important}
+.filter-bar input:focus,.filter-bar select:focus{border-color:rgba(220,38,38,.3)!important;outline:none!important}
 
 /* 后端页面标题渐变 */
-.page-title,.topbar h3{background:linear-gradient(135deg,#00f0ff,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.page-title,.topbar h3{background:linear-gradient(135deg,#dc2626,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 
 /* 登录页标题 */
-.login-logo h1{background:linear-gradient(135deg,#00f0ff,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.login-logo h1{background:linear-gradient(135deg,#dc2626,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .login-logo .login-sub{color:rgba(255,255,255,.4)!important}
 
 /* 页面加载条 */
-.loader-bar{background:linear-gradient(90deg,#00f0ff,#8b5cf6)!important}
+.loader-bar{background:linear-gradient(90deg,#dc2626,#8b5cf6)!important}
 .loader-text{color:rgba(255,255,255,.5)!important}
-.loader-title{background:linear-gradient(135deg,#00f0ff,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.loader-title{background:linear-gradient(135deg,#dc2626,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 
 /* 后端浅色模式 */
 body.admin-light{--bg:#f1f5f9;--bg2:#e2e8f0;--bg3:#f8fafc;--n:#0d1b2a;--b:#64748b;--l:#334155;--bd:#e2e8f0;--w:#fff;--w2:#1e293b}
@@ -321,13 +316,13 @@ body.admin-light .modal-box{background:rgba(255,255,255,.95);border-color:rgba(0
 
 
 .visitor-bar-admin{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--b);padding:3px 10px;background:rgba(0,0,0,.04);border-radius:16px;margin-left:auto}.visitor-bar-admin .dot{width:5px;height:5px;border-radius:50%;background:#22c55e;animation:pulse 2s infinite}@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-.love-module{background:var(--card-bg,var(--card-bg,#fff));border-radius:16px;padding:28px;box-shadow:var(--shadow);text-align:center}.love-module h3{font-size:20px;font-weight:900;margin-bottom:8px;color:#ffffff}.love-module p{color:var(--b);font-size:13px;margin-bottom:20px}.love-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}.love-btn{padding:12px 28px;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;transition:transform .2s}.love-btn:hover{transform:translateY(-2px)}.love-btn.decline{background:#16213e;color:#ffffff}.love-btn.accept{background:linear-gradient(135deg,#ec4899,#f43f5e);color:#fff;box-shadow:0 4px 14px rgba(236,72,153,.3)}
-.love-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99998;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s}.love-modal-overlay.show{opacity:1;pointer-events:auto}.love-modal{background:var(--card-bg,#fff);border-radius:16px;padding:32px;max-width:400px;width:90%;text-align:center;transform:scale(.9);transition:transform .3s;color:#ffffff}.love-modal-overlay.show .love-modal{transform:scale(1)}.love-modal .modal-text{font-size:16px;line-height:1.8;margin-bottom:20px}
-.anni-section,.qrcode-section,.textbeautify-section,.page-assistant-section{background:var(--card-bg,#fff);border-radius:16px;padding:28px;box-shadow:var(--shadow)}.anni-section h3,.qrcode-section h3,.textbeautify-section h3,.page-assistant-section h3{font-size:18px;font-weight:900;margin-bottom:8px;color:#ffffff}.anni-section p,.qrcode-section p,.textbeautify-section p,.page-assistant-section p{color:var(--b);font-size:13px;margin-bottom:16px}
-.anni-input{padding:10px 14px;border:1.5px solid var(--bd);border-radius:10px;font-size:14px;outline:none;color:#ffffff;background:var(--card-bg)}.anni-result{font-size:48px;font-weight:900;color:#ec4899;margin-top:16px}
+.love-module{background:var(--card-bg,var(--card-bg,#fff));border-radius:16px;padding:28px;box-shadow:var(--shadow);text-align:center}.love-module h3{font-size:20px;font-weight:900;margin-bottom:8px;color:#1a1d37}.love-module p{color:var(--b);font-size:13px;margin-bottom:20px}.love-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}.love-btn{padding:12px 28px;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;transition:transform .2s}.love-btn:hover{transform:translateY(-2px)}.love-btn.decline{background:#eef2f7;color:#1a1d37}.love-btn.accept{background:linear-gradient(135deg,#ec4899,#f43f5e);color:#1a1d37;box-shadow:0 4px 14px rgba(236,72,153,.3)}
+.love-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99998;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s}.love-modal-overlay.show{opacity:1;pointer-events:auto}.love-modal{background:var(--card-bg,#fff);border-radius:16px;padding:32px;max-width:400px;width:90%;text-align:center;transform:scale(.9);transition:transform .3s;color:#1a1d37}.love-modal-overlay.show .love-modal{transform:scale(1)}.love-modal .modal-text{font-size:16px;line-height:1.8;margin-bottom:20px}
+.anni-section,.qrcode-section,.textbeautify-section,.page-assistant-section{background:var(--card-bg,#fff);border-radius:16px;padding:28px;box-shadow:var(--shadow)}.anni-section h3,.qrcode-section h3,.textbeautify-section h3,.page-assistant-section h3{font-size:18px;font-weight:900;margin-bottom:8px;color:#1a1d37}.anni-section p,.qrcode-section p,.textbeautify-section p,.page-assistant-section p{color:var(--b);font-size:13px;margin-bottom:16px}
+.anni-input{padding:10px 14px;border:1.5px solid var(--bd);border-radius:10px;font-size:14px;outline:none;color:#1a1d37;background:var(--card-bg)}.anni-result{font-size:48px;font-weight:900;color:#ec4899;margin-top:16px}
 .enhance-grid-admin{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:20px;padding:20px}
-.beautify-area{width:100%;min-height:100px;padding:12px;border:1.5px solid var(--bd);border-radius:10px;font-size:13px;resize:vertical;outline:none;font-family:inherit;line-height:1.8;color:#ffffff;background:var(--card-bg)}.beautify-output{background:#16213e;border-radius:10px;padding:14px;white-space:pre-wrap;line-height:2;font-size:13px;min-height:40px;margin-top:10px;border:1px solid var(--bd);color:#ffffff}
-.pa-chat{height:250px;overflow-y:auto;padding:14px;background:#16213e;border-radius:10px;margin-bottom:10px;font-size:13px;border:1px solid var(--bd)}.pa-msg{margin-bottom:10px;padding:8px 12px;border-radius:10px;max-width:85%}.pa-msg.user{background:var(--p);color:#fff;margin-left:auto;text-align:right}.pa-msg.bot{background:var(--card-bg);border:1px solid var(--bd);color:#ffffff}
+.beautify-area{width:100%;min-height:100px;padding:12px;border:1.5px solid var(--bd);border-radius:10px;font-size:13px;resize:vertical;outline:none;font-family:inherit;line-height:1.8;color:#1a1d37;background:var(--card-bg)}.beautify-output{background:#eef2f7;border-radius:10px;padding:14px;white-space:pre-wrap;line-height:2;font-size:13px;min-height:40px;margin-top:10px;border:1px solid var(--bd);color:#1a1d37}
+.pa-chat{height:250px;overflow-y:auto;padding:14px;background:#eef2f7;border-radius:10px;margin-bottom:10px;font-size:13px;border:1px solid var(--bd)}.pa-msg{margin-bottom:10px;padding:8px 12px;border-radius:10px;max-width:85%}.pa-msg.user{background:var(--p);color:#1a1d37;margin-left:auto;text-align:right}.pa-msg.bot{background:var(--card-bg);border:1px solid var(--bd);color:#1a1d37}
 </style>
 </head>
 <body>
@@ -344,7 +339,7 @@ body.admin-light .modal-box{background:rgba(255,255,255,.95);border-color:rgba(0
 <!-- ===== LOGIN ===== -->
 <div id="loginPage" class="login-wrap">
   <div class="login-box">
-    <div class="login-logo"><span style="font-size:11px;color:rgba(0,240,255,.6);display:block;margin-bottom:4px">V5.2</span>
+    <div class="login-logo"><span style="font-size:11px;color:rgba(220,38,38,.6);display:block;margin-bottom:4px">V5.2</span>
       <img src="logo.png" alt="Logo">
       <h1>罗圣纪元</h1>
       <p>后台管理系统</p>
@@ -454,7 +449,7 @@ const MODULES=[
 {id:'edu-school',name:'校企合作资源对接',desc:'职校、高校校企项目落地，实习就业资源联动。'},
 {id:'edu-side',name:'成人副业实训课',desc:'低成本副业实操教学，手把手落地变现项目。'}
 ]},
-{id:'campus',name:'伯雅校园',icon:'fa-solid fa-school',color:'#00f0ff',gradient:'linear-gradient(135deg,#00f0ff,#7c6cf6)',summary:'主打高校本地化创业项目，布局全国校园渠道',services:[
+{id:'campus',name:'伯雅校园',icon:'fa-solid fa-school',color:'#dc2626',gradient:'linear-gradient(135deg,#dc2626,#7c6cf6)',summary:'主打高校本地化创业项目，布局全国校园渠道',services:[
 {id:'campus-partner',name:'校区合伙人招商',desc:'全国各高校招募校区经理，标准化加盟扶持体系。'},
 {id:'campus-incubate',name:'大学生创业扶持',desc:'在校学生创业项目孵化、资源对接、启动指导。'},
 {id:'campus-local',name:'校园本地化项目落地',desc:'校园商超、校园服务、校园新媒体项目落地运营。'},
@@ -634,7 +629,7 @@ function renderDashboard(){
     <button class="pg-btn${_dashPeriod==='month'?' active':''}" onclick="_dashPeriod='month';renderDashboard()">近30天</button>
   </div>
   <div class="stats">
-    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#00f0ff,#7c6cf6)"><i class="fa-solid fa-cubes"></i></div><div class="stat-info"><h4>${MODULES.length}</h4><p>业务模块</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#dc2626,#7c6cf6)"><i class="fa-solid fa-cubes"></i></div><div class="stat-info"><h4>${MODULES.length}</h4><p>业务模块</p></div></div>
     <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#3b82f6,#60a5fa)"><i class="fa-solid fa-wrench"></i></div><div class="stat-info"><h4>${totalSvc}</h4><p>服务项目</p></div></div>
     <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#10b981,#34d399)"><i class="fa-solid fa-users"></i></div><div class="stat-info"><h4>${users.length}</h4><p>注册用户</p></div></div>
     <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#f59e0b,#fbbf24)"><i class="fa-solid fa-crosshairs"></i></div><div class="stat-info"><h4>${getLeads().length}</h4><p>线索总量</p></div></div>
@@ -646,8 +641,8 @@ function renderDashboard(){
       ${Object.entries(ROLE_MAP).map(([k,v])=>{const cnt=users.filter(u=>u.role===k).length;return`<div style="display:flex;align-items:center;gap:8px;font-size:13px"><span class="badge ${v.badge}" style="min-width:80px;text-align:center">${v.label}</span><div style="flex:1;height:8px;border-radius:4px;background:var(--bg2);overflow:hidden"><div style="height:100%;width:${users.length?Math.round(cnt/users.length*100):0}%;background:var(--p);border-radius:4px"></div></div><span style="font-weight:700;min-width:24px;text-align:right">${cnt}</span></div>`}).join('')}
     </div></div></div>
     <div class="card"><div class="card-header"><h3><i class="fa-solid fa-cubes" style="color:var(--p);margin-right:6px"></i>业务模块概览</h3></div><div class="card-body"><div style="display:flex;flex-direction:column;gap:10px">
-      ${MODULES.map(m=>`<div style="display:flex;align-items:center;gap:12px;padding:10px;border-radius:10px;background:#16213e">
-        <div style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;background:${m.gradient};color:#fff"><i class="${m.icon}"></i></div>
+      ${MODULES.map(m=>`<div style="display:flex;align-items:center;gap:12px;padding:10px;border-radius:10px;background:#eef2f7">
+        <div style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;background:${m.gradient};color:#1a1d37"><i class="${m.icon}"></i></div>
         <div style="flex:1"><div style="font-size:13px;font-weight:700">${m.name}</div><div style="font-size:11px;color:var(--b)">${m.services.length} 项服务</div></div>
         <div style="width:80px;height:6px;border-radius:3px;background:var(--bg2);overflow:hidden"><div style="height:100%;width:${Math.round(m.services.length/5*100)}%;background:${m.color};border-radius:3px"></div></div>
       </div>`).join('')}
@@ -691,7 +686,7 @@ function renderDashboard(){
     }
     var maxV=Math.max.apply(null,msgData.concat(userData))*1.2||10;
     // 坐标轴
-    ctx.strokeStyle='rgba(255,255,255,0.18)';ctx.lineWidth=1;
+    ctx.strokeStyle='rgba(26,29,55,0.12)';ctx.lineWidth=1;
     ctx.fillStyle='rgba(255,255,255,0.4)';ctx.font='11px sans-serif';
     for(var i=0;i<=4;i++){
       var y=pad.top+ch-(ch/4)*i;
@@ -703,9 +698,9 @@ function renderDashboard(){
       ctx.fillText(labels[i],x-12,h-10);
     }
     // 消息折线（电光蓝）
-    ctx.beginPath();ctx.strokeStyle='#00f0ff';ctx.lineWidth=2;
+    ctx.beginPath();ctx.strokeStyle='#dc2626';ctx.lineWidth=2;
     var grad=ctx.createLinearGradient(0,pad.top,0,pad.top+ch);
-    grad.addColorStop(0,'rgba(0,240,255,0.3)');grad.addColorStop(1,'rgba(0,240,255,0)');
+    grad.addColorStop(0,'rgba(220,38,38,0.3)');grad.addColorStop(1,'rgba(220,38,38,0)');
     for(var i=0;i<msgData.length;i++){
       var x=pad.left+(cw/(msgData.length-1))*i;
       var y=pad.top+ch-(msgData[i]/maxV)*ch;
@@ -719,8 +714,8 @@ function renderDashboard(){
     for(var i=0;i<msgData.length;i++){
       var x=pad.left+(cw/(msgData.length-1))*i;
       var y=pad.top+ch-(msgData[i]/maxV)*ch;
-      ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fillStyle='#00f0ff';ctx.fill();
-      ctx.beginPath();ctx.arc(x,y,2,0,Math.PI*2);ctx.fillStyle='#0a0e17';ctx.fill();
+      ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fillStyle='#dc2626';ctx.fill();
+      ctx.beginPath();ctx.arc(x,y,2,0,Math.PI*2);ctx.fillStyle='#f0f4f8';ctx.fill();
     }
     // 用户柱状图（紫色）
     var barW=cw/msgData.length*0.4;
@@ -734,7 +729,7 @@ function renderDashboard(){
       ctx.beginPath();ctx.roundRect(x,y,barW,bh,3);ctx.fill();
     }
     // 图例
-    ctx.fillStyle='#00f0ff';ctx.fillRect(w-140,8,12,3);
+    ctx.fillStyle='#dc2626';ctx.fillRect(w-140,8,12,3);
     ctx.fillStyle='rgba(255,255,255,0.5)';ctx.font='11px sans-serif';ctx.fillText('消息量',w-124,14);
     ctx.fillStyle='#8b5cf6';ctx.fillRect(w-70,8,12,3);
     ctx.fillStyle='rgba(255,255,255,0.5)';ctx.fillText('用户数',w-54,14);
@@ -774,7 +769,7 @@ function renderUsers(p){
   const pg=paginate(filtered,_uPage,10);
   document.getElementById('mainContent').innerHTML=`
   <div class="stats">
-    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#00f0ff,#7c6cf6)"><i class="fa-solid fa-users"></i></div><div class="stat-info"><h4>${users.length}</h4><p>总用户数</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#dc2626,#7c6cf6)"><i class="fa-solid fa-users"></i></div><div class="stat-info"><h4>${users.length}</h4><p>总用户数</p></div></div>
     <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#10b981,#34d399)"><i class="fa-solid fa-user-shield"></i></div><div class="stat-info"><h4>${users.filter(u=>['admin','super_admin','supreme_admin','boss'].includes(u.role)).length}</h4><p>管理员</p></div></div>
     <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#3b82f6,#60a5fa)"><i class="fa-solid fa-user"></i></div><div class="stat-info"><h4>${users.filter(u=>!['admin','super_admin','supreme_admin','boss'].includes(u.role)).length}</h4><p>普通用户</p></div></div>
   </div>
@@ -916,13 +911,13 @@ function viewMsg(idx){
     <div class="fg"><label class="fl">业务模块</label><div style="padding:8px 0">${c.module?`<span class="badge badge-purple">${c.module}</span>`:'未选择'}</div></div>
     <div class="fg"><label class="fl">状态</label><div style="padding:8px 0">${(() => {const st=c.status||'pending';const m={pending:'待处理',replied:'已回复',closed:'已关闭'};return`<span class="badge ${st==='pending'?'badge-yellow':st==='replied'?'badge-green':'badge-gray'}">${m[st]||'待处理'}</span>`})()}</div></div>
     ${c.reply?`<div class="fg"><label class="fl">回复内容</label><div style="font-size:14px;padding:12px;background:#dcfce7;border-radius:8px;line-height:1.8">${c.reply}</div></div>`:''}
-    <div class="fg"><label class="fl">留言内容</label><div style="font-size:14px;padding:12px;background:#16213e;border-radius:8px;line-height:1.8">${c.message||'-'}</div></div>
+    <div class="fg"><label class="fl">留言内容</label><div style="font-size:14px;padding:12px;background:#eef2f7;border-radius:8px;line-height:1.8">${c.message||'-'}</div></div>
     <div class="fg"><label class="fl">提交时间</label><div style="font-size:13px;color:var(--b);padding:8px 0">${fmtDate(c.time)}</div></div>
     <div class="modal-actions"><button class="m-cancel" onclick="closeModal()">关闭</button><button class="m-confirm" onclick="closeModal();replyMsg(${idx})"><i class="fa-solid fa-reply"></i> 回复</button></div>`)}
 function replyMsg(idx){
   const c=getContacts()[idx];if(!c)return;
   showMod(`<h3><i class="fa-solid fa-reply" style="color:var(--ok)"></i> 回复留言</h3>
-    <div style="padding:12px;background:#16213e;border-radius:8px;margin-bottom:16px"><div style="font-weight:600;font-size:13px">${maskName(c.name)}: </div><div style="font-size:13px;color:var(--b);margin-top:4px">${(c.message||'').substring(0,100)}</div></div>
+    <div style="padding:12px;background:#eef2f7;border-radius:8px;margin-bottom:16px"><div style="font-weight:600;font-size:13px">${maskName(c.name)}: </div><div style="font-size:13px;color:var(--b);margin-top:4px">${(c.message||'').substring(0,100)}</div></div>
     <div class="fg"><label class="fl">回复内容</label><textarea class="fi" id="msgReply" rows="3" placeholder="输入回复内容...">${c.reply||''}</textarea></div>
     <div class="fg"><label class="fl">标记状态</label><select class="fi" id="msgStatus"><option value="replied">已回复</option><option value="closed">已关闭</option><option value="pending">待处理</option></select></div>
     <div class="modal-actions"><button class="m-cancel" onclick="closeModal()">取消</button><button class="m-confirm" id="replyBtn" onclick="saveReply(${idx})">发送回复</button></div>`)}
@@ -992,7 +987,7 @@ function renderOrders(p){
     ${renderPagination(pg,'renderOrders')}
   </div></div>
   <div class="card"><div class="card-header"><h3><i class="fa-solid fa-bolt" style="color:#7c3aed;margin-right:6px"></i>算力余额一览</h3></div><div class="card-body">
-    <div class="table-wrap"><table><thead><tr style="background:#0a0e17;text-align:left"><th style="padding:10px 12px;font-size:13px">用户</th><th style="padding:10px 12px;font-size:13px">当前算力</th><th style="padding:10px 12px;font-size:13px">操作</th></tr></thead><tbody>
+    <div class="table-wrap"><table><thead><tr style="background:#f0f4f8;text-align:left"><th style="padding:10px 12px;font-size:13px">用户</th><th style="padding:10px 12px;font-size:13px">当前算力</th><th style="padding:10px 12px;font-size:13px">操作</th></tr></thead><tbody>
       ${getUsers().map(u=>{const credits=getAllCredits();const val=credits[u.username]||0;
         return`<tr style="border-bottom:1px solid #f1f5f9"><td style="padding:10px 12px;font-size:13px;font-weight:600">${u.username}</td><td style="padding:10px 12px;font-size:13px;font-weight:700;color:#7c3aed">${val.toLocaleString()}</td><td style="padding:10px 12px"><input id="manualCredit_${u.username}" type="number" min="0" placeholder="数量" style="width:80px;padding:4px 8px;border:1px solid #d1d5db;border-radius:4px"> <button class="act-btn ok" onclick="manualAddCredit('${u.username}')"><i class="fa-solid fa-plus"></i> 充值</button></td></tr>`}).join('')}
     </tbody></table></div>
@@ -1083,7 +1078,7 @@ function renderSettings(){
     </div></div>
   </div>
   <div class="card"><div class="card-header"><h3><i class="fa-solid fa-link" style="color:var(--info);margin-right:6px"></i>平台访问地址</h3></div><div class="card-body">
-    <div class="fg"><label class="fl">前台访问地址</label><div style="padding:10px;background:#16213e;border-radius:8px;font-size:13px;display:flex;align-items:center;justify-content:space-between"><a href="https://h0int.github.io/lsjy-app/" target="_blank">https://h0int.github.io/lsjy-app/</a><button class="tb-btn" onclick="navigator.clipboard.writeText('https://h0int.github.io/lsjy-app/');toast('已复制','success')"><i class="fa-solid fa-copy"></i> 复制</button></div></div>
+    <div class="fg"><label class="fl">前台访问地址</label><div style="padding:10px;background:#eef2f7;border-radius:8px;font-size:13px;display:flex;align-items:center;justify-content:space-between"><a href="https://h0int.github.io/lsjy-app/" target="_blank">https://h0int.github.io/lsjy-app/</a><button class="tb-btn" onclick="navigator.clipboard.writeText('https://h0int.github.io/lsjy-app/');toast('已复制','success')"><i class="fa-solid fa-copy"></i> 复制</button></div></div>
     <p style="font-size:12px;color:var(--b);margin-top:8px"><i class="fa-solid fa-info-circle"></i> 前台和后台共享 localStorage 数据，用户在前台注册的数据可在后台直接查看和管理。</p>
   </div></div>
   <div class="card"><div class="card-header"><h3><i class="fa-solid fa-clock-rotate-left" style="color:var(--ok);margin-right:6px"></i>登录日志 (最近10条)</h3></div><div class="card-body">
@@ -1174,7 +1169,7 @@ function openEditLead(idx){const leads=getLeads(),l=leads[idx];if(!l)return;show
   <div class="modal-actions"><button class="m-cancel" onclick="closeModal()">取消</button><button class="m-confirm" onclick="saveLead(${idx})">保存</button></div>`)}
 function saveLead(idx){const leads=getLeads(),l=leads[idx];l.type=document.getElementById('ldType').value;l.name=document.getElementById('ldName').value.trim();l.phone=document.getElementById('ldPhone').value.trim();l.source=document.getElementById('ldSource').value.trim();l.assignee=document.getElementById('ldAssign').value.trim();l.status=document.getElementById('ldStatus').value;l.note=document.getElementById('ldNote').value.trim();saveLeads(leads);addOpLog('编辑线索',l.name);closeModal();renderLeads();toast('线索已更新','success')}
 function viewLead(idx){const l=getLeads()[idx];if(!l)return;const sl={pending:'待跟进',following:'跟进中',done:'已完成',closed:'已关闭'};showMod(`<h3><i class="fa-solid fa-eye" style="color:var(--info)"></i> 线索详情</h3>
-  <div style="padding:16px;background:#16213e;border-radius:10px"><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px"><div><span style="color:var(--b)">类型：</span><b>${l.type}</b></div><div><span style="color:var(--b)">状态：</span><span class="badge badge-blue">${sl[l.status]||l.status}</span></div><div><span style="color:var(--b)">名称：</span><b>${l.name}</b></div><div><span style="color:var(--b)">手机号：</span>${l.phone||'-'}</div><div><span style="color:var(--b)">来源：</span>${l.source||'-'}</div><div><span style="color:var(--b)">负责人：</span>${l.assignee||'-'}</div><div><span style="color:var(--b)">时间：</span>${l.time||'-'}</div></div>${l.note?`<div style="margin-top:12px;padding:12px;background:rgba(255,255,255,0.1);border-radius:8px;font-size:13px"><span style="color:var(--b)">备注：</span>${l.note}</div>`:''}</div>
+  <div style="padding:16px;background:#eef2f7;border-radius:10px"><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px"><div><span style="color:var(--b)">类型：</span><b>${l.type}</b></div><div><span style="color:var(--b)">状态：</span><span class="badge badge-blue">${sl[l.status]||l.status}</span></div><div><span style="color:var(--b)">名称：</span><b>${l.name}</b></div><div><span style="color:var(--b)">手机号：</span>${l.phone||'-'}</div><div><span style="color:var(--b)">来源：</span>${l.source||'-'}</div><div><span style="color:var(--b)">负责人：</span>${l.assignee||'-'}</div><div><span style="color:var(--b)">时间：</span>${l.time||'-'}</div></div>${l.note?`<div style="margin-top:12px;padding:12px;background:rgba(26,29,55,0.06);border-radius:8px;font-size:13px"><span style="color:var(--b)">备注：</span>${l.note}</div>`:''}</div>
   <div class="modal-actions"><button class="m-cancel" onclick="closeModal()">关闭</button></div>`)}
 function delLead(idx){const leads=getLeads(),l=leads[idx];showMod(`<h3><i class="fa-solid fa-triangle-exclamation" style="color:var(--err)"></i> 删除线索</h3><p>确定删除 <b>${l.name}</b>？</p><div class="modal-actions"><button class="m-cancel" onclick="closeModal()">取消</button><button class="m-confirm" style="background:var(--err)" onclick="cfmDelLead(${idx})">删除</button></div>`)}
 function cfmDelLead(idx){const leads=getLeads(),l=leads.splice(idx,1)[0];softDelete('lead',l);saveLeads(leads);addOpLog('删除线索',l.name);closeModal();renderLeads();toast('线索已删除','success')}
@@ -1191,7 +1186,7 @@ function renderContent(){
       ${f.type==='textarea'?`<textarea class="fi" id="ct_${f.key}" rows="3">${cd[f.key]||''}</textarea>`:`<input class="fi" id="ct_${f.key}" value="${cd[f.key]||''}">`}
     </div>`).join('')}
     </div>
-    <div style="margin-top:20px;display:flex;gap:10px"><button class="btn-p" style="padding:10px 24px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;background:var(--p);color:#fff" onclick="saveContent()"><i class="fa-solid fa-save"></i> 保存修改</button><button class="btn-p" style="padding:10px 24px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;background:var(--ok);color:#fff" onclick="resetContent()"><i class="fa-solid fa-rotate-left"></i> 恢复默认</button></div>
+    <div style="margin-top:20px;display:flex;gap:10px"><button class="btn-p" style="padding:10px 24px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;background:var(--p);color:#1a1d37" onclick="saveContent()"><i class="fa-solid fa-save"></i> 保存修改</button><button class="btn-p" style="padding:10px 24px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;background:var(--ok);color:#1a1d37" onclick="resetContent()"><i class="fa-solid fa-rotate-left"></i> 恢复默认</button></div>
   </div></div>`;
 }
 function saveContent(){const cd=getContentData();['hero_title','hero_subtitle','hero_desc','company_name','company_addr','company_phone','company_email','icp','footer_desc'].forEach(k=>{const el=document.getElementById('ct_'+k);if(el)cd[k]=el.value.trim()});saveContentData(cd);addOpLog('修改内容','更新网站内容配置');toast('内容已保存','success')}
@@ -1417,7 +1412,7 @@ function renderAIHub(){
   main.innerHTML=`
   <div style="margin-bottom:20px">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
-      <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#00f0ff,#7c6cf6);display:flex;align-items:center;justify-content:center;font-size:24px">🤖</div>
+      <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#dc2626,#7c6cf6);display:flex;align-items:center;justify-content:center;font-size:24px">🤖</div>
       <div><h3 style="font-size:18px;font-weight:900">AI创作中心</h3><p style="font-size:12px;color:var(--b)">11款AI工具，接入豆包大模型(doubao-seed-2.0-pro)ns大模型，真正的AI驱动创作</p></div>
     </div>
   </div>
@@ -1563,7 +1558,7 @@ async function aiDoDigital(){
   const opt=await aiGenerateText(`将以下文案优化为口播视频脚本，分段标注停顿和语气：\n"${script}"`,'你是专业口播脚本编剧。');
   const fs=opt||script;
   const avatar=await aiGenerateImage('professional business person portrait, clean background, studio lighting, 4k',256,256);
-  out.innerHTML=`<div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:16px"><div style="width:80px;height:80px;border-radius:50%;overflow:hidden;border:3px solid var(--p);flex-shrink:0"><img src="${avatar}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'"></div><div style="flex:1"><div style="font-weight:700;font-size:15px;margin-bottom:4px">数字人口播视频</div><div style="font-size:12px;color:var(--b)">AI已优化口播脚本 + 生成数字人形象</div><span style="display:inline-block;margin-top:6px" class="badge badge-green">已完成</span></div></div><div style="background:#16213e;border-radius:10px;padding:16px;border:1px solid var(--bd);margin-bottom:12px"><div style="font-weight:600;font-size:13px;margin-bottom:8px">📋 口播脚本（AI优化版）</div><div style="font-size:14px;line-height:2;white-space:pre-wrap">${fs.replace(/</g,'&lt;')}</div></div><div style="display:flex;gap:8px"><button class="ai-back" onclick="navigator.clipboard.writeText(document.querySelector('#dhOutput pre,\x23dhOutput div div:last-child div:last-child').innerText);toast('已复制','success')" style="margin:0">📋 复制脚本</button></div>`;
+  out.innerHTML=`<div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:16px"><div style="width:80px;height:80px;border-radius:50%;overflow:hidden;border:3px solid var(--p);flex-shrink:0"><img src="${avatar}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'"></div><div style="flex:1"><div style="font-weight:700;font-size:15px;margin-bottom:4px">数字人口播视频</div><div style="font-size:12px;color:var(--b)">AI已优化口播脚本 + 生成数字人形象</div><span style="display:inline-block;margin-top:6px" class="badge badge-green">已完成</span></div></div><div style="background:#eef2f7;border-radius:10px;padding:16px;border:1px solid var(--bd);margin-bottom:12px"><div style="font-weight:600;font-size:13px;margin-bottom:8px">📋 口播脚本（AI优化版）</div><div style="font-size:14px;line-height:2;white-space:pre-wrap">${fs.replace(/</g,'&lt;')}</div></div><div style="display:flex;gap:8px"><button class="ai-back" onclick="navigator.clipboard.writeText(document.querySelector('#dhOutput pre,\x23dhOutput div div:last-child div:last-child').innerText);toast('已复制','success')" style="margin:0">📋 复制脚本</button></div>`;
   toast('数字人视频生成完成！','success');
 }
 
@@ -1601,7 +1596,7 @@ async function aiDoVoice(){
         u.onend=()=>{};
         speechSynthesis.speak(u);
       }
-      out.innerHTML=`<div style="font-weight:700;color:var(--ok);margin-bottom:12px">✅ AI配音方案生成完成</div><div style="background:var(--ps);border-radius:12px;padding:16px;margin-bottom:12px"><div style="font-weight:700;margin-bottom:8px;color:var(--p)">🤖 豆包AI配音方案</div><div style="font-size:13px;line-height:1.8;white-space:pre-wrap">${result}</div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="ai-back" onclick="aiDoVoice()" style="margin:0">🔄 重新生成</button><button class="ai-back" style="margin:0;background:var(--ok);color:#fff" onclick="navigator.clipboard.writeText(this.previousElementSibling.previousElementSibling.textContent)">📋 复制方案</button></div>`;
+      out.innerHTML=`<div style="font-weight:700;color:var(--ok);margin-bottom:12px">✅ AI配音方案生成完成</div><div style="background:var(--ps);border-radius:12px;padding:16px;margin-bottom:12px"><div style="font-weight:700;margin-bottom:8px;color:var(--p)">🤖 豆包AI配音方案</div><div style="font-size:13px;line-height:1.8;white-space:pre-wrap">${result}</div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="ai-back" onclick="aiDoVoice()" style="margin:0">🔄 重新生成</button><button class="ai-back" style="margin:0;background:var(--ok);color:#1a1d37" onclick="navigator.clipboard.writeText(this.previousElementSibling.previousElementSibling.textContent)">📋 复制方案</button></div>`;
       toast('AI配音方案生成完成！','success');
     }else{throw new Error('AI服务暂时不可用，请稍后重试或检查网络连接')}
   }catch(e){out.innerHTML=`<div style="padding:16px;background:#fee2e2;border-radius:12px"><div style="font-weight:700;color:#991b1b">✗ AI配音失败</div><div style="font-size:13px;margin-top:8px">${e.message||'请稍后重试'}</div></div>`}
@@ -1689,7 +1684,7 @@ function renderAIAudio(){
     <div class="ai-output" id="audioResult">上传音频后选择处理模式开始...</div>
   </div>`;
 }
-function aiPreviewAudio(inp){const f=inp.files[0];if(!f)return;document.getElementById('audioPreview').innerHTML=`<div style="padding:12px;background:#16213e;border-radius:10px;display:flex;align-items:center;gap:10px"><span style="font-size:24px">🎵</span><div><p style="font-size:13px;font-weight:600">${f.name}</p><p style="font-size:11px;color:var(--b)">${(f.size/1024/1024).toFixed(1)}MB</p></div></div>`}
+function aiPreviewAudio(inp){const f=inp.files[0];if(!f)return;document.getElementById('audioPreview').innerHTML=`<div style="padding:12px;background:#eef2f7;border-radius:10px;display:flex;align-items:center;gap:10px"><span style="font-size:24px">🎵</span><div><p style="font-size:13px;font-weight:600">${f.name}</p><p style="font-size:11px;color:var(--b)">${(f.size/1024/1024).toFixed(1)}MB</p></div></div>`}
 async function aiDoAudio(){
   const f=document.getElementById('audioFile');const file=f?f.files[0]:null;
   if(!file)return toast('请先上传音频','error');
@@ -1701,7 +1696,7 @@ async function aiDoAudio(){
     const result=await aiGenerateText(prompt,'你是专业音频工程师，精通音频后期处理、降噪、混响、变速变调等技术。');
     if(result){
       const dataUrl=URL.createObjectURL(file);
-      out.innerHTML=`<div style="font-weight:700;color:var(--ok);margin-bottom:12px">✅ AI音频分析完成 <span class="badge badge-green">${modes[_audioMode]}</span></div><div style="background:#16213e;border-radius:10px;padding:16px;border:1px solid var(--bd);margin-bottom:12px"><audio controls style="width:100%" src="${dataUrl}"></audio></div><div style="background:var(--ps);border-radius:12px;padding:16px;margin-bottom:12px"><div style="font-weight:700;margin-bottom:8px;color:var(--p)">🤖 豆包AI分析报告</div><div style="font-size:13px;line-height:1.8;white-space:pre-wrap">${result}</div></div><div style="display:flex;gap:8px"><button class="ai-back" onclick="aiDoAudio()" style="margin:0">🔄 重新分析</button></div>`;
+      out.innerHTML=`<div style="font-weight:700;color:var(--ok);margin-bottom:12px">✅ AI音频分析完成 <span class="badge badge-green">${modes[_audioMode]}</span></div><div style="background:#eef2f7;border-radius:10px;padding:16px;border:1px solid var(--bd);margin-bottom:12px"><audio controls style="width:100%" src="${dataUrl}"></audio></div><div style="background:var(--ps);border-radius:12px;padding:16px;margin-bottom:12px"><div style="font-weight:700;margin-bottom:8px;color:var(--p)">🤖 豆包AI分析报告</div><div style="font-size:13px;line-height:1.8;white-space:pre-wrap">${result}</div></div><div style="display:flex;gap:8px"><button class="ai-back" onclick="aiDoAudio()" style="margin:0">🔄 重新分析</button></div>`;
       toast('AI音频分析完成！','success');
     }else{throw new Error('AI服务暂时不可用，请稍后重试或检查网络连接')}
   }catch(e){out.innerHTML=`<div style="padding:16px;background:#fee2e2;border-radius:12px"><div style="font-weight:700;color:#991b1b">✗ AI分析失败</div><div style="font-size:13px;margin-top:8px">${e.message||'请稍后重试'}</div></div>`}
@@ -1733,7 +1728,7 @@ async function aiDoAccomp(){
     const prompt='请为一段视频/内容生成专业的编曲方案：\n要求BPM：'+bpm+'\n时长：'+dur+'秒\n\n请输出完整的编曲方案，包括：\n1. 推荐的和弦进行（如 I-V-vi-IV）\n2. 各乐器编排建议（和弦/贝斯/鼓组/旋律乐器）\n3. 情绪起伏设计（前奏/主歌/副歌/尾奏）\n4. 音色推荐和效果器建议\n5. 整体风格定位和参考曲目';
     const result=await aiGenerateText(prompt,'你是专业音乐制作人，精通编曲、和声学和音乐理论。');
     if(result){
-      out.innerHTML=`<div style="font-weight:700;color:var(--ok);margin-bottom:12px">✅ AI编曲方案完成 <span class="badge badge-green">${bpm}BPM · ${dur}秒</span></div><div style="background:var(--ps);border-radius:12px;padding:16px;margin-bottom:12px"><div style="font-weight:700;margin-bottom:8px;color:var(--p)">🤖 豆包AI编曲方案</div><div style="font-size:13px;line-height:1.8;white-space:pre-wrap">${result}</div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="ai-back" onclick="aiDoAccomp()" style="margin:0">🔄 重新生成</button><button class="ai-back" style="margin:0;background:var(--ok);color:#fff" onclick="navigator.clipboard.writeText(this.previousElementSibling.previousElementSibling.textContent)">📋 复制方案</button></div>`;
+      out.innerHTML=`<div style="font-weight:700;color:var(--ok);margin-bottom:12px">✅ AI编曲方案完成 <span class="badge badge-green">${bpm}BPM · ${dur}秒</span></div><div style="background:var(--ps);border-radius:12px;padding:16px;margin-bottom:12px"><div style="font-weight:700;margin-bottom:8px;color:var(--p)">🤖 豆包AI编曲方案</div><div style="font-size:13px;line-height:1.8;white-space:pre-wrap">${result}</div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="ai-back" onclick="aiDoAccomp()" style="margin:0">🔄 重新生成</button><button class="ai-back" style="margin:0;background:var(--ok);color:#1a1d37" onclick="navigator.clipboard.writeText(this.previousElementSibling.previousElementSibling.textContent)">📋 复制方案</button></div>`;
       toast('AI编曲方案生成完成！','success');
     }else{throw new Error('AI服务暂时不可用，请稍后重试或检查网络连接')}
   }catch(e){out.innerHTML=`<div style="padding:16px;background:#fee2e2;border-radius:12px"><div style="font-weight:700;color:#991b1b">✗ AI编曲失败</div><div style="font-size:13px;margin-top:8px">${e.message||'请稍后重试'}</div></div>`}
@@ -1799,7 +1794,7 @@ function renderRedeemCodes(p){
 
   document.getElementById('mainContent').innerHTML=`
   <div class="stats">
-    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#00f0ff,#7c6cf6)"><i class="fa-solid fa-ticket"></i></div><div class="stat-info"><h4>${allCodes.length}</h4><p>卡密总数</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#dc2626,#7c6cf6)"><i class="fa-solid fa-ticket"></i></div><div class="stat-info"><h4>${allCodes.length}</h4><p>卡密总数</p></div></div>
     <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#3b82f6,#60a5fa)"><i class="fa-solid fa-check-circle"></i></div><div class="stat-info"><h4>${unused}</h4><p>未使用</p></div></div>
     <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#22c55e,#34d399)"><i class="fa-solid fa-circle-check"></i></div><div class="stat-info"><h4>${used}</h4><p>已兑换</p></div></div>
     <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#f59e0b,#fbbf24)"><i class="fa-solid fa-bolt"></i></div><div class="stat-info"><h4>${totalCredits.toLocaleString()}</h4><p>待兑换算力</p></div></div>
@@ -1901,7 +1896,7 @@ function batchGenCodes(){
     <div style="display:flex;gap:8px;margin-bottom:8px">
       <button class="act-btn ok" onclick="navigator.clipboard.writeText(document.getElementById('codeListArea').value);toast('已复制全部卡密','success')"><i class="fa-solid fa-copy"></i> 复制全部</button>
     </div>
-    <textarea id="codeListArea" rows="${Math.min(codes.length+1,10)}" style="width:100%;padding:10px;border:1px solid var(--bd);border-radius:8px;font-family:monospace;font-size:12px;background:#16213e" readonly>${codeList}</textarea>`;
+    <textarea id="codeListArea" rows="${Math.min(codes.length+1,10)}" style="width:100%;padding:10px;border:1px solid var(--bd);border-radius:8px;font-family:monospace;font-size:12px;background:#eef2f7" readonly>${codeList}</textarea>`;
   addOpLog('批量生成卡密',packName+' x'+codes.length);
   toast('成功生成 '+codes.length+' 个卡密','success');
   renderRedeemCodes();
@@ -1950,14 +1945,14 @@ function renderCustomers(){
     <div style="display:flex;gap:8px">
       <button class="act-btn ok" onclick="adminAddCredits()"><i class="fa-solid fa-bolt"></i> 充值算力</button>
       <button class="act-btn" onclick="adminCreateOrder()"><i class="fa-solid fa-receipt"></i> 创建订单</button>
-      <button class="act-btn" style="background:var(--warn);color:#fff" onclick="adminGenRedeemCode()"><i class="fa-solid fa-ticket"></i> 生成卡密</button>
+      <button class="act-btn" style="background:var(--warn);color:#1a1d37" onclick="adminGenRedeemCode()"><i class="fa-solid fa-ticket"></i> 生成卡密</button>
     </div>
   </div><div class="card-body" id="custListBody"></div></div>
   <div class="card"><div class="card-header"><h3><i class="fa-solid fa-robot" style="color:var(--p);margin-right:6px"></i>AI任务记录</h3>
     <button class="act-btn" onclick="renderCustomers()"><i class="fa-solid fa-refresh"></i> 刷新</button>
   </div><div class="card-body">
     ${tasks.length?`<div class="table-wrap"><table><tr><th>任务ID</th><th>工具</th><th>状态</th><th>创建时间</th><th>操作</th></tr>
-      ${tasks.slice(0,20).map(t=>{const sm={pending:'<span class="badge badge-yellow">排队中</span>',processing:'<span class="badge badge-blue">生成中</span>',completed:'<span class="badge badge-green">已完成</span>',failed:'<span class="badge" style="background:#fef2f2;color:var(--err)">失败</span>'};return`<tr><td style="font-size:11px;font-family:monospace">${t.id}</td><td>${t.toolName||'-'}</td><td>${sm[t.status]||t.status}</td><td style="color:var(--b)">${fmtDate(t.created)}</td><td>${t.status==='completed'?'<button class="act-btn ok btn-sm" onclick="viewTaskResult(\''+t.id+'\')"><i class="fa-solid fa-eye"></i></button>':''}${t.status==='failed'?'<button class="act-btn btn-sm" style="background:var(--err);color:#fff" onclick="deleteTask(\''+t.id+'\')"><i class="fa-solid fa-trash"></i></button>':''}</td></tr>`}).join('')}
+      ${tasks.slice(0,20).map(t=>{const sm={pending:'<span class="badge badge-yellow">排队中</span>',processing:'<span class="badge badge-blue">生成中</span>',completed:'<span class="badge badge-green">已完成</span>',failed:'<span class="badge" style="background:#fef2f2;color:var(--err)">失败</span>'};return`<tr><td style="font-size:11px;font-family:monospace">${t.id}</td><td>${t.toolName||'-'}</td><td>${sm[t.status]||t.status}</td><td style="color:var(--b)">${fmtDate(t.created)}</td><td>${t.status==='completed'?'<button class="act-btn ok btn-sm" onclick="viewTaskResult(\''+t.id+'\')"><i class="fa-solid fa-eye"></i></button>':''}${t.status==='failed'?'<button class="act-btn btn-sm" style="background:var(--err);color:#1a1d37" onclick="deleteTask(\''+t.id+'\')"><i class="fa-solid fa-trash"></i></button>':''}</td></tr>`}).join('')}
     </table></div>`:'<div class="empty"><i class="fa-solid fa-robot"></i><p>暂无AI任务</p></div>'}
   </div></div>`;
   renderCustList();
@@ -1977,8 +1972,8 @@ function renderCustList(){
       <td style="font-weight:600">${u.username}</td><td>${maskName(u.nickname)}</td><td>${maskPhone(u.phone)}</td>
       <td style="color:var(--b)">${fmtDate(u.created)}</td><td><span class="badge badge-blue">${uo.length}</span></td>
       <td><button class="act-btn ok btn-sm" onclick="viewCustDetail('${u.username}')"><i class="fa-solid fa-eye"></i> 详情</button>
-        <button class="act-btn btn-sm" style="background:var(--warn);color:#fff" onclick="adminCustAddCredits('${u.username}')"><i class="fa-solid fa-bolt"></i></button>
-        <button class="act-btn btn-sm" style="background:var(--err);color:#fff" onclick="adminDelUser('${u.username}')"><i class="fa-solid fa-trash"></i></button></td>
+        <button class="act-btn btn-sm" style="background:var(--warn);color:#1a1d37" onclick="adminCustAddCredits('${u.username}')"><i class="fa-solid fa-bolt"></i></button>
+        <button class="act-btn btn-sm" style="background:var(--err);color:#1a1d37" onclick="adminDelUser('${u.username}')"><i class="fa-solid fa-trash"></i></button></td>
     </tr>`}).join('')}
   </table></div>`;
 }
@@ -2104,7 +2099,7 @@ function viewTaskResult(taskId){
   showMod(`<h3><i class="fa-solid fa-robot" style="color:var(--p);margin-right:6px"></i>${t.toolName||'AI任务'}</h3>
     <div style="margin-top:16px;font-size:13px"><div><b>状态:</b> ${t.status}</div><div><b>时间:</b> ${fmtDate(t.created)}</div></div>
     ${t.type==='image'&&t.result?`<div style="margin-top:12px"><img src="${t.result}" style="max-width:100%;border-radius:8px" alt="AI生成结果"></div>`:''}
-    ${t.type==='text'&&t.result?`<div style="margin-top:12px;padding:12px;background:#16213e;border-radius:8px;white-space:pre-wrap;max-height:400px;overflow-y:auto;font-size:13px">${t.result}</div>`:''}
+    ${t.type==='text'&&t.result?`<div style="margin-top:12px;padding:12px;background:#eef2f7;border-radius:8px;white-space:pre-wrap;max-height:400px;overflow-y:auto;font-size:13px">${t.result}</div>`:''}
     <div class="modal-actions"><button class="m-cancel" onclick="closeModal()">关闭</button></div>`);
 }
 function deleteTask(taskId){
@@ -2173,7 +2168,7 @@ function renderEliteBillingPage(){
   document.getElementById('mainContent').innerHTML=`
   <div class="card"><div class="card-header"><h3>商业精英版计费管理</h3></div><div class="card-body">
     <div style="padding:16px;background:var(--ps);border-radius:12px;margin-bottom:20px"><p style="font-size:13px;color:var(--p);font-weight:600">当前套餐: <b>${team.plan||'basic'}</b> | 下次续费: ${team.nextBilling?new Date(team.nextBilling).toLocaleDateString():'未设置'}</p></div>
-    <div class="ai-grid">${plans.map(function(p){return '<div class="ai-card" style="text-align:left"><div class="ai-card-badge" style="background:'+(team.plan===p.id?'var(--ok)':'var(--ps)')+'color:'+(team.plan===p.id?'#fff':'var(--p)')+'">' +(team.plan===p.id?'\u5F53\u524D':'-')+'</div><div style="font-size:20px;font-weight:800;color:#ffffff">' +(typeof p.price==='number'?'\u00A5':'')+p.price+(typeof p.price==='number'?'':'')+'</div><div style="font-size:12px;color:var(--b)">' +p.period+'</div><div style="margin-top:12px;font-size:12px;color:var(--l)"><div>'+p.accounts+' 子账号</div><div>'+p.credits+' 算力</div></div></div>'}).join('')}</div>
+    <div class="ai-grid">${plans.map(function(p){return '<div class="ai-card" style="text-align:left"><div class="ai-card-badge" style="background:'+(team.plan===p.id?'var(--ok)':'var(--ps)')+'color:'+(team.plan===p.id?'#fff':'var(--p)')+'">' +(team.plan===p.id?'\u5F53\u524D':'-')+'</div><div style="font-size:20px;font-weight:800;color:#1a1d37">' +(typeof p.price==='number'?'\u00A5':'')+p.price+(typeof p.price==='number'?'':'')+'</div><div style="font-size:12px;color:var(--b)">' +p.period+'</div><div style="margin-top:12px;font-size:12px;color:var(--l)"><div>'+p.accounts+' 子账号</div><div>'+p.credits+' 算力</div></div></div>'}).join('')}</div>
   </div></div>`;
 }
 function adminAddCredits(){showMod(`<h3>补充算力池</h3><div class="fg"><label class="fl">补充数量</label><input class="fi" type="number" id="addCreditsAmt" value="50000" min="1000"></div><div class="modal-actions"><button class="m-cancel" onclick="closeModal()">取消</button><button class="m-confirm" onclick="doAdminAddCredits()">确认补充</button></div>`)}
@@ -2197,10 +2192,10 @@ function renderLuoshengAI(){
   main.innerHTML=`<div style="height:calc(100vh - var(--topbar));display:flex;flex-direction:column;padding:0">
     <div style="background:rgba(255,255,255,.05);border-bottom:1px solid var(--bd);padding:10px 20px;display:flex;align-items:center;gap:12px;flex-shrink:0">
       <span style="font-size:20px">🤖</span>
-      <div style="flex:1"><div style="font-weight:700;font-size:15px;color:#ffffff">罗圣AI助手</div><div style="font-size:11px;color:var(--b)">后台专用 · 免费无限使用</div></div>
+      <div style="flex:1"><div style="font-weight:700;font-size:15px;color:#1a1d37">罗圣AI助手</div><div style="font-size:11px;color:var(--b)">后台专用 · 免费无限使用</div></div>
     </div>
     <div id="adminAITabs" style="background:rgba(255,255,255,.05);border-bottom:1px solid var(--bd);display:flex;padding:0 20px;gap:4px;flex-shrink:0">
-      <button onclick="adminAITabSwitch('chat')" id="adminAITab_chat" class="adminAI-tab active" style="padding:8px 18px;border:none;background:var(--p);color:#fff;border-radius:8px 8px 0 0;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s">💬 智能对话</button>
+      <button onclick="adminAITabSwitch('chat')" id="adminAITab_chat" class="adminAI-tab active" style="padding:8px 18px;border:none;background:var(--p);color:#1a1d37;border-radius:8px 8px 0 0;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s">💬 智能对话</button>
       <button onclick="adminAITabSwitch('img')" id="adminAITab_img" class="adminAI-tab" style="padding:8px 18px;border:none;background:transparent;color:var(--b);border-radius:8px 8px 0 0;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s">🎨 AI绘图</button>
       <button onclick="adminAITabSwitch('video')" id="adminAITab_video" class="adminAI-tab" style="padding:8px 18px;border:none;background:transparent;color:var(--b);border-radius:8px 8px 0 0;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s">🎬 视频生成</button>
     </div>
@@ -2216,7 +2211,7 @@ function adminAITabSwitch(tab){
   if(active){active.style.background='var(--p)';active.style.color='#fff'}
   var body=document.getElementById('adminAIBody');
   if(tab==='chat'){
-    body.innerHTML=`<div id="adminAIChat" style="height:100%;overflow-y:auto;padding:20px;background:#16213e"></div>
+    body.innerHTML=`<div id="adminAIChat" style="height:100%;overflow-y:auto;padding:20px;background:#eef2f7"></div>
     <div style="background:rgba(255,255,255,.05);border-top:1px solid var(--bd);padding:8px 20px;display:flex;gap:8px;align-items:center;flex-shrink:0;position:absolute;bottom:0;left:0;right:0;flex-wrap:wrap">
       <select id="adminAIPlatform" onchange="adminAIUpdateModels()" style="padding:8px 10px;border:1.5px solid var(--bd);border-radius:8px;font-size:12px;outline:none;background:rgba(255,255,255,.05);cursor:pointer">
         <option value="volcengine">&#128293; 火山引擎</option>
@@ -2229,16 +2224,16 @@ function adminAITabSwitch(tab){
         <option value="doubao-seed-2-0-lite-260215">豆包Lite</option>
       </select>
       <input id="adminAIInput" style="flex:1;min-width:150px;padding:10px 14px;border:1.5px solid var(--bd);border-radius:10px;font-size:14px;outline:none" placeholder="向罗圣AI提问..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();adminAISend()}">
-      <button onclick="adminAISend()" style="padding:10px 20px;background:var(--p);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer">发送</button>
-      <button onclick="adminAIClear()" style="padding:10px 16px;background:#16213e;border:1.5px solid var(--bd);border-radius:10px;font-size:13px;cursor:pointer;color:var(--b)">清空</button>
+      <button onclick="adminAISend()" style="padding:10px 20px;background:var(--p);color:#1a1d37;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer">发送</button>
+      <button onclick="adminAIClear()" style="padding:10px 16px;background:#eef2f7;border:1.5px solid var(--bd);border-radius:10px;font-size:13px;cursor:pointer;color:var(--b)">清空</button>
     </div>`;
     adminAIUpdateModels();
     adminAIRender();
   }else if(tab==='img'){
-    body.innerHTML=`<div style="height:100%;overflow-y:auto;padding:20px;background:#16213e">
+    body.innerHTML=`<div style="height:100%;overflow-y:auto;padding:20px;background:#eef2f7">
       <div style="max-width:600px;margin:0 auto">
         <div style="background:rgba(255,255,255,.05);border-radius:14px;padding:24px;box-shadow:var(--shadow)">
-          <h3 style="margin:0 0 16px;font-size:16px;color:#ffffff">🎨 AI文生图</h3>
+          <h3 style="margin:0 0 16px;font-size:16px;color:#1a1d37">🎨 AI文生图</h3>
           <p style="font-size:12px;color:var(--b);margin:0 0 16px">描述你想要的图片，AI为你生成高清大图</p>
           <div style="margin-bottom:12px"><textarea id="adminImgPrompt" rows="4" style="width:100%;padding:12px;border:1.5px solid var(--bd);border-radius:10px;font-size:14px;resize:vertical;outline:none;font-family:inherit" placeholder="例如：一只戴着墨镜的猫在纽约街头，赛博朋克风格，霓虹灯光..." onfocus="this.style.borderColor='var(--p)'" onblur="this.style.borderColor='var(--bd)'"></textarea></div>
           <div style="margin-bottom:16px"><label style="font-size:12px;color:var(--b);margin-bottom:4px;display:block">图片尺寸</label>
@@ -2248,16 +2243,16 @@ function adminAITabSwitch(tab){
             <option value="720x1280">竖屏 720×1280</option>
             <option value="2048x2048">高清 2048×2048</option>
           </select></div>
-          <button onclick="adminDoImgGen()" style="width:100%;padding:12px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer">🚀 开始生成</button>
+          <button onclick="adminDoImgGen()" style="width:100%;padding:12px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#1a1d37;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer">🚀 开始生成</button>
           <div id="adminImgResult" style="margin-top:16px"></div>
         </div>
       </div>
     </div>`;
   }else if(tab==='video'){
-    body.innerHTML=`<div style="height:100%;overflow-y:auto;padding:20px;background:#16213e">
+    body.innerHTML=`<div style="height:100%;overflow-y:auto;padding:20px;background:#eef2f7">
       <div style="max-width:600px;margin:0 auto">
         <div style="background:rgba(255,255,255,.05);border-radius:14px;padding:24px;box-shadow:var(--shadow)">
-          <h3 style="margin:0 0 16px;font-size:16px;color:#ffffff">🎬 AI文生视频</h3>
+          <h3 style="margin:0 0 16px;font-size:16px;color:#1a1d37">🎬 AI文生视频</h3>
           <p style="font-size:12px;color:var(--b);margin:0 0 16px">描述视频内容，AI为你自动生成短视频</p>
           <div style="margin-bottom:12px"><textarea id="adminVidPrompt" rows="4" style="width:100%;padding:12px;border:1.5px solid var(--bd);border-radius:10px;font-size:14px;resize:vertical;outline:none;font-family:inherit" placeholder="例如：一只橘猫在花园里追蝴蝶，阳光明媚的春天..." onfocus="this.style.borderColor='var(--p)'" onblur="this.style.borderColor='var(--bd)'"></textarea></div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
@@ -2270,7 +2265,7 @@ function adminAITabSwitch(tab){
                 <option value="16:9">16:9 横屏</option><option value="9:16">9:16 竖屏</option><option value="1:1">1:1 正方</option>
               </select></div>
           </div>
-          <button onclick="adminDoVidGen()" id="adminVidBtn" style="width:100%;padding:12px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer">🚀 开始生成视频</button>
+          <button onclick="adminDoVidGen()" id="adminVidBtn" style="width:100%;padding:12px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#1a1d37;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer">🚀 开始生成视频</button>
           <div id="adminVidResult" style="margin-top:16px"></div>
         </div>
       </div>
@@ -2294,16 +2289,16 @@ function adminAIRender(){
   var chat=document.getElementById('adminAIChat');
   if(!chat)return;
   if(_adminAIChat.length===0){
-    chat.innerHTML='<div style="text-align:center;padding:60px 20px;color:var(--b)"><div style="font-size:48px;margin-bottom:16px">🤖</div><div style="font-size:16px;font-weight:600;color:#ffffff;margin-bottom:8px">你好，我是罗圣AI助手</div><div style="font-size:13px">我是罗圣纪元互联网科技有限责任公司研发的全能型AI助手<br>可以为您提供文案创作、商业分析、编程开发等服务</div></div>';
+    chat.innerHTML='<div style="text-align:center;padding:60px 20px;color:var(--b)"><div style="font-size:48px;margin-bottom:16px">🤖</div><div style="font-size:16px;font-weight:600;color:#1a1d37;margin-bottom:8px">你好，我是罗圣AI助手</div><div style="font-size:13px">我是罗圣纪元互联网科技有限责任公司研发的全能型AI助手<br>可以为您提供文案创作、商业分析、编程开发等服务</div></div>';
     return;
   }
   var html='';
   for(var i=0;i<_adminAIChat.length;i++){
     var m=_adminAIChat[i];
     if(m.role==='user'){
-      html+='<div style="display:flex;justify-content:flex-end;margin-bottom:16px"><div style="background:var(--p);color:#fff;padding:10px 14px;border-radius:12px 12px 4px 12px;max-width:70%;font-size:13px;line-height:1.6;white-space:pre-wrap">'+m.content.replace(/</g,'&lt;').replace(/\n/g,'<br>')+'</div></div>';
+      html+='<div style="display:flex;justify-content:flex-end;margin-bottom:16px"><div style="background:var(--p);color:#1a1d37;padding:10px 14px;border-radius:12px 12px 4px 12px;max-width:70%;font-size:13px;line-height:1.6;white-space:pre-wrap">'+m.content.replace(/</g,'&lt;').replace(/\n/g,'<br>')+'</div></div>';
     }else{
-      html+='<div style="display:flex;justify-content:flex-start;margin-bottom:16px;gap:8px"><div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#00f0ff,#7c6cf6);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-size:14px">🤖</div><div style="background:rgba(255,255,255,.05);padding:10px 14px;border-radius:12px 12px 12px 4px;max-width:70%;font-size:13px;line-height:1.6;white-space:pre-wrap;box-shadow:var(--shadow);border:1px solid var(--bd)" id="adminAIMsg_'+i+'">'+m.content.replace(/</g,'&lt;').replace(/\n/g,'<br>')+'</div></div>';
+      html+='<div style="display:flex;justify-content:flex-start;margin-bottom:16px;gap:8px"><div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#dc2626,#7c6cf6);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#1a1d37;font-size:14px">🤖</div><div style="background:rgba(255,255,255,.05);padding:10px 14px;border-radius:12px 12px 12px 4px;max-width:70%;font-size:13px;line-height:1.6;white-space:pre-wrap;box-shadow:var(--shadow);border:1px solid var(--bd)" id="adminAIMsg_'+i+'">'+m.content.replace(/</g,'&lt;').replace(/\n/g,'<br>')+'</div></div>';
     }
   }
   chat.innerHTML=html;
@@ -2360,7 +2355,7 @@ function adminAISend(){
   }
   var chat=document.getElementById('adminAIChat');
   var loadId='adminAIMsg_load';
-  chat.innerHTML+='<div id="'+loadId+'" style="display:flex;justify-content:flex-start;margin-bottom:16px;gap:8px"><div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#00f0ff,#7c6cf6);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-size:14px">🤖</div><div style="background:rgba(255,255,255,.05);padding:10px 14px;border-radius:12px;font-size:13px;box-shadow:var(--shadow)"><div class="ai-spinner" style="width:20px;height:20px;border-width:2px"></div> 思考中...</div></div>';
+  chat.innerHTML+='<div id="'+loadId+'" style="display:flex;justify-content:flex-start;margin-bottom:16px;gap:8px"><div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#dc2626,#7c6cf6);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#1a1d37;font-size:14px">🤖</div><div style="background:rgba(255,255,255,.05);padding:10px 14px;border-radius:12px;font-size:13px;box-shadow:var(--shadow)"><div class="ai-spinner" style="width:20px;height:20px;border-width:2px"></div> 思考中...</div></div>';
   chat.scrollTop=chat.scrollHeight;
   var _pVal=document.getElementById('adminAIPlatform').value;var _kVal=getPlatformKey(_pVal);var _authHeader=_pVal==='tencent'?'Basic '+btoa(_kVal+':'+getTencentSecretKey()):'Bearer '+_kVal;
   fetch(PLATFORMS[_pVal].base+'/chat/completions',{
@@ -2434,7 +2429,7 @@ function adminDoImgGen(){
   }).then(function(data){
     if(data.data&&data.data[0]&&data.data[0].url){
       var url=data.data[0].url;
-      out.innerHTML='<div style="text-align:center"><img src="'+url+'" style="max-width:100%;border-radius:12px;box-shadow:var(--shadow);cursor:pointer" onclick="window.open(this.src)" onerror="this.parentElement.innerHTML=\'<p style=\'color:var(--err)\'>图片加载失败，可能已过期</p>\'" ><div style="margin-top:12px"><a href="'+url+'" target="_blank" download="lsjy_ai_img_'+Date.now()+'.png" style="padding:8px 20px;background:var(--p);color:#fff;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600">📥 下载图片</a></div></div>';
+      out.innerHTML='<div style="text-align:center"><img src="'+url+'" style="max-width:100%;border-radius:12px;box-shadow:var(--shadow);cursor:pointer" onclick="window.open(this.src)" onerror="this.parentElement.innerHTML=\'<p style=\'color:var(--err)\'>图片加载失败，可能已过期</p>\'" ><div style="margin-top:12px"><a href="'+url+'" target="_blank" download="lsjy_ai_img_'+Date.now()+'.png" style="padding:8px 20px;background:var(--p);color:#1a1d37;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600">📥 下载图片</a></div></div>';
     }else{
       out.innerHTML='<p style="color:var(--err);text-align:center">生成失败：未返回图片</p>';
     }
@@ -2486,7 +2481,7 @@ function adminDoVidGen(){
             }
           }
           if(videoUrl){
-            out.innerHTML='<div style="text-align:center"><video controls autoplay loop style="width:100%;border-radius:12px;box-shadow:var(--shadow);max-height:400px;background:#000" src="'+videoUrl+'"></video><div style="margin-top:12px;display:flex;gap:8px;justify-content:center"><a href="'+videoUrl+'" download="lsjy_ai_video_'+Date.now()+'.mp4" target="_blank" style="padding:8px 20px;background:#7c3aed;color:#fff;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600">📥 下载视频</a><button onclick="adminDoVidGen()" style="padding:8px 20px;background:#16213e;border:1.5px solid var(--bd);border-radius:8px;font-size:13px;cursor:pointer">🔄 重新生成</button></div></div>';
+            out.innerHTML='<div style="text-align:center"><video controls autoplay loop style="width:100%;border-radius:12px;box-shadow:var(--shadow);max-height:400px;background:#000" src="'+videoUrl+'"></video><div style="margin-top:12px;display:flex;gap:8px;justify-content:center"><a href="'+videoUrl+'" download="lsjy_ai_video_'+Date.now()+'.mp4" target="_blank" style="padding:8px 20px;background:#7c3aed;color:#1a1d37;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600">📥 下载视频</a><button onclick="adminDoVidGen()" style="padding:8px 20px;background:#eef2f7;border:1.5px solid var(--bd);border-radius:8px;font-size:13px;cursor:pointer">🔄 重新生成</button></div></div>';
           }else{
             out.innerHTML='<p style="color:var(--err);text-align:center">视频生成完成但未返回视频地址</p>';
           }
@@ -2521,7 +2516,7 @@ function adminDoVidGen(){
 })();
 </script>
 <!-- ===== 后台增强功能模块 ===== -->
-<div id="adminLoveModal" class="love-modal-overlay"><div class="love-modal"><p class="modal-text" id="adminLoveModalText"></p><button onclick="closeAdminLoveModal()" style="padding:10px 28px;background:var(--p);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">我知道了</button></div></div>
+<div id="adminLoveModal" class="love-modal-overlay"><div class="love-modal"><p class="modal-text" id="adminLoveModalText"></p><button onclick="closeAdminLoveModal()" style="padding:10px 28px;background:var(--p);color:#1a1d37;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">我知道了</button></div></div>
 <script>
 /* ===== 加载动画 ===== */
 function hideLoader(){document.querySelectorAll('#pageLoader,.loader,.loading,.mask,.loading-mask').forEach(function(el){el.style.display='none'})}
@@ -2568,7 +2563,7 @@ _adminPaHist.push({role:'bot',text:resp});adminPaRender()}
 _pageTitles['enhance_tools']='增强工具';
 _pageRenders['enhance_tools']=function(){
   var mc=document.getElementById('mainContent');
-  mc.innerHTML='<div style="height:calc(100vh - var(--topbar));overflow-y:auto;padding:24px"><h2 style="font-size:22px;font-weight:900;color:#ffffff;margin-bottom:16px">🛠️ 增强工具中心</h2><p style="font-size:13px;color:var(--b);margin-bottom:20px">后台专用 · 免费无限使用</p><div class="enhance-grid-admin"><div class="love-module"><h3>💕 告白互动</h3><p>点击按钮，看看会发生什么~</p><div class="love-btns"><button class="love-btn decline" onclick="adminLoveDecline()">暂时不想</button><button class="love-btn accept" onclick="adminLoveAccept()">我愿意和好</button></div></div><div class="anni-section"><h3>📅 纪念日计算</h3><p>选择日期，一键计算相处天数</p><input type="date" class="anni-input" id="adminAnniDate"><button onclick="adminCalcAnni()" style="margin:12px 0;padding:10px 24px;background:linear-gradient(135deg,#ec4899,#f43f5e);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">计算相处天数</button><div id="adminAnniResult"></div></div><div class="qrcode-section"><h3>📱 二维码生成</h3><p>输入文字或网址，一键生成二维码</p><input type="text" id="adminQrInput" placeholder="输入文字或网址..." style="width:100%;padding:10px 14px;border:1.5px solid var(--bd);border-radius:10px;font-size:13px;outline:none;margin:8px 0;background:var(--card-bg);color:#ffffff"><button onclick="adminGenQR()" style="padding:10px 24px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">立即生成</button><div id="adminQrResult" style="margin-top:12px"></div></div><div class="textbeautify-section"><h3>✍️ 文案美化</h3><p>粘贴文案，一键排版美化</p><textarea class="beautify-area" id="adminBeautifyInput" placeholder="在这里粘贴或输入你的文案..."></textarea><button onclick="adminBeautifyText()" style="margin-top:10px;padding:10px 24px;background:linear-gradient(135deg,#059669,#10b981);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">开始美化</button><div class="beautify-output" id="adminBeautifyOutput" style="display:none"></div></div><div class="page-assistant-section"><h3>🤖 网页智能操控</h3><p>文字指挥助手操作后台页面</p><div class="pa-chat" id="adminPaChat"><div class="pa-msg bot">你好！我是后台页面助手。试试说：\n• "打开罗圣AI"\n• "打开AI创作中心"\n• "查看数据看板"\n• "切换暗黑模式"</div></div><div style="display:flex;gap:8px"><input id="adminPaInput" style="flex:1;padding:10px 14px;border:1.5px solid var(--bd);border-radius:10px;font-size:13px;outline:none;background:var(--card-bg);color:#ffffff" placeholder="输入指令..." onkeydown="if(event.key===\'Enter\')adminPaSend()"><button onclick="adminPaSend()" style="padding:10px 16px;background:var(--p);color:#fff;border:none;border-radius:10px;font-size:13px;cursor:pointer">发送</button></div></div></div></div>';
+  mc.innerHTML='<div style="height:calc(100vh - var(--topbar));overflow-y:auto;padding:24px"><h2 style="font-size:22px;font-weight:900;color:#1a1d37;margin-bottom:16px">🛠️ 增强工具中心</h2><p style="font-size:13px;color:var(--b);margin-bottom:20px">后台专用 · 免费无限使用</p><div class="enhance-grid-admin"><div class="love-module"><h3>💕 告白互动</h3><p>点击按钮，看看会发生什么~</p><div class="love-btns"><button class="love-btn decline" onclick="adminLoveDecline()">暂时不想</button><button class="love-btn accept" onclick="adminLoveAccept()">我愿意和好</button></div></div><div class="anni-section"><h3>📅 纪念日计算</h3><p>选择日期，一键计算相处天数</p><input type="date" class="anni-input" id="adminAnniDate"><button onclick="adminCalcAnni()" style="margin:12px 0;padding:10px 24px;background:linear-gradient(135deg,#ec4899,#f43f5e);color:#1a1d37;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">计算相处天数</button><div id="adminAnniResult"></div></div><div class="qrcode-section"><h3>📱 二维码生成</h3><p>输入文字或网址，一键生成二维码</p><input type="text" id="adminQrInput" placeholder="输入文字或网址..." style="width:100%;padding:10px 14px;border:1.5px solid var(--bd);border-radius:10px;font-size:13px;outline:none;margin:8px 0;background:var(--card-bg);color:#1a1d37"><button onclick="adminGenQR()" style="padding:10px 24px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#1a1d37;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">立即生成</button><div id="adminQrResult" style="margin-top:12px"></div></div><div class="textbeautify-section"><h3>✍️ 文案美化</h3><p>粘贴文案，一键排版美化</p><textarea class="beautify-area" id="adminBeautifyInput" placeholder="在这里粘贴或输入你的文案..."></textarea><button onclick="adminBeautifyText()" style="margin-top:10px;padding:10px 24px;background:linear-gradient(135deg,#059669,#10b981);color:#1a1d37;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">开始美化</button><div class="beautify-output" id="adminBeautifyOutput" style="display:none"></div></div><div class="page-assistant-section"><h3>🤖 网页智能操控</h3><p>文字指挥助手操作后台页面</p><div class="pa-chat" id="adminPaChat"><div class="pa-msg bot">你好！我是后台页面助手。试试说：\n• "打开罗圣AI"\n• "打开AI创作中心"\n• "查看数据看板"\n• "切换暗黑模式"</div></div><div style="display:flex;gap:8px"><input id="adminPaInput" style="flex:1;padding:10px 14px;border:1.5px solid var(--bd);border-radius:10px;font-size:13px;outline:none;background:var(--card-bg);color:#1a1d37" placeholder="输入指令..." onkeydown="if(event.key===\'Enter\')adminPaSend()"><button onclick="adminPaSend()" style="padding:10px 16px;background:var(--p);color:#1a1d37;border:none;border-radius:10px;font-size:13px;cursor:pointer">发送</button></div></div></div></div>';
 };
 </script>
 
