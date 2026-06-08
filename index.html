@@ -2126,26 +2126,31 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 </div>
 
 <!-- ===== FOOTER ===== -->
-<footer class="footer" style="text-align:center;width:100%;padding:32px 16px">
-<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;max-width:900px;margin:0 auto;text-align:center">
-<div>
-<p style="font-weight:600;color:#e2e8f0;margin-bottom:8px;font-size:14px">🏢 公司信息</p>
-<p style="font-size:12px;color:#94a3b8;line-height:1.8">祁阳市罗圣纪元互联网科技有限责任公司<br>湖南省永州市祁阳市<br>创始人：罗凯中</p>
+<footer class="footer" style="width:100%;padding:40px 24px;background:#060a12">
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;max-width:1100px;margin:0 auto">
+<div style="text-align:left;padding:0 20px">
+<p style="font-weight:700;color:#e2e8f0;margin-bottom:10px;font-size:14px">🏢 公司信息</p>
+<p style="font-size:12px;color:#94a3b8;line-height:2">祁阳市罗圣纪元互联网科技有限责任公司</p>
+<p style="font-size:12px;color:#94a3b8;line-height:2">统一社会信用代码：91431121MAKD052H05</p>
+<p style="font-size:12px;color:#94a3b8;line-height:2">创始人：罗凯中</p>
 </div>
-<div>
-<p style="font-weight:600;color:#e2e8f0;margin-bottom:8px;font-size:14px">🌍 业务矩阵</p>
-<p style="font-size:12px;color:#94a3b8;line-height:1.8">AI · 自媒体 · 电商 · 宠物 · 教育<br>伯雅校园</p>
-</div>
-<div>
-<p style="font-weight:600;color:#e2e8f0;margin-bottom:8px;font-size:14px">📄 法律信息</p>
-<p style="font-size:12px;color:#94a3b8;line-height:1.8">
-<a href="privacy.html" style="color:#94a3b8;text-decoration:none" target="_blank">隐私政策</a> · 
-<a href="terms.html" style="color:#94a3b8;text-decoration:none" target="_blank">用户协议</a> · 
+<div style="text-align:center;padding:0 20px">
+<p style="font-weight:700;color:#e2e8f0;margin-bottom:10px;font-size:14px">版权与法律</p>
+<p style="font-size:12px;color:#94a3b8;line-height:2;margin-bottom:6px">
+<a href="privacy.html" style="color:#00f5ff;text-decoration:none">隐私政策</a> ·
+<a href="terms.html" style="color:#00f5ff;text-decoration:none">用户协议</a>
+</p>
+<p style="font-size:12px;color:#94a3b8;line-height:2">
 <a href="https://beian.miit.gov.cn/" style="color:#94a3b8;text-decoration:none" target="_blank" rel="nofollow noopener">湘ICP备2026XXXXXX号</a>
 </p>
+<p style="font-size:11px;color:#64748b;margin-top:10px">© 2026 祁阳市罗圣纪元互联网科技有限责任公司</p>
+</div>
+<div style="text-align:right;padding:0 20px">
+<p style="font-weight:700;color:#e2e8f0;margin-bottom:10px;font-size:14px">联系我们</p>
+<p style="font-size:12px;color:#94a3b8;margin-bottom:12px">contact@lsjy.com</p>
+<button style="display:inline-block;padding:10px 28px;background:var(--p);color:#0a0e17;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 14px rgba(0,245,255,.35)'" onmouseout="this.style.transform='';this.style.boxShadow=''" onclick="openAuth('login')">立即注册</button>
 </div>
 </div>
-<p style="margin-top:20px;font-size:11px;color:#64748b">© 2026 祁阳市罗圣纪元互联网科技有限责任公司 | 湖南省永州市祁阳市</p>
 </footer>
 <script>
 // ===== 工具分类筛选 =====
@@ -6062,7 +6067,7 @@ setTimeout(function(){
     ];
     var mhtml='';
     _M.forEach(function(m){
-      mhtml+='<div class="mod-card" onclick="openServiceDetail(m.id)" style="background:rgba(255,255,255,.85);border:1px solid rgba(0,0,0,.06);border-radius:16px;padding:32px 24px;transition:all .3s;cursor:pointer;overflow:hidden;backdrop-filter:blur(10px)" onmouseover="this.style.transform=\'translateY(-4px)\';this.style.boxShadow=\'0 12px 30px rgba(0,0,0,.08)\'" onmouseout="this.style.transform=\'\';this.style.boxShadow=\'\'">';
+      mhtml+='<div class="mod-card" onclick="openServiceDetail('+m.id+')" style="background:rgba(15,22,35,.9);border:1px solid rgba(0,245,255,.12);border-radius:16px;padding:32px 24px;transition:all .3s;cursor:pointer;overflow:hidden;backdrop-filter:blur(10px)" onmouseover="this.style.transform=\'translateY(-4px)\';this.style.boxShadow=\'0 12px 30px rgba(0,0,0,.08)\'" onmouseout="this.style.transform=\'\';this.style.boxShadow=\'\'">';
       mhtml+='<div style="width:48px;height:48px;border-radius:12px;background:'+m.gradient+';display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:16px">'+m.icon+'</div>';
       mhtml+='<h3 style="margin:0 0 8px;font-size:18px;color:#e2e8f0">'+m.name+'</h3>';
       mhtml+='<p style="margin:0;font-size:13px;color:#94a3b8;line-height:1.6">'+m.summary+'</p>';
@@ -6087,7 +6092,7 @@ setTimeout(function(){
       var fp=m.packs[0];
       phtml+='<div style="background:#0a0e17;border:1px solid rgba(0,245,255,0.12);border-radius:16px;padding:28px 24px;position:relative;transition:all .3s'+(m.featured?';border-color:'+m.color:'')+'">';
       if(m.featured)phtml+='<div style="position:absolute;top:-1px;right:20px;background:'+m.color+';color:#e2e8f0;font-size:11px;padding:4px 12px;border-radius:0 0 8px 8px">\u70ed\u5356</div>';
-      phtml+='<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px"><div style="width:40px;height:40px;border-radius:10px;background:'+m.gradient+';display:flex;align-items:center;justify-content:center;font-size:20px">'+m.icon+'</div><div><h3 style="margin:0;font-size:16px;color:#1a1a1a">'+m.name+'</h3><p style="margin:2px 0 0;font-size:12px;color:#888">'+m.packs.length+' \u4e2a\u5957\u9910\u53ef\u9009</p></div></div>';
+      phtml+='<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px"><div style="width:40px;height:40px;border-radius:10px;background:'+m.gradient+';display:flex;align-items:center;justify-content:center;font-size:20px">'+m.icon+'</div><div><h3 style="margin:0;font-size:16px;color:#e2e8f0">'+m.name+'</h3><p style="margin:2px 0 0;font-size:12px;color:#888">'+m.packs.length+' \u4e2a\u5957\u9910\u53ef\u9009</p></div></div>';
       phtml+='<div style="margin-bottom:16px"><span style="font-size:28px;font-weight:700;color:'+m.color+'">\uffe5'+fp.price+'</span><span style="font-size:13px;color:#888">/'+fp.period+'\u8d77</span></div>';
       phtml+='<ul style="list-style:none;padding:0;margin:0 0 16px;font-size:13px;color:#555;line-height:2">'+fp.features.map(function(f){return '<li style="padding-left:16px;position:relative"><span style="position:absolute;left:0;color:'+m.color+'">\u2713</span>'+f+'</li>'}).join('')+'</ul>';
       phtml+='<button onclick="openServiceDetail(\''+m.id+'\')" style="width:100%;padding:10px;border:none;border-radius:10px;background:'+m.gradient+';color:#e2e8f0;font-size:14px;font-weight:600;cursor:pointer">\u67e5\u770b\u5957\u9910</button>';
@@ -6453,7 +6458,7 @@ window._showPayQR=function(methodId,payName,payPrice){
   var m=_PAY_METHODS.filter(function(x){return x.id===methodId;})[0];
   if(!m) return;
   var body=document.getElementById('payModalBody');
-  var h='<div style="padding:24px 24px 16px;text-align:center"><div style="display:flex;align-items:center;gap:10px;justify-content:center;margin-bottom:4px"><button class="pay-back-btn" style="background:none;border:none;font-size:20px;cursor:pointer;color:#888;padding:4px 8px">\u2190</button><div style="width:36px;height:36px;border-radius:10px;background:'+m.color+';display:flex;align-items:center;justify-content:center;font-size:18px;color:#e2e8f0">'+m.icon+'</div><h3 style="margin:0;font-size:17px;color:#1a1a1a">'+m.name+'</h3></div><p style="margin:6px 0 0;font-size:13px;color:#888">\u8d2d\u4e70 '+(payName||'')+' \u00b7 '+(payPrice||'')+'</p></div>';
+  var h='<div style="padding:24px 24px 16px;text-align:center"><div style="display:flex;align-items:center;gap:10px;justify-content:center;margin-bottom:4px"><button class="pay-back-btn" style="background:none;border:none;font-size:20px;cursor:pointer;color:#888;padding:4px 8px">\u2190</button><div style="width:36px;height:36px;border-radius:10px;background:'+m.color+';display:flex;align-items:center;justify-content:center;font-size:18px;color:#e2e8f0">'+m.icon+'</div><h3 style="margin:0;font-size:17px;color:#e2e8f0">'+m.name+'</h3></div><p style="margin:6px 0 0;font-size:13px;color:#888">\u8d2d\u4e70 '+(payName||'')+' \u00b7 '+(payPrice||'')+'</p></div>';
   h+='<div style="padding:8px 32px 16px;text-align:center"><div style="display:inline-block;padding:16px;background:#fafafa;border-radius:16px;border:1px solid #eee"><img src="'+m.img+'" style="width:200px;height:200px;object-fit:contain;border-radius:8px"></div></div>';
   h+='<div style="padding:8px 32px;text-align:center"><p style="margin:0 0 16px;font-size:14px;color:#666;font-weight:600">'+m.tip+'</p>';
   h+='<div style="display:flex;gap:10px;justify-content:center"><button class="pay-save-btn" style="flex:1;padding:12px;border:1.5px solid '+m.color+';border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;background:#0a0e17;color:'+m.color+'">\ud83d\udcbe \u4fdd\u5b58\u4e8c\u7ef4\u7801</button><button class="pay-done-btn" style="flex:1;padding:12px;border:none;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;background:'+m.color+';color:#e2e8f0">\u2705 \u6211\u5df2\u5b8c\u6210\u652f\u4ed8</button></div>';
@@ -6659,7 +6664,7 @@ console.log('[CDN FIX] doGen10, buyPlan, _addMedia, openMediaLib loaded successf
 
 (function(){
   // 1. 修复业务板块卡片的点击事件
-  // Fallback渲染中的 onclick="openServiceDetail(m.id)" 变量引用问题
+  // Fallback渲染中的 onclick="openServiceDetail('+m.id+')" 变量引用问题
   // 由于已在HTML层面修复了拼接，这里做二次保险
   setTimeout(function(){
     var cards = document.querySelectorAll('#modGrid .mod-card');
