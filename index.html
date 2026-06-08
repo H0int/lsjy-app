@@ -836,6 +836,8 @@ to{opacity:1;transform:translateY(0) scale(1)}}
 </style>
 <style id="v52-color-fix">
 /* V5.2 配色微调强制覆盖 */
+.detail-overlay,.tool-overlay,.auth-overlay,.pay-overlay{display:none!important}
+.detail-panel,.tool-panel,.auth-panel,.pay-panel{display:none!important}
 .hero-card-item,.hero-card-item .ci,.hero-card-item .cn{color:#fff!important;border-color:rgba(255,255,255,.15)!important}
 .hero-card-item:hover{color:#fff!important}
 .nav-cta{color:#fff!important}
@@ -1675,6 +1677,31 @@ renderEmployeeAcct();
 
 </script>
 <!-- cache-bust: 6c579ac5 -->
+<style id="v52-tech-effects">
+/* 科技粒子背景 */
+.tech-particles{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.tech-particles span{position:absolute;width:2px;height:2px;background:rgba(220,38,38,0.3);border-radius:50%;animation:float-particle linear infinite}
+@keyframes float-particle{0%{transform:translateY(100vh) scale(0);opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translateY(-10vh) scale(1);opacity:0}}
+
+/* 扫描线 */
+.scan-line{position:fixed;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(220,38,38,0.15),rgba(37,99,235,0.1),transparent);z-index:1;pointer-events:none;animation:scan 8s linear infinite}
+@keyframes scan{0%{top:-2px}100%{top:100vh}}
+
+/* 网格背景增强 */
+.hero-grid{position:absolute;inset:0;background-image:radial-gradient(rgba(220,38,38,0.08) 1px,transparent 1px),linear-gradient(rgba(26,29,55,0.03) 1px,transparent 1px);background-size:40px 40px,80px 80px;opacity:.3}
+
+/* 卡片光效 */
+.mod-card::before,.tool-card::before,.price-card::before{content:'';position:absolute;top:0;left:-100%;width:50%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.05),transparent);transition:left .6s}
+.mod-card:hover::before,.tool-card:hover::before,.price-card:hover::before{left:100%}
+
+/* 按钮脉冲 */
+.btn-p{position:relative;overflow:hidden}
+.btn-p::after{content:'';position:absolute;inset:-2px;border-radius:inherit;background:linear-gradient(45deg,transparent,rgba(255,255,255,0.1),transparent);animation:btn-pulse 3s ease-in-out infinite}
+@keyframes btn-pulse{0%,100%{opacity:0;transform:scale(0.8)}50%{opacity:1;transform:scale(1)}}
+
+/* 浮动工具栏hover */
+#floatToolbar div:hover{transform:scale(1.1);box-shadow:0 6px 20px rgba(26,29,55,0.15)}
+</style>
 </head>
 <body>
 
@@ -3859,21 +3886,21 @@ const adminEl=document.getElementById('navAdminBtn');if(adminEl)adminEl.remove()
 window.PRICING=[
 {id:'ai',name:'AI 人工智能',icon:'🤖',gradient:'linear-gradient(135deg,#3b82f6,#60a5fa)',color:'#3b82f6',featured:true,
  packs:[
-  {name:'基础版',price:299,period:'月',desc:'适合个人用户和小微商家',features:['AI文案生成 50次/月','短视频切片 10条/月','基础智能推荐','在线客服支持']},
-  {name:'专业版',price:899,period:'月',desc:'适合成长型商家',features:['AI文案生成 不限次数','短视频切片 不限条数','商家获客系统','1对1专属顾问','数据分析报表']},
-  {name:'旗舰版',price:2999,period:'月',desc:'适合中大型企业',features:['全部专业版功能','行业定制化API开发','企业数字化搭建','私有化部署方案','优先技术支持','季度战略规划']}
+  {name:'基础版',price:399,period:'月',desc:'适合个人用户和小微商家',features:['AI文案生成 100次/月','短视频切片 20条/月','智能推荐算法','在线客服支持','数据分析看板']},
+  {name:'专业版',price:1299,period:'月',desc:'适合成长型商家',features:['AI文案生成 不限次数','短视频切片 不限条数','智能获客系统','1对1专属顾问','数据分析报表','优先技术响应']},
+  {name:'旗舰版',price:4999,period:'月',desc:'适合中大型企业',features:['全部专业版功能','行业定制API开发','企业数字化搭建','私有化部署方案','7x24技术支持','季度战略规划','专属客户经理']}
  ]},
 {id:'media',name:'自媒体',icon:'📱',gradient:'linear-gradient(135deg,#ea2261,#f96bee)',color:'#ea2261',featured:false,
  packs:[
-  {name:'入门版',price:499,period:'月',desc:'适合个人创作者',features:['单平台账号代运营','月更 15 条内容','基础数据报告','图文文案 10篇/月']},
-  {name:'进阶版',price:1299,period:'月',desc:'适合品牌商家',features:['双平台账号代运营','月更 30 条内容','探店短视频 2条/月','达人IP孵化指导','优先内容策划']},
-  {name:'矩阵版',price:3999,period:'月',desc:'适合连锁品牌',features:['全平台账号代运营','月更 60 条内容','短视频矩阵搭建','探店/拍摄/剪辑全包','专属运营团队','月度复盘优化']}
+  {name:'入门版',price:699,period:'月',desc:'适合个人创作者',features:['单平台账号代运营','月更 20 条内容','基础数据报告','图文文案 15篇/月','评论维护']},
+  {name:'进阶版',price:1999,period:'月',desc:'适合品牌商家',features:['双平台账号代运营','月更 40 条内容','探店短视频 4条/月','达人IP孵化','优先内容策划','月度复盘报告']},
+  {name:'矩阵版',price:5999,period:'月',desc:'适合连锁品牌',features:['全平台账号代运营','月更 80 条内容','短视频矩阵搭建','探店/拍摄/剪辑全包','专属运营团队','月度复盘优化','季度品牌策划']}
  ]},
 {id:'ecom',name:'电商',icon:'🛒',gradient:'linear-gradient(135deg,#8b5cf6,#a78bfa)',color:'#8b5cf6',featured:false,
  packs:[
-  {name:'开店版',price:399,period:'次',desc:'适合新入驻商家',features:['抖快小店代入驻','店铺基础装修','类目报备指导','新手运营手册']},
-  {name:'运营版',price:1299,period:'月',desc:'适合稳定经营商家',features:['店铺全托管运营','团购上架优化','货源供应链对接','基础投流优化','月度数据报告']},
-  {name:'全案版',price:4999,period:'月',desc:'适合规模化商家',features:['全部运营版功能','千川投流优化','随心推精准投放','私域运营搭建','7x12小时客服','爆款打造方案']}
+  {name:'开店版',price:599,period:'次',desc:'适合新入驻商家',features:['抖快小店代入驻','店铺精装修','类目报备指导','新手运营手册','首月运营指导']},
+  {name:'运营版',price:1999,period:'月',desc:'适合稳定经营商家',features:['店铺全托管运营','团购上架优化','货源供应链对接','千川投流优化','月度数据报告','竞品监控']},
+  {name:'全案版',price:7999,period:'月',desc:'适合规模化商家',features:['全部运营版功能','千川投流优化','随心推精准投放','私域运营搭建','7x12小时客服','爆款打造方案','季度GMV保障']}
  ]},
 {id:'pet',name:'宠物',icon:'🐾',gradient:'linear-gradient(135deg,#fb923c,#fbbf24)',color:'#fb923c',featured:false,
  packs:[
@@ -3883,15 +3910,15 @@ window.PRICING=[
  ]},
 {id:'edu',name:'教育',icon:'📚',gradient:'linear-gradient(135deg,#10b981,#34d399)',color:'#10b981',featured:false,
  packs:[
-  {name:'学员版',price:199,period:'月',desc:'适合个人学习者',features:['在线课程不限看','直播回放权限','学员社群交流','作业点评服务']},
-  {name:'创业版',price:999,period:'月',desc:'适合创业者',features:['全部学员版功能','创业1对1辅导','项目资源对接','商业计划指导','行业人脉圈']},
+  {name:'学员版',price:299,period:'月',desc:'适合个人学习者',features:['在线课程不限看','直播回放权限','学员社群交流','作业点评服务','课程资料下载']},
+  {name:'创业版',price:1999,period:'月',desc:'适合创业者',features:['全部学员版功能','创业1对1辅导','项目资源对接','商业计划指导','行业人脉圈','路演机会']},
   {name:'企业版',price:4999,period:'月',desc:'适合教育机构',features:['课程定制开发','校企合作对接','师资培训服务','品牌包装策划','招生引流方案','年度战略咨询']}
  ]},
 {id:'campus',name:'伯雅校园',icon:'🏫',gradient:'linear-gradient(135deg,#533afd,#7c6cf6)',color:'#533afd',featured:false,
  packs:[
   {name:'合伙人版',price:0,period:'免费',desc:'适合在校大学生',features:['校区代理权限','标准运营手册','线上培训体系','社群资源支持','创业指导']},
-  {name:'孵化版',price:999,period:'次',desc:'适合创业团队',features:['创业项目孵化','启动资金对接','导师1对1指导','资源网络对接','品牌授权使用']},
-  {name:'区域版',price:5999,period:'月',desc:'适合区域运营',features:['区域独家代理','全套运营体系','校园渠道搭建','活动策划执行','专属运营团队','季度KPI保障']}
+  {name:'孵化版',price:1999,period:'次',desc:'适合创业团队',features:['创业项目孵化','启动资金对接','导师1对1指导','资源网络对接','品牌授权使用','3个月跟踪辅导']},
+  {name:'区域版',price:9999,period:'月',desc:'适合区域运营',features:['区域独家代理','全套运营体系','校园渠道搭建','活动策划执行','专属运营团队','季度KPI保障','年度品牌大会']}
  ]}
 ];
 
@@ -7270,6 +7297,24 @@ var _voiceRec=null;function startVoice(targetId){var target=document.getElementB
 </script>
 
 
+</script>
+
+
+<!-- 浮动快捷工具栏 -->
+<div id="floatToolbar" style="position:fixed;right:16px;bottom:100px;z-index:9000;display:flex;flex-direction:column;gap:10px">
+  <div onclick="scrollTo({top:0,behavior:'smooth'})" style="width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,0.9);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(26,29,55,0.08);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;box-shadow:0 4px 12px rgba(26,29,55,0.1);transition:all .2s" title="回到顶部">⬆</div>
+  <div onclick="window.open('https://h0int.github.io/lsjy-app/admin/','_blank')" style="width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,0.9);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(26,29,55,0.08);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;box-shadow:0 4px 12px rgba(26,29,55,0.1);transition:all .2s" title="管理后台">⚙</div>
+  <div onclick="openAIPanel()" style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#dc2626,#b91c1c);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;box-shadow:0 4px 16px rgba(220,38,38,0.3);transition:all .2s" title="罗圣AI">🤖</div>
+  <div onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})" style="width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,0.9);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(26,29,55,0.08);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;box-shadow:0 4px 12px rgba(26,29,55,0.1);transition:all .2s" title="联系我们">📞</div>
+</div>
+
+
+<div class="tech-particles" id="techParticles"></div>
+<div class="scan-line"></div>
+
+
+<script>
+(function(){var c=document.getElementById('techParticles');if(!c)return;for(var i=0;i<30;i++){var s=document.createElement('span');s.style.left=Math.random()*100+'%';s.style.animationDuration=(8+Math.random()*12)+'s';s.style.animationDelay=Math.random()*10+'s';s.style.width=s.style.height=(1+Math.random()*3)+'px';c.appendChild(s)}})();
 </script>
 
 </body>
