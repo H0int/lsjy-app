@@ -2763,6 +2763,27 @@ function changePwdValidate(){
 
 // Enhanced functions above
 function addLog(action,detail){var logs=JSON.parse(localStorage.getItem('lsjy_admin_logs')||'[]');logs.unshift({time:new Date().toLocaleString(),action:action,detail:detail||''});if(logs.length>100)logs.length=100;localStorage.setItem('lsjy_admin_logs',JSON.stringify(logs))}
+
+// === 退出登录 ===
+function doLogout(){
+  localStorage.removeItem('lsjy3_admin');
+  localStorage.removeItem('lsjy3_cur');
+  localStorage.removeItem('lsjy_admin_logs');
+  window.location.reload();
+}
+
+// === 登录状态持久化检查 ===
+(function(){
+  var admin=localStorage.getItem('lsjy3_admin');
+  if(!admin){
+    var lw=document.getElementById('loginWrap');
+    var app=document.getElementById('app');
+    if(lw)lw.style.display='flex';
+    if(app)app.style.display='none';
+    return;
+  }
+  try{var a=JSON.parse(admin);if(!a.isLogin){var lw=document.getElementById('loginWrap');var app=document.getElementById('app');if(lw)lw.style.display='flex';if(app)app.style.display='none';}}catch(e){}
+})();
 </script>
 
 
