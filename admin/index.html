@@ -498,7 +498,7 @@ body.admin-light .modal-box{background:rgba(255,255,255,.95);border-color:rgba(0
       <div class="sb-item" onclick="goPage('logs',this)"><i class="fa-solid fa-clock-rotate-left"></i>操作日志</div>
       <div class="sb-item" onclick="goPage('settings',this)"><i class="fa-solid fa-gear"></i>系统设置</div>
     </div>
-    <div class="sb-footer">&copy; 2026 罗圣纪元互联网科技有限责任公司</div>
+    <div class="sb-footer">&copy; 2026 祁阳市罗圣纪元互联网科技有限责任公司</div>
   </div>
   <div class="sidebar-overlay" id="sbOverlay" onclick="toggleSidebar()"></div>
   <div class="topbar">
@@ -2769,20 +2769,44 @@ function doLogout(){
   localStorage.removeItem('lsjy3_admin');
   localStorage.removeItem('lsjy3_cur');
   localStorage.removeItem('lsjy_admin_logs');
-  window.location.reload();
+  // 确保显示登录页，隐藏app
+  var lp=document.getElementById('loginPage');
+  var app=document.getElementById('app');
+  if(lp)lp.style.display='';
+  if(app)app.classList.remove('active');
+  hideLoader();
+  toast('已退出登录','success');
 }
 
 // === 登录状态持久化检查 ===
 (function(){
   var admin=localStorage.getItem('lsjy3_admin');
   if(!admin){
-    var lw=document.getElementById('loginWrap');
+    var lp=document.getElementById('loginPage');
     var app=document.getElementById('app');
-    if(lw)lw.style.display='flex';
-    if(app)app.style.display='none';
+    if(lp)lp.style.display='';
+    if(app)app.classList.remove('active');
+    hideLoader();
     return;
   }
-  try{var a=JSON.parse(admin);if(!a.isLogin){var lw=document.getElementById('loginWrap');var app=document.getElementById('app');if(lw)lw.style.display='flex';if(app)app.style.display='none';}}catch(e){}
+  try{
+    var a=JSON.parse(admin);
+    if(!a.isLogin){
+      var lp=document.getElementById('loginPage');
+      var app=document.getElementById('app');
+      if(lp)lp.style.display='';
+      if(app)app.classList.remove('active');
+      hideLoader();
+    }else{
+      // 已登录，直接进入
+      enterApp();
+      hideLoader();
+    }
+  }catch(e){
+    var lp=document.getElementById('loginPage');
+    if(lp)lp.style.display='';
+    hideLoader();
+  }
 })();
 </script>
 
