@@ -1914,7 +1914,7 @@ async function seedanceQueryTask(taskId) {
 }
 
 async function seedancePollUntilDone(taskId, onStatus, interval) {
-  interval = interval || 10000;
+  interval = interval || 8000;
   const maxWait = 600000; // 最多等10分钟
   const start = Date.now();
   while (Date.now() - start < maxWait) {
@@ -1923,7 +1923,11 @@ async function seedancePollUntilDone(taskId, onStatus, interval) {
       if (onStatus) onStatus(result);
       if (result.status === 'succeeded') return result;
       if (result.status === 'failed') throw new Error(result.error?.message || '视频生成失败');
-    } catch (e) { if (e.message && e.message.indexOf('视频生成失败') >= 0) throw e; }
+    } catch (e) { 
+      if (e.message && e.message.indexOf('视频生成失败') >= 0) throw e;
+      // 网络错误时继续轮询，不中断
+      console.log('Poll error (will retry):', e.message);
+    }
     await new Promise(r => setTimeout(r, interval));
   }
   throw new Error('视频生成超时，请稍后查看任务状态');
@@ -6666,9 +6670,20 @@ async function lsSendMessage(){
       var typingEl=document.getElementById('lsTyping');
       if(typingEl){
         var pEl=typingEl.querySelector('.ls-msg-typing');
-        if(pEl)pEl.innerHTML='<span style="font-size:12px;color:#6b7280;white-space:nowrap">视频生成中...任务ID: '+taskId.substring(0,12)+'</span>';
+        if(pEl)pEl.innerHTML='<div style="text-align:center"><div class="ai-spinner" style="width:28px;height:28px;border-width:3px;margin:0 auto"></div><p style="font-size:12px;color:#6b7280;margin-top:8px">视频生成中... (约1-3分钟)</p><p style="font-size:11px;color:#aaa;margin-top:4px">任务ID: '+taskId.substring(0,16)+'</p></div>';
       }
-      var videoResult=await seedancePollUntilDone(taskId);
+      var videoResult=await seedancePollUntilDone(taskId,function(r){
+        var typingEl2=document.getElementById('lsTyping');
+        if(typingEl2){
+          var pEl2=typingEl2.querySelector('.ls-msg-typing');
+          if(pEl2){
+            var statusText=r.status||'processing';
+            var statusMap={'running':'AI生成中...','queued':'排队等待中...','succeeded':'生成完成','failed':'生成失败'};
+            var displayStatus=statusMap[statusText]||statusText;
+            pEl2.innerHTML='<div style="text-align:center"><div class="ai-spinner" style="width:28px;height:28px;border-width:3px;margin:0 auto"></div><p style="font-size:12px;color:#6b7280;margin-top:8px">'+displayStatus+'</p><p style="font-size:11px;color:#aaa;margin-top:4px">任务ID: '+taskId.substring(0,16)+'</p></div>';
+          }
+        }
+      });
       if(videoResult&&videoResult.status==='succeeded'&&videoResult.content){
         var videoContent=null;
         for(var vi=0;vi<videoResult.content.length;vi++){
