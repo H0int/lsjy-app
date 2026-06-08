@@ -353,6 +353,56 @@ textarea.fi{resize:vertical;min-height:120px}
 .copywriter-types{grid-template-columns:repeat(2,1fr)}
 .contact-info{grid-template-columns:1fr}
 }
+
+/* ===== Agent 手机适配 ===== */
+@media(max-width:768px){
+#lsOverlayAgent{width:100%!important;max-width:100vw!important;height:100vh!important;top:0!important;right:0!important;left:0!important;border-radius:0!important;margin:0!important}
+#lsOverlayAgent .ls-agent-inner{border-radius:0!important;height:100vh!important}
+#lsOverlayAgent .ls-agent-header{padding:10px 12px!important}
+#lsOverlayAgent .ls-agent-header h3{font-size:15px!important}
+#lsOverlayAgent .ls-agent-brand{display:none!important}
+#lsOverlayAgent .ls-agent-subtitle{display:none!important}
+#lsOverlayAgent .ls-agent-close{width:32px!important;height:32px!important;font-size:18px!important}
+#lsOverlayAgent .ls-agent-feats{gap:2px!important;padding:0 8px!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch!important;flex-wrap:nowrap!important}
+#lsOverlayAgent .ls-agent-feat{padding:8px 12px!important;font-size:12px!important;white-space:nowrap!important;flex-shrink:0!important;border-radius:8px!important}
+#lsOverlayAgent .ls-agent-models{flex-wrap:wrap!important;gap:6px!important;padding:8px!important}
+#lsOverlayAgent .ls-agent-model-opt{padding:6px 10px!important;font-size:11px!important;border-radius:8px!important}
+#lsOverlayAgent .ls-agent-info{padding:8px 12px!important}
+#lsOverlayAgent .ls-agent-cost-hint{font-size:11px!important}
+#lsOverlayAgent .ls-agent-input{margin:8px!important;border-radius:16px!important}
+#lsOverlayAgent .ls-agent-input textarea{font-size:14px!important;padding:10px 12px!important;min-height:44px!important}
+#lsOverlayAgent .ls-agent-input .ls-agent-tools{padding:6px 8px!important;gap:4px!important}
+#lsOverlayAgent .ls-agent-input .ls-agent-tools button{padding:4px 8px!important;font-size:11px!important}
+#lsOverlayAgent .ls-agent-send{padding:6px 14px!important;font-size:12px!important}
+#lsOverlayAgent .ls-chat{padding:10px!important}
+#lsOverlayAgent .ls-msg{margin-bottom:8px!important;padding:0!important}
+#lsOverlayAgent .ls-msg-bubble{padding:10px 14px!important;font-size:13px!important;border-radius:14px!important;max-width:88%!important}
+#lsOverlayAgent .ls-msg-user .ls-msg-bubble{border-top-right-radius:4px!important}
+#lsOverlayAgent .ls-msg-ai .ls-msg-bubble{border-top-left-radius:4px!important}
+#lsOverlayAgent .ls-msg-avatar{width:28px!important;height:28px!important;font-size:12px!important}
+#lsOverlayAgent .ls-msg-acts{gap:6px!important;justify-content:flex-end!important}
+#lsOverlayAgent .ls-msg-act{padding:4px 8px!important;font-size:11px!important}
+#lsOverlayAgent .ls-msg-typing{padding:10px 14px!important}
+#lsOverlayAgent .ls-welcome{padding:30px 20px!important}
+#lsOverlayAgent .ls-welcome h4{font-size:16px!important}
+#lsOverlayAgent .ls-welcome p{font-size:12px!important}
+#lsOverlayAgent .ls-welcome-chips{flex-wrap:wrap!important;gap:6px!important}
+#lsOverlayAgent .ls-welcome-chip{padding:6px 12px!important;font-size:12px!important}
+#lsOverlayAgent .ls-agent-expand{display:none!important}
+#lsOverlayAgent .ls-agent-confirm{width:40px!important;height:40px!important;bottom:80px!important;right:12px!important;font-size:16px!important}
+#lsOverlayAgent .ls-agent-models-scroll{overflow-x:auto!important;flex-wrap:nowrap!important;max-height:none!important}
+#lsOverlayAgent .ls-agent-models-scroll .ls-agent-model-opt{flex-shrink:0!important}
+}
+
+@media(max-width:480px){
+#lsOverlayAgent .ls-agent-feats{gap:0!important;padding:0 6px!important}
+#lsOverlayAgent .ls-agent-feat{padding:7px 10px!important;font-size:11px!important}
+#lsOverlayAgent .ls-agent-models{padding:6px!important;gap:4px!important}
+#lsOverlayAgent .ls-agent-model-opt{padding:5px 8px!important;font-size:10px!important}
+#lsOverlayAgent .ls-msg-bubble{padding:8px 12px!important;font-size:12px!important;max-width:90%!important}
+#lsOverlayAgent .ls-agent-input textarea{font-size:16px!important}
+#lsOverlayAgent .ls-welcome-chip{font-size:11px!important;padding:5px 10px!important}
+}
 /* === AI SPINNER === */
 .ai-spinner{display:inline-block;width:40px;height:40px;border:3px solid var(--bd);border-top-color:var(--p);border-radius:50%;animation:ai-spin .8s linear infinite}
 @keyframes ai-spin{to{transform:rotate(360deg)}}
