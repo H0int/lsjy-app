@@ -540,36 +540,27 @@ function doLogin(e){
     const rem=Math.ceil((lo.lockedUntil-Date.now())/1000);
     toast('账号已锁定，请'+Math.ceil(rem/60)+'分钟后再试','error');return;
   }
-  const u=document.getElementById('loginUser').value.trim(),p=document.getElementById('loginPwd').value;
-  const users=getUsers();
-  const found=users.find(x=>x.username===u);
-  const pwdOk=decryptPwd(found.password)===p||found.password===btoa(p);
+  var u=document.getElementById('loginUser').value.trim(),p=document.getElementById('loginPwd').value;
+  var users=getUsers();
+  var found=users.find(function(x){return x.username===u});
+  var pwdOk=false;
+  try{pwdOk=decryptPwd(found.password)===p||found.password===btoa(p)}catch(e){pwdOk=false}
   if(!found||!pwdOk){
-    const cnt=(lo.failCount||0)+1;
+    var cnt=(lo.failCount||0)+1;
     lo.failCount=cnt;lo.lastFail=Date.now();
     if(cnt>=5){lo.lockedUntil=Date.now()+15*60*1000;lo.failCount=0;saveLockout(lo);updateLockoutUI();toast('连续5次登录失败，账号已锁定15分钟','error');return}
     saveLockout(lo);toast('账号或密码错误 ('+cnt+'/5)','error');return;
   }
   lo.failCount=0;lo.lockedUntil=null;saveLockout(lo);
-  const ADMIN_ROLES=['admin','super_admin','supreme_admin','boss'];if(!ADMIN_ROLES.includes(found.role)){toast('非管理员账号，无法进入后台','error');return}
+  var ADMIN_ROLES=['admin','super_admin','supreme_admin','boss'];if(ADMIN_ROLES.indexOf(found.role)<0){toast('非管理员账号，无法进入后台','error');return}
   // Login log
-  const log=getLoginLog();log.push({username:u,time:new Date().toISOString(),ip:'-',device:navigator.userAgent.substring(0,80)});if(log.length>200)log.splice(0,log.length-200);saveLoginLog(log);
-  setCur(found);hideLoader();toast('登录成功','success');enterApp();
-  try{const r=await new Promise((resolve,reject)=>{var xhr=new XMLHttpRequest();xhr.open('POST',BACKEND_URL+'/api/auth/login',true);xhr.setRequestHeader('Content-Type','application/json');xhr.onload=function(){try{resolve(JSON.parse(xhr.responseText))}catch(e){reject(e)}};xhr.onerror=function(){reject(new Error('Network error'))};xhr.send(JSON.stringify({username:u,password:p}))});if(r.success&&r.token){localStorage.setItem('lsjy_backend_token',r.token)}}catch(e){}
-  
+  try{var log=getLoginLog();log.push({username:u,time:new Date().toISOString(),ip:'-',device:navigator.userAgent.substring(0,80)});if(log.length>200)log.splice(0,log.length-200);saveLoginLog(log)}catch(e){}
+  setCur(found);
+  // P0 FIX: 立即写入登录态并关闭所有遮罩
+  hideLoader();
+  toast('登录成功','success');
+  enterApp();
 }
-function updateLockoutUI(){
-  const lo=getLockout();
-  const box=document.getElementById('lockoutInfo');
-  if(lo.lockedUntil&&Date.now()<lo.lockedUntil){
-    box.style.display='block';
-    const rem=Math.ceil((lo.lockedUntil-Date.now())/1000);
-    box.innerHTML='<i class="fa-solid fa-lock"></i><div style="font-weight:700;margin-bottom:4px">账号已锁定</div><div>连续5次登录失败，请等待'+Math.ceil(rem/60)+'分钟后再试</div>';
-  }else{box.style.display='none'}
-}
-setInterval(updateLockoutUI,5000);updateLockoutUI();
-function doLogout(){try{addOpLog('登出','管理员主动登出')}catch(e){}localStorage.removeItem('lsjy3_cur');document.getElementById('loginPage').style.display='';document.getElementById('app').classList.remove('active');toast('已退出登录')}
-
 // ===== Navigation =====
 const _pageTitles={dashboard:'数据看板',modules:'业务模块',services:'服务管理',users:'用户管理',messages:'留言管理',leads:'线索管理',orders:'订单管理',customers:'顾客管理',redeemCodes:'卡密管理',content:'内容管理',aihub:'AI创作中心',luosheng_ai:'罗圣AI助手',recycle:'回收站',logs:'操作日志',settings:'系统设置',elite:'企业管理',elite_tools:'企业工具管理',elite_billing:'企业计费',enhance_tools:'增强工具'};
 
@@ -592,9 +583,15 @@ function goPage(page,el){
   if(window.innerWidth<769)toggleSidebar();
 }
 function enterApp(){
-  hideLoader();
-  document.getElementById('loginPage').style.display='none';document.getElementById('app').classList.add('active');
-  const u=getCur();document.getElementById('tbAvatar').textContent=(u.nickname||u.username)[0].toUpperCase();document.getElementById('tbName').textContent=u.nickname||u.username;
+  // P0 FIX: 强制关闭所有遮罩和加载页
+  var ld=document.getElementById('pageLoader');if(ld)ld.style.display='none';
+  var lp=document.getElementById('loginPage');if(lp)lp.style.display='none';
+  var app=document.getElementById('app');if(app)app.classList.add('active');
+  var u=getCur();
+  if(u){
+    var av=document.getElementById('tbAvatar');if(av)av.textContent=(u.nickname||u.username||'A')[0].toUpperCase();
+    var nm=document.getElementById('tbName');if(nm)nm.textContent=u.nickname||u.username||'Admin';
+  }
   goPage('dashboard');
 }
 // Auto-login handled by checkAndInit()
@@ -2527,7 +2524,7 @@ function adminDoVidGen(){
 <div id="adminLoveModal" class="love-modal-overlay"><div class="love-modal"><p class="modal-text" id="adminLoveModalText"></p><button onclick="closeAdminLoveModal()" style="padding:10px 28px;background:var(--p);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">我知道了</button></div></div>
 <script>
 /* ===== 加载动画 ===== */
-function hideLoader(){var ld=document.getElementById('pageLoader');if(ld){ld.classList.add('hide');setTimeout(function(){if(ld&&ld.parentNode)ld.remove()},600)}}
+function hideLoader(){var ld=document.getElementById('pageLoader');if(ld){ld.style.display='none'}}
 function checkAndInit(){
   var u=getCur();
   var ADMIN_ROLES=['admin','super_admin','supreme_admin','boss'];
