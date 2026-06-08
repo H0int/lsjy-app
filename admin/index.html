@@ -2362,9 +2362,10 @@ function adminAISend(){
   var loadId='adminAIMsg_load';
   chat.innerHTML+='<div id="'+loadId+'" style="display:flex;justify-content:flex-start;margin-bottom:16px;gap:8px"><div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#00f0ff,#7c6cf6);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-size:14px">🤖</div><div style="background:rgba(255,255,255,.05);padding:10px 14px;border-radius:12px;font-size:13px;box-shadow:var(--shadow)"><div class="ai-spinner" style="width:20px;height:20px;border-width:2px"></div> 思考中...</div></div>';
   chat.scrollTop=chat.scrollHeight;
-  fetch(PLATFORMS[document.getElementById('adminAIPlatform').value].base+'/chat/completions',{
+  var _pVal=document.getElementById('adminAIPlatform').value;var _kVal=getPlatformKey(_pVal);var _authHeader=_pVal==='tencent'?'Basic '+btoa(_kVal+':'+getTencentSecretKey()):'Bearer '+_kVal;
+  fetch(PLATFORMS[_pVal].base+'/chat/completions',{
     method:'POST',
-    headers:{'Content-Type':'application/json',(function(){var p=document.getElementById('adminAIPlatform').value;var k=getPlatformKey(p);if(p==='tencent'){return 'Basic '+btoa(k+':'+getTencentSecretKey());}return 'Bearer '+k;})()},
+    headers:{'Content-Type':'application/json','Authorization':_authHeader},
     body:JSON.stringify({model:document.getElementById('adminAIModel').value,messages:messages,stream:true})
   }).then(function(r){
     if(!r.ok)throw new Error('API错误 '+r.status);
@@ -2540,7 +2541,7 @@ function checkAndInit(){
 }
 window.addEventListener('load',function(){setTimeout(checkAndInit,300)});
 window.addEventListener('DOMContentLoaded',function(){setTimeout(function(){var ld=document.getElementById('pageLoader');if(ld&&!ld.classList.contains('hide'))checkAndInit()},1500)});
-setTimeout(function(){var ld=document.getElementById('pageLoader');if(ld&&!ld.classList.contains('hide'))checkAndInit()},3000});
+setTimeout(function(){var ld=document.getElementById('pageLoader');if(ld&&!ld.classList.contains('hide'))checkAndInit()},3000);
 
 
 /* ===== 访客统计 ===== */
