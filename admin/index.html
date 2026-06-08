@@ -205,10 +205,10 @@ tr:hover td{background:var(--ps)}
 .sidebar-overlay.show{display:block}
 /* ===== 增强功能CSS（后台版）===== */
 #pageLoader{position:fixed;inset:0;background:#fff;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .5s}#pageLoader.hide{opacity:0;pointer-events:none}#pageLoader .loader-logo{font-size:28px;font-weight:900;color:var(--p);margin-bottom:16px}#pageLoader .loader-bar{width:200px;height:4px;background:#e5e7eb;border-radius:2px;overflow:hidden}#pageLoader .loader-bar-inner{height:100%;width:0;background:linear-gradient(90deg,var(--p),#f59e0b);border-radius:2px;animation:loaderFill 1.5s ease forwards}@keyframes loaderFill{to{width:100%}}#pageLoader .loader-text{margin-top:10px;font-size:13px;color:var(--b)}
-.hearts-bg{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}.heart-float{position:absolute;bottom:-60px;font-size:20px;animation:heartRise linear forwards;opacity:0}@keyframes heartRise{0%{opacity:0;transform:translateY(0) scale(.5) rotate(0deg)}10%{opacity:.7}90%{opacity:.5}100%{opacity:0;transform:translateY(-110vh) scale(1.2) rotate(25deg)}}
-.love-burst .heart-burst-item{position:fixed;pointer-events:none;z-index:99998;font-size:24px;animation:burstUp 2s ease-out forwards}@keyframes burstUp{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-300px) scale(.3)}}
-body.dark-mode{--bg:#0f0f1a!important;--card-bg:#1a1a2e!important;--n:#e0e0e0!important;--b:#9ca3af!important;--bd:#2d2d44!important;--p:#7c6cf6!important;--shadow:0 4px 20px rgba(0,0,0,.4)!important;--err:#ef4444!important}.dark-mode .sidebar{background:#0f0f1a!important;border-color:#2d2d44!important}.dark-mode .sidebar .sb-item:hover,.dark-mode .sidebar .sb-item.active{background:#1a1a2e!important}
-.theme-toggle-admin{position:fixed;bottom:20px;right:20px;z-index:10000;width:44px;height:44px;border-radius:50%;border:none;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,.15);transition:transform .2s;background:linear-gradient(135deg,#f3f4f6,#e5e7eb);color:#374151}.theme-toggle-admin:hover{transform:scale(1.1)}
+
+
+
+
 .visitor-bar-admin{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--b);padding:3px 10px;background:rgba(0,0,0,.04);border-radius:16px;margin-left:auto}.visitor-bar-admin .dot{width:5px;height:5px;border-radius:50%;background:#22c55e;animation:pulse 2s infinite}@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 .love-module{background:var(--card-bg,var(--card-bg,#fff));border-radius:16px;padding:28px;box-shadow:var(--shadow);text-align:center}.love-module h3{font-size:20px;font-weight:900;margin-bottom:8px;color:var(--n)}.love-module p{color:var(--b);font-size:13px;margin-bottom:20px}.love-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}.love-btn{padding:12px 28px;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;transition:transform .2s}.love-btn:hover{transform:translateY(-2px)}.love-btn.decline{background:var(--bg);color:var(--n)}.love-btn.accept{background:linear-gradient(135deg,#ec4899,#f43f5e);color:#fff;box-shadow:0 4px 14px rgba(236,72,153,.3)}
 .love-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99998;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s}.love-modal-overlay.show{opacity:1;pointer-events:auto}.love-modal{background:var(--card-bg,#fff);border-radius:16px;padding:32px;max-width:400px;width:90%;text-align:center;transform:scale(.9);transition:transform .3s;color:var(--n)}.love-modal-overlay.show .love-modal{transform:scale(1)}.love-modal .modal-text{font-size:16px;line-height:1.8;margin-bottom:20px}
@@ -225,10 +225,8 @@ body.dark-mode{--bg:#0f0f1a!important;--card-bg:#1a1a2e!important;--n:#e0e0e0!im
 <div id="pageLoader"><div class="loader-logo">罗圣纪元 · 后台</div><div class="loader-bar"><div class="loader-bar-inner"></div></div><div class="loader-text">正在加载管理后台...</div></div>
 
 <!-- 爱心飘动背景 -->
-<div class="hearts-bg" id="heartsBg"></div>
 
 <!-- 主题切换 -->
-<button class="theme-toggle-admin" id="themeToggleAdmin" onclick="toggleAdminTheme()" title="切换明暗主题">🌙</button>
 
 <div class="toast" id="toast"></div>
 
@@ -2234,11 +2232,8 @@ function adminDoVidGen(){
 <script>
 /* ===== 加载动画 ===== */
 window.addEventListener('load',function(){setTimeout(function(){var ld=document.getElementById('pageLoader');if(ld)ld.classList.add('hide');setTimeout(function(){if(ld)ld.remove()},600)},1200)});
-/* ===== 爱心飘动 ===== */
-(function(){var bg=document.getElementById('heartsBg');if(!bg)return;var hearts=['❤️','💕','💖','💗','💓','🩷'];function spawnHeart(){var h=document.createElement('span');h.className='heart-float';h.textContent=hearts[Math.floor(Math.random()*hearts.length)];h.style.left=Math.random()*100+'%';h.style.fontSize=(14+Math.random()*16)+'px';h.style.animationDuration=(6+Math.random()*8)+'s';h.style.animationDelay=(Math.random()*4)+'s';bg.appendChild(h);h.addEventListener('animationend',function(){h.remove()})}setInterval(spawnHeart,1000);for(var i=0;i<4;i++)setTimeout(spawnHeart,i*400)})();
-/* ===== 主题切换 ===== */
-(function(){if(localStorage.getItem('admin_theme')==='dark'){document.body.classList.add('dark-mode');var tb=document.getElementById('themeToggleAdmin');if(tb){tb.textContent='☀️';tb.style.background='linear-gradient(135deg,#312e81,#4338ca)';tb.style.color='#fff'}}})();
-function toggleAdminTheme(){var body=document.body;var tb=document.getElementById('themeToggleAdmin');if(body.classList.contains('dark-mode')){body.classList.remove('dark-mode');localStorage.setItem('admin_theme','light');tb.textContent='🌙';tb.style.background='linear-gradient(135deg,#f3f4f6,#e5e7eb)';tb.style.color='#374151'}else{body.classList.add('dark-mode');localStorage.setItem('admin_theme','dark');tb.textContent='☀️';tb.style.background='linear-gradient(135deg,#312e81,#4338ca)';tb.style.color='#fff'}}
+
+
 /* ===== 访客统计 ===== */
 (function(){var c=parseInt(localStorage.getItem('admin_visitors')||'0')+1;localStorage.setItem('admin_visitors',c);var now=new Date();var ts=now.getFullYear()+'/'+String(now.getMonth()+1).padStart(2,'0')+'/'+String(now.getDate()).padStart(2,'0')+' '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');var vc=document.getElementById('adminVisitorCount');var vt=document.getElementById('adminVisitTime');if(vc)vc.textContent='访客: '+c;if(vt)vt.textContent=ts})();
 /* ===== 告白互动 ===== */
@@ -2257,7 +2252,7 @@ function adminBeautifyText(){var ta=document.getElementById('adminBeautifyInput'
 /* ===== 网页智能操控 ===== */
 var _adminPaHist=[];function adminPaSend(){var input=document.getElementById('adminPaInput');var text=input.value.trim();if(!text)return;_adminPaHist.push({role:'user',text:text});input.value='';adminPaRender();adminPaExec(text)}
 function adminPaRender(){var chat=document.getElementById('adminPaChat');if(!chat)return;var html='';for(var i=0;i<_adminPaHist.length;i++){var m=_adminPaHist[i];html+='<div class="pa-msg '+(m.role==='user'?'user':'bot')+'">'+m.text+'</div>'}chat.innerHTML=html;chat.scrollTop=chat.scrollHeight}
-function adminPaExec(cmd){var resp='';cmd=cmd.toLowerCase();if(cmd.includes('罗圣ai')||cmd.includes('助手')){resp='已为您打开罗圣AI助手！';goPage('luosheng_ai',document.querySelector('[onclick*=luosheng_ai]'))}else if(cmd.includes('创作')||cmd.includes('ai工具')){resp='已为您打开AI创作中心！';goPage('aihub',document.querySelector('[onclick*=aihub]'))}else if(cmd.includes('看板')||cmd.includes('概览')){resp='已为您打开数据看板！';goPage('dashboard',document.querySelector('[onclick*=dashboard]'))}else if(cmd.includes('暗')||cmd.includes('黑')||cmd.includes('模式')){resp='已为您切换主题！';toggleAdminTheme()}else{resp='试试说：\n• "打开罗圣AI"\n• "打开AI创作中心"\n• "查看数据看板"\n• "切换暗黑模式"'}
+function adminPaExec(cmd){var resp='';cmd=cmd.toLowerCase();if(cmd.includes('罗圣ai')||cmd.includes('助手')){resp='已为您打开罗圣AI助手！';goPage('luosheng_ai',document.querySelector('[onclick*=luosheng_ai]'))}else if(cmd.includes('创作')||cmd.includes('ai工具')){resp='已为您打开AI创作中心！';goPage('aihub',document.querySelector('[onclick*=aihub]'))}else if(cmd.includes('看板')||cmd.includes('概览')){resp='已为您打开数据看板！';goPage('dashboard',document.querySelector('[onclick*=dashboard]'))}else if(cmd.includes('暗')||cmd.includes('黑')||cmd.includes('模式')){resp='主题切换功能已移除'}else{resp='试试说：\n• "打开罗圣AI"\n• "打开AI创作中心"\n• "查看数据看板"\n• "切换暗黑模式"'}
 _adminPaHist.push({role:'bot',text:resp});adminPaRender()}
 /* ===== 添加增强功能页面到后台 ===== */
 _pageTitles['enhance_tools']='增强工具';
