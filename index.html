@@ -121,7 +121,7 @@ textarea.fi{resize:vertical;min-height:120px}
 .hero-orb:nth-child(3){width:300px;height:300px;background:rgba(251,146,60,.12);top:50%;left:50%;animation-delay:-15s}
 @keyframes orb{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(30px,-40px) scale(1.1)}66%{transform:translate(-20px,30px) scale(.9)}}
 .hero-grid{position:absolute;inset:0;background-image:radial-gradient(rgba(0,245,255,.12) 1px,transparent 1px);background-size:40px 40px;opacity:.25}
-.hero-content{position:relative;max-width:1200px;margin:0 auto;padding:140px 24px 100px;display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
+.hero-content{position:relative;max-width:1200px;margin:0 auto;padding:140px 24px 100px;display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:stretch}
 .hero-text{max-width:580px;width:100%}.hero-text h1{font-size:clamp(28px,5vw,48px)!important;line-height:1.2!important}.hero-text h2{font-size:clamp(16px,2.5vw,22px)!important}.hero-text p{font-size:clamp(13px,1.8vw,16px)!important}
 .hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(0,245,255,0.06);border:1px solid rgba(0,245,255,0.2);padding:6px 16px;border-radius:8px;font-size:12px;font-weight:600;color:#00f5ff;margin-bottom:24px}
 .hero-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--ok);animation:blink 2s infinite}
@@ -135,7 +135,7 @@ textarea.fi{resize:vertical;min-height:120px}
 .hero-stat p{font-size:13px;color:#64748b}
 .hero-visual{position:relative;display:flex;align-items:center;justify-content:center}
 .hero-card{width:100%;max-width:440px;background:var(--w);border-radius:var(--radius-lg);box-shadow:var(--sh-xl);padding:32px;position:relative;overflow:hidden}
-.hero-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--p),var(--ruby),var(--magenta))}
+.hero-card::before{display:none}
 .hero-card h3{font-size:18px;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:10px;color:#00f5ff;text-shadow:0 0 10px rgba(0,245,255,0.3)}
 .hero-card-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .hero-card-item{padding:14px;border-radius:12px;text-align:center;border:1px solid rgba(0,245,255,0.15);transition:all .2s;cursor:pointer;color:#fff}
@@ -355,46 +355,103 @@ textarea.fi{resize:vertical;min-height:120px}
 /* === V5.2 Responsive Enhancement === */
 @media(max-width:1024px){
   .hero-content{grid-template-columns:1fr!important;gap:32px;padding-top:100px}
-  .hero-visual{display:none}
+  .hero-visual{display:none!important}
   .mod-grid{grid-template-columns:repeat(2,1fr)!important}
   .pricing-grid{grid-template-columns:repeat(2,1fr)!important}
   .tool-grid{grid-template-columns:repeat(2,1fr)!important}
 }
 @media(max-width:768px){
-  .pricing-grid{grid-template-columns:1fr!important;max-width:400px;margin:0 auto}
-  .mod-grid{grid-template-columns:1fr!important}
-  .tool-grid{grid-template-columns:repeat(2,1fr)!important;gap:8px!important}
-  .tool-card{padding:14px 12px!important}
-  .tool-card h4{font-size:13px!important}
-  .tool-card .badge{font-size:10px!important}
-  .copywriter-types{grid-template-columns:repeat(2,1fr)!important}
+  /* === 导航栏 === */
+  .nav-inner{flex-wrap:nowrap!important}
+  .nav-links{display:none!important}
+  .mobile-toggle{display:flex!important}
+  .mobile-menu.show{display:flex!important;flex-direction:column;gap:0;background:rgba(10,14,23,0.97)!important;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:12px 20px}
+  .mobile-menu.show a{color:#e2e8f0!important;padding:14px 0;border-bottom:1px solid rgba(255,255,255,0.06);font-size:15px;text-decoration:none;font-weight:500}
+  .mobile-menu.show a:last-child{border-bottom:none}
+  .nav-left{flex-shrink:0}
+  .nav-brand{font-size:15px!important}
+  .nav-logo{height:26px!important}
+  #navRight{flex-shrink:0}
+  .nav-cta{padding:6px 12px!important;font-size:12px!important}
+  .visitor-bar{display:none!important}
+  
+  /* === Hero区域 === */
+  .hero-content{grid-template-columns:1fr!important;gap:24px;padding:80px 16px 40px!important}
+  .hero-visual{display:none!important}
+  .hero-text{text-align:center!important}
+  .hero-badge{margin:0 auto 12px!important}
+  h1{font-size:24px!important;line-height:1.3!important}
+  .hero-sub{font-size:13px!important;padding:0 8px!important}
+  .hero-actions{display:flex!important;flex-direction:column!important;gap:10px!important;align-items:center!important}
+  .hero-actions .btn{width:100%!important;max-width:280px!important;text-align:center!important;padding:12px 20px!important;font-size:14px!important}
+  .hero-stats{grid-template-columns:repeat(2,1fr)!important;gap:10px!important;margin-top:24px!important}
+  .hero-stat{padding:14px 10px!important;text-align:center!important}
+  .hero-stat h4{font-size:22px!important}
+  .hero-stat p{font-size:11px!important}
+  
+  /* === 业务板块 === */
   .sec-pad{padding:40px 16px!important}
-  .section-title{font-size:22px!important}
-  .section-sub{font-size:13px!important;padding:0 12px!important}
-  .cta-section h2{font-size:20px!important}
-  .cta-section .btn{width:100%!important;text-align:center}
-  .cta-section>div:first-of-type{flex-direction:column!important;align-items:center!important}
-  .contact-info{grid-template-columns:1fr!important;gap:12px!important}
-  .contact-item{font-size:12px!important}
+  .section-title{font-size:20px!important}
+  .section-sub{font-size:13px!important;padding:0 8px!important}
+  .mod-grid{grid-template-columns:1fr!important;gap:12px!important}
+  .mod-card{padding:20px 16px!important}
+  .tool-grid{grid-template-columns:repeat(2,1fr)!important;gap:8px!important}
+  .tool-card{padding:14px 10px!important;border-radius:12px!important}
+  .tool-card h4{font-size:12px!important}
+  .tool-card .badge{font-size:9px!important}
+  
+  /* === 定价 === */
+  .pricing-grid{grid-template-columns:1fr!important;max-width:380px!important;margin:0 auto!important;gap:12px!important}
+  .pricing-grid>div{padding:20px 16px!important}
+  
+  /* === CTA === */
+  .cta-section{padding:40px 16px!important;text-align:center!important}
+  .cta-section h2{font-size:18px!important}
+  .cta-section p{font-size:13px!important;padding:0 8px!important}
+  .cta-section>div[style*="flex"]{flex-direction:column!important;align-items:center!important;gap:10px!important}
+  .cta-section .btn{width:100%!important;max-width:280px!important;text-align:center!important}
+  .contact-info{grid-template-columns:1fr!important;gap:8px!important}
+  .contact-item{font-size:12px!important;justify-content:center!important}
+  
+  /* === About === */
   #about>div>div[style*="grid"]{grid-template-columns:1fr!important}
-  .hero-stats{grid-template-columns:repeat(2,1fr)!important}
-  .hero-stat{padding:16px!important}
+  #about h3{font-size:16px!important}
+  
+  /* === Footer === */
+  .footer{padding:24px 16px!important;text-align:center!important;width:100%!important}
+  .footer p{font-size:12px!important}
+  
+  /* === 浮动工具栏 === */
   .float-toolbar{bottom:12px!important;right:12px!important;gap:6px!important}
-  .float-toolbar button{width:36px!important;height:36px!important;font-size:14px!important}
-  .nav-container{padding:0 12px!important}
+  .float-toolbar button{width:38px!important;height:38px!important;font-size:15px!important}
+  
+  /* === 通用 === */
   .container{padding:0 16px!important}
-  footer .footer-links{flex-wrap:wrap!important;gap:8px!important}
-  footer .footer-bottom{font-size:11px!important}
+  
+  /* === 弹窗适配 === */
+  .overlay{width:96vw!important;max-width:96vw!important;left:2vw!important;right:2vw!important;max-height:85vh!important;overflow-y:auto!important;border-radius:16px!important}
+  .overlay .glass-panel{padding:20px 16px!important;width:100%!important}
+  .overlay h2{font-size:18px!important}
+  .overlay h3{font-size:16px!important}
+  
+  /* === 登录弹窗 === */
+  .auth-overlay{width:92vw!important;max-width:360px!important;left:4vw!important;right:auto!important}
+  
+  /* === 算力弹窗 === */
+  .ls-power-panel{width:90vw!important;max-width:340px!important}
 }
 @media(max-width:480px){
   .tool-grid{grid-template-columns:1fr!important}
-  .copywriter-types{grid-template-columns:1fr!important}
   .hero-stats{grid-template-columns:1fr!important}
-  .hero-actions .btn{font-size:13px!important;padding:10px 16px!important}
-  .pricing-grid>div{padding:20px 16px!important}
+  .hero-actions .btn{font-size:13px!important;padding:11px 16px!important}
+  .pricing-grid>div{padding:16px 14px!important}
+  h1{font-size:22px!important}
+  .section-title{font-size:18px!important}
+  .nav-brand{font-size:14px!important}
 }
 
 /* === V5.2 Responsive Enhancement END === */
+
 @media(max-width:768px){
 .nav-links{display:none}
 .mobile-toggle{display:flex}
@@ -1729,7 +1786,7 @@ renderEmployeeAcct();
 @keyframes float-particle{0%{transform:translateY(100vh) scale(0);opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translateY(-10vh) scale(1);opacity:0}}
 
 /* 赛博扫描线 */
-.scan-line{position:fixed;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,245,255,.3),rgba(139,92,246,.2),transparent);z-index:1;pointer-events:none;animation:scan 6s linear infinite}
+.scan-line{position:fixed;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,245,255,.08),rgba(139,92,246,.05),transparent);z-index:1;pointer-events:none;animation:scan 6s linear infinite}
 @keyframes scan{0%{top:-1px}100%{top:100vh}}
 
 /* 网格背景 */
@@ -1920,10 +1977,10 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 <div style="max-width:900px;margin:0 auto 48px">
 <h3 style="font-size:18px;font-weight:800;margin-bottom:24px;color:var(--n)">📊 平台数据</h3>
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px">
-<div style="padding:24px;background:linear-gradient(135deg,#0a0e17,#fee2e2);border-radius:16px;text-align:center"><div style="font-size:32px;font-weight:900;color:#00f5ff">6</div><div style="font-size:13px;color:#991b1b;margin-top:4px;font-weight:600">核心业务板块</div></div>
-<div style="padding:24px;background:linear-gradient(135deg,#eff6ff,#141c2e);border-radius:16px;text-align:center"><div style="font-size:32px;font-weight:900;color:#2563eb">28</div><div style="font-size:13px;color:#1e40af;margin-top:4px;font-weight:600">专业服务项目</div></div>
-<div style="padding:24px;background:linear-gradient(135deg,#f0fdf4,#dcfce7);border-radius:16px;text-align:center"><div style="font-size:32px;font-weight:900;color:#16a34a">205</div><div style="font-size:13px;color:#166534;margin-top:4px;font-weight:600">全能AI工具</div></div>
-<div style="padding:24px;background:linear-gradient(135deg,#fefce8,#fef9c3);border-radius:16px;text-align:center"><div style="font-size:32px;font-weight:900;color:#ca8a04">1000+</div><div style="font-size:13px;color:#92400e;margin-top:4px;font-weight:600">累计服务客户</div></div>
+<div style="padding:24px;background:linear-gradient(135deg,rgba(0,245,255,0.08),rgba(0,245,255,0.02));border-radius:16px;text-align:center;border:1px solid rgba(0,245,255,0.15)"><div style="font-size:32px;font-weight:900;color:#00f5ff">6</div><div style="font-size:13px;color:#7dd3fc;margin-top:4px;font-weight:600">核心业务板块</div></div>
+<div style="padding:24px;background:linear-gradient(135deg,rgba(139,92,246,0.08),rgba(139,92,246,0.02));border-radius:16px;text-align:center;border:1px solid rgba(139,92,246,0.15)"><div style="font-size:32px;font-weight:900;color:#a78bfa">28</div><div style="font-size:13px;color:#c4b5fd;margin-top:4px;font-weight:600">专业服务项目</div></div>
+<div style="padding:24px;background:linear-gradient(135deg,rgba(236,72,153,0.08),rgba(236,72,153,0.02));border-radius:16px;text-align:center;border:1px solid rgba(236,72,153,0.15)"><div style="font-size:32px;font-weight:900;color:#f472b6">205</div><div style="font-size:13px;color:#fbcfe8;margin-top:4px;font-weight:600">全能AI工具</div></div>
+<div style="padding:24px;background:linear-gradient(135deg,rgba(59,130,246,0.08),rgba(59,130,246,0.02));border-radius:16px;text-align:center;border:1px solid rgba(59,130,246,0.15)"><div style="font-size:32px;font-weight:900;color:#60a5fa">1000+</div><div style="font-size:13px;color:#93c5fd;margin-top:4px;font-weight:600">累计服务客户</div></div>
 </div>
 </div>
 <div style="max-width:900px;margin:0 auto 48px">
@@ -1935,12 +1992,12 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 <div style="max-width:900px;margin:0 auto">
 <h3 style="font-size:18px;font-weight:800;margin-bottom:24px;color:var(--n)">🌍 六大业务板块</h3>
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px">
-<div style="padding:20px;background:linear-gradient(135deg,#eff6ff,#141c2e);border-radius:14px;text-align:center"><div style="font-size:28px;margin-bottom:8px">🤖</div><div style="font-size:13px;font-weight:700;color:#1e40af">AI 人工智能</div></div>
-<div style="padding:20px;background:linear-gradient(135deg,#fdf2f8,#fce7f3);border-radius:14px;text-align:center"><div style="font-size:28px;margin-bottom:8px">📱</div><div style="font-size:13px;font-weight:700;color:#9d174d">自媒体</div></div>
-<div style="padding:20px;background:linear-gradient(135deg,#f5f3ff,#ede9fe);border-radius:14px;text-align:center"><div style="font-size:28px;margin-bottom:8px">🛒</div><div style="font-size:13px;font-weight:700;color:#5b21b6">电商</div></div>
-<div style="padding:20px;background:linear-gradient(135deg,#0a0e17,#ffedd5);border-radius:14px;text-align:center"><div style="font-size:28px;margin-bottom:8px">🐾</div><div style="font-size:13px;font-weight:700;color:#9a3412">宠物</div></div>
-<div style="padding:20px;background:linear-gradient(135deg,#ecfdf5,#d1fae5);border-radius:14px;text-align:center"><div style="font-size:28px;margin-bottom:8px">📚</div><div style="font-size:13px;font-weight:700;color:#065f46">教育</div></div>
-<div style="padding:20px;background:linear-gradient(135deg,#eef2ff,#e0e7ff);border-radius:14px;text-align:center"><div style="font-size:28px;margin-bottom:8px">🏫</div><div style="font-size:13px;font-weight:700;color:#3730a3">伯雅校园</div></div>
+<div style="padding:20px;background:linear-gradient(135deg,rgba(0,245,255,0.1),rgba(0,245,255,0.03));border-radius:14px;text-align:center;border:1px solid rgba(0,245,255,0.15)"><div style="font-size:28px;margin-bottom:8px">🤖</div><div style="font-size:13px;font-weight:700;color:#00f5ff">AI 人工智能</div></div>
+<div style="padding:20px;background:linear-gradient(135deg,rgba(236,72,153,0.1),rgba(236,72,153,0.03));border-radius:14px;text-align:center;border:1px solid rgba(236,72,153,0.15)"><div style="font-size:28px;margin-bottom:8px">📱</div><div style="font-size:13px;font-weight:700;color:#ec4899">自媒体</div></div>
+<div style="padding:20px;background:linear-gradient(135deg,rgba(139,92,246,0.1),rgba(139,92,246,0.03));border-radius:14px;text-align:center;border:1px solid rgba(139,92,246,0.15)"><div style="font-size:28px;margin-bottom:8px">🛒</div><div style="font-size:13px;font-weight:700;color:#8b5cf6">电商</div></div>
+<div style="padding:20px;background:linear-gradient(135deg,rgba(251,146,60,0.1),rgba(251,146,60,0.03));border-radius:14px;text-align:center;border:1px solid rgba(251,146,60,0.15)"><div style="font-size:28px;margin-bottom:8px">🐾</div><div style="font-size:13px;font-weight:700;color:#fb923c">宠物</div></div>
+<div style="padding:20px;background:linear-gradient(135deg,rgba(16,185,129,0.1),rgba(16,185,129,0.03));border-radius:14px;text-align:center;border:1px solid rgba(16,185,129,0.15)"><div style="font-size:28px;margin-bottom:8px">📚</div><div style="font-size:13px;font-weight:700;color:#10b981">教育</div></div>
+<div style="padding:20px;background:linear-gradient(135deg,rgba(83,58,253,0.1),rgba(83,58,253,0.03));border-radius:14px;text-align:center;border:1px solid rgba(83,58,253,0.15)"><div style="font-size:28px;margin-bottom:8px">🏫</div><div style="font-size:13px;font-weight:700;color:#533afd">伯雅校园</div></div>
 </div>
 </div>
 </div>
@@ -1964,8 +2021,8 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 </section>
 
 <!-- ===== FOOTER ===== -->
-<footer class="footer">
-<p>© 2026 祁阳市罗圣纪元互联网科技有限责任公司 &nbsp;|&nbsp; 湖南省永州市祁阳市</p>
+<footer class="footer" style="text-align:center;width:100%">
+<p style="margin:0">© 2026 祁阳市罗圣纪元互联网科技有限责任公司 &nbsp;|&nbsp; 湖南省永州市祁阳市</p>
 <p style="margin-top:8px">AI · 自媒体 · 电商 · 宠物 · 教育</p>
 <p style="margin-top:12px;font-size:12px">
   <a href="privacy.html" style="color:#64748b;text-decoration:none" target="_blank">隐私政策</a>
