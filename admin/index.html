@@ -433,7 +433,38 @@ body.admin-light .modal-box{background:rgba(255,255,255,.95);border-color:rgba(0
 <body>
 
 <!-- 加载动画 -->
-<div id="pageLoader"><div class="loader-logo">罗圣纪元 · 后台</div><div class="loader-bar"><div class="loader-bar-inner"></div></div><div class="loader-text">正在加载管理后台...</div></div>
+<div id="pageLoader"><div class="loader-logo">罗圣纪元 · 后台</div><div class="loader-bar"><div class="loader-bar-inner"></div></div><div class="loader-text">正在加载管理后台...</div>
+
+<script>
+/* P0: 确保loader在任何情况下都能被隐藏 */
+function _hideLoader(){document.querySelectorAll('#pageLoader,.loader,.loading,.mask,.loading-mask').forEach(function(el){el.style.display='none'})}
+function _checkLogin(){
+  try{
+    var u=JSON.parse(localStorage.getItem('lsjy3_cur')||'null');
+    var a=JSON.parse(localStorage.getItem('lsjy3_admin')||'null');
+    var roles=['admin','super_admin','supreme_admin','boss'];
+    if(a&&a.isLogin&&u&&u.role&&roles.indexOf(u.role)>=0){
+      document.getElementById('loginPage').style.display='none';
+      document.getElementById('app').classList.add('active');
+      document.body.style.visibility='visible';
+      _hideLoader();
+    }else{
+      var lp=document.getElementById('loginPage');
+      if(lp)lp.style.display='';
+      var app=document.getElementById('app');
+      if(app)app.classList.remove('active');
+      _hideLoader();
+    }
+  }catch(e){
+    _hideLoader();
+    var lp=document.getElementById('loginPage');
+    if(lp)lp.style.display='';
+  }
+}
+document.readyState==='loading'?document.addEventListener('DOMContentLoaded',_checkLogin):_checkLogin();
+</script>
+
+</div>
 
 <!-- 爱心飘动背景 -->
 
@@ -2619,7 +2650,7 @@ function adminDoVidGen(){
 (function(){
     if(typeof getCredits!=='function')return;
     var c=getCredits();
-    if(!c['KF02V9']){c['KF02V9']=10000;saveCredits(c)}
+    if(!c['KF02V9']){c['KF02V9']=10000;saveAllCredits(c)}
 })();
 </script>
 <!-- ===== 后台增强功能模块 ===== -->
