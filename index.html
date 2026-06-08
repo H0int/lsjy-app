@@ -399,7 +399,7 @@ textarea.fi{resize:vertical;min-height:120px}
   .mod-card{padding:18px 16px!important}
 
   /* 工具 - 单列卡片 */
-  .tool-grid{grid-template-columns:1fr!important;gap:10px!important}
+  .tools-grid,.tool-grid{grid-template-columns:1fr!important;gap:10px!important}
   .tool-card{padding:14px!important;border-radius:12px!important;min-height:70px!important}
   .tool-card h4{font-size:13px!important}
   .tool-card .badge{font-size:10px!important}
@@ -7733,3 +7733,11 @@ document.addEventListener('dblclick',function(e){
 <div id="backToTopBtn" style="position:fixed;bottom:max(80px,calc(env(safe-area-inset-bottom)+80px));right:16px;width:44px;height:44px;border-radius:50%;background:rgba(0,245,255,.12);border:1px solid rgba(0,245,255,.25);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:998;opacity:0;transition:all .3s;font-size:18px;color:#00f5ff" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</div>
 </body>
 </html>
+
+<!-- overlay click enhancement -->
+<style>
+.overlay{padding:24px!important}
+.overlay .glass-panel .close-btn,.tool-panel .tool-header button,.detail-panel .detail-close{width:40px!important;height:40px!important;min-width:40px;min-height:40px;font-size:18px!important;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:10px;transition:all .2s}
+.tool-card{min-height:70px!important;cursor:pointer!important}
+.tool-card *{pointer-events:none}
+</style>
