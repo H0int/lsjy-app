@@ -1954,11 +1954,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 <li><a href="#pricing">服务定价</a></li>
 <li><a href="#about">关于我们</a></li>
 <li><a href="#contact">联系我们</a></li>
-</ul><div style="display:inline-flex;align-items:center;gap:8px"><a href="javascript:void(0)" style="display:inline-flex;align-items:center;gap:4px;padding:8px 16px;border-radius:10px;background:linear-gradient(135deg,#1e1b4b,#4338ca);color:#e2e8f0;font-size:13px;font-weight:700;cursor:pointer;transition:all .25s;border:none;text-decoration:none;box-shadow:0 2px 10px rgba(30,27,75,.3)" onclick="openLuoshengAgent()" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 4px 14px rgba(30,27,75,.4)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 10px rgba(30,27,75,.3)'">🤖 罗圣AI</a><a href="javascript:void(0)" style="display:inline-flex;align-items:center;gap:4px;padding:8px 16px;border-radius:10px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#e2e8f0;font-size:13px;font-weight:700;cursor:pointer;transition:all .25s;border:none;text-decoration:none;box-shadow:0 2px 10px rgba(217,119,6,.3)" onclick="openEnterprise()" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 4px 14px rgba(217,119,6,.4)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 10px rgba(217,119,6,.3)'">🏢 企业版</a></div><div id="navRight" style="display:inline-flex;align-items:center;gap:6px">
-<div class="version-switch" id="versionSwitch"><button class="active" onclick="switchVersion('personal')">个人版</button><button onclick="switchVersion('enterprise')">企业版</button></div>
-<button class="theme-btn" id="themeToggleBtn" onclick="toggleTheme()" title="切换主题">🌙</button>
-<a href="javascript:void(0)" class="nav-cta" onclick="openAuth('login')" id="navLoginBtn">登录 / 注册</a>
-</div>
+</ul><div style="display:inline-flex;align-items:center;gap:8px"><a href="javascript:void(0)" style="display:inline-flex;align-items:center;gap:4px;padding:8px 16px;border-radius:10px;background:linear-gradient(135deg,#1e1b4b,#4338ca);color:#e2e8f0;font-size:13px;font-weight:700;cursor:pointer;transition:all .25s;border:none;text-decoration:none;box-shadow:0 2px 10px rgba(30,27,75,.3)" onclick="openLuoshengAgent()" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 4px 14px rgba(30,27,75,.4)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 10px rgba(30,27,75,.3)'">🤖 罗圣AI</a><a href="javascript:void(0)" style="display:inline-flex;align-items:center;gap:4px;padding:8px 16px;border-radius:10px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#e2e8f0;font-size:13px;font-weight:700;cursor:pointer;transition:all .25s;border:none;text-decoration:none;box-shadow:0 2px 10px rgba(217,119,6,.3)" onclick="openEnterprise()" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 4px 14px rgba(217,119,6,.4)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 10px rgba(217,119,6,.3)'">🏢 企业版</a></div><div id="navRight" style="display:inline-flex;align-items:center;gap:8px"><a href="javascript:void(0)" class="nav-cta" onclick="openAuth('login')" id="navLoginBtn">登录 / 注册</a></div>
 <button class="mobile-toggle" onclick="toggleMobileMenu()"><span></span><span></span><span></span></button>
 </div>
 </nav>
@@ -7798,6 +7794,12 @@ document.addEventListener('dblclick',function(e){
 
 </script>
 
+<div id="floatControls" style="position:fixed;bottom:max(20px,calc(env(safe-area-inset-bottom)+20px));right:16px;z-index:998;display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+<div style="display:flex;gap:6px;order:2">
+<div class="version-switch" id="versionSwitch"><button class="active" onclick="switchVersion('personal')">个人版</button><button onclick="switchVersion('enterprise')">企业版</button></div>
+<button class="theme-btn" id="themeToggleBtn" onclick="toggleTheme()" title="切换主题">🌙</button>
+</div>
+</div>
 <div id="backToTopBtn" style="position:fixed;bottom:max(80px,calc(env(safe-area-inset-bottom)+80px));right:16px;width:44px;height:44px;border-radius:50%;background:rgba(0,245,255,.12);border:1px solid rgba(0,245,255,.25);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:998;opacity:0;transition:all .3s;font-size:18px;color:#00f5ff" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</div>
 <script>
 // ===== ULTIMATE PRICING FALLBACK =====
