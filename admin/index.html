@@ -463,6 +463,32 @@ function _checkLogin(){
   }
 }
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',_checkLogin):_checkLogin();
+
+/* 访客实时统计 - 精确到秒 */
+(function(){
+  function _updateVisitor(){
+    var vc=document.getElementById('adminVisitorCount');
+    var vt=document.getElementById('adminVisitTime');
+    if(!vc||!vt)return;
+    var visits=parseInt(localStorage.getItem('lsjy_admin_visits')||'0');
+    var now=new Date();
+    var timeStr=now.getFullYear()+'-'+
+      String(now.getMonth()+1).padStart(2,'0')+'-'+
+      String(now.getDate()).padStart(2,'0')+' '+
+      String(now.getHours()).padStart(2,'0')+':'+
+      String(now.getMinutes()).padStart(2,'0')+':'+
+      String(now.getSeconds()).padStart(2,'0');
+    vc.textContent='访客: '+visits;
+    vt.textContent=timeStr;
+  }
+  // 首次更新
+  setTimeout(_updateVisitor,500);
+  // 每秒更新
+  setInterval(_updateVisitor,1000);
+  // 记录当前访问
+  var v=parseInt(localStorage.getItem('lsjy_admin_visits')||'0');
+  localStorage.setItem('lsjy_admin_visits',String(v+1));
+})();
 </script>
 
 </div>
@@ -722,8 +748,15 @@ function enterApp(){
   document.body.style.visibility='visible';
   var u=getCur();
   if(u){
-    var av=document.getElementById('tbAvatar');if(av)av.textContent=(u.nickname||u.username||'A')[0].toUpperCase();
-    var nm=document.getElementById('tbName');if(nm)nm.textContent=u.nickname||u.username||'Admin';
+    var customAvatar=localStorage.getItem('admin_custom_avatar');
+    var customName=localStorage.getItem('admin_custom_name');
+    var av=document.getElementById('tbAvatar');
+    if(av){
+      if(customAvatar){av.innerHTML='<img src="'+customAvatar+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover">';}
+      else{av.textContent=(customName||u.nickname||u.username||'A')[0].toUpperCase();}
+    }
+    var nm=document.getElementById('tbName');
+    if(nm)nm.textContent=customName||u.nickname||u.username||'Admin';
   }
   goPage('dashboard');
 }
@@ -1237,10 +1270,13 @@ function chgPwd(){
   const u=getCur();if(decryptPwd(u.password)!==o){ld.done();return toast('当前密码错误','error')}
   if(n.length<8||!/[A-Z]/.test(n)||!/[a-z]/.test(n)||!/[0-9]/.test(n)||!/[^A-Za-z0-9]/.test(n)){ld.done();return toast('密码需8位以上，含大小写字母+数字+符号','error')}
   if(n!==n2){ld.done();return toast('两次密码不一致','error')}
-  u.password=encryptPwd(n);setCur(u);const users=getUsers();const idx=users.findIndex(x=>x.username===u.username);if(idx>=0){users[idx].password=u.password;saveUsers(users)}
+  u.password=encryptPwd(n);setCur(u);var _nk=document.getElementById('aNickname');var _av=document.getElementById('aAvatar');if(_nk&&_nk.value.trim())localStorage.setItem('admin_custom_name',_nk.value.trim());else localStorage.removeItem('admin_custom_name');if(_av&&_av.value.trim())localStorage.setItem('admin_custom_avatar',_av.value.trim());else localStorage.removeItem('admin_custom_avatar');var _tbAv=document.getElementById('tbAvatar');var _tbNm=document.getElementById('tbName');if(_tbAv){var _sa=localStorage.getItem('admin_custom_avatar');if(_sa){_tbAv.innerHTML='<img src="'+_sa+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover">';}else{_tbAv.textContent=(_nk&&_nk.value.trim()||'A')[0].toUpperCase();}}if(_tbNm){var _sn=localStorage.getItem('admin_custom_name');if(_sn)_tbNm.textContent=_sn;}const users=getUsers();const idx=users.findIndex(x=>x.username===u.username);if(idx>=0){users[idx].password=u.password;saveUsers(users)}
   ld.done();toast('密码修改成功','success');document.getElementById('sOldPwd').value='';document.getElementById('sNewPwd').value='';document.getElementById('sNewPwd2').value='';
 }
-function openEditAdmin(){showMod(`<h3><i class="fa-solid fa-key" style="color:var(--warn)"></i> 修改管理员密码</h3>
+function openEditAdmin(){var curName=localStorage.getItem('admin_custom_name')||'';var curAvatar=localStorage.getItem('admin_custom_avatar')||'';showMod(`<h3><i class="fa-solid fa-user-gear" style="color:var(--p)"></i> 个人设置</h3>
+  <div class="fg"><label class="fl">显示昵称</label><input class="fi" type="text" id="aNickname" placeholder="修改后端显示的名字" value="'+curName+'"></div>
+  <div class="fg"><label class="fl">头像URL</label><input class="fi" type="text" id="aAvatar" placeholder="头像图片地址（留空使用首字母）" value="'+curAvatar+'"></div>
+  <div style="margin:12px 0;padding-top:12px;border-top:1px solid var(--bd)"><p style="font-size:12px;color:var(--nd);margin-bottom:8px">修改密码</p></div>
   <div class="fg"><label class="fl">当前密码</label><input class="fi" type="password" id="aOldPwd"></div>
   <div class="fg"><label class="fl">新密码</label><input class="fi" type="password" id="aNewPwd" placeholder="6个字符以上"></div>
   <div class="fg"><label class="fl">确认新密码</label><input class="fi" type="password" id="aNewPwd2"></div>
@@ -2806,8 +2842,15 @@ function doLogout(){
   var app=document.getElementById('app');
   if(lp)lp.style.display='';
   if(app)app.classList.remove('active');
-  hideLoader();
-  toast('已退出登录','success');
+  // 强制隐藏所有loader
+  document.querySelectorAll('#pageLoader,.loader,.loading,.mask,.loading-mask').forEach(function(el){el.style.display='none'});
+  document.body.style.visibility='visible';
+  // 清空输入框
+  var inputs=document.querySelectorAll('#loginPage input');
+  inputs.forEach(function(inp){inp.value='';});
+  // 聚焦到用户名输入框
+  var userInput=document.getElementById('loginUser');
+  if(userInput)setTimeout(function(){userInput.focus()},100);
 }
 
 // === 登录状态持久化检查 ===
