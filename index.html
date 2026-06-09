@@ -137,7 +137,7 @@ textarea.fi{resize:vertical;min-height:120px}
 .hero-card{width:100%;max-width:560px;background:var(--w);border-radius:var(--radius-lg);box-shadow:var(--sh-xl);padding:36px;position:relative;overflow:hidden}
 .hero-card::before{display:none}
 .hero-card h3{font-size:18px;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:10px;color:#00f5ff;text-shadow:0 0 10px rgba(0,245,255,0.3)}
-.hero-card-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hero-card-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .hero-card-item{padding:18px;border-radius:14px;text-align:center;border:1px solid rgba(0,245,255,0.15);transition:all .2s;cursor:pointer;color:#fff}
 .hero-card-item:hover{border-color:rgba(0,245,255,.3);background:rgba(0,245,255,.08);transform:translateY(-2px);color:#fff}
 .hero-card-item .ci{font-size:36px;margin-bottom:8px}
@@ -3495,10 +3495,10 @@ if(m.services&&m.services.length){m.services.forEach(s=>{html+=`<div class="deta
 else{html+='<p style="color:var(--b)">暂无服务项目</p>'}
 html+='</div><button class="btn btn-p" style="width:100%;margin-top:16px" onclick="closeDetail();document.querySelector(\'#contact\').scrollIntoView({behavior:\'smooth\'})">📋 咨询该业务</button>';
 body.innerHTML=html;
-document.getElementById('detailOverlay').classList.add('show');
+var dov=document.getElementById('detailOverlay');if(dov){dov.style.display='flex';dov.classList.add('show');}
 document.body.style.overflow='hidden';
 }
-function closeDetail(e){if(e&&e.target!==e.currentTarget)return;document.getElementById('detailOverlay').classList.remove('show');document.body.style.overflow=''}
+function closeDetail(e){if(e&&e.target!==e.currentTarget)return;var dov=document.getElementById('detailOverlay');if(dov){dov.style.display='none';dov.classList.remove('show');}document.body.style.overflow=''}
 // ===== Section Collapse/Expand =====
 function toggleSection(gridId,btn){var grid=document.getElementById(gridId);if(!grid)return;var isHidden=grid.style.display==='none';if(isHidden){grid.style.display='';grid.style.animation='slideUp .3s ease';btn.textContent='收起'+btn.textContent.replace('展开','');}else{grid.style.display='none';btn.textContent='展开'+btn.textContent.replace('收起','');}}
 
