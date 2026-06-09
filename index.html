@@ -673,12 +673,12 @@ input:focus,textarea:focus,select:focus{
 
 /* 主题切换按钮 */
 /* === 主题切换按钮样式 === */
-.theme-btn{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#e2e8f0;font-size:16px;cursor:pointer;transition:all .25s;padding:0}
-.theme-btn:hover{background:rgba(0,245,255,.1);border-color:rgba(0,245,255,.3)}
-.version-switch{display:inline-flex;align-items:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:10px;overflow:hidden;font-size:12px;font-weight:600}
+.theme-btn{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:10px;background:rgba(10,14,23,.7);border:1px solid rgba(0,245,255,.15);color:#00f5ff;font-size:16px;cursor:pointer;transition:all .25s;padding:0;backdrop-filter:blur(10px)}
+.theme-btn:hover{background:rgba(0,245,255,.12);border-color:rgba(0,245,255,.35);box-shadow:0 0 12px rgba(0,245,255,.15)}
+.version-switch{display:inline-flex;align-items:center;background:rgba(10,14,23,.7);border:1px solid rgba(0,245,255,.15);border-radius:10px;overflow:hidden;font-size:12px;font-weight:600;backdrop-filter:blur(10px)}
 .version-switch button{padding:6px 12px;background:none;border:none;color:#94a3b8;cursor:pointer;transition:all .25s;font-size:12px;font-weight:600}
-.version-switch button.active{background:rgba(0,245,255,.12);color:#00f5ff}
-.version-switch button:hover:not(.active){color:#e2e8f0}
+.version-switch button.active{background:rgba(0,245,255,.15);color:#00f5ff;text-shadow:0 0 6px rgba(0,245,255,.3)}
+.version-switch button:hover:not(.active){color:#e2e8f0;background:rgba(0,245,255,.06)}
 
 /* === 浅色模式（白天模式） === */
 body.light-mode{--bg:#f8fafc;--bg2:#f0f4f8;--bg3:#e8edf2;--n:#0f172a;--nd:#475569;--b:#64748b;--l:#64748b;--bd:rgba(0,0,0,.08);--w:#0f172a;--w2:rgba(0,0,0,.05);--glass:rgba(255,255,255,.85);--glass-b:rgba(0,0,0,.06);--sh:0 4px 6px -1px rgba(0,0,0,.08),0 2px 4px -2px rgba(0,0,0,.05);--sh-lg:0 20px 25px -5px rgba(0,0,0,.1),0 8px 10px -6px rgba(0,0,0,.06);--sh-xl:0 25px 50px -12px rgba(0,0,0,.12)}
@@ -728,6 +728,12 @@ body.light-mode .visitor-bar{background:rgba(0,0,0,.04)!important;color:#475569!
 body.light-mode .enterprise-privilege{background:#f0f4f8!important;border-color:rgba(0,0,0,.06)!important}
 body.light-mode .enterprise-privilege p{color:#475569!important}
 body.light-mode .enterprise-privilege h4{color:#0f172a!important}
+body.light-mode .theme-btn{background:rgba(15,23,42,.06)!important;border-color:rgba(8,145,178,.2)!important;color:#0891b2!important}
+body.light-mode .theme-btn:hover{background:rgba(8,145,178,.1)!important;border-color:rgba(8,145,178,.35)!important;box-shadow:none!important}
+body.light-mode .version-switch{background:rgba(15,23,42,.06)!important;border-color:rgba(8,145,178,.2)!important}
+body.light-mode .version-switch button{color:#475569!important}
+body.light-mode .version-switch button.active{background:rgba(8,145,178,.1)!important;color:#0891b2!important;text-shadow:none!important}
+body.light-mode .version-switch button:hover:not(.active){color:#0f172a!important;background:rgba(8,145,178,.06)!important}
 
 /* === AI SPINNER === */
 .ai-spinner{display:inline-block;width:40px;height:40px;border:3px solid var(--bd);border-top-color:var(--p);border-radius:50%;animation:ai-spin .8s linear infinite}
@@ -7625,46 +7631,8 @@ var _voiceRec=null;function startVoice(targetId){var target=document.getElementB
 <script>
 (function(){var c=document.getElementById('techParticles');if(!c)return;var colors=['rgba(0,245,255,0.4)','rgba(139,92,246,0.3)','rgba(236,72,153,0.25)','rgba(6,182,212,0.3)','rgba(16,185,129,0.2)'];for(var i=0;i<40;i++){var s=document.createElement('span');s.style.left=Math.random()*100+'%';s.style.background=colors[Math.floor(Math.random()*colors.length)];s.style.animationDuration=(6+Math.random()*14)+'s';s.style.animationDelay=Math.random()*12+'s';var size=1+Math.random()*3;s.style.width=s.style.height=size+'px';if(Math.random()>0.7){s.style.boxShadow='0 0 '+(size*3)+'px '+s.style.background}c.appendChild(s)}})();
 
-// ===== 日/夜模式切换 =====
-function toggleTheme(){
-  var body=document.body;
-  if(body.classList.contains('light-mode')){
-    body.classList.remove('light-mode');
-    document.querySelectorAll('.float-btn[title="切换日/夜模式"]').forEach(function(b){b.textContent='🌙';b.style.color='#00f5ff';b.style.borderColor='rgba(0,245,255,0.2)'});
-    localStorage.setItem('lsjy-theme','dark');
-    toast('已切换为深色模式','success');
-  }else{
-    body.classList.add('light-mode');
-    document.querySelectorAll('.float-btn[title="切换日/夜模式"]').forEach(function(b){b.textContent='☀️';b.style.color='#f59e0b';b.style.borderColor='rgba(245,158,11,0.3)'});
-    localStorage.setItem('lsjy-theme','light');
-    toast('已切换为浅色模式','success');
-  }
-}
-// 初始化主题
-(function(){if(localStorage.getItem('lsjy-theme')==='light'){document.body.classList.add('light-mode')}})();
+// 主题切换已移至底部统一管理
 
-// === 三大主题系统 ===
-function setTheme(t){
-  document.body.classList.remove('theme-light','theme-enterprise');
-  if(t==='light')document.body.classList.add('theme-light');
-  if(t==='enterprise')document.body.classList.add('theme-enterprise');
-  localStorage.setItem('lsjy-theme',t);
-  // 更新主题按钮
-  var btn=document.getElementById('themeToggleBtn');
-  if(btn){
-    var icons={dark:'\ud83c\udf19',light:'\u2600\ufe0f',enterprise:'\ud83d\udee0\ufe0f'};
-    var colors={dark:'#00f5ff',light:'#f59e0b',enterprise:'#f59e0b'};
-    btn.textContent=icons[t]||icons.dark;
-    btn.style.color=colors[t]||colors.dark;
-  }
-}
-function cycleTheme(){
-  var t=localStorage.getItem('lsjy-theme')||'dark';
-  var next=t==='dark'?'light':t==='light'?'enterprise':'dark';
-  setTheme(next);
-  showToast(next==='dark'?'深夜模式':next==='light'?'白天模式':'企业版');
-}
-(function(){var t=localStorage.getItem('lsjy-theme')||'dark';setTheme(t)})();
 
 // === 工具收藏 ===
 function toggleFav(name){
@@ -7866,69 +7834,121 @@ window.addEventListener('load',tryRender);
 </script>
 
 <script>
-// ===== 主题切换（夜间/白天模式） =====
-(function(){
-    var saved = localStorage.getItem('lsjy_theme') || 'dark';
+// ===== 统一主题切换系统 =====
+var LS_THEME_KEY = 'lsjy_theme';
+var LS_VERSION_KEY = 'lsjy_version';
+
+// 初始化主题 {
+    var saved = localStorage.getItem(LS_THEME_KEY) || 'dark';
     if(saved === 'light'){
         document.body.classList.add('light-mode');
-        var btn = document.getElementById('themeToggleBtn');
-        if(btn) btn.textContent = '☀️';
     }
+    // 更新按钮图标（延迟确保DOM就绪）
+    setTimeout(function(){
+        var btn = document.getElementById('themeToggleBtn');
+        if(btn) btn.textContent = saved === 'light' ? '\u2600\ufe0f' : '\ud83c\udf19';
+    }, 100);
 })();
 
 function toggleTheme(){
     var body = document.body;
     var btn = document.getElementById('themeToggleBtn');
+    if(!btn) return;
+    
     if(body.classList.contains('light-mode')){
+        // 切换到深色模式
         body.classList.remove('light-mode');
-        btn.textContent = '🌙';
-        localStorage.setItem('lsjy_theme','dark');
+        btn.textContent = '\ud83c\udf19';
+        localStorage.setItem(LS_THEME_KEY, 'dark');
+        showToast('已切换为深色模式');
     } else {
+        // 切换到浅色模式
         body.classList.add('light-mode');
-        btn.textContent = '☀️';
-        localStorage.setItem('lsjy_theme','light');
+        btn.textContent = '\u2600\ufe0f';
+        localStorage.setItem(LS_THEME_KEY, 'light');
+        showToast('已切换为浅色模式');
     }
+    
+    // 同时更新企业版弹窗中的深色区域（如果存在）
+    setTimeout(function(){
+        var entPriv = document.querySelector('.enterprise-privilege');
+        if(entPriv){
+            if(body.classList.contains('light-mode')){
+                entPriv.style.background = '#f0f4f8';
+                entPriv.style.borderColor = 'rgba(0,0,0,0.06)';
+                entPriv.querySelectorAll('p, span').forEach(function(el){ el.style.color = '#475569'; });
+                entPriv.querySelectorAll('h4').forEach(function(el){ el.style.color = '#0f172a'; });
+            } else {
+                entPriv.style.background = '#141c2e';
+                entPriv.style.borderColor = 'rgba(0,245,255,0.12)';
+                entPriv.querySelectorAll('p, span').forEach(function(el){ el.style.color = '#94a3b8'; });
+                entPriv.querySelectorAll('h4').forEach(function(el){ el.style.color = '#e2e8f0'; });
+            }
+        }
+    }, 50);
 }
 
-// ===== 版本切换（个人版/企业版） =====
-var _currentVersion = localStorage.getItem('lsjy_version') || 'personal';
-
+// ===== 统一版本切换系统 =====
 function switchVersion(ver){
-    _currentVersion = ver;
-    localStorage.setItem('lsjy_version', ver);
+    localStorage.setItem(LS_VERSION_KEY, ver);
+    
+    // 更新按钮active状态
     var btns = document.querySelectorAll('#versionSwitch button');
     btns.forEach(function(b){ b.classList.remove('active'); });
     if(ver === 'personal'){
         btns[0].classList.add('active');
-        // 个人版：隐藏企业版相关模块高亮，显示全部
-        document.querySelectorAll('.mod-card, .tool-card').forEach(function(c){
-            c.style.display = '';
-        });
     } else {
         btns[1].classList.add('active');
-        // 企业版：滚动到定价区域并高亮企业版相关内容
-        var pricing = document.getElementById('pricing');
-        if(pricing){
-            pricing.scrollIntoView({behavior:'smooth'});
-        }
-        // 高亮企业相关模块
-        var bizCards = document.querySelectorAll('.mod-card');
-        bizCards.forEach(function(c){
-            var text = c.textContent || '';
-            var isBiz = text.indexOf('企业') >= 0 || text.indexOf('电商') >= 0 || text.indexOf('AI') >= 0;
-            c.style.display = isBiz ? '' : 'none';
-        });
     }
+    
+    if(ver === 'personal'){
+        // 个人版：显示全部内容
+        showAllContent();
+        showToast('已切换到个人版');
+    } else {
+        // 企业版：显示企业专属内容，打开企业版弹窗
+        showToast('已切换到企业版');
+        openEnterprise();
+    }
+}
+
+function showAllContent(){
+    // 恢复所有模块卡片显示
+    document.querySelectorAll('.mod-card, .tool-card').forEach(function(c){
+        c.style.display = '';
+    });
+    // 恢复所有定价卡片显示
+    document.querySelectorAll('.price-card').forEach(function(c){
+        c.style.display = '';
+    });
 }
 
 // 页面加载时恢复版本状态
 (function(){
-    if(_currentVersion === 'enterprise'){
+    var savedVer = localStorage.getItem(LS_VERSION_KEY) || 'personal';
+    if(savedVer === 'enterprise'){
         var btns = document.querySelectorAll('#versionSwitch button');
-        if(btns[1]) btns[1].classList.add('active');
-        if(btns[0]) btns[0].classList.remove('active');
+        if(btns.length >= 2){
+            btns[0].classList.remove('active');
+            btns[1].classList.add('active');
+        }
     }
 })();
+
+// 兼容 showToast
+function showToast(msg){
+    // 尝试使用已有的toast函数
+    if(typeof toast === 'function'){
+        try{ toast(msg, 'info'); return; } catch(e){}
+    }
+    // 兜底：创建临时toast
+    var el = document.createElement('div');
+    el.textContent = msg;
+    el.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);padding:10px 24px;background:rgba(0,245,255,0.9);color:#0a0e17;border-radius:8px;font-size:13px;font-weight:600;z-index:99999;transition:opacity .3s;pointer-events:none';
+    document.body.appendChild(el);
+    setTimeout(function(){ el.style.opacity = '0'; }, 1500);
+    setTimeout(function(){ el.remove(); }, 2000);
+}
 </script>
 </body>
 </html>
