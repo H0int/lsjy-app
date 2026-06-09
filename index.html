@@ -7794,13 +7794,13 @@ document.addEventListener('dblclick',function(e){
 
 </script>
 
-<div id="floatControls" style="position:fixed;bottom:max(20px,calc(env(safe-area-inset-bottom)+20px));right:16px;z-index:998;display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+<div id="floatControls" style="position:fixed;bottom:max(16px,calc(env(safe-area-inset-bottom)+16px));right:16px;z-index:9999;display:flex;flex-direction:column-reverse;gap:8px;align-items:flex-end">
 <div style="display:flex;gap:6px;order:2">
 <div class="version-switch" id="versionSwitch"><button class="active" onclick="switchVersion('personal')">个人版</button><button onclick="switchVersion('enterprise')">企业版</button></div>
 <button class="theme-btn" id="themeToggleBtn" onclick="toggleTheme()" title="切换主题">🌙</button>
 </div>
 </div>
-<div id="backToTopBtn" style="position:fixed;bottom:max(80px,calc(env(safe-area-inset-bottom)+80px));right:16px;width:44px;height:44px;border-radius:50%;background:rgba(0,245,255,.12);border:1px solid rgba(0,245,255,.25);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:998;opacity:0;transition:all .3s;font-size:18px;color:#00f5ff" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</div>
+<div id="backToTopBtn" style="position:fixed;bottom:max(100px,calc(env(safe-area-inset-bottom)+100px));right:16px;z-index:9998;width:44px;height:44px;border-radius:50%;background:rgba(0,245,255,.12);border:1px solid rgba(0,245,255,.25);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:998;opacity:0;transition:all .3s;font-size:18px;color:#00f5ff" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</div>
 <script>
 // ===== ULTIMATE PRICING FALLBACK =====
 (function(){
