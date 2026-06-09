@@ -2025,6 +2025,34 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 <p class="section-sub">按需选择，灵活付费。支持微信支付、QQ支付、支付宝，开通即用</p>
 <div style="text-align:right;margin-bottom:16px"><button onclick="toggleSection('pricingGrid',this)" style="background:none;border:1px solid var(--bd);border-radius:8px;padding:6px 14px;font-size:12px;color:var(--b);cursor:pointer;transition:all .2s">收起定价</button></div>
 <div class="pricing-grid" id="pricingGrid"></div>
+<script>
+// ===== PRICING RENDERER (independent) =====
+(function(){
+var _P=[
+{id:'ai',name:'AI 人工智能',icon:'\ud83e\udd16',gradient:'linear-gradient(135deg,#3b82f6,#60a5fa)',color:'#3b82f6',featured:true,packs:[{name:'基础版',price:399,period:'月',desc:'适合个人用户和小微商家',features:['AI文案生成 100次/月','短视频切片 20条/月','智能推荐算法','在线客服支持','数据分析看板']},{name:'专业版',price:1299,period:'月',desc:'适合成长型商家',features:['AI文案生成 不限次数','短视频切片 不限条数','智能获客系统','1对1专属顾问','数据分析报表','优先技术响应']},{name:'旗舰版',price:4999,period:'月',desc:'适合中大型企业',features:['全部专业版功能','行业定制API开发','企业数字化搭建','私有化部署方案','7x24技术支持','季度战略规划','专属客户经理']}]},
+{id:'media',name:'自媒体',icon:'\ud83d\udcf1',gradient:'linear-gradient(135deg,#ea2261,#f96bee)',color:'#ea2261',featured:false,packs:[{name:'入门版',price:699,period:'月',desc:'适合个人创作者',features:['单平台账号代运营','月更 20 条内容','基础数据报告','图文文案 15篇/月','评论维护']},{name:'进阶版',price:1999,period:'月',desc:'适合品牌商家',features:['双平台账号代运营','月更 40 条内容','探店短视频 4条/月','达人IP孵化','优先内容策划','月度复盘报告']},{name:'矩阵版',price:5999,period:'月',desc:'适合连锁品牌',features:['全平台账号代运营','月更 80 条内容','短视频矩阵搭建','探店/拍摄/剪辑全包','专属运营团队','月度复盘优化','季度品牌策划']}]},
+{id:'ecom',name:'电商',icon:'\ud83d\uded2',gradient:'linear-gradient(135deg,#8b5cf6,#a78bfa)',color:'#8b5cf6',featured:false,packs:[{name:'开店版',price:599,period:'次',desc:'适合新入驻商家',features:['抖快小店代入驻','店铺精装修','类目报备指导','新手运营手册','首月运营指导']},{name:'运营版',price:1999,period:'月',desc:'适合稳定经营商家',features:['店铺全托管运营','团购上架优化','货源供应链对接','千川投流优化','月度数据报告','竞品监控']},{name:'全案版',price:7999,period:'月',desc:'适合规模化商家',features:['全部运营版功能','千川投流优化','随心推精准投放','私域运营搭建','7x12小时客服','爆款打造方案','季度GMV保障']}]},
+{id:'pet',name:'宠物',icon:'\ud83d\udc3e',gradient:'linear-gradient(135deg,#fb923c,#fbbf24)',color:'#fb923c',featured:false,packs:[{name:'基础版',price:299,period:'月',desc:'适合单店经营',features:['单平台店铺优化','月更 10 条内容','团购策划 1个/月','基础数据分析']},{name:'标准版',price:799,period:'月',desc:'适合区域连锁',features:['全平台店铺优化','月更 25 条内容','团购策划 3个/月','短视频引流拍摄','会员体系搭建']},{name:'旗舰版',price:1999,period:'月',desc:'适合全国连锁',features:['全部标准版功能','私域社群运营','宠物用品分销','疫苗团购策划','专属运营方案','季度增长规划']}]},
+{id:'edu',name:'教育',icon:'\ud83d\udcda',gradient:'linear-gradient(135deg,#10b981,#34d399)',color:'#10b981',featured:false,packs:[{name:'学员版',price:299,period:'月',desc:'适合个人学习者',features:['在线课程不限看','直播回放权限','学员社群交流','作业点评服务','课程资料下载']},{name:'创业版',price:1999,period:'月',desc:'适合创业者',features:['全部学员版功能','创业1对1辅导','项目资源对接','商业计划指导','行业人脉圈','路演机会']},{name:'企业版',price:4999,period:'月',desc:'适合教育机构',features:['课程定制开发','校企合作对接','师资培训服务','品牌包装策划','招生引流方案','年度战略咨询']}]},
+{id:'campus',name:'伯雅校园',icon:'\ud83c\udf93',gradient:'linear-gradient(135deg,#533afd,#7c6cf6)',color:'#533afd',featured:false,packs:[{name:'合伙人版',price:0,period:'免费',desc:'适合在校大学生',features:['校区代理权限','标准运营手册','线上培训体系','社群资源支持','创业指导']},{name:'孵化版',price:1999,period:'次',desc:'适合创业团队',features:['创业项目孵化','启动资金对接','导师1对1指导','资源网络对接','品牌授权使用','3个月跟踪辅导']},{name:'区域版',price:9999,period:'月',desc:'适合区域运营',features:['区域独家代理','全套运营体系','校园渠道搭建','活动策划执行','专属运营团队','季度KPI保障','年度品牌大会']}]}
+];
+var grid=document.getElementById('pricingGrid');
+if(!grid)return;
+var html='';
+_P.forEach(function(m){
+var fp=m.packs[0];
+html+='<div class="price-card" style="background:rgba(15,22,35,.92);backdrop-filter:blur(12px);border:1px solid rgba(0,245,255,.12);border-radius:16px;padding:28px 24px;position:relative;transition:all .3s'+(m.featured?';border-color:'+m.color+';box-shadow:0 0 30px rgba('+hexToRgb(m.color)+',.15)':'')+'">';
+if(m.featured)html+='<div class="price-badge" style="position:absolute;top:-1px;right:20px;background:'+m.color+';color:#fff;font-size:11px;padding:4px 12px;border-radius:0 0 8px 8px;font-weight:600">热门</div>';
+html+='<div class="price-head" style="display:flex;align-items:center;gap:12px;margin-bottom:16px"><div class="price-icon" style="width:44px;height:44px;border-radius:12px;background:'+m.gradient+';display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">'+m.icon+'</div><div><h3 style="margin:0;font-size:17px;color:#e2e8f0;font-weight:700">'+m.name+'</h3><p style="margin:2px 0 0;font-size:12px;color:#888">'+m.packs.length+' 个套餐可选</p></div></div>';
+html+='<div class="price-amount" style="margin-bottom:16px"><span style="font-size:32px;font-weight:800;color:'+m.color+'">¥'+fp.price+'</span><span style="font-size:14px;color:#888;margin-left:2px">/'+fp.period+'起</span></div>';
+html+='<div class="price-features"><ul style="list-style:none;padding:0;margin:0 0 20px;font-size:13px;line-height:2;color:#b0b8c4">'+fp.features.map(function(f){return '<li style="padding-left:18px;position:relative"><span style="position:absolute;left:0;color:'+m.color+';font-weight:700">✓</span>'+f+'</li>'}).join('')+'</ul></div>';
+html+='<div class="price-action"><button class="btn btn-p" onclick="openServiceDetail(\''+m.id+'\')" style="width:100%;padding:12px;border:none;border-radius:10px;background:'+m.gradient+';color:#fff;font-size:14px;font-weight:700;cursor:pointer;transition:all .25s">查看套餐</button></div>';
+html+='</div>';
+});
+grid.innerHTML=html;
+function hexToRgb(hex){var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return r+','+g+','+b;}
+})();
+</script>
 <div style="text-align:center;margin-top:32px">
 <p style="font-size:13px;color:var(--b)">所有套餐均含免费咨询 + 7天无理由退款保障 &nbsp;|&nbsp; 定制化需求请<a href="#contact" style="color:var(--p);font-weight:600;text-decoration:none">联系我们</a>获取专属报价</p>
 </div>
