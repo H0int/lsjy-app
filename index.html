@@ -571,7 +571,11 @@ textarea.fi{resize:vertical;min-height:120px}
 /* ===== 科技感全局样式 ===== */
 /* 玻璃态基础 */
 .glass-card{backdrop-filter:blur(16px) saturate(150%);background:rgba(0,245,255,0.1);border:1px solid rgba(0,245,255,0.15);box-shadow:0 8px 32px rgba(0,0,0,0.2);border-radius:var(--radius)}
-.glass-btn{backdrop-filter:blur(8px);background:rgba(0,245,255,.2);border:1px solid rgba(0,245,255,.2);color:#00f5ff;transition:all .3s ease;cursor:pointer;border-radius:10px}
+.glass-btn{backdrop-filter:blur(8px);background:rgba(10,14,23,.6)
+}
+.glass-btn:hover{background:rgba(0,245,255,.1);border-color:rgba(0,245,255,.25);color:#e2e8f0}
+.glass-btn.active{background:rgba(0,245,255,.15)!important;border-color:rgba(0,245,255,.3)!important;color:#00f5ff!important;font-weight:600!important;text-shadow:0 0 6px rgba(0,245,255,.2)}
+.dummy{;border:1px solid rgba(0,245,255,.12);color:#94a3b8;transition:all .25s ease;cursor:pointer;border-radius:8px;font-weight:500;font-size:12px}
 .glass-btn:hover{background:rgba(0,245,255,.2);box-shadow:var(--glow-sm);transform:translateY(-2px)}
 .glass-btn:active{transform:scale(.98)}
 
@@ -2015,7 +2019,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 <h2 class="section-title">六大业务板块</h2>
 <p class="section-sub">覆盖 AI、新媒体、电商、宠物、教育、校园全链路，为实体经济提供数字化流量赋能</p>
 <div style="text-align:right;margin-bottom:16px"><button onclick="toggleSection('modGrid',this)" style="background:none;border:1px solid var(--bd);border-radius:8px;padding:6px 14px;font-size:12px;color:var(--b);cursor:pointer;transition:all .2s">收起板块</button></div>
-<div id="toolFilter" style="display:flex;gap:8px;flex-wrap:wrap;margin:16px 0"><button class="glass-btn" data-filter="all" onclick="filterTools('all',this)" style="padding:6px 14px;font-size:12px;background:rgba(0,245,255,.15);border-color:rgba(0,245,255,.3);color:#e2e8f0;font-weight:600">全部</button><button class="glass-btn" data-filter="AI" onclick="filterTools('AI',this)" style="padding:6px 14px;font-size:12px">AI</button><button class="glass-btn" data-filter="写作" onclick="filterTools('写作',this)" style="padding:6px 14px;font-size:12px">写作</button><button class="glass-btn" data-filter="设计" onclick="filterTools('设计',this)" style="padding:6px 14px;font-size:12px">设计</button><button class="glass-btn" data-filter="开发" onclick="filterTools('开发',this)" style="padding:6px 14px;font-size:12px">开发</button><button class="glass-btn" data-filter="营销" onclick="filterTools('营销',this)" style="padding:6px 14px;font-size:12px">营销</button><button class="glass-btn" data-filter="生活" onclick="filterTools('生活',this)" style="padding:6px 14px;font-size:12px">生活</button></div>
+<div id="toolFilter" style="display:flex;gap:8px;flex-wrap:wrap;margin:16px 0"><button class="glass-btn" data-filter="all" onclick="filterTools('all',this)" style="padding:6px 14px;font-size:12px">全部</button><button class="glass-btn" data-filter="AI" onclick="filterTools('AI',this)" style="padding:6px 14px;font-size:12px">AI</button><button class="glass-btn" data-filter="写作" onclick="filterTools('写作',this)" style="padding:6px 14px;font-size:12px">写作</button><button class="glass-btn" data-filter="设计" onclick="filterTools('设计',this)" style="padding:6px 14px;font-size:12px">设计</button><button class="glass-btn" data-filter="开发" onclick="filterTools('开发',this)" style="padding:6px 14px;font-size:12px">开发</button><button class="glass-btn" data-filter="营销" onclick="filterTools('营销',this)" style="padding:6px 14px;font-size:12px">营销</button><button class="glass-btn" data-filter="生活" onclick="filterTools('生活',this)" style="padding:6px 14px;font-size:12px">生活</button></div>
 <div class="mod-grid" id="modGrid">
 </div>
 </section>
@@ -2215,8 +2219,20 @@ function hexToRgb(hex){var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,
 <script>
 // ===== 工具分类筛选 =====
 function filterTools(cat,btn){
-  var cards=document.querySelectorAll('#modGrid .tool-card,#modGrid .mod-card');
-  cards.forEach(function(c){
+  // 筛选mod-card（业务板块）
+  var modCards=document.querySelectorAll('#modGrid .mod-card');
+  modCards.forEach(function(c){
+    if(cat==='all'){c.style.display=''}
+    else{var biz=c.getAttribute('data-biz')||'';var txt=c.textContent.toLowerCase();
+      // 映射：AI->ai, 写作->ai, 设计->ai, 自媒体->media, 电商->ecom, 宠物->pet, 教育->edu, 营销->media, 生活->pet, 开发->ai, 伯雅校园->campus
+      var map={'ai':'ai','写作':'ai','设计':'ai','开发':'ai','自媒体':'media','电商':'ecom','营销':'media','宠物':'pet','生活':'pet','教育':'edu','伯雅校园':'campus'};
+      var target=map[cat]||cat;
+      c.style.display=(biz===target||txt.includes(cat.toLowerCase()))?'':'none';
+    }
+  });
+  // 筛选tool-card（工具箱）
+  var toolCards=document.querySelectorAll('#toolsGrid .tool-card,#toolGrid .mod-card');
+  toolCards.forEach(function(c){
     if(cat==='all'){c.style.display=''}
     else{c.style.display=c.textContent.toLowerCase().includes(cat.toLowerCase())?'':'none'}
   });
@@ -2285,7 +2301,7 @@ window.typewriterEffect=function(el,text,speed){
 
 
 <canvas id="particleCanvas"></canvas>
-<button id="themeToggle" title="切换主题">&#9789;</button>
+<!-- removed -->
 <script>
 // ===== 粒子背景 =====
 (function(){
@@ -6127,7 +6143,7 @@ setTimeout(function(){
     ];
     var mhtml='';
     _M.forEach(function(m){
-      mhtml+='<div class="mod-card" onclick="document.getElementById('pricing').scrollIntoView({behavior:'smooth'})" style="background:rgba(15,22,35,.9);border:1px solid rgba(0,245,255,.12);border-radius:16px;padding:32px 24px;transition:all .3s;cursor:pointer;overflow:hidden;backdrop-filter:blur(10px)" onmouseover="this.style.transform=\'translateY(-4px)\';this.style.boxShadow=\'0 12px 30px rgba(0,0,0,.08)\'" onmouseout="this.style.transform=\'\';this.style.boxShadow=\'\'">';
+      mhtml+='<div class="mod-card" data-biz="'+m.id+'" onclick="document.getElementById('pricing').scrollIntoView({behavior:'smooth'})" style="background:rgba(15,22,35,.9);border:1px solid rgba(0,245,255,.12);border-radius:16px;padding:32px 24px;transition:all .3s;cursor:pointer;overflow:hidden;backdrop-filter:blur(10px)" onmouseover="this.style.transform=\'translateY(-4px)\';this.style.boxShadow=\'0 12px 30px rgba(0,0,0,.08)\'" onmouseout="this.style.transform=\'\';this.style.boxShadow=\'\'">';
       mhtml+='<div style="width:48px;height:48px;border-radius:12px;background:'+m.gradient+';display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:16px">'+m.icon+'</div>';
       mhtml+='<h3 style="margin:0 0 8px;font-size:18px;color:#e2e8f0">'+m.name+'</h3>';
       mhtml+='<p style="margin:0;font-size:13px;color:#94a3b8;line-height:1.6">'+m.summary+'</p>';
@@ -7580,7 +7596,7 @@ var _voiceRec=null;function startVoice(targetId){var target=document.getElementB
 
 
 <canvas id="particleCanvas"></canvas>
-<button id="themeToggle" title="切换主题">&#9789;</button>
+<!-- removed -->
 <script>
 // ===== 粒子背景 =====
 (function(){
