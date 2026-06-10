@@ -723,7 +723,7 @@ function toast(m,t){const e=document.getElementById('toast');e.textContent=m;e.c
 function btnLoading(el){if(!el)return;el.classList.add('loading');const t=el.textContent;el._ot=t;el.disabled=true;return{done:()=>{el.classList.remove('loading');el.disabled=false;el.textContent=el._ot||t}}}
 function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('sbOverlay').classList.toggle('show')}
 function fmtDate(s){if(!s)return'-';const d=new Date(s);if(isNaN(d))return s;return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}
-function toCSV(rows,headers){return '\uFEFF'+[headers.join(',')].concat(rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(','))).join('\n')}
+function toCSV(rows,headers){return '\uFEFF'+[headers.join(',')].concat(rows.map(r=>r.map(c=>'"'+String(c).split('"').join('""')+'"').join(','))).join('\n')}
 function downloadCSV(csv,name){const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name+'.csv';a.click()}
 function softDelete(type,item){const r=getRecycle();r.push({type,data:item,time:new Date().toISOString()});saveRecycle(r)}
 function filterByDateRange(arr,dateField,start,end){return arr.filter(a=>{if(!a[dateField])return true;const d=new Date(a[dateField]).getTime();return(!start||d>=start.getTime())&&(!end||d<=end.getTime())})
@@ -2826,7 +2826,7 @@ function switchAdminTheme(t){document.body.classList.remove('theme-light','theme
 // === 密码修改 ===
 function changePwd(){var o=document.getElementById('oldPwd'),n=document.getElementById('newPwd'),c=document.getElementById('cfmPwd');if(!o.value||!n.value){showToast('请填写完整');return}if(n.value!==c.value){showToast('两次密码不一致');return}if(n.value.length<6){showToast('密码至少6位');return}localStorage.setItem('lsjy_pwd',n.value);addLog('修改密码','成功');showToast('密码修改成功')}
 // === 数据导出 ===
-function exportCSV(id){var tbl=document.querySelector('#'+id+' table');if(!tbl){showToast('无数据');return}var rows=tbl.querySelectorAll('tr'),csv=[];rows.forEach(function(r){var c=[];r.querySelectorAll('td,th').forEach(function(d){c.push('"'+d.textContent.trim().replace(/"/g,'""')+'"')});csv.push(c.join(','))});var blob=new Blob(['﻿'+csv.join('
+function exportCSV(id){var tbl=document.querySelector('#'+id+' table');if(!tbl){showToast('无数据');return}var rows=tbl.querySelectorAll('tr'),csv=[];rows.forEach(function(r){var c=[];r.querySelectorAll('td,th').forEach(function(d){c.push('"'+d.textContent.trim().split('"').join('""')+'"')});csv.push(c.join(','))});var blob=new Blob(['﻿'+csv.join('
 ')],{type:'text/csv;charset=utf-8'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=id+'.csv';a.click();showToast('导出成功')}
 // === 操作日志 ===
 
