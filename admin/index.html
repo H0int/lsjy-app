@@ -556,6 +556,7 @@ setTimeout(_refreshProfile,200);
       <div class="fg"><label class="fl"><i class="fa-solid fa-user" style="margin-right:4px"></i>账号</label><input class="fi" id="loginUser" placeholder="请输入账号" required autocomplete="username"></div>
       <div class="fg"><label class="fl"><i class="fa-solid fa-lock" style="margin-right:4px"></i>密码</label><input class="fi" type="password" id="loginPwd" placeholder="请输入密码" required autocomplete="current-password"></div>
       <button type="submit" class="btn-p" id="loginBtn">登 录</button>
+      <div style="text-align:right;margin-top:8px"><a href="javascript:void(0)" onclick="resetAdmin()" style="font-size:12px;color:var(--b);text-decoration:none;cursor:pointer">重置管理员密码</a></div>
     </form>
     <!-- Register Form -->
     <form id="registerForm" style="display:none" onsubmit="doRegister(event)">
@@ -783,6 +784,24 @@ function switchTab(tab){
 }
 
 // ===== 用户注册（申请后台权限） =====
+
+// ===== 重置管理员密码 =====
+function resetAdmin(){
+  confirmAction('确认重置管理员 <b>KF02V9</b> 的密码？<br><br>重置后密码将恢复为默认密码。<br>已有注册用户不会被影响。',function(){
+    var users=getUsers();
+    var idx=users.findIndex(function(x){return x.username==='KF02V9'});
+    if(idx>=0){
+      users[idx].password='MzIsNTYsNDgsNzUsMiwwLDcsMiw2NCw4NQ==';
+      saveUsers(users);
+      toast('管理员密码已重置，请使用默认密码登录','success');
+    }else{
+      // 如果不存在，重新创建
+      users.push({username:'KF02V9',password:'MzIsNTYsNDgsNzUsMiwwLDcsMiw2NCw4NQ==',nickname:'管理员',role:'admin',phone:'',qq:'',wx:'',created:new Date().toLocaleString()});
+      saveUsers(users);
+      toast('管理员账号已重建，请使用默认密码登录','success');
+    }
+  });
+}
 function doRegister(e){
   e.preventDefault();
   var u=document.getElementById('regUser').value.trim();
