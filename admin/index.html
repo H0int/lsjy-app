@@ -431,6 +431,20 @@ body.admin-light .modal-box{background:rgba(255,255,255,.95);border-color:rgba(0
 }
 
 </style>
+<script>
+// 版本检查 - 如果缓存版本不是最新，强制刷新
+(function(){
+var CURRENT_VERSION='v5.2.7';
+var stored=localStorage.getItem('lsjy3_admin_version');
+if(stored!==CURRENT_VERSION){
+localStorage.setItem('lsjy3_admin_version',CURRENT_VERSION);
+if(stored){
+// 版本变更了，强制刷新清除缓存
+window.location.reload(true);
+}
+}
+})();
+</script>
 </head>
 <body>
 
