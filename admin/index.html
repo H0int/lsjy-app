@@ -568,6 +568,7 @@ setTimeout(_refreshProfile,200);
     </form>
     <div id="lockoutInfo" style="display:none" class="lockout-box"></div>
     <div style="margin-top:12px;text-align:center;font-size:12px;color:var(--b)"><i class="fa-solid fa-shield-halved" style="margin-right:4px"></i>注册后需管理员审核通过才能登录后台</div>
+    <p style="text-align:center;margin-top:16px;font-size:11px;color:rgba(148,163,184,.6)"><a href="https://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener" style="color:rgba(148,163,184,.6);text-decoration:none">湘ICP备2026022972号</a></p>
   </div>
 </div>
 
@@ -1378,7 +1379,7 @@ function renderSettings(){
       <div class="fg"><label class="fl">联系电话</label><input class="fi" id="sPhone" value="${s.phone||'18890000368'}"></div>
       <div class="fg"><label class="fl">公司地址</label><input class="fi" id="sAddr" value="${s.address||'湖南省永州市祁阳市'}"></div>
       <div class="fg"><label class="fl">创始人</label><input class="fi" id="sFounder" value="${s.founder||'罗凯中'}"></div>
-      <div class="fg"><label class="fl">ICP备案号</label><input class="fi" id="sIcp" value="${s.icp||''}" placeholder="例: 湘ICP备2026XXXXXX号"></div>
+      <div class="fg"><label class="fl">ICP备案号</label><input class="fi" id="sIcp" value="${s.icp||''}" placeholder="例: 湘ICP备2026022972号"></div>
       <button class="btn-p" style="margin-top:8px" id="saveSettingsBtn" onclick="saveSiteSettings()">保存设置</button>
     </div></div>
     <div class="card"><div class="card-header"><h3><i class="fa-solid fa-key" style="color:var(--warn);margin-right:6px"></i>修改管理员密码</h3></div><div class="card-body">
@@ -3060,5 +3061,8 @@ function doLogout(){
 
 
 
+
+<!-- 备案号 -->
+<div style="text-align:center;padding:12px;font-size:11px;opacity:.35;background:transparent"><a href="https://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener" style="color:var(--b);text-decoration:none">湘ICP备2026022972号</a> · © 2026 祁阳市罗圣纪元互联网科技有限责任公司</div>
 </body>
 </html>
