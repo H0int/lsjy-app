@@ -2,6 +2,10 @@
 <html lang="zh-CN" class="notranslate">
 <head>
 <script>
+// ===== 全局定价跳转函数 =====
+window.goPricing=function(){var el=document.getElementById('pricing');if(el)el.scrollIntoView({behavior:'smooth'})};
+</script>
+<script>
 (function(){
     // Fix corrupted credits
     var r=localStorage.getItem('lsjy3_credits');
@@ -2092,7 +2096,7 @@ if(m.featured)html+='<div class="price-badge" style="position:absolute;top:-1px;
 html+='<div class="price-head" style="display:flex;align-items:center;gap:12px;margin-bottom:16px"><div class="price-icon" style="width:44px;height:44px;border-radius:12px;background:'+m.gradient+';display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">'+m.icon+'</div><div><h3 style="margin:0;font-size:17px;color:#e2e8f0;font-weight:700">'+m.name+'</h3><p style="margin:2px 0 0;font-size:12px;color:#888">'+m.packs.length+' 个套餐可选</p></div></div>';
 html+='<div class="price-amount" style="margin-bottom:16px"><span style="font-size:32px;font-weight:800;color:'+m.color+'">¥'+fp.price+'</span><span style="font-size:14px;color:#888;margin-left:2px">/'+fp.period+'起</span></div>';
 html+='<div class="price-features"><ul style="list-style:none;padding:0;margin:0 0 20px;font-size:13px;line-height:2;color:#b0b8c4">'+fp.features.map(function(f){return '<li style="padding-left:18px;position:relative"><span style="position:absolute;left:0;color:'+m.color+';font-weight:700">✓</span>'+f+'</li>'}).join('')+'</ul></div>';
-html+='<div class="price-action"><button class="btn btn-p" onclick="document.getElementById('pricing').scrollIntoView({behavior:'smooth'})" style="width:100%;padding:12px;border:none;border-radius:10px;background:'+m.gradient+';color:#fff;font-size:14px;font-weight:700;cursor:pointer;transition:all .25s">查看套餐</button></div>';
+html+='<div class="price-action"><button class="btn btn-p" onclick="goPricing()" style="width:100%;padding:12px;border:none;border-radius:10px;background:'+m.gradient+';color:#fff;font-size:14px;font-weight:700;cursor:pointer;transition:all .25s">查看套餐</button></div>';
 html+='</div>';
 });
 grid.innerHTML=html;
@@ -2297,10 +2301,8 @@ window.typewriterEffect=function(el,text,speed){
   type();
 };
 
-
-
+</script>
 <canvas id="particleCanvas"></canvas>
-<!-- removed -->
 <script>
 // ===== 粒子背景 =====
 (function(){
@@ -4291,7 +4293,7 @@ ${MODULES.find(x=>x.id===m.id).services.map(s=>`<div class="price-svc-item">
 </div>`).join('')}
 </div>
 <div class="price-action">
-<button class="btn btn-p" onclick="document.getElementById('pricing').scrollIntoView({behavior:'smooth'})">查看套餐</button>
+<button class="btn btn-p" onclick="goPricing()">查看套餐</button>
 </div>
 </div>`;
 });
@@ -6142,11 +6144,11 @@ setTimeout(function(){
     ];
     var mhtml='';
     _M.forEach(function(m){
-      mhtml+='<div class="mod-card" data-biz="'+m.id+'" onclick="document.getElementById('pricing').scrollIntoView({behavior:'smooth'})" style="background:rgba(15,22,35,.9);border:1px solid rgba(0,245,255,.12);border-radius:16px;padding:32px 24px;transition:all .3s;cursor:pointer;overflow:hidden;backdrop-filter:blur(10px)" onmouseover="this.style.transform=\'translateY(-4px)\';this.style.boxShadow=\'0 12px 30px rgba(0,0,0,.08)\'" onmouseout="this.style.transform=\'\';this.style.boxShadow=\'\'">';
+      mhtml+='<div class="mod-card" data-biz="'+m.id+'" onclick="goPricing()" style="background:rgba(15,22,35,.9);border:1px solid rgba(0,245,255,.12);border-radius:16px;padding:32px 24px;transition:all .3s;cursor:pointer;overflow:hidden;backdrop-filter:blur(10px)" onmouseover="this.style.transform=\'translateY(-4px)\';this.style.boxShadow=\'0 12px 30px rgba(0,0,0,.08)\'" onmouseout="this.style.transform=\'\';this.style.boxShadow=\'\'">';
       mhtml+='<div style="width:48px;height:48px;border-radius:12px;background:'+m.gradient+';display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:16px">'+m.icon+'</div>';
       mhtml+='<h3 style="margin:0 0 8px;font-size:18px;color:#e2e8f0">'+m.name+'</h3>';
       mhtml+='<p style="margin:0;font-size:13px;color:#94a3b8;line-height:1.6">'+m.summary+'</p>';
-      mhtml+='<div style="margin-top:16px;display:flex;align-items:center;gap:8px;font-size:12px"><span style="color:'+m.color+';font-weight:600">'+m.svc+' 项服务</span><span style="margin-left:auto;color:var(--p);font-weight:600;cursor:pointer;padding:4px 12px;border-radius:6px;background:rgba(0,245,255,.12);border:1px solid rgba(0,245,255,.2)" onclick="document.getElementById('pricing').scrollIntoView({behavior:'smooth'})" onmouseover="this.style.background='rgba(0,245,255,.2)'" onmouseout="this.style.background='rgba(0,245,255,.12)'">查看套餐</span></div>';
+      mhtml+='<div style="margin-top:16px;display:flex;align-items:center;gap:8px;font-size:12px"><span style="color:'+m.color+';font-weight:600">'+m.svc+' 项服务</span><span style="margin-left:auto;color:var(--p);font-weight:600;cursor:pointer;padding:4px 12px;border-radius:6px;background:rgba(0,245,255,.12);border:1px solid rgba(0,245,255,.2)" onclick="goPricing()" onmouseover="this.style.background=\'rgba(0,245,255,.2)\'" onmouseout="this.style.background=\'rgba(0,245,255,.12)\'">查看套餐</span></div>';
       mhtml+='</div>';
     });
     mg.innerHTML=mhtml;
@@ -6170,7 +6172,7 @@ setTimeout(function(){
       phtml+='<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px"><div style="width:40px;height:40px;border-radius:10px;background:'+m.gradient+';display:flex;align-items:center;justify-content:center;font-size:20px">'+m.icon+'</div><div><h3 style="margin:0;font-size:16px;color:#e2e8f0">'+m.name+'</h3><p style="margin:2px 0 0;font-size:12px;color:#888">'+m.packs.length+' \u4e2a\u5957\u9910\u53ef\u9009</p></div></div>';
       phtml+='<div style="margin-bottom:16px"><span style="font-size:28px;font-weight:700;color:'+m.color+'">\uffe5'+fp.price+'</span><span style="font-size:13px;color:#888">/'+fp.period+'\u8d77</span></div>';
       phtml+='<ul style="list-style:none;padding:0;margin:0 0 16px;font-size:13px;color:#555;line-height:2">'+fp.features.map(function(f){return '<li style="padding-left:16px;position:relative"><span style="position:absolute;left:0;color:'+m.color+'">\u2713</span>'+f+'</li>'}).join('')+'</ul>';
-      phtml+='<button onclick="document.getElementById('pricing').scrollIntoView({behavior:'smooth'})" style="width:100%;padding:10px;border:none;border-radius:10px;background:'+m.gradient+';color:#e2e8f0;font-size:14px;font-weight:600;cursor:pointer">\u67e5\u770b\u5957\u9910</button>';
+      phtml+='<button onclick="goPricing()" style="width:100%;padding:10px;border:none;border-radius:10px;background:'+m.gradient+';color:#e2e8f0;font-size:14px;font-weight:600;cursor:pointer">\u67e5\u770b\u5957\u9910</button>';
       phtml+='</div>';
     });
     pg.innerHTML=phtml;
@@ -6739,7 +6741,7 @@ console.log('[CDN FIX] doGen10, buyPlan, _addMedia, openMediaLib loaded successf
 
 (function(){
   // 1. 修复业务板块卡片的点击事件
-  // Fallback渲染中的 onclick="document.getElementById('pricing').scrollIntoView({behavior:'smooth'})" 变量引用问题
+  // Fallback渲染中的 onclick="goPricing()" 变量引用问题
   // 由于已在HTML层面修复了拼接，这里做二次保险
   setTimeout(function(){
     var cards = document.querySelectorAll('#modGrid .mod-card');
@@ -7141,7 +7143,7 @@ function openEnterprise(){
           </ul>
         </div>
         <div style="display:flex;gap:12px;justify-content:center">
-          <button onclick="closeEnterprise();setTimeout(function(){document.getElementById('pricing').scrollIntoView({behavior:'smooth'})},300)" style="padding:12px 32px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#e2e8f0;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(217,119,6,.3)">立即开通</button>
+          <button onclick="closeEnterprise();setTimeout(function(){goPricing()},300)" style="padding:12px 32px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#e2e8f0;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(217,119,6,.3)">立即开通</button>
           <button onclick="closeEnterprise()" style="padding:12px 32px;background:rgba(255,255,255,0.06);color:#94a3b8;border:1px solid rgba(255,255,255,0.08);border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer">稍后再说</button>
         </div>
       </div>
@@ -7687,7 +7689,7 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)){
   document.addEventListener('focusin',function(e){
     if(e.target.matches('input,textarea')){
       setTimeout(function(){window.scrollTo(0,0);document.querySelector('.overlay').scrollIntoView(true)},300);
-    },300);
+    }
   });
 }
 
@@ -7839,7 +7841,7 @@ if(m.featured)h+='<div style="position:absolute;top:-1px;right:20px;background:'
 h+='<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px"><div style="width:44px;height:44px;border-radius:12px;background:'+m.gradient+';display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">'+m.icon+'</div><div><h3 style="margin:0;font-size:17px;color:#e2e8f0;font-weight:700">'+m.name+'</h3><p style="margin:2px 0 0;font-size:12px;color:#888">'+m.packs.length+' 个套餐可选</p></div></div>';
 h+='<div style="margin-bottom:16px"><span style="font-size:32px;font-weight:800;color:'+m.color+'">¥'+fp.price+'</span><span style="font-size:14px;color:#888;margin-left:2px">/'+fp.period+'起</span></div>';
 h+='<ul style="list-style:none;padding:0;margin:0 0 20px;font-size:13px;line-height:2;color:#b0b8c4">'+fp.features.map(function(f){return '<li style="padding-left:18px;position:relative"><span style="position:absolute;left:0;color:'+m.color+';font-weight:700">✓</span>'+f+'</li>'}).join('')+'</ul>';
-h+='<button class="btn btn-p" onclick="document.getElementById('pricing').scrollIntoView({behavior:'smooth'})" style="width:100%;padding:12px;border:none;border-radius:10px;background:'+m.gradient+';color:#fff;font-size:14px;font-weight:700;cursor:pointer">查看套餐</button>';
+h+='<button class="btn btn-p" onclick="goPricing()" style="width:100%;padding:12px;border:none;border-radius:10px;background:'+m.gradient+';color:#fff;font-size:14px;font-weight:700;cursor:pointer">查看套餐</button>';
 h+='</div>';
 });
 g.innerHTML=h;
@@ -7851,16 +7853,185 @@ window.addEventListener('load',tryRender);
 </script>
 
 <script>
+// ===== 补齐缺失函数 =====
+
+// buyPlan: 购买套餐
+function buyPlan(catId, packId, price) {
+    var cur = localStorage.getItem('lsjy3_cur');
+    if (!cur) { if(typeof openAuth==='function') openAuth(); return; }
+    try{ var user = JSON.parse(cur); } catch(e){ return; }
+    var credits = JSON.parse(localStorage.getItem('lsjy3_credits') || '{}');
+    var balance = credits[user.username] || 0;
+    if (balance < price) {
+        if (typeof toast === 'function') toast('积分不足，请先充值', 'warning');
+        if (typeof openCreditsShop === 'function') openCreditsShop();
+        return;
+    }
+    credits[user.username] = balance - price;
+    localStorage.setItem('lsjy3_credits', JSON.stringify(credits));
+    if (typeof updateCreditsUI === 'function') updateCreditsUI();
+    var orders = JSON.parse(localStorage.getItem('lsjy3_orders') || '[]');
+    orders.push({ id: Date.now(), catId: catId, packId: packId, price: price, user: user.username, time: Date.now(), status: 'paid' });
+    localStorage.setItem('lsjy3_orders', JSON.stringify(orders));
+    if (typeof toast === 'function') toast('购买成功！套餐已激活', 'success');
+}
+
+// doGen9: AI文本生成(旧版兼容)
+function doGen9(name, cost) {
+    var prompt = document.getElementById('ut_prompt');
+    if (!prompt || !prompt.value.trim()) { if(typeof toast==='function') toast('请输入内容','warning'); return; }
+    if (typeof aiGenerateText === 'function') {
+        aiGenerateText(prompt.value, name, function(result) {
+            var el = document.getElementById('aiResult');
+            if (el) { el.style.display = 'block'; el.innerHTML = '<p style="white-space:pre-wrap;color:#e2e8f0;line-height:1.8">' + (result||'') + '</p>'; }
+        });
+    }
+}
+
+// doGen10: AI多媒体生成(旧版兼容)
+function doGen10(name, cost, isImage, isVideo) {
+    var prompt = document.getElementById('ut_prompt');
+    if (!prompt || !prompt.value.trim()) { if(typeof toast==='function') toast('请输入描述','warning'); return; }
+    if (isImage && typeof aiGenerateImage === 'function') {
+        aiGenerateImage(prompt.value, name, function(url) {
+            var el = document.getElementById('aiResult');
+            if (el) { el.style.display = 'block'; el.innerHTML = '<img src="' + (url||'') + '" style="max-width:100%;border-radius:12px">'; }
+        });
+    } else if (isVideo && typeof seedanceCreateTask === 'function') {
+        seedanceCreateTask(prompt.value, name);
+    } else if (typeof aiGenerateText === 'function') {
+        aiGenerateText(prompt.value, name, function(result) {
+            var el = document.getElementById('aiResult');
+            if (el) { el.style.display = 'block'; el.innerHTML = '<p style="white-space:pre-wrap;color:#e2e8f0;line-height:1.8">' + (result||'') + '</p>'; }
+        });
+    }
+}
+
+// startCountdown: 倒计时工具
+function startCountdown() {
+    var dateInput = document.getElementById('ut_date');
+    var nameInput = document.getElementById('ut_name');
+    var result = document.getElementById('ut_result');
+    if (!dateInput || !dateInput.value) { if(typeof toast==='function') toast('请选择目标日期','warning'); return; }
+    var target = new Date(dateInput.value).getTime();
+    var eventName = nameInput ? (nameInput.value || '目标日期') : '目标日期';
+    if (window._countdownTimer) clearInterval(window._countdownTimer);
+    window._countdownTimer = setInterval(function() {
+        var now = Date.now();
+        var diff = target - now;
+        if (diff <= 0) {
+            clearInterval(window._countdownTimer);
+            if (result) result.innerHTML = '<div style="font-size:48px;margin-bottom:12px">&#x1F389;</div><h3 style="font-size:24px;color:#00f5ff">' + eventName + ' 已到达！</h3>';
+            return;
+        }
+        var days = Math.floor(diff / 86400000);
+        var hours = Math.floor((diff % 86400000) / 3600000);
+        var mins = Math.floor((diff % 3600000) / 60000);
+        var secs = Math.floor((diff % 60000) / 1000);
+        if (result) {
+            result.innerHTML = '<div style="margin-bottom:16px"><h3 style="font-size:18px;color:#e2e8f0;margin-bottom:8px">' + eventName + '</h3></div>' +
+                '<div style="display:flex;gap:12px;justify-content:center">' +
+                '<div style="background:rgba(0,245,255,.1);border:1px solid rgba(0,245,255,.2);border-radius:12px;padding:16px 24px;min-width:80px"><div style="font-size:36px;font-weight:800;color:#00f5ff">' + days + '</div><div style="font-size:12px;color:#94a3b8">天</div></div>' +
+                '<div style="background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.2);border-radius:12px;padding:16px 24px;min-width:80px"><div style="font-size:36px;font-weight:800;color:#8b5cf6">' + hours + '</div><div style="font-size:12px;color:#94a3b8">时</div></div>' +
+                '<div style="background:rgba(236,72,153,.1);border:1px solid rgba(236,72,153,.2);border-radius:12px;padding:16px 24px;min-width:80px"><div style="font-size:36px;font-weight:800;color:#ec4899">' + mins + '</div><div style="font-size:12px;color:#94a3b8">分</div></div>' +
+                '<div style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);border-radius:12px;padding:16px 24px;min-width:80px"><div style="font-size:36px;font-weight:800;color:#10b981">' + secs + '</div><div style="font-size:12px;color:#94a3b8">秒</div></div>' +
+                '</div>';
+        }
+    }, 1000);
+}
+
+// doUtilIdiom: 成语词典
+function doUtilIdiom() {
+    var input = document.getElementById('ut_input');
+    var result = document.getElementById('ut_result');
+    if (!input || !input.value.trim()) { if(typeof toast==='function') toast('请输入成语','warning'); return; }
+    var idioms = {
+        '画蛇添足':'比喻做了多余的事，非但无益，反而不合适','守株待兔':'比喻死守狭隘经验，不知变通',
+        '亡羊补牢':'比喻出了问题以后想办法补救，可以防止继续受损失','掩耳盗铃':'比喻自己欺骗自己',
+        '揠苗助长':'比喻违反客观规律，急于求成，反而把事情弄糟','杯弓蛇影':'比喻因疑神疑鬼而引起恐惧',
+        '叶公好龙':'比喻口头上说爱好某事物，实际上并不真爱好','对牛弹琴':'比喻说话不看对象',
+        '狐假虎威':'比喻仗着别人的势力欺压人','画龙点睛':'比喻写文章或讲话时，在关键处加上精辟的语句，使内容更加生动',
+        '鸡飞蛋打':'比喻两头落空，一无所得','胸有成竹':'比喻在做事之前已经拿定主意',
+        '事半功倍':'形容做事得法，费力小，收效大','井底之蛙':'比喻见识狭窄的人',
+        '刻舟求剑':'比喻拘泥成例，不知道跟着情势的变化而改变看法或办法',
+        '一箭双雕':'比喻做一件事达到两个目的','一鸣惊人':'比喻平时没有突出的表现，一下子做出惊人的成绩',
+        '三顾茅庐':'比喻真心诚意，一再邀请','四面楚歌':'比喻陷入四面受敌、孤立无援的境地',
+        '卧薪尝胆':'形容人刻苦自励，发奋图强','破釜沉舟':'比喻下定决心，不顾一切地干到底'
+    };
+    var word = input.value.trim();
+    var meaning = idioms[word];
+    if (result) {
+        if (meaning) {
+            result.innerHTML = '<div style="background:rgba(0,245,255,.08);border:1px solid rgba(0,245,255,.2);border-radius:12px;padding:16px"><h4 style="color:#00f5ff;margin-bottom:8px">' + word + '</h4><p style="color:#e2e8f0;line-height:1.8">' + meaning + '</p></div>';
+        } else {
+            result.innerHTML = '<p style="color:#94a3b8">未找到该成语的释义。支持查询常用成语。</p>';
+        }
+    }
+}
+
+// doUtilAvatarGen: AI头像生成
+function doUtilAvatarGen() {
+    var prompt = document.getElementById('ut_prompt');
+    var result = document.getElementById('ut_result');
+    if (!prompt || !prompt.value.trim()) { if(typeof toast==='function') toast('请描述头像风格','warning'); return; }
+    if (typeof aiGenerateImage === 'function') {
+        if (result) result.innerHTML = '<div style="text-align:center;padding:20px"><div style="width:40px;height:40px;border:3px solid rgba(0,245,255,.3);border-top-color:#00f5ff;border-radius:50%;animation:ai-spin .8s linear infinite;margin:0 auto 12px"></div><p style="color:#94a3b8;font-size:13px">AI正在生成头像...</p></div>';
+        aiGenerateImage(prompt.value + ', avatar, headshot, high quality', '头像生成', function(url) {
+            if (result) result.innerHTML = '<div style="text-align:center"><img src="' + (url||'') + '" style="width:200px;height:200px;border-radius:50%;border:3px solid rgba(0,245,255,.3);margin-bottom:12px"><br><a href="' + (url||'') + '" download="avatar.png" style="color:#00f5ff;font-size:13px">下载头像</a></div>';
+        });
+    } else {
+        if (result) result.innerHTML = '<p style="color:#94a3b8">请先登录后使用AI生成功能</p>';
+    }
+}
+
+// doUtilPosterGen: AI海报生成
+function doUtilPosterGen() {
+    var prompt = document.getElementById('ut_prompt');
+    var style = document.getElementById('ut_style');
+    var result = document.getElementById('ut_result');
+    if (!prompt || !prompt.value.trim()) { if(typeof toast==='function') toast('请输入海报主题','warning'); return; }
+    var styleText = style ? style.value : '简约商务';
+    if (typeof aiGenerateImage === 'function') {
+        if (result) result.innerHTML = '<div style="text-align:center;padding:20px"><div style="width:40px;height:40px;border:3px solid rgba(0,245,255,.3);border-top-color:#00f5ff;border-radius:50%;animation:ai-spin .8s linear infinite;margin:0 auto 12px"></div><p style="color:#94a3b8;font-size:13px">AI正在生成海报...</p></div>';
+        aiGenerateImage(prompt.value + ', ' + styleText + ' poster design, professional', '海报生成', function(url) {
+            if (result) result.innerHTML = '<div style="text-align:center"><img src="' + (url||'') + '" style="max-width:100%;border-radius:12px;margin-bottom:12px"><br><a href="' + (url||'') + '" download="poster.png" style="color:#00f5ff;font-size:13px">下载海报</a></div>';
+        });
+    } else {
+        if (result) result.innerHTML = '<p style="color:#94a3b8">请先登录后使用AI生成功能</p>';
+    }
+}
+
+// openCreditsShop: 积分商城
+function openCreditsShop() {
+    var overlay = document.getElementById('payOverlay');
+    if (overlay) {
+        overlay.style.display = 'flex';
+        overlay.classList.add('show');
+    } else if (typeof openPayment === 'function') {
+        openPayment('credits', 'recharge');
+    } else {
+        if (typeof toast === 'function') toast('积分商城即将上线', 'info');
+    }
+}
+
+// openMediaLib: 素材库
+function openMediaLib(type) {
+    type = type || 'video';
+    if (typeof toast === 'function') toast('素材库功能开发中，敬请期待', 'info');
+}
+</script>
+
+<script>
 // ===== 统一主题切换系统 =====
 var LS_THEME_KEY = 'lsjy_theme';
 var LS_VERSION_KEY = 'lsjy_version';
 
-// 初始化主题 {
+// 初始化主题
+(function initTheme(){
     var saved = localStorage.getItem(LS_THEME_KEY) || 'dark';
     if(saved === 'light'){
         document.body.classList.add('light-mode');
     }
-    // 更新按钮图标（延迟确保DOM就绪）
     setTimeout(function(){
         var btn = document.getElementById('themeToggleBtn');
         if(btn) btn.textContent = saved === 'light' ? '\u2600\ufe0f' : '\ud83c\udf19';
@@ -7966,7 +8137,8 @@ function showToast(msg){
     setTimeout(function(){ el.style.opacity = '0'; }, 1500);
     setTimeout(function(){ el.remove(); }, 2000);
 }
-</script>
+
+
 </body>
 </html>
 
