@@ -8003,14 +8003,10 @@ function doUtilPosterGen() {
 
 // openCreditsShop: 积分商城
 function openCreditsShop() {
-    var overlay = document.getElementById('payOverlay');
-    if (overlay) {
-        overlay.style.display = 'flex';
-        overlay.classList.add('show');
-    } else if (typeof openPayment === 'function') {
-        openPayment('credits', 'recharge');
-    } else {
-        if (typeof toast === 'function') toast('积分商城即将上线', 'info');
+    if (typeof openTool === 'function') {
+        openTool('credits');
+    } else if (typeof toast === 'function') {
+        toast('算力中心加载中，请稍后再试', 'info');
     }
 }
 
