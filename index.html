@@ -2161,6 +2161,22 @@ img,svg,video,iframe{max-width:100%;height:auto}
   .mobile-menu{top:max(60px,calc(60px + env(safe-area-inset-top)))}
 }
 </style>
+
+<style id="enterprise-theme">
+body.enterprise-mode{--p:#f59e0b;--p-light:#fbbf24;--p-dark:#d97706;--p-glow:rgba(245,158,11,.3)}
+body.enterprise-mode .nav{background:rgba(10,8,6,.95)!important;border-bottom:1px solid rgba(245,158,11,.2)!important}
+body.enterprise-mode .nav-brand em{color:#f59e0b!important;text-shadow:0 0 20px rgba(245,158,11,.4)!important}
+body.enterprise-mode .nav-links a:hover,body.enterprise-mode .nav-links a.active{color:#f59e0b!important;background:rgba(245,158,11,.1)!important}
+body.enterprise-mode .nav-cta{background:linear-gradient(135deg,#f59e0b,#d97706)!important;color:#0f172a!important}
+body.enterprise-mode .hero-text h1 .hl{background:linear-gradient(135deg,#f59e0b,#fbbf24)!important;-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+body.enterprise-mode .section-tag{background:rgba(245,158,11,.1)!important;color:#f59e0b!important;border-color:rgba(245,158,11,.25)!important}
+body.enterprise-mode .btn-p{background:linear-gradient(135deg,#f59e0b,#d97706)!important;color:#0f172a!important}
+body.enterprise-mode .btn-p:hover{background:linear-gradient(135deg,#fbbf24,#f59e0b)!important;box-shadow:0 0 24px rgba(245,158,11,.35)!important}
+body.enterprise-mode .mod-card:hover,body.enterprise-mode .tool-card:hover{border-color:rgba(245,158,11,.3)!important;box-shadow:0 4px 20px rgba(245,158,11,.15)!important}
+body.enterprise-mode .price-card.featured{border-color:rgba(245,158,11,.4)!important}
+body.enterprise-mode .version-switch button.active{background:#f59e0b!important;color:#0f172a!important}
+body.enterprise-mode .floating-controls .version-switch button{border-color:#f59e0b!important}
+</style>
 </head>
 <body>
 
@@ -2560,9 +2576,15 @@ window.typewriterEffect=function(el,text,speed){
   var saved=localStorage.getItem('lsjy3_theme')||'dark';
   if(saved==='light'){document.body.classList.add('light-mode');btn.innerHTML='&#9788;'}
   btn.addEventListener('click',function(){
-    // 暂时禁用浅色模式，保持深色
-    toast('浅色模式开发中，请使用深色模式','info');
-    return;
+    if(document.body.classList.contains('light-mode')){
+      document.body.classList.remove('light-mode');
+      btn.innerHTML='&#9789;';
+      localStorage.setItem('lsjy3_theme','dark');
+    }else{
+      document.body.classList.add('light-mode');
+      btn.innerHTML='&#9788;';
+      localStorage.setItem('lsjy3_theme','light');
+    }
   });
 })();
 
@@ -4592,8 +4614,12 @@ if(p!==p2)return toast('两次密码不一致','error');
 const users=getUsers();
 if(users.find(x=>x.username===u))return toast('用户名已存在','error');
 const newUser={username:u,password:btoa(p),nickname:n||u,role:'user',status:'pending',phone:'',qq:'',wx:'',created:new Date().toLocaleString()};
-users.push(newUser);saveUsers(users);closeAuth();
-toast('✅ 注册成功！您的账号正在审批中，管理员审核通过后即可登录，请稍后再试','success');
+users.push(newUser);saveUsers(users);
+// 新用户注册送100圣点
+const allCredits=JSON.parse(localStorage.getItem('lsjy3_credits')||'{}');
+allCredits[u]=100;localStorage.setItem('lsjy3_credits',JSON.stringify(allCredits));
+closeAuth();
+toast('✅ 注册成功！赠送100圣点已到账，管理员审核通过后即可登录','success');
 updateNavAuth();
 }
 
@@ -4652,8 +4678,12 @@ _verifySmsCode(phone,code,'regSmsCode').then(()=>smsRegSuccess(phone,nick)).catc
 function smsRegSuccess(phone,nick){
 const users=getUsers();if(users.find(u=>u.phone===phone))return toast('该手机号已注册，请直接登录','error');
 const newUser={username:'user_'+phone.slice(-4),password:'sms_'+Date.now(),nickname:nick||'用户'+phone.slice(-4),role:'user',status:'pending',phone:phone,qq:'',wx:'',created:new Date().toLocaleString()};
-users.push(newUser);saveUsers(users);closeAuth();
-toast('✅ 注册成功！账号正在审批中，管理员审核通过后即可登录','success');
+users.push(newUser);saveUsers(users);
+// 新用户注册送100圣点
+const allCreds=JSON.parse(localStorage.getItem('lsjy3_credits')||'{}');
+allCreds[newUser.username]=100;localStorage.setItem('lsjy3_credits',JSON.stringify(allCreds));
+closeAuth();
+toast('✅ 注册成功！赠送100圣点已到账，管理员审核通过后即可登录','success');
 updateNavAuth();
 }
 // ===== WeChat / QQ OAuth =====
@@ -8305,9 +8335,6 @@ var _voiceRec=null;function startVoice(targetId){var target=document.getElementB
 </script>
 
 
-</script>
-
-
  
 
 
@@ -8756,17 +8783,13 @@ function switchVersion(ver){
     btns.forEach(function(b){ b.classList.remove('active'); });
     if(ver === 'personal'){
         btns[0].classList.add('active');
-    } else {
-        btns[1].classList.add('active');
-    }
-    
-    if(ver === 'personal'){
-        // 个人版：显示全部内容
+        document.body.classList.remove('enterprise-mode');
         showAllContent();
         showToast('已切换到个人版');
     } else {
-        // 企业版：显示企业专属内容，打开企业版弹窗
-        showToast('已切换到企业版');
+        btns[1].classList.add('active');
+        document.body.classList.add('enterprise-mode');
+        showToast('已切换到企业版 · 尊享金色特权');
         openEnterprise();
     }
 }
@@ -8791,6 +8814,7 @@ function showAllContent(){
             btns[0].classList.remove('active');
             btns[1].classList.add('active');
         }
+        document.body.classList.add('enterprise-mode');
     }
 })();
 
@@ -8808,7 +8832,7 @@ function showToast(msg){
     setTimeout(function(){ el.style.opacity = '0'; }, 1500);
     setTimeout(function(){ el.remove(); }, 2000);
 }
-
+</script>
 
 <!-- ===== 罗圣AI智能客服浮窗（豆包风格） ===== -->
 <div id="lsKefuBubble" style="position:fixed;bottom:28px;right:28px;z-index:99999;cursor:pointer;user-select:none" onclick="toggleKefuChat()">
@@ -8936,11 +8960,3 @@ function sendKefuMsg(){
 
 </body>
 </html>
-
-<!-- overlay click enhancement -->
-<style>
-.overlay{padding:24px!important}
-.overlay .glass-panel .close-btn,.tool-panel .tool-header button,.detail-panel .detail-close{width:40px!important;height:40px!important;min-width:40px;min-height:40px;font-size:18px!important;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:10px;transition:all .2s}
-.tool-card{min-height:70px!important;cursor:pointer!important}
-.tool-card *{pointer-events:none}
-</style>
