@@ -4902,8 +4902,8 @@ if(navRight){
   let creditEl=document.getElementById('navCredits');
   if(!creditEl){creditEl=document.createElement('div');creditEl.id='navCredits';creditEl.style.cssText='display:inline-flex;align-items:center;gap:4px;padding:6px 14px;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#78350f;border-radius:8px;font-size:12px;font-weight:700;margin-right:8px';navRight.insertBefore(creditEl,btn)}
   creditEl.innerHTML='<i class="fa-solid fa-bolt"></i> <span id="creditDisplay">'+getUserCredits()+'</span> 算力';
-  // 管理员按钮（仅admin角色显示）
-  if(u.role==='admin'){
+  // 管理员按钮（admin/superadmin角色显示）
+  if(u.role==='admin'||u.role==='superadmin'){
     let adminEl=document.getElementById('navAdminBtn');
     if(!adminEl){adminEl=document.createElement('a');adminEl.id='navAdminBtn';adminEl.href='admin/';adminEl.style.cssText='display:inline-flex;align-items:center;gap:4px;padding:6px 14px;background:linear-gradient(135deg,#00f5ff,#00c8d9);color:#e2e8f0;border-radius:8px;font-size:12px;font-weight:700;margin-right:8px;text-decoration:none;box-shadow:0 2px 8px rgba(0,245,255,.3)';adminEl.innerHTML='<i class="fa-solid fa-shield-halved"></i> 管理员';navRight.insertBefore(adminEl,btn)}
   }
