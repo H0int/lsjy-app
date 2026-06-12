@@ -452,34 +452,18 @@ function navigate(page) {
 function renderDashboard() {
   var stats = Store.get('stats') || DEFAULT_STATS;
   var users = Store.getUsers() || [];
-  var credits = Store.getCredits() || {};
   var pendingCount = users.filter(function(u){ return u.status==='pending'; }).length;
-  var approvedCount = users.filter(function(u){ return u.status==='approved'; }).length;
-  var bannedCount = users.filter(function(u){ return u.status==='banned'; }).length;
-  var totalCreditBalance = 0;
-  Object.keys(credits).forEach(function(k){ totalCreditBalance += (credits[k]||0); });
-  var orders = Store.get('orders') || [];
-  var todayOrders = orders.filter(function(o){ return o.status==='completed'&&o.type==='recharge'; }).length;
 
   var html = '<div class="dash-grid">';
 
-  // 统计卡片 - 增强版
-  html += statCard('fa-users', '用户总数', stats.totalUsers, '已通过'+approvedCount+'人', 'var(--p)');
-  html += statCard('fa-user-plus', '今日新增', stats.todayNewUsers, '待审批'+pendingCount+'人', 'var(--p2)');
-  html += statCard('fa-bolt', '算力总量', totalCreditBalance, '今日消耗+'+stats.todayCredits, '#f59e0b');
+  // 统计卡片
+  html += statCard('fa-users', '用户总数', stats.totalUsers, '+12%', 'var(--p)');
+  html += statCard('fa-user-plus', '今日新增', stats.todayNewUsers, '+3', 'var(--p2)');
+  html += statCard('fa-bolt', '算力总量', stats.totalCredits, '今日+'+stats.todayCredits, '#f59e0b');
   html += statCard('fa-coins', '今日收入', '¥'+stats.todayRevenue, '本周¥'+stats.weekRevenue, 'var(--ok)');
   html += statCard('fa-chart-line', '本月收入', '¥'+stats.monthRevenue, '环比+15%', 'var(--p2)');
-  html += statCard('fa-clock', '待审批', pendingCount, pendingCount > 0 ? '需处理' : '无待处理', pendingCount > 0 ? 'var(--err)' : 'var(--ok)');
-  html += statCard('fa-ban', '已封禁', bannedCount, '占比'+(stats.totalUsers>0?Math.round(bannedCount/stats.totalUsers*100):0)+'%', 'var(--err)');
-  html += statCard('fa-receipt', '今日订单', todayOrders, '总'+orders.length+'笔', 'var(--p2)');
+  html += statCard('fa-clock', '待审批', pendingCount, '需处理', pendingCount > 0 ? 'var(--err)' : 'var(--ok)');
 
-  html += '</div>';
-
-  // 趋势图时间段切换
-  html += '<div style="margin-bottom:12px;display:flex;gap:8px;align-items:center;">';
-  html += '<span style="color:var(--nd);font-size:13px;"><i class="fa-solid fa-chart-area" style="color:var(--p)"></i> 数据趋势</span>';
-  html += '<button class="btn-xs" style="background:var(--p);color:#fff;border:none;" id="dash-period-7" onclick="AdminAPI.switchDashPeriod(7)">近7天</button>';
-  html += '<button class="btn-xs" id="dash-period-30" onclick="AdminAPI.switchDashPeriod(30)">近30天</button>';
   html += '</div>';
 
   // 工具使用排行
@@ -514,41 +498,6 @@ function renderDashboard() {
   html += renderSVGChart();
   html += '</div></div>';
 
-  html += '</div>';
-
-  // 用户地域分布 + 支付方式分布
-  html += '<div class="dash-row" style="margin-top:16px;">';
-  html += '<div class="dash-card" style="flex:1;min-width:300px;">';
-  html += '<div class="dash-card-header"><i class="fa-solid fa-map-location-dot" style="color:var(--p2)"></i> 用户地域分布 (模拟)</div>';
-  var regions = [
-    {name:'湖南',pct:28},{name:'广东',pct:18},{name:'北京',pct:12},{name:'上海',pct:10},
-    {name:'浙江',pct:8},{name:'江苏',pct:7},{name:'四川',pct:5},{name:'湖北',pct:4},
-    {name:'福建',pct:3},{name:'其他',pct:5}
-  ];
-  html += '<div style="padding:0 16px 16px;">';
-  regions.forEach(function(r){
-    var barColor = r.pct > 15 ? 'var(--p)' : r.pct > 8 ? 'var(--p2)' : '#f59e0b';
-    html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;font-size:13px;">';
-    html += '<span style="width:50px;text-align:right;color:var(--nd);">'+r.name+'</span>';
-    html += '<div style="flex:1;height:10px;background:var(--w2);border-radius:5px;overflow:hidden;"><div style="width:'+r.pct+'%;height:100%;background:'+barColor+';border-radius:5px;transition:width .5s;"></div></div>';
-    html += '<span style="color:var(--nd);width:40px;text-align:right;">'+r.pct+'%</span>';
-    html += '</div>';
-  });
-  html += '</div></div>';
-
-  // 支付方式分布
-  html += '<div class="dash-card" style="flex:1;min-width:300px;">';
-  html += '<div class="dash-card-header"><i class="fa-solid fa-credit-card" style="color:var(--ok)"></i> 支付方式分布</div>';
-  var paymentMethods = [{name:'微信支付',pct:52,icon:'fa-brands fa-weixin',color:'#07c160'},{name:'支付宝',pct:31,icon:'fa-brands fa-alipay',color:'#1677ff'},{name:'QQ支付',pct:17,icon:'fa-brands fa-qq',color:'#12b7f5'}];
-  html += '<div style="padding:16px;">';
-  paymentMethods.forEach(function(pm){
-    html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding:12px;background:var(--bg2);border-radius:8px;">';
-    html += '<i class="fa-solid '+pm.icon+'" style="font-size:24px;color:'+pm.color+';width:30px;text-align:center;"></i>';
-    html += '<div style="flex:1;"><div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span style="font-weight:600;">'+pm.name+'</span><span style="color:var(--nd);">'+pm.pct+'%</span></div>';
-    html += '<div style="height:6px;background:var(--w2);border-radius:3px;overflow:hidden;"><div style="width:'+pm.pct+'%;height:100%;background:'+pm.color+';border-radius:3px;"></div></div>';
-    html += '</div></div>';
-  });
-  html += '</div></div>';
   html += '</div>';
 
   // 最近注册用户
@@ -620,14 +569,9 @@ function renderUsers() {
   var credits = Store.getCredits() || {};
 
   var html = '<div class="page-toolbar">';
-  html += '<div class="toolbar-left"><input type="text" id="user-search" placeholder="搜索用户名/手机/邮箱..." oninput="AdminAPI.filterUsers()">';
-  html += '<select id="user-filter" onchange="AdminAPI.filterUsers()"><option value="">全部状态</option><option value="pending">待审批</option><option value="approved">已通过</option><option value="banned">已封禁</option><option value="rejected">已拒绝</option></select>';
-  html += '<button class="admin-btn" style="font-size:12px;padding:4px 10px;" onclick="AdminAPI.exportUsers()"><i class="fa-solid fa-download"></i> 导出</button></div>';
-  html += '<div class="toolbar-right">';
-  html += '<button class="admin-btn" onclick="AdminAPI.batchApprove()"><i class="fa-solid fa-check-double"></i> 批量通过</button>';
-  html += '<button class="admin-btn" style="background:var(--warn);" onclick="AdminAPI.batchBan()"><i class="fa-solid fa-ban"></i> 批量封禁</button>';
-  html += '<button class="admin-btn" style="background:var(--err);" onclick="AdminAPI.batchDelete()"><i class="fa-solid fa-trash"></i> 批量删除</button>';
-  html += '</div>';
+  html += '<div class="toolbar-left"><input type="text" id="user-search" placeholder="搜索用户名..." oninput="AdminAPI.filterUsers()">';
+  html += '<select id="user-filter" onchange="AdminAPI.filterUsers()"><option value="">全部状态</option><option value="pending">待审批</option><option value="approved">已通过</option><option value="banned">已封禁</option><option value="rejected">已拒绝</option></select></div>';
+  html += '<div class="toolbar-right"><button class="admin-btn" onclick="AdminAPI.batchApprove()"><i class="fa-solid fa-check-double"></i> 批量通过</button></div>';
   html += '</div>';
 
   html += '<div class="dash-card"><div style="overflow-x:auto;"><table class="admin-table" id="users-table"><thead><tr>';
@@ -668,7 +612,6 @@ function renderUserRow(u, credit) {
     if (u.status === 'banned') {
       html += '<button class="btn-xs btn-ok" onclick="AdminAPI.unbanUser(\''+u.username+'\')">解封</button>';
     }
-    html += '<button class="btn-xs" onclick="AdminAPI.viewUserDetail(\''+u.username+'\')"><i class="fa-solid fa-eye"></i> 详情</button>';
     html += '<button class="btn-xs" onclick="AdminAPI.adjustCredits(\''+u.username+'\')"><i class="fa-solid fa-bolt"></i> 算力</button>';
     html += '<button class="btn-xs btn-err" onclick="AdminAPI.deleteUser(\''+u.username+'\')"><i class="fa-solid fa-trash"></i></button>';
   }
@@ -689,15 +632,8 @@ function renderTools() {
   });
 
   var html = '<div class="page-toolbar">';
-  html += '<div class="toolbar-left"><span style="color:var(--nd);">共 <strong style="color:var(--p)">'+totalTools+'</strong> 个工具，已启用 <strong style="color:var(--ok)">'+enabledTools+'</strong> 个</span>';
-  html += '<input type="text" id="tool-search" placeholder="搜索工具名称..." oninput="AdminAPI.searchTools()" style="margin-left:12px;">';
-  html += '</div>';
-  html += '<div class="toolbar-right">';
-  html += '<button class="admin-btn" style="background:var(--ok);" onclick="AdminAPI.enableAllTools()"><i class="fa-solid fa-toggle-on"></i> 全部启用</button>';
-  html += '<button class="admin-btn" style="background:var(--err);" onclick="AdminAPI.disableAllTools()"><i class="fa-solid fa-toggle-off"></i> 全部禁用</button>';
-  html += '<button class="admin-btn" style="background:var(--p2);" onclick="AdminAPI.batchAdjustToolCredits()"><i class="fa-solid fa-sliders"></i> 批量调价</button>';
-  html += '<button class="admin-btn" onclick="AdminAPI.resetTools()"><i class="fa-solid fa-rotate"></i> 重置默认</button>';
-  html += '</div>';
+  html += '<div class="toolbar-left"><span style="color:var(--nd);">共 <strong style="color:var(--p)">'+totalTools+'</strong> 个工具，已启用 <strong style="color:var(--ok)">'+enabledTools+'</strong> 个</span></div>';
+  html += '<div class="toolbar-right"><button class="admin-btn" onclick="AdminAPI.resetTools()"><i class="fa-solid fa-rotate"></i> 重置默认</button></div>';
   html += '</div>';
 
   // 分类标签
@@ -753,9 +689,7 @@ function renderFinance() {
   // 子标签
   html += '<div class="tab-bar"><div class="tab-item active" onclick="AdminAPI.switchFinanceTab(\'orders\',this)">订单列表</div>';
   html += '<div class="tab-item" onclick="AdminAPI.switchFinanceTab(\'refunds\',this)">退款管理</div>';
-  html += '<div class="tab-item" onclick="AdminAPI.switchFinanceTab(\'payments\',this)">支付方式</div>';
-  html += '<div class="tab-item" onclick="AdminAPI.switchFinanceTab(\'revenue\',this)">收入趋势</div>';
-  html += '<div class="tab-item" onclick="AdminAPI.switchFinanceTab(\'stats\',this)">财务统计</div></div>';
+  html += '<div class="tab-item" onclick="AdminAPI.switchFinanceTab(\'payments\',this)">支付方式</div></div>';
 
   html += '<div id="finance-content">';
   html += renderFinanceOrders(orders);
@@ -843,8 +777,7 @@ function renderContent() {
   html += '<div class="tab-item" onclick="AdminAPI.switchContentTab(\'faq\',this)">FAQ管理</div>';
   html += '<div class="tab-item" onclick="AdminAPI.switchContentTab(\'seo\',this)">SEO设置</div>';
   html += '<div class="tab-item" onclick="AdminAPI.switchContentTab(\'popup\',this)">弹窗广告</div>';
-  html += '<div class="tab-item" onclick="AdminAPI.switchContentTab(\'changelog\',this)">版本日志</div>';
-  html += '<div class="tab-item" onclick="AdminAPI.switchContentTab(\'emailtpl\',this)">邮件模板</div></div>';
+  html += '<div class="tab-item" onclick="AdminAPI.switchContentTab(\'changelog\',this)">版本日志</div></div>';
   html += '<div id="content-area">';
   html += renderContentAnnouncements();
   html += '</div>';
@@ -864,8 +797,7 @@ function renderContentAnnouncements() {
     html += '<tr><td>'+a.title+'</td><td>'+(typeMap[a.type]||a.type)+'</td><td>'+(statusMap[a.status]||a.status)+'</td>';
     html += '<td style="font-size:12px;">'+formatTime(a.createTime)+'</td>';
     html += '<td style="font-size:12px;">'+formatTime(a.expireTime)+'</td>';
-    html += '<td><button class="btn-xs" onclick="AdminAPI.previewAnnouncement('+a.id+')"><i class="fa-solid fa-eye"></i></button>';
-    html += '<button class="btn-xs" onclick="AdminAPI.editAnnouncement('+a.id+')"><i class="fa-solid fa-pen"></i></button>';
+    html += '<td><button class="btn-xs" onclick="AdminAPI.editAnnouncement('+a.id+')"><i class="fa-solid fa-pen"></i></button>';
     html += '<button class="btn-xs btn-err" onclick="AdminAPI.deleteAnnouncement('+a.id+')"><i class="fa-solid fa-trash"></i></button></td></tr>';
   });
   html += '</tbody></table></div></div>';
@@ -913,7 +845,6 @@ function renderContentPopup() {
     html += '<td>'+(p.enabled?'<span class="badge badge-ok">启用</span>':'<span class="badge badge-warn">禁用</span>')+'</td>';
     html += '<td style="font-size:12px;">'+p.startTime+'</td><td style="font-size:12px;">'+p.endTime+'</td>';
     html += '<td><label class="toggle-switch"><input type="checkbox" '+(p.enabled?'checked':'')+' onchange="AdminAPI.togglePopup('+p.id+',this.checked)"><span class="toggle-slider"></span></label>';
-    html += '<button class="btn-xs" onclick="AdminAPI.previewPopup('+p.id+')"><i class="fa-solid fa-eye"></i></button>';
     html += '<button class="btn-xs btn-err" onclick="AdminAPI.deletePopup('+p.id+')"><i class="fa-solid fa-trash"></i></button></td></tr>';
   });
   html += '</tbody></table></div></div>';
@@ -925,13 +856,9 @@ function renderContentChangelog() {
   var html = '<div class="page-toolbar"><div class="toolbar-left"><span style="color:var(--nd)">共 '+logs.length+' 条版本记录</span></div>';
   html += '<div class="toolbar-right"><button class="admin-btn" onclick="AdminAPI.addChangelog()"><i class="fa-solid fa-plus"></i> 新增版本</button></div></div>';
   html += '<div class="dash-card" style="padding:20px;">';
-  logs.forEach(function(l, idx) {
-    html += '<div style="margin-bottom:20px;padding-left:20px;border-left:3px solid var(--p);position:relative;">';
-    html += '<div style="font-size:16px;font-weight:700;color:var(--p);">'+l.version+' <span style="font-size:12px;color:var(--nd);font-weight:400;">'+l.date+'</span>';
-    html += '<div style="float:right;display:flex;gap:6px;">';
-    html += '<button class="btn-xs" onclick="AdminAPI.editChangelog('+idx+')"><i class="fa-solid fa-pen"></i></button>';
-    html += '<button class="btn-xs btn-err" onclick="AdminAPI.deleteChangelog('+idx+')"><i class="fa-solid fa-trash"></i></button>';
-    html += '</div></div>';
+  logs.forEach(function(l) {
+    html += '<div style="margin-bottom:20px;padding-left:20px;border-left:3px solid var(--p);">';
+    html += '<div style="font-size:16px;font-weight:700;color:var(--p);">'+l.version+' <span style="font-size:12px;color:var(--nd);font-weight:400;">'+l.date+'</span></div>';
     html += '<div style="color:var(--nd);margin-top:4px;">'+l.content+'</div>';
     html += '</div>';
   });
@@ -945,9 +872,7 @@ function renderPermissions() {
   var admins = Store.get('admins') || [];
 
   var html = '<div class="tab-bar"><div class="tab-item active" onclick="AdminAPI.switchPermTab(\'roles\',this)">角色管理</div>';
-  html += '<div class="tab-item" onclick="AdminAPI.switchPermTab(\'admins\',this)">管理员账号</div>';
-  html += '<div class="tab-item" onclick="AdminAPI.switchPermTab(\'matrix\',this)">权限矩阵</div>';
-  html += '<div class="tab-item" onclick="AdminAPI.switchPermTab(\'audit\',this)">操作审计</div></div>';
+  html += '<div class="tab-item" onclick="AdminAPI.switchPermTab(\'admins\',this)">管理员账号</div></div>';
 
   html += '<div id="perm-content">';
 
@@ -1007,10 +932,8 @@ function renderSettings() {
   var html = '<div class="tab-bar"><div class="tab-item active" onclick="AdminAPI.switchSettingsTab(\'basic\',this)">基本设置</div>';
   html += '<div class="tab-item" onclick="AdminAPI.switchSettingsTab(\'theme\',this)">主题设置</div>';
   html += '<div class="tab-item" onclick="AdminAPI.switchSettingsTab(\'api\',this)">API配置</div>';
-  html += '<div class="tab-item" onclick="AdminAPI.switchSettingsTab(\'email\',this)">邮件模板</div>';
   html += '<div class="tab-item" onclick="AdminAPI.switchSettingsTab(\'backup\',this)">数据备份</div>';
   html += '<div class="tab-item" onclick="AdminAPI.switchSettingsTab(\'logs\',this)">系统日志</div>';
-  html += '<div class="tab-item" onclick="AdminAPI.switchSettingsTab(\'health\',this)">健康检查</div>';
   html += '<div class="tab-item" onclick="AdminAPI.switchSettingsTab(\'about\',this)">关于系统</div></div>';
   html += '<div id="settings-content">';
   html += renderSettingsBasic(settings);
@@ -1358,8 +1281,6 @@ window.AdminAPI = {
     if (tab === 'orders') content.innerHTML = renderFinanceOrders(Store.get('orders') || []);
     else if (tab === 'refunds') content.innerHTML = renderFinanceRefunds();
     else if (tab === 'payments') content.innerHTML = renderFinancePayments();
-    else if (tab === 'revenue') content.innerHTML = renderFinanceRevenue();
-    else if (tab === 'stats') content.innerHTML = renderFinanceStats();
   },
 
   completeOrder: function(orderId) {
@@ -1416,7 +1337,6 @@ window.AdminAPI = {
     else if (tab === 'seo') content.innerHTML = renderContentSEO();
     else if (tab === 'popup') content.innerHTML = renderContentPopup();
     else if (tab === 'changelog') content.innerHTML = renderContentChangelog();
-    else if (tab === 'emailtpl') content.innerHTML = renderContentEmailTpl();
   },
 
   addAnnouncement: function() {
@@ -1501,8 +1421,6 @@ window.AdminAPI = {
     el.classList.add('active');
     var content = document.getElementById('perm-content');
     if (tab === 'admins') content.innerHTML = renderPermAdmins();
-    else if (tab === 'matrix') content.innerHTML = renderPermMatrix();
-    else if (tab === 'audit') content.innerHTML = renderPermAudit();
     else navigate(currentPage);
   },
 
@@ -1539,10 +1457,8 @@ window.AdminAPI = {
     if (tab === 'basic') content.innerHTML = renderSettingsBasic(Store.get('settings')||{});
     else if (tab === 'theme') content.innerHTML = renderSettingsTheme();
     else if (tab === 'api') content.innerHTML = renderSettingsAPI();
-    else if (tab === 'email') content.innerHTML = renderSettingsEmail();
     else if (tab === 'backup') content.innerHTML = renderSettingsBackup();
     else if (tab === 'logs') content.innerHTML = renderSettingsLogs();
-    else if (tab === 'health') content.innerHTML = renderSettingsHealth();
     else if (tab === 'about') content.innerHTML = renderSettingsAbout();
   },
 
@@ -1640,718 +1556,8 @@ window.AdminAPI = {
       toast('日志已清空', 'success');
       navigate(currentPage);
     });
-  },
-
-  // ===== 增强功能 =====
-
-  // 数据看板 - 切换时间周期
-  switchDashPeriod: function(days) {
-    var btn7 = document.getElementById('dash-period-7');
-    var btn30 = document.getElementById('dash-period-30');
-    if (btn7) { btn7.style.background = days===7?'var(--p)':''; btn7.style.color = days===7?'#fff':''; }
-    if (btn30) { btn30.style.background = days===30?'var(--p)':''; btn30.style.color = days===30?'#fff':''; }
-    // Re-render chart in the second dash-card
-    var chartCards = document.querySelectorAll('.dash-card');
-    for (var i = 0; i < chartCards.length; i++) {
-      var header = chartCards[i].querySelector('.dash-card-header');
-      if (header && header.textContent.indexOf('用户增长') >= 0) {
-        var chartDiv = chartCards[i].querySelector('div[style*="padding"]');
-        if (chartDiv) chartDiv.innerHTML = renderSVGChartExtended(days);
-        break;
-      }
-    }
-    toast('已切换至近'+days+'天趋势', 'info');
-  },
-
-  // 用户管理 - 查看用户详情
-  viewUserDetail: function(username) {
-    var users = Store.getUsers() || [];
-    var user = null;
-    for (var i = 0; i < users.length; i++) {
-      if (users[i].username === username) { user = users[i]; break; }
-    }
-    if (!user) { toast('用户不存在', 'error'); return; }
-    var credits = Store.getCredits() || {};
-    var credit = credits[username] || 0;
-    var orders = (Store.get('orders') || []).filter(function(o){ return o.username===username; });
-    var statusMap = {pending:'待审批',approved:'已通过',banned:'已封禁',rejected:'已拒绝'};
-
-    var overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99998;display:flex;align-items:center;justify-content:center;';
-    var box = document.createElement('div');
-    box.style.cssText = 'background:var(--bg3);border:1px solid var(--bd);border-radius:12px;padding:24px;max-width:600px;width:90%;color:var(--w);max-height:85vh;overflow-y:auto;';
-    var html = '<div style="font-size:18px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;"><i class="fa-solid fa-user" style="color:var(--p)"></i> 用户详情</div>';
-
-    html += '<div style="background:var(--bg2);border-radius:8px;padding:16px;margin-bottom:16px;">';
-    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px;">';
-    html += '<div><span style="color:var(--nd);">用户名：</span><strong>'+user.username+'</strong></div>';
-    html += '<div><span style="color:var(--nd);">状态：</span><span class="badge badge-'+(user.status==='approved'?'ok':user.status==='pending'?'warn':'err')+'">'+(statusMap[user.status]||user.status)+'</span></div>';
-    html += '<div><span style="color:var(--nd);">手机：</span>'+(user.phone||'-')+'</div>';
-    html += '<div><span style="color:var(--nd);">邮箱：</span>'+(user.email||'-')+'</div>';
-    html += '<div><span style="color:var(--nd);">注册时间：</span>'+formatTime(user.registerTime)+'</div>';
-    html += '<div><span style="color:var(--nd);">最后登录：</span>'+formatTime(user.lastLogin)+'</div>';
-    html += '<div><span style="color:var(--nd);">算力余额：</span><strong style="color:var(--p);">'+credit+'</strong></div>';
-    html += '<div><span style="color:var(--nd);">订单数：</span>'+orders.length+'</div>';
-    html += '</div></div>';
-
-    html += '<div style="margin-bottom:16px;"><div style="font-weight:600;margin-bottom:8px;"><i class="fa-solid fa-bolt" style="color:#f59e0b"></i> 近期算力消费</div>';
-    html += '<div style="background:var(--bg2);border-radius:8px;padding:12px;max-height:200px;overflow-y:auto;">';
-    var sampleConsume = [
-      {tool:'AI文章生成',credit:5,time:'2026-06-12 15:30'},{tool:'AI绘画',credit:10,time:'2026-06-12 11:20'},
-      {tool:'AI翻译助手',credit:2,time:'2026-06-11 16:45'},{tool:'AI代码生成',credit:6,time:'2026-06-11 09:10'},
-      {tool:'AI摘要提取',credit:3,time:'2026-06-10 14:00'},{tool:'AI简历优化',credit:4,time:'2026-06-10 10:30'},
-      {tool:'AI数据分析',credit:6,time:'2026-06-09 15:20'},{tool:'AI语音合成',credit:5,time:'2026-06-09 08:45'}
-    ];
-    sampleConsume.forEach(function(c){
-      html += '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bd);font-size:12px;">';
-      html += '<span>'+c.tool+'</span><span style="color:var(--err);">-'+c.credit+'</span><span style="color:var(--nd);">'+c.time+'</span>';
-      html += '</div>';
-    });
-    html += '</div></div>';
-
-    if (orders.length > 0) {
-      html += '<div style="margin-bottom:16px;"><div style="font-weight:600;margin-bottom:8px;"><i class="fa-solid fa-receipt" style="color:var(--ok)"></i> 相关订单</div>';
-      html += '<div style="background:var(--bg2);border-radius:8px;padding:12px;max-height:200px;overflow-y:auto;">';
-      orders.forEach(function(o){
-        html += '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bd);font-size:12px;">';
-        html += '<span style="color:var(--nd);">'+o.id+'</span>';
-        html += '<span>'+(o.type==='recharge'?'充值':'退款')+'</span>';
-        html += '<span style="color:'+(o.amount>0?'var(--ok)':'var(--err)')+'">¥'+Math.abs(o.amount)+'</span>';
-        html += '<span style="color:var(--nd);">'+formatTime(o.time)+'</span>';
-        html += '</div>';
-      });
-      html += '</div></div>';
-    }
-
-    html += '<div style="display:flex;gap:10px;justify-content:flex-end;">';
-    html += '<button class="admin-btn-cancel" onclick="this.closest(\'div[style*=fixed]\').remove()">关闭</button>';
-    html += '<button class="admin-btn" onclick="AdminAPI.adjustCredits(\''+username+'\');this.closest(\'div[style*=fixed]\').remove();">调整算力</button>';
-    html += '</div>';
-
-    box.innerHTML = html;
-    overlay.appendChild(box);
-    document.body.appendChild(overlay);
-    overlay.onclick = function(e) { if(e.target===overlay) overlay.remove(); };
-  },
-
-  // 用户管理 - 批量封禁
-  batchBan: function() {
-    var checked = document.querySelectorAll('.user-checkbox:checked');
-    if (checked.length === 0) { toast('请先选择用户', 'warning'); return; }
-    var usernames = [];
-    checked.forEach(function(cb) { usernames.push(cb.value); });
-    confirmDialog('确定批量封禁 '+usernames.length+' 个用户？', function() {
-      var users = Store.getUsers() || [];
-      users.forEach(function(u) {
-        if (usernames.indexOf(u.username) >= 0 && u.status === 'approved') {
-          u.status = 'banned';
-        }
-      });
-      Store.setUsers(users);
-      addLog('user', '批量封禁 '+usernames.length+' 个用户');
-      toast('已批量封禁 '+usernames.length+' 个用户', 'warning');
-      navigate(currentPage);
-    });
-  },
-
-  // 用户管理 - 批量删除
-  batchDelete: function() {
-    var checked = document.querySelectorAll('.user-checkbox:checked');
-    if (checked.length === 0) { toast('请先选择用户', 'warning'); return; }
-    var usernames = [];
-    checked.forEach(function(cb) { usernames.push(cb.value); });
-    confirmDialog('确定批量删除 '+usernames.length+' 个用户？此操作不可恢复！', function() {
-      var users = Store.getUsers() || [];
-      users = users.filter(function(u){ return usernames.indexOf(u.username) < 0; });
-      Store.setUsers(users);
-      var credits = Store.getCredits() || {};
-      usernames.forEach(function(un){ delete credits[un]; });
-      Store.setCredits(credits);
-      addLog('user', '批量删除 '+usernames.length+' 个用户');
-      toast('已批量删除 '+usernames.length+' 个用户', 'success');
-      navigate(currentPage);
-    });
-  },
-
-  // 用户管理 - 导出用户
-  exportUsers: function() {
-    var users = Store.getUsers() || [];
-    var credits = Store.getCredits() || {};
-    var csv = '用户名,状态,算力余额,注册时间,最后登录,手机,邮箱\n';
-    users.forEach(function(u) {
-      csv += u.username+','+u.status+','+(credits[u.username]||0)+','+formatTime(u.registerTime)+','+formatTime(u.lastLogin)+','+(u.phone||'')+','+(u.email||'')+'\n';
-    });
-    var blob = new Blob(['\ufeff'+csv], {type:'text/csv'});
-    var a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'users_export_'+formatDate(new Date().toISOString())+'.csv';
-    a.click();
-    toast('用户数据已导出', 'success');
-  },
-
-  // 工具管理 - 搜索工具
-  searchTools: function() {
-    var keyword = (document.getElementById('tool-search') || {}).value || '';
-    keyword = keyword.toLowerCase();
-    var rows = document.querySelectorAll('#tools-list tr');
-    rows.forEach(function(tr) {
-      var tds = tr.querySelectorAll('td');
-      if (tds.length < 2) return;
-      var name = (tds[1].textContent || '').toLowerCase();
-      tr.style.display = (!keyword || name.indexOf(keyword) >= 0) ? '' : 'none';
-    });
-  },
-
-  // 工具管理 - 全部启用
-  enableAllTools: function() {
-    confirmDialog('确定启用所有工具？', function() {
-      var toolCats = Store.get('tools') || TOOL_CATEGORIES;
-      toolCats.forEach(function(cat) {
-        cat.tools.forEach(function(t) { t.enabled = true; });
-      });
-      Store.set('tools', toolCats);
-      addLog('system', '启用所有工具');
-      toast('已启用所有工具', 'success');
-      navigate(currentPage);
-    });
-  },
-
-  // 工具管理 - 全部禁用
-  disableAllTools: function() {
-    confirmDialog('确定禁用所有工具？', function() {
-      var toolCats = Store.get('tools') || TOOL_CATEGORIES;
-      toolCats.forEach(function(cat) {
-        cat.tools.forEach(function(t) { t.enabled = false; });
-      });
-      Store.set('tools', toolCats);
-      addLog('system', '禁用所有工具');
-      toast('已禁用所有工具', 'warning');
-      navigate(currentPage);
-    });
-  },
-
-  // 工具管理 - 批量调整算力
-  batchAdjustToolCredits: function() {
-    var overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99998;display:flex;align-items:center;justify-content:center;';
-    var box = document.createElement('div');
-    box.style.cssText = 'background:var(--bg3);border:1px solid var(--bd);border-radius:12px;padding:24px;max-width:400px;width:90%;color:var(--w);';
-    box.innerHTML = '<div style="font-size:16px;font-weight:600;margin-bottom:16px;"><i class="fa-solid fa-sliders" style="color:var(--p2)"></i> 批量调整算力</div>'+
-      '<div class="form-group"><label>调整方式</label><select id="batch-credit-action" style="width:100%"><option value="multiply">乘以倍数</option><option value="add">统一增加</option><option value="set">统一设为</option></select></div>'+
-      '<div class="form-group"><label>数值</label><input type="number" id="batch-credit-value" value="1" min="0" step="0.5" style="width:100%"></div>'+
-      '<div class="form-group"><label>应用范围</label><select id="batch-credit-scope" style="width:100%"><option value="all">所有工具</option><option value="text">文本生成</option><option value="image">图片生成</option><option value="code">编程开发</option><option value="audio">音频视频</option><option value="data">数据分析</option><option value="edu">教育学习</option><option value="life">生活助手</option></select></div>'+
-      '<div style="display:flex;gap:10px;justify-content:flex-end;">'+
-      '<button class="admin-btn-cancel" onclick="this.closest(\'div[style*=fixed]\').remove()">取消</button>'+
-      '<button class="admin-btn" onclick="AdminAPI._doBatchAdjustCredits()">确认调整</button></div>';
-    overlay.appendChild(box);
-    document.body.appendChild(overlay);
-    overlay.onclick = function(e) { if(e.target===overlay) overlay.remove(); };
-  },
-
-  _doBatchAdjustCredits: function() {
-    var action = document.getElementById('batch-credit-action').value;
-    var value = parseFloat(document.getElementById('batch-credit-value').value) || 0;
-    var scope = document.getElementById('batch-credit-scope').value;
-    var toolCats = Store.get('tools') || TOOL_CATEGORIES;
-    var count = 0;
-    toolCats.forEach(function(cat) {
-      if (scope !== 'all' && cat.id !== scope) return;
-      cat.tools.forEach(function(t) {
-        if (action === 'multiply') t.credit = Math.max(1, Math.round(t.credit * value));
-        else if (action === 'add') t.credit = Math.max(1, t.credit + Math.round(value));
-        else if (action === 'set') t.credit = Math.max(1, Math.round(value));
-        count++;
-      });
-    });
-    Store.set('tools', toolCats);
-    addLog('system', '批量调整工具算力: '+action+' '+value+' ('+count+'个工具)');
-    toast('已调整 '+count+' 个工具的算力消耗', 'success');
-    document.querySelector('div[style*="fixed"]').remove();
-    navigate(currentPage);
-  },
-
-  // 内容管理 - 预览公告
-  previewAnnouncement: function(id) {
-    var anns = Store.get('announcements') || [];
-    var ann = anns.filter(function(a){ return a.id===id; })[0];
-    if (!ann) return;
-    var typeMap = {important:'重要通知',normal:'系统公告',activity:'活动公告'};
-    var typeColor = {important:'var(--err)',normal:'var(--p)',activity:'#f59e0b'};
-    var overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99998;display:flex;align-items:center;justify-content:center;';
-    var box = document.createElement('div');
-    box.style.cssText = 'background:var(--bg3);border:1px solid var(--bd);border-radius:12px;padding:24px;max-width:500px;width:90%;color:var(--w);';
-    box.innerHTML = '<div style="font-size:12px;color:var(--nd);margin-bottom:8px;">'+typeMap[ann.type]+' · '+formatTime(ann.createTime)+'</div>'+
-      '<div style="font-size:20px;font-weight:700;color:'+typeColor[ann.type]+';margin-bottom:16px;">'+ann.title+'</div>'+
-      '<div style="color:var(--nd);line-height:1.8;padding:16px;background:var(--bg2);border-radius:8px;margin-bottom:16px;">'+ann.content+'</div>'+
-      (ann.expireTime?'<div style="font-size:12px;color:var(--nd);">过期时间: '+formatTime(ann.expireTime)+'</div>':'')+
-      '<div style="display:flex;justify-content:flex-end;margin-top:12px;"><button class="admin-btn-cancel" onclick="this.closest(\'div[style*=fixed]\').remove()">关闭</button></div>';
-    overlay.appendChild(box);
-    document.body.appendChild(overlay);
-    overlay.onclick = function(e) { if(e.target===overlay) overlay.remove(); };
-  },
-
-  // 内容管理 - 预览弹窗
-  previewPopup: function(id) {
-    var popups = Store.get('popups') || [];
-    var popup = popups.filter(function(p){ return p.id===id; })[0];
-    if (!popup) return;
-    var overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99998;display:flex;align-items:center;justify-content:center;';
-    var box = document.createElement('div');
-    box.style.cssText = 'background:var(--bg3);border:1px solid var(--p);border-radius:12px;padding:30px;max-width:400px;width:90%;color:var(--w);text-align:center;position:relative;';
-    box.innerHTML = '<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="position:absolute;top:8px;right:12px;background:none;border:none;color:var(--nd);cursor:pointer;font-size:18px;">&times;</button>'+
-      '<div style="font-size:18px;font-weight:700;color:var(--p);margin-bottom:12px;">'+popup.title+'</div>'+
-      '<div style="color:var(--nd);line-height:1.6;margin-bottom:16px;">'+popup.content+'</div>'+
-      '<div style="font-size:11px;color:var(--nd);">'+popup.startTime+' ~ '+popup.endTime+'</div>'+
-      '<button class="admin-btn" style="margin-top:12px;" onclick="this.closest(\'div[style*=fixed]\').remove()">知道了</button>';
-    overlay.appendChild(box);
-    document.body.appendChild(overlay);
-  },
-
-  // 内容管理 - 编辑版本日志
-  editChangelog: function(idx) {
-    var logs = Store.get('changelogs') || [];
-    var log = logs[idx];
-    if (!log) return;
-    var overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99998;display:flex;align-items:center;justify-content:center;';
-    var box = document.createElement('div');
-    box.style.cssText = 'background:var(--bg3);border:1px solid var(--bd);border-radius:12px;padding:24px;max-width:500px;width:90%;color:var(--w);';
-    box.innerHTML = '<div style="font-size:16px;font-weight:600;margin-bottom:16px;">编辑版本日志</div>'+
-      '<div class="form-group"><label>版本号</label><input type="text" id="cl-version" value="'+log.version+'" style="width:100%"></div>'+
-      '<div class="form-group"><label>日期</label><input type="date" id="cl-date" value="'+log.date+'" style="width:100%"></div>'+
-      '<div class="form-group"><label>更新内容</label><textarea id="cl-content" rows="3" style="width:100%">'+log.content+'</textarea></div>'+
-      '<div style="display:flex;gap:10px;justify-content:flex-end;">'+
-      '<button class="admin-btn-cancel" onclick="this.closest(\'div[style*=fixed]\').remove()">取消</button>'+
-      '<button class="admin-btn" onclick="AdminAPI._saveChangelogEdit('+idx+')">保存</button></div>';
-    overlay.appendChild(box);
-    document.body.appendChild(overlay);
-    overlay.onclick = function(e) { if(e.target===overlay) overlay.remove(); };
-  },
-
-  _saveChangelogEdit: function(idx) {
-    var logs = Store.get('changelogs') || [];
-    if (logs[idx]) {
-      logs[idx].version = document.getElementById('cl-version').value;
-      logs[idx].date = document.getElementById('cl-date').value;
-      logs[idx].content = document.getElementById('cl-content').value;
-    }
-    Store.set('changelogs', logs);
-    toast('版本日志已更新', 'success');
-    document.querySelector('div[style*="fixed"]').remove();
-    navigate(currentPage);
-  },
-
-  // 内容管理 - 删除版本日志
-  deleteChangelog: function(idx) {
-    confirmDialog('确定删除此版本日志？', function() {
-      var logs = Store.get('changelogs') || [];
-      logs.splice(idx, 1);
-      Store.set('changelogs', logs);
-      toast('版本日志已删除', 'success');
-      navigate(currentPage);
-    });
-  },
-
-  // 系统健康检查
-  systemHealthCheck: function() {
-    return this._doHealthCheck();
-  },
-
-  _doHealthCheck: function() {
-    var checks = [];
-    try {
-      var testKey = '__health_check__';
-      localStorage.setItem(testKey, '1');
-      localStorage.removeItem(testKey);
-      checks.push({name:'LocalStorage',status:'ok',detail:'读写正常'});
-    } catch(e) {
-      checks.push({name:'LocalStorage',status:'error',detail:'读写异常: '+e.message});
-    }
-    var users = Store.getUsers();
-    checks.push({name:'用户数据',status:users&&users.length>0?'ok':'warn',detail:users?users.length+'条记录':'数据为空'});
-    var credits = Store.getCredits();
-    checks.push({name:'算力数据',status:credits?'ok':'warn',detail:credits?Object.keys(credits).length+'条记录':'数据为空'});
-    var orders = Store.get('orders');
-    checks.push({name:'订单数据',status:orders?'ok':'warn',detail:orders?orders.length+'条记录':'数据为空'});
-    var tools = Store.get('tools');
-    var toolCount = 0;
-    if(tools) tools.forEach(function(c){ toolCount += c.tools.length; });
-    checks.push({name:'工具配置',status:tools?'ok':'warn',detail:tools?toolCount+'个工具':'未配置'});
-    var session = Store.getSession();
-    checks.push({name:'登录会话',status:session?'ok':'warn',detail:session?'已登录('+session.username+')':'未登录'});
-    var totalSize = 0;
-    for(var i=0;i<localStorage.length;i++){
-      var k = localStorage.key(i);
-      if(k) totalSize += (localStorage.getItem(k)||'').length;
-    }
-    checks.push({name:'存储使用',status:totalSize<5000000?'ok':'warn',detail:(totalSize/1024).toFixed(1)+'KB'});
-    return checks;
-  },
-
-  // 邮件模板保存
-  saveEmailTemplate: function(type) {
-    var templates = Store.get('emailTemplates') || {};
-    templates[type] = {
-      subject: document.getElementById('email-subject').value,
-      body: document.getElementById('email-body').value,
-      enabled: document.getElementById('email-enabled') ? document.getElementById('email-enabled').checked : true
-    };
-    Store.set('emailTemplates', templates);
-    addLog('system', '保存邮件模板: '+type);
-    toast('邮件模板已保存', 'success');
   }
 };
-
-
-// ========== 增强渲染函数 ==========
-
-// 扩展SVG图表（支持7天/30天）
-function renderSVGChartExtended(days) {
-  var data7 = [12,18,15,22,28,25,31];
-  var labels7 = ['6/7','6/8','6/9','6/10','6/11','6/12','6/13'];
-  var data30 = [5,8,12,10,15,18,14,22,19,25,20,28,24,30,26,35,32,38,33,40,36,42,38,45,40,48,44,50,46,52];
-  var labels30 = [];
-  for(var i=29;i>=0;i--) {
-    var d = new Date(); d.setDate(d.getDate()-i);
-    labels30.push((d.getMonth()+1)+'/'+d.getDate());
-  }
-  var data = days===30 ? data30 : data7;
-  var labels = days===30 ? labels30 : labels7;
-  var w = 400, h = 180, padX = 40, padY = 20;
-  var maxV = Math.max.apply(null, data) * 1.2;
-  var stepX = (w - padX*2) / (data.length - 1);
-  var points = data.map(function(v, i) {
-    return (padX + i * stepX) + ',' + (h - padY - (v / maxV) * (h - padY*2));
-  });
-  var areaPoints = points.join(' ') + ' ' + (padX + (data.length-1)*stepX) + ',' + (h - padY) + ' ' + padX + ',' + (h - padY);
-  var svg = '<svg viewBox="0 0 '+w+' '+h+'" style="width:100%;height:auto;">';
-  svg += '<defs><linearGradient id="areaGrad2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--p)" stop-opacity="0.3"/><stop offset="100%" stop-color="var(--p)" stop-opacity="0.02"/></linearGradient></defs>';
-  for (var i = 0; i <= 4; i++) {
-    var y = padY + i * (h - padY*2) / 4;
-    svg += '<line x1="'+padX+'" y1="'+y+'" x2="'+(w-padX)+'" y2="'+y+'" stroke="var(--bd)" stroke-width="0.5"/>';
-  }
-  svg += '<polygon points="'+areaPoints+'" fill="url(#areaGrad2)"/>';
-  svg += '<polyline points="'+points.join(' ')+'" fill="none" stroke="var(--p)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
-  // Only show labels for 7-day, for 30-day show every 5th
-  data.forEach(function(v, i) {
-    var x = padX + i * stepX;
-    var y = h - padY - (v / maxV) * (h - padY*2);
-    svg += '<circle cx="'+x+'" cy="'+y+'" r="2" fill="var(--p)"/>';
-    if (days===7 || i%5===0) {
-      svg += '<text x="'+x+'" y="'+(h-4)+'" text-anchor="middle" fill="var(--nd)" font-size="9">'+labels[i]+'</text>';
-      svg += '<text x="'+x+'" y="'+(y-6)+'" text-anchor="middle" fill="var(--p)" font-size="9">'+v+'</text>';
-    }
-  });
-  svg += '</svg>';
-  return svg;
-}
-
-// 财务 - 收入趋势
-function renderFinanceRevenue() {
-  var orders = Store.get('orders') || [];
-  var completedOrders = orders.filter(function(o){ return o.status==='completed' && o.type==='recharge'; });
-  var html = '<div class="dash-card"><div class="dash-card-header"><i class="fa-solid fa-chart-line" style="color:var(--ok)"></i> 收入趋势</div>';
-  html += '<div style="padding:16px;">';
-  // Simulated monthly revenue data
-  var months = ['1月','2月','3月','4月','5月','6月'];
-  var revenues = [2800,3500,4200,5800,8600,12800];
-  var maxR = Math.max.apply(null, revenues) * 1.2;
-  var w = 400, h = 200, padX = 50, padY = 20;
-  var stepX = (w - padX*2) / (months.length - 1);
-  var points = revenues.map(function(v, i) {
-    return (padX + i * stepX) + ',' + (h - padY - (v / maxR) * (h - padY*2));
-  });
-  html += '<svg viewBox="0 0 '+w+' '+h+'" style="width:100%;height:auto;">';
-  html += '<defs><linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--ok)" stop-opacity="0.3"/><stop offset="100%" stop-color="var(--ok)" stop-opacity="0.02"/></linearGradient></defs>';
-  for (var i = 0; i <= 4; i++) {
-    var y = padY + i * (h - padY*2) / 4;
-    html += '<line x1="'+padX+'" y1="'+y+'" x2="'+(w-padX)+'" y2="'+y+'" stroke="var(--bd)" stroke-width="0.5"/>';
-    html += '<text x="'+(padX-5)+'" y="'+(y+4)+'" text-anchor="end" fill="var(--nd)" font-size="9">¥'+Math.round(maxR*(1-i/4))+'</text>';
-  }
-  var areaPoints = points.join(' ') + ' ' + (padX + (months.length-1)*stepX) + ',' + (h-padY) + ' ' + padX + ',' + (h-padY);
-  html += '<polygon points="'+areaPoints+'" fill="url(#revGrad)"/>';
-  html += '<polyline points="'+points.join(' ')+'" fill="none" stroke="var(--ok)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>';
-  revenues.forEach(function(v, i) {
-    var x = padX + i * stepX;
-    var y2 = h - padY - (v / maxR) * (h - padY*2);
-    html += '<circle cx="'+x+'" cy="'+y2+'" r="4" fill="var(--ok)"/>';
-    html += '<text x="'+x+'" y="'+(h-4)+'" text-anchor="middle" fill="var(--nd)" font-size="10">'+months[i]+'</text>';
-    html += '<text x="'+x+'" y="'+(y2-10)+'" text-anchor="middle" fill="var(--ok)" font-size="9">¥'+v+'</text>';
-  });
-  html += '</svg>';
-  html += '</div></div>';
-
-  // 收入构成
-  html += '<div class="dash-card" style="margin-top:16px;"><div class="dash-card-header"><i class="fa-solid fa-pie-chart" style="color:var(--p2)"></i> 收入构成分析</div>';
-  html += '<div style="padding:16px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">';
-  var incomeItems = [
-    {label:'小额充值(¥20-50)',amount:3200,pct:25,color:'var(--p)'},
-    {label:'中额充值(¥50-100)',amount:6400,pct:50,color:'var(--ok)'},
-    {label:'大额充值(¥100+)',amount:3200,pct:25,color:'var(--p2)'}
-  ];
-  incomeItems.forEach(function(item){
-    html += '<div style="background:var(--bg2);border-radius:8px;padding:16px;text-align:center;">';
-    html += '<div style="font-size:20px;font-weight:700;color:'+item.color+';">¥'+item.amount+'</div>';
-    html += '<div style="font-size:12px;color:var(--nd);margin-top:4px;">'+item.label+'</div>';
-    html += '<div style="margin-top:8px;height:4px;background:var(--w2);border-radius:2px;overflow:hidden;"><div style="width:'+item.pct+'%;height:100%;background:'+item.color+';border-radius:2px;"></div></div>';
-    html += '<div style="font-size:11px;color:var(--nd);margin-top:2px;">'+item.pct+'%</div>';
-    html += '</div>';
-  });
-  html += '</div></div>';
-  return html;
-}
-
-// 财务 - 统计
-function renderFinanceStats() {
-  var orders = Store.get('orders') || [];
-  var recharges = orders.filter(function(o){ return o.type==='recharge'; });
-  var refunds = orders.filter(function(o){ return o.type==='refund'; });
-  var completedRecharges = recharges.filter(function(o){ return o.status==='completed'; });
-  var pendingRecharges = recharges.filter(function(o){ return o.status==='pending'; });
-  var processingRefunds = refunds.filter(function(o){ return o.status==='processing'; });
-  var totalIncome = completedRecharges.reduce(function(s,o){ return s+o.amount; },0);
-  var totalRefund = refunds.reduce(function(s,o){ return s+Math.abs(o.amount); },0);
-  var wechatCount = orders.filter(function(o){ return o.method==='wechat'; }).length;
-  var alipayCount = orders.filter(function(o){ return o.method==='alipay'; }).length;
-  var qqCount = orders.filter(function(o){ return o.method==='qq'; }).length;
-
-  var html = '<div class="dash-grid">';
-  html += statCard('fa-money-bill-wave','总收入','¥'+totalIncome, completedRecharges.length+'笔完成','var(--ok)');
-  html += statCard('fa-rotate-left','退款总额','¥'+totalRefund, processingRefunds.length+'笔处理中','var(--err)');
-  html += statCard('fa-hourglass-half','待处理订单',pendingRecharges.length,'需及时处理','var(--warn)');
-  html += statCard('fa-chart-simple','净收入','¥'+(totalIncome-totalRefund),'','var(--p)');
-  html += '</div>';
-
-  // 退款统计
-  html += '<div class="dash-card" style="margin-top:16px;"><div class="dash-card-header"><i class="fa-solid fa-rotate-left" style="color:var(--err)"></i> 退款统计</div>';
-  html += '<div style="padding:16px;">';
-  var refundRate = recharges.length > 0 ? (refunds.length / recharges.length * 100).toFixed(1) : 0;
-  html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px;">';
-  html += '<div style="text-align:center;padding:12px;background:var(--bg2);border-radius:8px;"><div style="font-size:24px;font-weight:700;color:var(--err);">'+refunds.length+'</div><div style="font-size:12px;color:var(--nd);">退款总数</div></div>';
-  html += '<div style="text-align:center;padding:12px;background:var(--bg2);border-radius:8px;"><div style="font-size:24px;font-weight:700;color:var(--err);">¥'+totalRefund+'</div><div style="font-size:12px;color:var(--nd);">退款总额</div></div>';
-  html += '<div style="text-align:center;padding:12px;background:var(--bg2);border-radius:8px;"><div style="font-size:24px;font-weight:700;color:var(--warn);">'+refundRate+'%</div><div style="font-size:12px;color:var(--nd);">退款率</div></div>';
-  html += '</div></div></div>';
-
-  // 支付方式分布
-  html += '<div class="dash-card" style="margin-top:16px;"><div class="dash-card-header"><i class="fa-solid fa-credit-card" style="color:var(--p2)"></i> 支付方式分布</div>';
-  html += '<div style="padding:16px;">';
-  var totalOrders = orders.length || 1;
-  var paymentData = [
-    {name:'微信支付',count:wechatCount,icon:'fa-brands fa-weixin',color:'#07c160'},
-    {name:'支付宝',count:alipayCount,icon:'fa-brands fa-alipay',color:'#1677ff'},
-    {name:'QQ支付',count:qqCount,icon:'fa-brands fa-qq',color:'#12b7f5'}
-  ];
-  paymentData.forEach(function(pm){
-    var pct = Math.round(pm.count / totalOrders * 100);
-    html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;padding:12px;background:var(--bg2);border-radius:8px;">';
-    html += '<i class="fa-solid '+pm.icon+'" style="font-size:20px;color:'+pm.color+';width:24px;text-align:center;"></i>';
-    html += '<div style="flex:1;"><div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span style="font-weight:600;">'+pm.name+'</span><span style="color:var(--nd);">'+pm.count+'笔 ('+pct+'%)</span></div>';
-    html += '<div style="height:6px;background:var(--w2);border-radius:3px;overflow:hidden;"><div style="width:'+pct+'%;height:100%;background:'+pm.color+';border-radius:3px;"></div></div>';
-    html += '</div></div>';
-  });
-  html += '</div></div>';
-  return html;
-}
-
-// 权限 - 权限矩阵
-function renderPermMatrix() {
-  var roles = Store.get('roles') || [];
-  var modules = ['users','content','tools','finance','view','permissions','settings'];
-  var moduleNames = {users:'用户管理',content:'内容管理',tools:'工具管理',finance:'财务管理',view:'查看权限',permissions:'权限管理',settings:'系统设置'};
-  var html = '<div class="dash-card"><div class="dash-card-header"><i class="fa-solid fa-table-cells" style="color:var(--p)"></i> 权限矩阵</div>';
-  html += '<div style="padding:16px;overflow-x:auto;">';
-  html += '<table class="admin-table"><thead><tr><th>功能模块</th>';
-  roles.forEach(function(r){ html += '<th style="text-align:center;">'+r.name+'</th>'; });
-  html += '</tr></thead><tbody>';
-  modules.forEach(function(m) {
-    html += '<tr><td><strong>'+moduleNames[m]+'</strong></td>';
-    roles.forEach(function(r) {
-      var has = r.permissions.indexOf(m) >= 0 || r.permissions.indexOf('all') >= 0;
-      html += '<td style="text-align:center;">';
-      if (r.id === 'superadmin') {
-        html += '<i class="fa-solid fa-crown" style="color:#f59e0b;font-size:16px;" title="超级管理员拥有全部权限"></i>';
-      } else {
-        html += '<label class="toggle-switch"><input type="checkbox" '+(has?'checked':'')+' onchange="AdminAPI._togglePerm(\''+r.id+'\',\''+m+'\',this.checked)"><span class="toggle-slider"></span></label>';
-      }
-      html += '</td>';
-    });
-    html += '</tr>';
-  });
-  html += '</tbody></table></div></div>';
-  return html;
-}
-
-// 权限矩阵切换
-AdminAPI._togglePerm = function(roleId, perm, enabled) {
-  var roles = Store.get('roles') || [];
-  roles.forEach(function(r) {
-    if (r.id === roleId) {
-      if (enabled) {
-        if (r.permissions.indexOf(perm) < 0) r.permissions.push(perm);
-      } else {
-        r.permissions = r.permissions.filter(function(p){ return p !== perm; });
-      }
-    }
-  });
-  Store.set('roles', roles);
-  addLog('system', '修改角色权限: '+roleId+' '+perm+' '+(enabled?'启用':'禁用'));
-  toast('权限已更新', 'success');
-};
-
-// 权限 - 操作审计
-function renderPermAudit() {
-  var logs = Store.get('logs') || [];
-  // Filter for admin operations
-  var auditLogs = logs.filter(function(l){
-    return l.type==='login' || l.type==='system' || l.type==='finance' || l.type==='user';
-  });
-  var html = '<div class="page-toolbar"><div class="toolbar-left"><span style="color:var(--nd)">共 '+auditLogs.length+' 条审计记录</span>';
-  html += '<select id="audit-filter" onchange="AdminAPI._filterAudit()" style="margin-left:8px;"><option value="">全部类型</option><option value="login">登录</option><option value="system">系统</option><option value="user">用户</option><option value="finance">财务</option></select></div>';
-  html += '<div class="toolbar-right"><button class="admin-btn" onclick="AdminAPI.exportAuditLog()"><i class="fa-solid fa-download"></i> 导出审计日志</button></div></div>';
-  html += '<div class="dash-card"><div style="overflow-x:auto;"><table class="admin-table" id="audit-table"><thead><tr>';
-  html += '<th>时间</th><th>类型</th><th>操作人</th><th>详情</th><th>IP</th>';
-  html += '</tr></thead><tbody>';
-  if (auditLogs.length === 0) {
-    html += '<tr><td colspan="5" style="text-align:center;color:var(--nd);padding:40px;">暂无审计记录</td></tr>';
-  }
-  auditLogs.slice(0,100).forEach(function(l) {
-    var typeMap = {login:'<span class="badge badge-p">登录</span>',user:'<span class="badge badge-ok">用户</span>',system:'<span class="badge badge-warn">系统</span>',finance:'<span class="badge badge-err">财务</span>'};
-    html += '<tr data-type="'+l.type+'"><td style="font-size:12px;white-space:nowrap;">'+l.time+'</td><td>'+(typeMap[l.type]||l.type)+'</td><td>'+l.user+'</td><td>'+l.detail+'</td><td style="font-size:12px;color:var(--nd);">'+l.ip+'</td></tr>';
-  });
-  html += '</tbody></table></div></div>';
-  return html;
-}
-
-AdminAPI._filterAudit = function() {
-  var filter = (document.getElementById('audit-filter') || {}).value || '';
-  var rows = document.querySelectorAll('#audit-table tbody tr');
-  rows.forEach(function(tr) {
-    var type = tr.dataset.type || '';
-    tr.style.display = (!filter || type === filter) ? '' : 'none';
-  });
-};
-
-AdminAPI.exportAuditLog = function() {
-  var logs = Store.get('logs') || [];
-  var csv = '时间,类型,操作人,详情,IP\n';
-  logs.forEach(function(l) {
-    csv += l.time+','+l.type+','+l.user+','+l.detail+','+l.ip+'\n';
-  });
-  var blob = new Blob(['\ufeff'+csv], {type:'text/csv'});
-  var a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'audit_log_'+formatDate(new Date().toISOString())+'.csv';
-  a.click();
-  toast('审计日志已导出', 'success');
-};
-
-// 系统设置 - 邮件模板
-function renderSettingsEmail() {
-  var templates = Store.get('emailTemplates') || {};
-  var defaultTemplates = {
-    welcome: {subject:'欢迎注册罗圣纪元',body:'尊敬的{username}，欢迎注册罗圣纪元平台！您的账号正在审核中，审核通过后即可使用全部AI工具。',enabled:true},
-    approved: {subject:'账号审核通过通知',body:'尊敬的{username}，恭喜！您的罗圣纪元账号已审核通过，现在可以登录使用平台的所有AI工具。',enabled:true},
-    recharge: {subject:'充值成功通知',body:'尊敬的{username}，您已成功充值{amount}元，获得{credits}算力。当前算力余额：{balance}。',enabled:true},
-    banned: {subject:'账号状态变更通知',body:'尊敬的{username}，您的账号已被管理员封禁。如有疑问请联系客服。',enabled:false}
-  };
-  // Merge defaults
-  Object.keys(defaultTemplates).forEach(function(k){
-    if (!templates[k]) templates[k] = defaultTemplates[k];
-  });
-  Store.set('emailTemplates', templates);
-
-  var html = '<div class="dash-card"><div class="dash-card-header"><i class="fa-solid fa-envelope" style="color:var(--p2)"></i> 邮件模板配置</div>';
-  html += '<div style="padding:16px;">';
-  html += '<p style="color:var(--nd);margin-bottom:16px;">配置系统自动发送的邮件模板，支持变量：{username}、{amount}、{credits}、{balance}</p>';
-
-  var tplNames = {welcome:'注册欢迎邮件',approved:'审核通过邮件',recharge:'充值成功邮件',banned:'账号封禁邮件'};
-  var tplColors = {welcome:'var(--ok)',approved:'var(--p)',recharge:'#f59e0b',banned:'var(--err)'};
-
-  Object.keys(tplNames).forEach(function(key) {
-    var tpl = templates[key] || defaultTemplates[key];
-    html += '<div style="border:1px solid var(--bd);border-radius:8px;padding:16px;margin-bottom:16px;">';
-    html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">';
-    html += '<div style="font-weight:600;color:'+tplColors[key]+';"><i class="fa-solid fa-envelope" style="margin-right:6px;"></i>'+tplNames[key]+'</div>';
-    html += '<label class="toggle-switch"><input type="checkbox" id="email-enabled-'+key+'" '+(tpl.enabled?'checked':'')+'><span class="toggle-slider"></span><span style="margin-left:8px;font-size:12px;color:var(--nd);">'+(tpl.enabled?'已启用':'已禁用')+'</span></label>';
-    html += '</div>';
-    html += '<div class="form-group"><label>邮件主题</label><input type="text" id="email-subject-'+key+'" value="'+tpl.subject+'" style="width:100%"></div>';
-    html += '<div class="form-group"><label>邮件正文</label><textarea id="email-body-'+key+'" rows="3" style="width:100%">'+tpl.body+'</textarea></div>';
-    html += '<button class="admin-btn" style="font-size:12px;" onclick="AdminAPI._saveEmailTemplateByKey(\''+key+'\')"><i class="fa-solid fa-save"></i> 保存此模板</button>';
-    html += '</div>';
-  });
-
-  html += '</div></div>';
-  return html;
-}
-
-AdminAPI._saveEmailTemplateByKey = function(key) {
-  var templates = Store.get('emailTemplates') || {};
-  templates[key] = {
-    subject: document.getElementById('email-subject-'+key).value,
-    body: document.getElementById('email-body-'+key).value,
-    enabled: document.getElementById('email-enabled-'+key).checked
-  };
-  Store.set('emailTemplates', templates);
-  addLog('system', '保存邮件模板: '+key);
-  toast('邮件模板已保存', 'success');
-};
-
-// 系统设置 - 健康检查
-function renderSettingsHealth() {
-  var checks = AdminAPI._doHealthCheck();
-  var html = '<div class="dash-card"><div class="dash-card-header"><i class="fa-solid fa-heart-pulse" style="color:var(--ok)"></i> 系统健康检查';
-  html += '<button class="admin-btn" style="float:right;font-size:12px;" onclick="navigate(currentPage)"><i class="fa-solid fa-rotate"></i> 重新检查</button>';
-  html += '</div>';
-  html += '<div style="padding:16px;">';
-
-  checks.forEach(function(c) {
-    var statusIcon = c.status==='ok'?'fa-circle-check':'fa-triangle-exclamation';
-    var statusColor = c.status==='ok'?'var(--ok)':c.status==='warn'?'var(--warn)':'var(--err)';
-    html += '<div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg2);border-radius:8px;margin-bottom:8px;">';
-    html += '<i class="fa-solid '+statusIcon+'" style="color:'+statusColor+';font-size:18px;"></i>';
-    html += '<div style="flex:1;"><div style="font-weight:600;">'+c.name+'</div><div style="font-size:12px;color:var(--nd);">'+c.detail+'</div></div>';
-    html += '<span class="badge badge-'+(c.status==='ok'?'ok':c.status==='warn'?'warn':'err')+'">'+(c.status==='ok'?'正常':c.status==='warn'?'警告':'异常')+'</span>';
-    html += '</div>';
-  });
-
-  // Overall status
-  var allOk = checks.every(function(c){return c.status==='ok';});
-  html += '<div style="text-align:center;margin-top:16px;padding:20px;background:var(--bg2);border-radius:8px;">';
-  html += '<i class="fa-solid '+(allOk?'fa-shield-check':'fa-shield-exclamation')+'" style="font-size:48px;color:'+(allOk?'var(--ok)':'var(--warn)')+';margin-bottom:8px;"></i>';
-  html += '<div style="font-size:18px;font-weight:700;color:'+(allOk?'var(--ok)':'var(--warn)')+';">系统状态: '+(allOk?'健康':'需关注')+'</div>';
-  html += '<div style="color:var(--nd);font-size:13px;margin-top:4px;">检查时间: '+formatTime(new Date().toISOString())+'</div>';
-  html += '</div>';
-
-  html += '</div></div>';
-
-  // Storage details
-  html += '<div class="dash-card" style="margin-top:16px;"><div class="dash-card-header"><i class="fa-solid fa-database" style="color:var(--p2)"></i> 存储详情</div>';
-  html += '<div style="padding:16px;">';
-  var storageKeys = ['lsjy3_users','lsjy3_credits','lsjy_admin_orders','lsjy_admin_announcements','lsjy_admin_faqs','lsjy_admin_tools','lsjy_admin_stats','lsjy_admin_logs','lsjy_admin_admins','lsjy_admin_roles','lsjy_admin_settings','lsjy_admin_seo','lsjy_admin_popups','lsjy_admin_changelogs'];
-  var totalBytes = 0;
-  storageKeys.forEach(function(key) {
-    var val = localStorage.getItem(key) || '';
-    var size = val.length;
-    totalBytes += size;
-    var pct = Math.min(100, size / 50000 * 100);
-    html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;font-size:12px;">';
-    html += '<span style="width:200px;color:var(--nd);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+key+'</span>';
-    html += '<div style="flex:1;height:6px;background:var(--w2);border-radius:3px;overflow:hidden;"><div style="width:'+pct+'%;height:100%;background:var(--p);border-radius:3px;"></div></div>';
-    html += '<span style="width:60px;text-align:right;color:var(--nd);">'+(size/1024).toFixed(1)+'KB</span>';
-    html += '</div>';
-  });
-  html += '<div style="text-align:right;color:var(--nd);font-size:12px;margin-top:8px;">合计: '+(totalBytes/1024).toFixed(1)+'KB</div>';
-  html += '</div></div>';
-
-  return html;
-}
-
-// 内容管理 - 邮件模板标签
-function renderContentEmailTpl() {
-  return renderSettingsEmail();
-}
 
 // ========== 弹窗表单 ==========
 function showAnnouncementForm(ann) {
