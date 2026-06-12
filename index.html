@@ -1944,6 +1944,8 @@ renderEmployeeAcct();
 /* 赛博背景网格(全局) */
 body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,245,255,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(0,245,255,.02) 1px,transparent 1px);background-size:60px 60px;z-index:0;pointer-events:none}
 </style>
+<link rel="stylesheet" href="lsjy-enhancements.css">
+<script src="lsjy-enhancements.js"></script>
 </head>
 <body>
 
@@ -1964,7 +1966,16 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 <li><a href="#pricing">服务定价</a></li>
 <li><a href="#about">关于我们</a></li>
 <li><a href="#contact">联系我们</a></li>
-</ul><div style="display:inline-flex;align-items:center;gap:8px"><a href="javascript:void(0)" style="display:inline-flex;align-items:center;gap:4px;padding:8px 16px;border-radius:10px;background:linear-gradient(135deg,#1e1b4b,#4338ca);color:#e2e8f0;font-size:13px;font-weight:700;cursor:pointer;transition:all .25s;border:none;text-decoration:none;box-shadow:0 2px 10px rgba(30,27,75,.3)" onclick="openLuoshengAgent()" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 4px 14px rgba(30,27,75,.4)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 10px rgba(30,27,75,.3)'">🤖 罗圣AI</a><a href="javascript:void(0)" style="display:inline-flex;align-items:center;gap:4px;padding:8px 16px;border-radius:10px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#e2e8f0;font-size:13px;font-weight:700;cursor:pointer;transition:all .25s;border:none;text-decoration:none;box-shadow:0 2px 10px rgba(217,119,6,.3)" onclick="openEnterprise()" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 4px 14px rgba(217,119,6,.4)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 10px rgba(217,119,6,.3)'">🏢 企业版</a></div><div id="navRight" style="display:inline-flex;align-items:center;gap:8px"><a href="javascript:void(0)" class="nav-cta" onclick="openAuth('login')" id="navLoginBtn">登录 / 注册</a></div>
+</ul><div style="display:inline-flex;align-items:center;gap:8px"><a href="javascript:void(0)" style="display:inline-flex;align-items:center;gap:4px;padding:8px 16px;border-radius:10px;background:linear-gradient(135deg,#1e1b4b,#4338ca);color:#e2e8f0;font-size:13px;font-weight:700;cursor:pointer;transition:all .25s;border:none;text-decoration:none;box-shadow:0 2px 10px rgba(30,27,75,.3)" onclick="openLuoshengAgent()" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 4px 14px rgba(30,27,75,.4)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 10px rgba(30,27,75,.3)'">🤖 罗圣AI</a><a href="javascript:void(0)" style="display:inline-flex;align-items:center;gap:4px;padding:8px 16px;border-radius:10px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#e2e8f0;font-size:13px;font-weight:700;cursor:pointer;transition:all .25s;border:none;text-decoration:none;box-shadow:0 2px 10px rgba(217,119,6,.3)" onclick="openEnterprise()" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 4px 14px rgba(217,119,6,.4)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 10px rgba(217,119,6,.3)'">🏢 企业版</a></div><div class="nav-toggle-group" style="display:inline-flex;align-items:center;gap:8px">
+  <div class="theme-toggle" onclick="toggleTheme()">
+    <span class="theme-toggle-icon">🌙</span>
+    <span class="theme-toggle-text" style="font-size:12px;font-weight:600">夜间</span>
+  </div>
+  <div class="version-toggle">
+    <button class="version-toggle-btn active-personal" data-mode="personal" onclick="toggleVersion('personal')">👤 个人版</button>
+    <button class="version-toggle-btn" data-mode="enterprise" onclick="toggleVersion('enterprise')">🏢 企业版</button>
+  </div>
+</div><div id="navRight" style="display:inline-flex;align-items:center;gap:8px"><a href="javascript:void(0)" class="nav-cta" onclick="openAuth('login')" id="navLoginBtn">登录 / 注册</a></div>
 <button class="mobile-toggle" onclick="toggleMobileMenu()"><span></span><span></span><span></span></button>
 </div>
 </nav>
@@ -1975,6 +1986,9 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 <a href="#pricing" onclick="closeMobileMenu()">服务定价</a>
 <a href="#about" onclick="closeMobileMenu()">关于我们</a>
 <a href="#contact" onclick="closeMobileMenu()">联系我们</a>
+<a href="javascript:void(0)" onclick="closeMobileMenu();openLuoshengAgent()" class="mobile-agent-link">🤖 罗圣AI</a>
+<a href="javascript:void(0)" onclick="closeMobileMenu();toggleVersion('enterprise')" class="mobile-version-link">🏢 切换企业版</a>
+<a href="javascript:void(0)" onclick="closeMobileMenu();toggleTheme()" class="mobile-theme-link">🌙 切换主题</a>
 <a href="javascript:void(0)" onclick="closeMobileMenu();openAuth('login')">登录 / 注册</a>
 
 </div>
@@ -2060,7 +2074,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 </div>
 </div>
 <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:24px">
-<div class="tool-tabs" id="toolTabs"><button class="tool-tab active" onclick="openServiceDetail('all',this)">全部</button><button class="tool-tab" onclick="openServiceDetail('AI人工智能',this)">🤖 AI人工智能</button><button class="tool-tab" onclick="openServiceDetail('自媒体',this)">📱 自媒体</button><button class="tool-tab" onclick="openServiceDetail('电商',this)">🛒 电商</button><button class="tool-tab" onclick="openServiceDetail('教育',this)">📚 教育</button><button class="tool-tab" onclick="openServiceDetail('宠物',this)">🐾 宠物</button><button class="tool-tab" onclick="openServiceDetail('伯雅校园',this)">🎓 伯雅校园</button></div>
+<div class="tool-tabs" id="toolTabs"><button class="tool-tab active" onclick="goPricing()">全部</button><button class="tool-tab" onclick="goPricing()">🤖 AI人工智能</button><button class="tool-tab" onclick="goPricing()">📱 自媒体</button><button class="tool-tab" onclick="goPricing()">🛒 电商</button><button class="tool-tab" onclick="goPricing()">📚 教育</button><button class="tool-tab" onclick="goPricing()">🐾 宠物</button><button class="tool-tab" onclick="goPricing()">🎓 伯雅校园</button></div>
 <div style="position:relative;flex:1;min-width:220px;max-width:400px">
 <input type="text" id="toolSearch" placeholder="🔍 搜索工具名称或功能..." style="width:100%;padding:12px 16px;border:1.5px solid rgba(255,255,255,.1);border-radius:12px;font-size:14px;color:#e2e8f0;background:rgba(255,255,255,.06);backdrop-filter:blur(10px);outline:none;transition:border .2s" onfocus="this.style.borderColor='rgba(0,245,255,.3)'" onblur="this.style.borderColor='rgba(255,255,255,.1)'"utline:none;transition:border .3s" onfocus="this.style.borderColor='#00f5ff'" onblur="this.style.borderColor='#e5e7eb'" oninput="searchTools(this.value)">
 <div id="searchCount" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:12px;color:#9ca3af"></div>
@@ -6754,7 +6768,7 @@ console.log('[CDN FIX] doGen10, buyPlan, _addMedia, openMediaLib loaded successf
         card.onclick = function(e){
           e.stopPropagation();
           if(typeof window.openServiceDetail === 'function'){
-            openServiceDetail(bizIds[i]);
+            goPricing();
           } else {
             toast('服务详情功能加载中，请稍后再试','info');
           }
@@ -6817,7 +6831,7 @@ console.log('[CDN FIX] doGen10, buyPlan, _addMedia, openMediaLib loaded successf
           btn.onclick = function(e){
             e.stopPropagation();
             if(typeof window.openServiceDetail === 'function'){
-              openServiceDetail(moduleId);
+              goPricing();
             }
           };
         }
