@@ -4576,6 +4576,9 @@ e.preventDefault();
 const u=document.getElementById('authUser').value.trim(),p=document.getElementById('authPwd').value;
 const users=getUsers(),found=users.find(x=>x.username===u&&(x.password===p||x.password===btoa(p)));
 if(!found){toast('账号或密码错误','error');return}
+if(found.status==='pending'){toast('⏳ 您的账号正在审批中，请等待管理员审核通过后再登录','warn');return}
+if(found.status==='rejected'){toast('❌ 您的账号已被拒绝，请联系客服 188-9000-0368','error');return}
+if(found.status==='banned'){toast('🚫 您的账号已被封禁，请联系客服','error');return}
 setCur(found);saveToken(found);closeAuth();if(checkToken()){console.log('Auto-login via token')}
 updateNavAuth();if(typeof updateCreditsUI==='function')updateCreditsUI();toast('登录成功，欢迎回来！','success');
 
@@ -4588,9 +4591,10 @@ if(p.length<6)return toast('密码至少6个字符','error');
 if(p!==p2)return toast('两次密码不一致','error');
 const users=getUsers();
 if(users.find(x=>x.username===u))return toast('用户名已存在','error');
-const newUser={username:u,password:btoa(p),nickname:n||u,role:'user',phone:'',qq:'',wx:'',created:new Date().toLocaleString()};
-users.push(newUser);saveUsers(users);setCur(newUser);saveToken(newUser);const c=getCredits();c[newUser.username]=100;saveCredits(c);closeAuth();if(checkToken()){console.log("Auto-login via token")}
-updateNavAuth();toast('注册成功！','success');
+const newUser={username:u,password:btoa(p),nickname:n||u,role:'user',status:'pending',phone:'',qq:'',wx:'',created:new Date().toLocaleString()};
+users.push(newUser);saveUsers(users);closeAuth();
+toast('✅ 注册成功！您的账号正在审批中，管理员审核通过后即可登录，请稍后再试','success');
+updateNavAuth();
 }
 
 // ===== SMS Login/Register =====
@@ -4632,7 +4636,10 @@ _verifySmsCode(phone,code,'authSmsCode').then(()=>smsLoginSuccess(phone)).catch(
 }
 function smsLoginSuccess(phone){
 const users=getUsers();let found=users.find(u=>u.phone===phone);
-if(!found){found={username:'user_'+phone.slice(-4),password:'sms_'+Date.now(),nickname:'用户'+phone.slice(-4),role:'user',phone:phone,qq:'',wx:'',created:new Date().toLocaleString()};users.push(found);saveUsers(users)}
+if(!found){found={username:'user_'+phone.slice(-4),password:'sms_'+Date.now(),nickname:'用户'+phone.slice(-4),role:'user',status:'pending',phone:phone,qq:'',wx:'',created:new Date().toLocaleString()};users.push(found);saveUsers(users)}
+if(found.status==='pending'){toast('⏳ 您的账号正在审批中，请等待管理员审核','warn');return}
+if(found.status==='rejected'){toast('❌ 您的账号已被拒绝，请联系客服','error');return}
+if(found.status==='banned'){toast('🚫 您的账号已被封禁','error');return}
 setCur(found);saveToken(found);closeAuth();if(checkToken()){console.log("Auto-login via token")}
 updateNavAuth();if(typeof updateCreditsUI==='function')updateCreditsUI();toast('登录成功，欢迎回来！','success');
 }
@@ -4644,9 +4651,10 @@ _verifySmsCode(phone,code,'regSmsCode').then(()=>smsRegSuccess(phone,nick)).catc
 }
 function smsRegSuccess(phone,nick){
 const users=getUsers();if(users.find(u=>u.phone===phone))return toast('该手机号已注册，请直接登录','error');
-const newUser={username:'user_'+phone.slice(-4),password:'sms_'+Date.now(),nickname:nick||'用户'+phone.slice(-4),role:'user',phone:phone,qq:'',wx:'',created:new Date().toLocaleString()};
-users.push(newUser);saveUsers(users);setCur(newUser);closeAuth();if(checkToken()){console.log("Auto-login via token")}
-updateNavAuth();toast('注册成功！','success');
+const newUser={username:'user_'+phone.slice(-4),password:'sms_'+Date.now(),nickname:nick||'用户'+phone.slice(-4),role:'user',status:'pending',phone:phone,qq:'',wx:'',created:new Date().toLocaleString()};
+users.push(newUser);saveUsers(users);closeAuth();
+toast('✅ 注册成功！账号正在审批中，管理员审核通过后即可登录','success');
+updateNavAuth();
 }
 // ===== WeChat / QQ OAuth =====
 function doWxLogin(){
@@ -8801,6 +8809,130 @@ function showToast(msg){
     setTimeout(function(){ el.remove(); }, 2000);
 }
 
+
+<!-- ===== 罗圣AI智能客服浮窗（豆包风格） ===== -->
+<div id="lsKefuBubble" style="position:fixed;bottom:28px;right:28px;z-index:99999;cursor:pointer;user-select:none" onclick="toggleKefuChat()">
+  <div style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 4px 20px rgba(99,102,241,.45);display:flex;align-items:center;justify-content:center;transition:transform .2s,box-shadow .2s" onmouseover="this.style.transform='scale(1.1)';this.style.boxShadow='0 6px 28px rgba(99,102,241,.6)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 20px rgba(99,102,241,.45)'">
+    <span style="font-size:28px">🤖</span>
+  </div>
+  <div id="lsKefuBadge" style="display:none;position:absolute;top:-4px;right:-4px;width:20px;height:20px;border-radius:50%;background:#ef4444;color:#fff;font-size:11px;font-weight:700;line-height:20px;text-align:center;box-shadow:0 2px 6px rgba(239,68,68,.4)">1</div>
+</div>
+
+<div id="lsKefuPanel" style="display:none;position:fixed;bottom:100px;right:28px;z-index:99998;width:380px;max-width:calc(100vw - 40px);height:520px;max-height:calc(100vh - 140px);border-radius:20px;background:#0f172a;box-shadow:0 8px 40px rgba(0,0,0,.35);overflow:hidden;flex-direction:column;border:1px solid rgba(99,102,241,.2)">
+  <!-- Header -->
+  <div style="padding:18px 20px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;gap:12px;flex-shrink:0">
+    <div style="width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:22px">🤖</div>
+    <div style="flex:1">
+      <div style="color:#fff;font-size:15px;font-weight:700">罗圣AI · 智能客服</div>
+      <div style="color:rgba(255,255,255,.7);font-size:11px">7×24小时在线 · 随时为你服务</div>
+    </div>
+    <button onclick="toggleKefuChat()" style="width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+  </div>
+  <!-- Quick Actions -->
+  <div id="lsKefuQuick" style="padding:12px 16px;display:flex;gap:8px;flex-wrap:wrap;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,.06)">
+    <button onclick="kefuQuick('如何注册账号？')" style="padding:6px 14px;border-radius:20px;border:1px solid rgba(99,102,241,.3);background:rgba(99,102,241,.1);color:#a5b4fc;font-size:12px;cursor:pointer;transition:all .2s" onmouseover="this.style.background='rgba(99,102,241,.25)'" onmouseout="this.style.background='rgba(99,102,241,.1)'">🔑 注册登录</button>
+    <button onclick="kefuQuick('如何购买算力？')" style="padding:6px 14px;border-radius:20px;border:1px solid rgba(34,211,238,.3);background:rgba(34,211,238,.1);color:#67e8f9;font-size:12px;cursor:pointer;transition:all .2s" onmouseover="this.style.background='rgba(34,211,238,.25)'" onmouseout="this.style.background='rgba(34,211,238,.1)'">💰 购买算力</button>
+    <button onclick="kefuQuick('有哪些AI工具可以用？')" style="padding:6px 14px;border-radius:20px;border:1px solid rgba(251,191,36,.3);background:rgba(251,191,36,.1);color:#fcd34d;font-size:12px;cursor:pointer;transition:all .2s" onmouseover="this.style.background='rgba(251,191,36,.25)'" onmouseout="this.style.background='rgba(251,191,36,.1)'">🛠️ AI工具</button>
+    <button onclick="kefuQuick('如何联系人工客服？')" style="padding:6px 14px;border-radius:20px;border:1px solid rgba(52,211,153,.3);background:rgba(52,211,153,.1);color:#6ee7b7;font-size:12px;cursor:pointer;transition:all .2s" onmouseover="this.style.background='rgba(52,211,153,.25)'" onmouseout="this.style.background='rgba(52,211,153,.1)'">📞 人工客服</button>
+  </div>
+  <!-- Chat Messages -->
+  <div id="lsKefuMessages" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;min-height:0">
+    <div style="display:flex;gap:10px;align-items:flex-start">
+      <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">🤖</div>
+      <div style="background:#1e293b;border-radius:14px 14px 14px 4px;padding:12px 16px;max-width:85%;font-size:13px;color:#e2e8f0;line-height:1.7">
+        你好！我是<strong style="color:#a5b4fc">罗圣AI智能客服</strong> 🎉<br>
+        我可以帮你：<br>
+        ✅ 解答注册/登录问题<br>
+        ✅ 引导购买算力和套餐<br>
+        ✅ 介绍6大业务板块功能<br>
+        ✅ 转接人工客服<br><br>
+        请问有什么可以帮你的？
+      </div>
+    </div>
+  </div>
+  <!-- Input -->
+  <div style="padding:12px 16px;border-top:1px solid rgba(255,255,255,.06);display:flex;gap:10px;align-items:center;flex-shrink:0;background:#0f172a">
+    <input id="lsKefuInput" type="text" placeholder="输入你的问题..." style="flex:1;height:42px;border-radius:12px;border:1px solid rgba(99,102,241,.25);background:#1e293b;color:#e2e8f0;padding:0 14px;font-size:13px;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='rgba(99,102,241,.6)'" onblur="this.style.borderColor='rgba(99,102,241,.25)'" onkeydown="if(event.key==='Enter')sendKefuMsg()">
+    <button onclick="sendKefuMsg()" style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .15s" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform=''">➤</button>
+  </div>
+</div>
+
+<script>
+// ===== 智能客服系统 =====
+var _kefuOpen=false;
+function toggleKefuChat(){
+  var p=document.getElementById('lsKefuPanel');
+  _kefuOpen=!_kefuOpen;
+  p.style.display=_kefuOpen?'flex':'none';
+  if(_kefuOpen){document.getElementById('lsKefuBadge').style.display='none';document.getElementById('lsKefuInput').focus()}
+}
+function kefuQuick(q){document.getElementById('lsKefuInput').value=q;sendKefuMsg()}
+
+var _KEFU_KB={
+  '注册':{a:'📝 注册流程：\n1. 点击页面右上角「登录/注册」\n2. 填写用户名、昵称和密码\n3. 提交后等待管理员审批（1-2个工作日）\n4. 审批通过后即可登录使用\n\n💡 也可以用手机号快捷注册哦！',k:['注册','注册账号','怎么注册','如何注册','signup']},
+  '登录':{a:'🔑 登录方式：\n1. 用户名+密码登录\n2. 📱 手机短信验证码登录\n3. 💚 微信扫码登录（即将上线）\n4. 💬 QQ登录（即将上线）\n\n⚠️ 新注册用户需等管理员审批通过后才能登录',k:['登录','怎么登录','无法登录','登录不了','login']},
+  '审批':{a:'⏳ 账号审批说明：\n注册后账号状态为「待审批」，管理员审核通过后才能登录。\n\n审核时间：一般1-2个工作日\n如需加急，请拨打客服电话：188-9000-0368',k:['审批','审核','待审批','pending','还没通过','等不了']},
+  '算力':{a:'💰 算力购买方式：\n1. 点击页面「充值算力」按钮\n2. 选择算力套餐（100/500/2000算力）\n3. 选择支付方式（支付宝/微信/QQ）\n4. 扫码支付，24小时内到账\n\n💡 也可以联系客服购买算力卡密',k:['算力','购买算力','充值','怎么充值','多少钱','价格','credits']},
+  '套餐':{a:'📦 我们的6大业务套餐：\n\n🤖 AI人工智能 - 基础版¥399/月起\n📱 自媒体 - 基础版¥299/月起\n🛒 电商 - 开店版¥599/次起\n📚 教育 - 基础版¥199/月起\n🐾 宠物 - 基础版¥199/月起\n🎓 伯雅校园 - 基础版¥99/月起\n\n每个套餐都有基础版/专业版/旗舰版可选！',k:['套餐','价格','多少钱','服务','package','plan']},
+  'AI工具':{a:'🛠️ 我们提供200+AI工具，覆盖6大板块：\n\n🤖 AI人工智能：大模型对话、文案创作、文生图、视频生成等47个工具\n📱 自媒体：短视频脚本、直播话术、评论回复等40个工具\n🛒 电商：商品描述、店铺装修、运营方案等40个工具\n📚 教育：课件生成、题库出题、学习计划等30个工具\n🐾 宠物：养护指南、健康咨询、活动策划等25个工具\n🎓 伯雅校园：创业计划书、论文指导、面试准备等25个工具',k:['工具','功能','有什么','能用','AI工具','哪些工具','tool']},
+  '支付':{a:'💳 支持的支付方式：\n1. 💚 微信支付\n2. 👋 支付宝\n3. 💬 QQ钱包\n\n支付流程：选择服务 → 选支付方式 → 扫码支付 → 等待确认到账\n\n❓ 支付问题请联系：188-9000-0368',k:['支付','怎么付','付款','微信支付','支付宝','pay']},
+  '人工客服':{a:'📞 联系人工客服：\n\n☎️ 客服电话：188-9000-0368\n💬 QQ客服：请查看页面底部\n💚 微信客服：请扫描页面底部二维码\n\n🕐 服务时间：\n工作日 9:00-21:00\n周末 10:00-18:00\n\n你也可以继续和我聊，我能解决大部分问题！',k:['人工','客服','电话','联系','联系客服','人工客服','real person']},
+  '企业版':{a:'🏢 企业版特权：\n\n✅ 28+大模型无限对话\n✅ AI绘图创作无限次\n✅ 智能报表与数据分析\n✅ Seedance视频生成\n✅ 7×24技术支持\n✅ 专属客户经理\n✅ 私有化部署方案\n\n💰 企业版详询：188-9000-0368',k:['企业版','enterprise','公司','商业']},
+  '视频':{a:'🎬 AI视频生成功能：\n\n我们集成了豆包Seedance视频模型，支持：\n1. 文字描述生成视频\n2. 图片转视频\n3. 多种风格选择\n\n使用方法：点击「大模型中心」→ 选择视频模型 → 输入描述 → 生成',k:['视频','video','生成视频','做视频','Seedance']},
+  '图片':{a:'🎨 AI图片功能：\n\n1. 文生图 - 文字描述生成图片\n2. 图生图 - 图片风格迁移\n3. 智能修图 - AI修图增强\n4. 抠图去背 - 智能去背景\n5. 超分辨率 - 低清变高清\n6. 老照片上色 - 黑白变彩色\n7. Logo设计 - 品牌Logo生成\n8. 海报生成 - 活动宣传海报',k:['图片','绘图','画画','生成图','image','画图']},
+};
+
+function _matchKefu(msg){
+  var lm=msg.toLowerCase();
+  var best=null,bestScore=0;
+  for(var key in _KEFU_KB){
+    var entry=_KEFU_KB[key];
+    for(var i=0;i<entry.k.length;i++){
+      if(lm.indexOf(entry.k[i].toLowerCase())>=0){
+        if(entry.k[i].length>bestScore){bestScore=entry.k[i].length;best=entry.a}
+      }
+    }
+  }
+  return best;
+}
+
+function _kefuTyping(el,text,i){
+  if(i<=text.length){
+    el.textContent=text.substring(0,i);
+    var mc=document.getElementById('lsKefuMessages');mc.scrollTop=mc.scrollHeight;
+    setTimeout(function(){_kefuTyping(el,text,i+1)},18);
+  }
+}
+
+function sendKefuMsg(){
+  var input=document.getElementById('lsKefuInput');
+  var msg=input.value.trim();
+  if(!msg)return;
+  input.value='';
+  var mc=document.getElementById('lsKefuMessages');
+  // user msg
+  var udiv=document.createElement('div');
+  udiv.style.cssText='display:flex;gap:10px;align-items:flex-start;justify-content:flex-end';
+  udiv.innerHTML='<div style="background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:14px 14px 4px 14px;padding:12px 16px;max-width:85%;font-size:13px;color:#fff;line-height:1.7;white-space:pre-wrap">'+msg.replace(/</g,'&lt;')+'</div>';
+  mc.appendChild(udiv);
+  mc.scrollTop=mc.scrollHeight;
+  // bot thinking
+  var bdiv=document.createElement('div');
+  bdiv.style.cssText='display:flex;gap:10px;align-items:flex-start';
+  bdiv.innerHTML='<div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">🤖</div><div id="kefuResp_'+Date.now()+'" style="background:#1e293b;border-radius:14px 14px 14px 4px;padding:12px 16px;max-width:85%;font-size:13px;color:#e2e8f0;line-height:1.7;white-space:pre-wrap">💭 思考中...</div>';
+  mc.appendChild(bdiv);
+  mc.scrollTop=mc.scrollHeight;
+  var respEl=bdiv.querySelector('[id^="kefuResp_"]');
+  setTimeout(function(){
+    var answer=_matchKefu(msg);
+    if(!answer){
+      answer='🤔 这个问题我还需要学习一下，建议你：\n\n1. 尝试换个方式描述你的问题\n2. 点击上方的快捷按钮查看常见问题\n3. 联系人工客服：188-9000-0368\n\n我会持续学习，下次一定能帮到你！';
+    }
+    respEl.textContent='';
+    _kefuTyping(respEl,answer,1);
+  },600+Math.random()*400);
+}
+</script>
 
 </body>
 </html>
