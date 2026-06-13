@@ -1,6 +1,6 @@
 
 // ============================================================
-// 罗圣纪元管理后台 V6.0 核心逻辑
+// 罗圣纪元管理后台 V7.0 核心逻辑
 // (c) 2026 祁阳市罗圣纪元互联网科技有限责任公司
 // 7大功能模块 + 用户审批 + 权限管理
 // ============================================================
@@ -10,7 +10,7 @@
 
 // ========== 全局配置 ==========
 var APP = {
-  version: 'V6.0',
+  version: 'V7.0',
   company: '祁阳市罗圣纪元互联网科技有限责任公司',
   creditCode: '91431121MAKD052H05',
   capital: '52万元',
@@ -624,6 +624,7 @@ function renderUsers() {
   html += '<select id="user-filter" onchange="AdminAPI.filterUsers()"><option value="">全部状态</option><option value="pending">待审批</option><option value="approved">已通过</option><option value="banned">已封禁</option><option value="rejected">已拒绝</option></select>';
   html += '<button class="admin-btn" style="font-size:12px;padding:4px 10px;" onclick="AdminAPI.exportUsers()"><i class="fa-solid fa-download"></i> 导出</button></div>';
   html += '<div class="toolbar-right">';
+  html += '<button class="admin-btn" style="background:var(--ok);" onclick="AdminAPI.addUser()"><i class="fa-solid fa-user-plus"></i> 添加用户</button>';
   html += '<button class="admin-btn" onclick="AdminAPI.batchApprove()"><i class="fa-solid fa-check-double"></i> 批量通过</button>';
   html += '<button class="admin-btn" style="background:var(--warn);" onclick="AdminAPI.batchBan()"><i class="fa-solid fa-ban"></i> 批量封禁</button>';
   html += '<button class="admin-btn" style="background:var(--err);" onclick="AdminAPI.batchDelete()"><i class="fa-solid fa-trash"></i> 批量删除</button>';
@@ -1210,6 +1211,49 @@ window.AdminAPI = {
       toast('已解封用户 '+username, 'success');
       navigate(currentPage);
     });
+  },
+
+  addUser: function() {
+    var overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99998;display:flex;align-items:center;justify-content:center;';
+    var box = document.createElement('div');
+    box.style.cssText = 'background:var(--bg3);border:1px solid var(--bd);border-radius:12px;padding:24px;max-width:420px;width:90%;color:var(--w);';
+    box.innerHTML = '<div style="font-size:16px;font-weight:600;margin-bottom:16px;"><i class="fa-solid fa-user-plus" style="color:var(--ok)"></i> 创建用户</div>'+
+      '<div class="form-group"><label>用户名</label><input type="text" id="new-user-name" placeholder="至少3个字符" style="width:100%"></div>'+
+      '<div class="form-group"><label>密码</label><input type="password" id="new-user-pwd" placeholder="至少6个字符" style="width:100%"></div>'+
+      '<div class="form-group"><label>昵称</label><input type="text" id="new-user-nick" placeholder="选填" style="width:100%"></div>'+
+      '<div class="form-group"><label>手机号</label><input type="text" id="new-user-phone" placeholder="选填" maxlength="11" style="width:100%"></div>'+
+      '<div class="form-group"><label>初始算力</label><input type="number" id="new-user-credits" value="100" min="0" style="width:100%"></div>'+
+      '<div class="form-group"><label>角色</label><select id="new-user-role" style="width:100%"><option value="user">普通用户</option><option value="admin">管理员</option></select></div>'+
+      '<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">'+
+      '<button class="admin-btn-cancel" onclick="this.closest(\'div[style*=fixed]\').remove()">取消</button>'+
+      '<button class="admin-btn" onclick="AdminAPI.doAddUser()">确认创建</button></div>';
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', function(e){ if(e.target===overlay) overlay.remove(); });
+  },
+
+  doAddUser: function() {
+    var username = document.getElementById('new-user-name').value.trim();
+    var pwd = document.getElementById('new-user-pwd').value;
+    var nick = document.getElementById('new-user-nick').value.trim();
+    var phone = document.getElementById('new-user-phone').value.trim();
+    var credits = parseInt(document.getElementById('new-user-credits').value)||0;
+    var role = document.getElementById('new-user-role').value;
+    if(username.length<3) return toast('用户名至少3个字符','error');
+    if(pwd.length<6) return toast('密码至少6个字符','error');
+    var users = Store.getUsers() || [];
+    if(users.find(function(u){return u.username===username})) return toast('用户名已存在','error');
+    if(phone&&users.find(function(u){return u.phone===phone})) return toast('手机号已被注册','error');
+    users.push({username:username,password:btoa(pwd),nickname:nick||username,role:role,status:'approved',phone:phone,qq:'',wx:'',created:new Date().toLocaleString(),registerTime:new Date().toISOString()});
+    Store.setUsers(users);
+    var allCredits = Store.getCredits() || {};
+    allCredits[username] = credits;
+    Store.setCredits(allCredits);
+    addLog('user', '创建用户 '+username+' (角色:'+role+', 算力:'+credits+')');
+    toast('用户 '+username+' 创建成功','success');
+    document.querySelector('div[style*="fixed"][style*="99998"]').remove();
+    navigate(currentPage);
   },
 
   deleteUser: function(username) {

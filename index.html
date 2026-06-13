@@ -2463,7 +2463,7 @@ function hexToRgb(hex){var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,
 <div style="text-align:center;padding:0 20px">
 <p style="font-weight:700;color:#e2e8f0;margin-bottom:10px;font-size:14px">联系我们</p>
 <p style="font-size:12px;color:#94a3b8;margin-bottom:12px">contact@lsjy.com</p>
-<button style="display:inline-block;padding:10px 28px;background:var(--p);color:#0a0e17;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 14px rgba(0,245,255,.35)'" onmouseout="this.style.transform='';this.style.boxShadow=''" onclick="openAuth('login')">立即注册</button>
+<button style="display:inline-block;padding:10px 28px;background:var(--p);color:#0a0e17;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 14px rgba(0,245,255,.35)'" onmouseout="this.style.transform='';this.style.boxShadow=''" onclick="openAuth('register')">立即注册</button>
 </div>
 </div>
 </footer>
@@ -4561,6 +4561,7 @@ return`<form onsubmit="doLogin(event)">
 <div class="fg"><label class="fl">账号</label><input class="fi" id="authUser" placeholder="请输入账号" required></div>
 <div class="fg"><label class="fl">密码</label><input class="fi" type="password" id="authPwd" placeholder="请输入密码" required></div>
 <button type="submit" class="btn btn-p" style="width:100%">登 录</button>
+<div style="text-align:right;margin-top:8px"><a href="javascript:void(0)" onclick="showForgotPwd()" style="font-size:12px;color:var(--nd);text-decoration:underline">忘记密码？</a></div>
 </form>
 <div class="social-divider">—— 手机号快捷登录 ——</div>
 <div class="fg"><label class="fl">手机号</label><input class="fi" id="authPhone" type="tel" placeholder="请输入手机号" maxlength="11"></div>
@@ -4623,19 +4624,56 @@ toast('✅ 注册成功！赠送100圣点已到账，管理员审核通过后即
 updateNavAuth();
 }
 
+// ===== 忘记密码 =====
+function showForgotPwd(){
+document.getElementById('authContent').innerHTML=`
+<div class="fg"><label class="fl">绑定的手机号</label><input class="fi" id="resetPhone" type="tel" placeholder="请输入已绑定的手机号" maxlength="11"></div>
+<div class="fg"><div style="display:flex;gap:8px"><input class="fi" id="resetSmsCode" placeholder="6位验证码" maxlength="6" style="flex:1"><button type="button" class="btn btn-sm" id="resetSmsBtn" onclick="sendResetSmsCode()">获取验证码</button></div></div>
+<div class="fg"><label class="fl">新密码</label><input class="fi" type="password" id="resetPwd" placeholder="至少6个字符" minlength="6"></div>
+<button type="button" class="btn btn-p" style="width:100%;background:var(--phone)" onclick="doResetPwd()">📱 重置密码</button>
+<div style="text-align:center;margin-top:12px"><a href="javascript:void(0)" onclick="switchAuthTab('login')" style="font-size:12px;color:var(--p);text-decoration:underline">← 返回登录</a></div>`;
+}
+let _resetSmsTimer=null;
+function sendResetSmsCode(){
+const phone=document.getElementById('resetPhone').value.trim();
+if(!/^1\\d{10}$/.test(phone))return toast('请输入正确的11位手机号','error');
+const btn=document.getElementById('resetSmsBtn');
+_resetSmsTimer=_startSmsCountdown(btn,_resetSmsTimer);
+_sendSmsCode(phone,'resetSmsCode');
+}
+function doResetPwd(){
+const phone=document.getElementById('resetPhone').value.trim(),code=document.getElementById('resetSmsCode').value.trim(),pwd=document.getElementById('resetPwd').value;
+if(!/^1\\d{10}$/.test(phone))return toast('请输入正确的手机号','error');
+if(!code||code.length!==6)return toast('请输入6位验证码','error');
+if(pwd.length<6)return toast('新密码至少6个字符','error');
+_verifySmsCode(phone,code,'resetSmsCode').then(()=>{
+const users=getUsers();const found=users.find(u=>u.phone===phone);
+if(!found)return toast('该手机号未注册或未绑定','error');
+found.password=btoa(pwd);saveUsers(users);
+toast('密码重置成功，请使用新密码登录','success');
+switchAuthTab('login');
+}).catch(e=>toast(e.message||'验证码错误','error'));
+}
+
 // ===== SMS Login/Register =====
 let _loginSmsTimer=null,_regSmsTimer=null;
 function _startSmsCountdown(btn,_timerRef){btn.disabled=true;let sec=60;btn.textContent=sec+'s';clearInterval(_timerRef);_timerRef=setInterval(()=>{sec--;btn.textContent=sec+'s';if(sec<=0){clearInterval(_timerRef);btn.disabled=false;btn.textContent='发送验证码'}},1000);return _timerRef}
 function _sendSmsCode(phone,codeInputId){
-if(SMS_ENABLED&&SMS_API!=='https://your-sms-server.onrender.com'){
+if(SMS_ENABLED&&SMS_API&&SMS_API!=='https://your-sms-server.onrender.com'){
   fetch(SMS_API+'/api/sms/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone})})
-  .then(r=>r.json()).then(d=>{if(d.success){toast('验证码已发送至 '+phone,'success')}else{toast(d.message||'发送失败','error')}}).catch(()=>{const code=String(Math.floor(Math.random()*900000+100000));toast('验证码: '+code+'（演示模式）','warn');document.getElementById(codeInputId).dataset.code=code});
+  .then(r=>r.json()).then(d=>{if(d.success){toast('验证码已发送至 '+phone,'success')}else{toast(d.message||'发送失败','error')}}).catch(()=>{const code=String(Math.floor(Math.random()*900000+100000));_showDemoCode(code,codeInputId)});
 }else{
-  const code=String(Math.floor(Math.random()*900000+100000));toast('验证码: '+code+'（演示模式，部署后端后自动切换真实短信）','warn');document.getElementById(codeInputId).dataset.code=code;
+  const code=String(Math.floor(Math.random()*900000+100000));_showDemoCode(code,codeInputId);
 }
+}
+function _showDemoCode(code,codeInputId){
+document.getElementById(codeInputId).dataset.code=code;
+var el=document.getElementById(codeInputId);var hint=document.getElementById(codeInputId+'_hint');
+if(!hint){hint=document.createElement('div');hint.id=codeInputId+'_hint';hint.style.cssText='font-size:11px;color:#f59e0b;margin-top:4px';el.parentNode.appendChild(hint)}
+hint.textContent='🔧 演示模式验证码: '+code+'（接入短信服务后自动隐藏）';
 }
 function _verifySmsCode(phone,code,codeInputId){
-if(SMS_ENABLED&&SMS_API!=='https://your-sms-server.onrender.com'){
+if(SMS_ENABLED&&SMS_API&&SMS_API!=='https://your-sms-server.onrender.com'){
   return fetch(SMS_API+'/api/sms/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,code})})
   .then(r=>r.json()).then(d=>{if(d.success)return true;const dc=document.getElementById(codeInputId).dataset.code;if(dc&&code===dc)return true;throw new Error(d.message||'验证码错误')});
 }else{
@@ -4657,12 +4695,12 @@ _sendSmsCode(phone,'regSmsCode');
 function doSmsLogin(){
 const phone=document.getElementById('authPhone').value.trim(),code=document.getElementById('authSmsCode').value.trim();
 if(!/^1\d{10}$/.test(phone))return toast('请输入正确的手机号','error');
-if(!code||code.length<4)return toast('请输入验证码','error');
+if(!code||code.length!==6)return toast('请输入6位验证码','error');
 _verifySmsCode(phone,code,'authSmsCode').then(()=>smsLoginSuccess(phone)).catch(e=>toast(e.message||'验证码错误','error'));
 }
 function smsLoginSuccess(phone){
 const users=getUsers();let found=users.find(u=>u.phone===phone);
-if(!found){found={username:'user_'+phone.slice(-4),password:'sms_'+Date.now(),nickname:'用户'+phone.slice(-4),role:'user',status:'pending',phone:phone,qq:'',wx:'',created:new Date().toLocaleString()};users.push(found);saveUsers(users)}
+if(!found){found={username:'user_'+phone.slice(-4),password:btoa('sms_'+Math.random().toString(36).slice(2,10)+Date.now().toString(36)),nickname:'用户'+phone.slice(-4),role:'user',status:'pending',phone:phone,qq:'',wx:'',created:new Date().toLocaleString()};users.push(found);saveUsers(users)}
 if(found.status==='pending'){toast('⏳ 您的账号正在审批中，请等待管理员审核','warn');return}
 if(found.status==='rejected'){toast('❌ 您的账号已被拒绝，请联系客服','error');return}
 if(found.status==='banned'){toast('🚫 您的账号已被封禁','error');return}
@@ -4672,12 +4710,12 @@ updateNavAuth();if(typeof updateCreditsUI==='function')updateCreditsUI();toast('
 function doSmsRegister(){
 const phone=document.getElementById('regPhone').value.trim(),code=document.getElementById('regSmsCode').value.trim(),nick=document.getElementById('regNick').value.trim();
 if(!/^1\d{10}$/.test(phone))return toast('请输入正确的手机号','error');
-if(!code||code.length<4)return toast('请输入验证码','error');
+if(!code||code.length!==6)return toast('请输入6位验证码','error');
 _verifySmsCode(phone,code,'regSmsCode').then(()=>smsRegSuccess(phone,nick)).catch(e=>toast(e.message||'验证码错误','error'));
 }
 function smsRegSuccess(phone,nick){
 const users=getUsers();if(users.find(u=>u.phone===phone))return toast('该手机号已注册，请直接登录','error');
-const newUser={username:'user_'+phone.slice(-4),password:'sms_'+Date.now(),nickname:nick||'用户'+phone.slice(-4),role:'user',status:'pending',phone:phone,qq:'',wx:'',created:new Date().toLocaleString()};
+const newUser={username:'user_'+phone.slice(-4),password:btoa('sms_'+Math.random().toString(36).slice(2,10)+Date.now().toString(36)),nickname:nick||'用户'+phone.slice(-4),role:'user',status:'pending',phone:phone,qq:'',wx:'',created:new Date().toLocaleString()};
 users.push(newUser);saveUsers(users);
 // 新用户注册送100圣点
 const allCreds=JSON.parse(localStorage.getItem('lsjy3_credits')||'{}');
@@ -4803,7 +4841,7 @@ panel.innerHTML=`<div class="auth-hero" style="position:relative;background:line
 <div class="fg"><label class="fl">手机号码</label>
 <div class="phone-row">
 <input class="fi" id="bindPhone" type="tel" placeholder="请输入手机号" value="${u?u.phone:''}">
-<button class="btn btn-p btn-sm" id="smsBtn" onclick="sendSmsCode()">发送验证码</button>
+<button class="btn btn-p btn-sm" id="smsBtn" onclick="sendBindSmsCode()">发送验证码</button>
 </div>
 </div>
 <div class="fg"><label class="fl">验证码</label><input class="fi" id="smsCode" placeholder="请输入6位验证码" maxlength="6"></div>
@@ -4815,7 +4853,7 @@ document.body.style.overflow='hidden';
 }
 
 let smsTimer=null;
-function sendSmsCode(){
+function sendBindSmsCode(){
 const phone=document.getElementById('bindPhone').value.trim();
 if(!/^1\d{10}$/.test(phone))return toast('请输入正确的11位手机号','error');
 const btn=document.getElementById('smsBtn');
@@ -4827,7 +4865,7 @@ function confirmBindPhone(){
 const phone=document.getElementById('bindPhone').value.trim();
 const code=document.getElementById('smsCode').value.trim();
 if(!phone)return toast('请输入手机号','error');
-if(!code)return toast('请输入验证码','error');
+if(!code||code.length!==6)return toast('请输入6位验证码','error');
 _verifySmsCode(phone,code,'smsCode').then(()=>bindPhoneSuccess(phone)).catch(e=>toast(e.message||'验证码错误','error'));
 }
 function bindPhoneSuccess(phone){
