@@ -1,39 +1,49 @@
 <template>
   <div class="max-w-4xl mx-auto px-4 py-6">
-    <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">👤 个人中心</h1>
+    <h1 class="text-2xl font-bold mb-6" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">
+      <span style="color: var(--cyber-cyan);">▍</span>个人中心
+    </h1>
 
     <div class="grid md:grid-cols-3 gap-6">
       <!-- 左侧用户卡片 -->
       <div class="md:col-span-1">
-        <div class="bg-white dark:bg-dark-100 rounded-2xl p-6 text-center shadow-sm">
-          <div class="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center text-white text-3xl font-bold mx-auto mb-4">
+        <div class="cyber-card p-6 text-center">
+          <div class="w-20 h-20 rounded-full flex items-center justify-center text-black text-3xl font-bold mx-auto mb-4"
+            style="background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-magenta)); box-shadow: 0 0 20px rgba(0,240,255,0.3);">
             {{ (authStore.nickname || 'U')[0] }}
           </div>
-          <h2 class="text-lg font-bold text-gray-900 dark:text-white">{{ authStore.user?.nickname }}</h2>
-          <p class="text-sm text-gray-500 mt-1">@{{ authStore.user?.username }}</p>
-          <span class="inline-block mt-2 px-3 py-1 rounded-full text-xs font-medium"
-            :class="roleBadge.class">{{ roleBadge.label }}</span>
+          <h2 class="text-lg font-bold" style="color: var(--cyber-text);">{{ authStore.user?.nickname }}</h2>
+          <p class="text-sm mt-1" style="color: var(--cyber-text-dim);">@{{ authStore.user?.username }}</p>
+          <span class="inline-block mt-2 px-3 py-1 rounded-full text-xs font-medium" :style="roleBadgeStyle">
+            {{ roleBadge.label }}
+          </span>
 
-          <div class="mt-6 pt-4 border-t border-gray-100 dark:border-gray-700 space-y-3">
+          <div class="mt-6 pt-4 space-y-3" style="border-top: 1px solid var(--cyber-border);">
             <div class="flex justify-between text-sm">
-              <span class="text-gray-500">⚡ 圣点余额</span>
-              <span class="font-bold text-amber-500">{{ authStore.coinBalance.toFixed(2) }}</span>
+              <span style="color: var(--cyber-text-dim);">⚡ 圣点余额</span>
+              <span class="font-bold glow-cyan" style="color: var(--cyber-cyan);">{{ authStore.coinBalance.toFixed(2) }}</span>
             </div>
             <div class="flex justify-between text-sm">
-              <span class="text-gray-500">📅 注册日期</span>
-              <span class="text-gray-700 dark:text-gray-300">{{ formatDate(authStore.user?.createdAt || '') }}</span>
+              <span style="color: var(--cyber-text-dim);">📅 注册日期</span>
+              <span style="color: var(--cyber-text);">{{ formatDate(authStore.user?.createdAt || '') }}</span>
             </div>
             <div class="flex justify-between text-sm">
-              <span class="text-gray-500">🏷️ 用户类型</span>
-              <span class="text-gray-700 dark:text-gray-300">{{ userTypeLabel }}</span>
+              <span style="color: var(--cyber-text-dim);">🏷️ 用户类型</span>
+              <span style="color: var(--cyber-text);">{{ userTypeLabel }}</span>
             </div>
           </div>
 
           <div class="mt-6 space-y-2">
-            <router-link to="/profile/wallet" class="block w-full py-2.5 rounded-lg text-sm font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors">
+            <router-link to="/profile/wallet"
+              class="block w-full py-2.5 rounded-lg text-sm font-medium transition-all text-center"
+              style="background: rgba(0,240,255,0.08); color: var(--cyber-cyan); border: 1px solid rgba(0,240,255,0.2);"
+              @mouseover="($event.currentTarget as HTMLElement).style.background='rgba(0,240,255,0.15)'"
+              @mouseleave="($event.currentTarget as HTMLElement).style.background='rgba(0,240,255,0.08)'">
               💰 圣点账户
             </router-link>
-            <button class="block w-full py-2.5 rounded-lg text-sm font-medium bg-gray-100 dark:bg-dark-300 text-gray-700 dark:text-gray-300 hover:bg-gray-200 transition-colors">
+            <button
+              class="block w-full py-2.5 rounded-lg text-sm font-medium transition-all"
+              style="background: rgba(136,136,170,0.08); color: var(--cyber-text-dim); border: 1px solid var(--cyber-border);">
               🔒 安全设置
             </button>
           </div>
@@ -42,8 +52,10 @@
 
       <!-- 右侧信息编辑 -->
       <div class="md:col-span-2">
-        <div class="bg-white dark:bg-dark-100 rounded-2xl p-6 shadow-sm">
-          <h3 class="font-bold text-gray-900 dark:text-white mb-4">编辑个人信息</h3>
+        <div class="cyber-card p-6">
+          <h3 class="font-bold mb-4" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">
+            <span style="color: var(--cyber-magenta);">▍</span>编辑个人信息
+          </h3>
           <el-form :model="profileForm" label-position="top">
             <div class="grid sm:grid-cols-2 gap-4">
               <el-form-item label="昵称">
@@ -78,9 +90,9 @@
         <!-- 快捷功能 -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
           <div v-for="item in quickActions" :key="item.label"
-            class="bg-white dark:bg-dark-100 rounded-xl p-4 text-center cursor-pointer hover:shadow-md transition-all">
-            <div class="text-2xl mb-2">{{ item.icon }}</div>
-            <div class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ item.label }}</div>
+            class="cyber-card p-4 text-center cursor-pointer transition-all duration-300 hover:-translate-y-1">
+            <div class="text-2xl mb-2" style="filter: drop-shadow(0 0 4px rgba(0,240,255,0.3));">{{ item.icon }}</div>
+            <div class="text-sm font-medium" style="color: var(--cyber-text);">{{ item.label }}</div>
           </div>
         </div>
       </div>
@@ -109,11 +121,17 @@ const profileForm = reactive({
 
 const roleBadge = computed(() => {
   const roles = authStore.userRoles
-  if (roles.includes('super_admin')) return { label: '👑 超级管理员', class: 'bg-purple-100 text-purple-600' }
-  if (roles.includes('operator')) return { label: '🔧 运营', class: 'bg-green-100 text-green-600' }
-  if (roles.includes('merchant')) return { label: '🏢 商户', class: 'bg-amber-100 text-amber-600' }
-  return { label: '👤 普通用户', class: 'bg-gray-100 text-gray-600' }
+  if (roles.includes('super_admin')) return { label: '👑 超级管理员', bg: 'rgba(124,58,237,0.15)', color: 'var(--cyber-purple)', border: 'rgba(124,58,237,0.3)' }
+  if (roles.includes('operator')) return { label: '🔧 运营', bg: 'rgba(0,255,136,0.1)', color: 'var(--cyber-green)', border: 'rgba(0,255,136,0.2)' }
+  if (roles.includes('merchant')) return { label: '🏢 商户', bg: 'rgba(255,184,0,0.1)', color: 'var(--cyber-amber)', border: 'rgba(255,184,0,0.2)' }
+  return { label: '👤 普通用户', bg: 'rgba(136,136,170,0.1)', color: 'var(--cyber-text-dim)', border: 'var(--cyber-border)' }
 })
+
+const roleBadgeStyle = computed(() => ({
+  background: roleBadge.value.bg,
+  color: roleBadge.value.color,
+  border: `1px solid ${roleBadge.value.border}`
+}))
 
 const userTypeLabel = computed(() => {
   return userTypeMap[authStore.user?.userType || 'personal'] || '个人版'
@@ -134,17 +152,15 @@ async function saveProfile() {
       bio: profileForm.bio,
       gender: profileForm.gender,
     })
-    // 注意：phone 和 email 的修改需要后端支持
     if (profileForm.phone !== (authStore.user?.phone || '')) {
-      // TODO: 单独的手机号修改接口（需要验证码）
+      // TODO: 单独的手机号修改接口
     }
     if (profileForm.email !== (authStore.user?.email || '')) {
-      // TODO: 单独的邮箱修改接口（需要验证邮件）
+      // TODO: 单独的邮箱修改接口
     }
     await authStore.fetchUserProfile()
     ElMessage.success('保存成功')
   } catch {
-    // 错误由拦截器处理
   } finally {
     saving.value = false
   }
