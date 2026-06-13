@@ -1,52 +1,50 @@
 <template>
   <div>
     <!-- 实时数据概览 -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-      <div v-for="stat in realtimeStats" :key="stat.label" class="bg-white dark:bg-dark-100 rounded-xl p-5 shadow-sm relative overflow-hidden">
-        <div class="absolute top-0 right-0 w-20 h-20 rounded-full opacity-10 -mr-6 -mt-6" :class="stat.bgClass"></div>
-        <div class="flex items-center justify-between relative">
+    <div class="cyber-grid-4 mb-6">
+      <div v-for="stat in realtimeStats" :key="stat.label" class="cyber-card cyber-stat-card">
+        <div class="stat-glow" :style="{ background: stat.glowColor }"></div>
+        <div class="stat-content">
           <div>
-            <p class="text-sm text-gray-500 dark:text-gray-400">{{ stat.label }}</p>
-            <p class="text-3xl font-bold text-gray-900 dark:text-white mt-1">{{ stat.value }}</p>
-            <p class="text-xs mt-1" :class="stat.change >= 0 ? 'text-green-500' : 'text-red-500'">
-              {{ stat.change >= 0 ? '↑' : '↓' }} {{ Math.abs(stat.change) }}% 较昨日
+            <p class="stat-label">{{ stat.label }}</p>
+            <p class="stat-value" :style="{ color: stat.valueColor, textShadow: `0 0 20px ${stat.valueColor}40` }">{{ stat.value }}</p>
+            <p class="stat-change" :class="stat.change >= 0 ? 'change-up' : 'change-down'">
+              {{ stat.change >= 0 ? '↑' : '↓' }} {{ Math.abs(stat.change) }}%
             </p>
           </div>
-          <div class="w-14 h-14 rounded-xl flex items-center justify-center text-3xl" :class="stat.iconBg">{{ stat.icon }}</div>
+          <div class="stat-icon" :style="{ boxShadow: `0 0 20px ${stat.valueColor}30` }">{{ stat.icon }}</div>
         </div>
       </div>
     </div>
 
     <!-- 预警指标 -->
     <div v-if="alerts.length > 0" class="mb-6 space-y-2">
-      <div v-for="(alert, idx) in alerts" :key="idx" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm" :class="alertClass(alert.type)">
-        <span class="text-lg">{{ alert.type === 'danger' ? '🔴' : alert.type === 'warning' ? '🟡' : '🔵' }}</span>
-        <span class="font-medium">{{ alert.metric }}</span>
-        <span class="text-gray-500">当前: {{ alert.value }}</span>
-        <span class="text-gray-400">|</span>
-        <span class="text-gray-500">阈值: {{ alert.threshold }}</span>
-        <span class="flex-1">{{ alert.message }}</span>
+      <div v-for="(alert, idx) in alerts" :key="idx" class="cyber-alert" :class="'alert-' + alert.type">
+        <span class="alert-icon">{{ alert.type === 'danger' ? '🔴' : alert.type === 'warning' ? '🟡' : '🔵' }}</span>
+        <span class="alert-metric">{{ alert.metric }}</span>
+        <span class="alert-detail">当前: {{ alert.value }}</span>
+        <span class="alert-sep">|</span>
+        <span class="alert-detail">阈值: {{ alert.threshold }}</span>
+        <span class="alert-msg">{{ alert.message }}</span>
       </div>
     </div>
 
     <!-- 趋势图表 -->
-    <div class="grid lg:grid-cols-2 gap-6 mb-6">
-      <!-- 用户增长曲线 -->
-      <div class="bg-white dark:bg-dark-100 rounded-xl p-5 shadow-sm">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="font-bold text-gray-900 dark:text-white">📈 用户增长趋势</h3>
-          <div class="flex gap-1">
-            <button v-for="r in ['7d','30d']" :key="r" @click="trendRange = r" class="px-3 py-1 rounded text-xs" :class="trendRange === r ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-dark-300 text-gray-500'">{{ r === '7d' ? '近7天' : '近30天' }}</button>
+    <div class="cyber-grid-2 mb-6">
+      <div class="cyber-card">
+        <div class="card-header">
+          <h3 class="card-title">📈 用户增长趋势</h3>
+          <div class="range-btns">
+            <button v-for="r in ['7d','30d']" :key="r" @click="trendRange = r" class="cyber-btn-sm" :class="{ 'cyber-btn-active': trendRange === r }">{{ r === '7d' ? '近7天' : '近30天' }}</button>
           </div>
         </div>
         <div ref="userChartRef" class="h-64"></div>
       </div>
-      <!-- 营收趋势 -->
-      <div class="bg-white dark:bg-dark-100 rounded-xl p-5 shadow-sm">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="font-bold text-gray-900 dark:text-white">💰 营收趋势</h3>
-          <div class="flex gap-1">
-            <button v-for="r in ['7d','30d']" :key="r" @click="revenueRange = r" class="px-3 py-1 rounded text-xs" :class="revenueRange === r ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-dark-300 text-gray-500'">{{ r === '7d' ? '近7天' : '近30天' }}</button>
+      <div class="cyber-card">
+        <div class="card-header">
+          <h3 class="card-title">💰 营收趋势</h3>
+          <div class="range-btns">
+            <button v-for="r in ['7d','30d']" :key="r" @click="revenueRange = r" class="cyber-btn-sm" :class="{ 'cyber-btn-active': revenueRange === r }">{{ r === '7d' ? '近7天' : '近30天' }}</button>
           </div>
         </div>
         <div ref="revenueChartRef" class="h-64"></div>
@@ -54,82 +52,67 @@
     </div>
 
     <!-- 模块分布 & 热门排行 -->
-    <div class="grid lg:grid-cols-3 gap-6 mb-6">
-      <!-- 六大模块用户分布 -->
-      <div class="bg-white dark:bg-dark-100 rounded-xl p-5 shadow-sm">
-        <h3 class="font-bold text-gray-900 dark:text-white mb-4">🧩 模块用户分布</h3>
+    <div class="cyber-grid-3 mb-6">
+      <div class="cyber-card">
+        <h3 class="card-title mb-4">🧩 模块用户分布</h3>
         <div ref="modulePieRef" class="h-56"></div>
       </div>
-      <!-- 营收贡献饼图 -->
-      <div class="bg-white dark:bg-dark-100 rounded-xl p-5 shadow-sm">
-        <h3 class="font-bold text-gray-900 dark:text-white mb-4">💎 营收贡献分布</h3>
+      <div class="cyber-card">
+        <h3 class="card-title mb-4">💎 营收贡献分布</h3>
         <div ref="revenuePieRef" class="h-56"></div>
       </div>
-      <!-- 各模块使用量对比 -->
-      <div class="bg-white dark:bg-dark-100 rounded-xl p-5 shadow-sm">
-        <h3 class="font-bold text-gray-900 dark:text-white mb-4">📊 模块使用量对比</h3>
+      <div class="cyber-card">
+        <h3 class="card-title mb-4">📊 模块使用量对比</h3>
         <div ref="moduleBarRef" class="h-56"></div>
       </div>
     </div>
 
     <!-- 热门排行 -->
-    <div class="grid lg:grid-cols-3 gap-6 mb-6">
-      <!-- Top10 AI工具 -->
-      <div class="bg-white dark:bg-dark-100 rounded-xl p-5 shadow-sm">
-        <h3 class="font-bold text-gray-900 dark:text-white mb-4">🤖 Top10 AI工具</h3>
-        <div class="space-y-2">
-          <div v-for="(item, index) in toolRanking" :key="item.name" class="flex items-center gap-3">
-            <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-              :class="index < 3 ? 'bg-gradient-to-br from-amber-400 to-orange-500 text-white' : 'bg-gray-100 dark:bg-dark-300 text-gray-500'">
-              {{ index + 1 }}
-            </span>
-            <span class="flex-1 text-sm text-gray-700 dark:text-gray-300 truncate">{{ item.name }}</span>
-            <div class="w-20 h-2 bg-gray-100 dark:bg-dark-300 rounded-full overflow-hidden">
-              <div class="h-full bg-gradient-to-r from-primary to-blue-400 rounded-full" :style="{ width: (item.count / maxToolCount * 100) + '%' }"></div>
+    <div class="cyber-grid-3 mb-6">
+      <div class="cyber-card">
+        <h3 class="card-title mb-4">🤖 Top10 AI工具</h3>
+        <div class="ranking-list">
+          <div v-for="(item, index) in toolRanking" :key="item.name" class="ranking-item">
+            <span class="rank-badge" :class="index < 3 ? 'rank-top' : ''">{{ index + 1 }}</span>
+            <span class="rank-name">{{ item.name }}</span>
+            <div class="rank-bar">
+              <div class="rank-bar-fill" :style="{ width: (item.count / maxToolCount * 100) + '%' }"></div>
             </div>
-            <span class="text-xs text-gray-500 w-14 text-right">{{ formatNum(item.count) }}</span>
+            <span class="rank-value">{{ formatNum(item.count) }}</span>
           </div>
         </div>
       </div>
-      <!-- Top10 热销商品 -->
-      <div class="bg-white dark:bg-dark-100 rounded-xl p-5 shadow-sm">
-        <h3 class="font-bold text-gray-900 dark:text-white mb-4">🛒 Top10 热销商品</h3>
-        <div class="space-y-2">
-          <div v-for="(item, index) in productRanking" :key="item.name" class="flex items-center gap-3">
-            <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-              :class="index < 3 ? 'bg-gradient-to-br from-amber-400 to-orange-500 text-white' : 'bg-gray-100 dark:bg-dark-300 text-gray-500'">
-              {{ index + 1 }}
-            </span>
-            <span class="flex-1 text-sm text-gray-700 dark:text-gray-300 truncate">{{ item.name }}</span>
-            <span class="text-xs text-green-600 w-14 text-right">¥{{ item.revenue }}</span>
+      <div class="cyber-card">
+        <h3 class="card-title mb-4">🛒 Top10 热销商品</h3>
+        <div class="ranking-list">
+          <div v-for="(item, index) in productRanking" :key="item.name" class="ranking-item">
+            <span class="rank-badge" :class="index < 3 ? 'rank-top' : ''">{{ index + 1 }}</span>
+            <span class="rank-name">{{ item.name }}</span>
+            <span class="rank-value text-green-400">¥{{ item.revenue }}</span>
           </div>
         </div>
       </div>
-      <!-- Top10 热门课程 -->
-      <div class="bg-white dark:bg-dark-100 rounded-xl p-5 shadow-sm">
-        <h3 class="font-bold text-gray-900 dark:text-white mb-4">📚 Top10 热门课程</h3>
-        <div class="space-y-2">
-          <div v-for="(item, index) in courseRanking" :key="item.name" class="flex items-center gap-3">
-            <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-              :class="index < 3 ? 'bg-gradient-to-br from-amber-400 to-orange-500 text-white' : 'bg-gray-100 dark:bg-dark-300 text-gray-500'">
-              {{ index + 1 }}
-            </span>
-            <span class="flex-1 text-sm text-gray-700 dark:text-gray-300 truncate">{{ item.name }}</span>
-            <span class="text-xs text-blue-600 w-14 text-right">{{ item.students }}人</span>
+      <div class="cyber-card">
+        <h3 class="card-title mb-4">📚 Top10 热门课程</h3>
+        <div class="ranking-list">
+          <div v-for="(item, index) in courseRanking" :key="item.name" class="ranking-item">
+            <span class="rank-badge" :class="index < 3 ? 'rank-top' : ''">{{ index + 1 }}</span>
+            <span class="rank-name">{{ item.name }}</span>
+            <span class="rank-value text-cyan-400">{{ item.students }}人</span>
           </div>
         </div>
       </div>
     </div>
 
     <!-- 系统日志 -->
-    <div class="bg-white dark:bg-dark-100 rounded-xl p-5 shadow-sm">
-      <h3 class="font-bold text-gray-900 dark:text-white mb-4">📋 最近操作日志</h3>
-      <div class="space-y-2">
-        <div v-for="log in recentLogs" :key="log.id" class="flex items-center gap-3 py-2 border-b border-gray-50 dark:border-gray-700 last:border-0">
-          <span class="px-2 py-0.5 rounded text-xs font-medium" :class="logTypeClass(log.type)">{{ log.module }}</span>
-          <span class="flex-1 text-sm text-gray-700 dark:text-gray-300">{{ log.action }}</span>
-          <span class="text-xs text-gray-400">{{ log.operator }}</span>
-          <span class="text-xs text-gray-400">{{ log.time }}</span>
+    <div class="cyber-card">
+      <h3 class="card-title mb-4">📋 最近操作日志</h3>
+      <div class="log-list">
+        <div v-for="log in recentLogs" :key="log.id" class="log-item">
+          <span class="log-tag" :class="'log-tag-' + log.type">{{ log.module }}</span>
+          <span class="log-action">{{ log.action }}</span>
+          <span class="log-operator">{{ log.operator }}</span>
+          <span class="log-time">{{ log.time }}</span>
         </div>
       </div>
     </div>
@@ -141,10 +124,10 @@ import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 
 // ===== 实时数据 =====
 const realtimeStats = ref([
-  { icon: '👥', label: '在线用户', value: '3,256', change: 12.5, bgClass: 'bg-blue-500', iconBg: 'bg-blue-100' },
-  { icon: '📝', label: '今日注册', value: '234', change: 8.3, bgClass: 'bg-green-500', iconBg: 'bg-green-100' },
-  { icon: '💰', label: '今日营收', value: '¥18,900', change: 15.2, bgClass: 'bg-amber-500', iconBg: 'bg-amber-100' },
-  { icon: '⚡', label: '圣点消耗', value: '45,600', change: -3.1, bgClass: 'bg-purple-500', iconBg: 'bg-purple-100' },
+  { icon: '👥', label: '在线用户', value: '3,256', change: 12.5, valueColor: '#00f0ff', glowColor: 'radial-gradient(circle, rgba(0,240,255,0.15) 0%, transparent 70%)' },
+  { icon: '📝', label: '今日注册', value: '234', change: 8.3, valueColor: '#00ff88', glowColor: 'radial-gradient(circle, rgba(0,255,136,0.15) 0%, transparent 70%)' },
+  { icon: '💰', label: '今日营收', value: '¥18,900', change: 15.2, valueColor: '#f59e0b', glowColor: 'radial-gradient(circle, rgba(245,158,11,0.15) 0%, transparent 70%)' },
+  { icon: '⚡', label: '圣点消耗', value: '45,600', change: -3.1, valueColor: '#c084fc', glowColor: 'radial-gradient(circle, rgba(192,132,252,0.15) 0%, transparent 70%)' },
 ])
 
 // ===== 预警 =====
@@ -153,15 +136,11 @@ const alerts = ref([
   { type: 'danger' as const, metric: '支付失败率', value: '5.1%', threshold: '<3%', message: '微信支付通道异常，请关注' },
 ])
 
-function alertClass(type: string) {
-  return { warning: 'bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 border border-amber-200 dark:border-amber-800', danger: 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800', info: 'bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 border border-blue-200 dark:border-blue-800' }[type] || ''
-}
-
 // ===== 趋势数据 =====
 const trendRange = ref('7d')
 const revenueRange = ref('7d')
 
-const trendData = {
+const trendData: Record<string, any> = {
   '7d': {
     dates: ['07-12', '07-13', '07-14', '07-15', '07-16', '07-17', '07-18'],
     newUsers: [145, 278, 312, 187, 256, 198, 234],
@@ -178,11 +157,11 @@ const trendData = {
 
 // ===== 模块数据 =====
 const moduleData = [
-  { name: 'AI工具', users: 12500, revenue: 156000, color: '#6366f1' },
-  { name: '自媒体', users: 8200, revenue: 89000, color: '#8b5cf6' },
+  { name: 'AI工具', users: 12500, revenue: 156000, color: '#00f0ff' },
+  { name: '自媒体', users: 8200, revenue: 89000, color: '#c084fc' },
   { name: '电商', users: 6800, revenue: 234000, color: '#f59e0b' },
-  { name: '教育', users: 5400, revenue: 125000, color: '#10b981' },
-  { name: '宠物', users: 3200, revenue: 45000, color: '#ef4444' },
+  { name: '教育', users: 5400, revenue: 125000, color: '#00ff88' },
+  { name: '宠物', users: 3200, revenue: 45000, color: '#ff00ff' },
   { name: '伯雅校园', users: 4100, revenue: 67000, color: '#3b82f6' },
 ]
 
@@ -221,10 +200,6 @@ const recentLogs = [
   { id: 6, type: 'order', module: '订单管理', action: '异常支付告警 - 微信支付通道', operator: '系统', time: '11:45' },
 ]
 
-function logTypeClass(type: string) {
-  return { user: 'bg-blue-100 text-blue-700', order: 'bg-amber-100 text-amber-700', tool: 'bg-purple-100 text-purple-700', content: 'bg-green-100 text-green-700', system: 'bg-gray-100 text-gray-600' }[type] || ''
-}
-
 function formatNum(n: number): string {
   if (n >= 10000) return (n / 10000).toFixed(1) + 'w'
   if (n >= 1000) return (n / 1000).toFixed(1) + 'k'
@@ -241,28 +216,27 @@ const moduleBarRef = ref<HTMLElement>()
 let charts: any[] = []
 
 function initCharts() {
-  // 检查 echarts 是否可用
   const echarts = (window as any).echarts
   if (!echarts) {
-    // 降级为纯 CSS 展示
     renderFallbackCharts()
     return
   }
 
-  const textColor = document.documentElement.classList.contains('dark') ? '#9ca3af' : '#6b7280'
+  const textColor = '#6a6a8a'
+  const gridColor = 'rgba(26, 26, 46, 0.8)'
 
   // 用户增长曲线
   if (userChartRef.value) {
     const chart = echarts.init(userChartRef.value)
-    const d = trendData[trendRange.value as keyof typeof trendData]
+    const d = trendData[trendRange.value]
     chart.setOption({
-      tooltip: { trigger: 'axis' },
+      tooltip: { trigger: 'axis', backgroundColor: '#12121f', borderColor: '#1a1a2e', textStyle: { color: '#a0a0cc' } },
       grid: { top: 20, right: 20, bottom: 30, left: 50 },
-      xAxis: { type: 'category', data: d.dates, axisLabel: { color: textColor, fontSize: 11 }, axisLine: { lineStyle: { color: '#e5e7eb' } } },
-      yAxis: { type: 'value', axisLabel: { color: textColor, fontSize: 11 }, splitLine: { lineStyle: { color: '#f3f4f6' } } },
+      xAxis: { type: 'category', data: d.dates, axisLabel: { color: textColor, fontSize: 11 }, axisLine: { lineStyle: { color: gridColor } } },
+      yAxis: { type: 'value', axisLabel: { color: textColor, fontSize: 11 }, splitLine: { lineStyle: { color: gridColor } } },
       series: [
-        { name: '新增用户', type: 'line', smooth: true, data: d.newUsers, areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(99,102,241,0.3)' }, { offset: 1, color: 'rgba(99,102,241,0.02)' }] } }, lineStyle: { color: '#6366f1' }, itemStyle: { color: '#6366f1' } },
-        { name: '活跃用户', type: 'line', smooth: true, data: d.activeUsers.map(v => v / 10), areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(16,185,129,0.3)' }, { offset: 1, color: 'rgba(16,185,129,0.02)' }] } }, lineStyle: { color: '#10b981' }, itemStyle: { color: '#10b981' } },
+        { name: '新增用户', type: 'line', smooth: true, data: d.newUsers, areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(0,240,255,0.25)' }, { offset: 1, color: 'rgba(0,240,255,0.02)' }] } }, lineStyle: { color: '#00f0ff', width: 2 }, itemStyle: { color: '#00f0ff' } },
+        { name: '活跃用户', type: 'line', smooth: true, data: d.activeUsers.map((v: number) => v / 10), areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(0,255,136,0.2)' }, { offset: 1, color: 'rgba(0,255,136,0.02)' }] } }, lineStyle: { color: '#00ff88', width: 2 }, itemStyle: { color: '#00ff88' } },
       ]
     })
     charts.push(chart)
@@ -271,13 +245,13 @@ function initCharts() {
   // 营收趋势
   if (revenueChartRef.value) {
     const chart = echarts.init(revenueChartRef.value)
-    const d = trendData[revenueRange.value as keyof typeof trendData]
+    const d = trendData[revenueRange.value]
     chart.setOption({
-      tooltip: { trigger: 'axis', formatter: '{b}<br/>营收: ¥{c}' },
+      tooltip: { trigger: 'axis', formatter: '{b}<br/>营收: ¥{c}', backgroundColor: '#12121f', borderColor: '#1a1a2e', textStyle: { color: '#a0a0cc' } },
       grid: { top: 20, right: 20, bottom: 30, left: 60 },
-      xAxis: { type: 'category', data: d.dates, axisLabel: { color: textColor, fontSize: 11 }, axisLine: { lineStyle: { color: '#e5e7eb' } } },
-      yAxis: { type: 'value', axisLabel: { color: textColor, fontSize: 11, formatter: (v: number) => v >= 1000 ? (v / 1000) + 'k' : v }, splitLine: { lineStyle: { color: '#f3f4f6' } } },
-      series: [{ name: '营收', type: 'bar', data: d.revenue, itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: '#f59e0b' }, { offset: 1, color: '#fbbf24' }] }, borderRadius: [4, 4, 0, 0] } }]
+      xAxis: { type: 'category', data: d.dates, axisLabel: { color: textColor, fontSize: 11 }, axisLine: { lineStyle: { color: gridColor } } },
+      yAxis: { type: 'value', axisLabel: { color: textColor, fontSize: 11, formatter: (v: number) => v >= 1000 ? (v / 1000) + 'k' : v }, splitLine: { lineStyle: { color: gridColor } } },
+      series: [{ name: '营收', type: 'bar', data: d.revenue, itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: '#f59e0b' }, { offset: 1, color: '#f59e0b44' }] }, borderRadius: [4, 4, 0, 0] } }]
     })
     charts.push(chart)
   }
@@ -286,8 +260,8 @@ function initCharts() {
   if (modulePieRef.value) {
     const chart = echarts.init(modulePieRef.value)
     chart.setOption({
-      tooltip: { trigger: 'item', formatter: '{b}: {c}人 ({d}%)' },
-      series: [{ type: 'pie', radius: ['40%', '70%'], data: moduleData.map(m => ({ name: m.name, value: m.users, itemStyle: { color: m.color } })), label: { color: textColor, fontSize: 11 }, emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.2)' } } }]
+      tooltip: { trigger: 'item', formatter: '{b}: {c}人 ({d}%)', backgroundColor: '#12121f', borderColor: '#1a1a2e', textStyle: { color: '#a0a0cc' } },
+      series: [{ type: 'pie', radius: ['40%', '70%'], data: moduleData.map(m => ({ name: m.name, value: m.users, itemStyle: { color: m.color } })), label: { color: '#8888aa', fontSize: 11 }, emphasis: { itemStyle: { shadowBlur: 20, shadowColor: 'rgba(0,240,255,0.3)' } } }]
     })
     charts.push(chart)
   }
@@ -296,8 +270,8 @@ function initCharts() {
   if (revenuePieRef.value) {
     const chart = echarts.init(revenuePieRef.value)
     chart.setOption({
-      tooltip: { trigger: 'item', formatter: '{b}: ¥{c} ({d}%)' },
-      series: [{ type: 'pie', radius: ['40%', '70%'], data: moduleData.map(m => ({ name: m.name, value: m.revenue, itemStyle: { color: m.color } })), label: { color: textColor, fontSize: 11 }, emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.2)' } } }]
+      tooltip: { trigger: 'item', formatter: '{b}: ¥{c} ({d}%)', backgroundColor: '#12121f', borderColor: '#1a1a2e', textStyle: { color: '#a0a0cc' } },
+      series: [{ type: 'pie', radius: ['40%', '70%'], data: moduleData.map(m => ({ name: m.name, value: m.revenue, itemStyle: { color: m.color } })), label: { color: '#8888aa', fontSize: 11 }, emphasis: { itemStyle: { shadowBlur: 20, shadowColor: 'rgba(0,240,255,0.3)' } } }]
     })
     charts.push(chart)
   }
@@ -306,9 +280,9 @@ function initCharts() {
   if (moduleBarRef.value) {
     const chart = echarts.init(moduleBarRef.value)
     chart.setOption({
-      tooltip: { trigger: 'axis' },
+      tooltip: { trigger: 'axis', backgroundColor: '#12121f', borderColor: '#1a1a2e', textStyle: { color: '#a0a0cc' } },
       grid: { top: 10, right: 10, bottom: 30, left: 80 },
-      xAxis: { type: 'value', axisLabel: { color: textColor, fontSize: 11 }, splitLine: { lineStyle: { color: '#f3f4f6' } } },
+      xAxis: { type: 'value', axisLabel: { color: textColor, fontSize: 11 }, splitLine: { lineStyle: { color: gridColor } } },
       yAxis: { type: 'category', data: moduleData.map(m => m.name).reverse(), axisLabel: { color: textColor, fontSize: 11 } },
       series: [{ type: 'bar', data: moduleData.map(m => m.users).reverse(), itemStyle: { color: (_: any, i: any) => moduleData[moduleData.length - 1 - i.dataIndex].color, borderRadius: [0, 4, 4, 0] }, barWidth: 16 }]
     })
@@ -317,17 +291,15 @@ function initCharts() {
 }
 
 function renderFallbackCharts() {
-  // 当 ECharts 不可用时，显示简单文本替代
   const refs = [userChartRef, revenueChartRef, modulePieRef, revenuePieRef, moduleBarRef]
   refs.forEach(r => {
-    if (r.value) r.value.innerHTML = '<div class="flex items-center justify-center h-full text-gray-400 text-sm">📊 图表加载中... (需安装 echarts)</div>'
+    if (r.value) r.value.innerHTML = '<div class="flex items-center justify-center h-full text-[#4a4a6a] text-sm">📊 图表加载中...</div>'
   })
 }
 
 function resizeCharts() { charts.forEach(c => c?.resize()) }
 
 onMounted(async () => {
-  // 尝试动态加载 ECharts
   if (!(window as any).echarts) {
     try {
       await new Promise<void>((resolve, reject) => {
@@ -349,3 +321,274 @@ onBeforeUnmount(() => {
   charts.forEach(c => c?.dispose())
 })
 </script>
+
+<style scoped>
+.cyber-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.cyber-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.cyber-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.cyber-card {
+  background: #12121f;
+  border: 1px solid #1a1a2e;
+  border-radius: 12px;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.3s;
+}
+
+.cyber-card:hover {
+  border-color: #2a2a4e;
+}
+
+/* Stat Cards */
+.cyber-stat-card {
+  padding: 0;
+}
+
+.stat-glow {
+  position: absolute;
+  top: -20px; right: -20px;
+  width: 100px; height: 100px;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.stat-content {
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #6a6a8a;
+  margin-bottom: 6px;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 800;
+  font-family: 'Courier New', monospace;
+}
+
+.stat-change {
+  font-size: 11px;
+  margin-top: 4px;
+}
+
+.change-up { color: #00ff88; }
+.change-down { color: #ff4466; }
+
+.stat-icon {
+  width: 48px; height: 48px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid #1a1a2e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+/* Alerts */
+.cyber-alert {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  border: 1px solid;
+}
+
+.alert-warning {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
+}
+
+.alert-danger {
+  background: rgba(255, 68, 102, 0.08);
+  border-color: rgba(255, 68, 102, 0.2);
+  color: #ff4466;
+}
+
+.alert-metric { font-weight: 600; }
+.alert-detail { color: #6a6a8a; font-size: 12px; }
+.alert-sep { color: #2a2a4e; }
+.alert-msg { flex: 1; color: #8888aa; font-size: 12px; }
+
+/* Card Header */
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #e0e0ff;
+}
+
+.mb-4 { margin-bottom: 16px; }
+
+/* Range Buttons */
+.range-btns {
+  display: flex;
+  gap: 4px;
+}
+
+.cyber-btn-sm {
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  background: transparent;
+  border: 1px solid #1a1a2e;
+  color: #6a6a8a;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cyber-btn-sm:hover {
+  border-color: #00f0ff44;
+  color: #00f0ff;
+}
+
+.cyber-btn-active {
+  background: rgba(0, 240, 255, 0.1) !important;
+  border-color: #00f0ff !important;
+  color: #00f0ff !important;
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.2);
+}
+
+/* Rankings */
+.ranking-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ranking-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rank-badge {
+  width: 22px; height: 22px;
+  border-radius: 6px;
+  background: #1a1a2e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: #4a4a6a;
+  flex-shrink: 0;
+}
+
+.rank-top {
+  background: linear-gradient(135deg, #f59e0b, #ff6b00);
+  color: #fff;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
+}
+
+.rank-name {
+  flex: 1;
+  font-size: 12px;
+  color: #a0a0cc;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rank-bar {
+  width: 60px; height: 4px;
+  background: #1a1a2e;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.rank-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00f0ff, #7c3aed);
+  border-radius: 2px;
+}
+
+.rank-value {
+  font-size: 11px;
+  color: #6a6a8a;
+  width: 50px;
+  text-align: right;
+  font-family: 'Courier New', monospace;
+}
+
+/* Log */
+.log-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.log-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #1a1a2e;
+}
+
+.log-item:last-child { border-bottom: none; }
+
+.log-tag {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.log-tag-user { background: rgba(0, 240, 255, 0.1); color: #00f0ff; }
+.log-tag-order { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+.log-tag-tool { background: rgba(124, 58, 237, 0.1); color: #c084fc; }
+.log-tag-content { background: rgba(0, 255, 136, 0.1); color: #00ff88; }
+.log-tag-system { background: rgba(100, 100, 140, 0.1); color: #6a6a8a; }
+
+.log-action {
+  flex: 1;
+  font-size: 13px;
+  color: #a0a0cc;
+}
+
+.log-operator {
+  font-size: 11px;
+  color: #4a4a6a;
+}
+
+.log-time {
+  font-size: 11px;
+  color: #4a4a6a;
+  font-family: 'Courier New', monospace;
+}
+
+.text-green-400 { color: #00ff88; }
+.text-cyan-400 { color: #00f0ff; }
+</style>
