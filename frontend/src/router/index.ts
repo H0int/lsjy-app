@@ -147,7 +147,7 @@ const router = createRouter({
 })
 
 // 路由守卫
-router.beforeEach((to, _from, next) => {
+router.beforeEach(async (to, _from, next) => {
   document.title = `${(to.meta.title as string) || '罗圣纪元'} - 罗圣纪元SaaS平台`
   const token = getToken()
 
