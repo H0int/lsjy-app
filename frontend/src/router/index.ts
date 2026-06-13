@@ -1,6 +1,9 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory, createWebHashHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import { getToken } from '@/utils'
+
+// 判断是否为 GitHub Pages 环境
+const isGitHubPages = import.meta.env.PROD && (import.meta.env.BASE_URL.includes('/lsjy-app/') || window.location.hostname.includes('github.io'))
 
 const routes: RouteRecordRaw[] = [
   {
@@ -141,7 +144,7 @@ const routes: RouteRecordRaw[] = [
 ]
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: isGitHubPages ? createWebHashHistory() : createWebHistory('/'),
   routes,
   scrollBehavior: () => ({ top: 0 })
 })
@@ -160,10 +163,8 @@ router.beforeEach(async (to, _from, next) => {
   // 管理后台：检查token + 管理员角色
   if (to.matched.some(r => r.meta.requiresAdmin)) {
     if (!token) return next('/login')
-    // 动态导入store检查admin权限
     const { useAuthStore } = await import('@/stores/auth')
     const authStore = useAuthStore()
-    // 如果用户信息未加载，先获取
     if (!authStore.user) {
       await authStore.fetchUserProfile()
     }
