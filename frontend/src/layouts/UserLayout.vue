@@ -1,41 +1,46 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-dark-200 transition-colors">
-    <!-- 顶部导航栏 -->
-    <header class="fixed top-0 left-0 right-0 z-50 bg-white/90 dark:bg-dark-100/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-700">
+  <div class="min-h-screen cyber-circuit-bg" style="background-color: var(--cyber-bg);">
+    <!-- 顶部导航栏 - 赛博朋克 -->
+    <header class="fixed top-0 left-0 right-0 z-50" style="background: rgba(10, 10, 15, 0.92); backdrop-filter: blur(12px); border-bottom: 1px solid var(--cyber-border);">
       <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
         <!-- Logo -->
         <div class="flex items-center gap-3 cursor-pointer" @click="$router.push('/dashboard')">
-          <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center text-white font-bold text-lg">罗</div>
-          <span class="text-lg font-bold text-gray-900 dark:text-white hidden sm:block">罗圣纪元</span>
+          <div class="w-9 h-9 rounded-lg flex items-center justify-center text-black font-bold text-lg"
+            style="background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple)); box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);">罗</div>
+          <span class="text-lg font-bold hidden sm:block glow-cyan" style="color: var(--cyber-cyan); font-family: 'JetBrains Mono', monospace;">罗圣纪元</span>
         </div>
 
         <!-- 导航菜单 -->
         <nav class="hidden md:flex items-center gap-1">
           <router-link v-for="item in navItems" :key="item.path" :to="item.path"
-            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-            :class="isActive(item.path) ? 'bg-primary/10 text-primary' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-300'">
+            class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300"
+            :class="isActive(item.path)
+              ? 'cyber-nav-active'
+              : 'text-gray-400 hover:text-white'"
+            :style="isActive(item.path) ? 'color: var(--cyber-cyan); background: rgba(0,240,255,0.08); box-shadow: 0 0 10px rgba(0,240,255,0.15);' : ''">
             <span class="mr-1.5">{{ item.icon }}</span>{{ item.label }}
           </router-link>
         </nav>
 
         <!-- 右侧操作区 -->
         <div class="flex items-center gap-3">
-          <!-- 主题切换 -->
-          <button @click="appStore.toggleTheme()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-300 text-gray-500 dark:text-gray-400 transition-colors">
-            {{ appStore.theme === 'light' ? '🌙' : '☀️' }}
-          </button>
           <!-- 余额 -->
-          <div class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 text-sm font-medium">
+          <div class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium"
+            style="background: rgba(255, 184, 0, 0.1); border: 1px solid rgba(255, 184, 0, 0.3); color: var(--cyber-amber);">
             <span>⚡</span>
             <span>{{ authStore.coinBalance?.toFixed(1) || '0.0' }}</span>
           </div>
           <!-- 用户头像 -->
           <el-dropdown trigger="click">
-            <div class="flex items-center gap-2 cursor-pointer px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-300">
-              <div class="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center text-white text-sm font-medium">
+            <div class="flex items-center gap-2 cursor-pointer px-2 py-1 rounded-lg transition-all"
+              style="border: 1px solid transparent;"
+              @mouseover="($event.currentTarget as HTMLElement).style.borderColor='rgba(0,240,255,0.3)'"
+              @mouseleave="($event.currentTarget as HTMLElement).style.borderColor='transparent'">
+              <div class="w-8 h-8 rounded-full flex items-center justify-center text-black text-sm font-medium"
+                style="background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-magenta)); box-shadow: 0 0 8px rgba(0,240,255,0.3);">
                 {{ (authStore.nickname || 'U')[0] }}
               </div>
-              <span class="text-sm text-gray-700 dark:text-gray-300 hidden sm:block">{{ authStore.nickname }}</span>
+              <span class="text-sm hidden sm:block" style="color: var(--cyber-text);">{{ authStore.nickname }}</span>
             </div>
             <template #dropdown>
               <el-dropdown-menu>
@@ -48,18 +53,32 @@
           </el-dropdown>
         </div>
       </div>
+      <!-- 顶部扫描线装饰 -->
+      <div class="absolute bottom-0 left-0 right-0 h-px overflow-hidden">
+        <div class="h-full w-1/3 animate-scan"
+          style="background: linear-gradient(90deg, transparent, var(--cyber-cyan), transparent);"></div>
+      </div>
     </header>
 
-    <!-- 移动端底部导航 -->
-    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-dark-100 border-t border-gray-200 dark:border-gray-700 px-2 py-1">
-      <div class="flex justify-around">
+    <!-- 移动端底部导航 - 赛博朋克 -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-50"
+      style="background: rgba(10, 10, 15, 0.95); backdrop-filter: blur(12px); border-top: 1px solid var(--cyber-border);">
+      <div class="flex justify-around py-1">
         <router-link v-for="item in navItems" :key="item.path" :to="item.path"
-          class="flex flex-col items-center py-1.5 px-3 rounded-lg"
-          :class="isActive(item.path) ? 'text-primary' : 'text-gray-500 dark:text-gray-400'">
-          <span class="text-xl">{{ item.icon }}</span>
-          <span class="text-xs mt-0.5">{{ item.label }}</span>
+          class="flex flex-col items-center py-2 px-3 rounded-lg transition-all"
+          :style="isActive(item.path)
+            ? 'color: var(--cyber-cyan); text-shadow: 0 0 8px rgba(0,240,255,0.5);'
+            : 'color: var(--cyber-text-dim);'">
+          <span class="text-xl" :style="isActive(item.path) ? 'filter: drop-shadow(0 0 4px rgba(0,240,255,0.6));' : ''">{{ item.icon }}</span>
+          <span class="text-xs mt-0.5 font-medium">{{ item.label }}</span>
+          <!-- 活跃指示器 -->
+          <div v-if="isActive(item.path)" class="absolute bottom-1 w-4 h-0.5 rounded-full"
+            style="background: var(--cyber-cyan); box-shadow: 0 0 6px var(--cyber-cyan);"></div>
         </router-link>
       </div>
+      <!-- 顶部发光线 -->
+      <div class="absolute top-0 left-0 right-0 h-px"
+        style="background: linear-gradient(90deg, transparent, var(--cyber-cyan), var(--cyber-magenta), transparent);"></div>
     </nav>
 
     <!-- 主内容区 -->
@@ -102,4 +121,13 @@ function handleLogout() {
 <style scoped>
 .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+@keyframes scan-move {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(400%); }
+}
+
+.animate-scan {
+  animation: scan-move 4s ease-in-out infinite;
+}
 </style>
