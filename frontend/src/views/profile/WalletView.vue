@@ -89,7 +89,7 @@ const transactions = ref<CoinTransaction[]>([])
 onMounted(async () => {
   // 获取余额
   const balRes = await paymentApi.getBalance()
-  coinBalance.value = balRes.balance
+  coinBalance.value = balRes.data.balance
 
   // 获取套餐
   const pkgRes = await paymentApi.getPackages()
@@ -109,7 +109,7 @@ async function handleRecharge() {
     ElMessage.success(`充值订单已创建，订单号：${res.data.paymentTransaction.transactionNo}，金额：${res.data.paymentTransaction.amount}元`)
     // 刷新余额
     const balRes = await paymentApi.getBalance()
-    coinBalance.value = balRes.balance
+    coinBalance.value = balRes.data.balance
   } catch {
     // 错误由拦截器处理
   } finally {
@@ -126,7 +126,6 @@ async function loadTransactions() {
 }
 
 // watch showTransactions to lazy load
-import { watch } from 'vue'
 watch(showTransactions, (val) => {
   if (val && transactions.value.length === 0) loadTransactions()
 })

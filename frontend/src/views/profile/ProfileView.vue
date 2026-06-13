@@ -132,8 +132,15 @@ async function saveProfile() {
     await userApi.updateProfile({
       nickname: profileForm.nickname,
       bio: profileForm.bio,
-      gender: profileForm.gender
+      gender: profileForm.gender,
     })
+    // 注意：phone 和 email 的修改需要后端支持
+    if (profileForm.phone !== (authStore.user?.phone || '')) {
+      // TODO: 单独的手机号修改接口（需要验证码）
+    }
+    if (profileForm.email !== (authStore.user?.email || '')) {
+      // TODO: 单独的邮箱修改接口（需要验证邮件）
+    }
     await authStore.fetchUserProfile()
     ElMessage.success('保存成功')
   } catch {

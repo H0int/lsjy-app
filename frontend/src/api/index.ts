@@ -3,7 +3,9 @@ import { mockApi } from './mock'
 import type {
   ApiResponse, User, Tool, CoinTransaction, CoinAccount,
   PaymentTransaction, RechargePackage, LoginResult, TokenInfo,
-  PageResult, AiCallRecord, ToolCategory
+  PageResult, AiCallRecord, ToolCategory,
+  ChatMessage, ChatResult, ImageOptions, ImageResult,
+  ProviderStatus, ProviderModelGroup
 } from '@/types'
 
 const useMock = import.meta.env.VITE_MOCK === 'true'
@@ -92,7 +94,39 @@ export const toolApi = {
   /** GET /ai/quota/:toolId - 查询每日配额 */
   getQuota(toolId: number): Promise<ApiResponse<{ used: number; limit: number; date: string }>> {
     return service.get(`/ai/quota/${toolId}`).then(r => r.data)
-  }
+  },
+
+  /** POST /ai/tools/:toolId/chat - AI文本对话 */
+  chat(toolId: number, messages: ChatMessage[], options?: {
+    model?: string; temperature?: number; maxTokens?: number; stream?: boolean; systemPrompt?: string
+  }): Promise<ApiResponse<ChatResult>> {
+    return service.post(`/ai/tools/${toolId}/chat`, {
+      messages,
+      model: options?.model,
+      temperature: options?.temperature,
+      maxTokens: options?.maxTokens,
+      stream: options?.stream,
+      systemPrompt: options?.systemPrompt,
+    }).then(r => r.data)
+  },
+
+  /** POST /ai/tools/:toolId/generate - AI图像生成 */
+  generateImage(toolId: number, prompt: string, options?: ImageOptions): Promise<ApiResponse<ImageResult>> {
+    return service.post(`/ai/tools/${toolId}/generate`, {
+      prompt,
+      ...options,
+    }).then(r => r.data)
+  },
+
+  /** GET /ai/models - 获取所有可用模型 */
+  getModels(category?: string): Promise<ApiResponse<ProviderModelGroup[]>> {
+    return service.get('/ai/models', { params: { category } }).then(r => r.data)
+  },
+
+  /** GET /ai/providers - 获取Provider状态 */
+  getProviders(): Promise<ApiResponse<ProviderStatus[]>> {
+    return service.get('/ai/providers').then(r => r.data)
+  },
 }
 
 // ===== 支付API =====

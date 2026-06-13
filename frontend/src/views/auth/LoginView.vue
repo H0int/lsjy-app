@@ -19,7 +19,7 @@
           </el-form-item>
 
           <el-form-item>
-            <el-button type="primary" size="large" class="w-full" :loading="loading" @click="handleLogin"
+            <el-button type="primary" size="large" class="w-full" :loading="authStore.loading" @click="handleLogin"
               style="background: linear-gradient(135deg, #3b82f6, #2563eb); border: none;">
               登 录
             </el-button>
@@ -50,7 +50,6 @@ import type { FormInstance } from 'element-plus'
 const router = useRouter()
 const authStore = useAuthStore()
 
-const loading = ref(false)
 const formRef = ref<FormInstance>()
 
 const form = reactive({
@@ -65,12 +64,12 @@ const rules = {
 
 async function handleLogin() {
   if (!formRef.value) return
-  await formRef.value.validate(async (valid) => {
-    if (!valid) return
-    loading.value = true
+  try {
+    await formRef.value.validate()
     const success = await authStore.login(form.username, form.password)
-    loading.value = false
     if (success) router.push('/dashboard')
-  })
+  } catch {
+    // 验证失败，不执行登录
+  }
 }
 </script>

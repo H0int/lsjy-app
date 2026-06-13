@@ -379,3 +379,84 @@ export interface DashboardAlert {
   threshold: string
   message: string
 }
+
+// ===== AI Provider 相关类型 =====
+
+/** AI消息 */
+export interface ChatMessage {
+  role: 'system' | 'user' | 'assistant'
+  content: string
+  imageUrl?: string
+}
+
+/** 对话选项 */
+export interface ChatOptions {
+  model?: string
+  temperature?: number
+  maxTokens?: number
+  stream?: boolean
+  topP?: number
+  systemPrompt?: string
+  stop?: string[]
+}
+
+/** 对话响应 */
+export interface ChatResult {
+  content: string
+  usage: {
+    promptTokens: number
+    completionTokens: number
+    totalTokens: number
+  }
+  model: string
+  provider: string
+  durationMs: number
+  callRecordId: number
+  coinCost: number
+}
+
+/** 图像生成选项 */
+export interface ImageOptions {
+  size?: string
+  style?: string
+  count?: number
+  quality?: 'standard' | 'hd'
+  refImage?: string
+}
+
+/** 图像生成响应 */
+export interface ImageResult {
+  urls: string[]
+  model: string
+  provider: string
+  durationMs: number
+  callRecordId: number
+  coinCost: number
+}
+
+/** Provider状态 */
+export interface ProviderStatus {
+  name: string
+  displayName: string
+  status: 'healthy' | 'degraded' | 'down'
+  latencyMs?: number
+  lastError?: string
+}
+
+/** 模型信息 */
+export interface ModelInfo {
+  id: string
+  name: string
+  capabilities: ('text' | 'image' | 'code' | 'multimodal')[]
+  maxContextLength?: number
+  supportStream?: boolean
+  inputPrice?: number
+  outputPrice?: number
+}
+
+/** Provider模型组 */
+export interface ProviderModelGroup {
+  provider: string
+  providerName: string
+  models: ModelInfo[]
+}

@@ -71,15 +71,27 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useAppStore } from '@/stores/app'
+import { ElMessage } from 'element-plus'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const appStore = useAppStore()
+
+// 管理员身份校验（纵深防御）
+onMounted(async () => {
+  if (!authStore.user) {
+    await authStore.fetchUserProfile()
+  }
+  if (!authStore.isAdmin) {
+    ElMessage.error('无权访问管理后台')
+    router.push('/dashboard')
+  }
+})
 
 const menuGroups = [
   {
