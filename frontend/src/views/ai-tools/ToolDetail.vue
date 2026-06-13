@@ -1,32 +1,36 @@
 <template>
   <div class="max-w-5xl mx-auto px-4 py-6">
     <!-- 返回按钮 -->
-    <button @click="$router.back()" class="flex items-center gap-2 text-gray-500 hover:text-primary mb-4 transition-colors">
+    <button @click="$router.back()" class="flex items-center gap-2 mb-4 transition-colors"
+      style="color: var(--cyber-text-dim);"
+      @mouseover="($event.currentTarget as HTMLElement).style.color='var(--cyber-cyan)'"
+      @mouseleave="($event.currentTarget as HTMLElement).style.color='var(--cyber-text-dim)'">
       <span>←</span><span>返回</span>
     </button>
 
     <div v-if="loading" class="flex justify-center py-20">
-      <div class="animate-spin w-8 h-8 border-3 border-primary border-t-transparent rounded-full"></div>
+      <div class="pulse-glow w-8 h-8 rounded-full" style="background: var(--cyber-cyan);"></div>
     </div>
 
     <template v-else-if="tool">
-      <!-- 工具头部 -->
-      <div class="bg-white dark:bg-dark-100 rounded-2xl p-6 mb-6 shadow-sm">
+      <!-- 工具头部 - 赛博朋克 -->
+      <div class="cyber-card p-6 mb-6">
         <div class="flex items-start gap-4">
-          <div class="text-5xl">{{ tool.icon }}</div>
+          <div class="text-5xl" style="filter: drop-shadow(0 0 8px rgba(0,240,255,0.5));">{{ tool.icon }}</div>
           <div class="flex-1">
-            <div class="flex items-center gap-3 mb-1">
-              <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ tool.name }}</h1>
-              <span class="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-600">{{ toolTypeLabel(tool.toolType) }}</span>
-              <span class="text-xs px-2 py-1 rounded-full" :class="providerBadgeClass">
+            <div class="flex items-center gap-3 mb-1 flex-wrap">
+              <h1 class="text-2xl font-bold" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">{{ tool.name }}</h1>
+              <span class="text-xs px-2 py-1 rounded-full"
+                style="background: rgba(0,240,255,0.1); color: var(--cyber-cyan); border: 1px solid rgba(0,240,255,0.2);">{{ toolTypeLabel(tool.toolType) }}</span>
+              <span class="text-xs px-2 py-1 rounded-full" :style="providerBadgeStyle">
                 {{ providerDisplayName }}
               </span>
             </div>
-            <p class="text-gray-500 dark:text-gray-400 mb-3">{{ tool.description }}</p>
+            <p class="mb-3" style="color: var(--cyber-text-dim);">{{ tool.description }}</p>
             <div class="flex items-center gap-4 text-sm flex-wrap">
-              <span class="text-gray-400">{{ tool.modelId }}</span>
-              <span class="text-gray-400">{{ tool.usageCount.toLocaleString() }}次使用</span>
-              <span class="font-bold" :class="tool.isFree ? 'text-green-500' : 'text-amber-500'">
+              <span style="color: var(--cyber-text-dim);">{{ tool.modelId }}</span>
+              <span style="color: var(--cyber-text-dim);">{{ tool.usageCount.toLocaleString() }}次使用</span>
+              <span class="font-bold" :style="{ color: tool.isFree ? 'var(--cyber-green)' : 'var(--cyber-amber)' }">
                 {{ tool.isFree ? `免费(每日${tool.freeDailyLimit}次)` : `${tool.coinCost} 圣点/次` }}
               </span>
             </div>
@@ -35,9 +39,9 @@
       </div>
 
       <!-- 工具使用界面 -->
-      <div class="bg-white dark:bg-dark-100 rounded-2xl p-6 shadow-sm">
-        <h2 class="font-bold text-lg text-gray-900 dark:text-white mb-4">
-          {{ isImageTool ? '🎨 图像生成' : '💬 开始对话' }}
+      <div class="cyber-card p-6">
+        <h2 class="font-bold text-lg mb-4" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">
+          <span style="color: var(--cyber-cyan);">▍</span>{{ isImageTool ? '图像生成' : '开始对话' }}
         </h2>
 
         <!-- ===== 文本对话模式 ===== -->
@@ -47,9 +51,9 @@
             <div v-for="(msg, idx) in chatHistory" :key="idx"
               class="flex" :class="msg.role === 'user' ? 'justify-end' : 'justify-start'">
               <div class="max-w-[80%] rounded-2xl px-4 py-3 text-sm"
-                :class="msg.role === 'user'
-                  ? 'bg-primary text-white rounded-br-md'
-                  : 'bg-gray-100 dark:bg-dark-200 text-gray-700 dark:text-gray-300 rounded-bl-md'">
+                :style="msg.role === 'user'
+                  ? 'background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple)); color: #000; border-radius: 16px 16px 4px 16px;'
+                  : 'background: rgba(0,240,255,0.05); color: var(--cyber-text); border: 1px solid var(--cyber-border); border-radius: 16px 16px 16px 4px;'">
                 <div class="whitespace-pre-wrap leading-relaxed">{{ msg.content }}</div>
                 <div class="text-xs mt-1 opacity-60">
                   {{ msg.role === 'user' ? '我' : tool.name }}
@@ -64,40 +68,43 @@
               <el-input v-model="inputContent" type="textarea" :rows="3" :placeholder="inputPlaceholder"
                 class="w-full" :disabled="generating" @keydown.ctrl.enter="handleSend" />
               <div class="flex justify-between items-center mt-1">
-                <span class="text-xs text-gray-400">Ctrl+Enter 发送</span>
+                <span class="text-xs" style="color: var(--cyber-text-dim);">Ctrl+Enter 发送</span>
               </div>
             </div>
 
             <!-- 操作栏 -->
-            <div class="flex items-center justify-between pt-2">
+            <div class="flex items-center justify-between pt-2 flex-wrap gap-3">
               <div class="flex items-center gap-3">
-                <span class="text-sm text-gray-500">
-                  消耗：<strong :class="tool.isFree ? 'text-green-500' : 'text-amber-500'">
+                <span class="text-sm" style="color: var(--cyber-text-dim);">
+                  消耗：<strong :style="{ color: tool.isFree ? 'var(--cyber-green)' : 'var(--cyber-amber)' }">
                     {{ tool.isFree ? '免费' : `${tool.coinCost} 圣点` }}
                   </strong>
                 </span>
                 <button v-if="chatHistory.length > 0" @click="clearChat"
-                  class="text-xs text-gray-400 hover:text-red-400 transition-colors">
+                  class="text-xs transition-colors" style="color: var(--cyber-text-dim);"
+                  @mouseover="($event.currentTarget as HTMLElement).style.color='#ff4444'"
+                  @mouseleave="($event.currentTarget as HTMLElement).style.color='var(--cyber-text-dim)'">
                   🗑️ 清空对话
                 </button>
               </div>
               <el-button type="primary" size="large" :loading="generating" @click="handleSend"
                 :disabled="!inputContent.trim()"
-                style="background: linear-gradient(135deg, #3b82f6, #2563eb); border: none; min-width: 140px;">
+                style="min-width: 140px; height: 44px;">
                 {{ generating ? '生成中...' : '✨ 发送' }}
               </el-button>
             </div>
           </div>
 
-          <!-- 生成结果（非对话模式时的单独结果展示） -->
-          <div v-if="singleResult && !chatMode" class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+          <!-- 生成结果 -->
+          <div v-if="singleResult && !chatMode" class="mt-6 pt-6" style="border-top: 1px solid var(--cyber-border);">
             <div class="flex items-center justify-between mb-3">
-              <h3 class="font-bold text-gray-900 dark:text-white">生成结果</h3>
+              <h3 class="font-bold" style="color: var(--cyber-text);">生成结果</h3>
               <div class="flex gap-2">
                 <el-button size="small" @click="copyResult(singleResult)">📋 复制</el-button>
               </div>
             </div>
-            <div class="bg-gray-50 dark:bg-dark-200 rounded-xl p-4 text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
+            <div class="rounded-xl p-4 text-sm leading-relaxed whitespace-pre-wrap"
+              style="background: rgba(0,240,255,0.03); border: 1px solid var(--cyber-border); color: var(--cyber-text);">
               {{ singleResult }}
             </div>
           </div>
@@ -108,7 +115,7 @@
           <div class="space-y-4">
             <!-- Prompt输入 -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">画面描述</label>
+              <label class="block text-sm font-medium mb-2" style="color: var(--cyber-text-dim);">画面描述</label>
               <el-input v-model="imagePrompt" type="textarea" :rows="4"
                 placeholder="请描述您想生成的画面，越详细效果越好。例如：一只穿着宇航服的猫咪在月球上漫步，背景是地球，写实风格，4K高清"
                 class="w-full" :disabled="generating" />
@@ -117,7 +124,7 @@
             <!-- 参数设置 -->
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
-                <label class="block text-xs text-gray-500 mb-1">尺寸</label>
+                <label class="block text-xs mb-1" style="color: var(--cyber-text-dim);">尺寸</label>
                 <el-select v-model="imageSize" size="small" class="w-full">
                   <el-option label="1:1 正方形" value="1024x1024" />
                   <el-option label="16:9 横版" value="1792x1024" />
@@ -126,7 +133,7 @@
                 </el-select>
               </div>
               <div>
-                <label class="block text-xs text-gray-500 mb-1">风格</label>
+                <label class="block text-xs mb-1" style="color: var(--cyber-text-dim);">风格</label>
                 <el-select v-model="imageStyle" size="small" class="w-full">
                   <el-option label="自动" value="" />
                   <el-option label="写实" value="realistic" />
@@ -137,7 +144,7 @@
                 </el-select>
               </div>
               <div>
-                <label class="block text-xs text-gray-500 mb-1">数量</label>
+                <label class="block text-xs mb-1" style="color: var(--cyber-text-dim);">数量</label>
                 <el-select v-model="imageCount" size="small" class="w-full">
                   <el-option :label="'1张'" :value="1" />
                   <el-option :label="'2张'" :value="2" />
@@ -145,7 +152,7 @@
                 </el-select>
               </div>
               <div>
-                <label class="block text-xs text-gray-500 mb-1">质量</label>
+                <label class="block text-xs mb-1" style="color: var(--cyber-text-dim);">质量</label>
                 <el-select v-model="imageQuality" size="small" class="w-full">
                   <el-option label="标准" value="standard" />
                   <el-option label="高清 HD" value="hd" />
@@ -154,38 +161,41 @@
             </div>
 
             <!-- 生成按钮 -->
-            <div class="flex items-center justify-between pt-2">
-              <span class="text-sm text-gray-500">
-                消耗：<strong :class="tool.isFree ? 'text-green-500' : 'text-amber-500'">
+            <div class="flex items-center justify-between pt-2 flex-wrap gap-3">
+              <span class="text-sm" style="color: var(--cyber-text-dim);">
+                消耗：<strong :style="{ color: tool.isFree ? 'var(--cyber-green)' : 'var(--cyber-amber)' }">
                   {{ tool.isFree ? '免费' : `${tool.coinCost * imageCount} 圣点` }}
                 </strong>
               </span>
               <el-button type="primary" size="large" :loading="generating" @click="handleGenerateImage"
                 :disabled="!imagePrompt.trim()"
-                style="background: linear-gradient(135deg, #8b5cf6, #7c3aed); border: none; min-width: 160px;">
+                style="min-width: 160px; height: 44px; background: linear-gradient(135deg, var(--cyber-magenta), var(--cyber-purple)) !important;">
                 {{ generating ? '生成中...' : '🎨 开始生成' }}
               </el-button>
             </div>
           </div>
 
           <!-- 生成的图片 -->
-          <div v-if="generatedImages.length > 0" class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+          <div v-if="generatedImages.length > 0" class="mt-6 pt-6" style="border-top: 1px solid var(--cyber-border);">
             <div class="flex items-center justify-between mb-4">
-              <h3 class="font-bold text-gray-900 dark:text-white">生成结果</h3>
+              <h3 class="font-bold" style="color: var(--cyber-text);">生成结果</h3>
               <el-button size="small" @click="generatedImages = []">🗑️ 清除</el-button>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div v-for="(url, idx) in generatedImages" :key="idx"
-                class="relative group rounded-xl overflow-hidden bg-gray-100 dark:bg-dark-200">
+                class="relative group rounded-xl overflow-hidden cyber-card">
                 <img :src="url" :alt="`生成图片 ${idx + 1}`" class="w-full h-auto" />
-                <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  style="background: rgba(0,0,0,0.6);">
                   <div class="flex gap-2">
                     <a :href="url" target="_blank" download
-                      class="px-3 py-1.5 bg-white/90 rounded-lg text-sm font-medium hover:bg-white transition-colors">
+                      class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
+                      style="background: rgba(255,255,255,0.9); color: #000;">
                       ⬇️ 下载
                     </a>
                     <button @click="copyResult(url)"
-                      class="px-3 py-1.5 bg-white/90 rounded-lg text-sm font-medium hover:bg-white transition-colors">
+                      class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
+                      style="background: rgba(255,255,255,0.9); color: #000;">
                       📋 复制链接
                     </button>
                   </div>
@@ -196,7 +206,8 @@
         </template>
 
         <!-- 消耗提示 -->
-        <div v-if="lastCoinCost > 0" class="mt-4 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 text-sm text-amber-700 dark:text-amber-300">
+        <div v-if="lastCoinCost > 0" class="mt-4 p-3 rounded-xl text-sm"
+          style="background: rgba(255,184,0,0.08); border: 1px solid rgba(255,184,0,0.2); color: var(--cyber-amber);">
           💰 本次消耗 {{ lastCoinCost }} 圣点 | 耗时 {{ lastDurationMs }}ms | 模型: {{ lastModel }}
         </div>
       </div>
@@ -238,7 +249,7 @@ const lastModel = ref('')
 
 // ===== 计算属性 =====
 const isImageTool = computed(() => tool.value?.toolType === 'image')
-const result = ref('') // 兼容旧代码
+const result = ref('')
 
 const providerDisplayName = computed(() => {
   if (!tool.value) return ''
@@ -251,15 +262,15 @@ const providerDisplayName = computed(() => {
   return map[tool.value.provider] || tool.value.provider
 })
 
-const providerBadgeClass = computed(() => {
-  if (!tool.value) return 'bg-gray-100 text-gray-600'
+const providerBadgeStyle = computed(() => {
+  if (!tool.value) return 'background: rgba(136,136,170,0.1); color: var(--cyber-text-dim);'
   const map: Record<string, string> = {
-    doubao: 'bg-blue-100 text-blue-600',
-    jimeng: 'bg-purple-100 text-purple-600',
-    openai: 'bg-green-100 text-green-600',
-    tongyi: 'bg-orange-100 text-orange-600',
+    doubao: 'background: rgba(0,240,255,0.1); color: var(--cyber-cyan); border: 1px solid rgba(0,240,255,0.2);',
+    jimeng: 'background: rgba(255,0,255,0.1); color: var(--cyber-magenta); border: 1px solid rgba(255,0,255,0.2);',
+    openai: 'background: rgba(0,255,136,0.1); color: var(--cyber-green); border: 1px solid rgba(0,255,136,0.2);',
+    tongyi: 'background: rgba(255,184,0,0.1); color: var(--cyber-amber); border: 1px solid rgba(255,184,0,0.2);',
   }
-  return map[tool.value.provider] || 'bg-gray-100 text-gray-600'
+  return (map[tool.value.provider] || 'background: rgba(136,136,170,0.1); color: var(--cyber-text-dim);') + ' border: 1px solid transparent;'
 })
 
 const inputPlaceholder = computed(() => {
@@ -290,7 +301,6 @@ async function handleSend() {
     const assistantContent = res.data.content || '生成完成，暂无详细输出'
     chatHistory.value.push({ role: 'assistant', content: assistantContent })
 
-    // 更新消耗信息
     lastCoinCost.value = res.data.coinCost || 0
     lastDurationMs.value = res.data.durationMs || 0
     lastModel.value = res.data.model || tool.value.modelId
@@ -299,10 +309,8 @@ async function handleSend() {
     await nextTick()
     scrollToBottom()
   } catch {
-    // 错误由拦截器处理
-    // 移除最后一条用户消息（因为失败了）
     chatHistory.value.pop()
-    inputContent.value = userMessage // 恢复输入
+    inputContent.value = userMessage
   } finally {
     generating.value = false
   }
@@ -339,7 +347,6 @@ async function handleGenerateImage() {
 
     ElMessage.success(`成功生成 ${generatedImages.value.length} 张图片！`)
   } catch {
-    // 错误由拦截器处理
   } finally {
     generating.value = false
   }
@@ -366,7 +373,6 @@ async function handleGenerate() {
     result.value = res.data.outputText || '生成完成，暂无详细输出'
     ElMessage.success('生成完成！')
   } catch {
-    // 错误由拦截器处理
   } finally {
     generating.value = false
   }
