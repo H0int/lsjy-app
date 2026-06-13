@@ -1,91 +1,87 @@
 <template>
   <div>
     <!-- 统计卡片 -->
-    <div class="grid grid-cols-4 gap-4 mb-4">
-      <div class="bg-white dark:bg-dark-100 rounded-xl p-4 shadow-sm">
-        <p class="text-sm text-gray-500">有效优惠券</p>
-        <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1">{{ list.filter(c => c.status === 'active').length }}</p>
+    <div class="cyber-grid-4 mb-4">
+      <div class="cyber-stat-mini">
+        <p class="stat-lbl">有效优惠券</p>
+        <p class="stat-num text-white">{{ list.filter(c => c.status === 'active').length }}</p>
       </div>
-      <div class="bg-white dark:bg-dark-100 rounded-xl p-4 shadow-sm">
-        <p class="text-sm text-gray-500">总发放量</p>
-        <p class="text-2xl font-bold text-blue-600 mt-1">{{ list.reduce((s, c) => s + c.totalQuantity, 0).toLocaleString() }}</p>
+      <div class="cyber-stat-mini">
+        <p class="stat-lbl">总发放量</p>
+        <p class="stat-num text-cyan-400">{{ list.reduce((s, c) => s + c.totalQuantity, 0).toLocaleString() }}</p>
       </div>
-      <div class="bg-white dark:bg-dark-100 rounded-xl p-4 shadow-sm">
-        <p class="text-sm text-gray-500">已使用</p>
-        <p class="text-2xl font-bold text-green-600 mt-1">{{ list.reduce((s, c) => s + c.usedQuantity, 0).toLocaleString() }}</p>
+      <div class="cyber-stat-mini">
+        <p class="stat-lbl">已使用</p>
+        <p class="stat-num text-green-400">{{ list.reduce((s, c) => s + c.usedQuantity, 0).toLocaleString() }}</p>
       </div>
-      <div class="bg-white dark:bg-dark-100 rounded-xl p-4 shadow-sm">
-        <p class="text-sm text-gray-500">使用率</p>
-        <p class="text-2xl font-bold text-amber-600 mt-1">{{ usageRate }}%</p>
+      <div class="cyber-stat-mini">
+        <p class="stat-lbl">使用率</p>
+        <p class="stat-num text-amber-400">{{ usageRate }}%</p>
       </div>
     </div>
 
     <!-- 操作栏 -->
-    <div class="flex items-center justify-between mb-4">
-      <div class="flex gap-3">
-        <select v-model="filterType" class="border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-dark-200 text-gray-700 dark:text-gray-200">
-          <option value="">全部类型</option>
-          <option value="full_reduce">满减券</option>
-          <option value="discount">折扣券</option>
-          <option value="coin_gift">圣点赠送</option>
-        </select>
-      </div>
-      <button @click="showDialog = true" class="bg-primary text-white px-4 py-2 rounded-lg text-sm hover:opacity-90">+ 创建优惠券</button>
+    <div class="cyber-toolbar">
+      <select v-model="filterType" class="cyber-select">
+        <option value="">全部类型</option>
+        <option value="full_reduce">满减券</option>
+        <option value="discount">折扣券</option>
+        <option value="coin_gift">圣点赠送</option>
+      </select>
+      <button @click="showDialog = true" class="cyber-btn cyber-btn-cyan">+ 创建优惠券</button>
     </div>
 
     <!-- 优惠券列表 -->
-    <div class="grid md:grid-cols-2 gap-4">
-      <div v-for="coupon in list" :key="coupon.id" class="bg-white dark:bg-dark-100 rounded-xl shadow-sm overflow-hidden">
-        <div class="flex">
-          <div class="w-28 flex flex-col items-center justify-center text-white" :class="couponTypeBg(coupon.type)">
-            <span class="text-2xl font-bold">{{ coupon.type === 'discount' ? coupon.discountValue + '折' : coupon.type === 'coin_gift' ? '+' + coupon.discountValue : '¥' + coupon.discountValue }}</span>
-            <span class="text-xs opacity-80 mt-1">{{ couponTypeLabel(coupon.type) }}</span>
+    <div class="cyber-grid-2">
+      <div v-for="coupon in list" :key="coupon.id" class="cyber-coupon-card">
+        <div class="coupon-value-side" :class="'coupon-bg-' + coupon.type">
+          <span class="coupon-value">{{ coupon.type === 'discount' ? coupon.discountValue + '折' : coupon.type === 'coin_gift' ? '+' + coupon.discountValue : '¥' + coupon.discountValue }}</span>
+          <span class="coupon-type-label">{{ couponTypeLabel(coupon.type) }}</span>
+        </div>
+        <div class="coupon-info">
+          <div class="flex items-center justify-between mb-1">
+            <h3 class="font-semibold text-white text-sm">{{ coupon.name }}</h3>
+            <span class="cyber-badge" :class="coupon.status === 'active' ? 'badge-active' : coupon.status === 'paused' ? 'badge-paused' : 'badge-expired'">{{ couponStatusLabel(coupon.status) }}</span>
           </div>
-          <div class="flex-1 p-4">
-            <div class="flex items-center justify-between mb-1">
-              <h3 class="font-semibold text-gray-900 dark:text-white text-sm">{{ coupon.name }}</h3>
-              <span class="px-2 py-0.5 rounded-full text-xs" :class="coupon.status === 'active' ? 'bg-green-100 text-green-700' : coupon.status === 'paused' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500'">{{ couponStatusLabel(coupon.status) }}</span>
-            </div>
-            <p class="text-xs text-gray-500 mb-2">{{ coupon.minAmount > 0 ? '满¥' + coupon.minAmount + '可用' : '无门槛' }} | 发放规则: {{ issueRuleLabel(coupon.issueRule) }}</p>
-            <div class="flex items-center justify-between">
-              <div class="text-xs text-gray-400">{{ coupon.usedQuantity }}/{{ coupon.totalQuantity }} 已领取</div>
-              <div class="text-xs text-gray-400">有效期至 {{ coupon.validTo }}</div>
-            </div>
-            <div class="mt-2 h-1.5 bg-gray-100 dark:bg-dark-300 rounded-full overflow-hidden">
-              <div class="h-full bg-primary rounded-full" :style="{ width: (coupon.usedQuantity / coupon.totalQuantity * 100) + '%' }"></div>
-            </div>
-            <div class="flex gap-2 mt-3">
-              <button @click="toggleStatus(coupon)" class="px-3 py-1 text-xs rounded-lg" :class="coupon.status === 'active' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'">{{ coupon.status === 'active' ? '暂停' : '启用' }}</button>
-              <button @click="handleDelete(coupon)" class="px-3 py-1 bg-red-100 text-red-700 text-xs rounded-lg">删除</button>
-            </div>
+          <p class="text-xs text-[#6a6a8a] mb-2">{{ coupon.minAmount > 0 ? '满¥' + coupon.minAmount + '可用' : '无门槛' }} | 发放规则: {{ issueRuleLabel(coupon.issueRule) }}</p>
+          <div class="flex items-center justify-between">
+            <div class="text-xs text-[#4a4a6a]">{{ coupon.usedQuantity }}/{{ coupon.totalQuantity }} 已领取</div>
+            <div class="text-xs text-[#4a4a6a]">有效期至 {{ coupon.validTo }}</div>
+          </div>
+          <div class="cyber-progress mt-2">
+            <div class="cyber-progress-fill" :style="{ width: (coupon.usedQuantity / coupon.totalQuantity * 100) + '%' }"></div>
+          </div>
+          <div class="flex gap-2 mt-3">
+            <button @click="toggleStatus(coupon)" class="cyber-btn-xs" :class="coupon.status === 'active' ? 'cyber-btn-amber' : 'cyber-btn-green'">{{ coupon.status === 'active' ? '暂停' : '启用' }}</button>
+            <button @click="handleDelete(coupon)" class="cyber-btn-xs cyber-btn-magenta">删除</button>
           </div>
         </div>
       </div>
     </div>
 
     <!-- 创建弹窗 -->
-    <div v-if="showDialog" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white dark:bg-dark-100 rounded-2xl p-6 w-full max-w-lg mx-4">
-        <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">创建优惠券</h3>
+    <div v-if="showDialog" class="cyber-overlay">
+      <div class="cyber-dialog">
+        <h3 class="dialog-title">创建优惠券</h3>
         <div class="space-y-4">
-          <div><label class="block text-sm text-gray-600 dark:text-gray-400 mb-1">名称</label><input v-model="form.name" class="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-dark-200 text-gray-700 dark:text-gray-200" /></div>
-          <div class="grid grid-cols-2 gap-4">
-            <div><label class="block text-sm text-gray-600 dark:text-gray-400 mb-1">类型</label><select v-model="form.type" class="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-dark-200 text-gray-700 dark:text-gray-200"><option value="full_reduce">满减券</option><option value="discount">折扣券</option><option value="coin_gift">圣点赠送</option></select></div>
-            <div><label class="block text-sm text-gray-600 dark:text-gray-400 mb-1">面值</label><input v-model.number="form.discountValue" type="number" class="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-dark-200 text-gray-700 dark:text-gray-200" /></div>
+          <div><label class="cyber-label">名称</label><input v-model="form.name" class="cyber-text-input w-full" /></div>
+          <div class="cyber-grid-2">
+            <div><label class="cyber-label">类型</label><select v-model="form.type" class="cyber-select w-full"><option value="full_reduce">满减券</option><option value="discount">折扣券</option><option value="coin_gift">圣点赠送</option></select></div>
+            <div><label class="cyber-label">面值</label><input v-model.number="form.discountValue" type="number" class="cyber-text-input w-full" /></div>
           </div>
-          <div class="grid grid-cols-2 gap-4">
-            <div><label class="block text-sm text-gray-600 dark:text-gray-400 mb-1">发放总量</label><input v-model.number="form.totalQuantity" type="number" class="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-dark-200 text-gray-700 dark:text-gray-200" /></div>
-            <div><label class="block text-sm text-gray-600 dark:text-gray-400 mb-1">最低消费</label><input v-model.number="form.minAmount" type="number" class="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-dark-200 text-gray-700 dark:text-gray-200" /></div>
+          <div class="cyber-grid-2">
+            <div><label class="cyber-label">发放总量</label><input v-model.number="form.totalQuantity" type="number" class="cyber-text-input w-full" /></div>
+            <div><label class="cyber-label">最低消费</label><input v-model.number="form.minAmount" type="number" class="cyber-text-input w-full" /></div>
           </div>
-          <div class="grid grid-cols-2 gap-4">
-            <div><label class="block text-sm text-gray-600 dark:text-gray-400 mb-1">生效时间</label><input v-model="form.validFrom" type="date" class="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-dark-200 text-gray-700 dark:text-gray-200" /></div>
-            <div><label class="block text-sm text-gray-600 dark:text-gray-400 mb-1">过期时间</label><input v-model="form.validTo" type="date" class="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-dark-200 text-gray-700 dark:text-gray-200" /></div>
+          <div class="cyber-grid-2">
+            <div><label class="cyber-label">生效时间</label><input v-model="form.validFrom" type="date" class="cyber-text-input w-full" /></div>
+            <div><label class="cyber-label">过期时间</label><input v-model="form.validTo" type="date" class="cyber-text-input w-full" /></div>
           </div>
-          <div><label class="block text-sm text-gray-600 dark:text-gray-400 mb-1">发放规则</label><select v-model="form.issueRule" class="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-dark-200 text-gray-700 dark:text-gray-200"><option value="new_user">新用户注册</option><option value="consume_threshold">消费满额</option><option value="activity">活动发放</option><option value="manual">手动发放</option></select></div>
+          <div><label class="cyber-label">发放规则</label><select v-model="form.issueRule" class="cyber-select w-full"><option value="new_user">新用户注册</option><option value="consume_threshold">消费满额</option><option value="activity">活动发放</option><option value="manual">手动发放</option></select></div>
         </div>
-        <div class="flex justify-end gap-3 mt-6">
-          <button @click="showDialog = false" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm">取消</button>
-          <button @click="handleCreate" class="px-4 py-2 bg-primary text-white rounded-lg text-sm hover:opacity-90">创建</button>
+        <div class="dialog-footer">
+          <button @click="showDialog = false" class="cyber-btn cyber-btn-ghost">取消</button>
+          <button @click="handleCreate" class="cyber-btn cyber-btn-cyan">创建</button>
         </div>
       </div>
     </div>
@@ -114,7 +110,6 @@ const usageRate = computed(() => {
 })
 
 function couponTypeLabel(t: string) { return { full_reduce: '满减券', discount: '折扣券', coin_gift: '圣点赠送' }[t] || t }
-function couponTypeBg(t: string) { return { full_reduce: 'bg-gradient-to-br from-red-500 to-orange-500', discount: 'bg-gradient-to-br from-blue-500 to-purple-500', coin_gift: 'bg-gradient-to-br from-green-500 to-teal-500' }[t] || 'bg-gray-500' }
 function couponStatusLabel(s: string) { return { active: '生效中', paused: '已暂停', expired: '已过期' }[s] || s }
 function issueRuleLabel(r: string) { return { new_user: '新用户', consume_threshold: '消费满额', activity: '活动发放', manual: '手动发放' }[r] || r }
 function toggleStatus(c: Coupon) { c.status = c.status === 'active' ? 'paused' : 'active' }
@@ -124,3 +119,91 @@ function handleCreate() {
   showDialog.value = false
 }
 </script>
+
+<style scoped>
+.cyber-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.cyber-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+
+.cyber-stat-mini {
+  background: #12121f; border: 1px solid #1a1a2e; border-radius: 10px; padding: 16px; text-align: center;
+}
+.stat-num { font-size: 24px; font-weight: 800; font-family: 'Courier New', monospace; margin-top: 4px; }
+.stat-lbl { font-size: 11px; color: #6a6a8a; }
+
+.cyber-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+
+.cyber-select {
+  background: #0a0a14; border: 1px solid #1a1a2e; border-radius: 8px; padding: 8px 12px; font-size: 13px; color: #a0a0cc; outline: none;
+}
+.cyber-select:focus { border-color: #00f0ff; }
+.cyber-select option { background: #12121f; color: #a0a0cc; }
+
+.cyber-btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; border: 1px solid transparent; }
+.cyber-btn-cyan { background: rgba(0,240,255,0.1); color: #00f0ff; border-color: #00f0ff44; }
+.cyber-btn-cyan:hover { background: rgba(0,240,255,0.2); box-shadow: 0 0 12px rgba(0,240,255,0.3); }
+.cyber-btn-ghost { background: rgba(100,100,140,0.1); color: #8888aa; border-color: #2a2a4e; }
+.cyber-btn-ghost:hover { color: #c0c0ff; border-color: #4a4a6a; }
+
+.cyber-btn-xs { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.cyber-btn-green { background: rgba(0,255,136,0.1); color: #00ff88; border: 1px solid rgba(0,255,136,0.2); }
+.cyber-btn-green:hover { background: rgba(0,255,136,0.2); box-shadow: 0 0 8px rgba(0,255,136,0.3); }
+.cyber-btn-amber { background: rgba(245,158,11,0.1); color: #f59e0b; border: 1px solid rgba(245,158,11,0.2); }
+.cyber-btn-amber:hover { background: rgba(245,158,11,0.2); }
+.cyber-btn-magenta { background: rgba(255,0,255,0.1); color: #ff00ff; border: 1px solid rgba(255,0,255,0.2); }
+.cyber-btn-magenta:hover { background: rgba(255,0,255,0.2); box-shadow: 0 0 8px rgba(255,0,255,0.3); }
+
+/* Coupon Card */
+.cyber-coupon-card {
+  background: #12121f; border: 1px solid #1a1a2e; border-radius: 12px; overflow: hidden; display: flex;
+  transition: border-color 0.2s;
+}
+.cyber-coupon-card:hover { border-color: #2a2a4e; }
+
+.coupon-value-side {
+  width: 110px; display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.coupon-bg-full_reduce { background: linear-gradient(135deg, #ff4466, #f59e0b); }
+.coupon-bg-discount { background: linear-gradient(135deg, #7c3aed, #00f0ff); }
+.coupon-bg-coin_gift { background: linear-gradient(135deg, #00ff88, #00f0ff); }
+
+.coupon-value { font-size: 22px; font-weight: 800; color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.3); }
+.coupon-type-label { font-size: 10px; color: rgba(255,255,255,0.7); margin-top: 4px; }
+
+.coupon-info { flex: 1; padding: 16px; }
+
+.cyber-badge { padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.badge-active { background: rgba(0,255,136,0.1); color: #00ff88; border: 1px solid rgba(0,255,136,0.2); }
+.badge-paused { background: rgba(245,158,11,0.1); color: #f59e0b; border: 1px solid rgba(245,158,11,0.2); }
+.badge-expired { background: rgba(100,100,140,0.1); color: #6a6a8a; border: 1px solid #2a2a4e; }
+
+.cyber-progress { height: 4px; background: #1a1a2e; border-radius: 2px; overflow: hidden; }
+.cyber-progress-fill { height: 100%; background: linear-gradient(90deg, #00f0ff, #7c3aed); border-radius: 2px; transition: width 0.3s; }
+
+/* Dialog */
+.cyber-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 50; }
+.cyber-dialog { background: #12121f; border: 1px solid #1a1a2e; border-radius: 16px; padding: 24px; width: 100%; max-width: 520px; box-shadow: 0 0 40px rgba(0,240,255,0.05); }
+.dialog-title { font-size: 18px; font-weight: 700; color: #e0e0ff; margin-bottom: 20px; text-shadow: 0 0 10px rgba(0,240,255,0.2); }
+.cyber-label { display: block; font-size: 12px; color: #6a6a8a; margin-bottom: 6px; }
+.cyber-text-input { background: #0a0a14; border: 1px solid #1a1a2e; border-radius: 8px; padding: 8px 12px; font-size: 13px; color: #e0e0ff; outline: none; }
+.cyber-text-input:focus { border-color: #00f0ff; }
+.cyber-text-input::placeholder { color: #4a4a6a; }
+.dialog-footer { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; }
+.space-y-4 > * + * { margin-top: 16px; }
+.w-full { width: 100%; }
+.mb-1 { margin-bottom: 4px; }
+.mb-2 { margin-bottom: 8px; }
+.mt-2 { margin-top: 8px; }
+.mt-3 { margin-top: 12px; }
+.mb-4 { margin-bottom: 16px; }
+.gap-2 { gap: 8px; }
+.flex { display: flex; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.font-semibold { font-weight: 600; }
+.text-sm { font-size: 13px; }
+.text-xs { font-size: 11px; }
+.text-white { color: #fff; }
+.text-cyan-400 { color: #00f0ff; }
+.text-green-400 { color: #00ff88; }
+.text-amber-400 { color: #f59e0b; }
+</style>
