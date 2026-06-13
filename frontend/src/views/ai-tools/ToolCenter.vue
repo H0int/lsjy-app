@@ -19,7 +19,7 @@
 
     <!-- 分类标签 -->
     <div class="flex flex-wrap gap-2 mb-6">
-      <button v-for="cat in categoryList" :key="cat.id"
+      <button v-for="cat in categoryList" :key="cat.id ?? 'all'"
         @click="currentCategoryId = cat.id"
         class="px-4 py-2 rounded-full text-sm font-medium transition-all"
         :class="currentCategoryId === cat.id
