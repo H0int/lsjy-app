@@ -1944,7 +1944,6 @@ renderEmployeeAcct();
 /* 赛博背景网格(全局) */
 body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,245,255,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(0,245,255,.02) 1px,transparent 1px);background-size:60px 60px;z-index:0;pointer-events:none}
 </style>
-<link rel="stylesheet" href="lsjy-enhancements.css">
 
 <style id="mobile-first-overrides">
 /* ===== MOBILE-FIRST COMPLETE RESTRUCTURE ===== */
@@ -8357,22 +8356,7 @@ var _voiceRec=null;function startVoice(targetId){var target=document.getElementB
   function animate(){ctx.clearRect(0,0,c.width,c.height);for(var i=0;i<particles.length;i++){particles[i].update();particles[i].draw()}drawLines();requestAnimationFrame(animate)}
   animate();
 })();
-
-// ===== 主题切换 =====
-(function(){
-  var btn=document.getElementById('themeToggle');
-  var saved=localStorage.getItem('lsjy3_theme')||'dark';
-  if(saved==='light'){document.body.classList.add('light-mode');btn.innerHTML='&#9788;'}
-  btn.addEventListener('click',function(){
-    // 暂时禁用浅色模式，保持深色
-    toast('浅色模式开发中，请使用深色模式','info');
-    return;
-  });
-})();
 </script>
-
-
- 
 
 
 <div class="tech-particles" id="techParticles"></div>
