@@ -1,9 +1,9 @@
 <template>
   <div class="max-w-4xl">
-    <div class="bg-white dark:bg-dark-100 rounded-xl p-6 shadow-sm mb-6">
-      <h3 class="font-bold text-gray-900 dark:text-white mb-4">⚙️ 基础配置</h3>
+    <div class="cyber-card mb-6">
+      <h3 class="card-title mb-4">⚙️ 基础配置</h3>
       <el-form label-position="top">
-        <div class="grid sm:grid-cols-2 gap-4">
+        <div class="cyber-grid-2">
           <el-form-item label="平台名称">
             <el-input v-model="settings.platformName" />
           </el-form-item>
@@ -20,10 +20,10 @@
       </el-form>
     </div>
 
-    <div class="bg-white dark:bg-dark-100 rounded-xl p-6 shadow-sm mb-6">
-      <h3 class="font-bold text-gray-900 dark:text-white mb-4">💰 计费配置</h3>
+    <div class="cyber-card mb-6">
+      <h3 class="card-title mb-4">💰 计费配置</h3>
       <el-form label-position="top">
-        <div class="grid sm:grid-cols-2 gap-4">
+        <div class="cyber-grid-2">
           <el-form-item label="默认算力单价（元）">
             <el-input-number v-model="settings.unitPrice" :min="0.1" :step="0.1" class="w-full" />
           </el-form-item>
@@ -38,8 +38,8 @@
       </el-form>
     </div>
 
-    <div class="bg-white dark:bg-dark-100 rounded-xl p-6 shadow-sm mb-6">
-      <h3 class="font-bold text-gray-900 dark:text-white mb-4">🔔 通知配置</h3>
+    <div class="cyber-card mb-6">
+      <h3 class="card-title mb-4">🔔 通知配置</h3>
       <el-form label-position="top">
         <el-form-item label="开启邮件通知">
           <el-switch v-model="settings.emailNotify" />
@@ -50,7 +50,9 @@
       </el-form>
     </div>
 
-    <el-button type="primary" size="large" @click="saveSettings">保存配置</el-button>
+    <button @click="saveSettings" class="cyber-btn cyber-btn-cyan cyber-btn-save">
+      💾 保存配置
+    </button>
   </div>
 </template>
 
@@ -73,3 +75,56 @@ function saveSettings() {
   ElMessage.success('配置已保存')
 }
 </script>
+
+<style scoped>
+.max-w-4xl { max-width: 900px; }
+
+.cyber-card {
+  background: #12121f;
+  border: 1px solid #1a1a2e;
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #e0e0ff;
+}
+
+.cyber-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.cyber-btn {
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+}
+
+.cyber-btn-cyan {
+  background: rgba(0, 240, 255, 0.1);
+  color: #00f0ff;
+  border-color: #00f0ff55;
+}
+
+.cyber-btn-cyan:hover {
+  background: rgba(0, 240, 255, 0.2);
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+}
+
+.cyber-btn-save {
+  font-size: 15px;
+  padding: 14px 32px;
+}
+
+.mb-6 { margin-bottom: 24px; }
+.mb-4 { margin-bottom: 16px; }
+.w-full { width: 100%; }
+</style>
