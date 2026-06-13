@@ -1,44 +1,46 @@
 <template>
   <div>
     <!-- 时间范围选择 -->
-    <div class="flex items-center gap-3 mb-4">
-      <button v-for="range in ranges" :key="range.value" @click="activeRange = range.value" class="px-4 py-2 rounded-lg text-sm" :class="activeRange === range.value ? 'bg-primary text-white' : 'bg-white dark:bg-dark-100 text-gray-600 dark:text-gray-400 hover:bg-gray-100'">{{ range.label }}</button>
+    <div class="cyber-toolbar">
+      <div class="tab-bar">
+        <button v-for="range in ranges" :key="range.value" @click="activeRange = range.value" class="cyber-tab" :class="{ 'cyber-tab-active': activeRange === range.value }">{{ range.label }}</button>
+      </div>
       <div class="flex-1" />
       <ExportButton filename="运营数据报表" :data="exportData" />
     </div>
 
     <!-- 汇总数据 -->
-    <div class="grid grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
-      <div v-for="metric in summaryMetrics" :key="metric.label" class="bg-white dark:bg-dark-100 rounded-xl p-4 shadow-sm">
-        <p class="text-xs text-gray-500">{{ metric.label }}</p>
-        <p class="text-xl font-bold text-gray-900 dark:text-white mt-1">{{ metric.value }}</p>
-        <p class="text-xs mt-1" :class="metric.change >= 0 ? 'text-green-500' : 'text-red-500'">{{ metric.change >= 0 ? '↑' : '↓' }} {{ Math.abs(metric.change) }}%</p>
+    <div class="cyber-grid-6 mb-6">
+      <div v-for="metric in summaryMetrics" :key="metric.label" class="cyber-stat-mini">
+        <p class="stat-lbl">{{ metric.label }}</p>
+        <p class="stat-num text-white">{{ metric.value }}</p>
+        <p class="stat-change" :class="metric.change >= 0 ? 'change-up' : 'change-down'">{{ metric.change >= 0 ? '↑' : '↓' }} {{ Math.abs(metric.change) }}%</p>
       </div>
     </div>
 
     <!-- 趋势图表区 -->
-    <div class="grid lg:grid-cols-2 gap-6 mb-6">
-      <div class="bg-white dark:bg-dark-100 rounded-xl p-5 shadow-sm">
-        <h3 class="font-bold text-gray-900 dark:text-white mb-4">用户增长趋势</h3>
-        <div class="space-y-2">
-          <div v-for="item in reportData" :key="item.period" class="flex items-center gap-3">
-            <span class="text-xs text-gray-400 w-20">{{ item.period }}</span>
-            <div class="flex-1 h-6 bg-gray-100 dark:bg-dark-300 rounded-full overflow-hidden">
-              <div class="h-full bg-gradient-to-r from-blue-400 to-primary rounded-full flex items-center justify-end pr-2" :style="{ width: (item.newUsers / maxUsers * 100) + '%' }">
-                <span v-if="item.newUsers / maxUsers > 0.15" class="text-xs text-white">{{ item.newUsers }}</span>
+    <div class="cyber-grid-2 mb-6">
+      <div class="cyber-card">
+        <h3 class="card-title mb-4">用户增长趋势</h3>
+        <div class="bar-chart">
+          <div v-for="item in reportData" :key="item.period" class="bar-row">
+            <span class="bar-label">{{ item.period }}</span>
+            <div class="bar-track">
+              <div class="bar-fill bar-fill-cyan" :style="{ width: (item.newUsers / maxUsers * 100) + '%' }">
+                <span v-if="item.newUsers / maxUsers > 0.15" class="bar-text">{{ item.newUsers }}</span>
               </div>
             </div>
           </div>
         </div>
       </div>
-      <div class="bg-white dark:bg-dark-100 rounded-xl p-5 shadow-sm">
-        <h3 class="font-bold text-gray-900 dark:text-white mb-4">营收趋势</h3>
-        <div class="space-y-2">
-          <div v-for="item in reportData" :key="item.period" class="flex items-center gap-3">
-            <span class="text-xs text-gray-400 w-20">{{ item.period }}</span>
-            <div class="flex-1 h-6 bg-gray-100 dark:bg-dark-300 rounded-full overflow-hidden">
-              <div class="h-full bg-gradient-to-r from-green-400 to-emerald-500 rounded-full flex items-center justify-end pr-2" :style="{ width: (item.revenue / maxRevenue * 100) + '%' }">
-                <span v-if="item.revenue / maxRevenue > 0.15" class="text-xs text-white">¥{{ item.revenue.toLocaleString() }}</span>
+      <div class="cyber-card">
+        <h3 class="card-title mb-4">营收趋势</h3>
+        <div class="bar-chart">
+          <div v-for="item in reportData" :key="item.period" class="bar-row">
+            <span class="bar-label">{{ item.period }}</span>
+            <div class="bar-track">
+              <div class="bar-fill bar-fill-green" :style="{ width: (item.revenue / maxRevenue * 100) + '%' }">
+                <span v-if="item.revenue / maxRevenue > 0.15" class="bar-text">¥{{ item.revenue.toLocaleString() }}</span>
               </div>
             </div>
           </div>
@@ -47,43 +49,43 @@
     </div>
 
     <!-- 详细数据表 -->
-    <div class="bg-white dark:bg-dark-100 rounded-xl shadow-sm overflow-hidden">
-      <div class="p-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
-        <h3 class="font-bold text-gray-900 dark:text-white">详细数据</h3>
+    <div class="cyber-card p-0 overflow-hidden">
+      <div class="table-header">
+        <h3 class="card-title">详细数据</h3>
         <ExportButton filename="详细运营数据" :data="exportData" />
       </div>
-      <table class="w-full text-sm">
-        <thead class="bg-gray-50 dark:bg-dark-200">
+      <table class="cyber-html-table">
+        <thead>
           <tr>
-            <th class="px-4 py-3 text-left text-gray-500">日期</th>
-            <th class="px-4 py-3 text-right text-gray-500">新增用户</th>
-            <th class="px-4 py-3 text-right text-gray-500">活跃用户</th>
-            <th class="px-4 py-3 text-right text-gray-500">营收(¥)</th>
-            <th class="px-4 py-3 text-right text-gray-500">圣点消耗</th>
-            <th class="px-4 py-3 text-right text-gray-500">订单数</th>
-            <th class="px-4 py-3 text-right text-gray-500">工具调用</th>
+            <th>日期</th>
+            <th class="text-right">新增用户</th>
+            <th class="text-right">活跃用户</th>
+            <th class="text-right">营收(¥)</th>
+            <th class="text-right">圣点消耗</th>
+            <th class="text-right">订单数</th>
+            <th class="text-right">工具调用</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
-          <tr v-for="item in reportData" :key="item.period" class="hover:bg-gray-50 dark:hover:bg-dark-200">
-            <td class="px-4 py-3 text-gray-700 dark:text-gray-300 font-medium">{{ item.period }}</td>
-            <td class="px-4 py-3 text-right text-gray-600 dark:text-gray-400">{{ item.newUsers.toLocaleString() }}</td>
-            <td class="px-4 py-3 text-right text-gray-600 dark:text-gray-400">{{ item.activeUsers.toLocaleString() }}</td>
-            <td class="px-4 py-3 text-right text-green-600 font-medium">{{ item.revenue.toLocaleString() }}</td>
-            <td class="px-4 py-3 text-right text-amber-600">{{ item.coinConsumed.toLocaleString() }}</td>
-            <td class="px-4 py-3 text-right text-gray-600 dark:text-gray-400">{{ item.orders.toLocaleString() }}</td>
-            <td class="px-4 py-3 text-right text-blue-600">{{ item.toolCalls.toLocaleString() }}</td>
+        <tbody>
+          <tr v-for="item in reportData" :key="item.period" class="table-row-hover">
+            <td class="text-white font-medium">{{ item.period }}</td>
+            <td class="text-right text-[#a0a0cc] font-mono">{{ item.newUsers.toLocaleString() }}</td>
+            <td class="text-right text-[#a0a0cc] font-mono">{{ item.activeUsers.toLocaleString() }}</td>
+            <td class="text-right text-green-400 font-medium font-mono">{{ item.revenue.toLocaleString() }}</td>
+            <td class="text-right text-amber-400 font-mono">{{ item.coinConsumed.toLocaleString() }}</td>
+            <td class="text-right text-[#a0a0cc] font-mono">{{ item.orders.toLocaleString() }}</td>
+            <td class="text-right text-cyan-400 font-mono">{{ item.toolCalls.toLocaleString() }}</td>
           </tr>
         </tbody>
-        <tfoot class="bg-gray-50 dark:bg-dark-200 font-semibold">
-          <tr>
-            <td class="px-4 py-3 text-gray-700 dark:text-gray-300">合计</td>
-            <td class="px-4 py-3 text-right">{{ reportData.reduce((s, i) => s + i.newUsers, 0).toLocaleString() }}</td>
-            <td class="px-4 py-3 text-right">-</td>
-            <td class="px-4 py-3 text-right text-green-600">¥{{ reportData.reduce((s, i) => s + i.revenue, 0).toLocaleString() }}</td>
-            <td class="px-4 py-3 text-right text-amber-600">{{ reportData.reduce((s, i) => s + i.coinConsumed, 0).toLocaleString() }}</td>
-            <td class="px-4 py-3 text-right">{{ reportData.reduce((s, i) => s + i.orders, 0).toLocaleString() }}</td>
-            <td class="px-4 py-3 text-right text-blue-600">{{ reportData.reduce((s, i) => s + i.toolCalls, 0).toLocaleString() }}</td>
+        <tfoot>
+          <tr class="table-footer-row">
+            <td class="text-white font-semibold">合计</td>
+            <td class="text-right font-mono font-semibold">{{ reportData.reduce((s, i) => s + i.newUsers, 0).toLocaleString() }}</td>
+            <td class="text-right font-mono">-</td>
+            <td class="text-right text-green-400 font-mono font-semibold">¥{{ reportData.reduce((s, i) => s + i.revenue, 0).toLocaleString() }}</td>
+            <td class="text-right text-amber-400 font-mono font-semibold">{{ reportData.reduce((s, i) => s + i.coinConsumed, 0).toLocaleString() }}</td>
+            <td class="text-right font-mono font-semibold">{{ reportData.reduce((s, i) => s + i.orders, 0).toLocaleString() }}</td>
+            <td class="text-right text-cyan-400 font-mono font-semibold">{{ reportData.reduce((s, i) => s + i.toolCalls, 0).toLocaleString() }}</td>
           </tr>
         </tfoot>
       </table>
@@ -139,3 +141,56 @@ const exportData = computed(() => reportData.value.map(r => ({
   '营收': r.revenue, '圣点消耗': r.coinConsumed, '订单数': r.orders, '工具调用': r.toolCalls
 })))
 </script>
+
+<style scoped>
+.cyber-toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.cyber-grid-6 { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; }
+.cyber-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+
+.cyber-stat-mini { background: #12121f; border: 1px solid #1a1a2e; border-radius: 10px; padding: 16px; text-align: center; }
+.stat-num { font-size: 20px; font-weight: 800; font-family: 'Courier New', monospace; margin-top: 4px; }
+.stat-lbl { font-size: 10px; color: #6a6a8a; letter-spacing: 0.5px; }
+.stat-change { font-size: 10px; margin-top: 2px; }
+.change-up { color: #00ff88; }
+.change-down { color: #ff4466; }
+
+.tab-bar { display: flex; gap: 4px; }
+.cyber-tab { padding: 8px 16px; border-radius: 8px; font-size: 13px; background: transparent; border: 1px solid #1a1a2e; color: #6a6a8a; cursor: pointer; transition: all 0.2s; }
+.cyber-tab:hover { border-color: #00f0ff44; color: #00f0ff; }
+.cyber-tab-active { background: rgba(0,240,255,0.1) !important; border-color: #00f0ff !important; color: #00f0ff !important; box-shadow: 0 0 8px rgba(0,240,255,0.2); }
+
+.cyber-card { background: #12121f; border: 1px solid #1a1a2e; border-radius: 12px; padding: 20px; }
+
+.card-title { font-size: 14px; font-weight: 700; color: #e0e0ff; }
+.mb-4 { margin-bottom: 16px; }
+.mb-6 { margin-bottom: 24px; }
+
+/* Bar Charts */
+.bar-chart { display: flex; flex-direction: column; gap: 8px; }
+.bar-row { display: flex; align-items: center; gap: 12px; }
+.bar-label { font-size: 11px; color: #4a4a6a; width: 60px; font-family: 'Courier New', monospace; }
+.bar-track { flex: 1; height: 22px; background: #1a1a2e; border-radius: 4px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 4px; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px; transition: width 0.3s; }
+.bar-fill-cyan { background: linear-gradient(90deg, #00f0ff44, #00f0ff); }
+.bar-fill-green { background: linear-gradient(90deg, #00ff8844, #00ff88); }
+.bar-text { font-size: 10px; color: #0a0a0f; font-weight: 700; }
+
+/* Table */
+.table-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid #1a1a2e; }
+.cyber-html-table { width: 100%; font-size: 13px; }
+.cyber-html-table th { padding: 12px 16px; text-align: left; color: #4a4a6a; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; background: rgba(26,26,46,0.3); border-bottom: 1px solid #1a1a2e; }
+.cyber-html-table td { padding: 12px 16px; border-bottom: 1px solid #1a1a2e; }
+.table-row-hover:hover { background: rgba(0,240,255,0.03); }
+.table-footer-row { background: rgba(26,26,46,0.3); }
+.table-footer-row td { border-bottom: none; }
+
+.text-right { text-align: right; }
+.flex-1 { flex: 1; }
+.text-white { color: #fff; }
+.text-green-400 { color: #00ff88; }
+.text-amber-400 { color: #f59e0b; }
+.text-cyan-400 { color: #00f0ff; }
+.font-medium { font-weight: 500; }
+.font-semibold { font-weight: 600; }
+.font-mono { font-family: 'Courier New', monospace; }
+</style>
