@@ -1,92 +1,91 @@
 <template>
   <div>
     <!-- 筛选栏 -->
-    <div class="bg-white dark:bg-dark-100 rounded-xl p-4 mb-4 shadow-sm flex flex-wrap gap-3 items-center">
-      <select v-model="filters.contentType" class="border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-dark-200 text-gray-700 dark:text-gray-200">
+    <div class="cyber-card cyber-toolbar">
+      <select v-model="filters.contentType" class="cyber-select">
         <option value="">全部内容类型</option>
         <option value="post">帖子</option>
         <option value="comment">评论</option>
         <option value="course">课程</option>
         <option value="product">商品</option>
       </select>
-      <select v-model="filters.status" class="border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-dark-200 text-gray-700 dark:text-gray-200">
+      <select v-model="filters.status" class="cyber-select">
         <option value="">全部状态</option>
         <option value="pending">待审核</option>
         <option value="approved">已通过</option>
         <option value="rejected">已拒绝</option>
         <option value="flagged">已标记</option>
       </select>
-      <input v-model="filters.keyword" type="text" placeholder="搜索标题/作者" class="border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-dark-200 text-gray-700 dark:text-gray-200 w-48" />
-      <button @click="handleSearch" class="bg-primary text-white px-4 py-2 rounded-lg text-sm hover:opacity-90">搜索</button>
+      <input v-model="filters.keyword" type="text" placeholder="搜索标题/作者" class="cyber-text-input" />
+      <button @click="handleSearch" class="cyber-btn cyber-btn-cyan">搜索</button>
       <div class="flex-1" />
-      <button v-if="selectedIds.length > 0" @click="handleBatchApprove" class="bg-green-500 text-white px-4 py-2 rounded-lg text-sm hover:opacity-90">批量通过 ({{ selectedIds.length }})</button>
-      <button v-if="selectedIds.length > 0" @click="handleBatchReject" class="bg-red-500 text-white px-4 py-2 rounded-lg text-sm hover:opacity-90">批量拒绝</button>
+      <button v-if="selectedIds.length > 0" @click="handleBatchApprove" class="cyber-btn cyber-btn-green">批量通过 ({{ selectedIds.length }})</button>
+      <button v-if="selectedIds.length > 0" @click="handleBatchReject" class="cyber-btn cyber-btn-magenta">批量拒绝</button>
     </div>
 
     <!-- 统计卡片 -->
-    <div class="grid grid-cols-4 gap-4 mb-4">
-      <div class="bg-white dark:bg-dark-100 rounded-xl p-4 shadow-sm text-center">
-        <p class="text-2xl font-bold text-amber-500">{{ stats.pending }}</p>
-        <p class="text-xs text-gray-500 mt-1">待审核</p>
+    <div class="cyber-grid-4 mb-4">
+      <div class="cyber-stat-mini">
+        <p class="stat-num text-amber-400">{{ stats.pending }}</p>
+        <p class="stat-lbl">待审核</p>
       </div>
-      <div class="bg-white dark:bg-dark-100 rounded-xl p-4 shadow-sm text-center">
-        <p class="text-2xl font-bold text-green-500">{{ stats.approved }}</p>
-        <p class="text-xs text-gray-500 mt-1">已通过</p>
+      <div class="cyber-stat-mini">
+        <p class="stat-num text-green-400">{{ stats.approved }}</p>
+        <p class="stat-lbl">已通过</p>
       </div>
-      <div class="bg-white dark:bg-dark-100 rounded-xl p-4 shadow-sm text-center">
-        <p class="text-2xl font-bold text-red-500">{{ stats.rejected }}</p>
-        <p class="text-xs text-gray-500 mt-1">已拒绝</p>
+      <div class="cyber-stat-mini">
+        <p class="stat-num text-red-400">{{ stats.rejected }}</p>
+        <p class="stat-lbl">已拒绝</p>
       </div>
-      <div class="bg-white dark:bg-dark-100 rounded-xl p-4 shadow-sm text-center">
-        <p class="text-2xl font-bold text-blue-500">{{ stats.todayReviewed }}</p>
-        <p class="text-xs text-gray-500 mt-1">今日审核</p>
+      <div class="cyber-stat-mini">
+        <p class="stat-num text-cyan-400">{{ stats.todayReviewed }}</p>
+        <p class="stat-lbl">今日审核</p>
       </div>
     </div>
 
     <!-- 表格 -->
-    <div class="bg-white dark:bg-dark-100 rounded-xl shadow-sm overflow-hidden">
-      <table class="w-full text-sm">
-        <thead class="bg-gray-50 dark:bg-dark-200">
+    <div class="cyber-card p-0 overflow-hidden">
+      <table class="cyber-html-table">
+        <thead>
           <tr>
-            <th class="px-4 py-3 text-left"><input type="checkbox" @change="toggleAll" :checked="allSelected" /></th>
-            <th class="px-4 py-3 text-left text-gray-500">类型</th>
-            <th class="px-4 py-3 text-left text-gray-500">标题</th>
-            <th class="px-4 py-3 text-left text-gray-500">作者</th>
-            <th class="px-4 py-3 text-left text-gray-500">摘要</th>
-            <th class="px-4 py-3 text-left text-gray-500">状态</th>
-            <th class="px-4 py-3 text-left text-gray-500">提交时间</th>
-            <th class="px-4 py-3 text-left text-gray-500">操作</th>
+            <th class="w-10"><input type="checkbox" @change="toggleAll" :checked="allSelected" /></th>
+            <th>类型</th>
+            <th>标题</th>
+            <th>作者</th>
+            <th>摘要</th>
+            <th>状态</th>
+            <th>提交时间</th>
+            <th>操作</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
-          <tr v-for="item in list" :key="item.id" class="hover:bg-gray-50 dark:hover:bg-dark-200">
-            <td class="px-4 py-3"><input type="checkbox" :value="item.id" v-model="selectedIds" /></td>
-            <td class="px-4 py-3">
-              <span class="px-2 py-1 rounded text-xs" :class="typeClass(item.contentType)">{{ typeLabel(item.contentType) }}</span>
+        <tbody>
+          <tr v-for="item in list" :key="item.id" class="table-row-hover">
+            <td><input type="checkbox" :value="item.id" v-model="selectedIds" /></td>
+            <td>
+              <span class="cyber-tag" :class="'tag-' + item.contentType">{{ typeLabel(item.contentType) }}</span>
             </td>
-            <td class="px-4 py-3 text-gray-800 dark:text-gray-200 font-medium max-w-[200px] truncate">{{ item.contentTitle }}</td>
-            <td class="px-4 py-3 text-gray-600 dark:text-gray-400">{{ item.authorName }}</td>
-            <td class="px-4 py-3 text-gray-500 max-w-[200px] truncate">{{ item.summary }}</td>
-            <td class="px-4 py-3">
-              <span class="px-2 py-1 rounded-full text-xs font-medium" :class="statusClass(item.status)">{{ statusLabel(item.status) }}</span>
+            <td class="text-white font-medium max-w-[200px] truncate">{{ item.contentTitle }}</td>
+            <td class="text-[#8888aa]">{{ item.authorName }}</td>
+            <td class="text-[#6a6a8a] max-w-[200px] truncate">{{ item.summary }}</td>
+            <td>
+              <span class="cyber-badge" :class="'badge-' + item.status">{{ statusLabel(item.status) }}</span>
             </td>
-            <td class="px-4 py-3 text-gray-500 text-xs">{{ item.createdAt }}</td>
-            <td class="px-4 py-3">
+            <td class="text-[#4a4a6a] text-xs font-mono">{{ item.createdAt }}</td>
+            <td>
               <div class="flex gap-1">
-                <button v-if="item.status === 'pending'" @click="handleApprove(item)" class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs hover:bg-green-200">通过</button>
-                <button v-if="item.status === 'pending'" @click="handleReject(item)" class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs hover:bg-red-200">拒绝</button>
-                <button @click="handleFlag(item)" class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs hover:bg-blue-200">标记</button>
+                <button v-if="item.status === 'pending'" @click="handleApprove(item)" class="cyber-btn-xs cyber-btn-green">通过</button>
+                <button v-if="item.status === 'pending'" @click="handleReject(item)" class="cyber-btn-xs cyber-btn-magenta">拒绝</button>
+                <button @click="handleFlag(item)" class="cyber-btn-xs cyber-btn-cyan">标记</button>
               </div>
             </td>
           </tr>
         </tbody>
       </table>
-      <div v-if="list.length === 0" class="text-center py-12 text-gray-400">暂无审核内容</div>
-      <!-- 分页 -->
-      <div class="flex items-center justify-between px-4 py-3 border-t border-gray-100 dark:border-gray-700">
-        <span class="text-sm text-gray-500">共 {{ total }} 条</span>
+      <div v-if="list.length === 0" class="text-center py-12 text-[#4a4a6a]">暂无审核内容</div>
+      <div class="cyber-pagination">
+        <span class="text-sm text-[#6a6a8a]">共 {{ total }} 条</span>
         <div class="flex gap-1">
-          <button v-for="p in totalPages" :key="p" @click="page = p" class="px-3 py-1 rounded text-sm" :class="p === page ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-dark-300 text-gray-600 dark:text-gray-400'">{{ p }}</button>
+          <button v-for="p in totalPages" :key="p" @click="page = p" class="page-btn" :class="{ 'page-btn-active': p === page }">{{ p }}</button>
         </div>
       </div>
     </div>
@@ -120,9 +119,7 @@ const totalPages = computed(() => Math.ceil(total.value / pageSize))
 const allSelected = computed(() => list.value.length > 0 && selectedIds.value.length === list.value.length)
 
 function typeLabel(t: string) { return { post: '帖子', comment: '评论', course: '课程', product: '商品' }[t] || t }
-function typeClass(t: string) { return { post: 'bg-blue-100 text-blue-700', comment: 'bg-purple-100 text-purple-700', course: 'bg-green-100 text-green-700', product: 'bg-orange-100 text-orange-700' }[t] || 'bg-gray-100 text-gray-700' }
 function statusLabel(s: string) { return { pending: '待审核', approved: '已通过', rejected: '已拒绝', flagged: '已标记' }[s] || s }
-function statusClass(s: string) { return { pending: 'bg-amber-100 text-amber-700', approved: 'bg-green-100 text-green-700', rejected: 'bg-red-100 text-red-700', flagged: 'bg-blue-100 text-blue-700' }[s] || '' }
 
 function toggleAll(e: Event) { const checked = (e.target as HTMLInputElement).checked; selectedIds.value = checked ? list.value.map(i => i.id) : [] }
 function handleSearch() { page.value = 1 }
@@ -132,3 +129,222 @@ function handleFlag(item: ModerationItem) { item.status = 'flagged'; stats.value
 function handleBatchApprove() { list.value.filter(i => selectedIds.value.includes(i.id)).forEach(i => { i.status = 'approved'; i.reviewerName = '管理员' }); stats.value.pending -= selectedIds.value.length; stats.value.approved += selectedIds.value.length; selectedIds.value = [] }
 function handleBatchReject() { list.value.filter(i => selectedIds.value.includes(i.id)).forEach(i => { i.status = 'rejected'; i.reviewerName = '管理员' }); stats.value.pending -= selectedIds.value.length; stats.value.rejected += selectedIds.value.length; selectedIds.value = [] }
 </script>
+
+<style scoped>
+.cyber-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.cyber-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.cyber-stat-mini {
+  background: #12121f;
+  border: 1px solid #1a1a2e;
+  border-radius: 10px;
+  padding: 16px;
+  text-align: center;
+}
+
+.stat-num { font-size: 24px; font-weight: 800; font-family: 'Courier New', monospace; }
+.stat-lbl { font-size: 11px; color: #6a6a8a; margin-top: 4px; }
+
+.cyber-select {
+  background: #0a0a14;
+  border: 1px solid #1a1a2e;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #a0a0cc;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.cyber-select:focus { border-color: #00f0ff; }
+.cyber-select option { background: #12121f; color: #a0a0cc; }
+
+.cyber-text-input {
+  background: #0a0a14;
+  border: 1px solid #1a1a2e;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #e0e0ff;
+  width: 180px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.cyber-text-input:focus { border-color: #00f0ff; }
+.cyber-text-input::placeholder { color: #4a4a6a; }
+
+.cyber-btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+}
+
+.cyber-btn-cyan {
+  background: rgba(0, 240, 255, 0.1);
+  color: #00f0ff;
+  border-color: #00f0ff44;
+}
+.cyber-btn-cyan:hover {
+  background: rgba(0, 240, 255, 0.2);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.3);
+}
+
+.cyber-btn-green {
+  background: rgba(0, 255, 136, 0.1);
+  color: #00ff88;
+  border-color: rgba(0, 255, 136, 0.3);
+}
+.cyber-btn-green:hover {
+  background: rgba(0, 255, 136, 0.2);
+  box-shadow: 0 0 12px rgba(0, 255, 136, 0.3);
+}
+
+.cyber-btn-magenta {
+  background: rgba(255, 0, 255, 0.1);
+  color: #ff00ff;
+  border-color: rgba(255, 0, 255, 0.3);
+}
+.cyber-btn-magenta:hover {
+  background: rgba(255, 0, 255, 0.2);
+  box-shadow: 0 0 12px rgba(255, 0, 255, 0.3);
+}
+
+.cyber-btn-xs {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cyber-card {
+  background: #12121f;
+  border: 1px solid #1a1a2e;
+  border-radius: 12px;
+}
+
+.cyber-html-table {
+  width: 100%;
+  font-size: 13px;
+}
+
+.cyber-html-table th {
+  padding: 12px 16px;
+  text-align: left;
+  color: #4a4a6a;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  background: rgba(26, 26, 46, 0.3);
+  border-bottom: 1px solid #1a1a2e;
+}
+
+.cyber-html-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #1a1a2e;
+}
+
+.table-row-hover:hover {
+  background: rgba(0, 240, 255, 0.03);
+}
+
+.cyber-tag {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.tag-post { background: rgba(0, 240, 255, 0.1); color: #00f0ff; }
+.tag-comment { background: rgba(124, 58, 237, 0.1); color: #c084fc; }
+.tag-course { background: rgba(0, 255, 136, 0.1); color: #00ff88; }
+.tag-product { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+
+.cyber-badge {
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.badge-pending {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.badge-approved {
+  background: rgba(0, 255, 136, 0.1);
+  color: #00ff88;
+  border: 1px solid rgba(0, 255, 136, 0.2);
+}
+
+.badge-rejected {
+  background: rgba(255, 68, 102, 0.1);
+  color: #ff4466;
+  border: 1px solid rgba(255, 68, 102, 0.2);
+}
+
+.badge-flagged {
+  background: rgba(0, 240, 255, 0.1);
+  color: #00f0ff;
+  border: 1px solid rgba(0, 240, 255, 0.2);
+}
+
+.cyber-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-top: 1px solid #1a1a2e;
+}
+
+.page-btn {
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  background: transparent;
+  border: 1px solid #1a1a2e;
+  color: #6a6a8a;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.page-btn:hover { border-color: #00f0ff44; color: #00f0ff; }
+
+.page-btn-active {
+  background: rgba(0, 240, 255, 0.1) !important;
+  border-color: #00f0ff !important;
+  color: #00f0ff !important;
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.2);
+}
+
+.text-amber-400 { color: #f59e0b; }
+.text-green-400 { color: #00ff88; }
+.text-red-400 { color: #ff4466; }
+.text-cyan-400 { color: #00f0ff; }
+.mb-4 { margin-bottom: 16px; }
+.flex { display: flex; }
+.flex-1 { flex: 1; }
+.gap-1 { gap: 4px; }
+.w-10 { width: 2.5rem; }
+.max-w-\[200px\] { max-width: 200px; }
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+</style>
