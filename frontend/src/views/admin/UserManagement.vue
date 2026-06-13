@@ -1,9 +1,9 @@
 <template>
   <div>
-    <div class="flex items-center justify-between mb-4">
-      <div class="flex gap-3">
-        <el-input v-model="search" placeholder="搜索用户..." class="w-64" clearable prefix-icon="Search" />
-        <el-select v-model="statusFilter" placeholder="状态筛选" class="w-36" clearable>
+    <div class="cyber-toolbar">
+      <div class="toolbar-left">
+        <el-input v-model="search" placeholder="搜索用户..." class="cyber-input w-64" clearable prefix-icon="Search" />
+        <el-select v-model="statusFilter" placeholder="状态筛选" class="cyber-input w-36" clearable>
           <el-option label="正常" value="active" />
           <el-option label="冻结" value="frozen" />
           <el-option label="封禁" value="banned" />
@@ -12,17 +12,15 @@
       <el-button type="primary">+ 添加用户</el-button>
     </div>
 
-    <el-table :data="filteredUsers" stripe class="bg-white dark:bg-dark-100 rounded-xl overflow-hidden">
+    <el-table :data="filteredUsers" stripe class="cyber-table">
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column label="用户" min-width="180">
         <template #default="{ row }">
           <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center text-white text-sm">
-              {{ row.nickname[0] }}
-            </div>
+            <div class="cyber-avatar">{{ row.nickname[0] }}</div>
             <div>
-              <div class="font-medium text-gray-900 dark:text-white">{{ row.nickname }}</div>
-              <div class="text-xs text-gray-400">@{{ row.username }}</div>
+              <div class="text-white font-medium">{{ row.nickname }}</div>
+              <div class="text-xs text-[#4a4a6a]">@{{ row.username }}</div>
             </div>
           </div>
         </template>
@@ -31,19 +29,19 @@
       <el-table-column prop="email" label="邮箱" width="180" />
       <el-table-column label="类型" width="100">
         <template #default="{ row }">
-          <span class="text-sm">{{ userTypeLabel(row.userType) }}</span>
+          <span class="text-sm text-[#a0a0cc]">{{ userTypeLabel(row.userType) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="状态" width="80">
         <template #default="{ row }">
-          <span class="px-2 py-1 rounded-full text-xs" :class="statusClass(row.status)">
+          <span class="cyber-badge" :class="'badge-' + row.status">
             {{ statusLabel(row.status) }}
           </span>
         </template>
       </el-table-column>
       <el-table-column label="最后登录" width="160">
         <template #default="{ row }">
-          <span class="text-xs text-gray-400">{{ row.lastLoginAt ? formatDate(row.lastLoginAt) : '从未' }}</span>
+          <span class="text-xs text-[#4a4a6a] font-mono">{{ row.lastLoginAt ? formatDate(row.lastLoginAt) : '从未' }}</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" width="150" fixed="right">
@@ -94,14 +92,6 @@ function statusLabel(s: string): string {
   return userStatusMap[s] || s
 }
 
-function statusClass(s: string): string {
-  return {
-    active: 'bg-green-100 text-green-600',
-    frozen: 'bg-amber-100 text-amber-600',
-    banned: 'bg-red-100 text-red-600'
-  }[s] || ''
-}
-
 async function fetchUsers(page = 1) {
   const res = await adminApi.getUsers({ page, pageSize, status: statusFilter.value || undefined })
   users.value = res.data.items
@@ -124,3 +114,53 @@ async function handleStatusChange(user: User) {
 
 onMounted(() => fetchUsers())
 </script>
+
+<style scoped>
+.cyber-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.toolbar-left { display: flex; gap: 12px; }
+.cyber-input { flex-shrink: 0; }
+
+.cyber-avatar {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #00f0ff, #7c3aed);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+  flex-shrink: 0;
+}
+
+.cyber-badge {
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.badge-active {
+  background: rgba(0, 255, 136, 0.1);
+  color: #00ff88;
+  border: 1px solid rgba(0, 255, 136, 0.2);
+}
+
+.badge-frozen {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.badge-banned {
+  background: rgba(255, 68, 102, 0.1);
+  color: #ff4466;
+  border: 1px solid rgba(255, 68, 102, 0.2);
+}
+</style>
