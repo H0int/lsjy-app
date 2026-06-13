@@ -1,15 +1,15 @@
 <template>
   <div>
     <!-- 操作栏 -->
-    <div class="flex items-center justify-between mb-4">
-      <div class="flex gap-3">
-        <select v-model="filterType" class="border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-dark-200 text-gray-700 dark:text-gray-200">
+    <div class="cyber-toolbar">
+      <div class="toolbar-left">
+        <select v-model="filterType" class="cyber-select">
           <option value="">全部类型</option>
           <option value="system">系统通知</option>
           <option value="activity">活动公告</option>
           <option value="update">模块更新</option>
         </select>
-        <select v-model="filterStatus" class="border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-dark-200 text-gray-700 dark:text-gray-200">
+        <select v-model="filterStatus" class="cyber-select">
           <option value="">全部状态</option>
           <option value="draft">草稿</option>
           <option value="scheduled">定时发布</option>
@@ -17,62 +17,62 @@
           <option value="archived">已归档</option>
         </select>
       </div>
-      <button @click="showDialog = true" class="bg-primary text-white px-4 py-2 rounded-lg text-sm hover:opacity-90 flex items-center gap-1">+ 发布公告</button>
+      <button @click="showDialog = true" class="cyber-btn cyber-btn-cyan">+ 发布公告</button>
     </div>
 
     <!-- 公告列表 -->
     <div class="space-y-3">
-      <div v-for="item in list" :key="item.id" class="bg-white dark:bg-dark-100 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
+      <div v-for="item in list" :key="item.id" class="cyber-card announcement-card">
         <div class="flex items-start justify-between">
           <div class="flex-1">
             <div class="flex items-center gap-2 mb-2">
-              <span class="px-2 py-0.5 rounded text-xs font-medium" :class="typeClass(item.type)">{{ typeLabel(item.type) }}</span>
-              <span class="px-2 py-0.5 rounded-full text-xs" :class="statusClass(item.status)">{{ statusLabel(item.status) }}</span>
-              <span class="text-xs text-gray-400">推送: {{ scopeLabel(item.targetScope) }}</span>
+              <span class="cyber-tag" :class="'tag-' + item.type">{{ typeLabel(item.type) }}</span>
+              <span class="cyber-badge" :class="'badge-' + item.status">{{ statusLabel(item.status) }}</span>
+              <span class="text-xs text-[#4a4a6a]">推送: {{ scopeLabel(item.targetScope) }}</span>
             </div>
-            <h3 class="font-semibold text-gray-900 dark:text-white mb-1">{{ item.title }}</h3>
-            <p class="text-sm text-gray-500 line-clamp-2">{{ item.content }}</p>
-            <div class="flex items-center gap-4 mt-3 text-xs text-gray-400">
+            <h3 class="font-semibold text-white mb-1">{{ item.title }}</h3>
+            <p class="text-sm text-[#6a6a8a] line-clamp-2">{{ item.content }}</p>
+            <div class="flex items-center gap-4 mt-3 text-xs text-[#4a4a6a]">
               <span>创建: {{ item.createdAt }}</span>
               <span v-if="item.scheduledAt">定时: {{ item.scheduledAt }}</span>
               <span v-if="item.publishedAt">发布: {{ item.publishedAt }}</span>
             </div>
           </div>
           <div class="flex gap-2 ml-4">
-            <button v-if="item.status === 'draft'" @click="handlePublish(item)" class="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-xs hover:bg-green-200">发布</button>
-            <button @click="handleEdit(item)" class="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-xs hover:bg-gray-200 dark:bg-dark-300 dark:text-gray-300">编辑</button>
-            <button @click="handleDelete(item)" class="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-xs hover:bg-red-200">删除</button>
+            <button v-if="item.status === 'draft'" @click="handlePublish(item)" class="cyber-btn-xs cyber-btn-green">发布</button>
+            <button @click="handleEdit(item)" class="cyber-btn-xs cyber-btn-ghost">编辑</button>
+            <button @click="handleDelete(item)" class="cyber-btn-xs cyber-btn-magenta">删除</button>
           </div>
         </div>
       </div>
-      <div v-if="list.length === 0" class="text-center py-12 text-gray-400 bg-white dark:bg-dark-100 rounded-xl">暂无公告</div>
+      <div v-if="list.length === 0" class="text-center py-12 text-[#4a4a6a] cyber-card">暂无公告</div>
     </div>
 
     <!-- 新建/编辑弹窗 -->
-    <div v-if="showDialog" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white dark:bg-dark-100 rounded-2xl p-6 w-full max-w-lg mx-4">
-        <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">{{ editingId ? '编辑公告' : '发布公告' }}</h3>
+    <div v-if="showDialog" class="cyber-overlay">
+      <div class="cyber-dialog">
+        <h3 class="dialog-title">{{ editingId ? '编辑公告' : '发布公告' }}</h3>
         <div class="space-y-4">
           <div>
-            <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1">标题</label>
-            <input v-model="form.title" class="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-dark-200 text-gray-700 dark:text-gray-200" placeholder="公告标题" />
+            <label class="cyber-label">标题</label>
+            <input v-model="form.title" class="cyber-text-input w-full" placeholder="公告标题" />
           </div>
           <div>
-            <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1">内容</label>
-            <textarea v-model="form.content" rows="4" class="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-dark-200 text-gray-700 dark:text-gray-200" placeholder="公告内容"></textarea>
+            <label class="cyber-label">内容</label>
+            <textarea v-model="form.content" rows="4" class="cyber-text-input w-full" placeholder="公告内容"></textarea>
           </div>
-          <div class="grid grid-cols-2 gap-4">
+          <div class="cyber-grid-2">
             <div>
-              <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1">类型</label>
-              <select v-model="form.type" class="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-dark-200 text-gray-700 dark:text-gray-200">
+              <label class="cyber-label">类型</label>
+              <select v-model="form.type" class="cyber-select w-full">
                 <option value="system">系统通知</option>
                 <option value="activity">活动公告</option>
                 <option value="update">模块更新</option>
               </select>
             </div>
             <div>
-              <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1">推送范围</label>
-              <select v-model="form.targetScope" class="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-dark-200 text-gray-700 dark:text-gray-200">
+              <label class="cyber-label">推送范围</label>
+              <select v-model="form.targetScope" class="cyber-select w-full">
                 <option value="all">全部用户</option>
                 <option value="personal">个人版用户</option>
                 <option value="merchant">商户版用户</option>
@@ -81,13 +81,13 @@
             </div>
           </div>
           <div>
-            <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1">定时发布（可选）</label>
-            <input v-model="form.scheduledAt" type="datetime-local" class="border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-dark-200 text-gray-700 dark:text-gray-200" />
+            <label class="cyber-label">定时发布（可选）</label>
+            <input v-model="form.scheduledAt" type="datetime-local" class="cyber-text-input" />
           </div>
         </div>
-        <div class="flex justify-end gap-3 mt-6">
-          <button @click="showDialog = false" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200 dark:bg-dark-300 dark:text-gray-300">取消</button>
-          <button @click="handleSave" class="px-4 py-2 bg-primary text-white rounded-lg text-sm hover:opacity-90">保存</button>
+        <div class="dialog-footer">
+          <button @click="showDialog = false" class="cyber-btn cyber-btn-ghost">取消</button>
+          <button @click="handleSave" class="cyber-btn cyber-btn-cyan">保存</button>
         </div>
       </div>
     </div>
@@ -113,9 +113,7 @@ const list = ref<Announcement[]>([
 ])
 
 function typeLabel(t: string) { return { system: '系统通知', activity: '活动公告', update: '模块更新' }[t] || t }
-function typeClass(t: string) { return { system: 'bg-blue-100 text-blue-700', activity: 'bg-orange-100 text-orange-700', update: 'bg-green-100 text-green-700' }[t] || '' }
 function statusLabel(s: string) { return { draft: '草稿', scheduled: '定时发布', published: '已发布', archived: '已归档' }[s] || s }
-function statusClass(s: string) { return { draft: 'bg-gray-100 text-gray-600', scheduled: 'bg-amber-100 text-amber-700', published: 'bg-green-100 text-green-700', archived: 'bg-gray-200 text-gray-500' }[s] || '' }
 function scopeLabel(s: string) { return { all: '全部用户', personal: '个人版', merchant: '商户版', enterprise: '企业版' }[s] || s }
 
 function handlePublish(item: Announcement) { item.status = 'published'; item.publishedAt = new Date().toISOString().slice(0, 16).replace('T', ' ') }
@@ -131,3 +129,203 @@ function handleSave() {
   showDialog.value = false; editingId.value = null; form.value = { title: '', content: '', type: 'system', targetScope: 'all', scheduledAt: '' }
 }
 </script>
+
+<style scoped>
+.cyber-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.toolbar-left { display: flex; gap: 12px; }
+
+.space-y-3 > * + * { margin-top: 12px; }
+
+.cyber-card {
+  background: #12121f;
+  border: 1px solid #1a1a2e;
+  border-radius: 12px;
+  padding: 20px;
+  transition: border-color 0.2s;
+}
+
+.announcement-card:hover {
+  border-color: #2a2a4e;
+}
+
+.cyber-select {
+  background: #0a0a14;
+  border: 1px solid #1a1a2e;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #a0a0cc;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.cyber-select:focus { border-color: #00f0ff; }
+.cyber-select option { background: #12121f; color: #a0a0cc; }
+
+.cyber-btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+}
+
+.cyber-btn-cyan {
+  background: rgba(0, 240, 255, 0.1);
+  color: #00f0ff;
+  border-color: #00f0ff44;
+}
+.cyber-btn-cyan:hover {
+  background: rgba(0, 240, 255, 0.2);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.3);
+}
+
+.cyber-btn-ghost {
+  background: rgba(100, 100, 140, 0.1);
+  color: #8888aa;
+  border-color: #2a2a4e;
+}
+.cyber-btn-ghost:hover { color: #c0c0ff; border-color: #4a4a6a; }
+
+.cyber-btn-green {
+  background: rgba(0, 255, 136, 0.1);
+  color: #00ff88;
+  border-color: rgba(0, 255, 136, 0.3);
+}
+.cyber-btn-green:hover {
+  background: rgba(0, 255, 136, 0.2);
+  box-shadow: 0 0 12px rgba(0, 255, 136, 0.3);
+}
+
+.cyber-btn-magenta {
+  background: rgba(255, 0, 255, 0.1);
+  color: #ff00ff;
+  border-color: rgba(255, 0, 255, 0.3);
+}
+.cyber-btn-magenta:hover {
+  background: rgba(255, 0, 255, 0.2);
+  box-shadow: 0 0 12px rgba(255, 0, 255, 0.3);
+}
+
+.cyber-btn-xs {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cyber-tag {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.tag-system { background: rgba(0, 240, 255, 0.1); color: #00f0ff; }
+.tag-activity { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+.tag-update { background: rgba(0, 255, 136, 0.1); color: #00ff88; }
+
+.cyber-badge {
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.badge-draft { background: rgba(100, 100, 140, 0.1); color: #6a6a8a; border: 1px solid #2a2a4e; }
+.badge-scheduled { background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2); }
+.badge-published { background: rgba(0, 255, 136, 0.1); color: #00ff88; border: 1px solid rgba(0, 255, 136, 0.2); }
+.badge-archived { background: rgba(100, 100, 140, 0.1); color: #4a4a6a; border: 1px solid #1a1a2e; }
+
+/* Overlay & Dialog */
+.cyber-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.cyber-dialog {
+  background: #12121f;
+  border: 1px solid #1a1a2e;
+  border-radius: 16px;
+  padding: 24px;
+  width: 100%;
+  max-width: 520px;
+  box-shadow: 0 0 40px rgba(0, 240, 255, 0.05);
+}
+
+.dialog-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #e0e0ff;
+  margin-bottom: 20px;
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+}
+
+.cyber-label {
+  display: block;
+  font-size: 12px;
+  color: #6a6a8a;
+  margin-bottom: 6px;
+}
+
+.cyber-text-input {
+  background: #0a0a14;
+  border: 1px solid #1a1a2e;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #e0e0ff;
+  outline: none;
+  transition: border-color 0.2s;
+  resize: vertical;
+}
+.cyber-text-input:focus { border-color: #00f0ff; }
+.cyber-text-input::placeholder { color: #4a4a6a; }
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.cyber-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.w-full { width: 100%; }
+.w-36 { width: 144px; }
+.mb-2 { margin-bottom: 8px; }
+.mb-1 { margin-bottom: 4px; }
+.ml-4 { margin-left: 16px; }
+.mt-3 { margin-top: 12px; }
+.gap-2 { gap: 8px; }
+.gap-4 { gap: 16px; }
+.flex { display: flex; }
+.flex-1 { flex: 1; }
+.items-center { align-items: center; }
+.items-start { align-items: flex-start; }
+.justify-between { justify-content: space-between; }
+.space-y-4 > * + * { margin-top: 16px; }
+.font-semibold { font-weight: 600; }
+.text-sm { font-size: 13px; }
+.text-xs { font-size: 11px; }
+.text-white { color: #fff; }
+.line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+</style>
