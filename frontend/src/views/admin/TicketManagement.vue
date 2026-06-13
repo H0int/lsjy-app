@@ -1,38 +1,40 @@
 <template>
   <div>
     <!-- 统计卡片 -->
-    <div class="grid grid-cols-4 gap-4 mb-4">
-      <div class="bg-white dark:bg-dark-100 rounded-xl p-4 shadow-sm">
+    <div class="cyber-grid-4 mb-4">
+      <div class="cyber-stat-mini">
         <div class="flex items-center justify-between">
-          <div><p class="text-sm text-gray-500">待处理</p><p class="text-2xl font-bold text-red-500 mt-1">{{ stats.open }}</p></div>
-          <div class="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center text-xl">🔴</div>
+          <div><p class="stat-lbl">待处理</p><p class="stat-num text-red-400">{{ stats.open }}</p></div>
+          <div class="stat-icon-box text-xl">🔴</div>
         </div>
       </div>
-      <div class="bg-white dark:bg-dark-100 rounded-xl p-4 shadow-sm">
+      <div class="cyber-stat-mini">
         <div class="flex items-center justify-between">
-          <div><p class="text-sm text-gray-500">处理中</p><p class="text-2xl font-bold text-amber-500 mt-1">{{ stats.processing }}</p></div>
-          <div class="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center text-xl">🟡</div>
+          <div><p class="stat-lbl">处理中</p><p class="stat-num text-amber-400">{{ stats.processing }}</p></div>
+          <div class="stat-icon-box text-xl">🟡</div>
         </div>
       </div>
-      <div class="bg-white dark:bg-dark-100 rounded-xl p-4 shadow-sm">
+      <div class="cyber-stat-mini">
         <div class="flex items-center justify-between">
-          <div><p class="text-sm text-gray-500">平均响应</p><p class="text-2xl font-bold text-blue-500 mt-1">{{ stats.avgResponseTime }}</p></div>
-          <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-xl">⏱️</div>
+          <div><p class="stat-lbl">平均响应</p><p class="stat-num text-cyan-400">{{ stats.avgResponseTime }}</p></div>
+          <div class="stat-icon-box text-xl">⏱️</div>
         </div>
       </div>
-      <div class="bg-white dark:bg-dark-100 rounded-xl p-4 shadow-sm">
+      <div class="cyber-stat-mini">
         <div class="flex items-center justify-between">
-          <div><p class="text-sm text-gray-500">解决率</p><p class="text-2xl font-bold text-green-500 mt-1">{{ stats.resolveRate }}%</p></div>
-          <div class="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center text-xl">✅</div>
+          <div><p class="stat-lbl">解决率</p><p class="stat-num text-green-400">{{ stats.resolveRate }}%</p></div>
+          <div class="stat-icon-box text-xl">✅</div>
         </div>
       </div>
     </div>
 
     <!-- 筛选 -->
-    <div class="flex items-center gap-3 mb-4">
-      <button v-for="tab in tabs" :key="tab.value" @click="activeTab = tab.value" class="px-4 py-2 rounded-lg text-sm transition-colors" :class="activeTab === tab.value ? 'bg-primary text-white' : 'bg-white dark:bg-dark-100 text-gray-600 dark:text-gray-400 hover:bg-gray-100'">{{ tab.label }} <span class="ml-1 opacity-70">({{ tab.count }})</span></button>
+    <div class="cyber-toolbar">
+      <div class="tab-bar">
+        <button v-for="tab in tabs" :key="tab.value" @click="activeTab = tab.value" class="cyber-tab" :class="{ 'cyber-tab-active': activeTab === tab.value }">{{ tab.label }} <span class="tab-count">{{ tab.count }}</span></button>
+      </div>
       <div class="flex-1" />
-      <select v-model="assignFilter" class="border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-dark-200 text-gray-700 dark:text-gray-200">
+      <select v-model="assignFilter" class="cyber-select">
         <option value="">全部客服</option>
         <option value="1">客服小王</option>
         <option value="2">客服小李</option>
@@ -41,71 +43,69 @@
     </div>
 
     <!-- 工单列表 -->
-    <div class="bg-white dark:bg-dark-100 rounded-xl shadow-sm overflow-hidden">
-      <table class="w-full text-sm">
-        <thead class="bg-gray-50 dark:bg-dark-200">
+    <div class="cyber-card p-0 overflow-hidden">
+      <table class="cyber-html-table">
+        <thead>
           <tr>
-            <th class="px-4 py-3 text-left text-gray-500">工单号</th>
-            <th class="px-4 py-3 text-left text-gray-500">用户</th>
-            <th class="px-4 py-3 text-left text-gray-500">主题</th>
-            <th class="px-4 py-3 text-left text-gray-500">分类</th>
-            <th class="px-4 py-3 text-left text-gray-500">优先级</th>
-            <th class="px-4 py-3 text-left text-gray-500">状态</th>
-            <th class="px-4 py-3 text-left text-gray-500">处理人</th>
-            <th class="px-4 py-3 text-left text-gray-500">创建时间</th>
-            <th class="px-4 py-3 text-left text-gray-500">操作</th>
+            <th>工单号</th>
+            <th>用户</th>
+            <th>主题</th>
+            <th>分类</th>
+            <th>优先级</th>
+            <th>状态</th>
+            <th>处理人</th>
+            <th>创建时间</th>
+            <th>操作</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
-          <tr v-for="ticket in filteredList" :key="ticket.id" class="hover:bg-gray-50 dark:hover:bg-dark-200 cursor-pointer" @click="openDetail(ticket)">
-            <td class="px-4 py-3 text-primary font-mono text-xs">{{ ticket.ticketNo }}</td>
-            <td class="px-4 py-3 text-gray-700 dark:text-gray-300">{{ ticket.userName }}</td>
-            <td class="px-4 py-3 text-gray-800 dark:text-gray-200 font-medium max-w-[200px] truncate">{{ ticket.subject }}</td>
-            <td class="px-4 py-3"><span class="px-2 py-0.5 rounded text-xs" :class="categoryClass(ticket.category)">{{ categoryLabel(ticket.category) }}</span></td>
-            <td class="px-4 py-3"><span class="px-2 py-0.5 rounded-full text-xs font-medium" :class="priorityClass(ticket.priority)">{{ priorityLabel(ticket.priority) }}</span></td>
-            <td class="px-4 py-3"><span class="px-2 py-0.5 rounded-full text-xs" :class="statusClass(ticket.status)">{{ statusLabel(ticket.status) }}</span></td>
-            <td class="px-4 py-3 text-gray-500 text-xs">{{ ticket.assigneeName || '未分配' }}</td>
-            <td class="px-4 py-3 text-gray-500 text-xs">{{ ticket.createdAt }}</td>
-            <td class="px-4 py-3">
-              <button v-if="!ticket.assigneeId" @click.stop="handleAssign(ticket)" class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">分配</button>
-              <button v-if="ticket.status === 'open' || ticket.status === 'processing'" @click.stop="handleResolve(ticket)" class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">解决</button>
+        <tbody>
+          <tr v-for="ticket in filteredList" :key="ticket.id" class="table-row-hover cursor-pointer" @click="openDetail(ticket)">
+            <td class="font-mono text-xs text-cyan-400">{{ ticket.ticketNo }}</td>
+            <td class="text-[#a0a0cc]">{{ ticket.userName }}</td>
+            <td class="text-white font-medium max-w-[200px] truncate">{{ ticket.subject }}</td>
+            <td><span class="cyber-tag" :class="'tag-' + ticket.category">{{ categoryLabel(ticket.category) }}</span></td>
+            <td><span class="cyber-badge" :class="'priority-' + ticket.priority">{{ priorityLabel(ticket.priority) }}</span></td>
+            <td><span class="cyber-badge" :class="'status-' + ticket.status">{{ statusLabel(ticket.status) }}</span></td>
+            <td class="text-[#6a6a8a] text-xs">{{ ticket.assigneeName || '未分配' }}</td>
+            <td class="text-[#4a4a6a] text-xs font-mono">{{ ticket.createdAt }}</td>
+            <td>
+              <button v-if="!ticket.assigneeId" @click.stop="handleAssign(ticket)" class="cyber-btn-xs cyber-btn-cyan">分配</button>
+              <button v-if="ticket.status === 'open' || ticket.status === 'processing'" @click.stop="handleResolve(ticket)" class="cyber-btn-xs cyber-btn-green">解决</button>
             </td>
           </tr>
         </tbody>
       </table>
-      <div v-if="filteredList.length === 0" class="text-center py-12 text-gray-400">暂无工单</div>
+      <div v-if="filteredList.length === 0" class="text-center py-12 text-[#4a4a6a]">暂无工单</div>
     </div>
 
     <!-- 工单详情弹窗 -->
-    <div v-if="selectedTicket" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white dark:bg-dark-100 rounded-2xl p-6 w-full max-w-2xl mx-4 max-h-[80vh] overflow-y-auto">
+    <div v-if="selectedTicket" class="cyber-overlay">
+      <div class="cyber-dialog cyber-dialog-lg">
         <div class="flex items-center justify-between mb-4">
           <div>
-            <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ selectedTicket.subject }}</h3>
-            <p class="text-xs text-gray-400 mt-1">{{ selectedTicket.ticketNo }} | {{ selectedTicket.userName }} | {{ selectedTicket.createdAt }}</p>
+            <h3 class="text-lg font-bold text-white">{{ selectedTicket.subject }}</h3>
+            <p class="text-xs text-[#4a4a6a] mt-1 font-mono">{{ selectedTicket.ticketNo }} | {{ selectedTicket.userName }} | {{ selectedTicket.createdAt }}</p>
           </div>
-          <button @click="selectedTicket = null" class="p-2 hover:bg-gray-100 dark:hover:bg-dark-300 rounded-lg text-gray-400">✕</button>
+          <button @click="selectedTicket = null" class="close-btn">✕</button>
         </div>
-        <div class="bg-gray-50 dark:bg-dark-200 rounded-lg p-4 mb-4">
-          <p class="text-sm text-gray-700 dark:text-gray-300">{{ selectedTicket.content }}</p>
+        <div class="ticket-content-box">
+          <p class="text-sm text-[#a0a0cc]">{{ selectedTicket.content }}</p>
         </div>
-        <!-- 回复列表 -->
         <div class="space-y-3 mb-4">
           <div v-for="reply in selectedTicket.replies" :key="reply.id" class="flex gap-3" :class="reply.isStaff ? 'flex-row-reverse' : ''">
-            <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs flex-shrink-0" :class="reply.isStaff ? 'bg-primary' : 'bg-gray-400'">{{ reply.isStaff ? '客' : reply.userName[0] }}</div>
+            <div class="reply-avatar" :class="reply.isStaff ? 'avatar-staff' : 'avatar-user'">{{ reply.isStaff ? '客' : reply.userName[0] }}</div>
             <div class="max-w-[70%]">
               <div class="flex items-center gap-2 mb-1" :class="reply.isStaff ? 'flex-row-reverse' : ''">
-                <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ reply.userName }}</span>
-                <span class="text-xs text-gray-400">{{ reply.createdAt }}</span>
+                <span class="text-xs font-medium text-[#a0a0cc]">{{ reply.userName }}</span>
+                <span class="text-xs text-[#4a4a6a]">{{ reply.createdAt }}</span>
               </div>
-              <div class="rounded-lg p-3 text-sm" :class="reply.isStaff ? 'bg-primary/10 text-gray-700 dark:text-gray-200' : 'bg-gray-100 dark:bg-dark-300 text-gray-700 dark:text-gray-300'">{{ reply.content }}</div>
+              <div class="reply-bubble" :class="reply.isStaff ? 'reply-staff' : 'reply-customer'">{{ reply.content }}</div>
             </div>
           </div>
         </div>
-        <!-- 回复输入 -->
         <div class="flex gap-2">
-          <input v-model="replyText" class="flex-1 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-dark-200 text-gray-700 dark:text-gray-200" placeholder="输入回复内容..." />
-          <button @click="handleReply" class="bg-primary text-white px-4 py-2 rounded-lg text-sm hover:opacity-90">发送</button>
+          <input v-model="replyText" class="cyber-text-input flex-1" placeholder="输入回复内容..." />
+          <button @click="handleReply" class="cyber-btn cyber-btn-cyan">发送</button>
         </div>
       </div>
     </div>
@@ -148,11 +148,8 @@ const filteredList = computed(() => {
 })
 
 function categoryLabel(c: string) { return { account: '账号', payment: '支付', tool: '工具', bug: '故障', suggestion: '建议', other: '其他' }[c] || c }
-function categoryClass(c: string) { return { account: 'bg-red-100 text-red-700', payment: 'bg-amber-100 text-amber-700', tool: 'bg-blue-100 text-blue-700', bug: 'bg-orange-100 text-orange-700', suggestion: 'bg-green-100 text-green-700', other: 'bg-gray-100 text-gray-700' }[c] || '' }
 function priorityLabel(p: string) { return { low: '低', medium: '中', high: '高', urgent: '紧急' }[p] || p }
-function priorityClass(p: string) { return { low: 'bg-gray-100 text-gray-600', medium: 'bg-blue-100 text-blue-700', high: 'bg-orange-100 text-orange-700', urgent: 'bg-red-100 text-red-700' }[p] || '' }
 function statusLabel(s: string) { return { open: '待处理', processing: '处理中', resolved: '已解决', closed: '已关闭' }[s] || s }
-function statusClass(s: string) { return { open: 'bg-red-100 text-red-700', processing: 'bg-amber-100 text-amber-700', resolved: 'bg-green-100 text-green-700', closed: 'bg-gray-100 text-gray-500' }[s] || '' }
 
 function openDetail(ticket: Ticket) { selectedTicket.value = ticket }
 function handleAssign(ticket: Ticket) { ticket.assigneeId = 1; ticket.assigneeName = '客服小王'; ticket.status = 'processing' }
@@ -164,3 +161,104 @@ function handleReply() {
   replyText.value = ''
 }
 </script>
+
+<style scoped>
+.cyber-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.cyber-stat-mini { background: #12121f; border: 1px solid #1a1a2e; border-radius: 10px; padding: 16px; }
+.stat-num { font-size: 24px; font-weight: 800; font-family: 'Courier New', monospace; margin-top: 4px; }
+.stat-lbl { font-size: 11px; color: #6a6a8a; }
+.stat-icon-box { width: 36px; height: 36px; border-radius: 8px; background: rgba(255,255,255,0.03); display: flex; align-items: center; justify-content: center; }
+
+.cyber-toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+
+.tab-bar { display: flex; gap: 4px; }
+.cyber-tab { padding: 8px 16px; border-radius: 8px; font-size: 13px; background: transparent; border: 1px solid #1a1a2e; color: #6a6a8a; cursor: pointer; transition: all 0.2s; }
+.cyber-tab:hover { border-color: #00f0ff44; color: #00f0ff; }
+.cyber-tab-active { background: rgba(0,240,255,0.1) !important; border-color: #00f0ff !important; color: #00f0ff !important; box-shadow: 0 0 8px rgba(0,240,255,0.2); }
+.tab-count { font-size: 10px; opacity: 0.6; margin-left: 4px; }
+
+.cyber-select { background: #0a0a14; border: 1px solid #1a1a2e; border-radius: 8px; padding: 8px 12px; font-size: 13px; color: #a0a0cc; outline: none; }
+.cyber-select:focus { border-color: #00f0ff; }
+.cyber-select option { background: #12121f; }
+
+.cyber-card { background: #12121f; border: 1px solid #1a1a2e; border-radius: 12px; }
+
+.cyber-html-table { width: 100%; font-size: 13px; }
+.cyber-html-table th { padding: 12px 16px; text-align: left; color: #4a4a6a; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; background: rgba(26,26,46,0.3); border-bottom: 1px solid #1a1a2e; }
+.cyber-html-table td { padding: 12px 16px; border-bottom: 1px solid #1a1a2e; }
+.table-row-hover:hover { background: rgba(0,240,255,0.03); }
+
+.cyber-tag { padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; }
+.tag-account { background: rgba(255,68,102,0.1); color: #ff4466; }
+.tag-payment { background: rgba(245,158,11,0.1); color: #f59e0b; }
+.tag-tool { background: rgba(0,240,255,0.1); color: #00f0ff; }
+.tag-bug { background: rgba(255,107,0,0.1); color: #ff6b00; }
+.tag-suggestion { background: rgba(0,255,136,0.1); color: #00ff88; }
+.tag-other { background: rgba(100,100,140,0.1); color: #6a6a8a; }
+
+.cyber-badge { padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.priority-low { background: rgba(100,100,140,0.1); color: #6a6a8a; border: 1px solid #2a2a4e; }
+.priority-medium { background: rgba(0,240,255,0.1); color: #00f0ff; border: 1px solid rgba(0,240,255,0.2); }
+.priority-high { background: rgba(255,107,0,0.1); color: #ff6b00; border: 1px solid rgba(255,107,0,0.2); }
+.priority-urgent { background: rgba(255,68,102,0.1); color: #ff4466; border: 1px solid rgba(255,68,102,0.2); }
+
+.status-open { background: rgba(255,68,102,0.1); color: #ff4466; border: 1px solid rgba(255,68,102,0.2); }
+.status-processing { background: rgba(245,158,11,0.1); color: #f59e0b; border: 1px solid rgba(245,158,11,0.2); }
+.status-resolved { background: rgba(0,255,136,0.1); color: #00ff88; border: 1px solid rgba(0,255,136,0.2); }
+.status-closed { background: rgba(100,100,140,0.1); color: #6a6a8a; border: 1px solid #2a2a4e; }
+
+.cyber-btn-xs { padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.cyber-btn-cyan { background: rgba(0,240,255,0.1); color: #00f0ff; border: 1px solid rgba(0,240,255,0.2); }
+.cyber-btn-green { background: rgba(0,255,136,0.1); color: #00ff88; border: 1px solid rgba(0,255,136,0.2); }
+
+.cyber-btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; border: 1px solid transparent; }
+
+/* Detail Dialog */
+.cyber-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 50; }
+.cyber-dialog { background: #12121f; border: 1px solid #1a1a2e; border-radius: 16px; padding: 24px; width: 100%; max-width: 520px; }
+.cyber-dialog-lg { max-width: 700px; max-height: 80vh; overflow-y: auto; }
+.close-btn { padding: 8px; border-radius: 8px; background: transparent; border: none; color: #4a4a6a; cursor: pointer; font-size: 16px; }
+.close-btn:hover { background: rgba(255,255,255,0.05); color: #a0a0cc; }
+
+.ticket-content-box { background: rgba(26,26,46,0.3); border: 1px solid #1a1a2e; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+
+.reply-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; flex-shrink: 0; }
+.avatar-staff { background: linear-gradient(135deg, #00f0ff, #7c3aed); }
+.avatar-user { background: #4a4a6a; }
+
+.reply-bubble { border-radius: 8px; padding: 12px; font-size: 13px; }
+.reply-staff { background: rgba(0,240,255,0.05); color: #a0a0cc; border: 1px solid rgba(0,240,255,0.1); }
+.reply-customer { background: rgba(26,26,46,0.5); color: #a0a0cc; border: 1px solid #1a1a2e; }
+
+.cyber-text-input { background: #0a0a14; border: 1px solid #1a1a2e; border-radius: 8px; padding: 8px 12px; font-size: 13px; color: #e0e0ff; outline: none; }
+.cyber-text-input:focus { border-color: #00f0ff; }
+.cyber-text-input::placeholder { color: #4a4a6a; }
+
+.mb-4 { margin-bottom: 16px; }
+.mb-1 { margin-bottom: 4px; }
+.mt-1 { margin-top: 4px; }
+.gap-2 { gap: 8px; }
+.gap-3 { gap: 12px; }
+.flex { display: flex; }
+.flex-1 { flex: 1; }
+.flex-row-reverse { flex-direction: row-reverse; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.max-w-\[70\%\] { max-width: 70%; }
+.max-w-\[200px\] { max-width: 200px; }
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cursor-pointer { cursor: pointer; }
+.font-mono { font-family: 'Courier New', monospace; }
+.font-medium { font-weight: 500; }
+.font-bold { font-weight: 700; }
+.text-xs { font-size: 11px; }
+.text-sm { font-size: 13px; }
+.text-lg { font-size: 18px; }
+.text-xl { font-size: 20px; }
+.text-white { color: #fff; }
+.text-cyan-400 { color: #00f0ff; }
+.text-red-400 { color: #ff4466; }
+.text-amber-400 { color: #f59e0b; }
+.text-green-400 { color: #00ff88; }
+.space-y-3 > * + * { margin-top: 12px; }
+</style>
