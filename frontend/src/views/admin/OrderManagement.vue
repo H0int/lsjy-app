@@ -1,9 +1,9 @@
 <template>
   <div>
-    <div class="flex items-center justify-between mb-4">
-      <div class="flex gap-3">
-        <el-input v-model="search" placeholder="搜索订单号..." class="w-64" clearable prefix-icon="Search" />
-        <el-select v-model="statusFilter" placeholder="状态筛选" class="w-36" clearable>
+    <div class="cyber-toolbar">
+      <div class="toolbar-left">
+        <el-input v-model="search" placeholder="搜索订单号..." class="cyber-input w-64" clearable prefix-icon="Search" />
+        <el-select v-model="statusFilter" placeholder="状态筛选" class="cyber-input w-36" clearable>
           <el-option label="待支付" value="pending" />
           <el-option label="成功" value="success" />
           <el-option label="失败" value="failed" />
@@ -13,38 +13,42 @@
       <el-button>📥 导出</el-button>
     </div>
 
-    <el-table :data="filteredOrders" stripe class="bg-white dark:bg-dark-100 rounded-xl overflow-hidden">
-      <el-table-column prop="transactionNo" label="订单号" width="200" />
+    <el-table :data="filteredOrders" stripe class="cyber-table">
+      <el-table-column prop="transactionNo" label="订单号" width="200">
+        <template #default="{ row }">
+          <span class="font-mono text-xs text-[#00f0ff]">{{ row.transactionNo }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="业务类型" width="100">
         <template #default="{ row }">
-          <span class="text-sm">{{ bizTypeLabel(row.bizType) }}</span>
+          <span class="text-sm text-[#a0a0cc]">{{ bizTypeLabel(row.bizType) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="支付渠道" width="100">
         <template #default="{ row }">
-          <span class="text-sm">{{ channelLabel(row.payChannel) }}</span>
+          <span class="text-sm text-[#a0a0cc]">{{ channelLabel(row.payChannel) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="金额" width="100">
         <template #default="{ row }">
-          <span class="font-medium">¥{{ Number(row.amount).toFixed(2) }}</span>
+          <span class="font-medium text-white font-mono">¥{{ Number(row.amount).toFixed(2) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="圣点" width="80">
         <template #default="{ row }">
-          <span class="text-amber-500 font-medium">{{ row.coinAmount }}</span>
+          <span class="text-amber-400 font-medium font-mono">{{ row.coinAmount }}</span>
         </template>
       </el-table-column>
       <el-table-column label="状态" width="100">
         <template #default="{ row }">
-          <span class="px-2 py-1 rounded-full text-xs" :class="statusClass(row.status)">
+          <span class="cyber-badge" :class="'badge-' + row.status">
             {{ statusLabel(row.status) }}
           </span>
         </template>
       </el-table-column>
       <el-table-column label="创建时间" width="180">
         <template #default="{ row }">
-          <span class="text-sm">{{ formatDate(row.createdAt) }}</span>
+          <span class="text-sm text-[#6a6a8a] font-mono">{{ formatDate(row.createdAt) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" width="120" fixed="right">
@@ -89,15 +93,6 @@ function statusLabel(s: string): string {
   return { pending: '待支付', success: '成功', failed: '失败', refunded: '已退款' }[s] || s
 }
 
-function statusClass(s: string): string {
-  return {
-    pending: 'bg-amber-100 text-amber-600',
-    success: 'bg-green-100 text-green-600',
-    failed: 'bg-red-100 text-red-600',
-    refunded: 'bg-gray-100 text-gray-600'
-  }[s] || ''
-}
-
 function bizTypeLabel(t: string): string {
   return { order_pay: '订单支付', recharge: '充值', refund: '退款', commission: '佣金', withdraw: '提现' }[t] || t
 }
@@ -118,3 +113,47 @@ function handlePageChange(page: number) {
 
 onMounted(() => fetchOrders())
 </script>
+
+<style scoped>
+.cyber-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.toolbar-left { display: flex; gap: 12px; }
+.cyber-input { flex-shrink: 0; }
+
+.cyber-badge {
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.badge-pending {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.badge-success {
+  background: rgba(0, 255, 136, 0.1);
+  color: #00ff88;
+  border: 1px solid rgba(0, 255, 136, 0.2);
+}
+
+.badge-failed {
+  background: rgba(255, 68, 102, 0.1);
+  color: #ff4466;
+  border: 1px solid rgba(255, 68, 102, 0.2);
+}
+
+.badge-refunded {
+  background: rgba(100, 100, 140, 0.1);
+  color: #6a6a8a;
+  border: 1px solid rgba(100, 100, 140, 0.2);
+}
+
+.text-amber-400 { color: #f59e0b; }
+</style>
