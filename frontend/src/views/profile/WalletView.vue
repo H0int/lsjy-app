@@ -182,9 +182,9 @@ const submitting = ref(false)
 
 const qrCodeUrl = computed(() => {
   const baseUrl = import.meta.env.BASE_URL || '/'
-  if (payMethod.value === 'wechat') return baseUrl + 'qr/wechat.png'
-  if (payMethod.value === 'alipay') return baseUrl + 'qr/alipay.jpg'
-  return baseUrl + 'qr/qq.png'
+  if (payMethod.value === 'wechat') return baseUrl + 'qrcodes/wechat_pay.jpg'
+  if (payMethod.value === 'alipay') return baseUrl + 'qrcodes/alipay.jpg'
+  return baseUrl + 'assets/pay/alipay_qr.png'
 })
 
 const payMethodName = computed(() => {

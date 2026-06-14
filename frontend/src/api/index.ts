@@ -115,9 +115,9 @@ export const paymentApi = {
     if (useMock) return mockApi.getPackages() as any
     return service.get('/payment/coin/packages').then(r => r.data)
   },
-  recharge(packageId: number): Promise<ApiResponse<{ paymentTransaction: PaymentTransaction; coinAmount: number }>> {
+  recharge(packageId: number, paymentMethod?: string): Promise<ApiResponse<any>> {
     if (useMock) return mockApi.recharge(packageId) as any
-    return service.post('/payment/coin/recharge', { packageId }).then(r => r.data)
+    return service.post('/payment/coin/recharge', { packageId, paymentMethod }).then(r => r.data)
   },
   getTransactions(params?: { type?: string; page?: number; pageSize?: number }): Promise<ApiResponse<PageResult<CoinTransaction>>> {
     if (useMock) return mockApi.getTransactions(params) as any

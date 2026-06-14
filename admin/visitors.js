@@ -86,8 +86,8 @@
         html += '<tr>';
         html += '<td>' + v.id + '</td>';
         html += '<td><code>' + (v.ip || 'unknown') + '</code></td>';
-        html += '<td style="color:var(--cyan);font-weight:500;">' + (v.visitTime || '') + '</td>';
-        html += '<td>' + (v.page || '/') + '</td>';
+        html += '<td style="color:var(--cyan);font-weight:500;">' + (v.visitTimeFormatted || v.visitTime || '') + '</td>';
+        html += '<td>' + (v.path || v.page || '/') + '</td>';
         html += '<td style="color:var(--text-dim);font-size:12px;">' + (v.userAgent || '').substring(0, 60) + '</td>';
         html += '</tr>';
       });
@@ -120,8 +120,8 @@
             html += '<tr>';
             html += '<td>' + v.id + '</td>';
             html += '<td><code>' + (v.ip || 'unknown') + '</code></td>';
-            html += '<td style="color:var(--cyan);font-weight:500;">' + (v.visitTime || '') + '</td>';
-            html += '<td>' + (v.page || '/') + '</td>';
+            html += '<td style="color:var(--cyan);font-weight:500;">' + (v.visitTimeFormatted || v.visitTime || '') + '</td>';
+            html += '<td>' + (v.path || v.page || '/') + '</td>';
             html += '<td style="color:var(--text-dim);">' + (v.referer || '-') + '</td>';
             html += '<td style="color:var(--text-dim);font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (v.userAgent || '') + '</td>';
             html += '</tr>';

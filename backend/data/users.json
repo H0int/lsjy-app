@@ -1,0 +1,47 @@
+[
+  {
+    "id": 1,
+    "username": "KF02V9",
+    "nickname": "罗总",
+    "email": "ceo@lsjyapp.cn",
+    "phone": "",
+    "roles": ["boss"],
+    "status": "active",
+    "avatar": "",
+    "gender": 1,
+    "bio": "罗圣纪元创始人",
+    "coins": 99999,
+    "totalRecharge": 99999,
+    "createdAt": "2026-01-01T00:00:00Z"
+  },
+  {
+    "id": 2,
+    "username": "user1",
+    "nickname": "测试用户",
+    "email": "test@test.com",
+    "phone": "13800138000",
+    "roles": ["user"],
+    "status": "active",
+    "avatar": "",
+    "gender": 0,
+    "bio": "普通用户",
+    "coins": 500,
+    "totalRecharge": 500,
+    "createdAt": "2026-06-01T00:00:00Z"
+  },
+  {
+    "id": 3,
+    "username": "admin1",
+    "nickname": "管理员",
+    "email": "admin@lsjyapp.cn",
+    "phone": "",
+    "roles": ["admin"],
+    "status": "active",
+    "avatar": "",
+    "gender": 1,
+    "bio": "系统管理员",
+    "coins": 0,
+    "totalRecharge": 0,
+    "createdAt": "2026-03-01T00:00:00Z"
+  }
+]

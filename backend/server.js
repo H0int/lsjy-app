@@ -61,6 +61,17 @@ function authCheck(req, res, next) {
   if (!auth) {
     return res.status(401).json({ code: 401, message: '未授权，请先登录', data: null });
   }
+  // 从token中提取用户ID (token格式: jwt_<userId>_<timestamp>)
+  const token = auth.replace('Bearer ', '');
+  if (token.startsWith('jwt_')) {
+    const parts = token.split('_');
+    if (parts.length >= 2) {
+      const userId = parseInt(parts[1]);
+      if (!isNaN(userId)) {
+        req.user = { id: userId };
+      }
+    }
+  }
   next();
 }
 
@@ -352,7 +363,8 @@ app.get('/api/v1/visitors/stats', (req, res) => {
   const today = now.toISOString().split('T')[0];
   const todayVisitors = visitorsStore.filter(v => v.visitTime.startsWith(today));
   const uniqueIPs = new Set(visitorsStore.map(v => v.ip)).size;
-  
+  const recentVisitors = visitorsStore.slice(-10).reverse();
+
   res.json({
     code: 0,
     message: 'success',
@@ -360,7 +372,53 @@ app.get('/api/v1/visitors/stats', (req, res) => {
       totalVisitors: visitorsStore.length,
       todayVisitors: todayVisitors.length,
       uniqueIPs: uniqueIPs,
-      lastVisit: visitorsStore.length > 0 ? visitorsStore[visitorsStore.length - 1].visitTimeFormatted : null
+      lastVisit: visitorsStore.length > 0 ? visitorsStore[visitorsStore.length - 1].visitTimeFormatted : null,
+      lastVisitTime: visitorsStore.length > 0 ? visitorsStore[visitorsStore.length - 1].visitTimeFormatted : '暂无记录',
+      recentVisitors: recentVisitors
+    }
+  });
+});
+
+// POST /visitors/checkin — 前端 visitorApi.checkin() 调用
+app.post('/api/v1/visitors/checkin', (req, res) => {
+  const { page, referer } = req.body;
+  const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || req.connection.remoteAddress;
+  const now = new Date();
+
+  // 30秒内同一IP不重复计数
+  const recent = visitorsStore.find(v => v.ip === ip && (now - new Date(v.visitTime)) < 30000);
+  if (recent) {
+    return res.json({ code: 0, message: 'already recorded', data: recent });
+  }
+
+  const visitor = {
+    id: visitorsStore.length + 1,
+    ip,
+    userAgent: req.headers['user-agent'] || '',
+    path: page || '/',
+    referer: referer || req.headers.referer || '',
+    visitTime: now.toISOString(),
+    visitTimeFormatted: `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`
+  };
+  visitorsStore.push(visitor);
+  saveVisitors();
+  res.json({ code: 0, message: 'success', data: visitor });
+});
+
+// GET /visitors/list — 前端 visitorApi.getList() 和管理后台调用
+app.get('/api/v1/visitors/list', (req, res) => {
+  const { page = 1, pageSize = 20 } = req.query;
+  const start = (page - 1) * pageSize;
+  const end = start + parseInt(pageSize);
+  const list = visitorsStore.slice().reverse().slice(0, end);
+  res.json({
+    code: 0,
+    message: 'success',
+    data: {
+      items: list,
+      total: visitorsStore.length,
+      page: parseInt(page),
+      pageSize: parseInt(pageSize)
     }
   });
 });
@@ -394,12 +452,12 @@ app.post('/api/v1/auth/login', (req, res) => {
   let users = [];
   try { users = JSON.parse(fs.readFileSync(usersFile, 'utf8')); } catch (e) {}
   const user = users.find(u => u.username === username && u.password === password);
-  if (user && user.status === 'approved') {
+  if (user && (user.status === 'approved' || user.status === 'active')) {
     return res.json({
       code: 0, message: 'success',
       data: {
         accessToken: 'jwt_' + user.id + '_' + Date.now(), refreshToken: 'refresh_' + user.id + '_' + Date.now(),
-        user: { id: user.id, username: user.username, nickname: user.nickname, roles: ['normal'], status: 'active' },
+        user: { id: user.id, username: user.username, nickname: user.nickname, roles: user.roles || ['normal'], status: 'active' },
       },
     });
   }
@@ -420,11 +478,14 @@ app.post('/api/v1/auth/register', (req, res) => {
   }
   const newUser = {
     id: users.length + 1, username, password, nickname: nickname || username,
-    email, phone, status: 'approved', roles: ['normal'], createdAt: new Date().toISOString(),
+    email, phone, status: 'active', roles: ['normal'], coins: 0, totalRecharge: 0,
+    createdAt: new Date().toISOString(),
   };
   users.push(newUser);
   fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
-  res.json({ code: 0, message: '注册成功，等待管理员审批', data: { accessToken: null, refreshToken: null, user: { ...newUser, password: undefined } } });
+  const accessToken = 'jwt_' + newUser.id + '_' + Date.now();
+  const refreshToken = 'refresh_' + newUser.id + '_' + Date.now();
+  res.json({ code: 0, message: '注册成功', data: { accessToken, refreshToken, user: { id: newUser.id, username: newUser.username, nickname: newUser.nickname, roles: ['normal'], status: 'active' } } });
 });
 
 // 刷新token
@@ -734,9 +795,16 @@ app.post('/api/v1/ai/tools', authCheck, (req, res) => {
 // ===== 支付模块 =====
 // ============================================================
 
-// 余额
-app.get('/api/v1/payment/coin/balance', (req, res) => {
-  res.json({ code: 0, message: 'success', data: { balance: 99999, frozenAmount: 0, totalRecharge: 99999 } });
+// 余额 — 从 users.json 读取真实用户余额
+app.get('/api/v1/payment/coin/balance', authCheck, (req, res) => {
+  const userId = req.user?.id || 1;
+  const usersFile = path.join(__dirname, 'data', 'users.json');
+  let users = [];
+  try { users = JSON.parse(fs.readFileSync(usersFile, 'utf8')); } catch (e) {}
+  const user = users.find(u => u.id === userId);
+  const balance = user?.coins || 0;
+  const totalRecharge = user?.totalRecharge || 0;
+  res.json({ code: 0, message: 'success', data: { balance, frozenAmount: 0, totalRecharge } });
 });
 
 // 充值套餐
@@ -744,9 +812,9 @@ app.get('/api/v1/payment/coin/packages', (req, res) => {
   res.json({
     code: 0, message: 'success',
     data: [
-      { id: 1, name: '体验包', coins: 100, price: 9.9, bonusCoins: 10 },
-      { id: 2, name: '标准包', coins: 500, price: 39.9, bonusCoins: 100 },
-      { id: 3, name: '专业包', coins: 2000, price: 129.9, bonusCoins: 500 },
+      { id: 1, name: '体验包', coins: 100, price: 9.9, bonusCoins: 10, isRecommended: false, sortOrder: 1 },
+      { id: 2, name: '标准包', coins: 500, price: 39.9, bonusCoins: 100, isRecommended: true, sortOrder: 2 },
+      { id: 3, name: '专业包', coins: 2000, price: 129.9, bonusCoins: 500, isRecommended: false, sortOrder: 3 },
     ],
   });
 });
