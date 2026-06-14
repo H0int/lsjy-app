@@ -2,8 +2,8 @@
   <div>
     <div class="cyber-toolbar">
       <div class="toolbar-left">
-        <el-input v-model="search" placeholder="搜索用户..." class="cyber-input w-64" clearable prefix-icon="Search" />
-        <el-select v-model="statusFilter" placeholder="状态筛选" class="cyber-input w-36" clearable>
+        <el-input v-model="search" placeholder="搜索用户..." class="cyber-input" clearable prefix-icon="Search" />
+        <el-select v-model="statusFilter" placeholder="状态筛选" class="cyber-select" clearable>
           <el-option label="正常" value="active" />
           <el-option label="冻结" value="frozen" />
           <el-option label="封禁" value="banned" />
@@ -12,48 +12,88 @@
       <el-button type="primary" @click="openAddDialog">+ 添加用户</el-button>
     </div>
 
-    <el-table :data="filteredUsers" stripe class="cyber-table">
-      <el-table-column prop="id" label="ID" width="80" />
-      <el-table-column label="用户" min-width="180">
-        <template #default="{ row }">
-          <div class="flex items-center gap-3">
-            <div class="cyber-avatar">{{ row.nickname[0] }}</div>
-            <div>
-              <div class="text-white font-medium">{{ row.nickname }}</div>
-              <div class="text-xs text-[#4a4a6a]">@{{ row.username }}</div>
+    <!-- 桌面端表格 -->
+    <div class="table-wrapper">
+      <el-table :data="filteredUsers" stripe class="cyber-table">
+        <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column label="用户" min-width="180">
+          <template #default="{ row }">
+            <div class="flex items-center gap-3">
+              <div class="cyber-avatar">{{ row.nickname[0] }}</div>
+              <div>
+                <div class="text-white font-medium">{{ row.nickname }}</div>
+                <div class="text-xs text-[#4a4a6a]">@{{ row.username }}</div>
+              </div>
             </div>
+          </template>
+        </el-table-column>
+        <el-table-column prop="phone" label="手机号" width="130" />
+        <el-table-column prop="email" label="邮箱" width="180" />
+        <el-table-column label="类型" width="100">
+          <template #default="{ row }">
+            <span class="text-sm text-[#a0a0cc]">{{ userTypeLabel(row.userType) }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="状态" width="80">
+          <template #default="{ row }">
+            <span class="cyber-badge" :class="'badge-' + row.status">
+              {{ statusLabel(row.status) }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column label="最后登录" width="160">
+          <template #default="{ row }">
+            <span class="text-xs text-[#4a4a6a] font-mono">{{ row.lastLoginAt ? formatDate(row.lastLoginAt) : '从未' }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="150" fixed="right">
+          <template #default="{ row }">
+            <el-button size="small" link type="primary" @click="openEditDialog(row)">编辑</el-button>
+            <el-button size="small" link :type="row.status === 'active' ? 'danger' : 'success'"
+              @click="handleStatusChange(row)">
+              {{ row.status === 'active' ? '冻结' : '解冻' }}
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
+
+    <!-- 移动端卡片列表 -->
+    <div class="mobile-card-list">
+      <div v-for="row in filteredUsers" :key="row.id" class="mobile-user-card">
+        <div class="mobile-card-header">
+          <div class="cyber-avatar">{{ row.nickname[0] }}</div>
+          <div class="mobile-card-user-info">
+            <div class="mobile-card-name">{{ row.nickname }}</div>
+            <div class="mobile-card-username">@{{ row.username }}</div>
           </div>
-        </template>
-      </el-table-column>
-      <el-table-column prop="phone" label="手机号" width="130" />
-      <el-table-column prop="email" label="邮箱" width="180" />
-      <el-table-column label="类型" width="100">
-        <template #default="{ row }">
-          <span class="text-sm text-[#a0a0cc]">{{ userTypeLabel(row.userType) }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="状态" width="80">
-        <template #default="{ row }">
           <span class="cyber-badge" :class="'badge-' + row.status">
             {{ statusLabel(row.status) }}
           </span>
-        </template>
-      </el-table-column>
-      <el-table-column label="最后登录" width="160">
-        <template #default="{ row }">
-          <span class="text-xs text-[#4a4a6a] font-mono">{{ row.lastLoginAt ? formatDate(row.lastLoginAt) : '从未' }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" width="150" fixed="right">
-        <template #default="{ row }">
-          <el-button size="small" link type="primary" @click="openEditDialog(row)">编辑</el-button>
-          <el-button size="small" link :type="row.status === 'active' ? 'danger' : 'success'"
+        </div>
+        <div class="mobile-card-body">
+          <div class="mobile-card-row" v-if="row.phone">
+            <span class="mobile-card-label">手机</span>
+            <span class="mobile-card-value">{{ row.phone }}</span>
+          </div>
+          <div class="mobile-card-row" v-if="row.email">
+            <span class="mobile-card-label">邮箱</span>
+            <span class="mobile-card-value">{{ row.email }}</span>
+          </div>
+          <div class="mobile-card-row">
+            <span class="mobile-card-label">类型</span>
+            <span class="mobile-card-value">{{ userTypeLabel(row.userType) }}</span>
+          </div>
+        </div>
+        <div class="mobile-card-actions">
+          <el-button size="small" type="primary" @click="openEditDialog(row)">编辑</el-button>
+          <el-button size="small" :type="row.status === 'active' ? 'danger' : 'success'"
             @click="handleStatusChange(row)">
             {{ row.status === 'active' ? '冻结' : '解冻' }}
           </el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+        </div>
+      </div>
+    </div>
 
     <div class="mt-4 flex justify-end">
       <el-pagination layout="total, prev, pager, next" :total="total" :page-size="pageSize"
@@ -232,9 +272,115 @@ onMounted(() => fetchUsers())
   align-items: center;
   justify-content: space-between;
   margin-bottom: 16px;
+  gap: 12px;
 }
-.toolbar-left { display: flex; gap: 12px; }
-.cyber-input { flex-shrink: 0; }
+.toolbar-left {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.cyber-input { flex-shrink: 0; width: 256px; }
+.cyber-select { flex-shrink: 0; width: 144px; }
+
+@media (max-width: 767px) {
+  .cyber-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .toolbar-left {
+    flex-direction: column;
+  }
+  .cyber-input { width: 100%; }
+  .cyber-select { width: 100%; }
+}
+
+/* ===== Desktop: show table, hide cards ===== */
+.table-wrapper {
+  display: block;
+}
+.mobile-card-list {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .table-wrapper { display: none; }
+  .mobile-card-list { display: block; }
+}
+
+/* ===== Mobile Card Styles ===== */
+.mobile-user-card {
+  background: #12121f;
+  border: 1px solid #1a1a2e;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  transition: border-color 0.3s;
+}
+
+.mobile-user-card:hover {
+  border-color: #2a2a4e;
+}
+
+.mobile-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.mobile-card-user-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.mobile-card-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #e0e0ff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobile-card-username {
+  font-size: 12px;
+  color: #4a4a6a;
+}
+
+.mobile-card-body {
+  border-top: 1px solid #1a1a2e;
+  padding-top: 12px;
+  margin-bottom: 12px;
+}
+
+.mobile-card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.mobile-card-label {
+  font-size: 12px;
+  color: #6a6a8a;
+}
+
+.mobile-card-value {
+  font-size: 13px;
+  color: #a0a0cc;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 60%;
+}
+
+.mobile-card-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  border-top: 1px solid #1a1a2e;
+  padding-top: 12px;
+}
 
 .cyber-avatar {
   width: 32px; height: 32px;
@@ -255,6 +401,7 @@ onMounted(() => fetchUsers())
   border-radius: 20px;
   font-size: 11px;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .badge-active {
