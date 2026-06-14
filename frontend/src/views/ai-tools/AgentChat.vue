@@ -2,9 +2,9 @@
   <div class="max-w-4xl mx-auto px-4 py-4 flex flex-col" style="height: calc(100vh - 100px);">
     <!-- 头部 -->
     <div class="cyber-card p-3 mb-3 flex items-center gap-3 flex-shrink-0">
-      <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold text-black flex-shrink-0"
-        style="background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-magenta)); box-shadow: 0 0 16px rgba(0,240,255,0.4);">
-        罗
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+        style="box-shadow: 0 0 16px rgba(0,240,255,0.4);">
+        <img src="/logo.png" alt="罗圣纪元" style="width:100%;height:100%;border-radius:12px;object-fit:cover;" />
       </div>
       <div class="flex-1 min-w-0">
         <h1 class="text-base font-bold" style="color: var(--cyber-cyan); font-family: 'JetBrains Mono', monospace;">罗圣AI智能体</h1>
@@ -112,7 +112,11 @@
 
     <!-- ========== 图片生成 ========== -->
     <template v-if="tab === 'image'">
-      <div class="flex-1 overflow-y-auto mb-3 space-y-3">
+      <div class="flex-1 overflow-y-auto mb-3 space-y-3" style="min-height: 100px;">
+        <div v-if="images.length === 0" class="text-center py-8">
+          <div class="text-3xl mb-2">🎨</div>
+          <p class="text-sm" style="color: var(--cyber-text-dim);">输入描述，AI为你生成图片</p>
+        </div>
         <div v-for="(img, i) in images" :key="i" class="cyber-card p-3">
           <p class="text-xs mb-2" style="color: var(--cyber-text-dim);">🎨 {{ img.prompt }}</p>
           <img v-if="img.url" :src="img.url" class="w-full rounded-xl" style="border: 1px solid var(--cyber-border);" />
@@ -154,7 +158,11 @@
 
     <!-- ========== 视频生成 ========== -->
     <template v-if="tab === 'video'">
-      <div class="flex-1 overflow-y-auto mb-3 space-y-3">
+      <div class="flex-1 overflow-y-auto mb-3 space-y-3" style="min-height: 100px;">
+        <div v-if="videos.length === 0" class="text-center py-8">
+          <div class="text-3xl mb-2">🎬</div>
+          <p class="text-sm" style="color: var(--cyber-text-dim);">视频生成功能即将开放，敬请期待</p>
+        </div>
         <div v-for="(vid, i) in videos" :key="i" class="cyber-card p-3">
           <p class="text-xs mb-2" style="color: var(--cyber-text-dim);">🎬 {{ vid.prompt }}</p>
           <video v-if="vid.url" :src="vid.url" controls class="w-full rounded-xl"></video>
@@ -405,7 +413,7 @@ async function genImage() {
   }
 }
 
-// ========== 视频生成 ==========
+// ========== 视频生成（暂未开放）==========
 async function genVideo() {
   const prompt = vidPrompt.value.trim()
   if (!prompt || vidLoading.value) return
@@ -413,74 +421,14 @@ async function genVideo() {
   videos.value.unshift({ prompt, loading: true })
   vidLoading.value = true
 
-  try {
-    // 通过扣子Bot请求视频生成
-    const res = await fetch(COZE_API, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${COZE_TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        bot_id: BOT_ID,
-        user_id: 'vid_' + Date.now(),
-        stream: true,
-        auto_save_history: false,
-        additional_messages: [
-          { role: 'user', content: `请帮我生成一段视频：${prompt}`, type: 'query' }
-        ],
-      }),
-    })
-
-    if (!res.ok) throw new Error(`API ${res.status}`)
-
-    const reader = res.body!.getReader()
-    const decoder = new TextDecoder()
-    let content = ''
-    let buffer = ''
-
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
-      buffer += decoder.decode(value, { stream: true })
-      const lines = buffer.split('\n')
-      buffer = lines.pop() || ''
-
-      for (const line of lines) {
-        if (!line.startsWith('data:')) continue
-        try {
-          const d = JSON.parse(line.slice(5).trim())
-          if (d.type === 'answer' && d.content) {
-            if (d.content.length > content.length) {
-              content = d.content
-            } else {
-              content += d.content
-            }
-          }
-        } catch {}
-      }
-    }
-
-    const vidEntry = videos.value.find(v => v.prompt === prompt && v.loading)
-    if (vidEntry) {
-      // 尝试提取视频URL
-      const urlMatch = content.match(/https?:\/\/[^\s)]+\.(mp4|webm|mov)(\?[^\s)]*)?/i)
-      if (urlMatch) {
-        vidEntry.url = urlMatch[0]
-      } else {
-        vidEntry.error = content.substring(0, 300) || '视频生成请求已提交，请稍后查看'
-      }
-      vidEntry.loading = false
-    }
-  } catch (e: any) {
-    const vidEntry = videos.value.find(v => v.prompt === prompt && v.loading)
-    if (vidEntry) {
-      vidEntry.loading = false
-      vidEntry.error = `生成失败：${e.message || '服务异常'}`
-    }
-  } finally {
-    vidLoading.value = false
+  // 视频生成暂未开放，显示提示信息
+  await new Promise(r => setTimeout(r, 1000))
+  const vidEntry = videos.value.find(v => v.prompt === prompt && v.loading)
+  if (vidEntry) {
+    vidEntry.loading = false
+    vidEntry.error = '🎬 视频生成功能暂未开放，正在对接可灵/即梦视频API，敬请期待！'
   }
+  vidLoading.value = false
 }
 
 // ========== 持久化 ==========

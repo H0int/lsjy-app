@@ -19,8 +19,8 @@ export const AIConfig = registerAs('ai', () => ({
   // 即梦（字节跳动AI绘画）
   jimeng: {
     apiKey: process.env.JIMENG_API_KEY || '',
-    baseUrl: process.env.JIMENG_BASE_URL || 'https://jimeng.jianying.com/v1',
-    defaultModel: process.env.JIMENG_MODEL || 'jimeng-v2',
+    baseUrl: process.env.JIMENG_BASE_URL || 'https://ark.cn-beijing.volces.com/api/v3',
+    defaultModel: process.env.JIMENG_MODEL || 'doubao-seedream-5-0-lite',
   },
 
   // OpenAI GPT
@@ -63,8 +63,8 @@ export const AIConfig = registerAs('ai', () => ({
     },
     // 图像生成固定价格（圣点/张）
     imageFixedPrice: {
-      'jimeng-v2': 10,
-      'jimeng-v2-pro': 20,
+      'doubao-seedream-5-0-lite': 10,
+      'doubao-seedream-5-0-lite-pro': 20,
       'dall-e-3': 40,
     },
   },

@@ -33,8 +33,8 @@ const CONFIG = {
 
   // 即梦（字节跳动 AI 绘画）
   JIMENG_API_KEY: process.env.JIMENG_API_KEY || "ark-3c2a939f-9aec-4930-946e-29a97d476611-e6c69",
-  JIMENG_BASE_URL: process.env.JIMENG_BASE_URL || 'https://jimeng.jianying.com/v1',
-  JIMENG_MODEL: process.env.JIMENG_MODEL || 'jimeng-v2',
+  JIMENG_BASE_URL: process.env.JIMENG_BASE_URL || 'https://ark.cn-beijing.volces.com/api/v3',
+  JIMENG_MODEL: process.env.JIMENG_MODEL || 'doubao-seedream-5-0-lite',
 
   // DeepSeek
   DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY || 'sk-4f60d83ebf904321b99000888baf313c',
@@ -456,14 +456,37 @@ async function callJimengImageAPI(prompt, options = {}) {
   const model = CONFIG.JIMENG_MODEL;
 
   // 即梦 API 调用（参考官方文档）
+  // 短提示词自动增强 - 提升生成质量
+  let enhancedPrompt = prompt;
+  if (prompt.length < 20) {
+    enhancedPrompt = prompt + '，高质量，高清细节，专业摄影，8K分辨率，精细纹理';
+  }
+
+  // Seedream API 要求总像素在 [3686400, 16777216] 范围内
+  // 映射用户选择的有效尺寸
+  let sizeStr = '2K'; // 默认使用2K
+  const totalPixels = options.width * options.height;
+  if (totalPixels >= 3686400) {
+    sizeStr = `${options.width}x${options.height}`;
+  } else {
+    // 用户选择的尺寸太小，映射到有效尺寸
+    const aspectRatio = options.width / options.height;
+    if (aspectRatio > 1.3) {
+      sizeStr = '2560x1440'; // 横版
+    } else if (aspectRatio < 0.77) {
+      sizeStr = '1440x2560'; // 竖版
+    } else {
+      sizeStr = '2048x2048'; // 方形
+    }
+  }
+
   const res = await httpsRequest(`${baseUrl}/images/generations`, {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }
   }, {
     model,
-    prompt,
-    size: `${options.width}x${options.height}`,
-    style: options.style || 'auto',
+    prompt: enhancedPrompt,
+    size: sizeStr,
     n: options.count || 1
   });
 
