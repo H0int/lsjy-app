@@ -3030,6 +3030,7 @@ window.AdminAPI = {
       if (coupons[i].id === id) { coupons[i].name = name; coupons[i].code = code; coupons[i].discount = discount; coupons[i].expiry = expiry; break; }
     }
     Store.set('coupons', coupons);
+    addLog('coupon', '编辑优惠券 #'+id+': '+name);
     document.querySelector('.modal-overlay').remove();
     toast('优惠券已更新', 'success');
     navigate('coupons');
@@ -3088,29 +3089,35 @@ window.AdminAPI = {
     if (!t) return toast('未找到工单 #'+id, 'error');
     var statusMap = {open:'待处理',processing:'处理中',resolved:'已解决',closed:'已关闭'};
     var priorityMap = {low:'低',medium:'中',high:'高',urgent:'紧急'};
-    var html = '<div class="modal-overlay" onclick="if(event.target===this)AdminAPI.closeModal()"><div class="modal-card" style="max-width:520px">';
-    html += '<h3 style="color:var(--p);margin-bottom:16px"><i class="fas fa-ticket"></i> 工单详情 #'+id+'</h3>';
+    var overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.style.zIndex = '99998';
+    var box = document.createElement('div');
+    box.className = 'modal-box';
+    var html = '<div class="modal-header"><i class="fa-solid fa-ticket" style="color:var(--p)"></i> 工单详情 #'+id+'</div>';
+    html += '<div class="modal-body">';
     html += '<div style="display:grid;grid-template-columns:80px 1fr;gap:8px 12px;font-size:14px;margin-bottom:16px">';
-    html += '<span style="color:var(--text-dim)">标题</span><span style="color:var(--text);font-weight:bold">'+esc(t.title||'-')+'</span>';
-    html += '<span style="color:var(--text-dim)">提交人</span><span style="color:var(--text)">'+esc(t.user||t.username||'-')+'</span>';
-    html += '<span style="color:var(--text-dim)">状态</span><span style="color:var(--p)">'+(statusMap[t.status]||t.status)+'</span>';
-    html += '<span style="color:var(--text-dim)">优先级</span><span style="color:var(--warn)">'+(priorityMap[t.priority]||t.priority)+'</span>';
-    html += '<span style="color:var(--text-dim)">时间</span><span style="color:var(--text)">'+esc(t.createTime||t.createdAt||'-')+'</span>';
+    html += '<span style="color:var(--nd)">标题</span><span style="color:var(--w);font-weight:bold">'+esc(t.title||'-')+'</span>';
+    html += '<span style="color:var(--nd)">提交人</span><span style="color:var(--w)">'+esc(t.user||t.username||'-')+'</span>';
+    html += '<span style="color:var(--nd)">状态</span><span style="color:var(--p)">'+(statusMap[t.status]||t.status)+'</span>';
+    html += '<span style="color:var(--nd)">优先级</span><span style="color:var(--warn)">'+(priorityMap[t.priority]||t.priority)+'</span>';
+    html += '<span style="color:var(--nd)">时间</span><span style="color:var(--w)">'+esc(t.createTime||t.createdAt||'-')+'</span>';
     html += '</div>';
-    html += '<div style="background:var(--bg2);border:1px solid var(--bd);border-radius:8px;padding:12px;margin-bottom:16px">';
-    html += '<div style="color:var(--text-dim);font-size:12px;margin-bottom:6px">问题描述</div>';
-    html += '<div style="color:var(--text);font-size:14px;white-space:pre-wrap">'+esc(t.content||t.description||'无描述')+'</div>';
+    html += '<div style="background:var(--bg2);border:1px solid var(--border-glow);border-radius:8px;padding:12px;margin-bottom:16px">';
+    html += '<div style="color:var(--nd);font-size:12px;margin-bottom:6px">问题描述</div>';
+    html += '<div style="color:var(--w);font-size:14px;white-space:pre-wrap">'+esc(t.content||t.description||'无描述')+'</div>';
     html += '</div>';
     if (t.reply || t.adminReply) {
-      html += '<div style="background:rgba(0,240,255,0.05);border:1px solid var(--bd);border-radius:8px;padding:12px;margin-bottom:16px">';
+      html += '<div style="background:rgba(0,240,255,0.05);border:1px solid var(--border-glow);border-radius:8px;padding:12px;margin-bottom:16px">';
       html += '<div style="color:var(--p);font-size:12px;margin-bottom:6px">管理员回复</div>';
-      html += '<div style="color:var(--text);font-size:14px;white-space:pre-wrap">'+esc(t.reply||t.adminReply)+'</div>';
+      html += '<div style="color:var(--w);font-size:14px;white-space:pre-wrap">'+esc(t.reply||t.adminReply)+'</div>';
       html += '</div>';
     }
-    html += '<div style="display:flex;gap:10px;justify-content:flex-end">';
-    html += '<button class="btn btn-ghost" onclick="AdminAPI.closeModal()">关闭</button>';
-    html += '</div></div></div>';
-    document.getElementById('main-app').insertAdjacentHTML('beforeend', html);
+    html += '</div>';
+    html += '<div class="modal-footer"><button class="admin-btn-cancel" onclick="AdminAPI.closeModal()">关闭</button></div>';
+    box.innerHTML = html;
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
   },
 
   closeTicket: function(id) {
@@ -3168,20 +3175,25 @@ window.AdminAPI = {
     var campaigns = Store.get('campaigns') || [];
     var c = campaigns.find(function(x){ return x.id === id; });
     if (!c) return toast('未找到活动 #'+id, 'error');
-    var html = '<div class="modal-overlay" onclick="if(event.target===this)AdminAPI.closeModal()"><div class="modal-card" style="max-width:520px">';
-    html += '<h3 style="color:var(--p);margin-bottom:16px"><i class="fas fa-edit"></i> 编辑营销活动</h3>';
-    html += '<div style="display:flex;flex-direction:column;gap:12px">';
-    html += '<label style="color:var(--text)">名称<input id="ecamp-name" class="modal-input" value="'+esc(c.name||'')+'"></label>';
-    html += '<label style="color:var(--text)">类型<select id="ecamp-type" class="modal-input"><option value="discount"'+(c.type==='discount'?' selected':'')+'>折扣</option><option value="gift"'+(c.type==='gift'?' selected':'')+'>赠送</option><option value="event"'+(c.type==='event'?' selected':'')+'>活动</option></select></label>';
-    html += '<label style="color:var(--text)">描述<textarea id="ecamp-desc" class="modal-input" rows="3">'+esc(c.description||'')+'</textarea></label>';
-    html += '<label style="color:var(--text)">开始日期<input id="ecamp-start" type="date" class="modal-input" value="'+esc(c.startDate||'')+'"></label>';
-    html += '<label style="color:var(--text)">结束日期<input id="ecamp-end" type="date" class="modal-input" value="'+esc(c.endDate||'')+'"></label>';
-    html += '</div>';
-    html += '<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px">';
-    html += '<button class="btn btn-ghost" onclick="AdminAPI.closeModal()">取消</button>';
-    html += '<button class="btn btn-primary" onclick="AdminAPI._saveEditCampaign('+id+')">保存</button>';
-    html += '</div></div></div>';
-    document.getElementById('main-app').insertAdjacentHTML('beforeend', html);
+    var overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.style.zIndex = '99998';
+    var box = document.createElement('div');
+    box.className = 'modal-box';
+    box.innerHTML = '<div class="modal-header"><i class="fa-solid fa-edit" style="color:var(--p2)"></i> 编辑营销活动</div>' +
+      '<div class="modal-body">' +
+      '<div class="form-group"><label>名称</label><input type="text" id="ecamp-name" style="width:100%" value="'+esc(c.name||'')+'"></div>' +
+      '<div class="form-group"><label>类型</label><select id="ecamp-type" style="width:100%"><option value="discount"'+(c.type==='discount'?' selected':'')+'>折扣</option><option value="gift"'+(c.type==='gift'?' selected':'')+'>赠送</option><option value="event"'+(c.type==='event'?' selected':'')+'>活动</option></select></div>' +
+      '<div class="form-group"><label>描述</label><textarea id="ecamp-desc" rows="3" style="width:100%;resize:vertical;">'+esc(c.description||'')+'</textarea></div>' +
+      '<div class="form-group"><label>开始日期</label><input type="date" id="ecamp-start" style="width:100%" value="'+esc(c.startDate||'')+'"></div>' +
+      '<div class="form-group"><label>结束日期</label><input type="date" id="ecamp-end" style="width:100%" value="'+esc(c.endDate||'')+'"></div>' +
+      '</div>' +
+      '<div class="modal-footer">' +
+      '<button class="admin-btn-cancel" onclick="AdminAPI.closeModal()">取消</button>' +
+      '<button class="admin-btn" onclick="AdminAPI._saveEditCampaign('+id+')">保存修改</button>' +
+      '</div>';
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
   },
 
   _saveEditCampaign: function(id) {

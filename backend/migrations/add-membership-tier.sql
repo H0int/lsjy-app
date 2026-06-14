@@ -1,6 +1,6 @@
 -- 添加 membership_tier 字段
 ALTER TABLE users 
-ADD COLUMN membership_tier ENUM('normal', 'premium', 'admin', 'super_admin', 'ultimate_admin', 'founder') 
+ADD COLUMN membership_tier ENUM('normal', 'premium', 'normal_admin', 'super_admin', 'ultimate_admin', 'founder') 
 DEFAULT 'normal' AFTER vip_level;
 
 -- 创建索引
