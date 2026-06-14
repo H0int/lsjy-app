@@ -67,26 +67,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+
+import { ref, computed, onMounted } from 'vue'
+import { adminApi } from '@/api'
 import type { FAQItem } from '@/types'
+import { ElMessage } from 'element-plus'
 
 const filterCategory = ref('')
 const searchKeyword = ref('')
 const showDialog = ref(false)
 const editingId = ref<number | null>(null)
 const categories = ['账号相关', '支付充值', 'AI工具', '电商购物', '课程学习', '宠物服务']
-
 const form = ref({ category: '账号相关', question: '', answer: '', sortOrder: 0 })
-
-const list = ref<FAQItem[]>([
-  { id: 1, category: '支付充值', question: '圣点充值后多久到账？', answer: '正常情况下圣点充值即时到账。如超过10分钟未到账，请检查支付是否成功，或提交工单联系客服处理。', searchCount: 1256, sortOrder: 1, status: 'active', createdAt: '2025-06-01 10:00', updatedAt: '2025-06-01 10:00' },
-  { id: 2, category: 'AI工具', question: 'AI工具调用失败会扣圣点吗？', answer: '不会。如果AI工具调用失败（状态为failed），系统会自动退还消耗的圣点。一般会在5分钟内退还到您的账户。', searchCount: 980, sortOrder: 2, status: 'active', createdAt: '2025-06-01 10:00', updatedAt: '2025-06-01 10:00' },
-  { id: 3, category: '账号相关', question: '如何修改绑定手机号？', answer: '进入个人中心 -> 安全设置 -> 修改手机号，需要验证原手机号后即可绑定新手机号。如原手机号已无法接收验证码，请提交工单进行人工审核。', searchCount: 756, sortOrder: 3, status: 'active', createdAt: '2025-06-01 10:00', updatedAt: '2025-06-01 10:00' },
-  { id: 4, category: '电商购物', question: '商品退换货流程是什么？', answer: '在订单详情页点击"申请退换货"，填写原因并上传凭证图片。商家将在48小时内处理。如商家拒绝，可申请平台介入。', searchCount: 634, sortOrder: 4, status: 'active', createdAt: '2025-06-05 14:00', updatedAt: '2025-06-05 14:00' },
-  { id: 5, category: '课程学习', question: '课程购买后可以退款吗？', answer: '课程购买后7天内且学习进度不超过20%可申请退款。超过退款条件则不支持退款，建议先试看再购买。', searchCount: 520, sortOrder: 5, status: 'active', createdAt: '2025-06-10 09:00', updatedAt: '2025-06-10 09:00' },
-  { id: 6, category: '宠物服务', question: '宠物健康档案如何创建？', answer: '进入宠物模块 -> 点击"添加宠物"，填写宠物基本信息后即可自动创建健康档案。后续可在档案中记录疫苗、体检、就诊等信息。', searchCount: 310, sortOrder: 6, status: 'active', createdAt: '2025-06-15 11:00', updatedAt: '2025-06-15 11:00' },
-  { id: 7, category: 'AI工具', question: '如何成为AI工具创作者？', answer: '在工具中心页面点击"成为创作者"，填写个人介绍和技能特长，审核通过后即可上传自己开发的AI工具并获得收益分成。', searchCount: 445, sortOrder: 7, status: 'disabled', createdAt: '2025-06-20 16:00', updatedAt: '2025-06-20 16:00' },
-])
+const list = ref<FAQItem[]>([])
 
 const filteredList = computed(() => {
   let result = list.value
@@ -96,18 +89,48 @@ const filteredList = computed(() => {
 })
 
 function getCategoryCount(cat: string) { return list.value.filter(i => i.category === cat).length }
-function toggleStatus(item: FAQItem) { item.status = item.status === 'active' ? 'disabled' : 'active' }
-function handleEdit(item: FAQItem) { editingId.value = item.id; form.value = { category: item.category, question: item.question, answer: item.answer, sortOrder: item.sortOrder }; showDialog.value = true }
-function handleDelete(item: FAQItem) { const i = list.value.findIndex(x => x.id === item.id); if (i >= 0) list.value.splice(i, 1) }
-function handleSave() {
-  if (editingId.value) {
-    const item = list.value.find(i => i.id === editingId.value)
-    if (item) Object.assign(item, { category: form.value.category, question: form.value.question, answer: form.value.answer, sortOrder: form.value.sortOrder })
-  } else {
-    list.value.unshift({ id: Date.now(), category: form.value.category, question: form.value.question, answer: form.value.answer, searchCount: 0, sortOrder: form.value.sortOrder, status: 'active', createdAt: new Date().toISOString().slice(0, 16).replace('T', ' '), updatedAt: new Date().toISOString().slice(0, 16).replace('T', ' ') })
-  }
-  showDialog.value = false; editingId.value = null
+
+async function fetchData() {
+  const res = await adminApi.getFAQs()
+  list.value = res.data
 }
+
+async function toggleStatus(item: FAQItem) {
+  const newStatus = item.status === 'active' ? 'disabled' : 'active'
+  await adminApi.updateFAQ(item.id, { status: newStatus })
+  ElMessage.success(newStatus === 'disabled' ? '已禁用' : '已启用')
+  fetchData()
+}
+
+function handleEdit(item: FAQItem) {
+  editingId.value = item.id
+  form.value = { category: item.category, question: item.question, answer: item.answer, sortOrder: item.sortOrder }
+  showDialog.value = true
+}
+
+async function handleDelete(item: FAQItem) {
+  if (!confirm(`确认删除FAQ「${item.question}」？`)) return
+  await adminApi.deleteFAQ(item.id)
+  ElMessage.success('已删除')
+  fetchData()
+}
+
+async function handleSave() {
+  if (!form.value.question.trim()) { ElMessage.warning('请输入问题'); return }
+  if (editingId.value) {
+    await adminApi.updateFAQ(editingId.value, { category: form.value.category, question: form.value.question, answer: form.value.answer, sortOrder: form.value.sortOrder })
+    ElMessage.success('FAQ已更新')
+  } else {
+    await adminApi.createFAQ({ category: form.value.category, question: form.value.question, answer: form.value.answer, sortOrder: form.value.sortOrder })
+    ElMessage.success('FAQ已添加')
+  }
+  showDialog.value = false
+  editingId.value = null
+  fetchData()
+}
+
+onMounted(() => fetchData())
+
 </script>
 
 <style scoped>
