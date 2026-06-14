@@ -7,7 +7,7 @@
         <h1 class="text-2xl font-bold mb-1" style="color: var(--cyber-cyan); font-family: 'JetBrains Mono', monospace;">
           你好，{{ authStore.nickname }} <span class="neon-flicker">👋</span>
         </h1>
-        <p style="color: var(--cyber-text-dim);">欢迎回到罗圣纪元SaaS平台，今天想用哪个AI工具？</p>
+        <p style="color: var(--cyber-text-dim);">欢迎来到罗圣纪元官方网站，今天想用哪个AI工具？</p>
       </div>
       <div class="absolute right-6 top-1/2 -translate-y-1/2 text-6xl opacity-20">🚀</div>
       <!-- 角落装饰 -->
