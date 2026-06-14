@@ -11,14 +11,13 @@ export async function seedRoles(dataSource: DataSource) {
   const userRepo = dataSource.getRepository(User);
   const userRoleRepo = dataSource.getRepository(UserRole);
 
-  console.log('🌱 Seeding roles...');
+  console.log('🌱 Seeding 6-level role hierarchy...');
 
-  // 定义6个等级的角色
   const roles = [
     {
       name: 'normal',
       displayName: '普通用户',
-      description: '基础用户，拥有最基本的使用权限',
+      description: '基础用户，拥有基本使用权限',
       level: 0,
       isSystem: 1,
     },
@@ -31,8 +30,8 @@ export async function seedRoles(dataSource: DataSource) {
     },
     {
       name: 'admin',
-      displayName: '管理员',
-      description: '系统管理员，可管理用户和内容',
+      displayName: '普通管理员',
+      description: '普通管理员，可管理用户和内容',
       level: 2,
       isSystem: 1,
     },
@@ -53,7 +52,7 @@ export async function seedRoles(dataSource: DataSource) {
     {
       name: 'boss',
       displayName: '罗总专属',
-      description: '罗圣纪元最高权限，拥有系统全部功能',
+      description: '罗圣纪元最高权限，拥有系统全部功能和调试权限',
       level: 5,
       isSystem: 1,
     },
@@ -64,13 +63,13 @@ export async function seedRoles(dataSource: DataSource) {
     if (!role) {
       role = roleRepo.create(roleData);
       await roleRepo.save(role);
-      console.log(`  ✅ Created role: ${roleData.displayName} (${roleData.name})`);
+      console.log(`  ✅ Created role: ${roleData.displayName} (level ${roleData.level})`);
     } else {
       console.log(`  ⏭️  Role exists: ${roleData.displayName}`);
     }
   }
 
-  // 创建权限
+  // Create permissions
   console.log('🌱 Seeding permissions...');
   const permissions = [
     { name: 'user:read', module: 'user', description: '查看用户信息', sortOrder: 1 },
@@ -82,9 +81,11 @@ export async function seedRoles(dataSource: DataSource) {
     { name: 'content:delete', module: 'content', description: '删除内容', sortOrder: 13 },
     { name: 'system:read', module: 'system', description: '查看系统配置', sortOrder: 20 },
     { name: 'system:write', module: 'system', description: '修改系统配置', sortOrder: 21 },
+    { name: 'system:debug', module: 'system', description: '系统调试', sortOrder: 22 },
     { name: 'role:manage', module: 'role', description: '管理角色权限', sortOrder: 30 },
     { name: 'finance:read', module: 'finance', description: '查看财务数据', sortOrder: 40 },
     { name: 'finance:manage', module: 'finance', description: '管理财务', sortOrder: 41 },
+    { name: 'debug:all', module: 'debug', description: '全部调试权限（罗总专属）', sortOrder: 99 },
   ];
 
   for (const permData of permissions) {
@@ -96,70 +97,51 @@ export async function seedRoles(dataSource: DataSource) {
     }
   }
 
-  // 为各角色分配权限
+  // Assign all permissions to boss role
   console.log('🌱 Assigning permissions to roles...');
-  
   const bossRole = await roleRepo.findOne({ where: { name: 'boss' }, relations: ['permissions'] });
   if (bossRole) {
     const allPerms = await permissionRepo.find();
     bossRole.permissions = allPerms;
     await roleRepo.save(bossRole);
-    console.log('  ✅ Boss role: all permissions');
+    console.log('  ✅ Boss role (罗总专属): ALL permissions granted');
   }
 
-  // 确保 KF02V9 账号拥有 boss 角色
-  console.log('🌱 Setting up boss account...');
-  const bossUser = await userRepo.findOne({ where: { username: 'KF02V9' } });
-  if (bossUser) {
-    // 同步 membershipTier 字段
-    if (bossUser.membershipTier !== 'founder') {
-      bossUser.membershipTier = 'founder';
-      await userRepo.save(bossUser);
-      console.log('  ✅ Synced membershipTier to founder');
-    }
-    
-    const bossRoleEntity = await roleRepo.findOne({ where: { name: 'boss' } });
-    if (bossRoleEntity) {
-      const existingUserRole = await userRoleRepo.findOne({
-        where: { userId: bossUser.id, roleId: bossRoleEntity.id },
-      });
-      if (!existingUserRole) {
-        const userRole = userRoleRepo.create({
-          userId: bossUser.id,
-          roleId: bossRoleEntity.id,
-          scopeType: 'global',
-        });
-        await userRoleRepo.save(userRole);
-        console.log('  ✅ Assigned boss role to KF02V9');
-      } else {
-        console.log('  ⏭️  KF02V9 already has boss role');
-      }
-    }
-  } else {
+  // Ensure KF02V9 account has boss role
+  console.log('🌱 Setting up boss account KF02V9...');
+  let bossUser = await userRepo.findOne({ where: { username: 'KF02V9' } });
+  
+  if (!bossUser) {
     console.log('  ⚠️  KF02V9 user not found, creating...');
     const passwordHash = await bcrypt.hash('LKZ2005430', 10);
-    // 创建用户时设置 membershipTier
     const newUser = userRepo.create({
       username: 'KF02V9',
       passwordHash,
       nickname: '罗总',
       status: 'active',
-      vipLevel: 5,
-      membershipTier: 'founder',
+      vipLevel: 6,
     });
-    const savedUser = await userRepo.save(newUser);
-    
-    const bossRoleEntity = await roleRepo.findOne({ where: { name: 'boss' } });
-    if (bossRoleEntity) {
+    bossUser = await userRepo.save(newUser);
+    console.log('  ✅ Created KF02V9 user');
+  }
+
+  const bossRoleEntity = await roleRepo.findOne({ where: { name: 'boss' } });
+  if (bossRoleEntity && bossUser) {
+    const existingUserRole = await userRoleRepo.findOne({
+      where: { userId: bossUser.id, roleId: bossRoleEntity.id },
+    });
+    if (!existingUserRole) {
       const userRole = userRoleRepo.create({
-        userId: savedUser.id,
+        userId: bossUser.id,
         roleId: bossRoleEntity.id,
         scopeType: 'global',
       });
       await userRoleRepo.save(userRole);
-      console.log('  ✅ Created KF02V9 user and assigned boss role');
+      console.log('  ✅ Assigned 罗总专属 role to KF02V9');
+    } else {
+      console.log('  ⏭️  KF02V9 already has 罗总专属 role');
     }
   }
 
-  console.log('✅ Roles seeding completed!');
+  console.log('✅ 6-level role system seeding completed!');
 }
