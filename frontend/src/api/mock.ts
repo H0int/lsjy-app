@@ -483,4 +483,129 @@ export const mockApi = {
     await delay(300)
     return { code: 0, message: 'success', data: [...mockReportData] }
   },
+  // ===== AI: Models & Providers =====
+  async getModels(_category?: string) {
+    await delay(200)
+    return {
+      code: 0, message: 'success',
+      data: [
+        {
+          provider: 'doubao', providerName: '豆包',
+          models: [
+            { id: 'doubao-pro-4k', name: 'Doubao-Pro-4K', capabilities: ['text', 'code'], maxContextLength: 4096, supportStream: true, inputPrice: 0.8, outputPrice: 2.0 },
+            { id: 'doubao-pro-32k', name: 'Doubao-Pro-32K', capabilities: ['text', 'code'], maxContextLength: 32768, supportStream: true, inputPrice: 1.0, outputPrice: 2.5 },
+            { id: 'doubao-lite-32k', name: 'Doubao-Lite-32K', capabilities: ['text'], maxContextLength: 32768, supportStream: true, inputPrice: 0.3, outputPrice: 0.6 },
+          ]
+        },
+        {
+          provider: 'jimeng', providerName: '即梦',
+          models: [
+            { id: 'jimeng-2.1', name: '即梦 2.1', capabilities: ['image'], maxContextLength: 0, supportStream: false, inputPrice: 0, outputPrice: 5.0 },
+            { id: 'jimeng-2.0-pro', name: '即梦 2.0 Pro', capabilities: ['image'], maxContextLength: 0, supportStream: false, inputPrice: 0, outputPrice: 8.0 },
+          ]
+        },
+        {
+          provider: 'openai', providerName: 'OpenAI',
+          models: [
+            { id: 'gpt-4o', name: 'GPT-4o', capabilities: ['text', 'image', 'code', 'multimodal'], maxContextLength: 128000, supportStream: true, inputPrice: 2.5, outputPrice: 10.0 },
+            { id: 'gpt-4o-mini', name: 'GPT-4o Mini', capabilities: ['text', 'code', 'multimodal'], maxContextLength: 128000, supportStream: true, inputPrice: 0.15, outputPrice: 0.6 },
+            { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', capabilities: ['text', 'code', 'multimodal'], maxContextLength: 128000, supportStream: true, inputPrice: 10.0, outputPrice: 30.0 },
+            { id: 'dall-e-3', name: 'DALL-E 3', capabilities: ['image'], maxContextLength: 0, supportStream: false, inputPrice: 0, outputPrice: 40.0 },
+          ]
+        },
+        {
+          provider: 'tongyi', providerName: '通义千问',
+          models: [
+            { id: 'qwen-max', name: '通义千问 Max', capabilities: ['text', 'code'], maxContextLength: 32768, supportStream: true, inputPrice: 2.0, outputPrice: 6.0 },
+            { id: 'qwen-plus', name: '通义千问 Plus', capabilities: ['text', 'code'], maxContextLength: 131072, supportStream: true, inputPrice: 0.8, outputPrice: 2.0 },
+            { id: 'qwen-turbo', name: '通义千问 Turbo', capabilities: ['text'], maxContextLength: 131072, supportStream: true, inputPrice: 0.3, outputPrice: 0.6 },
+            { id: 'wanx-v1', name: '通义万相', capabilities: ['image'], maxContextLength: 0, supportStream: false, inputPrice: 0, outputPrice: 8.0 },
+          ]
+        },
+      ]
+    }
+  },
+
+  // ===== AI: Chat =====
+  async chat(_toolId: number, messages: any[], _options?: any) {
+    await delay(800 + Math.random() * 1200)
+    const lastMsg = messages[messages.length - 1]?.content || ''
+    const tool = mockTools.find(t => t.id === _toolId)
+    let reply = ''
+
+    if (lastMsg.includes('你好') || lastMsg.includes('hello')) {
+      reply = '你好！我是' + (tool?.name || 'AI助手') + '，很高兴为你服务。请问有什么可以帮到你的？'
+    } else if (lastMsg.includes('文案') || lastMsg.includes('写')) {
+      reply = '好的，我来帮你创作文案。\n\n' +
+        '📝 【创作方向】\n' +
+        '1. 品牌故事型：用真实的情感和经历打动用户\n' +
+        '2. 场景种草型：描绘使用场景，激发购买欲望\n' +
+        '3. 专业测评型：用数据和对比建立信任\n\n' +
+        '💡 示例文案：\n' +
+        '"当清晨第一缕阳光洒进窗台，一杯手冲咖啡的香气弥漫开来——这不是奢侈品，是对自己最好的犒赏。我们的精品咖啡豆，来自云南高海拔庄园，每一颗都经过手工挑选，只为给你最纯粹的味道。"'
+    } else if (lastMsg.includes('代码') || lastMsg.includes('编程')) {
+      reply = '当然可以！以下是一个示例：\n\n' +
+        '```typescript\n' +
+        'function fibonacci(n: number): number {\n' +
+        '  if (n <= 1) return n;\n' +
+        '  return fibonacci(n - 1) + fibonacci(n - 2);\n' +
+        '}\n\n' +
+        'console.log(fibonacci(10)); // 55\n' +
+        '```\n\n' +
+        '这个递归实现简单直观，但对于大数值可能会有性能问题。如果需要优化，可以使用动态规划或记忆化搜索。'
+    } else if (lastMsg.includes('分析') || lastMsg.includes('数据')) {
+      reply = '📊 数据分析报告\n\n' +
+        '根据您提供的数据，我做了以下分析：\n\n' +
+        '1. **趋势分析**：整体呈上升趋势，环比增长12.5%\n' +
+        '2. **关键发现**：用户活跃度在周末达到峰值\n' +
+        '3. **建议**：建议在周末推出限时活动，最大化转化率\n\n' +
+        '需要我深入分析某个具体方面吗？'
+    } else {
+      reply = '收到你的问题。让我为你详细解答：\n\n' +
+        '这是一个很好的问题。基于我的分析，这里有几个关键点需要考虑：\n\n' +
+        '1. 首先，需要明确你的核心目标和预期结果\n' +
+        '2. 其次，评估现有资源和可用工具\n' +
+        '3. 最后，制定一个可执行的行动计划\n\n' +
+        '如果你能提供更多具体信息，我可以给出更有针对性的建议。\n\n' +
+        '💡 提示：越详细的描述，我能提供的帮助越精准。'
+    }
+
+    const coinCost = tool?.coinCost || 10
+    return {
+      code: 0, message: 'success',
+      data: {
+        content: reply,
+        usage: { promptTokens: Math.floor(lastMsg.length * 1.5), completionTokens: Math.floor(reply.length * 1.2), totalTokens: Math.floor((lastMsg.length + reply.length) * 1.3) },
+        model: tool?.modelId || 'gpt-4o',
+        provider: tool?.provider || 'openai',
+        durationMs: 800 + Math.floor(Math.random() * 1200),
+        callRecordId: genId(),
+        coinCost: coinCost,
+      }
+    }
+  },
+
+  // ===== AI: Generate Image =====
+  async generateImage(_toolId: number, _prompt: string, _options?: any) {
+    await delay(2000 + Math.random() * 2000)
+    const tool = mockTools.find(t => t.id === _toolId)
+    const count = _options?.count || 1
+    // Return placeholder image URLs
+    const urls: string[] = []
+    for (let i = 0; i < count; i++) {
+      urls.push('https://placehold.co/1024x1024/12121f/00f0ff?text=AI+Generated+' + (i + 1))
+    }
+    return {
+      code: 0, message: 'success',
+      data: {
+        urls,
+        model: tool?.modelId || 'sd-xl',
+        provider: tool?.provider || 'stability',
+        durationMs: 2000 + Math.floor(Math.random() * 2000),
+        callRecordId: genId(),
+        coinCost: (tool?.coinCost || 20) * count,
+      }
+    }
+  },
+
 }
