@@ -42,7 +42,7 @@ export const mockTools: Tool[] = [
   { id: 9, categoryId: 6, name: '创业计划书', slug: 'business-plan', description: '大学生创业计划书', icon: '💼', provider: 'openai', modelId: 'gpt-4o', toolType: 'text', inputType: 'text', outputType: 'text', coinCost: 15, isFree: 0, freeDailyLimit: 0, usageCount: 980, sortOrder: 9, status: 'active', createdAt: '2026-01-01T00:00:00.000Z' },
   { id: 10, categoryId: 1, name: 'AI智能抠图', slug: 'ai-cutout', description: '智能去除图片背景', icon: '✂️', provider: 'local', modelId: 'rembg', toolType: 'image', inputType: 'image', outputType: 'image', coinCost: 10, isFree: 0, freeDailyLimit: 0, usageCount: 7650, sortOrder: 10, status: 'active', createdAt: '2026-01-01T00:00:00.000Z' },
   { id: 11, categoryId: 1, name: '数字人口播', slug: 'digital-human', description: 'AI脚本+数字人形象', icon: '🧑‍💼', provider: 'bytedance', modelId: 'digital-human-v2', toolType: 'video', inputType: 'text', outputType: 'video', coinCost: 100, isFree: 0, freeDailyLimit: 0, usageCount: 2340, sortOrder: 11, status: 'active', createdAt: '2026-01-01T00:00:00.000Z' },
-  { id: 12, categoryId: 1, name: '大模型中心', slug: 'llm-center', description: '豆包/DeepSeek/GLM/即梦 全模型', icon: '⚡', provider: 'multi', modelId: 'multi-model', toolType: 'text', inputType: 'text', outputType: 'text', coinCost: 0, isFree: 1, freeDailyLimit: 20, usageCount: 35000, sortOrder: 0, status: 'active', createdAt: '2026-01-01T00:00:00.000Z' },
+  { id: 12, categoryId: 1, name: '罗圣AI', slug: 'luosheng-ai', description: '罗圣AI大模型中心 - 豆包/DeepSeek/即梦/元宝/千问/GPT 全模型接入', icon: '🧠', provider: 'multi', modelId: 'multi-model', toolType: 'text', inputType: 'text', outputType: 'text', coinCost: 0, isFree: 1, freeDailyLimit: 20, usageCount: 35000, sortOrder: 0, status: 'active', createdAt: '2026-01-01T00:00:00.000Z' },
 ]
 
 export const mockPackages: RechargePackage[] = [
@@ -495,6 +495,20 @@ export const mockApi = {
             { id: 'doubao-pro-4k', name: 'Doubao-Pro-4K', capabilities: ['text', 'code'], maxContextLength: 4096, supportStream: true, inputPrice: 0.8, outputPrice: 2.0 },
             { id: 'doubao-pro-32k', name: 'Doubao-Pro-32K', capabilities: ['text', 'code'], maxContextLength: 32768, supportStream: true, inputPrice: 1.0, outputPrice: 2.5 },
             { id: 'doubao-lite-32k', name: 'Doubao-Lite-32K', capabilities: ['text'], maxContextLength: 32768, supportStream: true, inputPrice: 0.3, outputPrice: 0.6 },
+          ]
+        },
+        {
+          provider: 'deepseek', providerName: 'DeepSeek',
+          models: [
+            { id: 'deepseek-v3', name: 'DeepSeek-V3', capabilities: ['text', 'code'], maxContextLength: 65536, supportStream: true, inputPrice: 0.5, outputPrice: 1.0 },
+            { id: 'deepseek-r1', name: 'DeepSeek-R1', capabilities: ['text', 'code', 'reasoning'], maxContextLength: 65536, supportStream: true, inputPrice: 1.0, outputPrice: 2.0 },
+          ]
+        },
+        {
+          provider: 'yuanbao', providerName: '元宝',
+          models: [
+            { id: 'yuanbao-pro', name: '元宝 Pro', capabilities: ['text', 'code', 'multimodal'], maxContextLength: 32768, supportStream: true, inputPrice: 0.6, outputPrice: 1.5 },
+            { id: 'yuanbao-lite', name: '元宝 Lite', capabilities: ['text'], maxContextLength: 32768, supportStream: true, inputPrice: 0.2, outputPrice: 0.4 },
           ]
         },
         {
