@@ -138,6 +138,41 @@ function paginate(arr, page, pageSize) {
 let _idCounter = 100;
 function nextId() { return ++_idCounter; }
 
+// ===== 登录锁定机制 =====
+const loginFailMap = new Map(); // key: account, value: { fails: number, lockedUntil: number }
+const MAX_LOGIN_FAILS = 5;
+const LOCK_DURATION_MS = 10 * 60 * 1000; // 10分钟
+
+function checkAccountLock(account) {
+  const record = loginFailMap.get(account);
+  if (!record) return { locked: false, remaining: 0 };
+  if (record.lockedUntil && Date.now() < record.lockedUntil) {
+    return { locked: true, remaining: Math.ceil((record.lockedUntil - Date.now()) / 1000) };
+  }
+  // 锁定已过期，清除
+  if (record.lockedUntil && Date.now() >= record.lockedUntil) {
+    loginFailMap.delete(account);
+    return { locked: false, remaining: 0 };
+  }
+  return { locked: false, remaining: 0 };
+}
+
+function recordLoginFail(account) {
+  const record = loginFailMap.get(account) || { fails: 0, lockedUntil: 0 };
+  record.fails++;
+  if (record.fails >= MAX_LOGIN_FAILS) {
+    record.lockedUntil = Date.now() + LOCK_DURATION_MS;
+    loginFailMap.set(account, record);
+    return { locked: true, fails: record.fails };
+  }
+  loginFailMap.set(account, record);
+  return { locked: false, fails: record.fails, remaining: MAX_LOGIN_FAILS - record.fails };
+}
+
+function clearLoginFails(account) {
+  loginFailMap.delete(account);
+}
+
 function httpsRequest(url, options, body) {
   return new Promise((resolve, reject) => {
     const urlObj = new URL(url);
@@ -684,10 +719,24 @@ app.get('/api/v1/health', (req, res) => {
 // ===== 认证模块 =====
 // ============================================================
 
-// 登录
+// 登录（账号+密码，5次错误锁定10分钟）
 app.post('/api/v1/auth/login', (req, res) => {
   const { username, password } = req.body;
-  if (username === 'KF02V9' && password === 'LKZ2005430') {
+  const account = username || '';
+
+  // 检查账号是否被锁定
+  const lockStatus = checkAccountLock(account);
+  if (lockStatus.locked) {
+    return res.status(423).json({
+      code: 423,
+      message: `账号已锁定，请等待${Math.ceil(lockStatus.remaining / 60)}分钟后重试`,
+      data: { lockedUntil: lockStatus.remaining }
+    });
+  }
+
+  // Boss账号验证
+  if (account === 'KF02V9' && password === 'LKZ2005430') {
+    clearLoginFails(account);
     return res.json({
       code: 0, message: 'success',
       data: {
@@ -696,11 +745,14 @@ app.post('/api/v1/auth/login', (req, res) => {
       },
     });
   }
+
   const usersFile = path.join(__dirname, 'data', 'users.json');
   let users = [];
   try { users = JSON.parse(fs.readFileSync(usersFile, 'utf8')); } catch (e) {}
-  const user = users.find(u => u.username === username && u.password === password);
+  const user = users.find(u => u.username === account && u.password === password);
+
   if (user && (user.status === 'approved' || user.status === 'active')) {
+    clearLoginFails(account);
     return res.json({
       code: 0, message: 'success',
       data: {
@@ -709,10 +761,25 @@ app.post('/api/v1/auth/login', (req, res) => {
       },
     });
   }
+
   if (user && user.status === 'pending') {
     return res.status(403).json({ code: 403, message: '账号正在审批中，请耐心等待', data: null });
   }
-  res.status(401).json({ code: 401, message: '用户名或密码错误', data: null });
+
+  // 密码错误，记录失败
+  const failResult = recordLoginFail(account);
+  if (failResult.locked) {
+    return res.status(423).json({
+      code: 423,
+      message: '密码连续错误5次，账号已锁定10分钟',
+      data: { lockedUntil: 600 }
+    });
+  }
+  res.status(401).json({
+    code: 401,
+    message: `账号或密码错误，还剩${failResult.remaining}次机会`,
+    data: { failsRemaining: failResult.remaining }
+  });
 });
 
 // 注册
