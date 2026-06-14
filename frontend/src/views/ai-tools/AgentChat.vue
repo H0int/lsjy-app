@@ -233,6 +233,15 @@ function isGenericResponse(content: string): boolean {
     '最后，制定',
     '如果你能提供更多',
     '提示：越详细的描述',
+    'AI模型正在最终配置',
+    '当前可以',
+    '这个问题很有意思',
+    '告诉我更多具体需求',
+    '告诉我更多细节',
+    '这个问题没什么意思',
+    '没什么意义',
+    '没什么特别的意思',
+    '请直接告诉我你的具体需求',
   ]
   return genericPatterns.some(pattern => content.includes(pattern))
 }
@@ -330,8 +339,8 @@ async function sendMessage() {
         if (smartResponse) {
           responseContent = smartResponse
         } else {
-          // 没有匹配的智能回复，给出通用但有用的回复
-          responseContent = `关于"${text.substring(0, 30)}${text.length > 30 ? '...' : ''}"，我可以从以下几个方面帮你：\n\n1. **具体分析** - 告诉我更多细节\n2. **相关工具** - 罗圣纪元平台有对应的AI工具\n3. **实际案例** - 需要我举例说明吗？\n\n请直接告诉我你的具体需求，我会给出针对性建议。`
+          // 没有匹配的智能回复，使用generateSmartReply
+          responseContent = generateSmartReply(text)
         }
       }
 
