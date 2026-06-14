@@ -259,6 +259,27 @@ h1, h2, h3, h4, h5, h6,
   background-color: rgba(0, 240, 255, 0.05) !important;
 }
 
+.el-select .el-input__wrapper {
+  background-color: rgba(0, 240, 255, 0.03) !important;
+  box-shadow: 0 0 0 1px var(--cyber-border) inset !important;
+}
+
+.el-select .el-input__wrapper:hover {
+  box-shadow: 0 0 0 1px rgba(0, 240, 255, 0.4) inset !important;
+}
+
+.el-select .el-input.is-focus .el-input__wrapper {
+  box-shadow: 0 0 0 1px var(--cyber-cyan) inset, 0 0 10px rgba(0, 240, 255, 0.15) !important;
+}
+
+.el-select .el-input__inner {
+  color: var(--cyber-text) !important;
+}
+
+.el-select__caret {
+  color: var(--cyber-cyan) !important;
+}
+
 .el-popper.is-light {
   background: var(--cyber-card) !important;
   border: 1px solid var(--cyber-border) !important;

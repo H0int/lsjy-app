@@ -1,12 +1,16 @@
 <template>
   <div class="max-w-7xl mx-auto px-4 py-6">
-    <!-- 欢迎区域 -->
-    <div class="bg-gradient-to-r from-primary via-blue-500 to-purple-500 rounded-2xl p-6 mb-6 text-white relative overflow-hidden">
-      <div class="relative z-10">
-        <h1 class="text-2xl font-bold mb-1">你好，{{ authStore.nickname }} 👋</h1>
-        <p class="text-blue-100">欢迎回到罗圣纪元SaaS平台，今天想用哪个AI工具？</p>
+    <!-- 欢迎区域 - 赛博朋克风格 -->
+    <div class="cyber-welcome-banner rounded-2xl p-6 mb-6 text-white relative overflow-hidden">
+      <div class="welcome-bg-grid"></div>
+      <div class="welcome-glow"></div>
+      <div class="relative z-10 flex items-center gap-4">
+        <img src="/company-logo.jpg" alt="罗圣纪元" class="w-14 h-14 rounded-xl object-cover" style="border: 2px solid rgba(0,240,255,0.4); box-shadow: 0 0 15px rgba(0,240,255,0.3);" />
+        <div>
+          <h1 class="text-2xl font-bold mb-1" style="font-family: 'JetBrains Mono', monospace;">你好，{{ authStore.nickname }}</h1>
+          <p class="text-sm" style="color: rgba(0,240,255,0.7); font-family: 'JetBrains Mono', monospace;">欢迎回到罗圣纪元SaaS平台 · SYSTEM ONLINE</p>
+        </div>
       </div>
-      <div class="absolute right-6 top-1/2 -translate-y-1/2 text-6xl opacity-30">🚀</div>
     </div>
 
     <!-- 数据卡片 -->
