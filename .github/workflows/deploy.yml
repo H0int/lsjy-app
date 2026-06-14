@@ -40,9 +40,9 @@ jobs:
         working-directory: frontend
         env:
           GITHUB_PAGES: 'true'
-          VITE_API_BASE_URL: ''
+          VITE_API_BASE_URL: 'http://8.154.16.5:3000/api/v1'
           VITE_APP_TITLE: '罗圣纪元 SaaS平台'
-          VITE_MOCK: 'true'
+          VITE_MOCK: 'false'
         run: npx vite build
 
       - name: Setup Pages
