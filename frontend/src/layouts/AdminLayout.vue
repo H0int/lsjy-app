@@ -1,114 +1,133 @@
 <template>
   <div class="cyber-admin">
-    <!-- 背景网格 -->
-    <div class="cyber-bg-grid"></div>
-
-    <!-- 侧边栏 -->
-    <aside class="cyber-sidebar">
-      <!-- Logo -->
-      <div class="sidebar-logo">
-        <div class="logo-icon">罗</div>
-        <div class="logo-text">
-          <div class="logo-title">罗圣纪元</div>
-          <div class="logo-subtitle">ADMIN CONSOLE</div>
-        </div>
+    <!-- 移动端提示 -->
+    <div v-if="isMobile" class="mobile-prompt">
+      <div class="mobile-prompt-content">
+        <div class="mobile-icon">🖥️</div>
+        <h2 class="mobile-title">请在电脑端访问管理后台</h2>
+        <p class="mobile-desc">管理后台功能需要在桌面端浏览器中使用，请使用电脑访问以获得最佳体验。</p>
+        <router-link to="/dashboard" class="mobile-back-btn">返回首页</router-link>
       </div>
-      <div class="sidebar-divider"></div>
+    </div>
 
-      <!-- 菜单 -->
-      <nav class="sidebar-nav">
-        <div v-for="group in menuGroups" :key="group.label" class="menu-group">
-          <div class="menu-group-label">{{ group.label }}</div>
-          <router-link v-for="item in group.items" :key="item.path" :to="item.path"
-            class="menu-item"
-            :class="{ 'menu-active': isActive(item.path) }">
-            <span class="menu-icon">{{ item.icon }}</span>
-            <span class="menu-label">{{ item.label }}</span>
-            <span v-if="isActive(item.path)" class="menu-indicator"></span>
+    <!-- 桌面端内容 -->
+    <template v-else>
+      <!-- 背景网格 -->
+      <div class="cyber-bg-grid"></div>
+
+      <!-- 侧边栏 -->
+      <aside class="cyber-sidebar">
+        <!-- Logo -->
+        <div class="sidebar-logo">
+          <div class="logo-icon">罗</div>
+          <div class="logo-text">
+            <div class="logo-title">罗圣纪元</div>
+            <div class="logo-subtitle">ADMIN CONSOLE</div>
+          </div>
+        </div>
+        <div class="sidebar-divider"></div>
+
+        <!-- 菜单 -->
+        <nav class="sidebar-nav">
+          <div v-for="group in menuGroups" :key="group.label" class="menu-group">
+            <div class="menu-group-label">{{ group.label }}</div>
+            <router-link v-for="item in group.items" :key="item.path" :to="item.path"
+              class="menu-item"
+              :class="{ 'menu-active': isActive(item.path) }">
+              <span class="menu-icon">{{ item.icon }}</span>
+              <span class="menu-label">{{ item.label }}</span>
+              <span v-if="isActive(item.path)" class="menu-indicator"></span>
+            </router-link>
+          </div>
+        </nav>
+
+        <!-- 返回前台 -->
+        <div class="sidebar-footer">
+          <router-link to="/dashboard" class="back-link">
+            <span>↩️</span><span>返回前台</span>
           </router-link>
         </div>
-      </nav>
+      </aside>
 
-      <!-- 返回前台 -->
-      <div class="sidebar-footer">
-        <router-link to="/dashboard" class="back-link">
-          <span>↩️</span><span>返回前台</span>
-        </router-link>
-      </div>
-    </aside>
-
-    <!-- 主区域 -->
-    <div class="cyber-main">
-      <!-- 顶栏 -->
-      <header class="cyber-header">
-        <div class="header-left">
-          <h1 class="header-title">
-            <span class="title-accent">//</span> {{ currentTitle }}
-          </h1>
-        </div>
-        <div class="header-center">
-          <div class="sys-stat">
-            <span class="stat-dot stat-dot-cyan"></span>
-            <span class="stat-label">CPU</span>
-            <span class="stat-value">23%</span>
+      <!-- 主区域 -->
+      <div class="cyber-main">
+        <!-- 顶栏 -->
+        <header class="cyber-header">
+          <div class="header-left">
+            <h1 class="header-title">
+              <span class="title-accent">//</span> {{ currentTitle }}
+            </h1>
           </div>
-          <div class="sys-stat">
-            <span class="stat-dot stat-dot-green"></span>
-            <span class="stat-label">MEM</span>
-            <span class="stat-value">4.2G</span>
-          </div>
-          <div class="sys-stat">
-            <span class="stat-dot stat-dot-magenta"></span>
-            <span class="stat-label">ONLINE</span>
-            <span class="stat-value">3,256</span>
-          </div>
-        </div>
-        <div class="header-right">
-          <div class="admin-avatar">
-            <div class="avatar-ring">
-              <span class="avatar-text">管</span>
+          <div class="header-center">
+            <div class="sys-stat">
+              <span class="stat-dot stat-dot-cyan"></span>
+              <span class="stat-label">CPU</span>
+              <span class="stat-value">23%</span>
             </div>
-            <el-dropdown trigger="click">
-              <span class="admin-name">{{ authStore.nickname }}</span>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item @click="$router.push('/dashboard')">返回前台</el-dropdown-item>
-                  <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
+            <div class="sys-stat">
+              <span class="stat-dot stat-dot-green"></span>
+              <span class="stat-label">MEM</span>
+              <span class="stat-value">4.2G</span>
+            </div>
+            <div class="sys-stat">
+              <span class="stat-dot stat-dot-magenta"></span>
+              <span class="stat-label">ONLINE</span>
+              <span class="stat-value">3,256</span>
+            </div>
           </div>
-        </div>
-      </header>
+          <div class="header-right">
+            <div class="admin-avatar">
+              <div class="avatar-ring">
+                <span class="avatar-text">管</span>
+              </div>
+              <el-dropdown trigger="click">
+                <span class="admin-name">{{ authStore.nickname }}</span>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item @click="$router.push('/dashboard')">返回前台</el-dropdown-item>
+                    <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </div>
+          </div>
+        </header>
 
-      <!-- 内容区 -->
-      <main class="cyber-content">
-        <router-view v-slot="{ Component }">
-          <transition name="cyber-fade" mode="out-in">
-            <component :is="Component" />
-          </transition>
-        </router-view>
-      </main>
-    </div>
+        <!-- 内容区 -->
+        <main class="cyber-content">
+          <router-view v-slot="{ Component }">
+            <transition name="cyber-fade" mode="out-in">
+              <component :is="Component" />
+            </transition>
+          </router-view>
+        </main>
+      </div>
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { useAppStore } from '@/stores/app'
 import { ElMessage } from 'element-plus'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
-const appStore = useAppStore()
+const isMobile = ref(false)
 
-// 管理员身份校验（纵深防御）
-onMounted(async () => {
+// 检测移动端
+function checkMobile() {
+  isMobile.value = window.innerWidth < 768
+}
+
+onMounted(() => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+  
   if (!authStore.user) {
-    await authStore.fetchUserProfile()
+    authStore.fetchUserProfile()
   }
   if (!authStore.isAdmin) {
     ElMessage.error('无权访问管理后台')
@@ -183,6 +202,67 @@ function handleLogout() {
   position: relative;
 }
 
+/* ========== MOBILE PROMPT ========== */
+.mobile-prompt {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+  background: #0a0a0f;
+  background-image:
+    linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.mobile-prompt-content {
+  text-align: center;
+  max-width: 360px;
+}
+
+.mobile-icon {
+  font-size: 64px;
+  margin-bottom: 24px;
+  filter: drop-shadow(0 0 20px rgba(0, 240, 255, 0.3));
+}
+
+.mobile-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #e0e0ff;
+  margin-bottom: 12px;
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+}
+
+.mobile-desc {
+  font-size: 14px;
+  color: #6a6a8a;
+  line-height: 1.6;
+  margin-bottom: 32px;
+}
+
+.mobile-back-btn {
+  display: inline-block;
+  padding: 12px 32px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #00f0ff, #7c3aed);
+  color: #000;
+  font-weight: 700;
+  font-size: 14px;
+  text-decoration: none;
+  transition: all 0.3s;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+}
+
+.mobile-back-btn:hover {
+  box-shadow: 0 0 30px rgba(0, 240, 255, 0.5);
+  transform: translateY(-2px);
+  color: #000;
+  text-shadow: none;
+}
+
+/* ========== DESKTOP BACKGROUND ========== */
 .cyber-bg-grid {
   position: fixed;
   inset: 0;
