@@ -27,12 +27,12 @@ const CONFIG = {
   AI_PROVIDER: process.env.AI_PROVIDER || 'doubao',
 
   // 豆包（字节跳动火山引擎）
-  DOUBAO_API_KEY: process.env.DOUBAO_API_KEY || "NEED_API_KEY_FROM_CONSOLE",
+  DOUBAO_API_KEY: process.env.DOUBAO_API_KEY || "ark-3c2a939f-9aec-4930-946e-29a97d476611-e6c69",
   DOUBAO_BASE_URL: process.env.DOUBAO_BASE_URL || 'https://ark.cn-beijing.volces.com/api/v3',
   DOUBAO_MODEL: process.env.DOUBAO_MODEL || 'doubao-pro-32k',
 
   // 即梦（字节跳动 AI 绘画）
-  JIMENG_API_KEY: process.env.JIMENG_API_KEY || 'NEED_API_KEY',
+  JIMENG_API_KEY: process.env.JIMENG_API_KEY || "ark-3c2a939f-9aec-4930-946e-29a97d476611-e6c69",
   JIMENG_BASE_URL: process.env.JIMENG_BASE_URL || 'https://jimeng.jianying.com/v1',
   JIMENG_MODEL: process.env.JIMENG_MODEL || 'jimeng-v2',
 
@@ -48,13 +48,13 @@ const CONFIG = {
 
   // 通义千问（阿里云）
   TONGYI_API_KEY: process.env.TONGYI_API_KEY || 'sk-c4212c9d7e4644e6825d796f6365668e',
-  TONGYI_BASE_URL: process.env.TONGYI_BASE_URL || 'https://dashscope.aliyuncs.com/api/v1',
+  TONGYI_BASE_URL: process.env.TONGYI_BASE_URL || 'https://dashscope.aliyuncs.com/compatible-mode/v1',
   TONGYI_MODEL: process.env.TONGYI_MODEL || 'qwen-plus',
 
   // 腾讯元宝
-  YUANBAO_API_KEY: process.env.YUANBAO_API_KEY || 'NEED_TENCENT_KEY',
-  YUANBAO_BASE_URL: process.env.YUANBAO_BASE_URL || 'https://api.yuanbao.tencent.com/v1',
-  YUANBAO_MODEL: process.env.YUANBAO_MODEL || 'yuanbao-pro',
+  YUANBAO_API_KEY: process.env.YUANBAO_API_KEY || '' // 需要腾讯混元API Key(sk-开头)，待用户补充,
+  YUANBAO_BASE_URL: process.env.YUANBAO_BASE_URL || 'https://api.hunyuan.cloud.tencent.com/v1',
+  YUANBAO_MODEL: process.env.YUANBAO_MODEL || 'hunyuan-turbos-latest',
 
   // Coze 智能体
   COZE_API_KEY: process.env.COZE_API_KEY || '',
