@@ -7,7 +7,7 @@
         <div class="flex items-center gap-3 cursor-pointer" @click="$router.push('/dashboard')">
           <div class="w-9 h-9 rounded-lg flex items-center justify-center text-black font-bold text-lg"
             style="background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple)); box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);">罗</div>
-          <span class="text-lg font-bold hidden sm:block glow-cyan" style="color: var(--cyber-cyan); font-family: 'JetBrains Mono', monospace;">罗圣纪元 <span style="font-size: 11px; opacity: 0.7; font-weight: normal;">官方网站</span></span>
+          <span class="text-lg font-bold hidden sm:block glow-cyan" style="color: var(--cyber-cyan); font-family: 'JetBrains Mono', monospace;">罗圣纪元</span>
         </div>
 
         <!-- 导航菜单 -->
@@ -46,7 +46,7 @@
               <el-dropdown-menu>
                 <el-dropdown-item @click="$router.push('/profile')">👤 个人中心</el-dropdown-item>
                 <el-dropdown-item @click="$router.push('/profile/wallet')">💰 圣点账户</el-dropdown-item>
-                <el-dropdown-item v-if="authStore.isAdmin" divided @click="$router.push('/admin')">⚙️ 管理后台</el-dropdown-item>
+                <el-dropdown-item v-if="authStore.isAdmin" divided @click="goAdmin">⚙️ 管理后台</el-dropdown-item>
                 <el-dropdown-item divided @click="handleLogout">🚪 退出登录</el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -108,6 +108,10 @@ const navItems = [
 
 function isActive(path: string) {
   return route.path === path || route.path.startsWith(path + '/')
+}
+
+function goAdmin() {
+  window.location.href = (import.meta.env.BASE_URL || "/") + "admin/"
 }
 
 function handleLogout() {
