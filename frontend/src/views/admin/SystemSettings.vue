@@ -50,16 +50,18 @@
       </el-form>
     </div>
 
-    <button @click="saveSettings" class="cyber-btn cyber-btn-cyan cyber-btn-save">
-      💾 保存配置
+    <button @click="saveSettings" class="cyber-btn cyber-btn-cyan cyber-btn-save" :disabled="saving">
+      {{ saving ? '保存中...' : '💾 保存配置' }}
     </button>
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue'
+import { reactive, ref, onMounted } from 'vue'
+import { adminApi } from '@/api'
 import { ElMessage } from 'element-plus'
 
+const saving = ref(false)
 const settings = reactive({
   platformName: '罗圣纪元SaaS平台',
   domain: 'lsjyapp.cn',
@@ -71,59 +73,38 @@ const settings = reactive({
   smsNotify: false
 })
 
-function saveSettings() {
-  ElMessage.success('配置已保存')
+async function loadSettings() {
+  try {
+    const res = await adminApi.getSystemSettings()
+    Object.assign(settings, res.data)
+  } catch { /* use defaults */ }
 }
+
+async function saveSettings() {
+  saving.value = true
+  try {
+    await adminApi.saveSystemSettings({ ...settings })
+    ElMessage.success('配置已保存')
+  } catch {
+    ElMessage.error('保存失败')
+  } finally {
+    saving.value = false
+  }
+}
+
+onMounted(() => loadSettings())
 </script>
 
 <style scoped>
 .max-w-4xl { max-width: 900px; }
-
-.cyber-card {
-  background: #12121f;
-  border: 1px solid #1a1a2e;
-  border-radius: 12px;
-  padding: 24px;
-}
-
-.card-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: #e0e0ff;
-}
-
-.cyber-grid-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.cyber-btn {
-  padding: 12px 24px;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s;
-  border: 1px solid transparent;
-}
-
-.cyber-btn-cyan {
-  background: rgba(0, 240, 255, 0.1);
-  color: #00f0ff;
-  border-color: #00f0ff55;
-}
-
-.cyber-btn-cyan:hover {
-  background: rgba(0, 240, 255, 0.2);
-  box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
-}
-
-.cyber-btn-save {
-  font-size: 15px;
-  padding: 14px 32px;
-}
-
+.cyber-card { background: #12121f; border: 1px solid #1a1a2e; border-radius: 12px; padding: 24px; }
+.card-title { font-size: 14px; font-weight: 700; color: #e0e0ff; }
+.cyber-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.cyber-btn { padding: 12px 24px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; border: 1px solid transparent; }
+.cyber-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.cyber-btn-cyan { background: rgba(0,240,255,0.1); color: #00f0ff; border-color: #00f0ff55; }
+.cyber-btn-cyan:hover:not(:disabled) { background: rgba(0,240,255,0.2); box-shadow: 0 0 20px rgba(0,240,255,0.3); }
+.cyber-btn-save { font-size: 15px; padding: 14px 32px; }
 .mb-6 { margin-bottom: 24px; }
 .mb-4 { margin-bottom: 16px; }
 .w-full { width: 100%; }
