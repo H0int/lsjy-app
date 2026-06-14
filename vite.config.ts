@@ -9,7 +9,7 @@ const isGitHubPages = process.env.GITHUB_PAGES === 'true'
 export default defineConfig({
   plugins: [vue()],
   // GitHub Pages: /lsjy-app/  自定义域名: /
-  base: isGitHubPages ? '/lsjy-app/' : '/',
+  base: '/',  // 自定义域名 lsjyapp.cn 优先
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src')
