@@ -93,41 +93,74 @@
 </template>
 
 <script setup lang="ts">
+
 import { ref, computed, onMounted } from 'vue'
+import { adminApi } from '@/api'
 import type { ModerationItem } from '@/types'
+import { ElMessage } from 'element-plus'
 
 const filters = ref({ contentType: '', status: '', keyword: '' })
 const page = ref(1)
 const pageSize = 10
-const total = ref(56)
 const selectedIds = ref<number[]>([])
+const stats = ref({ pending: 0, approved: 0, rejected: 0, todayReviewed: 0 })
+const list = ref<ModerationItem[]>([])
 
-const stats = ref({ pending: 23, approved: 189, rejected: 12, todayReviewed: 8 })
-
-const list = ref<ModerationItem[]>([
-  { id: 1, contentType: 'post', contentTitle: '分享我的AI绘画作品', authorName: '张三', authorId: 101, summary: '这是一篇关于AI绘画的分享帖子...', status: 'pending', reason: null, reviewerId: null, reviewerName: null, createdAt: '2025-07-18 14:30', reviewedAt: null },
-  { id: 2, contentType: 'comment', contentTitle: '关于课程评价', authorName: '李四', authorId: 102, summary: '这个课程真的很棒，推荐给大家...', status: 'pending', reason: null, reviewerId: null, reviewerName: null, createdAt: '2025-07-18 13:20', reviewedAt: null },
-  { id: 3, contentType: 'course', contentTitle: 'Python从入门到精通', authorName: '王老师', authorId: 103, summary: '零基础Python编程课程...', status: 'approved', reason: null, reviewerId: 1, reviewerName: '管理员', createdAt: '2025-07-18 10:00', reviewedAt: '2025-07-18 11:30' },
-  { id: 4, contentType: 'product', contentTitle: '手工陶瓷茶杯套装', authorName: '匠心店铺', authorId: 104, summary: '纯手工制作的陶瓷茶杯...', status: 'pending', reason: null, reviewerId: null, reviewerName: null, createdAt: '2025-07-18 09:15', reviewedAt: null },
-  { id: 5, contentType: 'post', contentTitle: '宠物日记：我家猫咪的日常', authorName: '萌宠达人', authorId: 105, summary: '记录猫咪每天的生活日常...', status: 'rejected', reason: '内容涉及隐私信息', reviewerId: 1, reviewerName: '管理员', createdAt: '2025-07-17 16:45', reviewedAt: '2025-07-17 17:00' },
-  { id: 6, contentType: 'comment', contentTitle: '商品评价回复', authorName: '赵六', authorId: 106, summary: '感谢反馈，我们会改进的...', status: 'flagged', reason: '疑似广告内容', reviewerId: 1, reviewerName: '管理员', createdAt: '2025-07-17 15:30', reviewedAt: '2025-07-17 16:00' },
-  { id: 7, contentType: 'post', contentTitle: '校园二手交易攻略', authorName: '学长小李', authorId: 107, summary: '分享一下校园二手交易的经验...', status: 'pending', reason: null, reviewerId: null, reviewerName: null, createdAt: '2025-07-18 15:00', reviewedAt: null },
-  { id: 8, contentType: 'course', contentTitle: '电商运营实战课', authorName: '陈老师', authorId: 108, summary: '从0到1教你做电商运营...', status: 'pending', reason: null, reviewerId: null, reviewerName: null, createdAt: '2025-07-18 14:50', reviewedAt: null },
-])
-
-const totalPages = computed(() => Math.ceil(total.value / pageSize))
+const totalPages = computed(() => Math.ceil(list.value.length / pageSize))
 const allSelected = computed(() => list.value.length > 0 && selectedIds.value.length === list.value.length)
 
 function typeLabel(t: string) { return { post: '帖子', comment: '评论', course: '课程', product: '商品' }[t] || t }
 function statusLabel(s: string) { return { pending: '待审核', approved: '已通过', rejected: '已拒绝', flagged: '已标记' }[s] || s }
 
+function updateStats() {
+  stats.value.pending = list.value.filter(i => i.status === 'pending').length
+  stats.value.approved = list.value.filter(i => i.status === 'approved').length
+  stats.value.rejected = list.value.filter(i => i.status === 'rejected').length
+}
+
+async function fetchData() {
+  const res = await adminApi.getContentModerations()
+  list.value = res.data
+  updateStats()
+}
+
 function toggleAll(e: Event) { const checked = (e.target as HTMLInputElement).checked; selectedIds.value = checked ? list.value.map(i => i.id) : [] }
 function handleSearch() { page.value = 1 }
-function handleApprove(item: ModerationItem) { item.status = 'approved'; item.reviewerName = '管理员'; stats.value.pending--; stats.value.approved++; stats.value.todayReviewed++ }
-function handleReject(item: ModerationItem) { item.status = 'rejected'; item.reviewerName = '管理员'; stats.value.pending--; stats.value.rejected++; stats.value.todayReviewed++ }
+
+async function handleApprove(item: ModerationItem) {
+  await adminApi.approveContent(item.id)
+  ElMessage.success('已通过')
+  fetchData()
+}
+
+async function handleReject(item: ModerationItem) {
+  await adminApi.rejectContent(item.id, '不符合规范')
+  ElMessage.success('已拒绝')
+  fetchData()
+}
+
 function handleFlag(item: ModerationItem) { item.status = 'flagged'; stats.value.todayReviewed++ }
-function handleBatchApprove() { list.value.filter(i => selectedIds.value.includes(i.id)).forEach(i => { i.status = 'approved'; i.reviewerName = '管理员' }); stats.value.pending -= selectedIds.value.length; stats.value.approved += selectedIds.value.length; selectedIds.value = [] }
-function handleBatchReject() { list.value.filter(i => selectedIds.value.includes(i.id)).forEach(i => { i.status = 'rejected'; i.reviewerName = '管理员' }); stats.value.pending -= selectedIds.value.length; stats.value.rejected += selectedIds.value.length; selectedIds.value = [] }
+
+async function handleBatchApprove() {
+  for (const id of selectedIds.value) {
+    await adminApi.approveContent(id)
+  }
+  ElMessage.success(`已批量通过 ${selectedIds.value.length} 条`)
+  selectedIds.value = []
+  fetchData()
+}
+
+async function handleBatchReject() {
+  for (const id of selectedIds.value) {
+    await adminApi.rejectContent(id, '批量拒绝')
+  }
+  ElMessage.success(`已批量拒绝 ${selectedIds.value.length} 条`)
+  selectedIds.value = []
+  fetchData()
+}
+
+onMounted(() => fetchData())
+
 </script>
 
 <style scoped>
