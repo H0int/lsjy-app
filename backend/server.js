@@ -689,13 +689,124 @@ app.get('/api/v1/payment/coin/transactions', authCheck, (req, res) => {
   res.json({ code: 0, message: 'success', data: paginate(list, page, pageSize) });
 });
 
-// 充值
+// ===== 充值订单管理（手动审批流程）=====
+const RECHARGE_ORDERS_FILE = path.join(__dirname, 'data', 'recharge_orders.json');
+
+function getRechargeOrders() {
+  try { return JSON.parse(fs.readFileSync(RECHARGE_ORDERS_FILE, 'utf8')); } catch (e) { return []; }
+}
+function saveRechargeOrders(orders) {
+  fs.writeFileSync(RECHARGE_ORDERS_FILE, JSON.stringify(orders, null, 2));
+}
+
+// 创建充值订单（待支付）
 app.post('/api/v1/payment/coin/recharge', authCheck, (req, res) => {
+  const { packageId, paymentMethod } = req.body;
+  const packages = [
+    { id: 1, coins: 100, price: 9.9 },
+    { id: 2, coins: 500, price: 39.9 },
+    { id: 3, coins: 2000, price: 129.9 },
+  ];
+  const pkg = packages.find(p => p.id === packageId);
+  if (!pkg) return res.status(404).json({ code: 404, message: '套餐不存在', data: null });
+  
+  const order = {
+    id: Date.now(),
+    orderNo: 'RO' + Date.now(),
+    userId: req.user?.id || 1,
+    username: req.user?.username || 'unknown',
+    packageId: pkg.id,
+    coinAmount: pkg.coins,
+    price: pkg.price,
+    paymentMethod: paymentMethod || 'wechat', // wechat/alipay/qq
+    screenshotUrl: '',
+    status: 'pending_payment', // pending_payment, pending_review, approved, rejected
+    remark: '',
+    createdAt: new Date().toISOString(),
+    reviewedAt: null,
+    reviewedBy: null,
+  };
+  
+  const orders = getRechargeOrders();
+  orders.push(order);
+  saveRechargeOrders(orders);
+  
+  res.json({ code: 0, message: '订单已创建，请扫码付款', data: { order } });
+});
+
+// 提交付款截图（等待审核）
+app.post('/api/v1/payment/coin/submit-screenshot', authCheck, (req, res) => {
+  const { orderId, screenshotUrl } = req.body;
+  const orders = getRechargeOrders();
+  const order = orders.find(o => o.id === orderId);
+  if (!order) return res.status(404).json({ code: 404, message: '订单不存在', data: null });
+  
+  order.screenshotUrl = screenshotUrl;
+  order.status = 'pending_review';
+  saveRechargeOrders(orders);
+  
+  res.json({ code: 0, message: '截图已提交，等待管理员审核', data: { order } });
+});
+
+// 获取充值订单列表（管理员）
+app.get('/api/v1/payment/coin/orders', (req, res) => {
+  const orders = getRechargeOrders();
+  res.json({ code: 0, message: 'success', data: { items: orders, total: orders.length } });
+});
+
+// 审批充值订单（管理员）
+app.post('/api/v1/payment/coin/approve/:orderId', (req, res) => {
+  const orderId = parseInt(req.params.orderId);
+  const { action, remark } = req.body; // action: approve/reject
+  
+  const orders = getRechargeOrders();
+  const order = orders.find(o => o.id === orderId);
+  if (!order) return res.status(404).json({ code: 404, message: '订单不存在', data: null });
+  if (order.status === 'approved') return res.status(400).json({ code: 400, message: '订单已审批', data: null });
+  
+  if (action === 'approve') {
+    order.status = 'approved';
+    order.remark = remark || '审批通过';
+    order.reviewedAt = new Date().toISOString();
+    order.reviewedBy = 'admin';
+    
+    // 给用户加算力（更新users.json中的coins字段）
+    const usersFile = path.join(__dirname, 'data', 'users.json');
+    let users = [];
+    try { users = JSON.parse(fs.readFileSync(usersFile, 'utf8')); } catch (e) {}
+    const user = users.find(u => u.id === order.userId);
+    if (user) {
+      user.coins = (user.coins || 0) + order.coinAmount;
+      fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
+    }
+    
+    saveRechargeOrders(orders);
+    res.json({ code: 0, message: '已审批，用户获得' + order.coinAmount + '圣点', data: { order } });
+  } else {
+    order.status = 'rejected';
+    order.remark = remark || '审批拒绝';
+    order.reviewedAt = new Date().toISOString();
+    order.reviewedBy = 'admin';
+    saveRechargeOrders(orders);
+    res.json({ code: 0, message: '已拒绝', data: { order } });
+  }
+});
+
+// 获取当前用户充值订单
+app.get('/api/v1/payment/coin/my-orders', authCheck, (req, res) => {
+  const orders = getRechargeOrders();
+  const userId = req.user?.id || 1;
+  const myOrders = orders.filter(o => o.userId === userId);
+  res.json({ code: 0, message: 'success', data: { items: myOrders, total: myOrders.length } });
+});
+
+// 充值（旧接口保留，但改为直接创建订单）
+app.post('/api/v1/payment/coin/recharge-legacy', authCheck, (req, res) => {
   const { packageId, amount, payMethod } = req.body;
   const orderNo = 'LSJY' + Date.now();
   const newTx = {
     id: nextId(), userId: 1, type: 'recharge', amount: amount || 0,
-    balance: 99999 + (amount || 0), description: `充值 ${payMethod || 'wechat'}`,
+    balance: 99999 + (amount || 0), description: '充值 ' + (payMethod || 'wechat'),
     createdAt: new Date().toISOString(),
   };
   coinTransactionsStore.unshift(newTx);
