@@ -1,8 +1,8 @@
 
 // ============================================================
-// 罗圣纪元管理后台 V7.0 核心逻辑
+// 罗圣纪元管理后台 V8.0 核心逻辑
 // (c) 2026 祁阳市罗圣纪元互联网科技有限责任公司
-// 7大功能模块 + 用户审批 + 权限管理
+// 7大功能模块 + 用户审批 + 权限管理 + 赛博朋克UI + 移动端适配
 // ============================================================
 
 (function() {
@@ -10,7 +10,7 @@
 
 // ========== 全局配置 ==========
 var APP = {
-  version: 'V7.0',
+  version: 'V8.0',
   company: '祁阳市罗圣纪元互联网科技有限责任公司',
   creditCode: '91431121MAKD052H05',
   capital: '52万元',
@@ -381,26 +381,29 @@ function toast(msg, type) {
   var icons = { info: 'fa-circle-info', success: 'fa-circle-check', error: 'fa-circle-xmark', warning: 'fa-triangle-exclamation' };
   var el = document.createElement('div');
   el.className = 'admin-toast';
-  el.style.cssText = 'position:fixed;top:20px;right:20px;z-index:99999;padding:12px 20px;border-radius:8px;background:var(--bg3);border:1px solid '+colors[type]+';color:var(--w);font-size:14px;display:flex;align-items:center;gap:8px;box-shadow:0 4px 20px rgba(0,0,0,.4);animation:slideInRight .3s ease;max-width:400px;';
-  el.innerHTML = '<i class="fa-solid '+icons[type]+'" style="color:'+colors[type]+'"></i><span>'+msg+'</span>';
+  el.style.cssText = 'position:fixed;top:20px;right:20px;z-index:99999;padding:14px 22px;border-radius:10px;background:var(--card);border:1px solid '+colors[type]+';color:var(--w);font-size:14px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 24px rgba(0,0,0,.4),0 0 15px '+colors[type].replace('var(','').replace(')','')+'20;animation:slideInRight .3s ease;max-width:380px;backdrop-filter:blur(10px);';
+  el.innerHTML = '<i class="fa-solid '+icons[type]+'" style="color:'+colors[type]+';font-size:16px;"></i><span style="line-height:1.5;">'+msg+'</span>';
   document.body.appendChild(el);
-  setTimeout(function() { el.style.opacity='0'; el.style.transition='opacity .3s'; setTimeout(function(){ el.remove(); },300); }, 3000);
+  setTimeout(function() { el.style.opacity='0'; el.style.transition='opacity .3s, transform .3s'; el.style.transform='translateX(20px)'; setTimeout(function(){ el.remove(); },300); }, 3000);
 }
 
 // 确认弹窗
 function confirmDialog(msg, onOk, onCancel) {
   var overlay = document.createElement('div');
-  overlay.className = 'admin-confirm-overlay';
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99998;display:flex;align-items:center;justify-content:center;';
+  overlay.className = 'modal-overlay';
+  overlay.style.zIndex = '99998';
   var box = document.createElement('div');
-  box.style.cssText = 'background:var(--bg3);border:1px solid var(--bd);border-radius:12px;padding:24px;max-width:400px;width:90%;color:var(--w);';
-  box.innerHTML = '<div style="font-size:16px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px;"><i class="fa-solid fa-triangle-exclamation" style="color:var(--warn)"></i>确认操作</div>'+
-    '<div style="font-size:14px;color:var(--nd);margin-bottom:20px;line-height:1.6;">'+msg+'</div>'+
+  box.className = 'modal-box';
+  box.style.maxWidth = '400px';
+  box.innerHTML = '<div class="modal-header"><i class="fa-solid fa-triangle-exclamation" style="color:var(--warn)"></i>确认操作'+
+    '<button class="modal-close" title="取消"><i class="fa-solid fa-xmark"></i></button></div>'+
+    '<div style="font-size:14px;color:var(--nd);margin-bottom:20px;line-height:1.8;">'+msg+'</div>'+
     '<div style="display:flex;gap:10px;justify-content:flex-end;">'+
-    '<button class="admin-btn-cancel">取消</button>'+
-    '<button class="admin-btn-danger">确认</button></div>';
+    '<button class="admin-btn-cancel" style="width:auto;">取消</button>'+
+    '<button class="admin-btn-danger" style="width:auto;">确认</button></div>';
   overlay.appendChild(box);
   document.body.appendChild(overlay);
+  box.querySelector('.modal-close').onclick = function() { overlay.remove(); if(onCancel) onCancel(); };
   box.querySelector('.admin-btn-cancel').onclick = function() { overlay.remove(); if(onCancel) onCancel(); };
   box.querySelector('.admin-btn-danger').onclick = function() { overlay.remove(); if(onOk) onOk(); };
   overlay.onclick = function(e) { if(e.target===overlay){ overlay.remove(); if(onCancel) onCancel(); } };
@@ -446,6 +449,10 @@ function navigate(page) {
   if (titleEl) titleEl.textContent = routes[page].title;
   // 渲染页面
   routes[page].render();
+  // 移动端关闭侧边栏
+  if (window.innerWidth <= 768) {
+    closeMobileSidebar();
+  }
 }
 
 // ========== 渲染：数据看板 ==========
@@ -554,7 +561,7 @@ function renderDashboard() {
   // 最近注册用户
   html += '<div class="dash-card">';
   html += '<div class="dash-card-header"><i class="fa-solid fa-clock-rotate-left" style="color:var(--warn)"></i> 最近注册用户</div>';
-  html += '<div style="overflow-x:auto;"><table class="admin-table"><thead><tr><th>用户名</th><th>注册时间</th><th>状态</th><th>操作</th></tr></thead><tbody>';
+  html += '<div class="table-wrapper"><table class="admin-table"><thead><tr><th>用户名</th><th>注册时间</th><th>状态</th><th>操作</th></tr></thead><tbody>';
   var recentUsers = users.slice().sort(function(a,b){ return new Date(b.registerTime||0)-new Date(a.registerTime||0); }).slice(0,8);
   recentUsers.forEach(function(u) {
     if (u.role === 'superadmin') return;
@@ -573,7 +580,7 @@ function renderDashboard() {
 }
 
 function statCard(icon, label, value, sub, color) {
-  return '<div class="stat-card"><div class="stat-icon" style="background:'+color+'20;color:'+color+'"><i class="fa-solid '+icon+'"></i></div>'+
+  return '<div class="stat-card"><div class="stat-icon" style="background:'+color+'15;color:'+color+'"><i class="fa-solid '+icon+'"></i></div>'+
     '<div class="stat-info"><div class="stat-value" style="color:'+color+'">'+value+'</div><div class="stat-label">'+label+'</div><div class="stat-sub">'+sub+'</div></div></div>';
 }
 
@@ -591,7 +598,10 @@ function renderSVGChart() {
   var areaPoints = points.join(' ') + ' ' + (padX + (data.length-1)*stepX) + ',' + (h - padY) + ' ' + padX + ',' + (h - padY);
 
   var svg = '<svg viewBox="0 0 '+w+' '+h+'" style="width:100%;height:auto;">';
-  svg += '<defs><linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--p)" stop-opacity="0.3"/><stop offset="100%" stop-color="var(--p)" stop-opacity="0.02"/></linearGradient></defs>';
+  svg += '<defs>';
+  svg += '<linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--p)" stop-opacity="0.25"/><stop offset="100%" stop-color="var(--p2)" stop-opacity="0.02"/></linearGradient>';
+  svg += '<filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>';
+  svg += '</defs>';
 
   // Grid lines
   for (var i = 0; i <= 4; i++) {
@@ -600,14 +610,14 @@ function renderSVGChart() {
   }
 
   svg += '<polygon points="'+areaPoints+'" fill="url(#areaGrad)"/>';
-  svg += '<polyline points="'+points.join(' ')+'" fill="none" stroke="var(--p)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
+  svg += '<polyline points="'+points.join(' ')+'" fill="none" stroke="var(--p)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>';
 
   data.forEach(function(v, i) {
     var x = padX + i * stepX;
     var y = h - padY - (v / maxV) * (h - padY*2);
-    svg += '<circle cx="'+x+'" cy="'+y+'" r="3" fill="var(--p)"/>';
+    svg += '<circle cx="'+x+'" cy="'+y+'" r="4" fill="var(--bg3)" stroke="var(--p)" stroke-width="2" filter="url(#glow)"/>';
     svg += '<text x="'+x+'" y="'+(h-4)+'" text-anchor="middle" fill="var(--nd)" font-size="10">'+labels[i]+'</text>';
-    svg += '<text x="'+x+'" y="'+(y-8)+'" text-anchor="middle" fill="var(--p)" font-size="10">'+v+'</text>';
+    svg += '<text x="'+x+'" y="'+(y-10)+'" text-anchor="middle" fill="var(--p)" font-size="10" font-weight="600">'+v+'</text>';
   });
 
   svg += '</svg>';
@@ -725,7 +735,7 @@ function renderToolsList(toolCats, filter) {
     html += '<div class="dash-card-header"><i class="fa-solid '+cat.icon+'" style="color:var(--p2)"></i> '+cat.name;
     html += '<label class="toggle-switch" style="float:right;"><input type="checkbox" '+(cat.tools.every(function(t){return t.enabled})?'checked':'')+' onchange="AdminAPI.toggleCategory(\''+cat.id+'\',this.checked)"><span class="toggle-slider"></span><span style="margin-left:8px;font-size:12px;color:var(--nd)">全部'+(cat.tools.every(function(t){return t.enabled})?'启用':'禁用')+'</span></label>';
     html += '</div>';
-    html += '<div style="overflow-x:auto;"><table class="admin-table"><thead><tr><th>工具ID</th><th>工具名称</th><th>算力消耗</th><th>状态</th><th>操作</th></tr></thead><tbody>';
+    html += '<div class="table-wrapper"><table class="admin-table"><thead><tr><th>工具ID</th><th>工具名称</th><th>算力消耗</th><th>状态</th><th>操作</th></tr></thead><tbody>';
     cat.tools.forEach(function(t) {
       html += '<tr><td style="color:var(--nd);font-size:12px;">'+t.id+'</td><td>'+t.name+'</td>';
       html += '<td><input type="number" value="'+t.credit+'" min="1" max="100" style="width:60px;background:var(--bg2);border:1px solid var(--bd);color:var(--w);padding:4px 8px;border-radius:4px;text-align:center;" onchange="AdminAPI.updateToolCredit(\''+cat.id+'\',\''+t.id+'\',this.value)"></td>';
@@ -766,7 +776,7 @@ function renderFinance() {
 }
 
 function renderFinanceOrders(orders) {
-  var html = '<div class="dash-card"><div style="overflow-x:auto;"><table class="admin-table"><thead><tr>';
+  var html = '<div class="dash-card"><div class="table-wrapper"><table class="admin-table"><thead><tr>';
   html += '<th>订单号</th><th>用户</th><th>类型</th><th>金额</th><th>算力</th><th>支付方式</th><th>状态</th><th>时间</th><th>操作</th>';
   html += '</tr></thead><tbody>';
   orders.forEach(function(o) {
@@ -793,7 +803,7 @@ function renderFinanceOrders(orders) {
 function renderFinanceRefunds() {
   var orders = Store.get('orders') || [];
   var refunds = orders.filter(function(o){return o.type==='refund'});
-  var html = '<div class="dash-card"><div style="overflow-x:auto;"><table class="admin-table"><thead><tr>';
+  var html = '<div class="dash-card"><div class="table-wrapper"><table class="admin-table"><thead><tr>';
   html += '<th>订单号</th><th>用户</th><th>退款金额</th><th>扣除算力</th><th>状态</th><th>时间</th><th>操作</th>';
   html += '</tr></thead><tbody>';
   if (refunds.length === 0) {
@@ -856,7 +866,7 @@ function renderContentAnnouncements() {
   var anns = Store.get('announcements') || [];
   var html = '<div class="page-toolbar"><div class="toolbar-left"><span style="color:var(--nd)">共 '+anns.length+' 条公告</span></div>';
   html += '<div class="toolbar-right"><button class="admin-btn" onclick="AdminAPI.addAnnouncement()"><i class="fa-solid fa-plus"></i> 新增公告</button></div></div>';
-  html += '<div class="dash-card"><div style="overflow-x:auto;"><table class="admin-table"><thead><tr>';
+  html += '<div class="dash-card"><div class="table-wrapper"><table class="admin-table"><thead><tr>';
   html += '<th>标题</th><th>类型</th><th>状态</th><th>创建时间</th><th>过期时间</th><th>操作</th>';
   html += '</tr></thead><tbody>';
   anns.forEach(function(a) {
@@ -877,7 +887,7 @@ function renderContentFAQ() {
   var faqs = Store.get('faqs') || [];
   var html = '<div class="page-toolbar"><div class="toolbar-left"><span style="color:var(--nd)">共 '+faqs.length+' 条FAQ</span></div>';
   html += '<div class="toolbar-right"><button class="admin-btn" onclick="AdminAPI.addFAQ()"><i class="fa-solid fa-plus"></i> 新增FAQ</button></div></div>';
-  html += '<div class="dash-card"><div style="overflow-x:auto;"><table class="admin-table"><thead><tr>';
+  html += '<div class="dash-card"><div class="table-wrapper"><table class="admin-table"><thead><tr>';
   html += '<th>排序</th><th>分类</th><th>问题</th><th>答案</th><th>操作</th>';
   html += '</tr></thead><tbody>';
   faqs.forEach(function(f) {
@@ -906,7 +916,7 @@ function renderContentPopup() {
   var popups = Store.get('popups') || [];
   var html = '<div class="page-toolbar"><div class="toolbar-left"><span style="color:var(--nd)">共 '+popups.length+' 个弹窗广告</span></div>';
   html += '<div class="toolbar-right"><button class="admin-btn" onclick="AdminAPI.addPopup()"><i class="fa-solid fa-plus"></i> 新增弹窗</button></div></div>';
-  html += '<div class="dash-card"><div style="overflow-x:auto;"><table class="admin-table"><thead><tr>';
+  html += '<div class="dash-card"><div class="table-wrapper"><table class="admin-table"><thead><tr>';
   html += '<th>标题</th><th>内容</th><th>状态</th><th>开始时间</th><th>结束时间</th><th>操作</th>';
   html += '</tr></thead><tbody>';
   popups.forEach(function(p) {
@@ -982,7 +992,7 @@ function renderPermAdmins() {
   var admins = Store.get('admins') || [];
   var html = '<div class="page-toolbar"><div class="toolbar-left"></div>';
   html += '<div class="toolbar-right"><button class="admin-btn" onclick="AdminAPI.addAdmin()"><i class="fa-solid fa-plus"></i> 添加管理员</button></div></div>';
-  html += '<div class="dash-card"><div style="overflow-x:auto;"><table class="admin-table"><thead><tr>';
+  html += '<div class="dash-card"><div class="table-wrapper"><table class="admin-table"><thead><tr>';
   html += '<th>用户名</th><th>角色</th><th>状态</th><th>创建时间</th><th>操作</th>';
   html += '</tr></thead><tbody>';
   admins.forEach(function(a) {
@@ -1087,7 +1097,7 @@ function renderSettingsLogs() {
   var logs = Store.get('logs') || [];
   var html = '<div class="page-toolbar"><div class="toolbar-left"><span style="color:var(--nd)">共 '+logs.length+' 条日志</span></div>';
   html += '<div class="toolbar-right"><button class="admin-btn" onclick="AdminAPI.clearLogs()"><i class="fa-solid fa-trash"></i> 清空日志</button></div></div>';
-  html += '<div class="dash-card"><div style="overflow-x:auto;"><table class="admin-table"><thead><tr>';
+  html += '<div class="dash-card"><div class="table-wrapper"><table class="admin-table"><thead><tr>';
   html += '<th>时间</th><th>类型</th><th>用户</th><th>详情</th><th>IP</th>';
   html += '</tr></thead><tbody>';
   logs.slice(0,50).forEach(function(l) {
@@ -1215,9 +1225,11 @@ window.AdminAPI = {
 
   addUser: function() {
     var overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99998;display:flex;align-items:center;justify-content:center;';
+    overlay.className = 'modal-overlay';
+    overlay.style.zIndex = '99998';
     var box = document.createElement('div');
-    box.style.cssText = 'background:var(--bg3);border:1px solid var(--bd);border-radius:12px;padding:24px;max-width:420px;width:90%;color:var(--w);';
+    box.className = 'modal-box';
+    box.style.maxWidth = '420px';
     box.innerHTML = '<div style="font-size:16px;font-weight:600;margin-bottom:16px;"><i class="fa-solid fa-user-plus" style="color:var(--ok)"></i> 创建用户</div>'+
       '<div class="form-group"><label>用户名</label><input type="text" id="new-user-name" placeholder="至少3个字符" style="width:100%"></div>'+
       '<div class="form-group"><label>密码</label><input type="password" id="new-user-pwd" placeholder="至少6个字符" style="width:100%"></div>'+
@@ -1274,9 +1286,11 @@ window.AdminAPI = {
     var credits = Store.getCredits() || {};
     var current = credits[username] || 0;
     var overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99998;display:flex;align-items:center;justify-content:center;';
+    overlay.className = 'modal-overlay';
+    overlay.style.zIndex = '99998';
     var box = document.createElement('div');
-    box.style.cssText = 'background:var(--bg3);border:1px solid var(--bd);border-radius:12px;padding:24px;max-width:400px;width:90%;color:var(--w);';
+    box.className = 'modal-box';
+    box.style.maxWidth = '400px';
     box.innerHTML = '<div style="font-size:16px;font-weight:600;margin-bottom:16px;">调整算力 - '+username+'</div>'+
       '<div style="margin-bottom:12px;color:var(--nd);">当前算力: <strong style="color:var(--p)">'+current+'</strong></div>'+
       '<div class="form-group"><label>调整方式</label><select id="credit-action" style="width:100%"><option value="add">增加</option><option value="set">设为</option><option value="subtract">减少</option></select></div>'+
@@ -1721,9 +1735,13 @@ window.AdminAPI = {
     var statusMap = {pending:'待审批',approved:'已通过',banned:'已封禁',rejected:'已拒绝'};
 
     var overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99998;display:flex;align-items:center;justify-content:center;';
+    overlay.className = 'modal-overlay';
+    overlay.style.zIndex = '99998';
     var box = document.createElement('div');
-    box.style.cssText = 'background:var(--bg3);border:1px solid var(--bd);border-radius:12px;padding:24px;max-width:600px;width:90%;color:var(--w);max-height:85vh;overflow-y:auto;';
+    box.className = 'modal-box';
+    box.style.maxWidth = '600px';
+    box.style.maxHeight = '85vh';
+    box.style.overflowY = 'auto';
     var html = '<div style="font-size:18px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;"><i class="fa-solid fa-user" style="color:var(--p)"></i> 用户详情</div>';
 
     html += '<div style="background:var(--bg2);border-radius:8px;padding:16px;margin-bottom:16px;">';
@@ -1877,9 +1895,11 @@ window.AdminAPI = {
   // 工具管理 - 批量调整算力
   batchAdjustToolCredits: function() {
     var overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99998;display:flex;align-items:center;justify-content:center;';
+    overlay.className = 'modal-overlay';
+    overlay.style.zIndex = '99998';
     var box = document.createElement('div');
-    box.style.cssText = 'background:var(--bg3);border:1px solid var(--bd);border-radius:12px;padding:24px;max-width:400px;width:90%;color:var(--w);';
+    box.className = 'modal-box';
+    box.style.maxWidth = '400px';
     box.innerHTML = '<div style="font-size:16px;font-weight:600;margin-bottom:16px;"><i class="fa-solid fa-sliders" style="color:var(--p2)"></i> 批量调整算力</div>'+
       '<div class="form-group"><label>调整方式</label><select id="batch-credit-action" style="width:100%"><option value="multiply">乘以倍数</option><option value="add">统一增加</option><option value="set">统一设为</option></select></div>'+
       '<div class="form-group"><label>数值</label><input type="number" id="batch-credit-value" value="1" min="0" step="0.5" style="width:100%"></div>'+
@@ -1922,9 +1942,11 @@ window.AdminAPI = {
     var typeMap = {important:'重要通知',normal:'系统公告',activity:'活动公告'};
     var typeColor = {important:'var(--err)',normal:'var(--p)',activity:'#f59e0b'};
     var overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99998;display:flex;align-items:center;justify-content:center;';
+    overlay.className = 'modal-overlay';
+    overlay.style.zIndex = '99998';
     var box = document.createElement('div');
-    box.style.cssText = 'background:var(--bg3);border:1px solid var(--bd);border-radius:12px;padding:24px;max-width:500px;width:90%;color:var(--w);';
+    box.className = 'modal-box';
+  box.style.maxWidth = '500px';
     box.innerHTML = '<div style="font-size:12px;color:var(--nd);margin-bottom:8px;">'+typeMap[ann.type]+' · '+formatTime(ann.createTime)+'</div>'+
       '<div style="font-size:20px;font-weight:700;color:'+typeColor[ann.type]+';margin-bottom:16px;">'+ann.title+'</div>'+
       '<div style="color:var(--nd);line-height:1.8;padding:16px;background:var(--bg2);border-radius:8px;margin-bottom:16px;">'+ann.content+'</div>'+
@@ -1941,9 +1963,15 @@ window.AdminAPI = {
     var popup = popups.filter(function(p){ return p.id===id; })[0];
     if (!popup) return;
     var overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99998;display:flex;align-items:center;justify-content:center;';
+    overlay.className = 'modal-overlay';
+    overlay.style.zIndex = '99998';
     var box = document.createElement('div');
-    box.style.cssText = 'background:var(--bg3);border:1px solid var(--p);border-radius:12px;padding:30px;max-width:400px;width:90%;color:var(--w);text-align:center;position:relative;';
+    box.className = 'modal-box';
+    box.style.maxWidth = '400px';
+    box.style.padding = '30px';
+    box.style.textAlign = 'center';
+    box.style.position = 'relative';
+    box.style.borderColor = 'var(--p)';
     box.innerHTML = '<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="position:absolute;top:8px;right:12px;background:none;border:none;color:var(--nd);cursor:pointer;font-size:18px;">&times;</button>'+
       '<div style="font-size:18px;font-weight:700;color:var(--p);margin-bottom:12px;">'+popup.title+'</div>'+
       '<div style="color:var(--nd);line-height:1.6;margin-bottom:16px;">'+popup.content+'</div>'+
@@ -1959,9 +1987,11 @@ window.AdminAPI = {
     var log = logs[idx];
     if (!log) return;
     var overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99998;display:flex;align-items:center;justify-content:center;';
+    overlay.className = 'modal-overlay';
+    overlay.style.zIndex = '99998';
     var box = document.createElement('div');
-    box.style.cssText = 'background:var(--bg3);border:1px solid var(--bd);border-radius:12px;padding:24px;max-width:500px;width:90%;color:var(--w);';
+    box.className = 'modal-box';
+  box.style.maxWidth = '500px';
     box.innerHTML = '<div style="font-size:16px;font-weight:600;margin-bottom:16px;">编辑版本日志</div>'+
       '<div class="form-group"><label>版本号</label><input type="text" id="cl-version" value="'+log.version+'" style="width:100%"></div>'+
       '<div class="form-group"><label>日期</label><input type="date" id="cl-date" value="'+log.date+'" style="width:100%"></div>'+
@@ -2045,7 +2075,11 @@ window.AdminAPI = {
     Store.set('emailTemplates', templates);
     addLog('system', '保存邮件模板: '+type);
     toast('邮件模板已保存', 'success');
-  }
+  },
+
+  // 移动端侧边栏控制
+  closeMobileSidebar: closeMobileSidebar,
+  openMobileSidebar: openMobileSidebar
 };
 
 
@@ -2401,9 +2435,13 @@ function renderContentEmailTpl() {
 function showAnnouncementForm(ann) {
   var isEdit = !!ann;
   var overlay = document.createElement('div');
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99998;display:flex;align-items:center;justify-content:center;';
+  overlay.className = 'modal-overlay';
+    overlay.style.zIndex = '99998';
   var box = document.createElement('div');
-  box.style.cssText = 'background:var(--bg3);border:1px solid var(--bd);border-radius:12px;padding:24px;max-width:500px;width:90%;color:var(--w);max-height:90vh;overflow-y:auto;';
+  box.className = 'modal-box';
+  box.style.maxWidth = '500px';
+  box.style.maxHeight = '90vh';
+  box.style.overflowY = 'auto';
   box.innerHTML = '<div style="font-size:16px;font-weight:600;margin-bottom:16px;">'+(isEdit?'编辑':'新增')+'公告</div>'+
     '<div class="form-group"><label>标题</label><input type="text" id="ann-title" value="'+(ann?ann.title:'')+'" style="width:100%"></div>'+
     '<div class="form-group"><label>内容</label><textarea id="ann-content" rows="4" style="width:100%">'+(ann?ann.content:'')+'</textarea></div>'+
@@ -2444,9 +2482,13 @@ AdminAPI._saveAnnouncement = function(id) {
 function showFAQForm(faq) {
   var isEdit = !!faq;
   var overlay = document.createElement('div');
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99998;display:flex;align-items:center;justify-content:center;';
+  overlay.className = 'modal-overlay';
+    overlay.style.zIndex = '99998';
   var box = document.createElement('div');
-  box.style.cssText = 'background:var(--bg3);border:1px solid var(--bd);border-radius:12px;padding:24px;max-width:500px;width:90%;color:var(--w);max-height:90vh;overflow-y:auto;';
+  box.className = 'modal-box';
+  box.style.maxWidth = '500px';
+  box.style.maxHeight = '90vh';
+  box.style.overflowY = 'auto';
   box.innerHTML = '<div style="font-size:16px;font-weight:600;margin-bottom:16px;">'+(isEdit?'编辑':'新增')+'FAQ</div>'+
     '<div class="form-group"><label>问题</label><input type="text" id="faq-q" value="'+(faq?faq.question:'')+'" style="width:100%"></div>'+
     '<div class="form-group"><label>答案</label><textarea id="faq-a" rows="4" style="width:100%">'+(faq?faq.answer:'')+'</textarea></div>'+
@@ -2484,9 +2526,11 @@ AdminAPI._saveFAQ = function(id) {
 
 function showPopupForm() {
   var overlay = document.createElement('div');
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99998;display:flex;align-items:center;justify-content:center;';
+  overlay.className = 'modal-overlay';
+    overlay.style.zIndex = '99998';
   var box = document.createElement('div');
-  box.style.cssText = 'background:var(--bg3);border:1px solid var(--bd);border-radius:12px;padding:24px;max-width:500px;width:90%;color:var(--w);';
+  box.className = 'modal-box';
+  box.style.maxWidth = '500px';
   box.innerHTML = '<div style="font-size:16px;font-weight:600;margin-bottom:16px;">新增弹窗广告</div>'+
     '<div class="form-group"><label>标题</label><input type="text" id="popup-title" style="width:100%"></div>'+
     '<div class="form-group"><label>内容</label><textarea id="popup-content" rows="3" style="width:100%"></textarea></div>'+
@@ -2518,9 +2562,11 @@ AdminAPI._savePopup = function() {
 
 function showChangelogForm() {
   var overlay = document.createElement('div');
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99998;display:flex;align-items:center;justify-content:center;';
+  overlay.className = 'modal-overlay';
+    overlay.style.zIndex = '99998';
   var box = document.createElement('div');
-  box.style.cssText = 'background:var(--bg3);border:1px solid var(--bd);border-radius:12px;padding:24px;max-width:500px;width:90%;color:var(--w);';
+  box.className = 'modal-box';
+  box.style.maxWidth = '500px';
   box.innerHTML = '<div style="font-size:16px;font-weight:600;margin-bottom:16px;">新增版本日志</div>'+
     '<div class="form-group"><label>版本号</label><input type="text" id="cl-version" placeholder="V6.1" style="width:100%"></div>'+
     '<div class="form-group"><label>日期</label><input type="date" id="cl-date" style="width:100%"></div>'+
@@ -2549,9 +2595,11 @@ AdminAPI._saveChangelog = function() {
 function showAdminForm(admin) {
   var isEdit = !!admin;
   var overlay = document.createElement('div');
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99998;display:flex;align-items:center;justify-content:center;';
+  overlay.className = 'modal-overlay';
+    overlay.style.zIndex = '99998';
   var box = document.createElement('div');
-  box.style.cssText = 'background:var(--bg3);border:1px solid var(--bd);border-radius:12px;padding:24px;max-width:500px;width:90%;color:var(--w);';
+  box.className = 'modal-box';
+  box.style.maxWidth = '500px';
   box.innerHTML = '<div style="font-size:16px;font-weight:600;margin-bottom:16px;">'+(isEdit?'编辑':'添加')+'管理员</div>'+
     '<div class="form-group"><label>用户名</label><input type="text" id="adm-username" value="'+(admin?admin.username:'')+'" '+(isEdit?'readonly':'')+' style="width:100%"></div>'+
     (isEdit?'':'<div class="form-group"><label>密码</label><input type="password" id="adm-password" style="width:100%"></div>')+
@@ -2598,9 +2646,11 @@ function showRoleForm(roleId) {
   var allPerms = ['users','content','tools','finance','view','permissions','settings'];
   var permNames = {users:'用户管理',content:'内容管理',tools:'工具管理',finance:'财务管理',view:'查看权限',permissions:'权限管理',settings:'系统设置'};
   var overlay = document.createElement('div');
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99998;display:flex;align-items:center;justify-content:center;';
+  overlay.className = 'modal-overlay';
+    overlay.style.zIndex = '99998';
   var box = document.createElement('div');
-  box.style.cssText = 'background:var(--bg3);border:1px solid var(--bd);border-radius:12px;padding:24px;max-width:500px;width:90%;color:var(--w);';
+  box.className = 'modal-box';
+  box.style.maxWidth = '500px';
   var permHtml = '<div style="font-size:16px;font-weight:600;margin-bottom:16px;">编辑角色 - '+role.name+'</div>';
   permHtml += '<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px;">';
   allPerms.forEach(function(p) {
@@ -2657,6 +2707,72 @@ function showMainApp() {
   navigate('dashboard');
 }
 
+// ========== Matrix Rain Effect ==========
+function initMatrixRain() {
+  var canvas = document.getElementById('matrix-canvas');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var w, h, cols, drops;
+  var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&ロサンティ纪元';
+
+  function resize() {
+    w = canvas.width = canvas.parentElement.offsetWidth;
+    h = canvas.height = canvas.parentElement.offsetHeight;
+    cols = Math.floor(w / 16);
+    drops = [];
+    for (var i = 0; i < cols; i++) {
+      drops[i] = Math.random() * -100;
+    }
+  }
+
+  function draw() {
+    ctx.fillStyle = 'rgba(6,10,18,0.06)';
+    ctx.fillRect(0, 0, w, h);
+    ctx.font = '14px monospace';
+
+    for (var i = 0; i < cols; i++) {
+      var char = chars[Math.floor(Math.random() * chars.length)];
+      var x = i * 16;
+      var y = drops[i] * 16;
+
+      // Gradient color - cyan to purple
+      var ratio = i / cols;
+      if (ratio < 0.5) {
+        ctx.fillStyle = 'rgba(0,245,255,' + (0.3 + Math.random() * 0.4) + ')';
+      } else {
+        ctx.fillStyle = 'rgba(139,92,246,' + (0.3 + Math.random() * 0.4) + ')';
+      }
+      ctx.fillText(char, x, y);
+
+      if (y > h && Math.random() > 0.975) {
+        drops[i] = 0;
+      }
+      drops[i] += 0.5 + Math.random() * 0.5;
+    }
+  }
+
+  resize();
+  window.addEventListener('resize', resize);
+  setInterval(draw, 50);
+}
+
+// ========== Mobile Sidebar ==========
+function openMobileSidebar() {
+  var sb = document.getElementById('sidebar');
+  var bd = document.getElementById('sidebar-backdrop');
+  if (sb) sb.classList.add('mobile-open');
+  if (bd) bd.classList.add('visible');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeMobileSidebar() {
+  var sb = document.getElementById('sidebar');
+  var bd = document.getElementById('sidebar-backdrop');
+  if (sb) sb.classList.remove('mobile-open');
+  if (bd) bd.classList.remove('visible');
+  document.body.style.overflow = '';
+}
+
 // ========== 初始化 ==========
 function init() {
   initData();
@@ -2664,6 +2780,9 @@ function init() {
   // 应用主题
   var settings = Store.get('settings') || {};
   applyTheme(settings.theme || 'dark');
+
+  // Matrix rain on login page
+  initMatrixRain();
 
   // 检查会话
   var session = Store.getSession();
@@ -2718,22 +2837,34 @@ function init() {
     if (hash && routes[hash]) navigate(hash);
   };
 
-  // 移动端侧边栏
+  // 移动端侧边栏 - 打开
   var menuBtn = $('#mobile-menu');
   if (menuBtn) {
     menuBtn.onclick = function() {
-      $('#sidebar').classList.toggle('mobile-open');
+      var sb = $('#sidebar');
+      if (sb.classList.contains('mobile-open')) {
+        closeMobileSidebar();
+      } else {
+        openMobileSidebar();
+      }
     };
   }
 
   // 侧边栏点击关闭移动端
   var sbItems = $$('.sb-item');
   sbItems.forEach(function(item) {
-    item.onclick = function() {
-      if (window.innerWidth < 768) {
-        $('#sidebar').classList.remove('mobile-open');
+    item.addEventListener('click', function() {
+      if (window.innerWidth <= 768) {
+        closeMobileSidebar();
       }
-    };
+    });
+  });
+
+  // 窗口大小变化时重置侧边栏状态
+  window.addEventListener('resize', function() {
+    if (window.innerWidth > 768) {
+      closeMobileSidebar();
+    }
   });
 }
 
