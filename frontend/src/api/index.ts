@@ -5,36 +5,29 @@ import type {
   PaymentTransaction, RechargePackage, LoginResult, TokenInfo,
   PageResult, AiCallRecord, ToolCategory,
   ChatMessage, ChatResult, ImageOptions, ImageResult,
-  ProviderStatus, ProviderModelGroup
+  ProviderStatus, ProviderModelGroup,
+  Announcement, Coupon, Campaign, Ticket, FAQItem,
+  AutomationRule, ModerationItem, ReportData
 } from '@/types'
 
 const useMock = import.meta.env.VITE_MOCK === 'true'
 
 // ===== 认证API =====
 export const authApi = {
-  /** POST /auth/login - 用户名密码登录 */
   login(username: string, password: string): Promise<ApiResponse<LoginResult>> {
     if (useMock) return mockApi.login() as any
     return service.post('/auth/login', { username, password }).then(r => r.data)
   },
-
-  /** POST /auth/register - 用户注册 */
   register(data: { username: string; password: string; nickname: string; email?: string; phone?: string }): Promise<ApiResponse<LoginResult>> {
     if (useMock) return mockApi.register() as any
     return service.post('/auth/register', data).then(r => r.data)
   },
-
-  /** POST /auth/refresh - 刷新Token */
   refreshToken(refreshToken: string): Promise<ApiResponse<TokenInfo>> {
     return service.post('/auth/refresh', { refreshToken }).then(r => r.data)
   },
-
-  /** POST /auth/logout - 退出登录 */
   logout(): Promise<ApiResponse<{ message: string }>> {
     return service.post('/auth/logout').then(r => r.data)
   },
-
-  /** POST /auth/change-password - 修改密码 */
   changePassword(oldPassword: string, newPassword: string): Promise<ApiResponse<{ message: string }>> {
     return service.post('/auth/change-password', { oldPassword, newPassword }).then(r => r.data)
   }
@@ -42,19 +35,14 @@ export const authApi = {
 
 // ===== 用户API =====
 export const userApi = {
-  /** GET /users/me - 获取当前用户信息 */
   getProfile(): Promise<ApiResponse<User & { roles: any[] }>> {
     if (useMock) return mockApi.getProfile() as any
     return service.get('/users/me').then(r => r.data)
   },
-
-  /** PUT /users/me - 更新个人信息 */
   updateProfile(data: { nickname?: string; avatar?: string; gender?: number; bio?: string; birthday?: string }): Promise<ApiResponse<User>> {
     if (useMock) return Promise.resolve({ code: 0, message: 'ok', data: { ...data } as User })
     return service.put('/users/me', data).then(r => r.data)
   },
-
-  /** GET /users/me/roles - 获取当前用户角色 */
   getMyRoles(): Promise<ApiResponse<any[]>> {
     return service.get('/users/me/roles').then(r => r.data)
   }
@@ -62,68 +50,42 @@ export const userApi = {
 
 // ===== AI工具API =====
 export const toolApi = {
-  /** GET /ai/categories - 获取工具分类 */
   getCategories(): Promise<ApiResponse<ToolCategory[]>> {
     if (useMock) return mockApi.getCategories() as any
     return service.get('/ai/categories').then(r => r.data)
   },
-
-  /** GET /ai/tools - 获取工具列表 */
   getTools(params?: { categoryId?: number; toolType?: string; page?: number; pageSize?: number }): Promise<ApiResponse<PageResult<Tool>>> {
     if (useMock) return mockApi.getTools(params) as any
     return service.get('/ai/tools', { params }).then(r => r.data)
   },
-
-  /** GET /ai/tools/:id - 获取工具详情 */
   getToolDetail(id: number | string): Promise<ApiResponse<Tool>> {
     if (useMock) return mockApi.getToolDetail(id) as any
     return service.get(`/ai/tools/${id}`).then(r => r.data)
   },
-
-  /** POST /ai/tools/:id/call - 调用AI工具 */
   callTool(id: number | string, input: { text?: string; params?: Record<string, any>; files?: string[] }): Promise<ApiResponse<AiCallRecord>> {
     if (useMock) return mockApi.callTool(id, input) as any
     return service.post(`/ai/tools/${id}/call`, input).then(r => r.data)
   },
-
-  /** GET /ai/history - 获取调用历史 */
   getHistory(params?: { page?: number; pageSize?: number }): Promise<ApiResponse<PageResult<AiCallRecord>>> {
     return service.get('/ai/history', { params }).then(r => r.data)
   },
-
-  /** GET /ai/quota/:toolId - 查询每日配额 */
   getQuota(toolId: number): Promise<ApiResponse<{ used: number; limit: number; date: string }>> {
     return service.get(`/ai/quota/${toolId}`).then(r => r.data)
   },
-
-  /** POST /ai/tools/:toolId/chat - AI文本对话 */
   chat(toolId: number, messages: ChatMessage[], options?: {
     model?: string; temperature?: number; maxTokens?: number; stream?: boolean; systemPrompt?: string
   }): Promise<ApiResponse<ChatResult>> {
     return service.post(`/ai/tools/${toolId}/chat`, {
-      messages,
-      model: options?.model,
-      temperature: options?.temperature,
-      maxTokens: options?.maxTokens,
-      stream: options?.stream,
-      systemPrompt: options?.systemPrompt,
+      messages, model: options?.model, temperature: options?.temperature,
+      maxTokens: options?.maxTokens, stream: options?.stream, systemPrompt: options?.systemPrompt,
     }).then(r => r.data)
   },
-
-  /** POST /ai/tools/:toolId/generate - AI图像生成 */
   generateImage(toolId: number, prompt: string, options?: ImageOptions): Promise<ApiResponse<ImageResult>> {
-    return service.post(`/ai/tools/${toolId}/generate`, {
-      prompt,
-      ...options,
-    }).then(r => r.data)
+    return service.post(`/ai/tools/${toolId}/generate`, { prompt, ...options }).then(r => r.data)
   },
-
-  /** GET /ai/models - 获取所有可用模型 */
   getModels(category?: string): Promise<ApiResponse<ProviderModelGroup[]>> {
     return service.get('/ai/models', { params: { category } }).then(r => r.data)
   },
-
-  /** GET /ai/providers - 获取Provider状态 */
   getProviders(): Promise<ApiResponse<ProviderStatus[]>> {
     return service.get('/ai/providers').then(r => r.data)
   },
@@ -131,31 +93,22 @@ export const toolApi = {
 
 // ===== 支付API =====
 export const paymentApi = {
-  /** GET /payment/coin/balance - 查询圣点余额 */
   getBalance(): Promise<ApiResponse<CoinAccount>> {
     if (useMock) return mockApi.getBalance() as any
     return service.get('/payment/coin/balance').then(r => r.data)
   },
-
-  /** GET /payment/coin/packages - 获取充值套餐列表 */
   getPackages(): Promise<ApiResponse<RechargePackage[]>> {
     if (useMock) return mockApi.getPackages() as any
     return service.get('/payment/coin/packages').then(r => r.data)
   },
-
-  /** POST /payment/coin/recharge - 创建充值订单 */
   recharge(packageId: number): Promise<ApiResponse<{ paymentTransaction: PaymentTransaction; coinAmount: number }>> {
     if (useMock) return mockApi.recharge(packageId) as any
     return service.post('/payment/coin/recharge', { packageId }).then(r => r.data)
   },
-
-  /** GET /payment/coin/transactions - 查询圣点交易记录 */
   getTransactions(params?: { type?: string; page?: number; pageSize?: number }): Promise<ApiResponse<PageResult<CoinTransaction>>> {
     if (useMock) return mockApi.getTransactions(params) as any
     return service.get('/payment/coin/transactions', { params }).then(r => r.data)
   },
-
-  /** GET /payment/orders - 查询支付订单 */
   getOrders(params?: { page?: number; pageSize?: number }): Promise<ApiResponse<PageResult<PaymentTransaction>>> {
     if (useMock) return mockApi.getPaymentOrders() as any
     return service.get('/payment/orders', { params }).then(r => r.data)
@@ -164,50 +117,200 @@ export const paymentApi = {
 
 // ===== 管理API =====
 export const adminApi = {
-  /** GET /users - 获取用户列表(管理员) */
+  /** 用户管理 */
   getUsers(params?: { page?: number; pageSize?: number; status?: string }): Promise<ApiResponse<PageResult<User>>> {
-    if (useMock) return mockApi.getUsers() as any
+    if (useMock) return mockApi.getUsers(params) as any
     return service.get('/users', { params }).then(r => r.data)
   },
-
-  /** GET /users/:id - 获取指定用户(管理员) */
   getUserById(id: number): Promise<ApiResponse<User>> {
     return service.get(`/users/${id}`).then(r => r.data)
   },
-
-  /** PUT /users/:id/status - 更新用户状态 */
   updateUserStatus(id: number, status: string): Promise<ApiResponse<{ message: string }>> {
+    if (useMock) return mockApi.updateUserStatus(id, status) as any
     return service.put(`/users/${id}/status`, { status }).then(r => r.data)
   },
-
-  /** GET /ai/tools - 获取工具列表(管理复用) */
-  getAdminTools(params?: { page?: number; pageSize?: number }): Promise<ApiResponse<PageResult<Tool>>> {
-    if (useMock) return mockApi.getTools() as any
-    return service.get('/ai/tools', { params }).then(r => r.data)
+  saveUser(data: { id?: number | null; username?: string; nickname: string; phone?: string; email?: string; roles?: string[]; status?: string; password?: string }): Promise<ApiResponse<any>> {
+    if (useMock) return mockApi.saveUser(data) as any
+    if (data.id) return service.put(`/users/${data.id}`, data).then(r => r.data)
+    return service.post('/users', data).then(r => r.data)
   },
 
-  /** GET /payment/orders - 获取支付订单(管理复用) */
+  /** 工具管理 */
+  getAdminTools(params?: { page?: number; pageSize?: number }): Promise<ApiResponse<PageResult<Tool>>> {
+    if (useMock) return mockApi.getAdminTools(params) as any
+    return service.get('/ai/tools', { params }).then(r => r.data)
+  },
+  getCategories(): Promise<ApiResponse<ToolCategory[]>> {
+    if (useMock) return mockApi.getCategories() as any
+    return service.get('/ai/categories').then(r => r.data)
+  },
+  saveTool(data: any): Promise<ApiResponse<any>> {
+    if (useMock) return mockApi.saveTool(data) as any
+    if (data.id) return service.put(`/ai/tools/${data.id}`, data).then(r => r.data)
+    return service.post('/ai/tools', data).then(r => r.data)
+  },
+  updateToolStatus(id: number, status: string): Promise<ApiResponse<any>> {
+    if (useMock) return mockApi.updateToolStatus(id, status) as any
+    return service.put(`/ai/tools/${id}/status`, { status }).then(r => r.data)
+  },
+
+  /** 订单管理 */
   getOrders(params?: { page?: number; pageSize?: number }): Promise<ApiResponse<PageResult<PaymentTransaction>>> {
     if (useMock) return mockApi.getPaymentOrders() as any
     return service.get('/payment/orders', { params }).then(r => r.data)
   },
+  confirmOrder(id: number): Promise<ApiResponse<any>> {
+    if (useMock) return mockApi.confirmOrder(id) as any
+    return service.put(`/payment/orders/${id}/confirm`).then(r => r.data)
+  },
 
-  /** GET /system/logs - 获取操作日志 */
-  getLogs(params?: { module?: string; page?: number; pageSize?: number }): Promise<ApiResponse<PageResult<any>>> {
+  /** 公告管理 */
+  getAnnouncements(): Promise<ApiResponse<Announcement[]>> {
+    if (useMock) return mockApi.getAnnouncements() as any
+    return service.get('/admin/announcements').then(r => r.data)
+  },
+  createAnnouncement(data: any): Promise<ApiResponse<Announcement>> {
+    if (useMock) return mockApi.createAnnouncement(data) as any
+    return service.post('/admin/announcements', data).then(r => r.data)
+  },
+  updateAnnouncement(id: number, data: any): Promise<ApiResponse<Announcement>> {
+    if (useMock) return mockApi.updateAnnouncement(id, data) as any
+    return service.put(`/admin/announcements/${id}`, data).then(r => r.data)
+  },
+  deleteAnnouncement(id: number): Promise<ApiResponse<any>> {
+    if (useMock) return mockApi.deleteAnnouncement(id) as any
+    return service.delete(`/admin/announcements/${id}`).then(r => r.data)
+  },
+
+  /** 优惠券管理 */
+  getCoupons(): Promise<ApiResponse<Coupon[]>> {
+    if (useMock) return mockApi.getCoupons() as any
+    return service.get('/admin/coupons').then(r => r.data)
+  },
+  createCoupon(data: any): Promise<ApiResponse<Coupon>> {
+    if (useMock) return mockApi.createCoupon(data) as any
+    return service.post('/admin/coupons', data).then(r => r.data)
+  },
+  updateCoupon(id: number, data: any): Promise<ApiResponse<Coupon>> {
+    if (useMock) return mockApi.updateCoupon(id, data) as any
+    return service.put(`/admin/coupons/${id}`, data).then(r => r.data)
+  },
+  deleteCoupon(id: number): Promise<ApiResponse<any>> {
+    if (useMock) return mockApi.deleteCoupon(id) as any
+    return service.delete(`/admin/coupons/${id}`).then(r => r.data)
+  },
+
+  /** 活动管理 */
+  getCampaigns(): Promise<ApiResponse<Campaign[]>> {
+    if (useMock) return mockApi.getCampaigns() as any
+    return service.get('/admin/campaigns').then(r => r.data)
+  },
+  createCampaign(data: any): Promise<ApiResponse<Campaign>> {
+    if (useMock) return mockApi.createCampaign(data) as any
+    return service.post('/admin/campaigns', data).then(r => r.data)
+  },
+  deleteCampaign(id: number): Promise<ApiResponse<any>> {
+    if (useMock) return mockApi.deleteCampaign(id) as any
+    return service.delete(`/admin/campaigns/${id}`).then(r => r.data)
+  },
+
+  /** 工单管理 */
+  getTickets(): Promise<ApiResponse<Ticket[]>> {
+    if (useMock) return mockApi.getTickets() as any
+    return service.get('/admin/tickets').then(r => r.data)
+  },
+  replyTicket(id: number, content: string): Promise<ApiResponse<any>> {
+    if (useMock) return mockApi.replyTicket(id, content) as any
+    return service.post(`/admin/tickets/${id}/reply`, { content }).then(r => r.data)
+  },
+  resolveTicket(id: number): Promise<ApiResponse<any>> {
+    if (useMock) return mockApi.resolveTicket(id) as any
+    return service.put(`/admin/tickets/${id}/resolve`).then(r => r.data)
+  },
+  assignTicket(id: number, assigneeId: number, assigneeName: string): Promise<ApiResponse<any>> {
+    if (useMock) return mockApi.assignTicket(id, assigneeId, assigneeName) as any
+    return service.put(`/admin/tickets/${id}/assign`, { assigneeId, assigneeName }).then(r => r.data)
+  },
+
+  /** FAQ管理 */
+  getFAQs(): Promise<ApiResponse<FAQItem[]>> {
+    if (useMock) return mockApi.getFAQs() as any
+    return service.get('/admin/faqs').then(r => r.data)
+  },
+  createFAQ(data: any): Promise<ApiResponse<FAQItem>> {
+    if (useMock) return mockApi.createFAQ(data) as any
+    return service.post('/admin/faqs', data).then(r => r.data)
+  },
+  updateFAQ(id: number, data: any): Promise<ApiResponse<FAQItem>> {
+    if (useMock) return mockApi.updateFAQ(id, data) as any
+    return service.put(`/admin/faqs/${id}`, data).then(r => r.data)
+  },
+  deleteFAQ(id: number): Promise<ApiResponse<any>> {
+    if (useMock) return mockApi.deleteFAQ(id) as any
+    return service.delete(`/admin/faqs/${id}`).then(r => r.data)
+  },
+
+  /** 自动化规则 */
+  getAutomationRules(): Promise<ApiResponse<AutomationRule[]>> {
+    if (useMock) return mockApi.getAutomationRules() as any
+    return service.get('/admin/automation-rules').then(r => r.data)
+  },
+  createRule(data: any): Promise<ApiResponse<AutomationRule>> {
+    if (useMock) return mockApi.createRule(data) as any
+    return service.post('/admin/automation-rules', data).then(r => r.data)
+  },
+  toggleRule(id: number): Promise<ApiResponse<AutomationRule>> {
+    if (useMock) return mockApi.toggleRule(id) as any
+    return service.put(`/admin/automation-rules/${id}/toggle`).then(r => r.data)
+  },
+  deleteRule(id: number): Promise<ApiResponse<any>> {
+    if (useMock) return mockApi.deleteRule(id) as any
+    return service.delete(`/admin/automation-rules/${id}`).then(r => r.data)
+  },
+
+  /** 内容审核 */
+  getContentModerations(): Promise<ApiResponse<ModerationItem[]>> {
+    if (useMock) return mockApi.getContentModerations() as any
+    return service.get('/admin/content-moderations').then(r => r.data)
+  },
+  approveContent(id: number): Promise<ApiResponse<any>> {
+    if (useMock) return mockApi.approveContent(id) as any
+    return service.put(`/admin/content-moderations/${id}/approve`).then(r => r.data)
+  },
+  rejectContent(id: number, reason: string): Promise<ApiResponse<any>> {
+    if (useMock) return mockApi.rejectContent(id, reason) as any
+    return service.put(`/admin/content-moderations/${id}/reject`, { reason }).then(r => r.data)
+  },
+
+  /** 系统日志 */
+  getSystemLogs(params?: { module?: string; page?: number; pageSize?: number }): Promise<ApiResponse<PageResult<any>>> {
+    if (useMock) return mockApi.getSystemLogs() as any
     return service.get('/system/logs', { params }).then(r => r.data)
   },
 
-  /** GET /roles - 获取角色列表 */
+  /** 系统配置 */
+  getSystemSettings(): Promise<ApiResponse<any>> {
+    if (useMock) return mockApi.getSystemSettings() as any
+    return service.get('/admin/settings').then(r => r.data)
+  },
+  saveSystemSettings(data: any): Promise<ApiResponse<any>> {
+    if (useMock) return mockApi.saveSystemSettings(data) as any
+    return service.put('/admin/settings', data).then(r => r.data)
+  },
+
+  /** 数据报表 */
+  getDataReports(range?: string): Promise<ApiResponse<ReportData[]>> {
+    if (useMock) return mockApi.getDataReports(range) as any
+    return service.get('/admin/reports', { params: { range } }).then(r => r.data)
+  },
+
+  /** 角色和通知 */
   getRoles(): Promise<ApiResponse<any[]>> {
     return service.get('/roles').then(r => r.data)
   },
-
-  /** GET /notifications - 获取通知列表 */
   getNotifications(params?: { page?: number; pageSize?: number }): Promise<ApiResponse<PageResult<any>>> {
     return service.get('/notifications', { params }).then(r => r.data)
   },
-
-  /** GET /notifications/unread-count - 获取未读通知数 */
   getUnreadCount(): Promise<ApiResponse<{ count: number }>> {
     return service.get('/notifications/unread-count').then(r => r.data)
   }
