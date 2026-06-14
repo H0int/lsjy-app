@@ -111,7 +111,7 @@
         </template>
 
         <!-- ===== 图像生成模式 ===== -->
-        <template v-else>
+        <template v-else-if="isImageTool">
           <div class="space-y-4">
             <!-- Prompt输入 -->
             <div>
