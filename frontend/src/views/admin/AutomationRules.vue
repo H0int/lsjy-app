@@ -120,22 +120,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+
+import { ref, computed, onMounted } from 'vue'
+import { adminApi } from '@/api'
 import type { AutomationRule } from '@/types'
+import { ElMessage } from 'element-plus'
 
 const filterStatus = ref('')
 const showDialog = ref(false)
 const showLog = ref(false)
 const logRule = ref<AutomationRule | null>(null)
 const form = ref({ name: '', description: '', triggerEvent: 'user_register', actionType: 'send_coins' })
-
-const list = ref<AutomationRule[]>([
-  { id: 1, name: '新用户欢迎奖励', description: '新用户注册后自动发放20圣点作为欢迎奖励', triggerEvent: 'user_register', triggerCondition: {}, actions: [{ type: 'send_coins', config: { amount: 20, remark: '新用户注册奖励' } }, { type: 'send_notification', config: { template: 'welcome_bonus' } }], status: 'active', executionCount: 3420, lastExecutedAt: '2025-07-18 14:30', createdAt: '2025-06-01 10:00' },
-  { id: 2, name: '消费满100自动升级VIP1', description: '用户累计消费满100圣点自动升级为VIP1', triggerEvent: 'consume_threshold', triggerCondition: { threshold: 100 }, actions: [{ type: 'change_role', config: { vipLevel: 1 } }, { type: 'send_notification', config: { template: 'vip_upgrade' } }], status: 'active', executionCount: 856, lastExecutedAt: '2025-07-18 12:15', createdAt: '2025-06-05 14:00' },
-  { id: 3, name: '首次充值双倍返还', description: '用户首次充值额外赠送等额圣点', triggerEvent: 'first_recharge', triggerCondition: {}, actions: [{ type: 'send_coins', config: { amount: 'equal', remark: '首充双倍奖励' } }, { type: 'send_coupon', config: { couponId: 2, count: 1 } }], status: 'active', executionCount: 1230, lastExecutedAt: '2025-07-18 10:00', createdAt: '2025-06-10 09:00' },
-  { id: 4, name: '邀请3人奖励', description: '用户成功邀请3位好友注册各得50圣点', triggerEvent: 'invite_success', triggerCondition: { count: 3 }, actions: [{ type: 'send_coins', config: { amount: 50, remark: '邀请奖励', target: 'both' } }], status: 'active', executionCount: 345, lastExecutedAt: '2025-07-17 18:00', createdAt: '2025-06-15 16:00' },
-  { id: 5, name: '完成课程奖励', description: '用户完成任意课程全部章节后奖励30圣点', triggerEvent: 'course_complete', triggerCondition: { progress: 100 }, actions: [{ type: 'send_coins', config: { amount: 30, remark: '课程完成奖励' } }, { type: 'send_coupon', config: { couponId: 1, count: 1 } }], status: 'disabled', executionCount: 89, lastExecutedAt: '2025-07-10 09:30', createdAt: '2025-06-20 11:00' },
-])
+const list = ref<AutomationRule[]>([])
 
 const lastExecuted = computed(() => {
   const dates = list.value.filter(r => r.lastExecutedAt).map(r => r.lastExecutedAt!).sort().reverse()
@@ -145,20 +141,47 @@ const lastExecuted = computed(() => {
 const executionLogs = ref([
   { id: 1, message: '用户 张三(id:1001) 注册触发，发放20圣点', success: true, time: '2025-07-18 14:30:22' },
   { id: 2, message: '用户 李四(id:1002) 注册触发，发放20圣点', success: true, time: '2025-07-18 14:28:10' },
-  { id: 3, message: '用户 王五(id:1003) 注册触发，发送通知失败(用户通知关闭)', success: false, time: '2025-07-18 13:45:33' },
-  { id: 4, message: '用户 赵六(id:1004) 注册触发，发放20圣点', success: true, time: '2025-07-18 12:20:15' },
-  { id: 5, message: '用户 孙七(id:1005) 注册触发，发放20圣点', success: true, time: '2025-07-18 11:10:08' },
+  { id: 3, message: '用户 王五(id:1003) 注册触发，发送通知失败', success: false, time: '2025-07-18 13:45:33' },
 ])
 
 function triggerLabel(t: string) { return { user_register: '用户注册', first_recharge: '首次充值', consume_threshold: '消费达标', tool_call_count: '工具调用达标', course_complete: '完成课程', invite_success: '邀请成功' }[t] || t }
 function actionLabel(a: string) { return { send_coins: '发放圣点', send_notification: '发送通知', send_coupon: '发放优惠券', change_role: '变更角色' }[a] || a }
-function toggleStatus(rule: AutomationRule) { rule.status = rule.status === 'active' ? 'disabled' : 'active' }
-function handleViewLog(rule: AutomationRule) { logRule.value = rule; showLog.value = true }
-function handleDelete(rule: AutomationRule) { const i = list.value.findIndex(x => x.id === rule.id); if (i >= 0) list.value.splice(i, 1) }
-function handleCreate() {
-  list.value.unshift({ id: Date.now(), name: form.value.name, description: form.value.description, triggerEvent: form.value.triggerEvent, triggerCondition: {}, actions: [{ type: form.value.actionType as any, config: {} }], status: 'active', executionCount: 0, lastExecutedAt: null, createdAt: new Date().toISOString().slice(0, 16).replace('T', ' ') })
-  showDialog.value = false
+
+async function fetchData() {
+  const res = await adminApi.getAutomationRules()
+  list.value = res.data
 }
+
+async function toggleStatus(rule: AutomationRule) {
+  await adminApi.toggleRule(rule.id)
+  ElMessage.success(rule.status === 'active' ? '已禁用' : '已启用')
+  fetchData()
+}
+
+function handleViewLog(rule: AutomationRule) { logRule.value = rule; showLog.value = true }
+
+async function handleDelete(rule: AutomationRule) {
+  if (!confirm(`确认删除规则「${rule.name}」？`)) return
+  await adminApi.deleteRule(rule.id)
+  ElMessage.success('已删除')
+  fetchData()
+}
+
+async function handleCreate() {
+  if (!form.value.name.trim()) { ElMessage.warning('请输入规则名称'); return }
+  await adminApi.createRule({
+    name: form.value.name,
+    description: form.value.description,
+    triggerEvent: form.value.triggerEvent,
+    actions: [{ type: form.value.actionType, config: {} }]
+  })
+  ElMessage.success('规则已创建')
+  showDialog.value = false
+  fetchData()
+}
+
+onMounted(() => fetchData())
+
 </script>
 
 <style scoped>
