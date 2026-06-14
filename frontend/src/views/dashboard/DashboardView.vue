@@ -116,6 +116,7 @@ const statCards = ref([
   { icon: '🎯', label: '会员等级', value: '普通' },
 ])
 
+// TODO: 接入后端API获取最近使用记录
 const recentUsage = ref([
   { id: '1', icon: '🎬', name: 'AI视频生成', time: '30分钟前', coinCost: 80, isFree: false },
   { id: '2', icon: '✍️', name: 'AI文案创作', time: '2小时前', coinCost: 10, isFree: false },
@@ -123,6 +124,7 @@ const recentUsage = ref([
   { id: '4', icon: '📥', name: '短视频解析', time: '昨天', coinCost: 0, isFree: true },
 ])
 
+// TODO: 接入后端API获取平台公告
 const notices = ref([
   { id: '1', tag: '新功能', title: 'Seedance 2.0 视频生成已上线，效果大幅提升', date: '2026-06-10' },
   { id: '2', tag: '活动', title: '新用户注册送100圣点，限时活动', date: '2026-06-08' },
@@ -134,11 +136,12 @@ onMounted(async () => {
   try {
     const res = await toolApi.getTools({ pageSize: 6 })
     hotTools.value = res.data.items.sort((a, b) => b.usageCount - a.usageCount).slice(0, 6)
-  } catch { /* ignore */ }
+  } catch (e) { console.error('加载热门工具失败', e) }
 
   statCards.value[0].value = authStore.coinBalance.toLocaleString()
   if (authStore.user) {
     statCards.value[3].value = authStore.user.vipLevel > 0 ? `VIP${authStore.user.vipLevel}` : '普通'
   }
+  // TODO: 接入后端API获取「已用工具」和「生成作品」统计数据
 })
 </script>

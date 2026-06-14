@@ -280,13 +280,13 @@ function initData() {
     var allUsers = [DEFAULT_ADMIN].concat(SAMPLE_USERS);
     Store.setUsers(allUsers);
   } else {
-    // 确保管理员存在且密码正确
+    // 确保管理员存在（不覆盖已修改的密码）
     var adminExists = false;
     for (var i = 0; i < users.length; i++) {
       if (users[i].username === 'KF02V9') {
-        users[i].password = 'LKZ2005430';
-        users[i].role = 'superadmin';
-        users[i].status = 'approved';
+        // 仅在角色/状态缺失时补充，不覆盖密码
+        if (!users[i].role) users[i].role = 'superadmin';
+        if (!users[i].status) users[i].status = 'approved';
         adminExists = true;
         break;
       }
@@ -390,6 +390,14 @@ function formatDate(t) {
 }
 function pad(n) { return n < 10 ? '0'+n : ''+n; }
 function uuid() { return 'id_'+Date.now()+'_'+Math.random().toString(36).substr(2,6); }
+
+// XSS防护：HTML转义
+function esc(str) {
+  if (!str) return '';
+  var div = document.createElement('div');
+  div.appendChild(document.createTextNode(String(str)));
+  return div.innerHTML;
+}
 
 // Toast通知
 function toast(msg, type) {
@@ -686,7 +694,7 @@ function renderUsers() {
 function renderUserRow(u, credit) {
   var statusMap = {pending:'<span class="badge badge-warn">待审批</span>',approved:'<span class="badge badge-ok">已通过</span>',banned:'<span class="badge badge-err">已封禁</span>',rejected:'<span class="badge badge-err">已拒绝</span>'};
   var isAdmin = u.role === 'superadmin';
-  var html = '<tr data-username="'+u.username+'" data-status="'+u.status+'">';
+  var html = '<tr data-username="'+u.username+'" data-phone="'+(u.phone||'')+'" data-email="'+(u.email||'')+'" data-status="'+u.status+'">';
   html += '<td>'+(isAdmin?'':'<input type="checkbox" class="user-checkbox" value="'+u.username+'">')+'</td>';
   html += '<td><strong>'+u.username+'</strong>'+(isAdmin?' <span class="badge badge-p">超级管理员</span>':'')+'</td>';
   html += '<td>'+(statusMap[u.status]||u.status)+'</td>';
@@ -1730,6 +1738,12 @@ function renderReportAI() {
 
 // ========== 公共API ==========
 window.AdminAPI = {
+  // 关闭模态框
+  closeModal: function() {
+    var m = document.querySelector('.modal-overlay');
+    if (m) m.remove();
+  },
+
   // 登录
   login: function(username, password) {
     var users = Store.getUsers() || [];
@@ -1942,14 +1956,16 @@ window.AdminAPI = {
   },
 
   filterUsers: function() {
-    var search = (document.getElementById('user-search') || {}).value || '';
+    var search = ((document.getElementById('user-search') || {}).value || '').toLowerCase();
     var filter = (document.getElementById('user-filter') || {}).value || '';
     var rows = document.querySelectorAll('#users-tbody tr');
     rows.forEach(function(tr) {
       var un = (tr.dataset.username || '').toLowerCase();
+      var ph = (tr.dataset.phone || '').toLowerCase();
+      var em = (tr.dataset.email || '').toLowerCase();
       var st = tr.dataset.status || '';
       var show = true;
-      if (search && un.indexOf(search.toLowerCase()) < 0) show = false;
+      if (search && un.indexOf(search) < 0 && ph.indexOf(search) < 0 && em.indexOf(search) < 0) show = false;
       if (filter && st !== filter) show = false;
       tr.style.display = show ? '' : 'none';
     });
@@ -2785,7 +2801,40 @@ window.AdminAPI = {
   },
 
   editPrompt: function(id) {
-    toast('编辑提示词模板 #'+id, 'info');
+    var prompts = Store.get('agent_prompts') || [];
+    var p = prompts.find(function(x){ return x.id === id; });
+    if (!p) return toast('未找到提示词 #'+id, 'error');
+    var overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.style.zIndex = '99998';
+    var box = document.createElement('div');
+    box.className = 'modal-box';
+    box.innerHTML = '<div class="modal-header"><i class="fa-solid fa-edit" style="color:var(--p2)"></i> 编辑提示词模板</div>' +
+      '<div class="modal-body">' +
+      '<div class="form-group"><label>模板名称</label><input type="text" id="ep-name" style="width:100%" value="'+esc(p.name||'')+'"></div>' +
+      '<div class="form-group"><label>提示词内容</label><textarea id="ep-content" rows="5" style="width:100%;resize:vertical;">'+esc(p.prompt||p.content||'')+'</textarea></div>' +
+      '</div>' +
+      '<div class="modal-footer">' +
+      '<button class="admin-btn-cancel" onclick="AdminAPI.closeModal()">取消</button>' +
+      '<button class="admin-btn" onclick="AdminAPI._saveEditPrompt('+id+')">保存修改</button>' +
+      '</div>';
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+  },
+
+  _saveEditPrompt: function(id) {
+    var prompts = Store.get('agent_prompts') || [];
+    var name = (document.getElementById('ep-name')||{}).value||'';
+    var content = (document.getElementById('ep-content')||{}).value||'';
+    if (!name || !content) return toast('请填写完整', 'error');
+    for (var i = 0; i < prompts.length; i++) {
+      if (prompts[i].id === id) { prompts[i].name = name; prompts[i].prompt = content; break; }
+    }
+    Store.set('agent_prompts', prompts);
+    addLog('agent', '编辑提示词模板 #'+id);
+    document.querySelector('.modal-overlay').remove();
+    toast('提示词已更新', 'success');
+    navigate('agent');
   },
 
   deletePrompt: function(id) {
@@ -2866,7 +2915,25 @@ window.AdminAPI = {
   },
 
   viewOrderDetail: function(orderId) {
-    toast('订单详情: '+orderId, 'info');
+    var orders = Store.get('orders') || [];
+    var o = orders.find(function(x){ return x.id === orderId || x.orderNo === orderId; });
+    if (!o) return toast('未找到订单', 'error');
+    var statusMap = {pending:'待支付',paid:'已支付',processing:'处理中',completed:'已完成',cancelled:'已取消',refunded:'已退款',rejected:'已拒绝'};
+    var html = '<div class="modal-overlay" onclick="if(event.target===this)AdminAPI.closeModal()"><div class="modal-card" style="max-width:480px">';
+    html += '<h3 style="color:var(--p);margin-bottom:16px"><i class="fas fa-file-invoice"></i> 订单详情</h3>';
+    html += '<div style="display:grid;grid-template-columns:100px 1fr;gap:8px 12px;font-size:14px">';
+    html += '<span style="color:var(--text-dim)">订单号</span><span style="color:var(--text)">'+esc(o.orderNo||o.id)+'</span>';
+    html += '<span style="color:var(--text-dim)">用户</span><span style="color:var(--text)">'+esc(o.user||'未知')+'</span>';
+    html += '<span style="color:var(--text-dim)">金额</span><span style="color:var(--ok);font-weight:bold">¥'+(o.amount||0).toFixed(2)+'</span>';
+    html += '<span style="color:var(--text-dim)">支付方式</span><span style="color:var(--text)">'+esc(o.method||o.payment||'-')+'</span>';
+    html += '<span style="color:var(--text-dim)">状态</span><span style="color:var(--p)">'+(statusMap[o.status]||o.status)+'</span>';
+    html += '<span style="color:var(--text-dim)">创建时间</span><span style="color:var(--text)">'+esc(o.createTime||o.createdAt||'-')+'</span>';
+    html += '<span style="color:var(--text-dim)">商品</span><span style="color:var(--text)">'+esc(o.product||o.item||'-')+'</span>';
+    html += '</div>';
+    html += '<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px">';
+    html += '<button class="btn btn-ghost" onclick="AdminAPI.closeModal()">关闭</button>';
+    html += '</div></div></div>';
+    document.getElementById('main-app').insertAdjacentHTML('beforeend', html);
   },
 
   exportOrders: function() {
@@ -2929,7 +2996,38 @@ window.AdminAPI = {
   },
 
   editCoupon: function(id) {
-    toast('编辑优惠券 #'+id, 'info');
+    var coupons = Store.get('coupons') || [];
+    var c = coupons.find(function(x){ return x.id === id; });
+    if (!c) return toast('未找到优惠券 #'+id, 'error');
+    var html = '<div class="modal-overlay" onclick="if(event.target===this)AdminAPI.closeModal()"><div class="modal-card" style="max-width:480px">';
+    html += '<h3 style="color:var(--p);margin-bottom:16px"><i class="fas fa-edit"></i> 编辑优惠券</h3>';
+    html += '<div style="display:flex;flex-direction:column;gap:12px">';
+    html += '<label style="color:var(--text)">名称<input id="ec-name" class="modal-input" value="'+esc(c.name||'')+'"></label>';
+    html += '<label style="color:var(--text)">折扣码<input id="ec-code" class="modal-input" value="'+esc(c.code||'')+'"></label>';
+    html += '<label style="color:var(--text)">折扣(%)<input id="ec-discount" type="number" class="modal-input" value="'+(c.discount||0)+'"></label>';
+    html += '<label style="color:var(--text)">有效期至<input id="ec-expiry" type="date" class="modal-input" value="'+esc(c.expiry||'')+'"></label>';
+    html += '</div>';
+    html += '<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px">';
+    html += '<button class="btn btn-ghost" onclick="AdminAPI.closeModal()">取消</button>';
+    html += '<button class="btn btn-primary" onclick="AdminAPI._saveEditCoupon('+id+')">保存</button>';
+    html += '</div></div></div>';
+    document.getElementById('main-app').insertAdjacentHTML('beforeend', html);
+  },
+
+  _saveEditCoupon: function(id) {
+    var coupons = Store.get('coupons') || [];
+    var name = (document.getElementById('ec-name')||{}).value||'';
+    var code = (document.getElementById('ec-code')||{}).value||'';
+    var discount = parseInt((document.getElementById('ec-discount')||{}).value)||0;
+    var expiry = (document.getElementById('ec-expiry')||{}).value||'';
+    if (!name || !code) return toast('请填写完整', 'error');
+    for (var i = 0; i < coupons.length; i++) {
+      if (coupons[i].id === id) { coupons[i].name = name; coupons[i].code = code; coupons[i].discount = discount; coupons[i].expiry = expiry; break; }
+    }
+    Store.set('coupons', coupons);
+    document.querySelector('.modal-overlay').remove();
+    toast('优惠券已更新', 'success');
+    navigate('coupons');
   },
 
   deleteCoupon: function(id) {
@@ -2980,7 +3078,34 @@ window.AdminAPI = {
   },
 
   viewTicket: function(id) {
-    toast('查看工单 #'+id+' 详情', 'info');
+    var tickets = Store.get('tickets') || [];
+    var t = tickets.find(function(x){ return x.id === id; });
+    if (!t) return toast('未找到工单 #'+id, 'error');
+    var statusMap = {open:'待处理',processing:'处理中',resolved:'已解决',closed:'已关闭'};
+    var priorityMap = {low:'低',medium:'中',high:'高',urgent:'紧急'};
+    var html = '<div class="modal-overlay" onclick="if(event.target===this)AdminAPI.closeModal()"><div class="modal-card" style="max-width:520px">';
+    html += '<h3 style="color:var(--p);margin-bottom:16px"><i class="fas fa-ticket"></i> 工单详情 #'+id+'</h3>';
+    html += '<div style="display:grid;grid-template-columns:80px 1fr;gap:8px 12px;font-size:14px;margin-bottom:16px">';
+    html += '<span style="color:var(--text-dim)">标题</span><span style="color:var(--text);font-weight:bold">'+esc(t.title||'-')+'</span>';
+    html += '<span style="color:var(--text-dim)">提交人</span><span style="color:var(--text)">'+esc(t.user||t.username||'-')+'</span>';
+    html += '<span style="color:var(--text-dim)">状态</span><span style="color:var(--p)">'+(statusMap[t.status]||t.status)+'</span>';
+    html += '<span style="color:var(--text-dim)">优先级</span><span style="color:var(--warn)">'+(priorityMap[t.priority]||t.priority)+'</span>';
+    html += '<span style="color:var(--text-dim)">时间</span><span style="color:var(--text)">'+esc(t.createTime||t.createdAt||'-')+'</span>';
+    html += '</div>';
+    html += '<div style="background:var(--bg2);border:1px solid var(--bd);border-radius:8px;padding:12px;margin-bottom:16px">';
+    html += '<div style="color:var(--text-dim);font-size:12px;margin-bottom:6px">问题描述</div>';
+    html += '<div style="color:var(--text);font-size:14px;white-space:pre-wrap">'+esc(t.content||t.description||'无描述')+'</div>';
+    html += '</div>';
+    if (t.reply || t.adminReply) {
+      html += '<div style="background:rgba(0,240,255,0.05);border:1px solid var(--bd);border-radius:8px;padding:12px;margin-bottom:16px">';
+      html += '<div style="color:var(--p);font-size:12px;margin-bottom:6px">管理员回复</div>';
+      html += '<div style="color:var(--text);font-size:14px;white-space:pre-wrap">'+esc(t.reply||t.adminReply)+'</div>';
+      html += '</div>';
+    }
+    html += '<div style="display:flex;gap:10px;justify-content:flex-end">';
+    html += '<button class="btn btn-ghost" onclick="AdminAPI.closeModal()">关闭</button>';
+    html += '</div></div></div>';
+    document.getElementById('main-app').insertAdjacentHTML('beforeend', html);
   },
 
   closeTicket: function(id) {
@@ -3035,7 +3160,40 @@ window.AdminAPI = {
   },
 
   editCampaign: function(id) {
-    toast('编辑活动 #'+id, 'info');
+    var campaigns = Store.get('campaigns') || [];
+    var c = campaigns.find(function(x){ return x.id === id; });
+    if (!c) return toast('未找到活动 #'+id, 'error');
+    var html = '<div class="modal-overlay" onclick="if(event.target===this)AdminAPI.closeModal()"><div class="modal-card" style="max-width:520px">';
+    html += '<h3 style="color:var(--p);margin-bottom:16px"><i class="fas fa-edit"></i> 编辑营销活动</h3>';
+    html += '<div style="display:flex;flex-direction:column;gap:12px">';
+    html += '<label style="color:var(--text)">名称<input id="ecamp-name" class="modal-input" value="'+esc(c.name||'')+'"></label>';
+    html += '<label style="color:var(--text)">类型<select id="ecamp-type" class="modal-input"><option value="discount"'+(c.type==='discount'?' selected':'')+'>折扣</option><option value="gift"'+(c.type==='gift'?' selected':'')+'>赠送</option><option value="event"'+(c.type==='event'?' selected':'')+'>活动</option></select></label>';
+    html += '<label style="color:var(--text)">描述<textarea id="ecamp-desc" class="modal-input" rows="3">'+esc(c.description||'')+'</textarea></label>';
+    html += '<label style="color:var(--text)">开始日期<input id="ecamp-start" type="date" class="modal-input" value="'+esc(c.startDate||'')+'"></label>';
+    html += '<label style="color:var(--text)">结束日期<input id="ecamp-end" type="date" class="modal-input" value="'+esc(c.endDate||'')+'"></label>';
+    html += '</div>';
+    html += '<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px">';
+    html += '<button class="btn btn-ghost" onclick="AdminAPI.closeModal()">取消</button>';
+    html += '<button class="btn btn-primary" onclick="AdminAPI._saveEditCampaign('+id+')">保存</button>';
+    html += '</div></div></div>';
+    document.getElementById('main-app').insertAdjacentHTML('beforeend', html);
+  },
+
+  _saveEditCampaign: function(id) {
+    var campaigns = Store.get('campaigns') || [];
+    var name = (document.getElementById('ecamp-name')||{}).value||'';
+    var type = (document.getElementById('ecamp-type')||{}).value||'';
+    var desc = (document.getElementById('ecamp-desc')||{}).value||'';
+    var start = (document.getElementById('ecamp-start')||{}).value||'';
+    var end = (document.getElementById('ecamp-end')||{}).value||'';
+    if (!name) return toast('请填写活动名称', 'error');
+    for (var i = 0; i < campaigns.length; i++) {
+      if (campaigns[i].id === id) { campaigns[i].name = name; campaigns[i].type = type; campaigns[i].description = desc; campaigns[i].startDate = start; campaigns[i].endDate = end; break; }
+    }
+    Store.set('campaigns', campaigns);
+    document.querySelector('.modal-overlay').remove();
+    toast('活动已更新', 'success');
+    navigate('marketing');
   },
 
   deleteCampaign: function(id) {
@@ -3806,6 +3964,10 @@ function init() {
     toggleBtn.onclick = function() {
       var sb = $('#sidebar');
       sb.classList.toggle('collapsed');
+      var icon = toggleBtn.querySelector('i');
+      if (icon) {
+        icon.className = sb.classList.contains('collapsed') ? 'fas fa-angles-right' : 'fas fa-angles-left';
+      }
     };
   }
 

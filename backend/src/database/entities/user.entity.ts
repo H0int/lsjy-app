@@ -48,6 +48,10 @@ export class User extends SoftDeleteEntity {
   @Column({ name: 'vip_level', type: 'tinyint', default: 0 })
   vipLevel!: number;
 
+  @Column({ name: 'membership_tier', type: 'enum', enum: ['normal', 'premium', 'admin', 'super_admin', 'ultimate_admin', 'founder'], default: 'normal' })
+  @Index('idx_users_membership_tier')
+  membershipTier!: string;
+
   @Column({ name: 'vip_expire_at', type: 'datetime', nullable: true })
   vipExpireAt!: Date | null;
 

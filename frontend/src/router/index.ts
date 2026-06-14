@@ -1,6 +1,24 @@
-import { createRouter, createWebHistory, createWebHashHistory } from 'vue-router'
+import { createRouter, createWebHistory, createWebHashHistory, defineComponent, h } from 'vue'
 import type { RouteRecordRaw } from 'vue-router'
 import { getToken } from '@/utils'
+
+// 404 页面组件
+const NotFoundView = defineComponent({
+  name: 'NotFound',
+  setup() {
+    return () => h('div', {
+      style: 'display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;text-align:center;padding:2rem;'
+    }, [
+      h('div', { style: 'font-size:5rem;margin-bottom:1rem;' }, '🌌'),
+      h('h1', { style: 'font-size:2rem;font-weight:bold;color:var(--cyber-cyan,#00f0ff);margin-bottom:0.5rem;font-family:JetBrains Mono,monospace;' }, '404'),
+      h('p', { style: 'color:var(--cyber-text-dim,#8888aa);margin-bottom:2rem;' }, '页面走丢了，正在穿越赛博空间...'),
+      h('a', {
+        href: '/dashboard',
+        style: 'padding:0.75rem 2rem;border-radius:0.5rem;background:rgba(0,240,255,0.1);color:var(--cyber-cyan,#00f0ff);border:1px solid rgba(0,240,255,0.3);text-decoration:none;font-weight:500;transition:all 0.3s;'
+      }, '← 返回控制台')
+    ])
+  }
+})
 
 // 判断是否为 GitHub Pages 环境
 const isGitHubPages = import.meta.env.PROD && (import.meta.env.BASE_URL.includes('/lsjy-app/') || window.location.hostname.includes('github.io'))
@@ -194,6 +212,13 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '操作日志' }
       }
     ]
+  },
+  // 404 兜底路由
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'NotFound',
+    component: NotFoundView,
+    meta: { title: '404', skipAuth: true }
   }
 ]
 
@@ -207,6 +232,9 @@ const router = createRouter({
 router.beforeEach(async (to, _from, next) => {
   document.title = `${(to.meta.title as string) || '罗圣纪元'} - 罗圣纪元SaaS平台`
   const token = getToken()
+
+  // 无需认证的页面（404等）
+  if (to.meta.skipAuth) return next()
 
   // 访客页面（登录/注册），已登录则跳转控制台
   if (to.meta.guest) {

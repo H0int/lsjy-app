@@ -96,7 +96,7 @@
           </div>
 
           <!-- 生成结果 -->
-          <div v-if="singleResult && !chatMode" class="mt-6 pt-6" style="border-top: 1px solid var(--cyber-border);">
+          <div v-if="singleResult" class="mt-6 pt-6" style="border-top: 1px solid var(--cyber-border);">
             <div class="flex items-center justify-between mb-3">
               <h3 class="font-bold" style="color: var(--cyber-text);">生成结果</h3>
               <div class="flex gap-2">
@@ -231,7 +231,6 @@ const generating = ref(false)
 // ===== 文本对话状态 =====
 const inputContent = ref('')
 const chatHistory = ref<ChatMessage[]>([])
-const chatMode = ref(true)
 const singleResult = ref('')
 
 // ===== 图像生成状态 =====
@@ -249,7 +248,6 @@ const lastModel = ref('')
 
 // ===== 计算属性 =====
 const isImageTool = computed(() => tool.value?.toolType === 'image')
-const result = ref('')
 
 const providerDisplayName = computed(() => {
   if (!tool.value) return ''
@@ -258,6 +256,8 @@ const providerDisplayName = computed(() => {
     jimeng: '即梦',
     openai: 'OpenAI',
     tongyi: '通义千问',
+    deepseek: 'DeepSeek',
+    yuanbao: '元宝',
   }
   return map[tool.value.provider] || tool.value.provider
 })
@@ -269,6 +269,8 @@ const providerBadgeStyle = computed(() => {
     jimeng: 'background: rgba(255,0,255,0.1); color: var(--cyber-magenta); border: 1px solid rgba(255,0,255,0.2);',
     openai: 'background: rgba(0,255,136,0.1); color: var(--cyber-green); border: 1px solid rgba(0,255,136,0.2);',
     tongyi: 'background: rgba(255,184,0,0.1); color: var(--cyber-amber); border: 1px solid rgba(255,184,0,0.2);',
+    deepseek: 'background: rgba(88,166,255,0.1); color: #58a6ff; border: 1px solid rgba(88,166,255,0.2);',
+    yuanbao: 'background: rgba(255,100,130,0.1); color: #ff6482; border: 1px solid rgba(255,100,130,0.2);',
   }
   return (map[tool.value.provider] || 'background: rgba(136,136,170,0.1); color: var(--cyber-text-dim);') + ' border: 1px solid transparent;'
 })
@@ -308,9 +310,10 @@ async function handleSend() {
     ElMessage.success('生成完成！')
     await nextTick()
     scrollToBottom()
-  } catch {
+  } catch (e: any) {
     chatHistory.value.pop()
     inputContent.value = userMessage
+    ElMessage.error(e?.message || '生成失败，请重试')
   } finally {
     generating.value = false
   }
@@ -346,7 +349,8 @@ async function handleGenerateImage() {
     lastModel.value = res.data.model || tool.value.modelId
 
     ElMessage.success(`成功生成 ${generatedImages.value.length} 张图片！`)
-  } catch {
+  } catch (e: any) {
+    ElMessage.error(e?.message || '图片生成失败，请重试')
   } finally {
     generating.value = false
   }
@@ -361,21 +365,6 @@ function copyResult(text: string) {
 function scrollToBottom() {
   const el = document.querySelector('.max-h-96')
   if (el) el.scrollTop = el.scrollHeight
-}
-
-// ===== 旧接口兼容 =====
-async function handleGenerate() {
-  if (!inputContent.value.trim()) return ElMessage.warning('请输入内容')
-  generating.value = true
-  result.value = ''
-  try {
-    const res = await toolApi.callTool(Number(route.params.id), { text: inputContent.value })
-    result.value = res.data.outputText || '生成完成，暂无详细输出'
-    ElMessage.success('生成完成！')
-  } catch {
-  } finally {
-    generating.value = false
-  }
 }
 
 onMounted(async () => {

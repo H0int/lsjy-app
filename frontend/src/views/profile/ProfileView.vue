@@ -151,16 +151,13 @@ async function saveProfile() {
       nickname: profileForm.nickname,
       bio: profileForm.bio,
       gender: profileForm.gender,
+      phone: profileForm.phone,
+      email: profileForm.email,
     })
-    if (profileForm.phone !== (authStore.user?.phone || '')) {
-      // TODO: 单独的手机号修改接口
-    }
-    if (profileForm.email !== (authStore.user?.email || '')) {
-      // TODO: 单独的邮箱修改接口
-    }
     await authStore.fetchUserProfile()
     ElMessage.success('保存成功')
-  } catch {
+  } catch (e: any) {
+    ElMessage.error(e?.message || '保存失败，请重试')
   } finally {
     saving.value = false
   }

@@ -28,7 +28,7 @@
           <div class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium"
             style="background: rgba(255, 184, 0, 0.1); border: 1px solid rgba(255, 184, 0, 0.3); color: var(--cyber-amber);">
             <span>⚡</span>
-            <span>{{ authStore.coinBalance?.toFixed(1) || '0.0' }}</span>
+            <span>{{ authStore.coinBalance?.toFixed(2) || '0.00' }}</span>
           </div>
           <!-- 用户头像 -->
           <el-dropdown trigger="click">
@@ -95,12 +95,9 @@
 <script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { useAppStore } from '@/stores/app'
-
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
-const appStore = useAppStore()
 
 const navItems = [
   { path: '/dashboard', label: '控制台', icon: '🏠' },
