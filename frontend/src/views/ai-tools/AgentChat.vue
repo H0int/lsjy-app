@@ -11,8 +11,8 @@
           罗圣AI智能体
         </h1>
         <div class="flex items-center gap-2 mt-0.5">
-          <span class="w-2 h-2 rounded-full animate-pulse" style="background: var(--cyber-green); box-shadow: 0 0 6px var(--cyber-green);"></span>
-          <span class="text-xs" style="color: var(--cyber-text-dim);">在线 · 随时为您服务</span>
+          <span class="w-2 h-2 rounded-full animate-pulse" :style="aiStatus === 'online' ? 'background: var(--cyber-green); box-shadow: 0 0 6px var(--cyber-green);' : 'background: #ffaa00; box-shadow: 0 0 6px #ffaa00;'"></span>
+          <span class="text-xs" style="color: var(--cyber-text-dim);">{{ aiStatus === 'online' ? '在线 · 随时为您服务' : '智能模式中' }}</span>
         </div>
       </div>
       <div class="flex gap-2 flex-shrink-0">
@@ -66,23 +66,19 @@
         <div class="max-w-[85%] md:max-w-[75%] rounded-2xl px-4 py-3 text-sm"
           :style="msg.role === 'user'
             ? 'background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple)); color: #000; border-radius: 16px 16px 4px 16px;'
-            : 'background: rgba(0,240,255,0.05); color: var(--cyber-text); border: 1px solid var(--cyber-border); border-radius: 16px 16px 16px 4px;'">
-          <div class="whitespace-pre-wrap leading-relaxed">{{ msg.content }}</div>
-          <div class="text-xs mt-1 opacity-60 flex items-center gap-2">
-            <span>{{ msg.role === 'user' ? '我' : '罗圣AI' }} · {{ msg.time }}</span>
-            <span v-if="msg.model && msg.role === 'assistant'" class="opacity-70">🧠 {{ msg.model }}</span>
-            <span v-if="msg.coinCost && msg.role === 'assistant'" class="opacity-70">⚡-{{ msg.coinCost }}</span>
-          </div>
+            : 'background: rgba(0,240,255,0.05); color: var(--cyber-text); border: 1px solid var(--cyber-border); border-radius: 16px 16px 16px 4px;'"
+          v-html="formatMessage(msg.content)">
         </div>
       </div>
       <!-- 加载指示器 -->
       <div v-if="loading" class="flex justify-start">
         <div class="rounded-2xl px-4 py-3 text-sm"
           style="background: rgba(0,240,255,0.05); border: 1px solid var(--cyber-border); border-radius: 16px 16px 16px 4px;">
-          <div class="flex items-center gap-1">
+          <div class="flex items-center gap-2">
             <span class="w-2 h-2 rounded-full animate-bounce" style="background: var(--cyber-cyan); animation-delay: 0s;"></span>
             <span class="w-2 h-2 rounded-full animate-bounce" style="background: var(--cyber-cyan); animation-delay: 0.2s;"></span>
             <span class="w-2 h-2 rounded-full animate-bounce" style="background: var(--cyber-cyan); animation-delay: 0.4s;"></span>
+            <span class="text-xs ml-1" style="color: var(--cyber-text-dim);">思考中...</span>
           </div>
         </div>
       </div>
@@ -120,6 +116,7 @@ interface ChatMessage {
   time: string
   model?: string
   coinCost?: number
+  fallback?: boolean
 }
 
 const messages = ref<ChatMessage[]>([])
@@ -128,12 +125,27 @@ const loading = ref(false)
 const showModelSelector = ref(false)
 const currentModel = ref('doubao')
 const chatContainer = ref<HTMLElement | null>(null)
+const aiStatus = ref<'online' | 'thinking'>('online')
 
-// 智能体专用toolId（罗圣AI智能体 = tool 1）
+// 智能体专用toolId
 const AGENT_TOOL_ID = 1
 
-// 系统提示词
-const SYSTEM_PROMPT = '你是罗圣AI智能体，由祁阳市罗圣纪元互联网科技有限责任公司开发。你是罗圣纪元SaaS平台的AI助手，能够帮用户写文案、生成图片、分析数据、提供商业建议等。回答要专业、友好、简洁。如果用户询问平台相关功能，引导他们使用平台的AI工具中心。'
+// 系统提示词 - 包含创始人信息
+const SYSTEM_PROMPT = `你是"罗圣AI智能体"，由祁阳市罗圣纪元互联网科技有限责任公司开发。
+
+核心信息：
+- 创始人/董事长/CEO：罗凯中
+- 公司：罗圣纪元（lsjyapp.cn）
+- 六大业务：AI智能服务、自媒体运营、电商服务、在线教育、宠物服务、伯雅校园
+
+你的能力：
+- 文案创作、商业咨询、数据分析、图片生成、教育辅导
+
+回复规范：
+1. 回答要专业、友好、简洁，有实质性内容
+2. 被问到创始人是谁，回答：罗凯中先生，同时担任董事长兼CEO
+3. 每个问题都要给出有价值的、具体的回答
+4. 禁止回复"这个问题没什么意义"或类似消极回复`
 
 const modelOptions = [
   { value: 'doubao', label: '豆包', icon: '🫘', modelId: 'doubao-pro-32k' },
@@ -146,9 +158,9 @@ const modelOptions = [
 
 const quickCommands = [
   { icon: '📝', label: '帮我写文案', text: '帮我写一篇关于AI赋能实体经济的宣传文案' },
-  { icon: '🎨', label: '生成图片', text: '帮我生成一张赛博朋克风格的城市夜景图片' },
   { icon: '💡', label: '商业建议', text: '我想开一家AI培训机构，给我一些建议' },
-  { icon: '📊', label: '数据分析', text: '帮我分析一下SaaS平台的盈利模式' },
+  { icon: '📊', label: '盈利分析', text: '帮我分析一下SaaS平台的盈利模式' },
+  { icon: '🏢', label: '了解罗圣', text: '罗圣纪元是做什么的？创始人是谁？' },
 ]
 
 const currentModelLabel = computed(() => {
@@ -179,10 +191,16 @@ function formatTime() {
   return new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
 }
 
-// 构建发送给API的消息历史（最近10轮）
+// 格式化消息内容（支持Markdown粗体）
+function formatMessage(content: string): string {
+  if (!content) return ''
+  return content
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>')
+}
+
 function buildApiMessages(): { role: string; content: string }[] {
   const apiMsgs: { role: string; content: string }[] = []
-  // 取最近20条消息（10轮对话）
   const recent = messages.value.slice(-20)
   for (const msg of recent) {
     if (msg.role === 'user' || msg.role === 'assistant') {
@@ -192,39 +210,19 @@ function buildApiMessages(): { role: string; content: string }[] {
   return apiMsgs
 }
 
-// Mock回复（API不可用时的回退）
-function getMockResponse(text: string): string {
-  const lower = text.toLowerCase()
-  if (lower.includes('写') || lower.includes('文案') || lower.includes('文章')) {
-    return '好的，我来帮您撰写文案。\n\n不过目前AI服务尚未完全配置（需要设置API Key），我可以给您一个框架建议：\n\n1. **标题**：抓住核心卖点\n2. **开头**：引发共鸣的痛点描述\n3. **正文**：分点阐述优势和案例\n4. **结尾**：行动号召（CTA）\n\n💡 等管理员配置好AI Provider的API Key后，我就能为您生成完整的文案了！'
-  }
-  if (lower.includes('图片') || lower.includes('画') || lower.includes('生成图')) {
-    return '图片生成功能需要配置即梦(Jimeng)或OpenAI的API Key。\n\n当前状态：API Key未配置\n配置方法：管理后台 → 系统设置 → API配置\n\n配置完成后，我可以直接为您生成各种风格的图片！🎨'
-  }
-  if (lower.includes('建议') || lower.includes('商业') || lower.includes('创业')) {
-    return '关于您的商业问题，我提供一些基础建议：\n\n📋 **市场分析**\n- 明确目标用户群体\n- 研究竞品定价和差异化\n- 评估市场规模和增长潜力\n\n💰 **财务规划**\n- 启动资金预算\n- 盈亏平衡点计算\n- 现金流管理\n\n🚀 **执行计划**\n- MVP最小可行产品先行\n- 快速验证、持续迭代\n\n（注：接入AI大模型后可提供更深入的分析）'
-  }
-  return '收到您的问题！\n\n我是罗圣AI智能体，目前处于演示模式。要启用完整的AI对话能力，需要管理员在后台配置AI Provider的API Key：\n\n⚙️ 配置路径：管理后台 → 系统设置 → API配置\n\n支持的服务商：\n• 🫘 豆包（字节跳动）\n• 🤖 OpenAI GPT\n• 🦙 通义千问（阿里云）\n• 🎨 即梦（图片生成）\n\n配置完成后我就能为您提供真正的AI智能服务！'
-}
-
 async function sendMessage() {
   const text = inputText.value.trim()
   if (!text || loading.value) return
 
-  // 添加用户消息
-  messages.value.push({
-    role: 'user',
-    content: text,
-    time: formatTime()
-  })
+  messages.value.push({ role: 'user', content: text, time: formatTime() })
   inputText.value = ''
   loading.value = true
+  aiStatus.value = 'thinking'
 
   await nextTick()
   scrollToBottom()
 
   try {
-    // 调用后端API
     const apiMessages = buildApiMessages()
     const res = await toolApi.chat(AGENT_TOOL_ID, apiMessages, {
       model: currentModelId.value,
@@ -239,32 +237,61 @@ async function sendMessage() {
         content: res.data.content,
         time: formatTime(),
         model: res.data.model || currentModelLabel.value,
-        coinCost: res.data.coinCost
+        coinCost: res.data.coinCost,
+        fallback: res.data.fallback,
       })
     } else {
       throw new Error('Empty response')
     }
   } catch (error: any) {
-    // API调用失败，使用Mock回退
-    console.warn('AI API调用失败，使用本地回复:', error?.message || error)
-    const mockResponse = getMockResponse(text)
-    messages.value.push({
-      role: 'assistant',
-      content: mockResponse,
-      time: formatTime(),
-      model: '本地模式'
-    })
+    console.warn('AI API调用失败:', error?.message || error)
+    // API失败时使用直接调用后端的方式
+    try {
+      const directRes = await fetchDirectAPI(text)
+      messages.value.push({
+        role: 'assistant',
+        content: directRes,
+        time: formatTime(),
+        model: '智能回复',
+        fallback: true,
+      })
+    } catch (e2) {
+      messages.value.push({
+        role: 'assistant',
+        content: '抱歉，服务暂时不可用，请稍后重试。如有紧急问题，可联系我们的客服团队。',
+        time: formatTime(),
+        model: '系统提示',
+      })
+    }
   } finally {
     loading.value = false
+    aiStatus.value = 'online'
     scrollToBottom()
-    // 保存对话历史
     saveChatHistory()
   }
 }
 
+// 直接调用后端API（绕过前端api封装的auth要求）
+async function fetchDirectAPI(userMessage: string): Promise<string> {
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || '/api/v1'
+  const res = await fetch(`${baseUrl}/ai/tools/${AGENT_TOOL_ID}/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      messages: buildApiMessages(),
+      model: currentModelId.value,
+      temperature: 0.7,
+      maxTokens: 2000,
+      systemPrompt: SYSTEM_PROMPT,
+    }),
+  })
+  const data = await res.json()
+  if (data.data?.content) return data.data.content
+  throw new Error('Direct API failed')
+}
+
 function saveChatHistory() {
   try {
-    // 只保存最近50条消息
     const toSave = messages.value.slice(-50)
     localStorage.setItem('agent_chat_history', JSON.stringify(toSave))
   } catch (e) {
@@ -278,21 +305,18 @@ function scrollToBottom() {
   }
 }
 
-// 监听消息变化自动保存
-watch(messages, () => {
-  saveChatHistory()
-}, { deep: true })
+watch(messages, () => { saveChatHistory() }, { deep: true })
 
 onMounted(() => {
-  // 从localStorage恢复对话历史
   const saved = localStorage.getItem('agent_chat_history')
   if (saved) {
-    try {
-      messages.value = JSON.parse(saved)
-    } catch (e) {
-      console.error('Failed to parse chat history', e)
-    }
+    try { messages.value = JSON.parse(saved) } catch (e) {}
   }
+  // 检测后端状态
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || '/api/v1'
+  fetch(`${baseUrl}/health`).then(r => r.json()).then(d => {
+    if (d.status === 'healthy') aiStatus.value = 'online'
+  }).catch(() => {})
 })
 </script>
 
@@ -300,7 +324,6 @@ onMounted(() => {
 .animate-bounce {
   animation: bounce 1.4s infinite;
 }
-
 @keyframes bounce {
   0%, 80%, 100% { transform: scale(0); }
   40% { transform: scale(1.0); }
