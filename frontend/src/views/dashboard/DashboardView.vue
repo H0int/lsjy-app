@@ -159,3 +159,41 @@ onMounted(async () => {
   } catch { /* ignore */ }
 })
 </script>
+
+<style scoped>
+/* 赛博朋克欢迎横幅 */
+.cyber-welcome-banner {
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.1), rgba(124, 58, 237, 0.1));
+  border: 1px solid rgba(0, 240, 255, 0.15);
+  position: relative;
+}
+
+.cyber-welcome-banner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--cyber-cyan), var(--cyber-purple), transparent);
+}
+
+.welcome-bg-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+  background-size: 30px 30px;
+}
+
+.welcome-glow {
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(0, 240, 255, 0.08) 0%, transparent 70%);
+  border-radius: 50%;
+}
+</style>

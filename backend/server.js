@@ -53,8 +53,8 @@ const CONFIG = {
 
   // 腾讯元宝
   YUANBAO_API_KEY: process.env.YUANBAO_API_KEY || '' // 需要腾讯混元API Key(sk-开头)，待用户补充,
-  YUANBAO_BASE_URL: process.env.YUANBAO_BASE_URL || 'https://api.hunyuan.cloud.tencent.com/v1',
-  YUANBAO_MODEL: process.env.YUANBAO_MODEL || 'hunyuan-turbos-latest',
+  YUANBAO_BASE_URL: process.env.YUANBAO_BASE_URL || 'https://tokenhub.tencentmaas.com/v1',
+  YUANBAO_MODEL: process.env.YUANBAO_MODEL || 'hy3-preview',
 
   // Coze 智能体
   COZE_API_KEY: process.env.COZE_API_KEY || '',
@@ -1105,7 +1105,7 @@ app.get('/api/v1/ai/models', (req, res) => {
     { group: 'doubao', provider: 'doubao', models: [{ id: 'doubao-pro-32k', name: '豆包 Pro 32K', capabilities: ['text'] }] },
     { group: 'deepseek', provider: 'deepseek', models: [{ id: 'deepseek-chat', name: 'DeepSeek Chat', capabilities: ['text'] }] },
     { group: 'tongyi', provider: 'tongyi', models: [{ id: 'qwen-plus', name: '通义千问 Plus', capabilities: ['text'] }] },
-    { group: 'yuanbao', provider: 'yuanbao', models: [{ id: 'yuanbao-pro', name: '腾讯元宝 Pro', capabilities: ['text'] }] },
+    { group: 'yuanbao', provider: 'yuanbao', models: [{ id: 'hy3-preview', name: '腾讯元宝 Hy3 (混元)', capabilities: ['text'] }] },
     { group: 'openai', provider: 'openai', models: [
       { id: 'gpt-4o', name: 'GPT-4o', capabilities: ['text', 'image'] },
       { id: 'dall-e-3', name: 'DALL-E 3', capabilities: ['image'] }
