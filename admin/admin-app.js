@@ -488,6 +488,8 @@ function navigate(page) {
     closeMobileSidebar();
   }
 }
+// 暴露到全局供 HTML onclick 调用
+window.navigate = navigate;
 
 // ========== 渲染：数据看板 ==========
 function renderDashboard() {
