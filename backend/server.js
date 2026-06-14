@@ -349,7 +349,7 @@ app.post('/api/v1/auth/register', (req, res) => {
   }
   const newUser = {
     id: users.length + 1, username, password, nickname: nickname || username,
-    email, phone, status: 'pending', roles: ['normal'], createdAt: new Date().toISOString(),
+    email, phone, status: 'approved', roles: ['normal'], createdAt: new Date().toISOString(),
   };
   users.push(newUser);
   fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
