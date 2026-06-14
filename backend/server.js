@@ -27,17 +27,17 @@ const CONFIG = {
   AI_PROVIDER: process.env.AI_PROVIDER || 'doubao',
 
   // 豆包（字节跳动火山引擎）
-  DOUBAO_API_KEY: process.env.DOUBAO_API_KEY || '',
+  DOUBAO_API_KEY: process.env.DOUBAO_API_KEY || "NEED_API_KEY_FROM_CONSOLE",
   DOUBAO_BASE_URL: process.env.DOUBAO_BASE_URL || 'https://ark.cn-beijing.volces.com/api/v3',
   DOUBAO_MODEL: process.env.DOUBAO_MODEL || 'doubao-pro-32k',
 
   // 即梦（字节跳动 AI 绘画）
-  JIMENG_API_KEY: process.env.JIMENG_API_KEY || '',
+  JIMENG_API_KEY: process.env.JIMENG_API_KEY || 'NEED_API_KEY',
   JIMENG_BASE_URL: process.env.JIMENG_BASE_URL || 'https://jimeng.jianying.com/v1',
   JIMENG_MODEL: process.env.JIMENG_MODEL || 'jimeng-v2',
 
   // DeepSeek
-  DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY || '',
+  DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY || 'sk-4f60d83ebf904321b99000888baf313c',
   DEEPSEEK_BASE_URL: process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com/v1',
   DEEPSEEK_MODEL: process.env.DEEPSEEK_MODEL || 'deepseek-chat',
 
@@ -47,12 +47,12 @@ const CONFIG = {
   OPENAI_MODEL: process.env.OPENAI_MODEL || 'gpt-4o',
 
   // 通义千问（阿里云）
-  TONGYI_API_KEY: process.env.TONGYI_API_KEY || '',
+  TONGYI_API_KEY: process.env.TONGYI_API_KEY || 'sk-c4212c9d7e4644e6825d796f6365668e',
   TONGYI_BASE_URL: process.env.TONGYI_BASE_URL || 'https://dashscope.aliyuncs.com/api/v1',
   TONGYI_MODEL: process.env.TONGYI_MODEL || 'qwen-plus',
 
   // 腾讯元宝
-  YUANBAO_API_KEY: process.env.YUANBAO_API_KEY || '',
+  YUANBAO_API_KEY: process.env.YUANBAO_API_KEY || 'NEED_TENCENT_KEY',
   YUANBAO_BASE_URL: process.env.YUANBAO_BASE_URL || 'https://api.yuanbao.tencent.com/v1',
   YUANBAO_MODEL: process.env.YUANBAO_MODEL || 'yuanbao-pro',
 
@@ -382,7 +382,8 @@ async function callOpenAICompatibleAPI(messages, options = {}) {
 
 // AI 对话主函数 - 自动选择可用的 Provider
 async function callAI(messages, options = {}) {
-  const provider = CONFIG.AI_PROVIDER;
+  // 优先使用前端传来的provider，否则用默认配置
+  const provider = options.provider || CONFIG.AI_PROVIDER;
   const systemMsg = { role: 'system', content: options.systemPrompt || CONFIG.SYSTEM_PROMPT };
   const fullMessages = [systemMsg, ...messages.filter(m => m.role !== 'system')];
 

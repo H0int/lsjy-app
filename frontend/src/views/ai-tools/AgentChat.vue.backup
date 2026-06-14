@@ -182,9 +182,6 @@
 import { ref, computed, onMounted, nextTick, watch } from 'vue'
 
 // ========== API配置 ==========
-const API_BASE = 'http://8.154.16.5:3000/api/v1'
-const authToken = localStorage.getItem('lsjy_token') || ''
-// 视频生成暂时使用Coze API
 const COZE_API = 'https://api.coze.cn/v3/chat'
 const COZE_TOKEN = 'pat_PzQlUbxdIXu7txW3cvP69EpHRLSidiY8KKa3NQ98KncpAA8jnOIZpZZMnJQd2ld5'
 const BOT_ID = '7651223356586786856'
@@ -238,7 +235,7 @@ const models = [
   { value: 'doubao', label: '豆包', icon: '🫘' },
   { value: 'deepseek', label: 'DeepSeek', icon: '🔍' },
   { value: 'tongyi', label: '千问', icon: '🦙' },
-  { value: 'yuanbao', label: '元宝', icon: '🐧' },
+  { value: 'gpt4o', label: 'GPT-4o', icon: '🤖' },
 ]
 
 const quickCmds = [
@@ -302,21 +299,18 @@ async function sendMsg() {
   ]
 
   try {
-    // 构建后端API需要的消息格式
-    const backendMessages = msgs.value.slice(-20).map(m => ({
-      role: m.role,
-      content: m.content
-    }))
-
-    const res = await fetch(`${API_BASE}/ai/tools/2/chat`, {
+    const res = await fetch(COZE_API, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${authToken}`,
+        'Authorization': `Bearer ${COZE_TOKEN}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        messages: backendMessages,
-        provider: activeModel.value === 'auto' ? undefined : activeModel.value
+        bot_id: BOT_ID,
+        user_id: 'u_' + Date.now(),
+        stream: true,
+        auto_save_history: false,
+        additional_messages: apiMsgs,
       }),
     })
 
@@ -325,22 +319,59 @@ async function sendMsg() {
       throw new Error(`API ${res.status}: ${errText.substring(0, 100)}`)
     }
 
-    const result = await res.json()
-    if (result.code !== 0) {
-      throw new Error(result.message || 'AI服务返回错误')
+    // 流式读取
+    const reader = res.body!.getReader()
+    const decoder = new TextDecoder()
+    let fullContent = ''
+    let buffer = ''
+    const msgIdx = msgs.value.length
+
+    // 先添加一个空的助手消息，用于流式更新
+    msgs.value.push({ role: 'assistant', content: '', model: activeModelLabel.value })
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop() || ''
+
+      for (const line of lines) {
+        if (!line.startsWith('data:')) continue
+        const jsonStr = line.slice(5).trim()
+        if (!jsonStr) continue
+        try {
+          const d = JSON.parse(jsonStr)
+          // 只处理answer类型的消息
+          if (d.type === 'answer' && d.content) {
+            // delta: content只有增量; completed: content是完整内容
+            if (d.content.length > fullContent.length) {
+              // completed事件，完整内容
+              fullContent = d.content
+            } else if (d.content.length > 0 && fullContent.length === 0) {
+              // delta事件，增量累加
+              fullContent += d.content
+            }
+            // 更新显示
+            if (msgs.value[msgIdx]) {
+              msgs.value[msgIdx].content = fullContent
+            }
+            scrollToBottom()
+          }
+        } catch {}
+      }
     }
 
-    // 添加助手回复
-    msgs.value.push({
-      role: 'assistant',
-      content: result.data.content || '⚠️ 模型未返回有效内容',
-      model: result.data.model || activeModelLabel.value
-    })
+    // 最终确认：如果流式没拿到内容，尝试从最后一条completed取
+    if (!fullContent && msgs.value[msgIdx]) {
+      msgs.value[msgIdx].content = '⚠️ 模型未返回有效内容，请重试'
+    }
 
     // 保存
     saveChat()
   } catch (e: any) {
-    console.error('Backend API error:', e)
+    console.error('Coze API error:', e)
     msgs.value.push({
       role: 'assistant',
       content: `⚠️ AI服务连接失败：${e.message || '网络异常'}\n\n请检查网络连接后重试。`,
@@ -492,10 +523,12 @@ watch(msgs, () => saveChat(), { deep: true })
 onMounted(() => {
   const s = localStorage.getItem('lsjy_chat_v2')
   if (s) try { msgs.value = JSON.parse(s) } catch {}
-  // 检测后端API可用性
-  fetch(`${API_BASE}/ai/providers`)
-    .then(r => { aiOnline.value = r.ok })
-    .catch(() => { aiOnline.value = false })
+  // 检测API可用性
+  fetch(COZE_API.replace('/chat', '/chat/retrieve'), {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${COZE_TOKEN}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ conversation_id: 'test', chat_id: 'test' })
+  }).then(r => { aiOnline.value = r.status !== 401 }).catch(() => {})
 })
 </script>
 
