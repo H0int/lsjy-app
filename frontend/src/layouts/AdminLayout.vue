@@ -12,7 +12,7 @@
         <div class="logo-icon">罗</div>
         <div class="logo-text">
           <div class="logo-title">罗圣纪元</div>
-          <div class="logo-subtitle">ADMIN CONSOLE</div>
+          <div class="logo-subtitle">公司后台管理系统</div>
         </div>
       </div>
       <div class="sidebar-divider"></div>
