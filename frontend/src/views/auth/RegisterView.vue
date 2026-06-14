@@ -1,22 +1,13 @@
 <template>
-  <div class="min-h-screen cyber-circuit-bg flex items-center justify-center p-4" style="background-color: var(--cyber-bg);">
-    <!-- 背景装饰 -->
-    <div class="fixed inset-0 pointer-events-none overflow-hidden">
-      <div class="absolute top-1/3 right-1/4 w-80 h-80 rounded-full opacity-10"
-        style="background: radial-gradient(circle, var(--cyber-magenta), transparent 70%);"></div>
-      <div class="absolute bottom-1/3 left-1/4 w-80 h-80 rounded-full opacity-8"
-        style="background: radial-gradient(circle, var(--cyber-purple), transparent 70%);"></div>
-    </div>
-
-    <div class="w-full max-w-md relative z-10">
+  <div class="min-h-screen bg-gradient-to-br from-dark-200 via-dark-100 to-dark-200 flex items-center justify-center p-4">
+    <div class="w-full max-w-md">
       <div class="text-center mb-8">
-        <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl text-black text-2xl font-bold mb-4"
-          style="background: linear-gradient(135deg, var(--cyber-magenta), var(--cyber-purple)); box-shadow: 0 0 20px rgba(255,0,255,0.4);">罗</div>
-        <h1 class="text-2xl font-bold glow-magenta" style="color: var(--cyber-magenta); font-family: 'JetBrains Mono', monospace;">创建账号</h1>
-        <p class="mt-1" style="color: var(--cyber-text-dim);">加入罗圣纪元，开启AI数字化之旅</p>
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-blue-600 text-white text-2xl font-bold shadow-lg shadow-blue-500/30 mb-4">罗</div>
+        <h1 class="text-2xl font-bold text-white">创建账号</h1>
+        <p class="text-gray-400 mt-1">加入罗圣纪元，开启AI数字化之旅</p>
       </div>
 
-      <div class="cyber-card p-8">
+      <div class="bg-dark-100 rounded-2xl shadow-xl shadow-black/30 p-8 border border-gray-800">
         <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
           <el-form-item label="用户名" prop="username">
             <el-input v-model="form.username" placeholder="字母数字下划线，3位以上" size="large" />
@@ -38,14 +29,14 @@
           </el-form-item>
           <el-form-item>
             <el-button type="primary" size="large" class="w-full" :loading="loading" @click="handleRegister"
-              style="height: 48px; font-size: 16px; letter-spacing: 4px;">
+              style="background: linear-gradient(135deg, #3b82f6, #2563eb); border: none;">
               注 册
             </el-button>
           </el-form-item>
         </el-form>
 
-        <div class="text-center text-sm" style="color: var(--cyber-text-dim);">
-          已有账号？<router-link to="/login" class="font-medium" style="color: var(--cyber-cyan);">立即登录</router-link>
+        <div class="text-center text-sm text-gray-400">
+          已有账号？<router-link to="/login" class="text-blue-400 hover:underline">立即登录</router-link>
         </div>
       </div>
     </div>
