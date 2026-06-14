@@ -106,9 +106,13 @@ export class AuthService {
   }
 
   async login(dto: LoginDto, ip?: string): Promise<{ user: Partial<User>; accessToken: string; refreshToken: string }> {
-    // Find user by username or email
+    // Find user by username, email, or phone
     const user = await this.userRepo.findOne({
-      where: [{ username: dto.username }, { email: dto.username }],
+      where: [
+        { username: dto.username },
+        { email: dto.username },
+        { phone: dto.username }
+      ],
     });
 
     if (!user) {

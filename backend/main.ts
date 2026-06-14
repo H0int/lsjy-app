@@ -14,7 +14,7 @@ async function bootstrap() {
   // Security
   app.use(helmet());
 
-  // CORS
+  // CORS - 支持手机端和管理后台访问
   app.enableCors({
     origin: [
       'http://localhost:5173',
@@ -22,10 +22,13 @@ async function bootstrap() {
       'https://lsjyapp.cn',
       'https://www.lsjyapp.cn',
       'https://h0int.github.io',
-      // 'http://h0int.github.io', // Removed: insecure http protocol
+      'http://h0int.github.io',
+      // 允许所有移动端浏览器（生产环境可配置白名单）
+      /.*/,
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   });
 
   // Global prefix

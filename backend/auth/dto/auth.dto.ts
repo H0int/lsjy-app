@@ -33,7 +33,7 @@ export class RegisterDto {
 }
 
 export class LoginDto {
-  @ApiProperty({ description: '用户名或邮箱', example: 'john_doe' })
+  @ApiProperty({ description: '用户名/邮箱/手机号', example: 'john_doe' })
   @IsString()
   @IsNotEmpty()
   username!: string;
@@ -42,6 +42,11 @@ export class LoginDto {
   @IsString()
   @IsNotEmpty()
   password!: string;
+
+  @ApiPropertyOptional({ description: '登录设备类型', example: 'mobile' })
+  @IsOptional()
+  @IsString()
+  deviceType?: string; // 'mobile' | 'desktop' | 'tablet'
 }
 
 export class RefreshTokenDto {

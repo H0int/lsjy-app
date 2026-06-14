@@ -22,7 +22,24 @@ var APP = {
   prefix: 'lsjy_admin_',
   sessionKey: 'lsjy_admin_session',
   usersKey: 'lsjy3_users',
-  creditsKey: 'lsjy3_credits'
+  creditsKey: 'lsjy3_credits',
+  // ===== 后端API配置（手机端+电脑端通用）=====
+  apiBase: (function() {
+    // 生产环境使用线上API，开发环境使用本地
+    var host = window.location.hostname;
+    if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:3000/api/v1';
+    // 手机端访问时自动适配API域名
+    if (host === 'h0int.github.io') return 'https://api.lsjyapp.cn/api/v1';
+    // 自定义域名
+    return 'https://' + host.replace('www.','').replace('m.','') + '/api/v1';
+  })(),
+  // 设备类型检测（手机/电脑）
+  deviceType: (function() {
+    var ua = navigator.userAgent || '';
+    if (/Mobi|Android|iPhone|iPad|iPod|Windows Phone/i.test(ua)) return 'mobile';
+    if (/Tablet|iPad/i.test(ua)) return 'tablet';
+    return 'desktop';
+  })()
 };
 
 // 默认管理员
