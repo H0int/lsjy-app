@@ -192,17 +192,30 @@ const monthlyTokens = ref(3256000)
 const avgLatency = ref(342)
 
 const modelOptions = [
-  'GPT-4o', 'GPT-4o-mini', 'Claude-3.5-Sonnet', 'Claude-3-Haiku',
-  'DeepSeek-V3', 'Qwen-Max', 'GLM-4', 'Llama-3.1-70B'
+  // 豆包
+  'Doubao-Pro-32K', 'Doubao-Pro-4K', 'Doubao-Lite-32K',
+  // DeepSeek
+  'DeepSeek-V3', 'DeepSeek-R1',
+  // 即梦
+  '即梦 2.1', '即梦 2.0 Pro',
+  // 元宝
+  '元宝 Pro', '元宝 Lite',
+  // 千问
+  'Qwen-Max', 'Qwen-Plus', 'Qwen-Turbo',
+  // GPT
+  'GPT-4o', 'GPT-4o Mini', 'GPT-4 Turbo',
 ]
 
 const agents = ref([
-  { id: 1, name: '代码助手', icon: '💻', description: '全栈编程辅助，支持多语言', model: 'GPT-4o', temperature: 0.3, maxTokens: 8192, systemPrompt: 'You are an expert programmer...', totalCalls: 45230, status: 'active' },
-  { id: 2, name: '文案创作', icon: '✍️', description: '营销文案、广告语、社交媒体内容生成', model: 'Claude-3.5-Sonnet', temperature: 0.8, maxTokens: 4096, systemPrompt: 'You are a creative copywriter...', totalCalls: 28100, status: 'active' },
-  { id: 3, name: '数据分析', icon: '📊', description: '数据解读、报表分析、趋势预测', model: 'GPT-4o', temperature: 0.2, maxTokens: 16384, systemPrompt: 'You are a data analyst...', totalCalls: 15670, status: 'active' },
-  { id: 4, name: '客服机器人', icon: '🎧', description: '自动回答常见问题，引导用户', model: 'DeepSeek-V3', temperature: 0.5, maxTokens: 2048, systemPrompt: 'You are a customer service agent for 罗圣纪元...', totalCalls: 89400, status: 'active' },
-  { id: 5, name: '翻译专家', icon: '🌐', description: '多语言互译，保持语境和风格', model: 'GPT-4o-mini', temperature: 0.3, maxTokens: 4096, systemPrompt: 'You are a professional translator...', totalCalls: 19300, status: 'disabled' },
-  { id: 6, name: '学习导师', icon: '🎓', description: '个性化学习辅导，知识讲解', model: 'Qwen-Max', temperature: 0.6, maxTokens: 8192, systemPrompt: 'You are a patient tutor...', totalCalls: 8920, status: 'active' },
+  { id: 1, name: '罗圣AI', icon: '🧠', description: '罗圣纪元核心AI - 6大模型智能路由，全能力通用助手', model: 'DeepSeek-V3', temperature: 0.7, maxTokens: 8192, systemPrompt: '你是罗圣AI，罗圣纪元平台的智能助手。你可以调用豆包、DeepSeek、即梦、元宝、千问、GPT六大模型，根据用户需求智能选择最优模型。回答专业、高效、友好。', totalCalls: 128500, status: 'active' },
+  { id: 2, name: '代码助手', icon: '💻', description: '全栈编程辅助，支持多语言', model: 'DeepSeek-R1', temperature: 0.3, maxTokens: 8192, systemPrompt: 'You are an expert programmer...', totalCalls: 45230, status: 'active' },
+  { id: 3, name: '文案创作', icon: '✍️', description: '营销文案、广告语、社交媒体内容生成', model: 'GPT-4o', temperature: 0.8, maxTokens: 4096, systemPrompt: 'You are a creative copywriter...', totalCalls: 28100, status: 'active' },
+  { id: 4, name: 'AI文生图', icon: '🎨', description: '即梦AI绘画，文字描述生成高清图片', model: '即梦 2.1', temperature: 0.9, maxTokens: 4096, systemPrompt: 'You are an AI image generation assistant powered by Jimeng...', totalCalls: 22400, status: 'active' },
+  { id: 5, name: '数据分析', icon: '📊', description: '数据解读、报表分析、趋势预测', model: '元宝 Pro', temperature: 0.2, maxTokens: 16384, systemPrompt: 'You are a data analyst...', totalCalls: 15670, status: 'active' },
+  { id: 6, name: '客服机器人', icon: '🎧', description: '自动回答常见问题，引导用户', model: 'Qwen-Plus', temperature: 0.5, maxTokens: 2048, systemPrompt: '你是罗圣纪元平台的客服助手...', totalCalls: 89400, status: 'active' },
+  { id: 7, name: '豆包助手', icon: '🫘', description: '豆包大模型 - 中文理解与创作专家', model: 'Doubao-Pro-32K', temperature: 0.7, maxTokens: 32768, systemPrompt: '你是豆包大模型驱动的助手，擅长中文理解和创作...', totalCalls: 35800, status: 'active' },
+  { id: 8, name: '翻译专家', icon: '🌐', description: '多语言互译，保持语境和风格', model: 'GPT-4o Mini', temperature: 0.3, maxTokens: 4096, systemPrompt: 'You are a professional translator...', totalCalls: 19300, status: 'disabled' },
+  { id: 9, name: '学习导师', icon: '🎓', description: '个性化学习辅导，知识讲解', model: 'Qwen-Max', temperature: 0.6, maxTokens: 8192, systemPrompt: 'You are a patient tutor...', totalCalls: 8920, status: 'active' },
 ])
 
 const chatLogs = ref([
