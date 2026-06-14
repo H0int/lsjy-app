@@ -41,11 +41,11 @@
       <!-- 工具使用界面 -->
       <div class="cyber-card p-6">
         <h2 class="font-bold text-lg mb-4" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">
-          <span style="color: var(--cyber-cyan);">▍</span>{{ isImageTool ? '图像生成' : '开始对话' }}
+          <span style="color: var(--cyber-cyan);">▍</span>{{ isImageTool ? '图像生成' : isVideoTool ? '视频生成' : '开始对话' }}
         </h2>
 
         <!-- ===== 文本对话模式 ===== -->
-        <template v-if="!isImageTool">
+        <template v-if="!isImageTool && !isVideoTool">
           <!-- 对话历史 -->
           <div v-if="chatHistory.length > 0" class="space-y-3 mb-4 max-h-96 overflow-y-auto">
             <div v-for="(msg, idx) in chatHistory" :key="idx"
@@ -223,6 +223,95 @@
           </div>
         </template>
 
+        <!-- ===== 视频生成模式 ===== -->
+        <template v-else-if="isVideoTool">
+          <div class="space-y-4">
+            <!-- Prompt输入 -->
+            <div>
+              <label class="block text-sm font-medium mb-2" style="color: var(--cyber-text-dim);">视频描述</label>
+              <el-input v-model="videoPrompt" type="textarea" :rows="4"
+                placeholder="请描述您想生成的视频内容，越详细效果越好。例如：一只猫咪在草地上追逐蝴蝶，阳光明媚，慢动作，电影质感"
+                class="w-full" :disabled="generating" />
+            </div>
+
+            <!-- 参数设置 -->
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-xs mb-1" style="color: var(--cyber-text-dim);">时长</label>
+                <el-select v-model="videoDuration" size="small" class="w-full">
+                  <el-option :label="'5秒'" :value="5" />
+                  <el-option :label="'10秒'" :value="10" />
+                  <el-option :label="'15秒'" :value="15" />
+                </el-select>
+              </div>
+              <div>
+                <label class="block text-xs mb-1" style="color: var(--cyber-text-dim);">分辨率</label>
+                <el-select v-model="videoResolution" size="small" class="w-full">
+                  <el-option label="720p 高清" value="720p" />
+                  <el-option label="1080p 全高清" value="1080p" />
+                </el-select>
+              </div>
+            </div>
+
+            <!-- 生成按钮 -->
+            <div class="flex items-center justify-between pt-2 flex-wrap gap-3">
+              <span class="text-sm" style="color: var(--cyber-text-dim);">
+                消耗：<strong :style="{ color: tool.isFree ? 'var(--cyber-green)' : 'var(--cyber-amber)' }">
+                  {{ tool.isFree ? '免费' : `${tool.coinCost} 圣点` }}
+                </strong>
+              </span>
+              <el-button type="primary" size="large" :loading="generating" @click="handleGenerateVideo"
+                :disabled="!videoPrompt.trim()"
+                style="min-width: 160px; height: 44px; background: linear-gradient(135deg, var(--cyber-magenta), var(--cyber-purple)) !important;">
+                {{ generating ? '生成中...' : '🎬 开始生成' }}
+              </el-button>
+            </div>
+          </div>
+
+          <!-- 生成的视频 -->
+          <div v-if="generatedVideo || generating" class="mt-6 pt-6" style="border-top: 1px solid var(--cyber-border);">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-bold" style="color: var(--cyber-text);">生成结果</h3>
+              <el-button v-if="generatedVideo" size="small" @click="generatedVideo = ''">🗑️ 清除</el-button>
+            </div>
+
+            <!-- 加载中 -->
+            <div v-if="generating && !generatedVideo"
+              class="rounded-xl overflow-hidden cyber-card flex items-center justify-center"
+              style="height: 400px; background: rgba(0,240,255,0.03);">
+              <div class="text-center">
+                <div class="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center"
+                  style="background: linear-gradient(135deg, var(--cyber-magenta), var(--cyber-purple));">
+                  <span class="text-2xl animate-spin">🎬</span>
+                </div>
+                <p class="text-sm" style="color: var(--cyber-text-dim);">视频生成中，预计需要 1-3 分钟...</p>
+              </div>
+            </div>
+
+            <!-- 视频结果 -->
+            <div v-if="generatedVideo" class="rounded-xl overflow-hidden cyber-card" style="background: rgba(0,240,255,0.03);">
+              <video :src="generatedVideo" controls class="w-full" style="max-height: 500px;"></video>
+              <div class="p-4 flex items-center justify-between flex-wrap gap-3">
+                <div class="text-xs" style="color: var(--cyber-text-dim);">
+                  模型: {{ lastModel }} | 耗时: {{ lastDurationMs }}ms
+                </div>
+                <div class="flex gap-2">
+                  <a :href="generatedVideo" target="_blank" download
+                    class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
+                    style="background: rgba(0,240,255,0.1); color: var(--cyber-cyan); border: 1px solid rgba(0,240,255,0.2);">
+                    ⬇️ 下载
+                  </a>
+                  <button @click="copyResult(generatedVideo)"
+                    class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
+                    style="background: rgba(0,240,255,0.1); color: var(--cyber-cyan); border: 1px solid rgba(0,240,255,0.2);">
+                    🔗 复制链接
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
+
         <!-- 消耗提示 -->
         <div v-if="lastCoinCost > 0" class="mt-4 p-3 rounded-xl text-sm"
           style="background: rgba(255,184,0,0.08); border: 1px solid rgba(255,184,0,0.2); color: var(--cyber-amber);">
@@ -237,6 +326,7 @@
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { toolApi } from '@/api'
+import service from '@/api/request'
 import { toolTypeMap } from '@/utils'
 import type { Tool, ChatMessage } from '@/types'
 import { ElMessage } from 'element-plus'
@@ -259,6 +349,12 @@ const imageCount = ref(1)
 const imageQuality = ref('standard')
 const generatedImages = ref<string[]>([])
 
+// ===== 视频生成状态 =====
+const videoPrompt = ref('')
+const videoDuration = ref(5)
+const videoResolution = ref('720p')
+const generatedVideo = ref<string>('')
+
 // ===== 消耗信息 =====
 const lastCoinCost = ref(0)
 const lastDurationMs = ref(0)
@@ -266,6 +362,7 @@ const lastModel = ref('')
 
 // ===== 计算属性 =====
 const isImageTool = computed(() => tool.value?.toolType === 'image')
+const isVideoTool = computed(() => tool.value?.toolType === 'video')
 
 const providerDisplayName = computed(() => {
   if (!tool.value) return ''
@@ -373,6 +470,32 @@ async function handleGenerateImage() {
     ElMessage.success(`成功生成 ${generatedImages.value.length} 张图片！`)
   } catch (e: any) {
     ElMessage.error(e?.message || '图片生成失败，请重试')
+  } finally {
+    generating.value = false
+  }
+}
+
+// ===== 视频生成 =====
+async function handleGenerateVideo() {
+  if (!videoPrompt.value.trim() || !tool.value) return ElMessage.warning('请输入视频描述')
+  if (generating.value) return
+
+  generating.value = true
+  try {
+    const res = await service.post(`/ai/tools/${route.params.id}/video`, {
+      prompt: videoPrompt.value,
+      duration: videoDuration.value,
+      resolution: videoResolution.value,
+    })
+
+    generatedVideo.value = res.data.data?.videoUrl || ''
+    lastCoinCost.value = res.data.data?.coinCost || 0
+    lastDurationMs.value = res.data.data?.durationMs || 0
+    lastModel.value = res.data.data?.model || tool.value.modelId
+
+    ElMessage.success('视频生成成功！')
+  } catch (e: any) {
+    ElMessage.error(e?.response?.data?.message || e?.message || '视频生成失败，请重试')
   } finally {
     generating.value = false
   }

@@ -1,7 +1,7 @@
 /**
  * 罗圣纪元 SaaS 后端服务器 v2
  * Express.js + AI API 集成
- * 支持 Coze / DeepSeek / OpenAI 兼容 API
+ * 支持 Coze / DeepSeek / OpenAI / 豆包 / 即梦 / 通义千问 兼容 API
  * 完整版：包含所有管理后台所需API
  */
 const express = require('express');
@@ -10,6 +10,9 @@ const https = require('https');
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+
+// 加载环境变量
+require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -20,13 +23,60 @@ app.use(express.json({ limit: '10mb' }));
 
 // ===== 配置 =====
 const CONFIG = {
-  AI_PROVIDER: process.env.AI_PROVIDER || 'coze',
+  // AI Provider 配置
+  AI_PROVIDER: process.env.AI_PROVIDER || 'doubao',
+
+  // 豆包（字节跳动火山引擎）
+  DOUBAO_API_KEY: process.env.DOUBAO_API_KEY || '',
+  DOUBAO_BASE_URL: process.env.DOUBAO_BASE_URL || 'https://ark.cn-beijing.volces.com/api/v3',
+  DOUBAO_MODEL: process.env.DOUBAO_MODEL || 'doubao-pro-32k',
+
+  // 即梦（字节跳动 AI 绘画）
+  JIMENG_API_KEY: process.env.JIMENG_API_KEY || '',
+  JIMENG_BASE_URL: process.env.JIMENG_BASE_URL || 'https://jimeng.jianying.com/v1',
+  JIMENG_MODEL: process.env.JIMENG_MODEL || 'jimeng-v2',
+
+  // DeepSeek
+  DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY || '',
+  DEEPSEEK_BASE_URL: process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com/v1',
+  DEEPSEEK_MODEL: process.env.DEEPSEEK_MODEL || 'deepseek-chat',
+
+  // OpenAI
+  OPENAI_API_KEY: process.env.OPENAI_API_KEY || '',
+  OPENAI_BASE_URL: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
+  OPENAI_MODEL: process.env.OPENAI_MODEL || 'gpt-4o',
+
+  // 通义千问（阿里云）
+  TONGYI_API_KEY: process.env.TONGYI_API_KEY || '',
+  TONGYI_BASE_URL: process.env.TONGYI_BASE_URL || 'https://dashscope.aliyuncs.com/api/v1',
+  TONGYI_MODEL: process.env.TONGYI_MODEL || 'qwen-plus',
+
+  // 腾讯元宝
+  YUANBAO_API_KEY: process.env.YUANBAO_API_KEY || '',
+  YUANBAO_BASE_URL: process.env.YUANBAO_BASE_URL || 'https://api.yuanbao.tencent.com/v1',
+  YUANBAO_MODEL: process.env.YUANBAO_MODEL || 'yuanbao-pro',
+
+  // Coze 智能体
   COZE_API_KEY: process.env.COZE_API_KEY || '',
   COZE_BOT_ID: process.env.COZE_BOT_ID || '',
-  DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY || '',
-  OPENAI_API_KEY: process.env.OPENAI_API_KEY || '',
-  OPENAI_BASE_URL: process.env.OPENAI_BASE_URL || 'https://api.openai.com',
+
+  // 可灵视频生成（快手）
+  KLING_API_KEY: process.env.KLING_API_KEY || '',
+  KLING_BASE_URL: process.env.KLING_BASE_URL || 'https://kling-api.kuaishou.com/v1',
+  KLING_MODEL: process.env.KLING_MODEL || 'kling-v1',
+
+  // 图片/视频生成配置
+  IMAGE_GENERATION_PROVIDER: process.env.IMAGE_GENERATION_PROVIDER || 'jimeng',
+  VIDEO_GENERATION_PROVIDER: process.env.VIDEO_GENERATION_PROVIDER || 'kling',
+
+  // JWT 配置
   JWT_SECRET: process.env.JWT_SECRET || 'lsjy-jwt-secret-2026-rosheng',
+
+  // AI 全局配置
+  AI_MAX_RETRIES: parseInt(process.env.AI_MAX_RETRIES || '3'),
+  AI_TIMEOUT: parseInt(process.env.AI_TIMEOUT || '60000'),
+
+  // 系统提示词
   SYSTEM_PROMPT: `你是"罗圣AI智能体"，由祁阳市罗圣纪元互联网科技有限责任公司开发。
 
 核心信息：
@@ -38,7 +88,8 @@ const CONFIG = {
 - 文案创作：营销文案、宣传文章、社交媒体内容
 - 商业咨询：创业建议、市场分析、运营策略
 - 数据分析：业务数据解读、趋势预测
-- 图片生成：AI绘画、设计辅助（需配置即梦API）
+- 图片生成：AI绘画、设计辅助
+- 视频生成：AI视频创作
 - 教育辅导：课程推荐、学习建议
 
 回复规范：
@@ -241,37 +292,234 @@ async function callCozeAPI(messages, options = {}) {
   return { content: answerMsg.content, model: 'coze', usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 } };
 }
 
+// OpenAI 兼容 API 调用（支持 DeepSeek/豆包/通义千问/元宝/OpenAI）
 async function callOpenAICompatibleAPI(messages, options = {}) {
   const provider = options.provider || 'deepseek';
   let apiKey, baseUrl, model;
-  if (provider === 'deepseek') { apiKey = CONFIG.DEEPSEEK_API_KEY; baseUrl = 'https://api.deepseek.com'; model = options.model || 'deepseek-chat'; }
-  else { apiKey = CONFIG.OPENAI_API_KEY; baseUrl = CONFIG.OPENAI_BASE_URL; model = options.model || 'gpt-4o-mini'; }
-  if (!apiKey) throw new Error(`${provider} API Key 未配置`);
-  const fullMessages = [{ role: 'system', content: CONFIG.SYSTEM_PROMPT }, ...messages];
-  const res = await httpsRequest(`${baseUrl}/v1/chat/completions`, { method: 'POST', headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' } }, { model, messages: fullMessages, temperature: options.temperature || 0.7, max_tokens: options.maxTokens || 2000 });
-  if (res.status !== 200) throw new Error(`API调用失败 (${res.status}): ${JSON.stringify(res.data)}`);
+
+  switch (provider) {
+    case 'deepseek':
+      apiKey = CONFIG.DEEPSEEK_API_KEY;
+      baseUrl = CONFIG.DEEPSEEK_BASE_URL;
+      model = options.model || CONFIG.DEEPSEEK_MODEL;
+      break;
+    case 'doubao':
+      apiKey = CONFIG.DOUBAO_API_KEY;
+      baseUrl = CONFIG.DOUBAO_BASE_URL;
+      model = options.model || CONFIG.DOUBAO_MODEL;
+      break;
+    case 'tongyi':
+      apiKey = CONFIG.TONGYI_API_KEY;
+      baseUrl = CONFIG.TONGYI_BASE_URL;
+      model = options.model || CONFIG.TONGYI_MODEL;
+      break;
+    case 'yuanbao':
+      apiKey = CONFIG.YUANBAO_API_KEY;
+      baseUrl = CONFIG.YUANBAO_BASE_URL;
+      model = options.model || CONFIG.YUANBAO_MODEL;
+      break;
+    case 'openai':
+    default:
+      apiKey = CONFIG.OPENAI_API_KEY;
+      baseUrl = CONFIG.OPENAI_BASE_URL;
+      model = options.model || CONFIG.OPENAI_MODEL;
+      break;
+  }
+
+  if (!apiKey) throw new Error(`${provider} API Key 未配置，请在 .env 文件中配置 ${provider.toUpperCase()}_API_KEY`);
+
+  const fullMessages = [{ role: 'system', content: options.systemPrompt || CONFIG.SYSTEM_PROMPT }, ...messages];
+  const res = await httpsRequest(`${baseUrl}/chat/completions`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }
+  }, {
+    model,
+    messages: fullMessages,
+    temperature: options.temperature || 0.7,
+    max_tokens: options.maxTokens || 2000
+  });
+
+  if (res.status !== 200) throw new Error(`${provider} API调用失败 (${res.status}): ${JSON.stringify(res.data)}`);
   const choice = res.data.choices?.[0];
-  if (!choice?.message?.content) throw new Error('API返回空回复');
+  if (!choice?.message?.content) throw new Error(`${provider} API返回空回复`);
   return { content: choice.message.content, model, usage: res.data.usage || {} };
 }
 
+// AI 对话主函数 - 自动选择可用的 Provider
 async function callAI(messages, options = {}) {
   const provider = CONFIG.AI_PROVIDER;
   const systemMsg = { role: 'system', content: options.systemPrompt || CONFIG.SYSTEM_PROMPT };
   const fullMessages = [systemMsg, ...messages.filter(m => m.role !== 'system')];
+
   try {
     switch (provider) {
       case 'coze': return await callCozeAPI(fullMessages, options);
+      case 'doubao': return await callOpenAICompatibleAPI(messages, { ...options, provider: 'doubao' });
       case 'deepseek': return await callOpenAICompatibleAPI(messages, { ...options, provider: 'deepseek' });
+      case 'tongyi': return await callOpenAICompatibleAPI(messages, { ...options, provider: 'tongyi' });
+      case 'yuanbao': return await callOpenAICompatibleAPI(messages, { ...options, provider: 'yuanbao' });
       case 'openai': return await callOpenAICompatibleAPI(messages, { ...options, provider: 'openai' });
       default: throw new Error(`未知的AI Provider: ${provider}`);
     }
   } catch (err) {
     log(`AI API 调用失败 (${provider}): ${err.message}`);
-    if (provider !== 'deepseek' && CONFIG.DEEPSEEK_API_KEY) return await callOpenAICompatibleAPI(messages, { ...options, provider: 'deepseek' });
-    if (provider !== 'coze' && CONFIG.COZE_API_KEY && CONFIG.COZE_BOT_ID) return await callCozeAPI(fullMessages, options);
+
+    // 自动降级到其他可用的 Provider
+    const fallbackProviders = ['doubao', 'deepseek', 'tongyi', 'yuanbao', 'openai', 'coze'].filter(p => p !== provider);
+    for (const fallback of fallbackProviders) {
+      try {
+        if (fallback === 'coze') {
+          if (CONFIG.COZE_API_KEY && CONFIG.COZE_BOT_ID) {
+            log(`降级到 Coze Provider`);
+            return await callCozeAPI(fullMessages, options);
+          }
+        } else {
+          const keyMap = {
+            doubao: CONFIG.DOUBAO_API_KEY,
+            deepseek: CONFIG.DEEPSEEK_API_KEY,
+            tongyi: CONFIG.TONGYI_API_KEY,
+            yuanbao: CONFIG.YUANBAO_API_KEY,
+            openai: CONFIG.OPENAI_API_KEY,
+          };
+          if (keyMap[fallback]) {
+            log(`降级到 ${fallback} Provider`);
+            return await callOpenAICompatibleAPI(messages, { ...options, provider: fallback });
+          }
+        }
+      } catch (fallbackErr) {
+        log(`${fallback} 降级也失败：${fallbackErr.message}`);
+      }
+    }
+
     throw err;
   }
+}
+
+// ===== 图片生成 API =====
+async function generateImageWithAI(prompt, options = {}) {
+  const provider = CONFIG.IMAGE_GENERATION_PROVIDER || 'jimeng';
+  const width = options.width || 1024;
+  const height = options.height || 1024;
+  const style = options.style || 'auto';
+
+  if (provider === 'jimeng') {
+    return await callJimengImageAPI(prompt, { width, height, style });
+  } else if (provider === 'openai') {
+    return await callDALLEImageAPI(prompt, { width, height, style });
+  } else {
+    throw new Error(`不支持的图片生成 Provider: ${provider}`);
+  }
+}
+
+// 即梦 AI 绘画
+async function callJimengImageAPI(prompt, options = {}) {
+  const apiKey = CONFIG.JIMENG_API_KEY;
+  if (!apiKey) throw new Error('即梦 API Key 未配置，请在 .env 中配置 JIMENG_API_KEY');
+
+  const baseUrl = CONFIG.JIMENG_BASE_URL;
+  const model = CONFIG.JIMENG_MODEL;
+
+  // 即梦 API 调用（参考官方文档）
+  const res = await httpsRequest(`${baseUrl}/images/generations`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }
+  }, {
+    model,
+    prompt,
+    size: `${options.width}x${options.height}`,
+    style: options.style || 'auto',
+    n: options.count || 1
+  });
+
+  if (res.status !== 200) throw new Error(`即梦 API 调用失败 (${res.status}): ${JSON.stringify(res.data)}`);
+
+  // 解析返回的图片 URL
+  const urls = (res.data.data || []).map(item => item.url || item.b64_json).filter(Boolean);
+  if (urls.length === 0) throw new Error('即梦 API 未返回图片');
+
+  return { urls, model: 'jimeng-v2', prompt };
+}
+
+// DALL-E 图片生成（OpenAI）
+async function callDALLEImageAPI(prompt, options = {}) {
+  const apiKey = CONFIG.OPENAI_API_KEY;
+  if (!apiKey) throw new Error('OpenAI API Key 未配置，请在 .env 中配置 OPENAI_API_KEY');
+
+  const baseUrl = CONFIG.OPENAI_BASE_URL;
+
+  const res = await httpsRequest(`${baseUrl}/images/generations`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }
+  }, {
+    model: 'dall-e-3',
+    prompt,
+    size: `${options.width}x${options.height}`,
+    quality: 'standard',
+    n: options.count || 1
+  });
+
+  if (res.status !== 200) throw new Error(`DALL-E API 调用失败 (${res.status}): ${JSON.stringify(res.data)}`);
+
+  const urls = (res.data.data || []).map(item => item.url).filter(Boolean);
+  if (urls.length === 0) throw new Error('DALL-E API 未返回图片');
+
+  return { urls, model: 'dall-e-3', prompt };
+}
+
+// ===== 视频生成 API =====
+async function generateVideoWithAI(prompt, options = {}) {
+  const provider = CONFIG.VIDEO_GENERATION_PROVIDER || 'kling';
+
+  if (provider === 'kling') {
+    return await callKlingVideoAPI(prompt, options);
+  } else {
+    throw new Error(`不支持的视频生成 Provider: ${provider}`);
+  }
+}
+
+// 可灵视频生成（快手）
+async function callKlingVideoAPI(prompt, options = {}) {
+  const apiKey = CONFIG.KLING_API_KEY;
+  if (!apiKey) throw new Error('可灵 API Key 未配置，请在 .env 中配置 KLING_API_KEY');
+
+  const baseUrl = CONFIG.KLING_BASE_URL;
+  const model = CONFIG.KLING_MODEL;
+
+  // 提交视频生成任务
+  const submitRes = await httpsRequest(`${baseUrl}/videos/generations`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }
+  }, {
+    model,
+    prompt,
+    duration: options.duration || 5,
+    resolution: options.resolution || '720p'
+  });
+
+  if (submitRes.status !== 200) throw new Error(`可灵 API 提交失败 (${submitRes.status}): ${JSON.stringify(submitRes.data)}`);
+
+  const taskId = submitRes.data.data?.id || submitRes.data.data?.task_id;
+  if (!taskId) throw new Error('可灵 API 未返回任务 ID');
+
+  // 轮询任务状态
+  for (let i = 0; i < 60; i++) {
+    await new Promise(r => setTimeout(r, 3000));
+    const pollRes = await httpsRequest(`${baseUrl}/videos/generations/${taskId}`, {
+      method: 'GET',
+      headers: { 'Authorization': `Bearer ${apiKey}` }
+    });
+
+    const status = pollRes.data?.data?.status;
+    if (status === 'completed' || status === 'succeeded') {
+      const videoUrl = pollRes.data.data?.video_url || pollRes.data.data?.output?.video_url;
+      if (!videoUrl) throw new Error('可灵 API 未返回视频 URL');
+      return { videoUrl, model: 'kling-v1', prompt, durationMs: (i + 1) * 3000 };
+    } else if (status === 'failed') {
+      throw new Error(`可灵视频生成失败：${pollRes.data.data?.error || '未知错误'}`);
+    }
+  }
+
+  throw new Error('可灵视频生成超时（等待 3 分钟）');
 }
 
 // ===== 本地智能回复 =====
@@ -682,32 +930,103 @@ app.get('/api/v1/ai/quota/:toolId', authCheck, (req, res) => {
 });
 
 // 图片生成
-app.post('/api/v1/ai/tools/:id/generate', authCheck, (req, res) => {
+// AI 图片生成（真实 AI 绘画）
+app.post('/api/v1/ai/tools/:id/generate', authCheck, async (req, res) => {
   const tool = aiToolsStore.find(t => t.id === Number(req.params.id));
   if (!tool) return res.status(404).json({ code: 404, message: '工具不存在', data: null });
-  const { prompt, width, height, style } = req.body;
-  const count = Number(req.body.count) || 1;
-  const urls = [];
-  for (let i = 0; i < count; i++) {
-    urls.push(`https://picsum.photos/${width || 512}/${height || 512}?random=${Date.now()}_${i}`);
+
+  const { prompt, width, height, style, count } = req.body;
+  if (!prompt) return res.status(400).json({ code: 400, message: '请提供图片描述', data: null });
+
+  log(`收到图片生成请求: toolId=${req.params.id}, prompt=${prompt.slice(0, 50)}...`);
+
+  try {
+    const result = await generateImageWithAI(prompt, {
+      width: width || 1024,
+      height: height || 1024,
+      style: style || 'auto',
+      count: count || 1
+    });
+
+    log(`图片生成成功: model=${result.model}, urls=${result.urls.length}`);
+
+    res.json({
+      code: 0,
+      message: 'success',
+      data: {
+        urls: result.urls,
+        model: result.model,
+        prompt: result.prompt,
+        width: width || 1024,
+        height: height || 1024,
+        coinCost: tool.coinCost || 20,
+        durationMs: 3000,
+        createdAt: new Date().toISOString(),
+      },
+    });
+  } catch (err) {
+    log(`图片生成失败: ${err.message}`);
+    res.status(500).json({
+      code: 500,
+      message: `图片生成失败：${err.message}。请检查 .env 中的 API Key 配置。`,
+      data: null,
+    });
   }
-  res.json({
-    code: 0, message: 'success',
-    data: {
-      urls: urls,
-      model: 'jimeng-v2', prompt: prompt || '', width: width || 512, height: height || 512,
-      coinCost: tool.coinCost || 20, durationMs: Math.floor(Math.random() * 3000) + 1500,
-      createdAt: new Date().toISOString(),
-    },
-  });
 });
 
-// AI Provider状态
+// AI 视频生成
+app.post('/api/v1/ai/tools/:id/video', authCheck, async (req, res) => {
+  const tool = aiToolsStore.find(t => t.id === Number(req.params.id));
+  if (!tool) return res.status(404).json({ code: 404, message: '工具不存在', data: null });
+
+  const { prompt, duration, resolution } = req.body;
+  if (!prompt) return res.status(400).json({ code: 400, message: '请提供视频描述', data: null });
+
+  log(`收到视频生成请求: toolId=${req.params.id}, prompt=${prompt.slice(0, 50)}...`);
+
+  try {
+    const result = await generateVideoWithAI(prompt, {
+      duration: duration || 5,
+      resolution: resolution || '720p'
+    });
+
+    log(`视频生成成功: model=${result.model}, url=${result.videoUrl}`);
+
+    res.json({
+      code: 0,
+      message: 'success',
+      data: {
+        videoUrl: result.videoUrl,
+        model: result.model,
+        prompt: result.prompt,
+        duration: duration || 5,
+        resolution: resolution || '720p',
+        coinCost: tool.coinCost || 50,
+        durationMs: result.durationMs || 10000,
+        createdAt: new Date().toISOString(),
+      },
+    });
+  } catch (err) {
+    log(`视频生成失败: ${err.message}`);
+    res.status(500).json({
+      code: 500,
+      message: `视频生成失败：${err.message}。请检查 .env 中的 API Key 配置。`,
+      data: null,
+    });
+  }
+});
+
+// AI Provider 状态
 app.get('/api/v1/ai/providers', (req, res) => {
   const providers = [
-    { name: 'coze', displayName: 'Coze智能体', status: CONFIG.COZE_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
+    { name: 'doubao', displayName: '豆包', status: CONFIG.DOUBAO_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
     { name: 'deepseek', displayName: 'DeepSeek', status: CONFIG.DEEPSEEK_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
+    { name: 'tongyi', displayName: '通义千问', status: CONFIG.TONGYI_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
+    { name: 'yuanbao', displayName: '腾讯元宝', status: CONFIG.YUANBAO_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
     { name: 'openai', displayName: 'OpenAI', status: CONFIG.OPENAI_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
+    { name: 'jimeng', displayName: '即梦 (图片)', status: CONFIG.JIMENG_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
+    { name: 'kling', displayName: '可灵 (视频)', status: CONFIG.KLING_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
+    { name: 'coze', displayName: 'Coze 智能体', status: CONFIG.COZE_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
   ];
   res.json({ code: 0, message: 'success', data: providers });
 });
@@ -715,9 +1034,17 @@ app.get('/api/v1/ai/providers', (req, res) => {
 // AI模型列表
 app.get('/api/v1/ai/models', (req, res) => {
   const models = [
-    { group: 'coze', provider: 'coze', models: [{ id: 'coze-bot', name: 'Coze智能体', capabilities: ['text'] }] },
+    { group: 'doubao', provider: 'doubao', models: [{ id: 'doubao-pro-32k', name: '豆包 Pro 32K', capabilities: ['text'] }] },
     { group: 'deepseek', provider: 'deepseek', models: [{ id: 'deepseek-chat', name: 'DeepSeek Chat', capabilities: ['text'] }] },
-    { group: 'openai', provider: 'openai', models: [{ id: 'gpt-4o-mini', name: 'GPT-4o Mini', capabilities: ['text', 'image'] }] },
+    { group: 'tongyi', provider: 'tongyi', models: [{ id: 'qwen-plus', name: '通义千问 Plus', capabilities: ['text'] }] },
+    { group: 'yuanbao', provider: 'yuanbao', models: [{ id: 'yuanbao-pro', name: '腾讯元宝 Pro', capabilities: ['text'] }] },
+    { group: 'openai', provider: 'openai', models: [
+      { id: 'gpt-4o', name: 'GPT-4o', capabilities: ['text', 'image'] },
+      { id: 'dall-e-3', name: 'DALL-E 3', capabilities: ['image'] }
+    ] },
+    { group: 'jimeng', provider: 'jimeng', models: [{ id: 'jimeng-v2', name: '即梦 AI 绘画', capabilities: ['image'] }] },
+    { group: 'kling', provider: 'kling', models: [{ id: 'kling-v1', name: '可灵 AI 视频', capabilities: ['video'] }] },
+    { group: 'coze', provider: 'coze', models: [{ id: 'coze-bot', name: 'Coze 智能体', capabilities: ['text'] }] },
   ];
   res.json({ code: 0, message: 'success', data: models });
 });
@@ -1288,12 +1615,21 @@ app.use('/api/v1/*', (req, res) => {
 
 // ===== 启动服务器 =====
 app.listen(PORT, '0.0.0.0', () => {
-  log(`\n🚀 罗圣纪元后端服务器 v2 启动成功！`);
+  log(`\n 罗圣纪元后端服务器 v2 启动成功！`);
   log(`   端口: ${PORT}`);
-  log(`   AI Provider: ${CONFIG.AI_PROVIDER}`);
-  log(`   Coze配置: ${CONFIG.COZE_API_KEY ? '✅ 已配置' : '❌ 未配置'}`);
-  log(`   DeepSeek配置: ${CONFIG.DEEPSEEK_API_KEY ? '✅ 已配置' : '❌ 未配置'}`);
-  log(`   OpenAI配置: ${CONFIG.OPENAI_API_KEY ? '✅ 已配置' : '❌ 未配置'}`);
-  log(`   外部访问: http://0.0.0.0:${PORT}/api/v1`);
-  log(`   API端点总数: 60+`);
+  log(`   环境: ${process.env.NODE_ENV || 'development'}`);
+  log(`\n📊 AI 模型配置状态:`);
+  log(`   主 Provider: ${CONFIG.AI_PROVIDER}`);
+  log(`   豆包 (Doubao): ${CONFIG.DOUBAO_API_KEY ? '✅ 已配置' : '❌ 未配置'}`);
+  log(`   DeepSeek: ${CONFIG.DEEPSEEK_API_KEY ? '✅ 已配置' : ' 未配置'}`);
+  log(`   通义千问 (Tongyi): ${CONFIG.TONGYI_API_KEY ? '✅ 已配置' : '❌ 未配置'}`);
+  log(`   腾讯元宝 (Yuanbao): ${CONFIG.YUANBAO_API_KEY ? '✅ 已配置' : '❌ 未配置'}`);
+  log(`   OpenAI: ${CONFIG.OPENAI_API_KEY ? '✅ 已配置' : '❌ 未配置'}`);
+  log(`   即梦 (Jimeng 图片): ${CONFIG.JIMENG_API_KEY ? '✅ 已配置' : '❌ 未配置'}`);
+  log(`   可灵 (Kling 视频): ${CONFIG.KLING_API_KEY ? '✅ 已配置' : '❌ 未配置'}`);
+  log(`   Coze 智能体: ${CONFIG.COZE_API_KEY && CONFIG.COZE_BOT_ID ? '✅ 已配置' : '❌ 未配置'}`);
+  log(`\n📝 图片生成: ${CONFIG.IMAGE_GENERATION_PROVIDER} | 视频生成: ${CONFIG.VIDEO_GENERATION_PROVIDER}`);
+  log(`\n🌐 外部访问: http://0.0.0.0:${PORT}/api/v1`);
+  log(`   API 端点总数: 77+`);
+  log(`\n⚠️  如看到"❌ 未配置"，请在 backend/.env 文件中填入对应的 API Key`);
 });
