@@ -75,18 +75,32 @@ export const toolApi = {
   chat(toolId: number, messages: ChatMessage[], options?: {
     model?: string; temperature?: number; maxTokens?: number; stream?: boolean; systemPrompt?: string
   }): Promise<ApiResponse<ChatResult>> {
+    if (useMock) return mockApi.chat(toolId, messages, options) as any
     return service.post(`/ai/tools/${toolId}/chat`, {
       messages, model: options?.model, temperature: options?.temperature,
       maxTokens: options?.maxTokens, stream: options?.stream, systemPrompt: options?.systemPrompt,
     }).then(r => r.data)
   },
   generateImage(toolId: number, prompt: string, options?: ImageOptions): Promise<ApiResponse<ImageResult>> {
+    if (useMock) return mockApi.generateImage(toolId, prompt, options) as any
     return service.post(`/ai/tools/${toolId}/generate`, { prompt, ...options }).then(r => r.data)
   },
   getModels(category?: string): Promise<ApiResponse<ProviderModelGroup[]>> {
+    if (useMock) return mockApi.getModels(category) as any
     return service.get('/ai/models', { params: { category } }).then(r => r.data)
   },
   getProviders(): Promise<ApiResponse<ProviderStatus[]>> {
+    if (useMock) {
+      return Promise.resolve({
+        code: 0, message: 'success',
+        data: [
+          { name: 'doubao', displayName: '豆包', status: 'healthy', latencyMs: 120 },
+          { name: 'jimeng', displayName: '即梦', status: 'healthy', latencyMs: 200 },
+          { name: 'openai', displayName: 'OpenAI', status: 'healthy', latencyMs: 350 },
+          { name: 'tongyi', displayName: '通义千问', status: 'healthy', latencyMs: 150 },
+        ]
+      })
+    }
     return service.get('/ai/providers').then(r => r.data)
   },
 }
