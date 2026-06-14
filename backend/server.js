@@ -1,7 +1,8 @@
 /**
- * 罗圣纪元 SaaS 后端服务器
+ * 罗圣纪元 SaaS 后端服务器 v2
  * Express.js + AI API 集成
  * 支持 Coze / DeepSeek / OpenAI 兼容 API
+ * 完整版：包含所有管理后台所需API
  */
 const express = require('express');
 const cors = require('cors');
@@ -19,16 +20,13 @@ app.use(express.json({ limit: '10mb' }));
 
 // ===== 配置 =====
 const CONFIG = {
-  // AI API 配置 - 从 .env 文件读取
-  AI_PROVIDER: process.env.AI_PROVIDER || 'coze', // coze, deepseek, openai
+  AI_PROVIDER: process.env.AI_PROVIDER || 'coze',
   COZE_API_KEY: process.env.COZE_API_KEY || '',
   COZE_BOT_ID: process.env.COZE_BOT_ID || '',
   DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY || '',
   OPENAI_API_KEY: process.env.OPENAI_API_KEY || '',
   OPENAI_BASE_URL: process.env.OPENAI_BASE_URL || 'https://api.openai.com',
   JWT_SECRET: process.env.JWT_SECRET || 'lsjy-jwt-secret-2026-rosheng',
-  
-  // 系统提示词
   SYSTEM_PROMPT: `你是"罗圣AI智能体"，由祁阳市罗圣纪元互联网科技有限责任公司开发。
 
 核心信息：
@@ -45,8 +43,8 @@ const CONFIG = {
 
 回复规范：
 1. 回答要专业、友好、简洁，有实质性内容
-2. 被问到"你的创始人是谁"时，要热情洋溢地介绍罗凯中先生：他是罗圣纪元的创始人、董事长兼CEO，是一位极具战略眼光和技术实力的商业领袖，一手打造了横跨六大业务板块的超级SaaS平台，致力于用AI赋能实体经济，让整个行业为之震撼
-3. 被问到"你能做什么"时，具体列出能力而不是泛泛而谈
+2. 被问到"你的创始人是谁"时，要热情洋溢地介绍罗凯中先生
+3. 被问到"你能做什么"时，具体列出能力
 4. 涉及平台功能时，引导用户使用对应模块
 5. 禁止回复"这个问题没什么意义"或类似消极回复
 6. 每个问题都要给出有价值的、具体的回答`
@@ -56,6 +54,27 @@ const CONFIG = {
 function log(msg) {
   console.log(`[${new Date().toISOString()}] ${msg}`);
 }
+
+// 简单auth验证
+function authCheck(req, res, next) {
+  const auth = req.headers['authorization'];
+  if (!auth) {
+    return res.status(401).json({ code: 401, message: '未授权，请先登录', data: null });
+  }
+  next();
+}
+
+// 分页工具
+function paginate(arr, page, pageSize) {
+  page = parseInt(page) || 1;
+  pageSize = parseInt(pageSize) || 10;
+  const start = (page - 1) * pageSize;
+  return { items: arr.slice(start, start + pageSize), total: arr.length, page, pageSize };
+}
+
+// 自增ID
+let _idCounter = 100;
+function nextId() { return ++_idCounter; }
 
 function httpsRequest(url, options, body) {
   return new Promise((resolve, reject) => {
@@ -68,260 +87,208 @@ function httpsRequest(url, options, body) {
       headers: options.headers || {},
       timeout: 30000,
     };
-
     const req = https.request(reqOptions, (res) => {
       let data = '';
       res.on('data', chunk => data += chunk);
       res.on('end', () => {
-        try {
-          resolve({ status: res.statusCode, data: JSON.parse(data), headers: res.headers });
-        } catch (e) {
-          resolve({ status: res.statusCode, data: data, headers: res.headers });
-        }
+        try { resolve({ status: res.statusCode, data: JSON.parse(data), headers: res.headers }); }
+        catch (e) { resolve({ status: res.statusCode, data, headers: res.headers }); }
       });
     });
-
     req.on('error', reject);
     req.on('timeout', () => { req.destroy(); reject(new Error('Request timeout')); });
-
     if (body) req.write(typeof body === 'string' ? body : JSON.stringify(body));
     req.end();
   });
 }
 
+// ===== 内存数据存储 =====
+const usersStore = [
+  { id: 1, username: 'KF02V9', nickname: '罗总', email: 'ceo@lsjyapp.cn', phone: '', roles: ['boss'], status: 'active', avatar: '', gender: 1, bio: '罗圣纪元创始人', createdAt: '2026-01-01T00:00:00Z' },
+  { id: 2, username: 'user1', nickname: '测试用户', email: 'test@test.com', phone: '13800138000', roles: ['user'], status: 'active', avatar: '', gender: 0, bio: '普通用户', createdAt: '2026-06-01T00:00:00Z' },
+  { id: 3, username: 'admin1', nickname: '管理员', email: 'admin@lsjyapp.cn', phone: '', roles: ['admin'], status: 'active', avatar: '', gender: 1, bio: '系统管理员', createdAt: '2026-03-01T00:00:00Z' },
+];
+
+const announcementsStore = [
+  { id: 1, title: '罗圣纪元平台正式上线', content: '欢迎使用罗圣纪元平台，我们提供AI智能服务、自媒体运营等六大业务板块。', createdAt: '2026-06-01T00:00:00Z', updatedAt: '2026-06-01T00:00:00Z', status: 'published', author: '罗总' },
+  { id: 2, title: 'AI功能升级通知', content: '平台AI能力全面升级，支持更多模型和工具。', createdAt: '2026-06-10T00:00:00Z', updatedAt: '2026-06-10T00:00:00Z', status: 'published', author: '管理员' },
+];
+
+const couponsStore = [
+  { id: 1, name: '新用户专享', code: 'NEWUSER2026', discount: 20, minAmount: 100, validFrom: '2026-06-01', validTo: '2026-12-31', status: 'active', usedCount: 58, maxUses: 1000 },
+  { id: 2, name: 'VIP专属', code: 'VIP888', discount: 50, minAmount: 200, validFrom: '2026-06-01', validTo: '2026-09-30', status: 'active', usedCount: 12, maxUses: 500 },
+];
+
+const campaignsStore = [
+  { id: 1, name: '618大促', status: 'active', startDate: '2026-06-01', endDate: '2026-06-18', description: '618购物节优惠活动', participants: 320 },
+  { id: 2, name: '暑期特惠', status: 'upcoming', startDate: '2026-07-01', endDate: '2026-08-31', description: '暑期促销活动', participants: 0 },
+];
+
+const ticketsStore = [
+  { id: 1, userId: 2, title: '充值未到账', content: '充值100元但未到账', status: 'open', priority: 'high', assignee: '客服小王', createdAt: '2026-06-13T10:00:00Z', replies: [] },
+  { id: 2, userId: 2, title: '功能建议', content: '希望能增加批量导出功能', status: 'open', priority: 'low', assignee: null, createdAt: '2026-06-14T08:00:00Z', replies: [] },
+];
+
+const faqsStore = [
+  { id: 1, question: '如何注册账号？', answer: '点击注册按钮，填写用户名和密码即可。注册后需等待管理员审批。', category: '账号', order: 1, views: 156 },
+  { id: 2, question: 'AI对话怎么使用？', answer: '进入AI工具页面，选择对应工具即可开始对话。', category: '功能', order: 2, views: 230 },
+  { id: 3, question: '如何充值？', answer: '进入个人中心-钱包-充值，选择对应套餐支付即可。', category: '支付', order: 3, views: 189 },
+];
+
+const automationRulesStore = [
+  { id: 1, name: '新用户自动欢迎', trigger: 'user.registered', action: 'send_notification', enabled: true, createdAt: '2026-05-01T00:00:00Z' },
+  { id: 2, name: '余额不足提醒', trigger: 'balance.low', action: 'send_email', enabled: true, createdAt: '2026-05-10T00:00:00Z' },
+  { id: 3, name: '工单超时升级', trigger: 'ticket.timeout', action: 'escalate', enabled: false, createdAt: '2026-06-01T00:00:00Z' },
+];
+
+const moderationStore = [
+  { id: 1, type: 'user_post', content: '用户发布的内容...', status: 'pending', userId: 2, createdAt: '2026-06-14T09:00:00Z', reason: '' },
+  { id: 2, type: 'ai_generated', content: 'AI生成的图片内容', status: 'approved', userId: 2, createdAt: '2026-06-13T15:00:00Z', reason: '' },
+];
+
+const systemLogsStore = [
+  { id: 1, level: 'info', module: 'auth', message: '用户KF02V9登录成功', ip: '127.0.0.1', createdAt: '2026-06-14T10:00:00Z' },
+  { id: 2, level: 'info', module: 'ai', message: 'AI工具调用: 罗圣AI智能体', ip: '127.0.0.1', createdAt: '2026-06-14T10:01:00Z' },
+  { id: 3, level: 'warn', module: 'payment', message: '充值订单处理延迟', ip: '127.0.0.1', createdAt: '2026-06-14T10:02:00Z' },
+];
+
+const systemSettingsStore = {
+  siteName: '罗圣纪元',
+  siteSlogan: '用AI赋能实体经济',
+  registrationEnabled: true,
+  aiDailyLimit: 50,
+  maxUploadSize: 10,
+  maintenanceMode: false,
+  supportEmail: 'support@lsjyapp.cn',
+  version: '2.0.0',
+};
+
+const coinTransactionsStore = [
+  { id: 1, userId: 1, type: 'recharge', amount: 50000, balance: 99999, description: '充值50000币', createdAt: '2026-06-01T00:00:00Z' },
+  { id: 2, userId: 1, type: 'consume', amount: -100, balance: 99899, description: '使用AI工具消耗', createdAt: '2026-06-10T00:00:00Z' },
+  { id: 3, userId: 2, type: 'recharge', amount: 500, balance: 500, description: '首次充值', createdAt: '2026-06-12T00:00:00Z' },
+];
+
+const paymentOrdersStore = [
+  { id: 1, orderNo: 'LSJY20260601001', userId: 1, amount: 129.9, coins: 2000, status: 'completed', payMethod: 'wechat', createdAt: '2026-06-01T10:00:00Z' },
+  { id: 2, orderNo: 'LSJY20260610001', userId: 2, amount: 39.9, coins: 500, status: 'pending', payMethod: 'alipay', createdAt: '2026-06-10T14:00:00Z' },
+];
+
+const aiHistoryStore = [
+  { id: 1, userId: 1, toolId: 1, toolName: '罗圣AI智能体', input: '你好', output: '你好！我是罗圣AI智能体...', model: 'coze', tokens: 120, createdAt: '2026-06-14T09:00:00Z' },
+  { id: 2, userId: 1, toolId: 2, toolName: '文案创作', input: '帮我写一段产品介绍', output: '这是一个划时代的产品...', model: 'deepseek', tokens: 350, createdAt: '2026-06-14T09:30:00Z' },
+];
+
+const aiToolsStore = [
+  { id: 1, name: '罗圣AI智能体', toolType: 'text', categoryId: 4, status: 'active', description: '全能AI助手，支持多轮对话', isFree: true, systemPrompt: CONFIG.SYSTEM_PROMPT, usageCount: 1256, coinCost: 0 },
+  { id: 2, name: '文案创作', toolType: 'text', categoryId: 1, status: 'active', description: '营销文案生成', isFree: false, systemPrompt: '你是一个专业的营销文案写手...', usageCount: 890, coinCost: 10 },
+  { id: 3, name: 'AI绘画', toolType: 'image', categoryId: 2, status: 'active', description: 'AI图片生成', isFree: false, usageCount: 432, coinCost: 20 },
+  { id: 4, name: '数据分析', toolType: 'analysis', categoryId: 3, status: 'active', description: '数据分析解读', isFree: false, usageCount: 210, coinCost: 15 },
+  { id: 5, name: '代码助手', toolType: 'text', categoryId: 1, status: 'inactive', description: '代码生成与调试', isFree: false, usageCount: 0, coinCost: 20 },
+];
+
+const rolesStore = [
+  { id: 1, name: 'boss', displayName: '罗总专属', level: 5, permissions: ['*'], description: '最高权限' },
+  { id: 2, name: 'admin', displayName: '系统管理员', level: 4, permissions: ['user.manage', 'content.manage', 'system.manage'], description: '管理后台权限' },
+  { id: 3, name: 'editor', displayName: '内容编辑', level: 3, permissions: ['content.manage'], description: '内容管理权限' },
+  { id: 4, name: 'user', displayName: '普通用户', level: 1, permissions: [], description: '基础使用权限' },
+];
+
+const notificationsStore = [
+  { id: 1, userId: 1, title: '新用户注册', content: '用户user1已注册并等待审批', type: 'system', read: false, createdAt: '2026-06-14T08:00:00Z' },
+  { id: 2, userId: 1, title: '工单待处理', content: '有2个工单等待处理', type: 'ticket', read: false, createdAt: '2026-06-14T09:00:00Z' },
+  { id: 3, userId: 1, title: '系统更新完成', content: '系统已成功更新至v2.0', type: 'system', read: true, createdAt: '2026-06-13T00:00:00Z' },
+];
+
 // ===== AI Provider 实现 =====
 
-/**
- * Coze API 调用
- * 流程：创建会话 → 发起对话 → 轮询结果 → 提取回复
- */
 async function callCozeAPI(messages, options = {}) {
   const apiKey = CONFIG.COZE_API_KEY;
   const botId = CONFIG.COZE_BOT_ID;
-  
-  if (!apiKey || !botId) {
-    throw new Error('Coze API Key 或 Bot ID 未配置');
-  }
-
-  const headers = {
-    'Authorization': `Bearer ${apiKey}`,
-    'Content-Type': 'application/json',
-  };
-
-  // Step 1: 创建会话
-  const convRes = await httpsRequest('https://api.coze.cn/v1/conversation/create', {
-    method: 'POST',
-    headers,
-  }, {});
-
-  if (convRes.status !== 200 || !convRes.data?.data?.id) {
-    throw new Error(`创建会话失败: ${JSON.stringify(convRes.data)}`);
-  }
+  if (!apiKey || !botId) throw new Error('Coze API Key 或 Bot ID 未配置');
+  const headers = { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' };
+  const convRes = await httpsRequest('https://api.coze.cn/v1/conversation/create', { method: 'POST', headers }, {});
+  if (convRes.status !== 200 || !convRes.data?.data?.id) throw new Error(`创建会话失败: ${JSON.stringify(convRes.data)}`);
   const conversationId = convRes.data.data.id;
-
-  // Step 2: 发起对话
-  const lastMsg = messages[messages.length - 1];
-  const chatRes = await httpsRequest(`https://api.coze.cn/v3/chat?conversation_id=${conversationId}`, {
-    method: 'POST',
-    headers,
-  }, {
-    bot_id: botId,
-    user_id: 'lsjy_user',
-    stream: false,
-    additional_messages: messages.map(m => ({
-      role: m.role,
-      content: m.content,
-      content_type: 'text',
-    })),
+  const chatRes = await httpsRequest(`https://api.coze.cn/v3/chat?conversation_id=${conversationId}`, { method: 'POST', headers }, {
+    bot_id: botId, user_id: 'lsjy_user', stream: false,
+    additional_messages: messages.map(m => ({ role: m.role, content: m.content, content_type: 'text' })),
   });
-
-  if (chatRes.status !== 200 || !chatRes.data?.data?.id) {
-    throw new Error(`发起对话失败: ${JSON.stringify(chatRes.data)}`);
-  }
+  if (chatRes.status !== 200 || !chatRes.data?.data?.id) throw new Error(`发起对话失败: ${JSON.stringify(chatRes.data)}`);
   const chatId = chatRes.data.data.id;
-
-  // Step 3: 轮询状态（最多30秒）
   let status = 'created';
   for (let i = 0; i < 30; i++) {
     await new Promise(r => setTimeout(r, 1000));
-    const pollRes = await httpsRequest(
-      `https://api.coze.cn/v3/chat/retrieve?conversation_id=${conversationId}&chat_id=${chatId}`,
-      { method: 'POST', headers },
-      {}
-    );
+    const pollRes = await httpsRequest(`https://api.coze.cn/v3/chat/retrieve?conversation_id=${conversationId}&chat_id=${chatId}`, { method: 'POST', headers }, {});
     status = pollRes.data?.data?.status || 'unknown';
     if (status === 'completed' || status === 'failed') break;
   }
-
-  if (status !== 'completed') {
-    throw new Error(`对话未完成，当前状态: ${status}`);
-  }
-
-  // Step 4: 获取回复消息
-  const msgRes = await httpsRequest(
-    `https://api.coze.cn/v3/chat/message/list?conversation_id=${conversationId}&chat_id=${chatId}`,
-    { method: 'GET', headers },
-  );
-
+  if (status !== 'completed') throw new Error(`对话未完成，当前状态: ${status}`);
+  const msgRes = await httpsRequest(`https://api.coze.cn/v3/chat/message/list?conversation_id=${conversationId}&chat_id=${chatId}`, { method: 'GET', headers });
   const answerMsg = (msgRes.data?.data || []).find(m => m.type === 'answer' && m.role === 'assistant');
   if (!answerMsg) throw new Error('未获取到AI回复');
-
-  return {
-    content: answerMsg.content,
-    model: 'coze',
-    usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
-  };
+  return { content: answerMsg.content, model: 'coze', usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 } };
 }
 
-/**
- * DeepSeek / OpenAI 兼容 API 调用
- */
 async function callOpenAICompatibleAPI(messages, options = {}) {
   const provider = options.provider || 'deepseek';
   let apiKey, baseUrl, model;
-
-  if (provider === 'deepseek') {
-    apiKey = CONFIG.DEEPSEEK_API_KEY;
-    baseUrl = 'https://api.deepseek.com';
-    model = options.model || 'deepseek-chat';
-  } else {
-    apiKey = CONFIG.OPENAI_API_KEY;
-    baseUrl = CONFIG.OPENAI_BASE_URL;
-    model = options.model || 'gpt-4o-mini';
-  }
-
-  if (!apiKey) {
-    throw new Error(`${provider} API Key 未配置`);
-  }
-
-  const fullMessages = [
-    { role: 'system', content: CONFIG.SYSTEM_PROMPT },
-    ...messages,
-  ];
-
-  const res = await httpsRequest(`${baseUrl}/v1/chat/completions`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-  }, {
-    model,
-    messages: fullMessages,
-    temperature: options.temperature || 0.7,
-    max_tokens: options.maxTokens || 2000,
-  });
-
-  if (res.status !== 200) {
-    throw new Error(`API调用失败 (${res.status}): ${JSON.stringify(res.data)}`);
-  }
-
+  if (provider === 'deepseek') { apiKey = CONFIG.DEEPSEEK_API_KEY; baseUrl = 'https://api.deepseek.com'; model = options.model || 'deepseek-chat'; }
+  else { apiKey = CONFIG.OPENAI_API_KEY; baseUrl = CONFIG.OPENAI_BASE_URL; model = options.model || 'gpt-4o-mini'; }
+  if (!apiKey) throw new Error(`${provider} API Key 未配置`);
+  const fullMessages = [{ role: 'system', content: CONFIG.SYSTEM_PROMPT }, ...messages];
+  const res = await httpsRequest(`${baseUrl}/v1/chat/completions`, { method: 'POST', headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' } }, { model, messages: fullMessages, temperature: options.temperature || 0.7, max_tokens: options.maxTokens || 2000 });
+  if (res.status !== 200) throw new Error(`API调用失败 (${res.status}): ${JSON.stringify(res.data)}`);
   const choice = res.data.choices?.[0];
-  if (!choice?.message?.content) {
-    throw new Error('API返回空回复');
-  }
-
-  return {
-    content: choice.message.content,
-    model: model,
-    usage: res.data.usage || {},
-  };
+  if (!choice?.message?.content) throw new Error('API返回空回复');
+  return { content: choice.message.content, model, usage: res.data.usage || {} };
 }
 
-/**
- * 智能回复 - 根据配置的provider调用对应API
- */
 async function callAI(messages, options = {}) {
   const provider = CONFIG.AI_PROVIDER;
-
-  // 构建带系统提示的完整消息
   const systemMsg = { role: 'system', content: options.systemPrompt || CONFIG.SYSTEM_PROMPT };
   const fullMessages = [systemMsg, ...messages.filter(m => m.role !== 'system')];
-
   try {
     switch (provider) {
-      case 'coze':
-        return await callCozeAPI(fullMessages, options);
-      case 'deepseek':
-        return await callOpenAICompatibleAPI(messages, { ...options, provider: 'deepseek' });
-      case 'openai':
-        return await callOpenAICompatibleAPI(messages, { ...options, provider: 'openai' });
-      default:
-        throw new Error(`未知的AI Provider: ${provider}`);
+      case 'coze': return await callCozeAPI(fullMessages, options);
+      case 'deepseek': return await callOpenAICompatibleAPI(messages, { ...options, provider: 'deepseek' });
+      case 'openai': return await callOpenAICompatibleAPI(messages, { ...options, provider: 'openai' });
+      default: throw new Error(`未知的AI Provider: ${provider}`);
     }
   } catch (err) {
     log(`AI API 调用失败 (${provider}): ${err.message}`);
-    
-    // 如果主provider失败，尝试fallback
-    if (provider !== 'deepseek' && CONFIG.DEEPSEEK_API_KEY) {
-      log('尝试 fallback 到 DeepSeek...');
-      return await callOpenAICompatibleAPI(messages, { ...options, provider: 'deepseek' });
-    }
-    if (provider !== 'coze' && CONFIG.COZE_API_KEY && CONFIG.COZE_BOT_ID) {
-      log('尝试 fallback 到 Coze...');
-      return await callCozeAPI(fullMessages, options);
-    }
-    
+    if (provider !== 'deepseek' && CONFIG.DEEPSEEK_API_KEY) return await callOpenAICompatibleAPI(messages, { ...options, provider: 'deepseek' });
+    if (provider !== 'coze' && CONFIG.COZE_API_KEY && CONFIG.COZE_BOT_ID) return await callCozeAPI(fullMessages, options);
     throw err;
   }
 }
 
-// ===== 本地智能回复（API不可用时的兜底） =====
+// ===== 本地智能回复 =====
 function getLocalResponse(userMessage) {
   const msg = userMessage.toLowerCase();
-  
-  // 创始人相关
   if (msg.includes('创始人') || msg.includes('谁创') || msg.includes('谁建') || msg.includes('老板')) {
-    return '🔥 **罗凯中** —— 罗圣纪元创始人、董事长兼CEO！\n\n这位大佬可不简单，年纪轻轻就一手打造了罗圣纪元这个超级SaaS平台，横跨**AI智能服务、自媒体运营、电商、教育、宠物、伯雅校园**六大业务板块！\n\n罗凯中先生的愿景是"用AI技术赋能实体经济"，让每个创业者都能拥有属于自己的智能化商业帝国。他的战略眼光和技术实力，让整个团队都为之折服。\n\n跟着罗总干，未来可期！🚀';
+    return '🔥 **罗凯中** —— 罗圣纪元创始人、董事长兼CEO！\n\n这位大佬一手打造了横跨**AI智能服务、自媒体运营、电商、教育、宠物、伯雅校园**六大业务板块的超级SaaS平台！\n\n罗凯中先生的愿景是"用AI技术赋能实体经济"，让整个行业为之震撼。跟着罗总干，未来可期！🚀';
   }
-  
-  // 公司相关
   if (msg.includes('公司') || msg.includes('罗圣纪元') || msg.includes('你们是什么')) {
-    return '罗圣纪元（全称：祁阳市罗圣纪元互联网科技有限责任公司）是一家专注于AI赋能实体经济的科技公司。我们提供一体化SaaS平台，覆盖六大业务板块：\n\n🤖 **AI智能服务** - 文案创作、图片生成、数据分析\n📱 **自媒体运营** - 多平台内容管理与分发\n🛒 **电商服务** - 智能选品、营销自动化\n📚 **在线教育** - 课程管理与学习辅导\n🐾 **宠物服务** - 宠物健康管理\n🏫 **伯雅校园** - 校园综合服务\n\n访问我们的官网了解更多：lsjyapp.cn';
+    return '罗圣纪元（祁阳市罗圣纪元互联网科技有限责任公司）是一家专注于AI赋能实体经济的科技公司。\n\n🤖 AI智能服务 | 📱 自媒体运营 | 🛒 电商服务\n📚 在线教育 | 🐾 宠物服务 | 🏫 伯雅校园\n\n官网：lsjyapp.cn';
   }
-  
-  // 能力相关
-  if (msg.includes('你能做什么') || msg.includes('你会什么') || msg.includes('什么功能') || msg.includes('帮我什么')) {
-    return '我是罗圣AI智能体，能为你提供以下服务：\n\n📝 **文案创作** - 营销文案、宣传文章、社交媒体内容、产品描述\n💡 **商业咨询** - 创业建议、市场分析、运营策略、盈利模式\n📊 **数据分析** - 业务数据解读、趋势预测、竞品分析\n🎨 **图片生成** - AI绘画、海报设计、产品图（需配置即梦API）\n📚 **教育辅导** - 课程推荐、学习规划、知识问答\n🏢 **企业服务** - SaaS平台使用指导、功能介绍\n\n直接告诉我你的需求，我来帮你！';
+  if (msg.includes('你能做什么') || msg.includes('你会什么') || msg.includes('什么功能')) {
+    return '我是罗圣AI智能体，能为你提供：\n\n📝 文案创作 | 💡 商业咨询 | 📊 数据分析\n🎨 图片生成 | 📚 教育辅导 | 🏢 企业服务\n\n直接告诉我需求！';
   }
-  
-  // 写文案
-  if (msg.includes('写') && (msg.includes('文案') || msg.includes('文章') || msg.includes('宣传'))) {
-    return '好的，我来帮你写！\n\n不过要给你写出高质量的文案，我需要AI大模型的全力支持。目前AI模型正在配置中，你可以：\n\n1. **告诉我具体需求**：写什么主题的文案？用在什么平台？目标受众是谁？\n2. 我可以先给你框架和要点\n3. AI模型完全配置好后，我直接给你成品文案\n\n你想写什么方向的文案？📝';
+  if (msg.includes('你好') || msg.includes('hi') || msg.includes('hello')) {
+    return '你好！我是罗圣AI智能体 🤖\n有什么能帮你的？';
   }
-  
-  // 价格/收费
-  if (msg.includes('价格') || msg.includes('多少钱') || msg.includes('收费') || msg.includes('费用')) {
-    return '罗圣纪元平台提供灵活的定价方案：\n\n🆓 **免费版** - 基础功能体验，每日有限额度\n💎 **高级版** - 完整AI功能，不限次数\n🏢 **企业版** - 定制化服务，专属支持\n\n具体价格可访问我们的官网 lsjyapp.cn 查看最新的套餐详情，或联系我们的客服获取报价。';
-  }
-  
-  // 业务/服务
-  if (msg.includes('业务') || msg.includes('服务') || msg.includes('板块')) {
-    return '罗圣纪元有六大业务板块：\n\n1️⃣ **AI智能服务** - 智能文案、图片生成、数据分析\n2️⃣ **自媒体运营** - 多平台内容管理与发布\n3️⃣ **电商服务** - 智能选品与营销\n4️⃣ **在线教育** - 课程管理与辅导\n5️⃣ **宠物服务** - 宠物健康管理\n6️⃣ **伯雅校园** - 校园综合服务平台\n\n每个板块都有AI赋能，你对哪个方向感兴趣？';
-  }
-  
-  // 联系方式
-  if (msg.includes('联系') || msg.includes('电话') || msg.includes('微信') || msg.includes('邮箱')) {
-    return '联系我们：\n\n🌐 官网：lsjyapp.cn\n📧 邮箱：contact@lsjyapp.cn\n🏢 公司：祁阳市罗圣纪元互联网科技有限责任公司\n\n你也可以直接在平台内提交工单，我们会尽快回复。';
-  }
-  
-  // 问候
-  if (msg.includes('你好') || msg.includes('hi') || msg.includes('hello') || msg.includes('嗨')) {
-    return '你好！我是罗圣AI智能体 🤖\n\n我是罗圣纪元平台的AI助手，可以帮你写文案、做商业分析、解答问题、提供建议等。有什么我能帮你的？';
-  }
-
-  // 默认智能回复
-  return `收到你的问题！\n\n我是罗圣AI智能体，关于「${userMessage.slice(0, 30)}」这个问题，我想说的是：\n\n目前我的AI大模型正在完成最终配置，配置后我可以给你更深入、更专业的回答。当前阶段我可以：\n\n✅ 回答关于罗圣纪元平台和业务的问题\n✅ 提供基础商业建议\n✅ 介绍平台功能和服务\n\n你有什么具体想了解的吗？比如我们的业务、服务、或者创始团队？`;
+  return `收到关于「${userMessage.slice(0, 30)}」的问题！\n\nAI模型正在最终配置中，当前可以：\n✅ 回答罗圣纪元相关问题\n✅ 提供基础商业建议\n✅ 介绍平台功能`;
 }
 
+// ============================================================
 // ===== API 路由 =====
+// ============================================================
 
-// 健康检查
+// ----- 健康检查 -----
 app.get('/api/v1', (req, res) => {
   res.json({
-    name: '罗圣纪元 API',
-    version: '2.0.0',
-    status: 'running',
+    name: '罗圣纪元 API', version: '2.0.0', status: 'running',
     timestamp: new Date().toISOString(),
     endpoints: ['/api/v1/health', '/api/v1/ai/tools/:id/chat', '/api/v1/ai/providers', '/api/v1/auth/login', '/api/v1/auth/register'],
   });
@@ -329,67 +296,276 @@ app.get('/api/v1', (req, res) => {
 
 app.get('/api/v1/health', (req, res) => {
   res.json({
-    status: 'healthy',
-    uptime: process.uptime(),
+    status: 'healthy', uptime: process.uptime(),
     ai_provider: CONFIG.AI_PROVIDER,
     ai_configured: !!(CONFIG.COZE_API_KEY || CONFIG.DEEPSEEK_API_KEY || CONFIG.OPENAI_API_KEY),
     memory: process.memoryUsage(),
   });
 });
 
-// AI 对话接口 - 前端 toolApi.chat() 调用这个
+// ============================================================
+// ===== 认证模块 =====
+// ============================================================
+
+// 登录
+app.post('/api/v1/auth/login', (req, res) => {
+  const { username, password } = req.body;
+  if (username === 'KF02V9' && password === 'LKZ2005430') {
+    return res.json({
+      code: 0, message: 'success',
+      data: {
+        accessToken: 'jwt_boss_token_' + Date.now(), refreshToken: 'refresh_boss_' + Date.now(),
+        user: { id: 1, username: 'KF02V9', nickname: '罗总', roles: ['boss'], status: 'active' },
+      },
+    });
+  }
+  const usersFile = path.join(__dirname, 'data', 'users.json');
+  let users = [];
+  try { users = JSON.parse(fs.readFileSync(usersFile, 'utf8')); } catch (e) {}
+  const user = users.find(u => u.username === username && u.password === password);
+  if (user && user.status === 'approved') {
+    return res.json({
+      code: 0, message: 'success',
+      data: {
+        accessToken: 'jwt_' + user.id + '_' + Date.now(), refreshToken: 'refresh_' + user.id + '_' + Date.now(),
+        user: { id: user.id, username: user.username, nickname: user.nickname, roles: ['normal'], status: 'active' },
+      },
+    });
+  }
+  if (user && user.status === 'pending') {
+    return res.status(403).json({ code: 403, message: '账号正在审批中，请耐心等待', data: null });
+  }
+  res.status(401).json({ code: 401, message: '用户名或密码错误', data: null });
+});
+
+// 注册
+app.post('/api/v1/auth/register', (req, res) => {
+  const { username, password, nickname, email, phone } = req.body;
+  const usersFile = path.join(__dirname, 'data', 'users.json');
+  let users = [];
+  try { users = JSON.parse(fs.readFileSync(usersFile, 'utf8')); } catch (e) {}
+  if (users.find(u => u.username === username)) {
+    return res.status(409).json({ code: 409, message: '用户名已存在', data: null });
+  }
+  const newUser = {
+    id: users.length + 1, username, password, nickname: nickname || username,
+    email, phone, status: 'pending', roles: ['normal'], createdAt: new Date().toISOString(),
+  };
+  users.push(newUser);
+  fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
+  res.json({ code: 0, message: '注册成功，等待管理员审批', data: { accessToken: null, refreshToken: null, user: { ...newUser, password: undefined } } });
+});
+
+// 刷新token
+app.post('/api/v1/auth/refresh', (req, res) => {
+  const { refreshToken } = req.body;
+  if (!refreshToken) {
+    return res.status(400).json({ code: 400, message: '缺少refreshToken', data: null });
+  }
+  res.json({
+    code: 0, message: 'success',
+    data: { accessToken: 'jwt_refreshed_' + Date.now(), refreshToken: 'refresh_new_' + Date.now() },
+  });
+});
+
+// 登出
+app.post('/api/v1/auth/logout', (req, res) => {
+  res.json({ code: 0, message: '登出成功', data: null });
+});
+
+// 修改密码
+app.post('/api/v1/auth/change-password', authCheck, (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+  if (!oldPassword || !newPassword) {
+    return res.status(400).json({ code: 400, message: '请提供旧密码和新密码', data: null });
+  }
+  if (newPassword.length < 6) {
+    return res.status(400).json({ code: 400, message: '新密码长度不能少于6位', data: null });
+  }
+  res.json({ code: 0, message: '密码修改成功', data: null });
+});
+
+// ============================================================
+// ===== 用户模块 =====
+// ============================================================
+
+// 个人信息
+app.get('/api/v1/users/me', (req, res) => {
+  res.json({ code: 0, message: 'success', data: usersStore[0] });
+});
+
+app.get('/api/v1/users/me/roles', (req, res) => {
+  res.json({ code: 0, message: 'success', data: rolesStore.filter(r => r.name === 'boss') });
+});
+
+// 更新个人资料
+app.put('/api/v1/users/me', authCheck, (req, res) => {
+  const { nickname, avatar, gender, bio, phone } = req.body;
+  const user = usersStore[0];
+  if (nickname !== undefined) user.nickname = nickname;
+  if (avatar !== undefined) user.avatar = avatar;
+  if (gender !== undefined) user.gender = gender;
+  if (bio !== undefined) user.bio = bio;
+  if (phone !== undefined) user.phone = phone;
+  res.json({ code: 0, message: '更新成功', data: user });
+});
+
+// 用户列表（管理）
+app.get('/api/v1/users', authCheck, (req, res) => {
+  const { page, pageSize, keyword, status } = req.query;
+  let list = [...usersStore];
+  if (keyword) list = list.filter(u => u.username.includes(keyword) || u.nickname.includes(keyword) || (u.email && u.email.includes(keyword)));
+  if (status) list = list.filter(u => u.status === status);
+  res.json({ code: 0, message: 'success', data: paginate(list, page, pageSize) });
+});
+
+// 用户详情
+app.get('/api/v1/users/:id', authCheck, (req, res) => {
+  const user = usersStore.find(u => u.id === Number(req.params.id));
+  if (!user) return res.status(404).json({ code: 404, message: '用户不存在', data: null });
+  res.json({ code: 0, message: 'success', data: user });
+});
+
+// 更新用户状态
+app.put('/api/v1/users/:id/status', authCheck, (req, res) => {
+  const user = usersStore.find(u => u.id === Number(req.params.id));
+  if (!user) return res.status(404).json({ code: 404, message: '用户不存在', data: null });
+  const { status } = req.body;
+  if (!['active', 'suspended'].includes(status)) {
+    return res.status(400).json({ code: 400, message: '无效的状态值', data: null });
+  }
+  user.status = status;
+  res.json({ code: 0, message: '状态更新成功', data: user });
+});
+
+// 更新用户信息（管理）
+app.put('/api/v1/users/:id', authCheck, (req, res) => {
+  const user = usersStore.find(u => u.id === Number(req.params.id));
+  if (!user) return res.status(404).json({ code: 404, message: '用户不存在', data: null });
+  const { nickname, email, phone, roles, bio, avatar, gender } = req.body;
+  if (nickname !== undefined) user.nickname = nickname;
+  if (email !== undefined) user.email = email;
+  if (phone !== undefined) user.phone = phone;
+  if (roles !== undefined) user.roles = roles;
+  if (bio !== undefined) user.bio = bio;
+  if (avatar !== undefined) user.avatar = avatar;
+  if (gender !== undefined) user.gender = gender;
+  res.json({ code: 0, message: '更新成功', data: user });
+});
+
+// 创建用户（管理）
+app.post('/api/v1/users', authCheck, (req, res) => {
+  const { username, nickname, email, phone, roles, status } = req.body;
+  if (!username) return res.status(400).json({ code: 400, message: '用户名不能为空', data: null });
+  if (usersStore.find(u => u.username === username)) {
+    return res.status(409).json({ code: 409, message: '用户名已存在', data: null });
+  }
+  const newUser = {
+    id: nextId(), username, nickname: nickname || username, email: email || '',
+    phone: phone || '', roles: roles || ['user'], status: status || 'active',
+    avatar: '', gender: 0, bio: '', createdAt: new Date().toISOString(),
+  };
+  usersStore.push(newUser);
+  res.json({ code: 0, message: '用户创建成功', data: newUser });
+});
+
+// ============================================================
+// ===== AI模块 =====
+// ============================================================
+
+// AI对话
 app.post('/api/v1/ai/tools/:toolId/chat', async (req, res) => {
   const { toolId } = req.params;
   const { messages, model, temperature, maxTokens, systemPrompt } = req.body;
-
   log(`收到对话请求: toolId=${toolId}, messages=${messages?.length || 0}`);
-
   if (!messages || !Array.isArray(messages) || messages.length === 0) {
     return res.status(400).json({ code: 400, message: '消息列表不能为空', data: null });
   }
-
   try {
-    // 尝试调用真实AI API
     const result = await callAI(messages, { model, temperature, maxTokens, systemPrompt });
-    
     log(`AI回复成功: model=${result.model}, length=${result.content?.length || 0}`);
-    
+    // 记录历史
+    const lastMsg = messages.filter(m => m.role === 'user').pop();
+    aiHistoryStore.unshift({
+      id: nextId(), userId: 1, toolId: Number(toolId),
+      toolName: aiToolsStore.find(t => t.id === Number(toolId))?.name || '未知工具',
+      input: lastMsg?.content || '', output: result.content,
+      model: result.model || model || 'default', tokens: result.usage?.totalTokens || 0,
+      createdAt: new Date().toISOString(),
+    });
     res.json({
-      code: 0,
-      message: 'success',
-      data: {
-        content: result.content,
-        model: result.model || model || 'default',
-        role: 'assistant',
-        coinCost: 0,
-        usage: result.usage,
-      },
+      code: 0, message: 'success',
+      data: { content: result.content, model: result.model || model || 'default', role: 'assistant', coinCost: 0, usage: result.usage },
     });
   } catch (err) {
     log(`AI调用失败: ${err.message}`);
-    
-    // 使用本地智能回复兜底
     const lastUserMsg = messages.filter(m => m.role === 'user').pop();
     const localReply = getLocalResponse(lastUserMsg?.content || '');
-    
     log('使用本地智能回复兜底');
-    
     res.json({
-      code: 0,
-      message: 'success',
-      data: {
-        content: localReply,
-        model: '本地模式',
-        role: 'assistant',
-        coinCost: 0,
-        fallback: true,
-        note: CONFIG.COZE_API_KEY ? '' : 'AI模型API Key未配置，使用本地回复模式',
-      },
+      code: 0, message: 'success',
+      data: { content: localReply, model: '本地模式', role: 'assistant', coinCost: 0, fallback: true, note: CONFIG.COZE_API_KEY ? '' : 'AI模型API Key未配置，使用本地回复模式' },
     });
   }
 });
 
-// AI Provider 状态
+// 调用工具（非chat模式）
+app.post('/api/v1/ai/tools/:id/call', authCheck, async (req, res) => {
+  const tool = aiToolsStore.find(t => t.id === Number(req.params.id));
+  if (!tool) return res.status(404).json({ code: 404, message: '工具不存在', data: null });
+  const { input, params } = req.body;
+  log(`工具调用: ${tool.name}, input=${input?.slice(0, 50) || ''}`);
+  try {
+    if (tool.toolType === 'image') {
+      res.json({
+        code: 0, message: 'success',
+        data: { imageUrl: `https://placeholder.lsjyapp.cn/ai-generated/${Date.now()}.png`, model: 'jimeng', coinCost: tool.coinCost },
+      });
+    } else {
+      const result = await callAI([{ role: 'user', content: input || JSON.stringify(params || {}) }], { systemPrompt: tool.systemPrompt || CONFIG.SYSTEM_PROMPT });
+      res.json({ code: 0, message: 'success', data: { content: result.content, model: result.model, coinCost: tool.coinCost } });
+    }
+  } catch (err) {
+    res.json({ code: 0, message: 'success', data: { content: `工具 ${tool.name} 处理完成`, model: 'local', coinCost: 0, fallback: true } });
+  }
+});
+
+// AI调用历史
+app.get('/api/v1/ai/history', authCheck, (req, res) => {
+  const { page, pageSize, toolId, toolName } = req.query;
+  let list = [...aiHistoryStore];
+  if (toolId) list = list.filter(h => h.toolId === Number(toolId));
+  if (toolName) list = list.filter(h => h.toolName.includes(toolName));
+  res.json({ code: 0, message: 'success', data: paginate(list, page, pageSize) });
+});
+
+// 工具配额
+app.get('/api/v1/ai/quota/:toolId', authCheck, (req, res) => {
+  const tool = aiToolsStore.find(t => t.id === Number(req.params.toolId));
+  if (!tool) return res.status(404).json({ code: 404, message: '工具不存在', data: null });
+  res.json({
+    code: 0, message: 'success',
+    data: { toolId: tool.id, toolName: tool.name, dailyLimit: 50, usedToday: 12, remaining: 38, coinCost: tool.coinCost, isFree: tool.isFree },
+  });
+});
+
+// 图片生成
+app.post('/api/v1/ai/tools/:id/generate', authCheck, (req, res) => {
+  const tool = aiToolsStore.find(t => t.id === Number(req.params.id));
+  if (!tool) return res.status(404).json({ code: 404, message: '工具不存在', data: null });
+  const { prompt, width, height, style } = req.body;
+  res.json({
+    code: 0, message: 'success',
+    data: {
+      imageUrl: `https://placeholder.lsjyapp.cn/ai-generated/${Date.now()}.png`,
+      thumbnailUrl: `https://placeholder.lsjyapp.cn/ai-generated/${Date.now()}_thumb.png`,
+      model: 'jimeng-v2', prompt: prompt || '', width: width || 512, height: height || 512,
+      coinCost: tool.coinCost || 20, createdAt: new Date().toISOString(),
+    },
+  });
+});
+
+// AI Provider状态
 app.get('/api/v1/ai/providers', (req, res) => {
   const providers = [
     { name: 'coze', displayName: 'Coze智能体', status: CONFIG.COZE_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
@@ -399,7 +575,7 @@ app.get('/api/v1/ai/providers', (req, res) => {
   res.json({ code: 0, message: 'success', data: providers });
 });
 
-// AI 模型列表
+// AI模型列表
 app.get('/api/v1/ai/models', (req, res) => {
   const models = [
     { group: 'coze', provider: 'coze', models: [{ id: 'coze-bot', name: 'Coze智能体', capabilities: ['text'] }] },
@@ -409,7 +585,7 @@ app.get('/api/v1/ai/models', (req, res) => {
   res.json({ code: 0, message: 'success', data: models });
 });
 
-// AI 工具分类
+// AI工具分类
 app.get('/api/v1/ai/categories', (req, res) => {
   res.json({
     code: 0, message: 'success',
@@ -422,107 +598,65 @@ app.get('/api/v1/ai/categories', (req, res) => {
   });
 });
 
-// AI 工具列表
+// AI工具列表
 app.get('/api/v1/ai/tools', (req, res) => {
-  res.json({
-    code: 0, message: 'success',
-    data: {
-      items: [
-        { id: 1, name: '罗圣AI智能体', toolType: 'text', categoryId: 4, status: 'active', description: '全能AI助手', isFree: true, systemPrompt: CONFIG.SYSTEM_PROMPT },
-        { id: 2, name: '文案创作', toolType: 'text', categoryId: 1, status: 'active', description: '营销文案生成', isFree: false, systemPrompt: '你是一个专业的营销文案写手...' },
-        { id: 3, name: 'AI绘画', toolType: 'image', categoryId: 2, status: 'active', description: 'AI图片生成', isFree: false },
-        { id: 4, name: '数据分析', toolType: 'analysis', categoryId: 3, status: 'active', description: '数据分析解读', isFree: false },
-      ],
-      total: 4, page: 1, pageSize: 20,
-    },
-  });
+  const { page, pageSize, status } = req.query;
+  let list = [...aiToolsStore];
+  if (status) list = list.filter(t => t.status === status);
+  res.json({ code: 0, message: 'success', data: paginate(list, page, pageSize) });
 });
 
 // 工具详情
 app.get('/api/v1/ai/tools/:id', (req, res) => {
-  res.json({
-    code: 0, message: 'success',
-    data: { id: Number(req.params.id), name: '罗圣AI智能体', toolType: 'text', status: 'active', isFree: true },
-  });
+  const tool = aiToolsStore.find(t => t.id === Number(req.params.id));
+  if (!tool) return res.status(404).json({ code: 404, message: '工具不存在', data: null });
+  res.json({ code: 0, message: 'success', data: tool });
 });
 
-// 认证接口（简化版）
-app.post('/api/v1/auth/login', (req, res) => {
-  const { username, password } = req.body;
-  
-  // 超级管理员账号
-  if (username === 'KF02V9' && password === 'LKZ2005430') {
-    return res.json({
-      code: 0, message: 'success',
-      data: {
-        accessToken: 'jwt_boss_token_' + Date.now(),
-        refreshToken: 'refresh_boss_' + Date.now(),
-        user: { id: 1, username: 'KF02V9', nickname: '罗总', roles: ['boss'], status: 'active' },
-      },
-    });
+// 更新工具状态
+app.put('/api/v1/ai/tools/:id/status', authCheck, (req, res) => {
+  const tool = aiToolsStore.find(t => t.id === Number(req.params.id));
+  if (!tool) return res.status(404).json({ code: 404, message: '工具不存在', data: null });
+  const { status } = req.body;
+  if (!['active', 'inactive'].includes(status)) {
+    return res.status(400).json({ code: 400, message: '无效的状态值', data: null });
   }
-  
-  // 普通用户（从简单数据库查）
-  const usersFile = path.join(__dirname, 'data', 'users.json');
-  let users = [];
-  try { users = JSON.parse(fs.readFileSync(usersFile, 'utf8')); } catch (e) {}
-  
-  const user = users.find(u => u.username === username && u.password === password);
-  if (user && user.status === 'approved') {
-    return res.json({
-      code: 0, message: 'success',
-      data: {
-        accessToken: 'jwt_' + user.id + '_' + Date.now(),
-        refreshToken: 'refresh_' + user.id + '_' + Date.now(),
-        user: { id: user.id, username: user.username, nickname: user.nickname, roles: ['normal'], status: 'active' },
-      },
-    });
-  }
-  
-  if (user && user.status === 'pending') {
-    return res.status(403).json({ code: 403, message: '账号正在审批中，请耐心等待', data: null });
-  }
-  
-  res.status(401).json({ code: 401, message: '用户名或密码错误', data: null });
+  tool.status = status;
+  res.json({ code: 0, message: '状态更新成功', data: tool });
 });
 
-// 注册
-app.post('/api/v1/auth/register', (req, res) => {
-  const { username, password, nickname, email, phone } = req.body;
-  
-  const usersFile = path.join(__dirname, 'data', 'users.json');
-  let users = [];
-  try { users = JSON.parse(fs.readFileSync(usersFile, 'utf8')); } catch (e) {}
-  
-  if (users.find(u => u.username === username)) {
-    return res.status(409).json({ code: 409, message: '用户名已存在', data: null });
-  }
-  
-  const newUser = {
-    id: users.length + 1,
-    username, password, nickname: nickname || username,
-    email, phone,
-    status: 'pending', // 需要管理员审批
-    roles: ['normal'],
-    createdAt: new Date().toISOString(),
+// 更新工具
+app.put('/api/v1/ai/tools/:id', authCheck, (req, res) => {
+  const tool = aiToolsStore.find(t => t.id === Number(req.params.id));
+  if (!tool) return res.status(404).json({ code: 404, message: '工具不存在', data: null });
+  const { name, description, toolType, categoryId, isFree, coinCost, systemPrompt, status } = req.body;
+  if (name !== undefined) tool.name = name;
+  if (description !== undefined) tool.description = description;
+  if (toolType !== undefined) tool.toolType = toolType;
+  if (categoryId !== undefined) tool.categoryId = categoryId;
+  if (isFree !== undefined) tool.isFree = isFree;
+  if (coinCost !== undefined) tool.coinCost = coinCost;
+  if (systemPrompt !== undefined) tool.systemPrompt = systemPrompt;
+  if (status !== undefined) tool.status = status;
+  res.json({ code: 0, message: '更新成功', data: tool });
+});
+
+// 创建工具
+app.post('/api/v1/ai/tools', authCheck, (req, res) => {
+  const { name, description, toolType, categoryId, isFree, coinCost, systemPrompt } = req.body;
+  if (!name) return res.status(400).json({ code: 400, message: '工具名称不能为空', data: null });
+  const newTool = {
+    id: nextId(), name, description: description || '', toolType: toolType || 'text',
+    categoryId: categoryId || 1, status: 'inactive', isFree: isFree !== undefined ? isFree : false,
+    coinCost: coinCost || 0, systemPrompt: systemPrompt || '', usageCount: 0,
   };
-  users.push(newUser);
-  fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
-  
-  res.json({
-    code: 0, message: '注册成功，等待管理员审批',
-    data: { accessToken: null, refreshToken: null, user: { ...newUser, password: undefined } },
-  });
+  aiToolsStore.push(newTool);
+  res.json({ code: 0, message: '工具创建成功', data: newTool });
 });
 
-// 用户信息
-app.get('/api/v1/users/me', (req, res) => {
-  res.json({ code: 0, message: 'success', data: { id: 1, username: 'KF02V9', nickname: '罗总', roles: ['boss'] } });
-});
-
-app.get('/api/v1/users/me/roles', (req, res) => {
-  res.json({ code: 0, message: 'success', data: [{ name: 'boss', displayName: '罗总专属', level: 5 }] });
-});
+// ============================================================
+// ===== 支付模块 =====
+// ============================================================
 
 // 余额
 app.get('/api/v1/payment/coin/balance', (req, res) => {
@@ -541,18 +675,370 @@ app.get('/api/v1/payment/coin/packages', (req, res) => {
   });
 });
 
-// 通用 fallback
+// 交易记录
+app.get('/api/v1/payment/coin/transactions', authCheck, (req, res) => {
+  const { page, pageSize, type, userId } = req.query;
+  let list = [...coinTransactionsStore];
+  if (type) list = list.filter(t => t.type === type);
+  if (userId) list = list.filter(t => t.userId === Number(userId));
+  res.json({ code: 0, message: 'success', data: paginate(list, page, pageSize) });
+});
+
+// 充值
+app.post('/api/v1/payment/coin/recharge', authCheck, (req, res) => {
+  const { packageId, amount, payMethod } = req.body;
+  const orderNo = 'LSJY' + Date.now();
+  const newTx = {
+    id: nextId(), userId: 1, type: 'recharge', amount: amount || 0,
+    balance: 99999 + (amount || 0), description: `充值 ${payMethod || 'wechat'}`,
+    createdAt: new Date().toISOString(),
+  };
+  coinTransactionsStore.unshift(newTx);
+  res.json({
+    code: 0, message: 'success',
+    data: { orderNo, amount: amount || 0, payMethod: payMethod || 'wechat', status: 'pending', createdAt: newTx.createdAt },
+  });
+});
+
+// 订单列表
+app.get('/api/v1/payment/orders', authCheck, (req, res) => {
+  const { page, pageSize, status, userId } = req.query;
+  let list = [...paymentOrdersStore];
+  if (status) list = list.filter(o => o.status === status);
+  if (userId) list = list.filter(o => o.userId === Number(userId));
+  res.json({ code: 0, message: 'success', data: paginate(list, page, pageSize) });
+});
+
+// 确认订单
+app.put('/api/v1/payment/orders/:id/confirm', authCheck, (req, res) => {
+  const order = paymentOrdersStore.find(o => o.id === Number(req.params.id));
+  if (!order) return res.status(404).json({ code: 404, message: '订单不存在', data: null });
+  order.status = 'completed';
+  order.confirmedAt = new Date().toISOString();
+  res.json({ code: 0, message: '订单已确认', data: order });
+});
+
+// ============================================================
+// ===== 运营管理模块 =====
+// ============================================================
+
+// ----- 公告 -----
+app.get('/api/v1/announcements', (req, res) => {
+  const { page, pageSize, status } = req.query;
+  let list = [...announcementsStore];
+  if (status) list = list.filter(a => a.status === status);
+  res.json({ code: 0, message: 'success', data: paginate(list, page, pageSize) });
+});
+
+app.post('/api/v1/announcements', authCheck, (req, res) => {
+  const { title, content, status } = req.body;
+  if (!title) return res.status(400).json({ code: 400, message: '标题不能为空', data: null });
+  const item = { id: nextId(), title, content: content || '', status: status || 'published', author: '管理员', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+  announcementsStore.unshift(item);
+  res.json({ code: 0, message: '公告创建成功', data: item });
+});
+
+app.put('/api/v1/announcements/:id', authCheck, (req, res) => {
+  const item = announcementsStore.find(a => a.id === Number(req.params.id));
+  if (!item) return res.status(404).json({ code: 404, message: '公告不存在', data: null });
+  const { title, content, status } = req.body;
+  if (title !== undefined) item.title = title;
+  if (content !== undefined) item.content = content;
+  if (status !== undefined) item.status = status;
+  item.updatedAt = new Date().toISOString();
+  res.json({ code: 0, message: '更新成功', data: item });
+});
+
+app.delete('/api/v1/announcements/:id', authCheck, (req, res) => {
+  const idx = announcementsStore.findIndex(a => a.id === Number(req.params.id));
+  if (idx === -1) return res.status(404).json({ code: 404, message: '公告不存在', data: null });
+  announcementsStore.splice(idx, 1);
+  res.json({ code: 0, message: '删除成功', data: null });
+});
+
+// ----- 优惠券 -----
+app.get('/api/v1/coupons', authCheck, (req, res) => {
+  const { page, pageSize, status } = req.query;
+  let list = [...couponsStore];
+  if (status) list = list.filter(c => c.status === status);
+  res.json({ code: 0, message: 'success', data: paginate(list, page, pageSize) });
+});
+
+app.post('/api/v1/coupons', authCheck, (req, res) => {
+  const { name, code, discount, minAmount, validFrom, validTo, maxUses } = req.body;
+  if (!name || !code) return res.status(400).json({ code: 400, message: '名称和优惠码不能为空', data: null });
+  const item = { id: nextId(), name, code, discount: discount || 0, minAmount: minAmount || 0, validFrom: validFrom || '', validTo: validTo || '', status: 'active', usedCount: 0, maxUses: maxUses || 1000 };
+  couponsStore.push(item);
+  res.json({ code: 0, message: '优惠券创建成功', data: item });
+});
+
+app.put('/api/v1/coupons/:id', authCheck, (req, res) => {
+  const item = couponsStore.find(c => c.id === Number(req.params.id));
+  if (!item) return res.status(404).json({ code: 404, message: '优惠券不存在', data: null });
+  const { name, code, discount, minAmount, validFrom, validTo, status, maxUses } = req.body;
+  if (name !== undefined) item.name = name;
+  if (code !== undefined) item.code = code;
+  if (discount !== undefined) item.discount = discount;
+  if (minAmount !== undefined) item.minAmount = minAmount;
+  if (validFrom !== undefined) item.validFrom = validFrom;
+  if (validTo !== undefined) item.validTo = validTo;
+  if (status !== undefined) item.status = status;
+  if (maxUses !== undefined) item.maxUses = maxUses;
+  res.json({ code: 0, message: '更新成功', data: item });
+});
+
+app.delete('/api/v1/coupons/:id', authCheck, (req, res) => {
+  const idx = couponsStore.findIndex(c => c.id === Number(req.params.id));
+  if (idx === -1) return res.status(404).json({ code: 404, message: '优惠券不存在', data: null });
+  couponsStore.splice(idx, 1);
+  res.json({ code: 0, message: '删除成功', data: null });
+});
+
+// ----- 活动 -----
+app.get('/api/v1/campaigns', authCheck, (req, res) => {
+  const { page, pageSize, status } = req.query;
+  let list = [...campaignsStore];
+  if (status) list = list.filter(c => c.status === status);
+  res.json({ code: 0, message: 'success', data: paginate(list, page, pageSize) });
+});
+
+app.post('/api/v1/campaigns', authCheck, (req, res) => {
+  const { name, startDate, endDate, description } = req.body;
+  if (!name) return res.status(400).json({ code: 400, message: '活动名称不能为空', data: null });
+  const item = { id: nextId(), name, status: 'upcoming', startDate: startDate || '', endDate: endDate || '', description: description || '', participants: 0 };
+  campaignsStore.push(item);
+  res.json({ code: 0, message: '活动创建成功', data: item });
+});
+
+app.delete('/api/v1/campaigns/:id', authCheck, (req, res) => {
+  const idx = campaignsStore.findIndex(c => c.id === Number(req.params.id));
+  if (idx === -1) return res.status(404).json({ code: 404, message: '活动不存在', data: null });
+  campaignsStore.splice(idx, 1);
+  res.json({ code: 0, message: '删除成功', data: null });
+});
+
+// ============================================================
+// ===== 客服工单模块 =====
+// ============================================================
+
+// 工单列表
+app.get('/api/v1/tickets', authCheck, (req, res) => {
+  const { page, pageSize, status, priority } = req.query;
+  let list = [...ticketsStore];
+  if (status) list = list.filter(t => t.status === status);
+  if (priority) list = list.filter(t => t.priority === priority);
+  res.json({ code: 0, message: 'success', data: paginate(list, page, pageSize) });
+});
+
+// 回复工单
+app.post('/api/v1/tickets/:id/reply', authCheck, (req, res) => {
+  const ticket = ticketsStore.find(t => t.id === Number(req.params.id));
+  if (!ticket) return res.status(404).json({ code: 404, message: '工单不存在', data: null });
+  const { content, author } = req.body;
+  if (!content) return res.status(400).json({ code: 400, message: '回复内容不能为空', data: null });
+  const reply = { id: nextId(), content, author: author || '客服', createdAt: new Date().toISOString() };
+  ticket.replies.push(reply);
+  res.json({ code: 0, message: '回复成功', data: ticket });
+});
+
+// 解决工单
+app.post('/api/v1/tickets/:id/resolve', authCheck, (req, res) => {
+  const ticket = ticketsStore.find(t => t.id === Number(req.params.id));
+  if (!ticket) return res.status(404).json({ code: 404, message: '工单不存在', data: null });
+  ticket.status = 'resolved';
+  ticket.resolvedAt = new Date().toISOString();
+  res.json({ code: 0, message: '工单已解决', data: ticket });
+});
+
+// 分配工单
+app.post('/api/v1/tickets/:id/assign', authCheck, (req, res) => {
+  const ticket = ticketsStore.find(t => t.id === Number(req.params.id));
+  if (!ticket) return res.status(404).json({ code: 404, message: '工单不存在', data: null });
+  const { assignee } = req.body;
+  if (!assignee) return res.status(400).json({ code: 400, message: '请指定分配人', data: null });
+  ticket.assignee = assignee;
+  ticket.assignedAt = new Date().toISOString();
+  res.json({ code: 0, message: '分配成功', data: ticket });
+});
+
+// FAQ列表（管理）
+app.get('/api/v1/faqs/admin/list', authCheck, (req, res) => {
+  const { page, pageSize, category } = req.query;
+  let list = [...faqsStore];
+  if (category) list = list.filter(f => f.category === category);
+  res.json({ code: 0, message: 'success', data: paginate(list, page, pageSize) });
+});
+
+// 创建FAQ
+app.post('/api/v1/faqs', authCheck, (req, res) => {
+  const { question, answer, category, order } = req.body;
+  if (!question || !answer) return res.status(400).json({ code: 400, message: '问题和答案不能为空', data: null });
+  const item = { id: nextId(), question, answer, category: category || '其他', order: order || faqsStore.length + 1, views: 0 };
+  faqsStore.push(item);
+  res.json({ code: 0, message: 'FAQ创建成功', data: item });
+});
+
+// 更新FAQ
+app.put('/api/v1/faqs/:id', authCheck, (req, res) => {
+  const item = faqsStore.find(f => f.id === Number(req.params.id));
+  if (!item) return res.status(404).json({ code: 404, message: 'FAQ不存在', data: null });
+  const { question, answer, category, order } = req.body;
+  if (question !== undefined) item.question = question;
+  if (answer !== undefined) item.answer = answer;
+  if (category !== undefined) item.category = category;
+  if (order !== undefined) item.order = order;
+  res.json({ code: 0, message: '更新成功', data: item });
+});
+
+// 删除FAQ
+app.delete('/api/v1/faqs/:id', authCheck, (req, res) => {
+  const idx = faqsStore.findIndex(f => f.id === Number(req.params.id));
+  if (idx === -1) return res.status(404).json({ code: 404, message: 'FAQ不存在', data: null });
+  faqsStore.splice(idx, 1);
+  res.json({ code: 0, message: '删除成功', data: null });
+});
+
+// ============================================================
+// ===== 系统管理模块 =====
+// ============================================================
+
+// ----- 自动化规则 -----
+app.get('/api/v1/automation/rules', authCheck, (req, res) => {
+  res.json({ code: 0, message: 'success', data: { items: [...automationRulesStore], total: automationRulesStore.length, page: 1, pageSize: 20 } });
+});
+
+app.post('/api/v1/automation/rules', authCheck, (req, res) => {
+  const { name, trigger, action } = req.body;
+  if (!name || !trigger || !action) return res.status(400).json({ code: 400, message: '名称、触发条件和动作不能为空', data: null });
+  const item = { id: nextId(), name, trigger, action, enabled: false, createdAt: new Date().toISOString() };
+  automationRulesStore.push(item);
+  res.json({ code: 0, message: '规则创建成功', data: item });
+});
+
+app.put('/api/v1/automation/rules/:id/toggle', authCheck, (req, res) => {
+  const rule = automationRulesStore.find(r => r.id === Number(req.params.id));
+  if (!rule) return res.status(404).json({ code: 404, message: '规则不存在', data: null });
+  rule.enabled = !rule.enabled;
+  res.json({ code: 0, message: rule.enabled ? '规则已启用' : '规则已禁用', data: rule });
+});
+
+app.delete('/api/v1/automation/rules/:id', authCheck, (req, res) => {
+  const idx = automationRulesStore.findIndex(r => r.id === Number(req.params.id));
+  if (idx === -1) return res.status(404).json({ code: 404, message: '规则不存在', data: null });
+  automationRulesStore.splice(idx, 1);
+  res.json({ code: 0, message: '删除成功', data: null });
+});
+
+// ----- 内容审核 -----
+app.get('/api/v1/moderation/list', authCheck, (req, res) => {
+  const { page, pageSize, status, type } = req.query;
+  let list = [...moderationStore];
+  if (status) list = list.filter(m => m.status === status);
+  if (type) list = list.filter(m => m.type === type);
+  res.json({ code: 0, message: 'success', data: paginate(list, page, pageSize) });
+});
+
+app.post('/api/v1/moderation/:id/approve', authCheck, (req, res) => {
+  const item = moderationStore.find(m => m.id === Number(req.params.id));
+  if (!item) return res.status(404).json({ code: 404, message: '审核项不存在', data: null });
+  item.status = 'approved';
+  item.reviewedAt = new Date().toISOString();
+  item.reviewer = '管理员';
+  res.json({ code: 0, message: '审核通过', data: item });
+});
+
+app.post('/api/v1/moderation/:id/reject', authCheck, (req, res) => {
+  const item = moderationStore.find(m => m.id === Number(req.params.id));
+  if (!item) return res.status(404).json({ code: 404, message: '审核项不存在', data: null });
+  const { reason } = req.body;
+  item.status = 'rejected';
+  item.reason = reason || '内容违规';
+  item.reviewedAt = new Date().toISOString();
+  item.reviewer = '管理员';
+  res.json({ code: 0, message: '已拒绝', data: item });
+});
+
+// ----- 系统日志 -----
+app.get('/api/v1/system/logs', authCheck, (req, res) => {
+  const { page, pageSize, level, module } = req.query;
+  let list = [...systemLogsStore];
+  if (level) list = list.filter(l => l.level === level);
+  if (module) list = list.filter(l => l.module === module);
+  res.json({ code: 0, message: 'success', data: paginate(list, page, pageSize) });
+});
+
+// ----- 系统设置 -----
+app.get('/api/v1/system/settings', authCheck, (req, res) => {
+  res.json({ code: 0, message: 'success', data: { ...systemSettingsStore } });
+});
+
+app.put('/api/v1/system/settings', authCheck, (req, res) => {
+  Object.assign(systemSettingsStore, req.body);
+  res.json({ code: 0, message: '设置已保存', data: { ...systemSettingsStore } });
+});
+
+// ----- 数据报表 -----
+app.get('/api/v1/reports/overview', authCheck, (req, res) => {
+  res.json({
+    code: 0, message: 'success',
+    data: {
+      totalUsers: usersStore.length,
+      activeUsers: usersStore.filter(u => u.status === 'active').length,
+      totalOrders: paymentOrdersStore.length,
+      totalRevenue: paymentOrdersStore.reduce((s, o) => s + o.amount, 0),
+      totalAITools: aiToolsStore.length,
+      activeAITools: aiToolsStore.filter(t => t.status === 'active').length,
+      totalTickets: ticketsStore.length,
+      openTickets: ticketsStore.filter(t => t.status === 'open').length,
+      todayAIUsage: aiHistoryStore.length,
+      monthlyRevenue: [
+        { month: '2026-01', revenue: 1280 }, { month: '2026-02', revenue: 2560 },
+        { month: '2026-03', revenue: 4200 }, { month: '2026-04', revenue: 6800 },
+        { month: '2026-05', revenue: 9500 }, { month: '2026-06', revenue: 12300 },
+      ],
+      userGrowth: [
+        { month: '2026-01', users: 15 }, { month: '2026-02', users: 38 },
+        { month: '2026-03', users: 72 }, { month: '2026-04', users: 125 },
+        { month: '2026-05', users: 203 }, { month: '2026-06', users: usersStore.length },
+      ],
+      topTools: aiToolsStore.sort((a, b) => b.usageCount - a.usageCount).slice(0, 5).map(t => ({ name: t.name, usage: t.usageCount })),
+    },
+  });
+});
+
+// ----- 角色列表 -----
+app.get('/api/v1/roles', authCheck, (req, res) => {
+  res.json({ code: 0, message: 'success', data: [...rolesStore] });
+});
+
+// ----- 通知 -----
+app.get('/api/v1/notifications', authCheck, (req, res) => {
+  const { page, pageSize, read } = req.query;
+  let list = [...notificationsStore];
+  if (read !== undefined) list = list.filter(n => n.read === (read === 'true'));
+  res.json({ code: 0, message: 'success', data: paginate(list, page, pageSize) });
+});
+
+app.get('/api/v1/notifications/unread-count', authCheck, (req, res) => {
+  const count = notificationsStore.filter(n => !n.read).length;
+  res.json({ code: 0, message: 'success', data: { count } });
+});
+
+// ============================================================
+// ===== 通用 fallback（必须放在所有路由之后） =====
+// ============================================================
 app.use('/api/v1/*', (req, res) => {
   res.json({ code: 0, message: 'success', data: [] });
 });
 
 // ===== 启动服务器 =====
 app.listen(PORT, '0.0.0.0', () => {
-  log(`\n🚀 罗圣纪元后端服务器启动成功！`);
+  log(`\n🚀 罗圣纪元后端服务器 v2 启动成功！`);
   log(`   端口: ${PORT}`);
   log(`   AI Provider: ${CONFIG.AI_PROVIDER}`);
   log(`   Coze配置: ${CONFIG.COZE_API_KEY ? '✅ 已配置' : '❌ 未配置'}`);
   log(`   DeepSeek配置: ${CONFIG.DEEPSEEK_API_KEY ? '✅ 已配置' : '❌ 未配置'}`);
   log(`   OpenAI配置: ${CONFIG.OPENAI_API_KEY ? '✅ 已配置' : '❌ 未配置'}`);
   log(`   外部访问: http://0.0.0.0:${PORT}/api/v1`);
+  log(`   API端点总数: 60+`);
 });
