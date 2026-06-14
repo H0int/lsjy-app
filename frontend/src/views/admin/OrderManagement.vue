@@ -10,7 +10,7 @@
           <el-option label="已退款" value="refunded" />
         </el-select>
       </div>
-      <el-button>📥 导出</el-button>
+      <el-button @click="handleExport">📥 导出</el-button>
     </div>
 
     <el-table :data="filteredOrders" stripe class="cyber-table">
@@ -53,8 +53,8 @@
       </el-table-column>
       <el-table-column label="操作" width="120" fixed="right">
         <template #default="{ row }">
-          <el-button size="small" link type="primary">详情</el-button>
-          <el-button v-if="row.status === 'pending'" size="small" link type="success">确认</el-button>
+          <el-button size="small" link type="primary" @click="showDetail(row)">详情</el-button>
+          <el-button v-if="row.status === 'pending'" size="small" link type="success" @click="handleConfirm(row)">确认</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -63,6 +63,52 @@
       <el-pagination layout="total, prev, pager, next" :total="total" :page-size="pageSize"
         @current-change="handlePageChange" />
     </div>
+
+    <!-- 订单详情对话框 -->
+    <el-dialog v-model="detailVisible" title="订单详情" width="500px">
+      <div v-if="selectedOrder" class="order-detail">
+        <div class="detail-row">
+          <span class="detail-label">订单号</span>
+          <span class="detail-value font-mono text-[#00f0ff]">{{ selectedOrder.transactionNo }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">业务类型</span>
+          <span class="detail-value">{{ bizTypeLabel(selectedOrder.bizType) }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">支付渠道</span>
+          <span class="detail-value">{{ channelLabel(selectedOrder.payChannel) }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">金额</span>
+          <span class="detail-value text-white font-medium">¥{{ Number(selectedOrder.amount).toFixed(2) }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">圣点数</span>
+          <span class="detail-value text-amber-400">{{ selectedOrder.coinAmount }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">方向</span>
+          <span class="detail-value">{{ selectedOrder.direction === 'in' ? '收入' : '支出' }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">状态</span>
+          <span class="cyber-badge" :class="'badge-' + selectedOrder.status">{{ statusLabel(selectedOrder.status) }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">创建时间</span>
+          <span class="detail-value font-mono">{{ formatDate(selectedOrder.createdAt) }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">支付时间</span>
+          <span class="detail-value font-mono">{{ selectedOrder.paidAt ? formatDate(selectedOrder.paidAt) : '-' }}</span>
+        </div>
+        <div v-if="selectedOrder.remark" class="detail-row">
+          <span class="detail-label">备注</span>
+          <span class="detail-value text-[#6a6a8a]">{{ selectedOrder.remark }}</span>
+        </div>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -71,12 +117,15 @@ import { ref, computed, onMounted } from 'vue'
 import { adminApi } from '@/api'
 import { formatDate } from '@/utils'
 import type { PaymentTransaction } from '@/types'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 const search = ref('')
 const statusFilter = ref('')
 const orders = ref<PaymentTransaction[]>([])
 const total = ref(0)
 const pageSize = 20
+const detailVisible = ref(false)
+const selectedOrder = ref<PaymentTransaction | null>(null)
 
 const filteredOrders = computed(() => {
   let list = orders.value
@@ -109,6 +158,47 @@ async function fetchOrders(page = 1) {
 
 function handlePageChange(page: number) {
   fetchOrders(page)
+}
+
+function showDetail(order: PaymentTransaction) {
+  selectedOrder.value = order
+  detailVisible.value = true
+}
+
+async function handleConfirm(order: PaymentTransaction) {
+  try {
+    await ElMessageBox.confirm(`确认将订单 ${order.transactionNo} 标记为支付成功？`)
+    await adminApi.confirmOrder(order.id)
+    ElMessage.success('订单已确认')
+    fetchOrders()
+  } catch { /* cancelled */ }
+}
+
+function handleExport() {
+  const data = filteredOrders.value
+  if (data.length === 0) {
+    ElMessage.warning('没有可导出的数据')
+    return
+  }
+  const headers = ['订单号', '业务类型', '支付渠道', '金额', '圣点', '状态', '创建时间']
+  const rows = data.map(o => [
+    o.transactionNo,
+    bizTypeLabel(o.bizType),
+    channelLabel(o.payChannel),
+    Number(o.amount).toFixed(2),
+    o.coinAmount,
+    statusLabel(o.status),
+    formatDate(o.createdAt)
+  ])
+  const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `订单导出_${new Date().toISOString().slice(0, 10)}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
+  ElMessage.success(`已导出 ${data.length} 条订单`)
 }
 
 onMounted(() => fetchOrders())
@@ -156,4 +246,28 @@ onMounted(() => fetchOrders())
 }
 
 .text-amber-400 { color: #f59e0b; }
+
+.order-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #1a1a2e;
+}
+
+.detail-label {
+  font-size: 13px;
+  color: #6a6a8a;
+}
+
+.detail-value {
+  font-size: 13px;
+  color: #e0e0ff;
+}
 </style>
