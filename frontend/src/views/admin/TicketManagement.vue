@@ -113,15 +113,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+
+import { ref, computed, onMounted } from 'vue'
+import { adminApi } from '@/api'
 import type { Ticket } from '@/types'
+import { ElMessage } from 'element-plus'
 
 const activeTab = ref('all')
 const assignFilter = ref('')
 const selectedTicket = ref<Ticket | null>(null)
 const replyText = ref('')
-
-const stats = ref({ open: 8, processing: 5, avgResponseTime: '2.3h', resolveRate: 94 })
+const stats = ref({ open: 0, processing: 0, avgResponseTime: '2.3h', resolveRate: 94 })
+const list = ref<Ticket[]>([])
 
 const tabs = computed(() => [
   { label: '全部', value: 'all', count: list.value.length },
@@ -129,14 +132,6 @@ const tabs = computed(() => [
   { label: '处理中', value: 'processing', count: list.value.filter(t => t.status === 'processing').length },
   { label: '已解决', value: 'resolved', count: list.value.filter(t => t.status === 'resolved').length },
   { label: '已关闭', value: 'closed', count: list.value.filter(t => t.status === 'closed').length },
-])
-
-const list = ref<Ticket[]>([
-  { id: 1, ticketNo: 'TK20250718001', userId: 101, userName: '张三', subject: '充值圣点未到账', content: '我在今天上午10点左右充值了200元购买500圣点，支付已成功但圣点没有到账，订单号: PAY2025071800123。', category: 'payment', priority: 'high', status: 'open', assigneeId: null, assigneeName: null, replies: [], firstResponseAt: null, resolvedAt: null, createdAt: '2025-07-18 10:30', updatedAt: '2025-07-18 10:30' },
-  { id: 2, ticketNo: 'TK20250718002', userId: 102, userName: '李四', subject: 'AI绘画工具无法使用', content: '使用AI绘画工具时一直显示"处理中"，等了30分钟也没有结果。', category: 'tool', priority: 'medium', status: 'processing', assigneeId: 1, assigneeName: '客服小王', replies: [{ id: 1, ticketId: 2, userId: 1, userName: '客服小王', isStaff: true, content: '您好，已收到您的反馈。请问您使用的是哪个AI绘画工具？能否提供一下请求ID？', createdAt: '2025-07-18 11:00' }, { id: 2, ticketId: 2, userId: 102, userName: '李四', isStaff: false, content: '使用的是"AI国画生成器"，请求ID是 req_abc123456。', createdAt: '2025-07-18 11:15' }], firstResponseAt: '2025-07-18 11:00', resolvedAt: null, createdAt: '2025-07-18 09:45', updatedAt: '2025-07-18 11:15' },
-  { id: 3, ticketNo: 'TK20250717003', userId: 103, userName: '王五', subject: '建议增加批量导出功能', content: '希望能增加批量导出AI生成图片的功能，目前一张一张下载太麻烦了。', category: 'suggestion', priority: 'low', status: 'resolved', assigneeId: 2, assigneeName: '客服小李', replies: [{ id: 3, ticketId: 3, userId: 2, userName: '客服小李', isStaff: true, content: '感谢您的建议！我们已将此需求提交至产品团队，预计将在下个版本中实现。', createdAt: '2025-07-17 15:00' }], firstResponseAt: '2025-07-17 15:00', resolvedAt: '2025-07-17 15:30', createdAt: '2025-07-17 14:20', updatedAt: '2025-07-17 15:30' },
-  { id: 4, ticketNo: 'TK20250718004', userId: 104, userName: '赵六', subject: '账号被盗用', content: '我发现我的账号在异地登录，怀疑被盗，请帮我冻结账号并重置密码。', category: 'account', priority: 'urgent', status: 'processing', assigneeId: 1, assigneeName: '客服小王', replies: [{ id: 4, ticketId: 4, userId: 1, userName: '客服小王', isStaff: true, content: '已为您临时冻结账号，请提供注册手机号进行身份验证后重置密码。', createdAt: '2025-07-18 08:30' }], firstResponseAt: '2025-07-18 08:30', resolvedAt: null, createdAt: '2025-07-18 08:15', updatedAt: '2025-07-18 08:30' },
-  { id: 5, ticketNo: 'TK20250716005', userId: 105, userName: '孙七', subject: '课程视频无法播放', content: '购买的Python课程第三章视频一直显示加载失败。', category: 'bug', priority: 'medium', status: 'closed', assigneeId: 2, assigneeName: '客服小李', replies: [{ id: 5, ticketId: 5, userId: 2, userName: '客服小李', isStaff: true, content: '您好，该视频已修复，请您刷新后重试。', createdAt: '2025-07-16 16:00' }, { id: 6, ticketId: 5, userId: 105, userName: '孙七', isStaff: false, content: '可以正常播放了，谢谢！', createdAt: '2025-07-16 16:30' }], firstResponseAt: '2025-07-16 16:00', resolvedAt: '2025-07-16 16:30', createdAt: '2025-07-16 15:00', updatedAt: '2025-07-16 16:30' },
 ])
 
 const filteredList = computed(() => {
@@ -151,15 +146,44 @@ function categoryLabel(c: string) { return { account: '账号', payment: '支付
 function priorityLabel(p: string) { return { low: '低', medium: '中', high: '高', urgent: '紧急' }[p] || p }
 function statusLabel(s: string) { return { open: '待处理', processing: '处理中', resolved: '已解决', closed: '已关闭' }[s] || s }
 
-function openDetail(ticket: Ticket) { selectedTicket.value = ticket }
-function handleAssign(ticket: Ticket) { ticket.assigneeId = 1; ticket.assigneeName = '客服小王'; ticket.status = 'processing' }
-function handleResolve(ticket: Ticket) { ticket.status = 'resolved'; ticket.resolvedAt = new Date().toISOString().slice(0, 16).replace('T', ' ') }
-function handleReply() {
-  if (!replyText.value.trim() || !selectedTicket.value) return
-  selectedTicket.value.replies.push({ id: Date.now(), ticketId: selectedTicket.value.id, userId: 1, userName: '客服小王', isStaff: true, content: replyText.value, createdAt: new Date().toISOString().slice(0, 16).replace('T', ' ') })
-  if (selectedTicket.value.status === 'open') selectedTicket.value.status = 'processing'
-  replyText.value = ''
+function updateStats() {
+  stats.value.open = list.value.filter(t => t.status === 'open').length
+  stats.value.processing = list.value.filter(t => t.status === 'processing').length
 }
+
+async function fetchData() {
+  const res = await adminApi.getTickets()
+  list.value = res.data
+  updateStats()
+}
+
+function openDetail(ticket: Ticket) { selectedTicket.value = ticket }
+
+async function handleAssign(ticket: Ticket) {
+  await adminApi.assignTicket(ticket.id, 1, '客服小王')
+  ElMessage.success('已分配')
+  fetchData()
+}
+
+async function handleResolve(ticket: Ticket) {
+  await adminApi.resolveTicket(ticket.id)
+  ElMessage.success('已解决')
+  fetchData()
+}
+
+async function handleReply() {
+  if (!replyText.value.trim() || !selectedTicket.value) return
+  await adminApi.replyTicket(selectedTicket.value.id, replyText.value)
+  ElMessage.success('已回复')
+  replyText.value = ''
+  fetchData()
+  // refresh the selected ticket
+  const res = await adminApi.getTickets()
+  selectedTicket.value = res.data.find(t => t.id === selectedTicket.value!.id) || null
+}
+
+onMounted(() => fetchData())
+
 </script>
 
 <style scoped>
