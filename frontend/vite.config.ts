@@ -2,14 +2,9 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { resolve } from 'path'
 
-// 判断是否为 GitHub Pages 构建
-// GitHub Pages 需要设置 base 为 /lsjy-app/ 并使用 hash 路由
-const isGitHubPages = process.env.GITHUB_PAGES === 'true'
-
 export default defineConfig({
   plugins: [vue()],
-  // GitHub Pages: /lsjy-app/  自定义域名: /
-  base: isGitHubPages ? '/lsjy-app/' : '/',
+  base: '/',
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src')
