@@ -2999,19 +2999,24 @@ window.AdminAPI = {
     var coupons = Store.get('coupons') || [];
     var c = coupons.find(function(x){ return x.id === id; });
     if (!c) return toast('未找到优惠券 #'+id, 'error');
-    var html = '<div class="modal-overlay" onclick="if(event.target===this)AdminAPI.closeModal()"><div class="modal-card" style="max-width:480px">';
-    html += '<h3 style="color:var(--p);margin-bottom:16px"><i class="fas fa-edit"></i> 编辑优惠券</h3>';
-    html += '<div style="display:flex;flex-direction:column;gap:12px">';
-    html += '<label style="color:var(--text)">名称<input id="ec-name" class="modal-input" value="'+esc(c.name||'')+'"></label>';
-    html += '<label style="color:var(--text)">折扣码<input id="ec-code" class="modal-input" value="'+esc(c.code||'')+'"></label>';
-    html += '<label style="color:var(--text)">折扣(%)<input id="ec-discount" type="number" class="modal-input" value="'+(c.discount||0)+'"></label>';
-    html += '<label style="color:var(--text)">有效期至<input id="ec-expiry" type="date" class="modal-input" value="'+esc(c.expiry||'')+'"></label>';
-    html += '</div>';
-    html += '<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px">';
-    html += '<button class="btn btn-ghost" onclick="AdminAPI.closeModal()">取消</button>';
-    html += '<button class="btn btn-primary" onclick="AdminAPI._saveEditCoupon('+id+')">保存</button>';
-    html += '</div></div></div>';
-    document.getElementById('main-app').insertAdjacentHTML('beforeend', html);
+    var overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.style.zIndex = '99998';
+    var box = document.createElement('div');
+    box.className = 'modal-box';
+    box.innerHTML = '<div class="modal-header"><i class="fa-solid fa-edit" style="color:var(--p2)"></i> 编辑优惠券</div>' +
+      '<div class="modal-body">' +
+      '<div class="form-group"><label>名称</label><input type="text" id="ec-name" style="width:100%" value="'+esc(c.name||'')+'"></div>' +
+      '<div class="form-group"><label>折扣码</label><input type="text" id="ec-code" style="width:100%" value="'+esc(c.code||'')+'"></div>' +
+      '<div class="form-group"><label>折扣(%)</label><input type="number" id="ec-discount" style="width:100%" value="'+(c.discount||0)+'"></div>' +
+      '<div class="form-group"><label>有效期至</label><input type="date" id="ec-expiry" style="width:100%" value="'+esc(c.expiry||'')+'"></div>' +
+      '</div>' +
+      '<div class="modal-footer">' +
+      '<button class="admin-btn-cancel" onclick="AdminAPI.closeModal()">取消</button>' +
+      '<button class="admin-btn" onclick="AdminAPI._saveEditCoupon('+id+')">保存修改</button>' +
+      '</div>';
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
   },
 
   _saveEditCoupon: function(id) {

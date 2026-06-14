@@ -111,6 +111,13 @@ export async function seedRoles(dataSource: DataSource) {
   console.log('🌱 Setting up boss account...');
   const bossUser = await userRepo.findOne({ where: { username: 'KF02V9' } });
   if (bossUser) {
+    // 同步 membershipTier 字段
+    if (bossUser.membershipTier !== 'founder') {
+      bossUser.membershipTier = 'founder';
+      await userRepo.save(bossUser);
+      console.log('  ✅ Synced membershipTier to founder');
+    }
+    
     const bossRoleEntity = await roleRepo.findOne({ where: { name: 'boss' } });
     if (bossRoleEntity) {
       const existingUserRole = await userRoleRepo.findOne({
@@ -131,12 +138,14 @@ export async function seedRoles(dataSource: DataSource) {
   } else {
     console.log('  ⚠️  KF02V9 user not found, creating...');
     const passwordHash = await bcrypt.hash('LKZ2005430', 10);
+    // 创建用户时设置 membershipTier
     const newUser = userRepo.create({
       username: 'KF02V9',
       passwordHash,
       nickname: '罗总',
       status: 'active',
       vipLevel: 5,
+      membershipTier: 'founder',
     });
     const savedUser = await userRepo.save(newUser);
     
