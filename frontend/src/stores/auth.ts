@@ -7,14 +7,22 @@ import { ElMessage } from 'element-plus'
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref<string>(getToken() || '')
-  const user = ref<User | null>(null)
+  
+  // 从localStorage恢复用户信息
+  let savedUser: User | null = null
+  try {
+    const u = localStorage.getItem('lsjy_user')
+    if (u) savedUser = JSON.parse(u)
+  } catch (e) {}
+  
+  const user = ref<User | null>(savedUser)
   const userRoles = ref<string[]>([])
   const coinBalance = ref(0)
   const loading = ref(false)
 
   const isLoggedIn = computed(() => !!token.value)
-  const isAdmin = computed(() => userRoles.value.some(r => ['super_admin', 'operator'].includes(r)))
-  const nickname = computed(() => user.value?.nickname || '未登录')
+  const isAdmin = computed(() => userRoles.value.some(r => ['super_admin', 'boss', 'operator'].includes(r)))
+  const nickname = computed(() => user.value?.nickname || (user.value?.username || '用户'))
 
   // 登录（用户名 + 密码）
   async function login(username: string, password: string) {
@@ -25,8 +33,9 @@ export const useAuthStore = defineStore('auth', () => {
       token.value = accessToken
       setToken(accessToken)
       localStorage.setItem('lsjy_refresh_token', refreshToken)
-      // 直接使用登录返回的用户信息
+      // 保存用户信息到内存和localStorage
       user.value = loginUser
+      localStorage.setItem('lsjy_user', JSON.stringify(loginUser))
       userRoles.value = loginUser.roles || []
       ElMessage.success('登录成功')
       // 异步获取余额
@@ -46,6 +55,7 @@ export const useAuthStore = defineStore('auth', () => {
       const res = await userApi.getProfile()
       const userData = res.data
       user.value = userData
+      localStorage.setItem('lsjy_user', JSON.stringify(userData))
       // 从roles数组提取角色名
       if (Array.isArray(userData.roles) && userData.roles.length > 0) {
         if (typeof userData.roles[0] === 'string') {
@@ -82,6 +92,8 @@ export const useAuthStore = defineStore('auth', () => {
     coinBalance.value = 0
     removeToken()
     localStorage.removeItem('lsjy_refresh_token')
+    localStorage.removeItem('lsjy_user')
+    localStorage.removeItem('lsjy_remember')
     ElMessage.success('已退出登录')
   }
 
