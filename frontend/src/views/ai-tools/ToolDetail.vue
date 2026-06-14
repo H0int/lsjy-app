@@ -134,13 +134,15 @@
               </div>
               <div>
                 <label class="block text-xs mb-1" style="color: var(--cyber-text-dim);">风格</label>
-                <el-select v-model="imageStyle" size="small" class="w-full">
+                <el-select v-model="imageStyle" size="small" class="w-full" placeholder="请选择风格">
                   <el-option label="自动" value="" />
                   <el-option label="写实" value="realistic" />
                   <el-option label="动漫" value="anime" />
                   <el-option label="油画" value="oil-painting" />
                   <el-option label="水彩" value="watercolor" />
                   <el-option label="像素" value="pixel-art" />
+                  <el-option label="赛博朋克" value="cyberpunk" />
+                  <el-option label="3D渲染" value="3d-render" />
                 </el-select>
               </div>
               <div>
@@ -176,15 +178,31 @@
           </div>
 
           <!-- 生成的图片 -->
-          <div v-if="generatedImages.length > 0" class="mt-6 pt-6" style="border-top: 1px solid var(--cyber-border);">
+          <div v-if="generatedImages.length > 0 || generating" class="mt-6 pt-6" style="border-top: 1px solid var(--cyber-border);">
             <div class="flex items-center justify-between mb-4">
               <h3 class="font-bold" style="color: var(--cyber-text);">生成结果</h3>
-              <el-button size="small" @click="generatedImages = []">🗑️ 清除</el-button>
+              <el-button v-if="generatedImages.length > 0" size="small" @click="generatedImages = []">🗑️ 清除</el-button>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- 加载中占位 -->
+            <div v-if="generating && generatedImages.length === 0" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div v-for="i in imageCount" :key="i"
+                class="rounded-xl overflow-hidden cyber-card flex items-center justify-center"
+                style="height: 400px; background: rgba(0,240,255,0.03);">
+                <div class="text-center">
+                  <div class="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center"
+                    style="background: linear-gradient(135deg, var(--cyber-magenta), var(--cyber-purple));">
+                    <span class="text-3xl animate-spin">🎨</span>
+                  </div>
+                  <p class="text-sm" style="color: var(--cyber-text-dim);">AI正在创作中...</p>
+                  <p class="text-xs mt-1" style="color: var(--cyber-text-dim);">预计需要 5-30 秒</p>
+                </div>
+              </div>
+            </div>
+            <!-- 图片结果 -->
+            <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div v-for="(url, idx) in generatedImages" :key="idx"
                 class="relative group rounded-xl overflow-hidden cyber-card">
-                <img :src="url" :alt="`生成图片 ${idx + 1}`" class="w-full h-auto" />
+                <img :src="url" :alt="`生成图片 ${idx + 1}`" class="w-full h-auto" loading="lazy" />
                 <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                   style="background: rgba(0,0,0,0.6);">
                   <div class="flex gap-2">
@@ -196,7 +214,7 @@
                     <button @click="copyResult(url)"
                       class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
                       style="background: rgba(255,255,255,0.9); color: #000;">
-                      📋 复制链接
+                       复制链接
                     </button>
                   </div>
                 </div>
@@ -258,6 +276,8 @@ const providerDisplayName = computed(() => {
     tongyi: '通义千问',
     deepseek: 'DeepSeek',
     yuanbao: '元宝',
+    stability: 'Stability AI',
+    'stability-ai': 'Stability AI',
   }
   return map[tool.value.provider] || tool.value.provider
 })
@@ -271,6 +291,8 @@ const providerBadgeStyle = computed(() => {
     tongyi: 'background: rgba(255,184,0,0.1); color: var(--cyber-amber); border: 1px solid rgba(255,184,0,0.2);',
     deepseek: 'background: rgba(88,166,255,0.1); color: #58a6ff; border: 1px solid rgba(88,166,255,0.2);',
     yuanbao: 'background: rgba(255,100,130,0.1); color: #ff6482; border: 1px solid rgba(255,100,130,0.2);',
+    stability: 'background: rgba(255,107,107,0.1); color: #ff6b6b; border: 1px solid rgba(255,107,107,0.2);',
+    'stability-ai': 'background: rgba(255,107,107,0.1); color: #ff6b6b; border: 1px solid rgba(255,107,107,0.2);',
   }
   return (map[tool.value.provider] || 'background: rgba(136,136,170,0.1); color: var(--cyber-text-dim);') + ' border: 1px solid transparent;'
 })

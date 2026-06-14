@@ -15,6 +15,14 @@ import { AiToolsModule } from './ai-tools/ai-tools.module';
 import { AIModule } from './ai/ai.module';
 import { PaymentModule } from './payment/payment.module';
 import { SystemModule } from './system/system.module';
+import { AnnouncementsModule } from './announcements/announcements.module';
+import { CouponsModule } from './coupons/coupons.module';
+import { CampaignsModule } from './campaigns/campaigns.module';
+import { TicketsModule } from './tickets/tickets.module';
+import { FaqsModule } from './faqs/faqs.module';
+import { AutomationModule } from './automation/automation.module';
+import { ModerationModule } from './moderation/moderation.module';
+import { ReportsModule } from './reports/reports.module';
 
 @Module({
   imports: [
@@ -60,6 +68,14 @@ import { SystemModule } from './system/system.module';
     AIModule,
     PaymentModule,
     SystemModule,
+    AnnouncementsModule,
+    CouponsModule,
+    CampaignsModule,
+    TicketsModule,
+    FaqsModule,
+    AutomationModule,
+    ModerationModule,
+    ReportsModule,
   ],
   providers: [
     {

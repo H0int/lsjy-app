@@ -43,7 +43,7 @@ var APP = {
 };
 
 // 默认管理员
-var DEFAULT_ADMIN = { username: 'KF02V9', password: 'LKZ2005430', role: 'superadmin', status: 'approved', createTime: '2026-05-12T00:00:00' };
+var DEFAULT_ADMIN = { username: 'KF02V9', password: 'LKZ2005430', role: 'boss', status: 'approved', createTime: '2026-05-12T00:00:00' };
 
 // 默认统计
 var DEFAULT_STATS = {
@@ -285,7 +285,7 @@ function initData() {
     for (var i = 0; i < users.length; i++) {
       if (users[i].username === 'KF02V9') {
         // 仅在角色/状态缺失时补充，不覆盖密码
-        if (!users[i].role) users[i].role = 'superadmin';
+        if (!users[i].role) users[i].role = 'boss';
         if (!users[i].status) users[i].status = 'approved';
         adminExists = true;
         break;
@@ -323,15 +323,18 @@ function initData() {
 
   // 初始化管理员列表
   if (!Store.get('admins')) {
-    Store.set('admins', [{username:'KF02V9', role:'superadmin', createTime:'2026-05-12T00:00:00', status:'active'}]);
+    Store.set('admins', [{username:'KF02V9', role:'boss', createTime:'2026-05-12T00:00:00', status:'active'}]);
   }
 
-  // 初始化角色
+  // 初始化角色（6级体系）
   if (!Store.get('roles')) {
     Store.set('roles', [
-      {id:'superadmin', name:'超级管理员', desc:'拥有所有权限，不可被修改', permissions:['all']},
-      {id:'admin', name:'管理员', desc:'可管理用户和内容，不可管理权限和系统设置', permissions:['users','content','tools','finance']},
-      {id:'viewer', name:'查看者', desc:'只能查看数据，不可修改', permissions:['view']}
+      {id:'boss', name:'罗总专属', desc:'最高权限，拥有所有功能，仅限KF02V9', permissions:['all'], level:5},
+      {id:'ultimate_admin', name:'至尊管理员', desc:'仅次于罗总，可管理所有模块', permissions:['all'], level:4},
+      {id:'super_admin', name:'超级管理员', desc:'拥有所有权限，不可被修改', permissions:['all'], level:3},
+      {id:'admin', name:'普通管理员', desc:'可管理用户和内容，不可管理权限和系统设置', permissions:['users','content','tools','finance'], level:2},
+      {id:'premium', name:'高级用户', desc:'享有更多功能权限和更高配额', permissions:['tools','content'], level:1},
+      {id:'normal', name:'普通用户', desc:'只能查看数据和使用基础功能', permissions:['view'], level:0}
     ]);
   }
 
@@ -595,7 +598,7 @@ function renderDashboard() {
   html += '<div class="table-wrapper"><table class="admin-table"><thead><tr><th>用户名</th><th>注册时间</th><th>状态</th><th>操作</th></tr></thead><tbody>';
   var recentUsers = users.slice().sort(function(a,b){ return new Date(b.registerTime||0)-new Date(a.registerTime||0); }).slice(0,8);
   recentUsers.forEach(function(u) {
-    if (u.role === 'superadmin') return;
+    if (u.role === 'boss' || u.role === 'ultimate_admin' || u.role === 'super_admin') return;
     var statusMap = {pending:'<span class="badge badge-warn">待审批</span>',approved:'<span class="badge badge-ok">已通过</span>',banned:'<span class="badge badge-err">已封禁</span>',rejected:'<span class="badge badge-err">已拒绝</span>'};
     html += '<tr><td>'+u.username+'</td><td>'+formatTime(u.registerTime)+'</td><td>'+(statusMap[u.status]||u.status)+'</td>';
     html += '<td>';
@@ -693,7 +696,7 @@ function renderUsers() {
 
 function renderUserRow(u, credit) {
   var statusMap = {pending:'<span class="badge badge-warn">待审批</span>',approved:'<span class="badge badge-ok">已通过</span>',banned:'<span class="badge badge-err">已封禁</span>',rejected:'<span class="badge badge-err">已拒绝</span>'};
-  var isAdmin = u.role === 'superadmin';
+  var isAdmin = u.role === 'boss' || u.role === 'ultimate_admin' || u.role === 'super_admin';
   var html = '<tr data-username="'+u.username+'" data-phone="'+(u.phone||'')+'" data-email="'+(u.email||'')+'" data-status="'+u.status+'">';
   html += '<td>'+(isAdmin?'':'<input type="checkbox" class="user-checkbox" value="'+u.username+'">')+'</td>';
   html += '<td><strong>'+u.username+'</strong>'+(isAdmin?' <span class="badge badge-p">超级管理员</span>':'')+'</td>';
@@ -999,7 +1002,7 @@ function renderPermissions() {
   // 角色列表
   html += '<div class="dash-grid">';
   roles.forEach(function(r) {
-    var isSuper = r.id === 'superadmin';
+    var isSuper = r.id === 'boss' || r.id === 'ultimate_admin' || r.id === 'super_admin';
     html += '<div class="dash-card">';
     html += '<div class="dash-card-header"><i class="fa-solid '+(isSuper?'fa-crown':'fa-user-shield')+'" style="color:'+(isSuper?'#f59e0b':'var(--p)')+'"></i> '+r.name;
     if (isSuper) html += ' <span class="badge badge-warn" style="font-size:10px;">不可修改</span>';
@@ -1030,8 +1033,8 @@ function renderPermAdmins() {
   html += '<th>用户名</th><th>角色</th><th>状态</th><th>创建时间</th><th>操作</th>';
   html += '</tr></thead><tbody>';
   admins.forEach(function(a) {
-    var roleMap = {superadmin:'<span class="badge badge-warn">超级管理员</span>',admin:'<span class="badge badge-p">管理员</span>',viewer:'<span class="badge badge-ok">查看者</span>'};
-    var isSuper = a.role === 'superadmin';
+    var roleMap = {boss:'<span class="badge" style="background:rgba(255,215,0,0.15);color:#ffd700;border:1px solid rgba(255,215,0,0.4)">👑 罗总专属</span>',ultimate_admin:'<span class="badge" style="background:rgba(255,0,255,0.1);color:var(--p2);border:1px solid rgba(255,0,255,0.3)">💎 至尊管理员</span>',super_admin:'<span class="badge badge-warn">超级管理员</span>',admin:'<span class="badge badge-p">普通管理员</span>',premium:'<span class="badge badge-ok">高级用户</span>',normal:'<span class="badge badge-ok">普通用户</span>'};
+    var isSuper = a.role === 'boss' || a.role === 'ultimate_admin' || a.role === 'super_admin';
     html += '<tr><td><strong>'+a.username+'</strong></td><td>'+(roleMap[a.role]||a.role)+'</td>';
     html += '<td><span class="badge badge-ok">'+(a.status==='active'?'活跃':'禁用')+'</span></td>';
     html += '<td style="font-size:12px;">'+formatTime(a.createTime)+'</td>';
@@ -1760,7 +1763,7 @@ window.AdminAPI = {
     // 检查是否为管理员
     var admins = Store.get('admins') || [];
     var isAdmin = false;
-    var role = 'viewer';
+    var role = 'normal';
     for (var j = 0; j < admins.length; j++) {
       if (admins[j].username === username) {
         isAdmin = true;
@@ -1768,7 +1771,7 @@ window.AdminAPI = {
         break;
       }
     }
-    if (username === 'KF02V9') { isAdmin = true; role = 'superadmin'; }
+    if (username === 'KF02V9') { isAdmin = true; role = 'boss'; }
     if (!isAdmin) { toast('无管理员权限', 'error'); return; }
 
     Store.setSession({ username: username, role: role, loginTime: new Date().toISOString() });
@@ -1850,7 +1853,7 @@ window.AdminAPI = {
       '<div class="form-group"><label>昵称</label><input type="text" id="new-user-nick" placeholder="选填" style="width:100%"></div>'+
       '<div class="form-group"><label>手机号</label><input type="text" id="new-user-phone" placeholder="选填" maxlength="11" style="width:100%"></div>'+
       '<div class="form-group"><label>初始算力</label><input type="number" id="new-user-credits" value="100" min="0" style="width:100%"></div>'+
-      '<div class="form-group"><label>角色</label><select id="new-user-role" style="width:100%"><option value="user">普通用户</option><option value="admin">管理员</option></select></div>'+
+      '<div class="form-group"><label>角色</label><select id="new-user-role" style="width:100%"><option value="normal">普通用户</option><option value="premium">高级用户</option><option value="admin">普通管理员</option><option value="super_admin">超级管理员</option><option value="ultimate_admin">至尊管理员</option></select></div>'+
       '<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">'+
       '<button class="admin-btn-cancel" onclick="this.closest(\'div[style*=fixed]\').remove()">取消</button>'+
       '<button class="admin-btn" onclick="AdminAPI.doAddUser()">确认创建</button></div>';
@@ -3404,7 +3407,7 @@ function renderPermMatrix() {
     roles.forEach(function(r) {
       var has = r.permissions.indexOf(m) >= 0 || r.permissions.indexOf('all') >= 0;
       html += '<td style="text-align:center;">';
-      if (r.id === 'superadmin') {
+      if (r.id === 'super_admin') {
         html += '<i class="fa-solid fa-crown" style="color:#f59e0b;font-size:16px;" title="超级管理员拥有全部权限"></i>';
       } else {
         html += '<label class="toggle-switch"><input type="checkbox" '+(has?'checked':'')+' onchange="AdminAPI._togglePerm(\''+r.id+'\',\''+m+'\',this.checked)"><span class="toggle-slider"></span></label>';
@@ -3759,7 +3762,7 @@ function showAdminForm(admin) {
   box.innerHTML = '<div style="font-size:16px;font-weight:600;margin-bottom:16px;">'+(isEdit?'编辑':'添加')+'管理员</div>'+
     '<div class="form-group"><label>用户名</label><input type="text" id="adm-username" value="'+(admin?admin.username:'')+'" '+(isEdit?'readonly':'')+' style="width:100%"></div>'+
     (isEdit?'':'<div class="form-group"><label>密码</label><input type="password" id="adm-password" style="width:100%"></div>')+
-    '<div class="form-group"><label>角色</label><select id="adm-role" style="width:100%"><option value="admin"'+(admin&&admin.role==='admin'?' selected':'')+'>管理员</option><option value="viewer"'+(admin&&admin.role==='viewer'?' selected':'')+'>查看者</option></select></div>'+
+    '<div class="form-group"><label>角色</label><select id="adm-role" style="width:100%"><option value="boss"'+(admin&&admin.role==='boss'?' selected':'')+'>罗总专属</option><option value="ultimate_admin"'+(admin&&admin.role==='ultimate_admin'?' selected':'')+'>至尊管理员</option><option value="super_admin"'+(admin&&admin.role==='super_admin'?' selected':'')+'>超级管理员</option><option value="admin"'+(admin&&admin.role==='admin'?' selected':'')+'>普通管理员</option><option value="premium"'+(admin&&admin.role==='premium'?' selected':'')+'>高级用户</option><option value="normal"'+(admin&&admin.role==='normal'?' selected':'')+'>普通用户</option></select></div>'+
     '<div style="display:flex;gap:10px;justify-content:flex-end;">'+
     '<button class="admin-btn-cancel" onclick="this.closest(\'div[style*=fixed]\').remove()">取消</button>'+
     '<button class="admin-btn" onclick="AdminAPI._saveAdmin('+(isEdit?'\''+admin.username+'\'':'null')+')">保存</button></div>';
@@ -3857,7 +3860,7 @@ function showMainApp() {
   var session = Store.getSession();
   var userInfo = $('#admin-info');
   if (userInfo && session) {
-    var roleMap = {superadmin:'超级管理员',admin:'管理员',viewer:'查看者'};
+    var roleMap = {boss:'罗总专属',ultimate_admin:'至尊管理员',super_admin:'超级管理员',admin:'普通管理员',premium:'高级用户',normal:'普通用户'};
     userInfo.innerHTML = '<i class="fa-solid fa-user-shield" style="color:var(--p)"></i> '+session.username+' <span style="color:var(--nd);font-size:12px;">('+roleMap[session.role]+')</span>';
   }
   navigate('dashboard');

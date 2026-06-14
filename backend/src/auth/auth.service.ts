@@ -64,8 +64,8 @@ export class AuthService {
 
     const savedUser = await this.userRepo.save(user);
 
-    // Assign default 'user' role
-    const defaultRole = await this.roleRepo.findOne({ where: { name: 'user' } });
+    // Assign default 'normal' role
+    const defaultRole = await this.roleRepo.findOne({ where: { name: 'normal' } });
     if (defaultRole) {
       const userRole = this.userRoleRepo.create({
         userId: savedUser.id,

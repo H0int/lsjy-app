@@ -32,7 +32,7 @@ export const mockCategories: ToolCategory[] = [
 
 export const mockTools: Tool[] = [
   { id: 1, categoryId: 1, name: 'AI文案创作', slug: 'ai-copywriting', description: '短视频/团购/种草/朋友圈文案', icon: '✍️', provider: 'openai', modelId: 'gpt-4o', toolType: 'text', inputType: 'text', outputType: 'text', coinCost: 10, isFree: 0, freeDailyLimit: 0, usageCount: 12580, sortOrder: 1, status: 'active', createdAt: '2026-01-01T00:00:00.000Z' },
-  { id: 2, categoryId: 1, name: 'AI文生图', slug: 'ai-image', description: '文字描述生成高清图片', icon: '🎨', provider: 'stability', modelId: 'sd-xl', toolType: 'image', inputType: 'text', outputType: 'image', coinCost: 20, isFree: 0, freeDailyLimit: 0, usageCount: 8920, sortOrder: 2, status: 'active', createdAt: '2026-01-01T00:00:00.000Z' },
+  { id: 2, categoryId: 1, name: 'AI文生图', slug: 'ai-image', description: '文字描述生成高清图片', icon: '🎨', provider: 'jimeng', modelId: 'jimeng-v2', toolType: 'image', inputType: 'text', outputType: 'image', coinCost: 20, isFree: 0, freeDailyLimit: 0, usageCount: 8920, sortOrder: 2, status: 'active', createdAt: '2026-01-01T00:00:00.000Z' },
   { id: 3, categoryId: 1, name: 'AI视频生成', slug: 'ai-video', description: 'Seedance 2.0 AI文生视频', icon: '🎬', provider: 'bytedance', modelId: 'seedance-2.0', toolType: 'video', inputType: 'text', outputType: 'video', coinCost: 80, isFree: 0, freeDailyLimit: 0, usageCount: 5430, sortOrder: 3, status: 'active', createdAt: '2026-01-01T00:00:00.000Z' },
   { id: 4, categoryId: 2, name: '爆款脚本', slug: 'viral-script', description: 'AI生成爆款短视频脚本', icon: '📝', provider: 'openai', modelId: 'gpt-4o', toolType: 'text', inputType: 'text', outputType: 'text', coinCost: 50, isFree: 0, freeDailyLimit: 0, usageCount: 3210, sortOrder: 4, status: 'active', createdAt: '2026-01-01T00:00:00.000Z' },
   { id: 5, categoryId: 2, name: '短视频解析', slug: 'video-parser', description: '无水印视频下载', icon: '📥', provider: 'local', modelId: 'parser', toolType: 'other', inputType: 'text', outputType: 'file', coinCost: 0, isFree: 1, freeDailyLimit: 10, usageCount: 25600, sortOrder: 5, status: 'active', createdAt: '2026-01-01T00:00:00.000Z' },
@@ -604,17 +604,20 @@ export const mockApi = {
     await delay(2000 + Math.random() * 2000)
     const tool = mockTools.find(t => t.id === _toolId)
     const count = _options?.count || 1
-    // Return placeholder image URLs
+    const size = _options?.size || '1024x1024'
+    // Return realistic placeholder image URLs (using picsum for actual photos)
     const urls: string[] = []
     for (let i = 0; i < count; i++) {
-      urls.push('https://placehold.co/1024x1024/12121f/00f0ff?text=AI+Generated+' + (i + 1))
+      // Use picsum.photos with random seed for different images each time
+      const seed = Date.now() + i
+      urls.push(`https://picsum.photos/seed/${seed}/${size.replace('x', '/')}`)
     }
     return {
       code: 0, message: 'success',
       data: {
         urls,
         model: tool?.modelId || 'sd-xl',
-        provider: tool?.provider || 'stability',
+        provider: tool?.provider || 'jimeng',
         durationMs: 2000 + Math.floor(Math.random() * 2000),
         callRecordId: genId(),
         coinCost: (tool?.coinCost || 20) * count,

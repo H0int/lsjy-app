@@ -181,119 +181,119 @@ export const adminApi = {
   /** 公告管理 */
   getAnnouncements(): Promise<ApiResponse<Announcement[]>> {
     if (useMock) return mockApi.getAnnouncements() as any
-    return service.get('/admin/announcements').then(r => r.data)
+    return service.get('/announcements').then(r => r.data)
   },
   createAnnouncement(data: any): Promise<ApiResponse<Announcement>> {
     if (useMock) return mockApi.createAnnouncement(data) as any
-    return service.post('/admin/announcements', data).then(r => r.data)
+    return service.post('/announcements', data).then(r => r.data)
   },
   updateAnnouncement(id: number, data: any): Promise<ApiResponse<Announcement>> {
     if (useMock) return mockApi.updateAnnouncement(id, data) as any
-    return service.put(`/admin/announcements/${id}`, data).then(r => r.data)
+    return service.put(`/announcements/${id}`, data).then(r => r.data)
   },
   deleteAnnouncement(id: number): Promise<ApiResponse<any>> {
     if (useMock) return mockApi.deleteAnnouncement(id) as any
-    return service.delete(`/admin/announcements/${id}`).then(r => r.data)
+    return service.delete(`/announcements/${id}`).then(r => r.data)
   },
 
   /** 优惠券管理 */
   getCoupons(): Promise<ApiResponse<Coupon[]>> {
     if (useMock) return mockApi.getCoupons() as any
-    return service.get('/admin/coupons').then(r => r.data)
+    return service.get('/coupons').then(r => r.data)
   },
   createCoupon(data: any): Promise<ApiResponse<Coupon>> {
     if (useMock) return mockApi.createCoupon(data) as any
-    return service.post('/admin/coupons', data).then(r => r.data)
+    return service.post('/coupons', data).then(r => r.data)
   },
   updateCoupon(id: number, data: any): Promise<ApiResponse<Coupon>> {
     if (useMock) return mockApi.updateCoupon(id, data) as any
-    return service.put(`/admin/coupons/${id}`, data).then(r => r.data)
+    return service.put(`/coupons/${id}`, data).then(r => r.data)
   },
   deleteCoupon(id: number): Promise<ApiResponse<any>> {
     if (useMock) return mockApi.deleteCoupon(id) as any
-    return service.delete(`/admin/coupons/${id}`).then(r => r.data)
+    return service.delete(`/coupons/${id}`).then(r => r.data)
   },
 
   /** 活动管理 */
   getCampaigns(): Promise<ApiResponse<Campaign[]>> {
     if (useMock) return mockApi.getCampaigns() as any
-    return service.get('/admin/campaigns').then(r => r.data)
+    return service.get('/campaigns').then(r => r.data)
   },
   createCampaign(data: any): Promise<ApiResponse<Campaign>> {
     if (useMock) return mockApi.createCampaign(data) as any
-    return service.post('/admin/campaigns', data).then(r => r.data)
+    return service.post('/campaigns', data).then(r => r.data)
   },
   deleteCampaign(id: number): Promise<ApiResponse<any>> {
     if (useMock) return mockApi.deleteCampaign(id) as any
-    return service.delete(`/admin/campaigns/${id}`).then(r => r.data)
+    return service.delete(`/campaigns/${id}`).then(r => r.data)
   },
 
   /** 工单管理 */
   getTickets(): Promise<ApiResponse<Ticket[]>> {
     if (useMock) return mockApi.getTickets() as any
-    return service.get('/admin/tickets').then(r => r.data)
+    return service.get('/tickets').then(r => r.data)
   },
   replyTicket(id: number, content: string): Promise<ApiResponse<any>> {
     if (useMock) return mockApi.replyTicket(id, content) as any
-    return service.post(`/admin/tickets/${id}/reply`, { content }).then(r => r.data)
+    return service.post(`/tickets/${id}/reply`, { content }).then(r => r.data)
   },
   resolveTicket(id: number): Promise<ApiResponse<any>> {
     if (useMock) return mockApi.resolveTicket(id) as any
-    return service.put(`/admin/tickets/${id}/resolve`).then(r => r.data)
+    return service.post(`/tickets/${id}/resolve`).then(r => r.data)
   },
   assignTicket(id: number, assigneeId: number, assigneeName: string): Promise<ApiResponse<any>> {
     if (useMock) return mockApi.assignTicket(id, assigneeId, assigneeName) as any
-    return service.put(`/admin/tickets/${id}/assign`, { assigneeId, assigneeName }).then(r => r.data)
+    return service.post(`/tickets/${id}/assign`, { assigneeId, assigneeName }).then(r => r.data)
   },
 
   /** FAQ管理 */
   getFAQs(): Promise<ApiResponse<FAQItem[]>> {
     if (useMock) return mockApi.getFAQs() as any
-    return service.get('/admin/faqs').then(r => r.data)
+    return service.get('/faqs/admin/list').then(r => r.data)
   },
   createFAQ(data: any): Promise<ApiResponse<FAQItem>> {
     if (useMock) return mockApi.createFAQ(data) as any
-    return service.post('/admin/faqs', data).then(r => r.data)
+    return service.post('/faqs', data).then(r => r.data)
   },
   updateFAQ(id: number, data: any): Promise<ApiResponse<FAQItem>> {
     if (useMock) return mockApi.updateFAQ(id, data) as any
-    return service.put(`/admin/faqs/${id}`, data).then(r => r.data)
+    return service.put(`/faqs/${id}`, data).then(r => r.data)
   },
   deleteFAQ(id: number): Promise<ApiResponse<any>> {
     if (useMock) return mockApi.deleteFAQ(id) as any
-    return service.delete(`/admin/faqs/${id}`).then(r => r.data)
+    return service.delete(`/faqs/${id}`).then(r => r.data)
   },
 
   /** 自动化规则 */
   getAutomationRules(): Promise<ApiResponse<AutomationRule[]>> {
     if (useMock) return mockApi.getAutomationRules() as any
-    return service.get('/admin/automation-rules').then(r => r.data)
+    return service.get('/automation/rules').then(r => r.data)
   },
   createRule(data: any): Promise<ApiResponse<AutomationRule>> {
     if (useMock) return mockApi.createRule(data) as any
-    return service.post('/admin/automation-rules', data).then(r => r.data)
+    return service.post('/automation/rules', data).then(r => r.data)
   },
   toggleRule(id: number): Promise<ApiResponse<AutomationRule>> {
     if (useMock) return mockApi.toggleRule(id) as any
-    return service.put(`/admin/automation-rules/${id}/toggle`).then(r => r.data)
+    return service.put(`/automation/rules/${id}/toggle`).then(r => r.data)
   },
   deleteRule(id: number): Promise<ApiResponse<any>> {
     if (useMock) return mockApi.deleteRule(id) as any
-    return service.delete(`/admin/automation-rules/${id}`).then(r => r.data)
+    return service.delete(`/automation/rules/${id}`).then(r => r.data)
   },
 
   /** 内容审核 */
   getContentModerations(): Promise<ApiResponse<ModerationItem[]>> {
     if (useMock) return mockApi.getContentModerations() as any
-    return service.get('/admin/content-moderations').then(r => r.data)
+    return service.get('/moderation/list').then(r => r.data)
   },
   approveContent(id: number): Promise<ApiResponse<any>> {
     if (useMock) return mockApi.approveContent(id) as any
-    return service.put(`/admin/content-moderations/${id}/approve`).then(r => r.data)
+    return service.post(`/moderation/${id}/approve`).then(r => r.data)
   },
   rejectContent(id: number, reason: string): Promise<ApiResponse<any>> {
     if (useMock) return mockApi.rejectContent(id, reason) as any
-    return service.put(`/admin/content-moderations/${id}/reject`, { reason }).then(r => r.data)
+    return service.post(`/moderation/${id}/reject`, { reason }).then(r => r.data)
   },
 
   /** 系统日志 */
@@ -305,17 +305,17 @@ export const adminApi = {
   /** 系统配置 */
   getSystemSettings(): Promise<ApiResponse<any>> {
     if (useMock) return mockApi.getSystemSettings() as any
-    return service.get('/admin/settings').then(r => r.data)
+    return service.get('/system/settings').then(r => r.data)
   },
   saveSystemSettings(data: any): Promise<ApiResponse<any>> {
     if (useMock) return mockApi.saveSystemSettings(data) as any
-    return service.put('/admin/settings', data).then(r => r.data)
+    return service.put('/system/settings', data).then(r => r.data)
   },
 
   /** 数据报表 */
   getDataReports(range?: string): Promise<ApiResponse<ReportData[]>> {
     if (useMock) return mockApi.getDataReports(range) as any
-    return service.get('/admin/reports', { params: { range } }).then(r => r.data)
+    return service.get('/reports/overview', { params: { range } }).then(r => r.data)
   },
 
   /** 角色和通知 */

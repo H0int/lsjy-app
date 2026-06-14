@@ -121,10 +121,15 @@ const profileForm = reactive({
 
 const roleBadge = computed(() => {
   const roles = authStore.userRoles
-  if (roles.includes('super_admin')) return { label: '👑 超级管理员', bg: 'rgba(124,58,237,0.15)', color: 'var(--cyber-purple)', border: 'rgba(124,58,237,0.3)' }
+  // 按优先级从高到低检查
+  if (roles.includes('boss')) return { label: ' 罗总专属', bg: 'rgba(255,215,0,0.15)', color: '#ffd700', border: 'rgba(255,215,0,0.3)' }
+  if (roles.includes('ultimate_admin')) return { label: '💎 至尊管理员', bg: 'rgba(255,0,255,0.15)', color: 'var(--cyber-magenta)', border: 'rgba(255,0,255,0.3)' }
+  if (roles.includes('super_admin')) return { label: '⭐ 超级管理员', bg: 'rgba(124,58,237,0.15)', color: 'var(--cyber-purple)', border: 'rgba(124,58,237,0.3)' }
+  if (roles.includes('admin')) return { label: ' 普通管理员', bg: 'rgba(0,240,255,0.1)', color: 'var(--cyber-cyan)', border: 'rgba(0,240,255,0.2)' }
+  if (roles.includes('premium')) return { label: ' 高级用户', bg: 'rgba(0,255,136,0.1)', color: 'var(--cyber-green)', border: 'rgba(0,255,136,0.2)' }
   if (roles.includes('operator')) return { label: '🔧 运营', bg: 'rgba(0,255,136,0.1)', color: 'var(--cyber-green)', border: 'rgba(0,255,136,0.2)' }
   if (roles.includes('merchant')) return { label: '🏢 商户', bg: 'rgba(255,184,0,0.1)', color: 'var(--cyber-amber)', border: 'rgba(255,184,0,0.2)' }
-  return { label: '👤 普通用户', bg: 'rgba(136,136,170,0.1)', color: 'var(--cyber-text-dim)', border: 'var(--cyber-border)' }
+  return { label: ' 普通用户', bg: 'rgba(136,136,170,0.1)', color: 'var(--cyber-text-dim)', border: 'var(--cyber-border)' }
 })
 
 const roleBadgeStyle = computed(() => ({

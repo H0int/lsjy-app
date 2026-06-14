@@ -140,7 +140,36 @@ onMounted(async () => {
 
   statCards.value[0].value = authStore.coinBalance.toLocaleString()
   if (authStore.user) {
-    statCards.value[3].value = authStore.user.vipLevel > 0 ? `VIP${authStore.user.vipLevel}` : '普通'
+    // 优先从userRoles获取，其次从membershipTier获取
+    const roles = authStore.userRoles || []
+    const membershipTier = (authStore.user as any).membershipTier || ''
+
+    // 角色优先级映射（从高到低）
+    const rolePriority = ['boss', 'ultimate_admin', 'super_admin', 'admin', 'premium', 'normal']
+    let displayRole = 'normal'
+
+    // 先从userRoles中找最高优先级角色
+    for (const role of rolePriority) {
+      if (roles.includes(role)) {
+        displayRole = role
+        break
+      }
+    }
+
+    // 如果userRoles为空，尝试从membershipTier获取
+    if (displayRole === 'normal' && membershipTier && rolePriority.includes(membershipTier)) {
+      displayRole = membershipTier
+    }
+
+    const roleMap: Record<string, string> = {
+      'boss': '👑 罗总专属',
+      'ultimate_admin': '💎 至尊管理员',
+      'super_admin': '⭐ 超级管理员',
+      'admin': ' 普通管理员',
+      'premium': ' 高级用户',
+      'normal': '普通用户'
+    }
+    statCards.value[3].value = roleMap[displayRole] || '普通用户'
   }
   // TODO: 接入后端API获取「已用工具」和「生成作品」统计数据
 })
