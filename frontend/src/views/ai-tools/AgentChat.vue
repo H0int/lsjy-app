@@ -192,7 +192,12 @@ function generateSmartReply(userMessage: string): string {
   
   // 能力询问
   if (msg.match(/(你能做什么|你会什么|什么功能|帮我什么|有什么用|你会干嘛)/)) {
-    return '我是罗圣AI智能体 🤖
+    return '我是罗圣AI智能体 🤖\n\n我是罗圣纪元平台的AI助手，可以帮你：\n- 📝 写文案（朋友圈、小红书、抖音等）\n- 💡 商业咨询（创业建议、市场分析）\n- 📊 数据分析（盈利模式、竞品分析）\n- 🏢 了解罗圣纪元平台和业务\n\n有什么我能帮你的？'
+  }
+  
+  // 默认智能回复
+  return '关于"' + userMessage + '"这个问题，我来给你一些建议：\n\n1. 明确你的核心目标和预期结果\n2. 评估现有资源和可用工具\n3. 制定一个可执行的行动计划\n\n如果你能提供更多具体信息，我可以给出更有针对性的建议。罗圣纪元平台也提供文案创作、商业分析等AI工具可以帮你！'
+}
 
 // 检测是否是通用模板回复
 function isGenericResponse(content: string): boolean {
