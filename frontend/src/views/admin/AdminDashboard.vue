@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- 实时数据概览 -->
-    <div class="cyber-grid-4 mb-6">
+    <div class="cyber-grid-stats mb-6">
       <div v-for="stat in realtimeStats" :key="stat.label" class="cyber-card cyber-stat-card">
         <div class="stat-glow" :style="{ background: stat.glowColor }"></div>
         <div class="stat-content">
@@ -23,14 +23,14 @@
         <span class="alert-icon">{{ alert.type === 'danger' ? '🔴' : alert.type === 'warning' ? '🟡' : '🔵' }}</span>
         <span class="alert-metric">{{ alert.metric }}</span>
         <span class="alert-detail">当前: {{ alert.value }}</span>
-        <span class="alert-sep">|</span>
-        <span class="alert-detail">阈值: {{ alert.threshold }}</span>
-        <span class="alert-msg">{{ alert.message }}</span>
+        <span class="alert-sep alert-sep-mobile-hide">|</span>
+        <span class="alert-detail alert-detail-mobile-hide">阈值: {{ alert.threshold }}</span>
+        <span class="alert-msg alert-msg-mobile-hide">{{ alert.message }}</span>
       </div>
     </div>
 
     <!-- 趋势图表 -->
-    <div class="cyber-grid-2 mb-6">
+    <div class="cyber-grid-charts mb-6">
       <div class="cyber-card">
         <div class="card-header">
           <h3 class="card-title">📈 用户增长趋势</h3>
@@ -38,7 +38,7 @@
             <button v-for="r in ['7d','30d']" :key="r" @click="trendRange = r" class="cyber-btn-sm" :class="{ 'cyber-btn-active': trendRange === r }">{{ r === '7d' ? '近7天' : '近30天' }}</button>
           </div>
         </div>
-        <div ref="userChartRef" class="h-64"></div>
+        <div ref="userChartRef" class="chart-container"></div>
       </div>
       <div class="cyber-card">
         <div class="card-header">
@@ -47,28 +47,28 @@
             <button v-for="r in ['7d','30d']" :key="r" @click="revenueRange = r" class="cyber-btn-sm" :class="{ 'cyber-btn-active': revenueRange === r }">{{ r === '7d' ? '近7天' : '近30天' }}</button>
           </div>
         </div>
-        <div ref="revenueChartRef" class="h-64"></div>
+        <div ref="revenueChartRef" class="chart-container"></div>
       </div>
     </div>
 
     <!-- 模块分布 & 热门排行 -->
-    <div class="cyber-grid-3 mb-6">
+    <div class="cyber-grid-pies mb-6">
       <div class="cyber-card">
         <h3 class="card-title mb-4">🧩 模块用户分布</h3>
-        <div ref="modulePieRef" class="h-56"></div>
+        <div ref="modulePieRef" class="chart-container-sm"></div>
       </div>
       <div class="cyber-card">
         <h3 class="card-title mb-4">💎 营收贡献分布</h3>
-        <div ref="revenuePieRef" class="h-56"></div>
+        <div ref="revenuePieRef" class="chart-container-sm"></div>
       </div>
       <div class="cyber-card">
         <h3 class="card-title mb-4">📊 模块使用量对比</h3>
-        <div ref="moduleBarRef" class="h-56"></div>
+        <div ref="moduleBarRef" class="chart-container-sm"></div>
       </div>
     </div>
 
     <!-- 热门排行 -->
-    <div class="cyber-grid-3 mb-6">
+    <div class="cyber-grid-rankings mb-6">
       <div class="cyber-card">
         <h3 class="card-title mb-4">🤖 Top10 AI工具</h3>
         <div class="ranking-list">
@@ -111,7 +111,7 @@
         <div v-for="log in recentLogs" :key="log.id" class="log-item">
           <span class="log-tag" :class="'log-tag-' + log.type">{{ log.module }}</span>
           <span class="log-action">{{ log.action }}</span>
-          <span class="log-operator">{{ log.operator }}</span>
+          <span class="log-operator log-operator-mobile-hide">{{ log.operator }}</span>
           <span class="log-time">{{ log.time }}</span>
         </div>
       </div>
@@ -323,24 +323,89 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.cyber-grid-4 {
+/* ===== Responsive Grid: Stats (4 cols -> 2 cols mobile) ===== */
+.cyber-grid-stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
 }
-
-.cyber-grid-3 {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+@media (max-width: 767px) {
+  .cyber-grid-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+}
+@media (min-width: 768px) and (max-width: 1199px) {
+  .cyber-grid-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
 }
 
-.cyber-grid-2 {
+/* ===== Responsive Grid: Charts (2 cols -> 1 col mobile) ===== */
+.cyber-grid-charts {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
 }
+@media (max-width: 767px) {
+  .cyber-grid-charts {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
 
+/* ===== Responsive Grid: Pies (3 cols -> 1 col mobile) ===== */
+.cyber-grid-pies {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+@media (max-width: 767px) {
+  .cyber-grid-pies {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+@media (min-width: 768px) and (max-width: 1199px) {
+  .cyber-grid-pies {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+}
+
+/* ===== Responsive Grid: Rankings (3 cols -> 1 col mobile) ===== */
+.cyber-grid-rankings {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+@media (max-width: 767px) {
+  .cyber-grid-rankings {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+@media (min-width: 768px) and (max-width: 1199px) {
+  .cyber-grid-rankings {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+/* ===== Chart containers ===== */
+.chart-container {
+  height: 256px;
+}
+.chart-container-sm {
+  height: 224px;
+}
+@media (max-width: 767px) {
+  .chart-container { height: 200px; }
+  .chart-container-sm { height: 200px; }
+}
+
+/* ===== Card styles ===== */
 .cyber-card {
   background: #12121f;
   border: 1px solid #1a1a2e;
@@ -349,6 +414,12 @@ onBeforeUnmount(() => {
   position: relative;
   overflow: hidden;
   transition: border-color 0.3s;
+}
+@media (max-width: 767px) {
+  .cyber-card {
+    padding: 14px;
+    border-radius: 10px;
+  }
 }
 
 .cyber-card:hover {
@@ -375,11 +446,20 @@ onBeforeUnmount(() => {
   justify-content: space-between;
 }
 
+@media (max-width: 767px) {
+  .stat-content {
+    padding: 14px;
+  }
+}
+
 .stat-label {
   font-size: 12px;
   color: #6a6a8a;
   margin-bottom: 6px;
   letter-spacing: 0.5px;
+}
+@media (max-width: 767px) {
+  .stat-label { font-size: 11px; }
 }
 
 .stat-value {
@@ -387,10 +467,16 @@ onBeforeUnmount(() => {
   font-weight: 800;
   font-family: 'Courier New', monospace;
 }
+@media (max-width: 767px) {
+  .stat-value { font-size: 20px; }
+}
 
 .stat-change {
   font-size: 11px;
   margin-top: 4px;
+}
+@media (max-width: 767px) {
+  .stat-change { font-size: 10px; }
 }
 
 .change-up { color: #00ff88; }
@@ -406,6 +492,9 @@ onBeforeUnmount(() => {
   justify-content: center;
   font-size: 24px;
 }
+@media (max-width: 767px) {
+  .stat-icon { width: 36px; height: 36px; font-size: 18px; border-radius: 8px; }
+}
 
 /* Alerts */
 .cyber-alert {
@@ -416,6 +505,12 @@ onBeforeUnmount(() => {
   border-radius: 10px;
   font-size: 13px;
   border: 1px solid;
+}
+@media (max-width: 767px) {
+  .cyber-alert { gap: 8px; padding: 10px 12px; font-size: 12px; flex-wrap: wrap; }
+  .alert-sep-mobile-hide,
+  .alert-detail-mobile-hide { display: none; }
+  .alert-msg-mobile-hide { display: none; }
 }
 
 .alert-warning {
@@ -450,6 +545,10 @@ onBeforeUnmount(() => {
 }
 
 .mb-4 { margin-bottom: 16px; }
+.mb-6 { margin-bottom: 24px; }
+@media (max-width: 767px) {
+  .mb-6 { margin-bottom: 16px; }
+}
 
 /* Range Buttons */
 .range-btns {
@@ -527,6 +626,9 @@ onBeforeUnmount(() => {
   border-radius: 2px;
   overflow: hidden;
 }
+@media (max-width: 767px) {
+  .rank-bar { width: 40px; }
+}
 
 .rank-bar-fill {
   height: 100%;
@@ -541,6 +643,9 @@ onBeforeUnmount(() => {
   text-align: right;
   font-family: 'Courier New', monospace;
 }
+@media (max-width: 767px) {
+  .rank-value { width: 40px; font-size: 10px; }
+}
 
 /* Log */
 .log-list {
@@ -554,6 +659,10 @@ onBeforeUnmount(() => {
   gap: 12px;
   padding: 10px 0;
   border-bottom: 1px solid #1a1a2e;
+}
+@media (max-width: 767px) {
+  .log-item { gap: 8px; padding: 8px 0; flex-wrap: wrap; }
+  .log-operator-mobile-hide { display: none; }
 }
 
 .log-item:last-child { border-bottom: none; }
@@ -577,6 +686,9 @@ onBeforeUnmount(() => {
   font-size: 13px;
   color: #a0a0cc;
 }
+@media (max-width: 767px) {
+  .log-action { font-size: 12px; min-width: 0; }
+}
 
 .log-operator {
   font-size: 11px;
@@ -591,4 +703,6 @@ onBeforeUnmount(() => {
 
 .text-green-400 { color: #00ff88; }
 .text-cyan-400 { color: #00f0ff; }
+
+.space-y-2 > * + * { margin-top: 8px; }
 </style>
