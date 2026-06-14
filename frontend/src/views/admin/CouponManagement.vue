@@ -1,6 +1,5 @@
 <template>
   <div>
-    <!-- 统计卡片 -->
     <div class="cyber-grid-4 mb-4">
       <div class="cyber-stat-mini">
         <p class="stat-lbl">有效优惠券</p>
@@ -20,7 +19,6 @@
       </div>
     </div>
 
-    <!-- 操作栏 -->
     <div class="cyber-toolbar">
       <select v-model="filterType" class="cyber-select">
         <option value="">全部类型</option>
@@ -31,7 +29,6 @@
       <button @click="showDialog = true" class="cyber-btn cyber-btn-cyan">+ 创建优惠券</button>
     </div>
 
-    <!-- 优惠券列表 -->
     <div class="cyber-grid-2">
       <div v-for="coupon in list" :key="coupon.id" class="cyber-coupon-card">
         <div class="coupon-value-side" :class="'coupon-bg-' + coupon.type">
@@ -59,7 +56,6 @@
       </div>
     </div>
 
-    <!-- 创建弹窗 -->
     <div v-if="showDialog" class="cyber-overlay">
       <div class="cyber-dialog">
         <h3 class="dialog-title">创建优惠券</h3>
@@ -89,19 +85,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { adminApi } from '@/api'
 import type { Coupon } from '@/types'
+import { ElMessage } from 'element-plus'
 
 const filterType = ref('')
 const showDialog = ref(false)
 const form = ref({ name: '', type: 'full_reduce', discountValue: 10, minAmount: 0, totalQuantity: 1000, validFrom: '2025-07-20', validTo: '2025-08-20', issueRule: 'new_user' })
-
-const list = ref<Coupon[]>([
-  { id: 1, name: '新用户满50减10', type: 'full_reduce', discountValue: 10, minAmount: 50, maxReduce: null, totalQuantity: 5000, usedQuantity: 3280, validFrom: '2025-07-01', validTo: '2025-08-31', issueRule: 'new_user', status: 'active', createdAt: '2025-07-01 00:00' },
-  { id: 2, name: '暑期8折优惠券', type: 'discount', discountValue: 8, minAmount: 100, maxReduce: 50, totalQuantity: 2000, usedQuantity: 856, validFrom: '2025-07-15', validTo: '2025-08-15', issueRule: 'activity', status: 'active', createdAt: '2025-07-15 10:00' },
-  { id: 3, name: '充值赠送100圣点', type: 'coin_gift', discountValue: 100, minAmount: 200, maxReduce: null, totalQuantity: 1000, usedQuantity: 423, validFrom: '2025-07-01', validTo: '2025-07-31', issueRule: 'consume_threshold', status: 'active', createdAt: '2025-07-01 00:00' },
-  { id: 4, name: 'VIP专属9折券', type: 'discount', discountValue: 9, minAmount: 0, maxReduce: 30, totalQuantity: 500, usedQuantity: 120, validFrom: '2025-06-01', validTo: '2025-06-30', issueRule: 'manual', status: 'expired', createdAt: '2025-06-01 00:00' },
-])
+const list = ref<Coupon[]>([])
 
 const usageRate = computed(() => {
   const total = list.value.reduce((s, c) => s + c.totalQuantity, 0)
@@ -112,38 +104,52 @@ const usageRate = computed(() => {
 function couponTypeLabel(t: string) { return { full_reduce: '满减券', discount: '折扣券', coin_gift: '圣点赠送' }[t] || t }
 function couponStatusLabel(s: string) { return { active: '生效中', paused: '已暂停', expired: '已过期' }[s] || s }
 function issueRuleLabel(r: string) { return { new_user: '新用户', consume_threshold: '消费满额', activity: '活动发放', manual: '手动发放' }[r] || r }
-function toggleStatus(c: Coupon) { c.status = c.status === 'active' ? 'paused' : 'active' }
-function handleDelete(c: Coupon) { const i = list.value.findIndex(x => x.id === c.id); if (i >= 0) list.value.splice(i, 1) }
-function handleCreate() {
-  list.value.unshift({ id: Date.now(), name: form.value.name, type: form.value.type as any, discountValue: form.value.discountValue, minAmount: form.value.minAmount, maxReduce: null, totalQuantity: form.value.totalQuantity, usedQuantity: 0, validFrom: form.value.validFrom, validTo: form.value.validTo, issueRule: form.value.issueRule as any, status: 'active', createdAt: new Date().toISOString().slice(0, 16).replace('T', ' ') })
-  showDialog.value = false
+
+async function fetchData() {
+  const res = await adminApi.getCoupons()
+  list.value = res.data
 }
+
+async function toggleStatus(c: Coupon) {
+  const newStatus = c.status === 'active' ? 'paused' : 'active'
+  await adminApi.updateCoupon(c.id, { status: newStatus })
+  ElMessage.success(newStatus === 'paused' ? '已暂停' : '已启用')
+  fetchData()
+}
+
+async function handleDelete(c: Coupon) {
+  if (!confirm(`确认删除优惠券「${c.name}」？`)) return
+  await adminApi.deleteCoupon(c.id)
+  ElMessage.success('已删除')
+  fetchData()
+}
+
+async function handleCreate() {
+  if (!form.value.name.trim()) { ElMessage.warning('请输入名称'); return }
+  await adminApi.createCoupon({ ...form.value })
+  ElMessage.success('优惠券已创建')
+  showDialog.value = false
+  fetchData()
+}
+
+onMounted(() => fetchData())
 </script>
 
 <style scoped>
 .cyber-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
 .cyber-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
-
-.cyber-stat-mini {
-  background: #12121f; border: 1px solid #1a1a2e; border-radius: 10px; padding: 16px; text-align: center;
-}
+.cyber-stat-mini { background: #12121f; border: 1px solid #1a1a2e; border-radius: 10px; padding: 16px; text-align: center; }
 .stat-num { font-size: 24px; font-weight: 800; font-family: 'Courier New', monospace; margin-top: 4px; }
 .stat-lbl { font-size: 11px; color: #6a6a8a; }
-
 .cyber-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-
-.cyber-select {
-  background: #0a0a14; border: 1px solid #1a1a2e; border-radius: 8px; padding: 8px 12px; font-size: 13px; color: #a0a0cc; outline: none;
-}
+.cyber-select { background: #0a0a14; border: 1px solid #1a1a2e; border-radius: 8px; padding: 8px 12px; font-size: 13px; color: #a0a0cc; outline: none; }
 .cyber-select:focus { border-color: #00f0ff; }
-.cyber-select option { background: #12121f; color: #a0a0cc; }
-
+.cyber-select option { background: #12121f; }
 .cyber-btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; border: 1px solid transparent; }
 .cyber-btn-cyan { background: rgba(0,240,255,0.1); color: #00f0ff; border-color: #00f0ff44; }
 .cyber-btn-cyan:hover { background: rgba(0,240,255,0.2); box-shadow: 0 0 12px rgba(0,240,255,0.3); }
 .cyber-btn-ghost { background: rgba(100,100,140,0.1); color: #8888aa; border-color: #2a2a4e; }
-.cyber-btn-ghost:hover { color: #c0c0ff; border-color: #4a4a6a; }
-
+.cyber-btn-ghost:hover { color: #c0c0ff; }
 .cyber-btn-xs { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
 .cyber-btn-green { background: rgba(0,255,136,0.1); color: #00ff88; border: 1px solid rgba(0,255,136,0.2); }
 .cyber-btn-green:hover { background: rgba(0,255,136,0.2); box-shadow: 0 0 8px rgba(0,255,136,0.3); }
@@ -151,38 +157,24 @@ function handleCreate() {
 .cyber-btn-amber:hover { background: rgba(245,158,11,0.2); }
 .cyber-btn-magenta { background: rgba(255,0,255,0.1); color: #ff00ff; border: 1px solid rgba(255,0,255,0.2); }
 .cyber-btn-magenta:hover { background: rgba(255,0,255,0.2); box-shadow: 0 0 8px rgba(255,0,255,0.3); }
-
-/* Coupon Card */
-.cyber-coupon-card {
-  background: #12121f; border: 1px solid #1a1a2e; border-radius: 12px; overflow: hidden; display: flex;
-  transition: border-color 0.2s;
-}
+.cyber-coupon-card { background: #12121f; border: 1px solid #1a1a2e; border-radius: 12px; overflow: hidden; display: flex; transition: border-color 0.2s; }
 .cyber-coupon-card:hover { border-color: #2a2a4e; }
-
-.coupon-value-side {
-  width: 110px; display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0;
-}
+.coupon-value-side { width: 110px; display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; }
 .coupon-bg-full_reduce { background: linear-gradient(135deg, #ff4466, #f59e0b); }
 .coupon-bg-discount { background: linear-gradient(135deg, #7c3aed, #00f0ff); }
 .coupon-bg-coin_gift { background: linear-gradient(135deg, #00ff88, #00f0ff); }
-
 .coupon-value { font-size: 22px; font-weight: 800; color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.3); }
 .coupon-type-label { font-size: 10px; color: rgba(255,255,255,0.7); margin-top: 4px; }
-
 .coupon-info { flex: 1; padding: 16px; }
-
 .cyber-badge { padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
 .badge-active { background: rgba(0,255,136,0.1); color: #00ff88; border: 1px solid rgba(0,255,136,0.2); }
 .badge-paused { background: rgba(245,158,11,0.1); color: #f59e0b; border: 1px solid rgba(245,158,11,0.2); }
 .badge-expired { background: rgba(100,100,140,0.1); color: #6a6a8a; border: 1px solid #2a2a4e; }
-
 .cyber-progress { height: 4px; background: #1a1a2e; border-radius: 2px; overflow: hidden; }
 .cyber-progress-fill { height: 100%; background: linear-gradient(90deg, #00f0ff, #7c3aed); border-radius: 2px; transition: width 0.3s; }
-
-/* Dialog */
 .cyber-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 50; }
-.cyber-dialog { background: #12121f; border: 1px solid #1a1a2e; border-radius: 16px; padding: 24px; width: 100%; max-width: 520px; box-shadow: 0 0 40px rgba(0,240,255,0.05); }
-.dialog-title { font-size: 18px; font-weight: 700; color: #e0e0ff; margin-bottom: 20px; text-shadow: 0 0 10px rgba(0,240,255,0.2); }
+.cyber-dialog { background: #12121f; border: 1px solid #1a1a2e; border-radius: 16px; padding: 24px; width: 100%; max-width: 520px; }
+.dialog-title { font-size: 18px; font-weight: 700; color: #e0e0ff; margin-bottom: 20px; }
 .cyber-label { display: block; font-size: 12px; color: #6a6a8a; margin-bottom: 6px; }
 .cyber-text-input { background: #0a0a14; border: 1px solid #1a1a2e; border-radius: 8px; padding: 8px 12px; font-size: 13px; color: #e0e0ff; outline: none; }
 .cyber-text-input:focus { border-color: #00f0ff; }
