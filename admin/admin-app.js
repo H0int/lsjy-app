@@ -29,7 +29,7 @@ var APP = {
     var host = window.location.hostname;
     if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:3000/api/v1';
     // 手机端访问时自动适配API域名
-    if (host === 'h0int.github.io') return 'https://api.lsjyapp.cn/api/v1';
+    if (host === 'h0int.github.io') return 'http://8.154.16.5:3000/api/v1';
     // 自定义域名
     return 'https://' + host.replace('www.','').replace('m.','') + '/api/v1';
   })(),
@@ -262,13 +262,13 @@ var Store = {
     try { localStorage.setItem(APP.creditsKey, JSON.stringify(credits)); } catch(e) {}
   },
   getSession: function() {
-    try { var v = sessionStorage.getItem(APP.sessionKey); return v ? JSON.parse(v) : null; } catch(e) { return null; }
+    try { var v = localStorage.getItem(APP.sessionKey); return v ? JSON.parse(v) : null; } catch(e) { return null; }
   },
   setSession: function(s) {
-    try { sessionStorage.setItem(APP.sessionKey, JSON.stringify(s)); } catch(e) {}
+    try { localStorage.setItem(APP.sessionKey, JSON.stringify(s)); } catch(e) {}
   },
   clearSession: function() {
-    try { sessionStorage.removeItem(APP.sessionKey); } catch(e) {}
+    try { localStorage.removeItem(APP.sessionKey); } catch(e) {}
   }
 };
 
