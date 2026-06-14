@@ -396,74 +396,40 @@ async function genImage() {
   genLoading.value = true
 
   try {
-    // 通过扣子Bot的插件生成图片
-    const res = await fetch(COZE_API, {
+    // 直接调用后端图片生成API（即梦/DALL-E）
+    const res = await fetch(`${API_BASE}/ai/tools/2/generate`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${COZE_TOKEN}`,
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
       },
       body: JSON.stringify({
-        bot_id: BOT_ID,
-        user_id: 'img_' + Date.now(),
-        stream: true,
-        auto_save_history: false,
-        additional_messages: [
-          { role: 'user', content: fullPrompt, type: 'query' }
-        ],
+        prompt: fullPrompt,
+        width: parseInt(imgSize.value.split('x')[0]) || 1024,
+        height: parseInt(imgSize.value.split('x')[1]) || 1024,
+        style: imgStyle.value || 'auto',
+        count: 1,
       }),
     })
 
     if (!res.ok) throw new Error(`API ${res.status}`)
 
-    const reader = res.body!.getReader()
-    const decoder = new TextDecoder()
-    let content = ''
-    let buffer = ''
-
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
-      buffer += decoder.decode(value, { stream: true })
-      const lines = buffer.split('\n')
-      buffer = lines.pop() || ''
-
-      for (const line of lines) {
-        if (!line.startsWith('data:')) continue
-        try {
-          const d = JSON.parse(line.slice(5).trim())
-          if (d.type === 'answer' && d.content) {
-            if (d.content.length > content.length) {
-              content = d.content
-            } else {
-              content += d.content
-            }
-          }
-        } catch {}
+    const data = await res.json()
+    
+    if (data.code === 0 && data.data?.urls?.length > 0) {
+      images.value[0] = {
+        prompt,
+        url: data.data.urls[0],
+        model: data.data.model || 'AI绘画',
       }
+    } else {
+      throw new Error(data.message || '图片生成失败')
     }
-
-    // 尝试从回复中提取图片URL
-    const urlMatch = content.match(/https?:\/\/[^\s)]+\.(png|jpg|jpeg|webp|gif)(\?[^\s)]*)?/i)
-    const imgEntry = images.value.find(i => i.prompt === prompt && i.loading)
-
-    if (imgEntry) {
-      if (urlMatch) {
-        imgEntry.url = urlMatch[0]
-        imgEntry.loading = false
-      } else {
-        // Bot没有直接返回图片URL，返回的是文字描述
-        // 显示文字回复作为生成说明
-        imgEntry.url = undefined as any
-        imgEntry.error = `生成说明：${content.substring(0, 200)}`
-        imgEntry.loading = false
-      }
-    }
-  } catch (e: any) {
-    const imgEntry = images.value.find(i => i.prompt === prompt && i.loading)
-    if (imgEntry) {
-      imgEntry.loading = false
-      imgEntry.error = `生成失败：${e.message || '服务异常'}`
+  } catch (err) {
+    console.error('图片生成失败:', err)
+    images.value[0] = {
+      prompt,
+      error: `生成失败：${err.message}。请检查API Key配置或使用更详细的描述。`,
     }
   } finally {
     genLoading.value = false
