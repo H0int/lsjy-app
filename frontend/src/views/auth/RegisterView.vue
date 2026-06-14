@@ -1,32 +1,29 @@
 <template>
   <div class="min-h-screen bg-gradient-to-br from-dark-200 via-dark-100 to-dark-200 flex items-center justify-center p-4">
     <div class="w-full max-w-md">
+      <!-- Logo -->
       <div class="text-center mb-8">
         <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-blue-600 text-white text-2xl font-bold shadow-lg shadow-blue-500/30 mb-4">罗</div>
-        <h1 class="text-2xl font-bold text-white">创建账号</h1>
-        <p class="text-gray-400 mt-1">加入罗圣纪元，开启AI数字化之旅</p>
+        <h1 class="text-2xl font-bold text-white">注册罗圣纪元</h1>
+        <p class="text-gray-400 mt-1">AI赋能实体经济，一站式数字化转型平台</p>
       </div>
 
+      <!-- 注册卡片 -->
       <div class="bg-dark-100 rounded-2xl shadow-xl shadow-black/30 p-8 border border-gray-800">
-        <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
-          <el-form-item label="用户名" prop="username">
-            <el-input v-model="form.username" placeholder="字母数字下划线，3位以上" size="large" />
+        <el-form ref="formRef" :model="form" :rules="rules" @submit.prevent="handleRegister">
+          <el-form-item prop="account">
+            <el-input v-model="form.account" placeholder="请输入账号（4-20位字母数字）" prefix-icon="User" size="large" />
           </el-form-item>
-          <el-form-item label="昵称" prop="nickname">
-            <el-input v-model="form.nickname" placeholder="请输入昵称" size="large" />
+          <el-form-item prop="nickname">
+            <el-input v-model="form.nickname" placeholder="请输入昵称" prefix-icon="UserFilled" size="large" />
           </el-form-item>
-          <el-form-item label="手机号" prop="phone">
-            <el-input v-model="form.phone" placeholder="请输入手机号（选填）" size="large" />
+          <el-form-item prop="password">
+            <el-input v-model="form.password" type="password" placeholder="请输入密码（至少6位）" prefix-icon="Lock" size="large" show-password />
           </el-form-item>
-          <el-form-item label="邮箱" prop="email">
-            <el-input v-model="form.email" placeholder="请输入邮箱（选填）" size="large" />
+          <el-form-item prop="confirmPassword">
+            <el-input v-model="form.confirmPassword" type="password" placeholder="请确认密码" prefix-icon="Lock" size="large" show-password @keyup.enter="handleRegister" />
           </el-form-item>
-          <el-form-item label="密码" prop="password">
-            <el-input v-model="form.password" type="password" placeholder="请输入密码（至少6位）" size="large" show-password />
-          </el-form-item>
-          <el-form-item label="确认密码" prop="confirmPassword">
-            <el-input v-model="form.confirmPassword" type="password" placeholder="请再次输入密码" size="large" show-password />
-          </el-form-item>
+
           <el-form-item>
             <el-button type="primary" size="large" class="w-full" :loading="loading" @click="handleRegister"
               style="background: linear-gradient(135deg, #3b82f6, #2563eb); border: none;">
@@ -36,8 +33,14 @@
         </el-form>
 
         <div class="text-center text-sm text-gray-400">
-          已有账号？<router-link to="/login" class="text-blue-400 hover:underline">立即登录</router-link>
+          已有账号？
+          <router-link to="/login" class="text-blue-400 hover:underline">立即登录</router-link>
         </div>
+      </div>
+
+      <!-- 底部信息 -->
+      <div class="text-center mt-6 text-xs text-gray-500">
+        注册即表示同意《用户协议》和《隐私政策》
       </div>
     </div>
   </div>
@@ -46,37 +49,46 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
-import { authApi } from '@/api'
+import { useAuthStore } from '@/stores/auth'
 import { ElMessage } from 'element-plus'
 import type { FormInstance } from 'element-plus'
 
 const router = useRouter()
+const authStore = useAuthStore()
+
 const loading = ref(false)
 const formRef = ref<FormInstance>()
 
 const form = reactive({
-  username: '',
+  account: '',
   nickname: '',
-  phone: '',
-  email: '',
   password: '',
   confirmPassword: ''
 })
 
-const validateConfirm = (_rule: any, value: string, callback: any) => {
-  if (value !== form.password) callback(new Error('两次输入密码不一致'))
-  else callback()
+const validateConfirmPassword = (rule: any, value: string, callback: any) => {
+  if (value !== form.password) {
+    callback(new Error('两次输入的密码不一致'))
+  } else {
+    callback()
+  }
 }
 
 const rules = {
-  username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 3, message: '用户名至少3位', trigger: 'blur' },
-    { pattern: /^[a-zA-Z0-9_]+$/, message: '只能包含字母、数字和下划线', trigger: 'blur' }
+  account: [
+    { required: true, message: '请输入账号', trigger: 'blur' },
+    { min: 4, max: 20, message: '账号长度为4-20位', trigger: 'blur' },
+    { pattern: /^[a-zA-Z0-9_]+$/, message: '账号只能包含字母、数字和下划线', trigger: 'blur' }
   ],
   nickname: [{ required: true, message: '请输入昵称', trigger: 'blur' }],
-  password: [{ required: true, message: '请输入密码', trigger: 'blur' }, { min: 6, message: '密码至少6位', trigger: 'blur' }],
-  confirmPassword: [{ required: true, message: '请确认密码', trigger: 'blur' }, { validator: validateConfirm, trigger: 'blur' }]
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' },
+    { min: 6, message: '密码至少6位', trigger: 'blur' }
+  ],
+  confirmPassword: [
+    { required: true, message: '请确认密码', trigger: 'blur' },
+    { validator: validateConfirmPassword, trigger: 'blur' }
+  ]
 }
 
 async function handleRegister() {
@@ -85,17 +97,24 @@ async function handleRegister() {
     if (!valid) return
     loading.value = true
     try {
-      await authApi.register({
-        username: form.username,
+      const { authApi } = await import('@/api')
+      const res = await authApi.register({
+        username: form.account,
         password: form.password,
-        nickname: form.nickname,
-        phone: form.phone || undefined,
-        email: form.email || undefined
+        nickname: form.nickname
       })
-      ElMessage.success('注册成功，请登录')
-      router.push('/login')
+      if (res.code === 0) {
+        ElMessage.success('注册成功！')
+        // 自动登录
+        const success = await authStore.login(form.account, form.password)
+        if (success) router.push('/dashboard')
+        else router.push('/login')
+      } else {
+        ElMessage.error(res.message || '注册失败')
+      }
     } catch (e: any) {
-      // 错误已由拦截器处理
+      const msg = e?.response?.data?.message || e?.message || '注册失败，请稍后重试'
+      ElMessage.error(msg)
     } finally {
       loading.value = false
     }
