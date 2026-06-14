@@ -29,7 +29,11 @@ export const useAuthStore = defineStore('auth', () => {
     loading.value = true
     try {
       const res = await authApi.login(username, password)
-      const { accessToken, refreshToken, user: loginUser } = res.data
+      // 后端返回字段: token, refreshToken, userInfo
+      const data = res.data
+      const accessToken = data.token || data.accessToken
+      const refreshToken = data.refreshToken
+      const loginUser = data.userInfo || data.user
       token.value = accessToken
       setToken(accessToken)
       localStorage.setItem('lsjy_refresh_token', refreshToken)
@@ -103,3 +107,4 @@ export const useAuthStore = defineStore('auth', () => {
     login, fetchUserProfile, fetchBalance, logout
   }
 })
+
