@@ -137,8 +137,11 @@ const SYSTEM_PROMPT = '你是罗圣AI智能体，由祁阳市罗圣纪元互联�
 
 const modelOptions = [
   { value: 'doubao', label: '豆包', icon: '🫘', modelId: 'doubao-pro-32k' },
-  { value: 'openai', label: 'GPT-4o', icon: '🤖', modelId: 'gpt-4o' },
-  { value: 'tongyi', label: '通义千问', icon: '🦙', modelId: 'qwen-plus' },
+  { value: 'deepseek', label: 'DeepSeek', icon: '🔍', modelId: 'deepseek-chat' },
+  { value: 'jimeng', label: '即梦', icon: '🎨', modelId: 'jimeng-v2' },
+  { value: 'yuanbao', label: '元宝', icon: '💎', modelId: 'yuanbao-pro' },
+  { value: 'tongyi', label: '千问', icon: '🦙', modelId: 'qwen-plus' },
+  { value: 'gpt', label: 'GPT-4o', icon: '🤖', modelId: 'gpt-4o' },
 ]
 
 const quickCommands = [

@@ -121,11 +121,12 @@ const editingId = ref<number|null>(null)
 const form = ref({ name: '', icon: '', endpoint: '', apiKey: '', modelsStr: '' })
 
 const providers = ref([
-  { id: 1, name: 'OpenAI', icon: '🟢', endpoint: 'https://api.openai.com/v1', apiKey: 'sk-***abc123', apiKeyMasked: 'sk-***abc123', models: ['GPT-4o','GPT-4o-mini'], monthlyCost: 2340, connected: true },
-  { id: 2, name: 'Anthropic', icon: '🟠', endpoint: 'https://api.anthropic.com/v1', apiKey: 'sk-ant-***xyz', apiKeyMasked: 'sk-ant-***xyz', models: ['Claude-3.5-Sonnet','Claude-3-Haiku'], monthlyCost: 1890, connected: true },
-  { id: 3, name: 'DeepSeek', icon: '🔵', endpoint: 'https://api.deepseek.com/v1', apiKey: 'sk-ds-***def', apiKeyMasked: 'sk-ds-***def', models: ['DeepSeek-V3','DeepSeek-R1'], monthlyCost: 560, connected: true },
-  { id: 4, name: '阿里云通义', icon: '🟣', endpoint: 'https://dashscope.aliyuncs.com/api/v1', apiKey: 'sk-ali-***ghi', apiKeyMasked: 'sk-ali-***ghi', models: ['Qwen-Max','Qwen-Plus'], monthlyCost: 780, connected: false },
-  { id: 5, name: '智谱AI', icon: '🔴', endpoint: 'https://open.bigmodel.cn/api/paas/v4', apiKey: '***glm', apiKeyMasked: '***glm', models: ['GLM-4','GLM-4-Flash'], monthlyCost: 320, connected: true },
+  { id: 1, name: '豆包', icon: '🫘', endpoint: 'https://ark.cn-beijing.volces.com/api/v3', apiKey: '', apiKeyMasked: '未配置', models: ['Doubao-Pro-32K','Doubao-Pro-128K','Doubao-Lite-32K'], monthlyCost: 0, connected: false },
+  { id: 2, name: 'DeepSeek', icon: '🔍', endpoint: 'https://api.deepseek.com/v1', apiKey: '', apiKeyMasked: '未配置', models: ['DeepSeek-V3','DeepSeek-R1'], monthlyCost: 0, connected: false },
+  { id: 3, name: '即梦', icon: '🎨', endpoint: 'https://jimeng.jianying.com/v1', apiKey: '', apiKeyMasked: '未配置', models: ['即梦 2.1','即梦 2.0 Pro'], monthlyCost: 0, connected: false },
+  { id: 4, name: '腾讯元宝', icon: '💎', endpoint: 'https://api.yuanbao.tencent.com/v1', apiKey: '', apiKeyMasked: '未配置', models: ['元宝 Pro','元宝 Lite'], monthlyCost: 0, connected: false },
+  { id: 5, name: '通义千问', icon: '🦙', endpoint: 'https://dashscope.aliyuncs.com/api/v1', apiKey: '', apiKeyMasked: '未配置', models: ['Qwen-Max','Qwen-Plus','Qwen-Turbo'], monthlyCost: 0, connected: false },
+  { id: 6, name: 'OpenAI GPT', icon: '🤖', endpoint: 'https://api.openai.com/v1', apiKey: '', apiKeyMasked: '未配置', models: ['GPT-4o','GPT-4o Mini','GPT-4 Turbo'], monthlyCost: 0, connected: false },
 ])
 
 function openDialog(p?: any) {

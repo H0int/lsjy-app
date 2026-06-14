@@ -147,7 +147,6 @@ const menuGroups = [
     items: [
       { path: '/admin/users', label: '用户管理', icon: '👥' },
       { path: '/admin/tools', label: '工具管理', icon: '🔧' },
-      { path: '/admin/orders', label: '订单管理', icon: '📦' },
     ]
   },
   {
@@ -156,6 +155,15 @@ const menuGroups = [
       { path: '/admin/ai-agent', label: 'AI智能体', icon: '🤖' },
       { path: '/admin/chat-logs', label: '对话记录', icon: '💬' },
       { path: '/admin/model-config', label: '模型配置', icon: '🧠' },
+    ]
+  },
+  {
+    label: '财务中心',
+    items: [
+      { path: '/admin/coin-packages', label: '圣点套餐', icon: '💰' },
+      { path: '/admin/payments', label: '支付记录', icon: '💳' },
+      { path: '/admin/recharge', label: '充值管理', icon: '💎' },
+      { path: '/admin/orders', label: '订单管理', icon: '📦' },
     ]
   },
   {

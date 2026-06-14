@@ -36,6 +36,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: 'AI工具中心', icon: '🤖' }
       },
       {
+        path: 'agent',
+        name: 'AgentChat',
+        component: () => import('@/views/ai-tools/AgentChat.vue'),
+        meta: { title: 'AI智能体', icon: '🧠' }
+      },
+      {
         path: 'tools/:id',
         name: 'ToolDetail',
         component: () => import('@/views/ai-tools/ToolDetail.vue'),
@@ -138,6 +144,24 @@ const routes: RouteRecordRaw[] = [
         name: 'AdminSettings',
         component: () => import('@/views/admin/SystemSettings.vue'),
         meta: { title: '系统配置' }
+      },
+      {
+        path: 'coin-packages',
+        name: 'AdminCoinPackages',
+        component: () => import('@/views/admin/CoinPackages.vue'),
+        meta: { title: '圣点套餐' }
+      },
+      {
+        path: 'payments',
+        name: 'AdminPayments',
+        component: () => import('@/views/admin/PaymentRecords.vue'),
+        meta: { title: '支付记录' }
+      },
+      {
+        path: 'recharge',
+        name: 'AdminRecharge',
+        component: () => import('@/views/admin/RechargeManagement.vue'),
+        meta: { title: '充值管理' }
       },
       {
         path: 'ai-agent',

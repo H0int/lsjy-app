@@ -499,6 +499,7 @@ body::after{
 .badge-err{background:rgba(244,63,94,.12);color:var(--err);border:1px solid rgba(244,63,94,.2);}
 .badge-warn{background:rgba(245,158,11,.12);color:var(--warn);border:1px solid rgba(245,158,11,.2);}
 .badge-p{background:var(--ps);color:var(--p);border:1px solid rgba(0,245,255,.2);}
+.status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:middle;}
 
 /* ===== TOOLBAR ===== */
 .page-toolbar{
@@ -825,11 +826,31 @@ body::after{
       <div class="sb-item" data-page="tools" onclick="navigate('tools')">
         <i class="fa-solid fa-wand-magic-sparkles"></i><span>AI工具管理</span>
       </div>
+      <div class="sb-item" data-page="agent" onclick="navigate('agent')">
+        <i class="fa-solid fa-robot"></i><span>AI智能体</span>
+      </div>
+      <div class="sb-item" data-page="orders" onclick="navigate('orders')">
+        <i class="fa-solid fa-receipt"></i><span>订单管理</span>
+      </div>
       <div class="sb-item" data-page="finance" onclick="navigate('finance')">
         <i class="fa-solid fa-coins"></i><span>财务管理</span>
       </div>
       <div class="sb-item" data-page="content" onclick="navigate('content')">
         <i class="fa-solid fa-newspaper"></i><span>内容管理</span>
+      </div>
+
+      <div class="sb-group">运营</div>
+      <div class="sb-item" data-page="coupons" onclick="navigate('coupons')">
+        <i class="fa-solid fa-ticket"></i><span>优惠券</span>
+      </div>
+      <div class="sb-item" data-page="tickets" onclick="navigate('tickets')">
+        <i class="fa-solid fa-headset"></i><span>工单管理</span>
+      </div>
+      <div class="sb-item" data-page="marketing" onclick="navigate('marketing')">
+        <i class="fa-solid fa-bullhorn"></i><span>营销管理</span>
+      </div>
+      <div class="sb-item" data-page="reports" onclick="navigate('reports')">
+        <i class="fa-solid fa-chart-line"></i><span>数据报表</span>
       </div>
 
       <div class="sb-group">系统</div>

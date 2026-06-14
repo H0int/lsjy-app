@@ -37,12 +37,26 @@ export const AIConfig = registerAs('ai', () => ({
     defaultModel: process.env.TONGYI_MODEL || 'qwen-plus',
   },
 
+  // DeepSeek
+  deepseek: {
+    apiKey: process.env.DEEPSEEK_API_KEY || '',
+    baseUrl: process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com/v1',
+    defaultModel: process.env.DEEPSEEK_MODEL || 'deepseek-chat',
+  },
+
+  // 腾讯元宝
+  yuanbao: {
+    apiKey: process.env.YUANBAO_API_KEY || '',
+    baseUrl: process.env.YUANBAO_BASE_URL || 'https://api.yuanbao.tencent.com/v1',
+    defaultModel: process.env.YUANBAO_MODEL || 'yuanbao-pro',
+  },
+
   // 智能路由配置
   routing: {
-    'text-generation': ['doubao', 'openai', 'tongyi'],
+    'text-generation': ['doubao', 'deepseek', 'openai', 'tongyi', 'yuanbao'],
     'image-generation': ['jimeng', 'openai'],
-    'code-generation': ['openai', 'doubao', 'tongyi'],
-    'text-analysis': ['tongyi', 'doubao', 'openai'],
+    'code-generation': ['deepseek', 'openai', 'doubao', 'tongyi'],
+    'text-analysis': ['tongyi', 'doubao', 'deepseek', 'openai', 'yuanbao'],
     'multimodal': ['openai'],
   },
 
@@ -60,6 +74,10 @@ export const AIConfig = registerAs('ai', () => ({
       'qwen-turbo': { input: 0.3, output: 0.6 },
       'qwen-plus': { input: 0.8, output: 2.0 },
       'qwen-max': { input: 2.0, output: 6.0 },
+      'deepseek-chat': { input: 0.14, output: 0.28 },
+      'deepseek-reasoner': { input: 0.55, output: 2.19 },
+      'yuanbao-pro': { input: 0.8, output: 2.0 },
+      'yuanbao-lite': { input: 0.3, output: 0.6 },
     },
     // 图像生成固定价格（圣点/张）
     imageFixedPrice: {

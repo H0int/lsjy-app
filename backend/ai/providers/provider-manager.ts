@@ -6,16 +6,18 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { IAIProvider, ProviderStatus, AIProviderError, AIErrorCode } from './ai-provider.interface';
 import { DoubaoProvider } from './doubao.provider';
+import { DeepSeekProvider } from './deepseek.provider';
 import { JimengProvider } from './jimeng.provider';
 import { OpenAIProvider } from './openai.provider';
 import { TongyiProvider } from './tongyi.provider';
+import { YuanbaoProvider } from './yuanbao.provider';
 
 /** 任务类型 → Provider优先级映射 */
 const DEFAULT_ROUTING: Record<string, string[]> = {
-  'text-generation': ['doubao', 'openai', 'tongyi'],
+  'text-generation': ['doubao', 'deepseek', 'openai', 'tongyi', 'yuanbao'],
   'image-generation': ['jimeng', 'openai'],
-  'code-generation': ['openai', 'doubao', 'tongyi'],
-  'text-analysis': ['tongyi', 'doubao', 'openai'],
+  'code-generation': ['deepseek', 'openai', 'doubao', 'tongyi'],
+  'text-analysis': ['tongyi', 'doubao', 'deepseek', 'openai', 'yuanbao'],
   'multimodal': ['openai'],
 };
 
@@ -62,6 +64,18 @@ export class AIProviderManager implements OnModuleInit {
         apiKey: this.configService.get<string>('TONGYI_API_KEY'),
         baseUrl: this.configService.get<string>('TONGYI_BASE_URL', 'https://dashscope.aliyuncs.com/api/v1'),
         defaultModel: this.configService.get<string>('TONGYI_MODEL', 'qwen-plus'),
+      },
+      {
+        instance: new DeepSeekProvider(),
+        apiKey: this.configService.get<string>('DEEPSEEK_API_KEY'),
+        baseUrl: this.configService.get<string>('DEEPSEEK_BASE_URL', 'https://api.deepseek.com/v1'),
+        defaultModel: this.configService.get<string>('DEEPSEEK_MODEL', 'deepseek-chat'),
+      },
+      {
+        instance: new YuanbaoProvider(),
+        apiKey: this.configService.get<string>('YUANBAO_API_KEY'),
+        baseUrl: this.configService.get<string>('YUANBAO_BASE_URL', 'https://api.yuanbao.tencent.com/v1'),
+        defaultModel: this.configService.get<string>('YUANBAO_MODEL', 'yuanbao-pro'),
       },
     ];
 
