@@ -294,6 +294,77 @@ app.get('/api/v1', (req, res) => {
   });
 });
 
+
+// ===== 访客中心 =====
+const visitorsStore = [];
+const VISITORS_FILE = path.join(__dirname, 'data', 'visitors.json');
+
+// 加载访客数据
+try {
+  const data = fs.readFileSync(VISITORS_FILE, 'utf8');
+  visitorsStore.push(...JSON.parse(data));
+} catch (e) {}
+
+// 保存访客数据
+function saveVisitors() {
+  fs.writeFileSync(VISITORS_FILE, JSON.stringify(visitorsStore, null, 2));
+}
+
+// 记录访客访问
+app.post('/api/v1/visitors/record', (req, res) => {
+  const { ip, userAgent, path: visitPath, referer } = req.body;
+  const now = new Date();
+  const visitor = {
+    id: visitorsStore.length + 1,
+    ip: ip || req.ip || req.connection.remoteAddress,
+    userAgent: userAgent || req.headers['user-agent'],
+    path: visitPath || req.path,
+    referer: referer || req.headers.referer,
+    visitTime: now.toISOString(),
+    visitTimeFormatted: `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`
+  };
+  visitorsStore.push(visitor);
+  saveVisitors();
+  res.json({ code: 0, message: 'success', data: visitor });
+});
+
+// 获取访客列表
+app.get('/api/v1/visitors', (req, res) => {
+  const { page = 1, pageSize = 20 } = req.query;
+  const start = (page - 1) * pageSize;
+  const end = start + parseInt(pageSize);
+  const list = visitorsStore.slice().reverse().slice(0, end);
+  res.json({
+    code: 0,
+    message: 'success',
+    data: {
+      items: list,
+      total: visitorsStore.length,
+      page: parseInt(page),
+      pageSize: parseInt(pageSize)
+    }
+  });
+});
+
+// 获取访客统计
+app.get('/api/v1/visitors/stats', (req, res) => {
+  const now = new Date();
+  const today = now.toISOString().split('T')[0];
+  const todayVisitors = visitorsStore.filter(v => v.visitTime.startsWith(today));
+  const uniqueIPs = new Set(visitorsStore.map(v => v.ip)).size;
+  
+  res.json({
+    code: 0,
+    message: 'success',
+    data: {
+      totalVisitors: visitorsStore.length,
+      todayVisitors: todayVisitors.length,
+      uniqueIPs: uniqueIPs,
+      lastVisit: visitorsStore.length > 0 ? visitorsStore[visitorsStore.length - 1].visitTimeFormatted : null
+    }
+  });
+});
+
 app.get('/api/v1/health', (req, res) => {
   res.json({
     status: 'healthy', uptime: process.uptime(),

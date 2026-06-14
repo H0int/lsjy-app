@@ -103,6 +103,7 @@
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { toolApi } from '@/api'
+import axios from 'axios'
 import type { Tool } from '@/types'
 
 const authStore = useAuthStore()
@@ -114,6 +115,7 @@ const statCards = ref([
   { icon: '🛠️', label: '已用工具', value: '0' },
   { icon: '📄', label: '生成作品', value: '0' },
   { icon: '🎯', label: '会员等级', value: '普通' },
+  { icon: '👥', label: '今日访客', value: '0' },
 ])
 
 // TODO: 接入后端API获取最近使用记录
@@ -172,5 +174,24 @@ onMounted(async () => {
     statCards.value[3].value = roleMap[displayRole] || '普通用户'
   }
   // TODO: 接入后端API获取「已用工具」和「生成作品」统计数据
+  
+  // 记录当前访客访问
+  try {
+    await axios.post('/api/v1/visitors/record', {
+      path: window.location.pathname
+    })
+  } catch (e) {
+    console.error('记录访客失败', e)
+  }
+  
+  // 获取访客统计
+  try {
+    const visitorRes = await axios.get('/api/v1/visitors/stats')
+    if (visitorRes.data.code === 0) {
+      statCards.value[4].value = visitorRes.data.data.todayVisitors.toString()
+    }
+  } catch (e) {
+    console.error('获取访客统计失败', e)
+  }
 })
 </script>
