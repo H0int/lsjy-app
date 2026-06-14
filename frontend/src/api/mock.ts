@@ -1,6 +1,8 @@
 import type {
   User, Tool, CoinTransaction, CoinAccount, PaymentTransaction,
-  RechargePackage, LoginResult, PageResult, AiCallRecord, ToolCategory
+  RechargePackage, LoginResult, PageResult, AiCallRecord, ToolCategory,
+  Announcement, Coupon, Campaign, Ticket, FAQItem, AutomationRule,
+  ModerationItem, ReportData
 } from '@/types'
 
 // ===== Mock用户数据 =====
@@ -62,6 +64,7 @@ export const mockTransactions: CoinTransaction[] = [
 export const mockPaymentOrders: PaymentTransaction[] = [
   { id: 1, transactionNo: 'PAY20260609001', userId: 1, bizType: 'recharge', payChannel: 'wechat', amount: 199.00, coinAmount: 580, direction: 'in', status: 'success', remark: '充值: 500圣点', createdAt: '2026-06-09T09:00:00.000Z', paidAt: '2026-06-09T09:01:00.000Z' },
   { id: 2, transactionNo: 'PAY20260608002', userId: 1, bizType: 'recharge', payChannel: 'wechat', amount: 99.90, coinAmount: 210, direction: 'in', status: 'success', remark: '充值: 100圣点', createdAt: '2026-06-08T11:00:00.000Z', paidAt: '2026-06-08T11:01:00.000Z' },
+  { id: 3, transactionNo: 'PAY20260610003', userId: 2, bizType: 'recharge', payChannel: 'alipay', amount: 49.90, coinAmount: 100, direction: 'in', status: 'pending', remark: '充值: 100圣点', createdAt: '2026-06-10T10:00:00.000Z', paidAt: null },
 ]
 
 export const mockUsers: User[] = [
@@ -72,25 +75,88 @@ export const mockUsers: User[] = [
   { id: 5, username: 'zhaoliu', nickname: '赵六', avatar: null, email: 'zhaoliu@qq.com', phone: '13500133456', gender: 0, bio: null, userType: 'personal', vipLevel: 0, status: 'frozen', roles: ['user'], createdAt: '2026-04-01T08:00:00.000Z', updatedAt: '2026-05-20T00:00:00.000Z', lastLoginAt: '2026-05-15T10:00:00.000Z' },
 ]
 
+// ===== Admin mock data =====
+export const mockAnnouncements: Announcement[] = [
+  { id: 1, title: '平台v3.0版本升级通知', content: '尊敬的用户，平台将于本周六凌晨2:00-6:00进行系统升级维护。', type: 'system', targetScope: 'all', status: 'published', scheduledAt: null, publishedAt: '2025-07-15T08:00:00.000Z', createdBy: 1, createdAt: '2025-07-14T16:00:00.000Z', updatedAt: '2025-07-15T08:00:00.000Z' },
+  { id: 2, title: '暑期大促：圣点充值8折优惠', content: '暑期限时活动，7月20日至8月20日期间，所有充值套餐享受8折优惠！', type: 'activity', targetScope: 'all', status: 'published', scheduledAt: null, publishedAt: '2025-07-18T10:00:00.000Z', createdBy: 1, createdAt: '2025-07-17T14:00:00.000Z', updatedAt: '2025-07-18T10:00:00.000Z' },
+  { id: 3, title: '自媒体模块新增小红书数据分析', content: '自媒体模块已支持小红书平台数据接入。', type: 'update', targetScope: 'all', status: 'scheduled', scheduledAt: '2025-07-20T09:00:00.000Z', publishedAt: null, createdBy: 1, createdAt: '2025-07-18T11:00:00.000Z', updatedAt: '2025-07-18T11:00:00.000Z' },
+  { id: 4, title: '电商模块商家入驻规则调整', content: '为提升平台商品质量，自8月1日起，新入驻商家需提供营业执照。', type: 'system', targetScope: 'merchant', status: 'draft', scheduledAt: null, publishedAt: null, createdBy: 1, createdAt: '2025-07-18T15:00:00.000Z', updatedAt: '2025-07-18T15:00:00.000Z' },
+]
+
+export const mockCoupons: Coupon[] = [
+  { id: 1, name: '新用户满50减10', type: 'full_reduce', discountValue: 10, minAmount: 50, maxReduce: null, totalQuantity: 5000, usedQuantity: 3280, validFrom: '2025-07-01', validTo: '2025-08-31', issueRule: 'new_user', status: 'active', createdAt: '2025-07-01T00:00:00.000Z' },
+  { id: 2, name: '暑期8折优惠券', type: 'discount', discountValue: 8, minAmount: 100, maxReduce: 50, totalQuantity: 2000, usedQuantity: 856, validFrom: '2025-07-15', validTo: '2025-08-15', issueRule: 'activity', status: 'active', createdAt: '2025-07-15T10:00:00.000Z' },
+  { id: 3, name: '充值赠送100圣点', type: 'coin_gift', discountValue: 100, minAmount: 200, maxReduce: null, totalQuantity: 1000, usedQuantity: 423, validFrom: '2025-07-01', validTo: '2025-07-31', issueRule: 'consume_threshold', status: 'active', createdAt: '2025-07-01T00:00:00.000Z' },
+  { id: 4, name: 'VIP专属9折券', type: 'discount', discountValue: 9, minAmount: 0, maxReduce: 30, totalQuantity: 500, usedQuantity: 120, validFrom: '2025-06-01', validTo: '2025-06-30', issueRule: 'manual', status: 'expired', createdAt: '2025-06-01T00:00:00.000Z' },
+]
+
+export const mockCampaigns: Campaign[] = [
+  { id: 1, name: '暑期充值大返利', type: 'flash_sale', description: '暑期限时充值返利活动', startTime: '2025-07-20 00:00', endTime: '2025-08-20 23:59', participantCount: 2340, totalReward: 56000, status: 'active', config: {}, createdAt: '2025-07-15T10:00:00.000Z' },
+  { id: 2, name: '每日签到领圣点', type: 'check_in', description: '连续签到7天可获得50圣点奖励', startTime: '2025-07-01 00:00', endTime: '2025-09-30 23:59', participantCount: 8920, totalReward: 123000, status: 'active', config: {}, createdAt: '2025-06-28T14:00:00.000Z' },
+  { id: 3, name: '邀请好友得奖励', type: 'invite_reward', description: '每邀请一位新用户注册并完成首充，双方各得20圣点', startTime: '2025-07-01 00:00', endTime: '2025-12-31 23:59', participantCount: 1560, totalReward: 31200, status: 'active', config: {}, createdAt: '2025-06-25T09:00:00.000Z' },
+  { id: 4, name: '618大促', type: 'flash_sale', description: '618限时折扣，全场AI工具8折', startTime: '2025-06-18 00:00', endTime: '2025-06-20 23:59', participantCount: 15600, totalReward: 280000, status: 'ended', config: {}, createdAt: '2025-06-10T10:00:00.000Z' },
+]
+
+export const mockTickets: Ticket[] = [
+  { id: 1, ticketNo: 'TK20250718001', userId: 101, userName: '张三', subject: '充值圣点未到账', content: '我在今天上午10点左右充值了200元购买500圣点，支付已成功但圣点没有到账。', category: 'payment', priority: 'high', status: 'open', assigneeId: null, assigneeName: null, replies: [], firstResponseAt: null, resolvedAt: null, createdAt: '2025-07-18T10:30:00.000Z', updatedAt: '2025-07-18T10:30:00.000Z' },
+  { id: 2, ticketNo: 'TK20250718002', userId: 102, userName: '李四', subject: 'AI绘画工具无法使用', content: '使用AI绘画工具时一直显示"处理中"，等了30分钟也没有结果。', category: 'tool', priority: 'medium', status: 'processing', assigneeId: 1, assigneeName: '客服小王', replies: [{ id: 1, ticketId: 2, userId: 1, userName: '客服小王', isStaff: true, content: '您好，已收到您的反馈。', createdAt: '2025-07-18T11:00:00.000Z' }], firstResponseAt: '2025-07-18T11:00:00.000Z', resolvedAt: null, createdAt: '2025-07-18T09:45:00.000Z', updatedAt: '2025-07-18T11:00:00.000Z' },
+  { id: 3, ticketNo: 'TK20250717003', userId: 103, userName: '王五', subject: '建议增加批量导出功能', content: '希望能增加批量导出AI生成图片的功能。', category: 'suggestion', priority: 'low', status: 'resolved', assigneeId: 2, assigneeName: '客服小李', replies: [{ id: 3, ticketId: 3, userId: 2, userName: '客服小李', isStaff: true, content: '感谢建议！已提交至产品团队。', createdAt: '2025-07-17T15:00:00.000Z' }], firstResponseAt: '2025-07-17T15:00:00.000Z', resolvedAt: '2025-07-17T15:30:00.000Z', createdAt: '2025-07-17T14:20:00.000Z', updatedAt: '2025-07-17T15:30:00.000Z' },
+]
+
+export const mockFAQs: FAQItem[] = [
+  { id: 1, category: '支付充值', question: '圣点充值后多久到账？', answer: '正常情况下圣点充值即时到账。如超过10分钟未到账，请提交工单联系客服处理。', searchCount: 1256, sortOrder: 1, status: 'active', createdAt: '2025-06-01T10:00:00.000Z', updatedAt: '2025-06-01T10:00:00.000Z' },
+  { id: 2, category: 'AI工具', question: 'AI工具调用失败会扣圣点吗？', answer: '不会。如果AI工具调用失败，系统会自动退还消耗的圣点。', searchCount: 980, sortOrder: 2, status: 'active', createdAt: '2025-06-01T10:00:00.000Z', updatedAt: '2025-06-01T10:00:00.000Z' },
+  { id: 3, category: '账号相关', question: '如何修改绑定手机号？', answer: '进入个人中心 -> 安全设置 -> 修改手机号。', searchCount: 756, sortOrder: 3, status: 'active', createdAt: '2025-06-01T10:00:00.000Z', updatedAt: '2025-06-01T10:00:00.000Z' },
+]
+
+export const mockAutomationRules: AutomationRule[] = [
+  { id: 1, name: '新用户欢迎奖励', description: '新用户注册后自动发放20圣点', triggerEvent: 'user_register', triggerCondition: {}, actions: [{ type: 'send_coins', config: { amount: 20 } }], status: 'active', executionCount: 3420, lastExecutedAt: '2025-07-18T14:30:00.000Z', createdAt: '2025-06-01T10:00:00.000Z' },
+  { id: 2, name: '消费满100自动升级VIP1', description: '用户累计消费满100圣点自动升级', triggerEvent: 'consume_threshold', triggerCondition: { threshold: 100 }, actions: [{ type: 'change_role', config: { vipLevel: 1 } }], status: 'active', executionCount: 856, lastExecutedAt: '2025-07-18T12:15:00.000Z', createdAt: '2025-06-05T14:00:00.000Z' },
+  { id: 3, name: '首次充值双倍返还', description: '用户首次充值额外赠送等额圣点', triggerEvent: 'first_recharge', triggerCondition: {}, actions: [{ type: 'send_coins', config: { amount: 'equal' } }], status: 'active', executionCount: 1230, lastExecutedAt: '2025-07-18T10:00:00.000Z', createdAt: '2025-06-10T09:00:00.000Z' },
+]
+
+export const mockModerations: ModerationItem[] = [
+  { id: 1, contentType: 'post', contentTitle: '分享我的AI绘画作品', authorName: '张三', authorId: 101, summary: '这是一篇关于AI绘画的分享帖子...', status: 'pending', reason: null, reviewerId: null, reviewerName: null, createdAt: '2025-07-18T14:30:00.000Z', reviewedAt: null },
+  { id: 2, contentType: 'comment', contentTitle: '关于课程评价', authorName: '李四', authorId: 102, summary: '这个课程真的很棒，推荐给大家...', status: 'pending', reason: null, reviewerId: null, reviewerName: null, createdAt: '2025-07-18T13:20:00.000Z', reviewedAt: null },
+  { id: 3, contentType: 'course', contentTitle: 'Python从入门到精通', authorName: '王老师', authorId: 103, summary: '零基础Python编程课程...', status: 'approved', reason: null, reviewerId: 1, reviewerName: '管理员', createdAt: '2025-07-18T10:00:00.000Z', reviewedAt: '2025-07-18T11:30:00.000Z' },
+  { id: 4, contentType: 'product', contentTitle: '手工陶瓷茶杯套装', authorName: '匠心店铺', authorId: 104, summary: '纯手工制作的陶瓷茶杯...', status: 'pending', reason: null, reviewerId: null, reviewerName: null, createdAt: '2025-07-18T09:15:00.000Z', reviewedAt: null },
+]
+
+export const mockReportData: ReportData[] = [
+  { period: '07-18', newUsers: 234, activeUsers: 5620, revenue: 18900, coinConsumed: 45600, orders: 189, toolCalls: 12340 },
+  { period: '07-17', newUsers: 198, activeUsers: 5430, revenue: 16500, coinConsumed: 41200, orders: 165, toolCalls: 11200 },
+  { period: '07-16', newUsers: 256, activeUsers: 5890, revenue: 21300, coinConsumed: 52100, orders: 213, toolCalls: 14500 },
+  { period: '07-15', newUsers: 187, activeUsers: 5210, revenue: 15200, coinConsumed: 38900, orders: 152, toolCalls: 10800 },
+  { period: '07-14', newUsers: 312, activeUsers: 6100, revenue: 25600, coinConsumed: 61200, orders: 256, toolCalls: 16700 },
+  { period: '07-13', newUsers: 278, activeUsers: 5950, revenue: 22100, coinConsumed: 54300, orders: 221, toolCalls: 15200 },
+  { period: '07-12', newUsers: 145, activeUsers: 4890, revenue: 12300, coinConsumed: 32100, orders: 123, toolCalls: 8900 },
+]
+
 // ===== Mock API =====
 function delay(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
+let nextId = 100
+
+function genId(): number {
+  return ++nextId
+}
+
+function paginate<T>(items: T[], page = 1, pageSize = 20): PageResult<T> {
+  const start = (page - 1) * pageSize
+  return { items: items.slice(start, start + pageSize), total: items.length, page, pageSize }
+}
+
 export const mockApi = {
   async login() {
     await delay(500)
-    const result: LoginResult = {
-      user: mockUser,
-      accessToken: 'mock_access_token_xxx',
-      refreshToken: 'mock_refresh_token_xxx'
-    }
-    return { code: 0, message: 'success', data: result }
+    return { code: 0, message: 'success', data: { user: mockUser, accessToken: 'mock_access_token_xxx', refreshToken: 'mock_refresh_token_xxx' } as LoginResult }
   },
 
   async register() {
     await delay(500)
-    return { code: 0, message: 'success', data: { user: mockUser, accessToken: 'mock_token', refreshToken: 'mock_refresh' } }
+    return { code: 0, message: 'success', data: { user: mockUser, accessToken: 'mock_token', refreshToken: 'mock_refresh' } as LoginResult }
   },
 
   async getProfile() {
@@ -108,8 +174,7 @@ export const mockApi = {
     let list = [...mockTools].filter(t => t.status === 'active')
     if (params?.categoryId) list = list.filter(t => t.categoryId === params.categoryId)
     if (params?.toolType) list = list.filter(t => t.toolType === params.toolType)
-    const result: PageResult<Tool> = { items: list, total: list.length, page: 1, pageSize: 20 }
-    return { code: 0, message: 'success', data: result }
+    return { code: 0, message: 'success', data: paginate(list) }
   },
 
   async getToolDetail(id: number | string) {
@@ -121,7 +186,7 @@ export const mockApi = {
   async callTool(_id: number | string, input: any) {
     await delay(1000)
     const record: AiCallRecord = {
-      id: 100, userId: 1, toolId: Number(_id), requestId: 'mock-req-id',
+      id: genId(), userId: 1, toolId: Number(_id), requestId: 'mock-req-id',
       inputText: input?.text || '', outputText: '【Mock生成结果】这是一段模拟的AI生成内容。',
       coinCost: 10, status: 'completed', isFavorite: 0, createdAt: new Date().toISOString()
     }
@@ -144,7 +209,7 @@ export const mockApi = {
     return {
       code: 0, message: 'success',
       data: {
-        paymentTransaction: { id: 99, transactionNo: 'PAY_MOCK_001', userId: 1, bizType: 'recharge', payChannel: 'wechat', amount: pkg?.price || 0, coinAmount: (pkg?.coinAmount || 0) + (pkg?.bonusCoins || 0), direction: 'in', status: 'pending', remark: `充值: ${pkg?.name}`, createdAt: new Date().toISOString(), paidAt: null },
+        paymentTransaction: { id: genId(), transactionNo: 'PAY_MOCK_' + Date.now(), userId: 1, bizType: 'recharge', payChannel: 'wechat', amount: pkg?.price || 0, coinAmount: (pkg?.coinAmount || 0) + (pkg?.bonusCoins || 0), direction: 'in', status: 'pending', remark: `充值: ${pkg?.name}`, createdAt: new Date().toISOString(), paidAt: null },
         coinAmount: (pkg?.coinAmount || 0) + (pkg?.bonusCoins || 0)
       }
     }
@@ -152,19 +217,270 @@ export const mockApi = {
 
   async getTransactions(_params?: any) {
     await delay(300)
-    const result: PageResult<CoinTransaction> = { items: mockTransactions, total: mockTransactions.length, page: 1, pageSize: 20 }
-    return { code: 0, message: 'success', data: result }
+    return { code: 0, message: 'success', data: paginate(mockTransactions) }
   },
 
   async getPaymentOrders() {
     await delay(300)
-    const result: PageResult<PaymentTransaction> = { items: mockPaymentOrders, total: mockPaymentOrders.length, page: 1, pageSize: 20 }
-    return { code: 0, message: 'success', data: result }
+    return { code: 0, message: 'success', data: paginate(mockPaymentOrders) }
   },
 
-  async getUsers() {
+  async getUsers(_params?: any) {
     await delay(300)
-    const result: PageResult<User> = { items: mockUsers, total: mockUsers.length, page: 1, pageSize: 20 }
-    return { code: 0, message: 'success', data: result }
-  }
+    return { code: 0, message: 'success', data: paginate(mockUsers) }
+  },
+
+  // ===== Admin: User =====
+  async saveUser(data: any) {
+    await delay(300)
+    if (data.id) {
+      const user = mockUsers.find(u => u.id === data.id)
+      if (user) Object.assign(user, { nickname: data.nickname, phone: data.phone, email: data.email, roles: data.roles, status: data.status })
+    } else {
+      mockUsers.push({ id: genId(), username: data.username, nickname: data.nickname, avatar: null, email: data.email, phone: data.phone, gender: 0, bio: null, userType: 'personal', vipLevel: 0, status: data.status || 'active', roles: data.roles || ['user'], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), lastLoginAt: null })
+    }
+    return { code: 0, message: 'success', data: { message: 'ok' } }
+  },
+
+  async updateUserStatus(id: number, status: string) {
+    await delay(200)
+    const user = mockUsers.find(u => u.id === id)
+    if (user) user.status = status as any
+    return { code: 0, message: 'success', data: { message: 'ok' } }
+  },
+
+  // ===== Admin: Tools =====
+  async getAdminTools(params?: { page?: number; pageSize?: number }) {
+    await delay(300)
+    return { code: 0, message: 'success', data: paginate(mockTools, params?.page, params?.pageSize) }
+  },
+
+  async saveTool(data: any) {
+    await delay(300)
+    if (data.id) {
+      const tool = mockTools.find(t => t.id === data.id)
+      if (tool) Object.assign(tool, data)
+    } else {
+      mockTools.push({ id: genId(), categoryId: data.categoryId || 1, name: data.name, slug: data.name, description: data.description || '', icon: data.icon || '🔧', provider: data.provider || 'openai', modelId: data.modelId || '', toolType: data.toolType || 'text', inputType: 'text', outputType: 'text', coinCost: data.coinCost || 0, isFree: data.isFree || 0, freeDailyLimit: data.freeDailyLimit || 0, usageCount: 0, sortOrder: mockTools.length + 1, status: data.status || 'active', createdAt: new Date().toISOString() })
+    }
+    return { code: 0, message: 'success', data: { message: 'ok' } }
+  },
+
+  async updateToolStatus(id: number, status: string) {
+    await delay(200)
+    const tool = mockTools.find(t => t.id === id)
+    if (tool) tool.status = status as any
+    return { code: 0, message: 'success', data: { message: 'ok' } }
+  },
+
+  // ===== Admin: Orders =====
+  async confirmOrder(id: number) {
+    await delay(300)
+    const order = mockPaymentOrders.find(o => o.id === id)
+    if (order) { order.status = 'success'; order.paidAt = new Date().toISOString() }
+    return { code: 0, message: 'success', data: { message: 'ok' } }
+  },
+
+  // ===== Admin: Announcements =====
+  async getAnnouncements() {
+    await delay(300)
+    return { code: 0, message: 'success', data: [...mockAnnouncements] }
+  },
+
+  async createAnnouncement(data: any) {
+    await delay(300)
+    const item: Announcement = { id: genId(), title: data.title, content: data.content, type: data.type, targetScope: data.targetScope, status: data.scheduledAt ? 'scheduled' : 'draft', scheduledAt: data.scheduledAt || null, publishedAt: null, createdBy: 1, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
+    mockAnnouncements.unshift(item)
+    return { code: 0, message: 'success', data: item }
+  },
+
+  async updateAnnouncement(id: number, data: any) {
+    await delay(300)
+    const item = mockAnnouncements.find(a => a.id === id)
+    if (item) Object.assign(item, data, { updatedAt: new Date().toISOString() })
+    return { code: 0, message: 'success', data: item }
+  },
+
+  async deleteAnnouncement(id: number) {
+    await delay(200)
+    const idx = mockAnnouncements.findIndex(a => a.id === id)
+    if (idx >= 0) mockAnnouncements.splice(idx, 1)
+    return { code: 0, message: 'success', data: { message: 'ok' } }
+  },
+
+  // ===== Admin: Coupons =====
+  async getCoupons() {
+    await delay(300)
+    return { code: 0, message: 'success', data: [...mockCoupons] }
+  },
+
+  async createCoupon(data: any) {
+    await delay(300)
+    const item: Coupon = { id: genId(), name: data.name, type: data.type, discountValue: data.discountValue, minAmount: data.minAmount || 0, maxReduce: null, totalQuantity: data.totalQuantity, usedQuantity: 0, validFrom: data.validFrom, validTo: data.validTo, issueRule: data.issueRule, status: 'active', createdAt: new Date().toISOString() }
+    mockCoupons.unshift(item)
+    return { code: 0, message: 'success', data: item }
+  },
+
+  async updateCoupon(id: number, data: any) {
+    await delay(300)
+    const item = mockCoupons.find(c => c.id === id)
+    if (item) Object.assign(item, data)
+    return { code: 0, message: 'success', data: item }
+  },
+
+  async deleteCoupon(id: number) {
+    await delay(200)
+    const idx = mockCoupons.findIndex(c => c.id === id)
+    if (idx >= 0) mockCoupons.splice(idx, 1)
+    return { code: 0, message: 'success', data: { message: 'ok' } }
+  },
+
+  // ===== Admin: Campaigns =====
+  async getCampaigns() {
+    await delay(300)
+    return { code: 0, message: 'success', data: [...mockCampaigns] }
+  },
+
+  async createCampaign(data: any) {
+    await delay(300)
+    const item: Campaign = { id: genId(), name: data.name, type: data.type, description: data.description || '', startTime: data.startTime, endTime: data.endTime, participantCount: 0, totalReward: data.totalReward || 0, status: 'draft', config: {}, createdAt: new Date().toISOString() }
+    mockCampaigns.unshift(item)
+    return { code: 0, message: 'success', data: item }
+  },
+
+  async deleteCampaign(id: number) {
+    await delay(200)
+    const idx = mockCampaigns.findIndex(c => c.id === id)
+    if (idx >= 0) mockCampaigns.splice(idx, 1)
+    return { code: 0, message: 'success', data: { message: 'ok' } }
+  },
+
+  // ===== Admin: Tickets =====
+  async getTickets() {
+    await delay(300)
+    return { code: 0, message: 'success', data: [...mockTickets] }
+  },
+
+  async replyTicket(id: number, content: string) {
+    await delay(300)
+    const ticket = mockTickets.find(t => t.id === id)
+    if (ticket) {
+      ticket.replies.push({ id: genId(), ticketId: id, userId: 1, userName: '管理员', isStaff: true, content, createdAt: new Date().toISOString() })
+      if (ticket.status === 'open') ticket.status = 'processing'
+    }
+    return { code: 0, message: 'success', data: { message: 'ok' } }
+  },
+
+  async resolveTicket(id: number) {
+    await delay(200)
+    const ticket = mockTickets.find(t => t.id === id)
+    if (ticket) { ticket.status = 'resolved'; ticket.resolvedAt = new Date().toISOString() }
+    return { code: 0, message: 'success', data: { message: 'ok' } }
+  },
+
+  async assignTicket(id: number, assigneeId: number, assigneeName: string) {
+    await delay(200)
+    const ticket = mockTickets.find(t => t.id === id)
+    if (ticket) { ticket.assigneeId = assigneeId; ticket.assigneeName = assigneeName; if (ticket.status === 'open') ticket.status = 'processing' }
+    return { code: 0, message: 'success', data: { message: 'ok' } }
+  },
+
+  // ===== Admin: FAQs =====
+  async getFAQs() {
+    await delay(300)
+    return { code: 0, message: 'success', data: [...mockFAQs] }
+  },
+
+  async createFAQ(data: any) {
+    await delay(300)
+    const item: FAQItem = { id: genId(), category: data.category, question: data.question, answer: data.answer, searchCount: 0, sortOrder: data.sortOrder || 0, status: 'active', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
+    mockFAQs.unshift(item)
+    return { code: 0, message: 'success', data: item }
+  },
+
+  async updateFAQ(id: number, data: any) {
+    await delay(300)
+    const item = mockFAQs.find(f => f.id === id)
+    if (item) Object.assign(item, data, { updatedAt: new Date().toISOString() })
+    return { code: 0, message: 'success', data: item }
+  },
+
+  async deleteFAQ(id: number) {
+    await delay(200)
+    const idx = mockFAQs.findIndex(f => f.id === id)
+    if (idx >= 0) mockFAQs.splice(idx, 1)
+    return { code: 0, message: 'success', data: { message: 'ok' } }
+  },
+
+  // ===== Admin: Automation Rules =====
+  async getAutomationRules() {
+    await delay(300)
+    return { code: 0, message: 'success', data: [...mockAutomationRules] }
+  },
+
+  async createRule(data: any) {
+    await delay(300)
+    const item: AutomationRule = { id: genId(), name: data.name, description: data.description || '', triggerEvent: data.triggerEvent, triggerCondition: {}, actions: data.actions || [], status: 'active', executionCount: 0, lastExecutedAt: null, createdAt: new Date().toISOString() }
+    mockAutomationRules.unshift(item)
+    return { code: 0, message: 'success', data: item }
+  },
+
+  async toggleRule(id: number) {
+    await delay(200)
+    const rule = mockAutomationRules.find(r => r.id === id)
+    if (rule) rule.status = rule.status === 'active' ? 'disabled' : 'active'
+    return { code: 0, message: 'success', data: rule }
+  },
+
+  async deleteRule(id: number) {
+    await delay(200)
+    const idx = mockAutomationRules.findIndex(r => r.id === id)
+    if (idx >= 0) mockAutomationRules.splice(idx, 1)
+    return { code: 0, message: 'success', data: { message: 'ok' } }
+  },
+
+  // ===== Admin: Content Moderation =====
+  async getContentModerations() {
+    await delay(300)
+    return { code: 0, message: 'success', data: [...mockModerations] }
+  },
+
+  async approveContent(id: number) {
+    await delay(200)
+    const item = mockModerations.find(m => m.id === id)
+    if (item) { item.status = 'approved'; item.reviewerName = '管理员'; item.reviewedAt = new Date().toISOString() }
+    return { code: 0, message: 'success', data: { message: 'ok' } }
+  },
+
+  async rejectContent(id: number, reason: string) {
+    await delay(200)
+    const item = mockModerations.find(m => m.id === id)
+    if (item) { item.status = 'rejected'; item.reason = reason; item.reviewerName = '管理员'; item.reviewedAt = new Date().toISOString() }
+    return { code: 0, message: 'success', data: { message: 'ok' } }
+  },
+
+  // ===== Admin: System =====
+  async getSystemLogs() {
+    await delay(300)
+    return { code: 0, message: 'success', data: paginate([
+      { id: 1, module: 'user', action: '用户注册', userId: 101, detail: '新用户 zhangsan 注册', createdAt: '2025-07-18T14:30:00.000Z' },
+      { id: 2, module: 'payment', action: '充值成功', userId: 1, detail: '充值500圣点 ¥199', createdAt: '2025-07-18T10:00:00.000Z' },
+      { id: 3, module: 'tool', action: '工具调用', userId: 2, detail: 'AI文案创作 消耗10圣点', createdAt: '2025-07-18T09:30:00.000Z' },
+    ]) }
+  },
+
+  async getSystemSettings() {
+    await delay(200)
+    return { code: 0, message: 'success', data: { platformName: '罗圣纪元SaaS平台', domain: 'lsjyapp.cn', adminEmail: 'admin@lsjyapp.cn', newUserBonus: 50, unitPrice: 0.6, enterpriseDiscount: '0.8', emailNotify: true, smsNotify: false } }
+  },
+
+  async saveSystemSettings(data: any) {
+    await delay(300)
+    return { code: 0, message: 'success', data: { message: 'ok', ...data } }
+  },
+
+  async getDataReports(_range?: string) {
+    await delay(300)
+    return { code: 0, message: 'success', data: [...mockReportData] }
+  },
 }
