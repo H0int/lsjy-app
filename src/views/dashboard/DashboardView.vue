@@ -10,11 +10,36 @@
     </div>
 
     <!-- 数据卡片 -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
       <div v-for="card in statCards" :key="card.label" class="bg-white dark:bg-dark-100 rounded-xl p-4 shadow-sm">
         <div class="text-2xl mb-2">{{ card.icon }}</div>
         <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ card.value }}</div>
         <div class="text-sm text-gray-500 dark:text-gray-400">{{ card.label }}</div>
+      </div>
+    </div>
+
+    <!-- 访客信息栏 -->
+    <div class="bg-white dark:bg-dark-100 rounded-xl p-4 mb-6 shadow-sm flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <span class="text-2xl">👥</span>
+        <div>
+          <div class="text-sm text-gray-500 dark:text-gray-400">平台访客总数</div>
+          <div class="text-xl font-bold text-gray-900 dark:text-white">{{ visitorStats.totalVisitors }} 人</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="text-2xl">📅</span>
+        <div>
+          <div class="text-sm text-gray-500 dark:text-gray-400">今日访客</div>
+          <div class="text-xl font-bold text-gray-900 dark:text-white">{{ visitorStats.todayVisitors }} 人</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="text-2xl">🕐</span>
+        <div>
+          <div class="text-sm text-gray-500 dark:text-gray-400">最近访问时间</div>
+          <div class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ visitorStats.lastVisitTime || '暂无记录' }}</div>
+        </div>
       </div>
     </div>
 
@@ -72,7 +97,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
-import { toolApi } from '@/api'
+import { toolApi, visitorApi } from '@/api'
 import type { Tool } from '@/types'
 
 const authStore = useAuthStore()
@@ -83,7 +108,14 @@ const statCards = ref([
   { icon: '🛠️', label: '已用工具', value: '0' },
   { icon: '📄', label: '生成作品', value: '0' },
   { icon: '🎯', label: '会员等级', value: '普通' },
+  { icon: '👥', label: '平台访客', value: '0' },
 ])
+
+const visitorStats = ref({
+  totalVisitors: 0,
+  todayVisitors: 0,
+  lastVisitTime: '',
+})
 
 const recentUsage = ref([
   { id: '1', icon: '🎬', name: 'AI视频生成', time: '30分钟前', coinCost: 80, isFree: false },
@@ -103,7 +135,6 @@ onMounted(async () => {
   // 获取热门工具
   try {
     const res = await toolApi.getTools({ pageSize: 6 })
-    // 按使用量排序取前6
     hotTools.value = res.data.items.sort((a, b) => b.usageCount - a.usageCount).slice(0, 6)
   } catch { /* ignore */ }
 
@@ -112,5 +143,19 @@ onMounted(async () => {
   if (authStore.user) {
     statCards.value[3].value = authStore.user.vipLevel > 0 ? `VIP${authStore.user.vipLevel}` : '普通'
   }
+
+  // 访客签到 + 获取统计
+  try {
+    await visitorApi.checkin('/dashboard', document.referrer)
+    const statsRes = await visitorApi.getStats()
+    if (statsRes.data) {
+      visitorStats.value = {
+        totalVisitors: statsRes.data.totalVisitors || 0,
+        todayVisitors: statsRes.data.todayVisitors || 0,
+        lastVisitTime: statsRes.data.lastVisitTime || '',
+      }
+      statCards.value[4].value = String(statsRes.data.totalVisitors || 0)
+    }
+  } catch { /* ignore */ }
 })
 </script>
