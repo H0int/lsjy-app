@@ -3734,7 +3734,12 @@ function initMatrixRain() {
 
   resize();
   window.addEventListener('resize', resize);
-  setInterval(draw, 50);
+  var matrixIntervalId = setInterval(function() {
+    if (canvas.offsetParent === null) return; // skip if hidden
+    draw();
+  }, 50);
+  // Expose stop function
+  window._stopMatrixRain = function() { clearInterval(matrixIntervalId); };
 }
 
 // ========== Mobile Sidebar ==========
