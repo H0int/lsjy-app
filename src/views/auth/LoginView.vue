@@ -19,6 +19,12 @@
           </el-form-item>
 
           <el-form-item>
+            <div class="flex items-center justify-between w-full">
+              <el-checkbox v-model="rememberMe" label="记住账号密码" />
+            </div>
+          </el-form-item>
+
+          <el-form-item>
             <el-button type="primary" size="large" class="w-full" :loading="loading" @click="handleLogin"
               style="background: linear-gradient(135deg, #3b82f6, #2563eb); border: none;">
               登 录
@@ -41,7 +47,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { ElMessage } from 'element-plus'
@@ -52,10 +58,24 @@ const authStore = useAuthStore()
 
 const loading = ref(false)
 const formRef = ref<FormInstance>()
+const rememberMe = ref(false)
 
 const form = reactive({
   username: '',
   password: ''
+})
+
+// 页面加载时恢复记住的账号密码
+onMounted(() => {
+  const saved = localStorage.getItem('lsjy_remember')
+  if (saved) {
+    try {
+      const data = JSON.parse(saved)
+      form.username = data.username || ''
+      form.password = data.password || ''
+      rememberMe.value = true
+    } catch (e) {}
+  }
 })
 
 const rules = {
@@ -70,7 +90,15 @@ async function handleLogin() {
     loading.value = true
     const success = await authStore.login(form.username, form.password)
     loading.value = false
-    if (success) router.push('/dashboard')
+    if (success) {
+      // 保存/清除记住的账号密码
+      if (rememberMe.value) {
+        localStorage.setItem('lsjy_remember', JSON.stringify({ username: form.username, password: form.password }))
+      } else {
+        localStorage.removeItem('lsjy_remember')
+      }
+      router.push('/dashboard')
+    }
   })
 }
 </script>
