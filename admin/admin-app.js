@@ -467,7 +467,9 @@ var routes = {
   marketing: { render: renderMarketing, title: '营销管理' },
   reports: { render: renderReports, title: '数据报表' },
   permissions: { render: renderPermissions, title: '权限管理' },
-  settings: { render: renderSettings, title: '系统设置' }
+  settings: { render: renderSettings, title: '系统设置' },
+  'recharge-review': { render: renderRechargeReview, title: '充值审核' },
+  'visitors': { render: renderVisitors, title: '访客管理' }
 };
 
 function navigate(page) {
@@ -4044,5 +4046,179 @@ if (document.readyState === 'loading') {
 } else {
   init();
 }
+
+
+// ========== 充值审核面板 ==========
+function renderRechargeReview() {
+  var html = "<div class="page-toolbar"><div class="toolbar-left">";
+  html += "<select id="recharge-status-filter" onchange="AdminAPI.filterRechargeApps()">";
+  html += "<option value="">全部状态</option><option value="pending_payment">待支付</option><option value="pending_review">待审核</option>";
+  html += "<option value="approved">已通过</option><option value="rejected">已拒绝</option></select>";
+  html += "<button class="btn-xs" onclick="AdminAPI.loadRechargeApps()">刷新</button>";
+  html += "</div></div>";
+  html += "<div class="dash-grid" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr));margin-bottom:16px;">";
+  html += statCard("fa-clock","待审核","--","条","var(--warn)");
+  html += statCard("fa-check","已通过","--","条","var(--ok)");
+  html += statCard("fa-times","已拒绝","--","条","var(--err)");
+  html += "</div>";
+  html += "<div class="dash-card"><table class="admin-table"><thead><tr>";
+  html += "<th>订单号</th><th>用户</th><th>金额</th><th>算力</th><th>支付方式</th><th>截图</th><th>状态</th><th>时间</th><th>操作</th>";
+  html += "</tr></thead><tbody id="recharge-apps-body">";
+  html += "<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--nd);">加载中...</td></tr>";
+  html += "</tbody></table></div>";
+  $("#main-content").innerHTML = html;
+  AdminAPI.loadRechargeApps();
+}
+
+// ========== 访客管理面板 ==========
+function renderVisitors() {
+  var html = "<div class="page-toolbar"><div class="toolbar-left">";
+  html += "<input type="text" id="visitor-search" placeholder="搜索IP/路径..." oninput="AdminAPI.filterVisitors()">";
+  html += "<button class="btn-xs" onclick="AdminAPI.loadVisitors()">刷新</button>";
+  html += "</div></div>";
+  html += "<div class="dash-grid" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr));margin-bottom:16px;">";
+  html += statCard("fa-eye","今日访客","--","人","var(--p)");
+  html += statCard("fa-users","总访客","--","人","var(--p2)");
+  html += "</div>";
+  html += "<div class="dash-card"><table class="admin-table"><thead><tr>";
+  html += "<th>时间</th><th>IP</th><th>访问路径</th><th>UserAgent</th><th>来源</th>";
+  html += "</tr></thead><tbody id="visitors-body">";
+  html += "<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--nd);">加载中...</td></tr>";
+  html += "</tbody></table></div>";
+  $("#main-content").innerHTML = html;
+  AdminAPI.loadVisitors();
+}
+
+
+// ========== 充值审核 AdminAPI ==========
+AdminAPI.loadRechargeApps = function() {
+  var apiBase = APP.apiBase;
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", apiBase.replace("/api/v1","") + "/api/v1/payment/coin/orders?pageSize=100", true);
+  xhr.setRequestHeader("Content-Type", "application/json");
+  var token = sessionStorage.getItem("lsjy_jwt") || Store.getToken ? Store.getToken() : "";
+  if (token) xhr.setRequestHeader("Authorization", "Bearer " + token);
+  xhr.onload = function() {
+    if (xhr.status === 200) {
+      try {
+        var res = JSON.parse(xhr.responseText);
+        var orders = (res.data && res.data.orders) ? res.data.orders : (res.data || []);
+        if (!Array.isArray(orders)) orders = [];
+        var filter = document.getElementById("recharge-status-filter");
+        var status = filter ? filter.value : "";
+        if (status) orders = orders.filter(function(o){ return o.status === status; });
+        AdminAPI._renderRechargeApps(orders);
+      } catch(e) { AdminAPI._renderRechargeAppsLocal(); }
+    } else { AdminAPI._renderRechargeAppsLocal(); }
+  };
+  xhr.onerror = function() { AdminAPI._renderRechargeAppsLocal(); };
+  xhr.send();
+};
+
+AdminAPI._renderRechargeAppsLocal = function() {
+  var orders = Store.get("orders") || SAMPLE_ORDERS;
+  AdminAPI._renderRechargeApps(orders);
+};
+
+AdminAPI._renderRechargeApps = function(orders) {
+  var tbody = document.getElementById("recharge-apps-body");
+  if (!tbody || !orders.length) { if(tbody) tbody.innerHTML = "<tr><td colspan=9 style="text-align:center;padding:40px;color:var(--nd);">暂无数据</td></tr>"; return; }
+  var statusMap = {pending_payment:"<span class="badge badge-warn">待支付</span>",pending_review:"<span class="badge badge-p">待审核</span>",approved:"<span class="badge badge-ok">已通过</span>",rejected:"<span class="badge badge-err">已拒绝</span>"};
+  var methodMap = {wechat:"微信",alipay:"支付宝",qq:"QQ"};
+  var html = "";
+  orders.forEach(function(o) {
+    var st = statusMap[o.status] || o.status;
+    var method = methodMap[o.method] || methodMap[o.payMethod] || o.payMethod || "--";
+    html += "<tr><td>" + (o.orderNo || o.id) + "</td><td>" + (o.username || o.user || "--") + "</td>";
+    html += "<td>¥" + (o.amount || 0) + "</td><td>" + (o.coins || o.coinAmount || 0) + "</td>";
+    html += "<td>" + method + "</td><td>" + (o.screenshotUrl ? "<a href=""+o.screenshotUrl+"" target="_blank">查看</a>" : "--") + "</td>";
+    html += "<td>" + st + "</td><td>" + (o.createdAt || o.time || "--") + "</td>";
+    if (o.status === "pending_review" || o.status === "pending_payment") {
+      html += "<td><button class="btn-xs btn-ok" onclick="AdminAPI.approveRechargeApp("+o.id+")">通过</button> <button class="btn-xs btn-err" onclick="AdminAPI.rejectRechargeApp("+o.id+")">拒绝</button></td>";
+    } else { html += "<td>--</td>"; }
+    html += "</tr>";
+  });
+  tbody.innerHTML = html;
+};
+
+AdminAPI.approveRechargeApp = function(id) {
+  if (!confirm("确认通过此充值申请？")) return;
+  var apiBase = APP.apiBase;
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", apiBase.replace("/api/v1","") + "/api/v1/payment/coin/approve/" + id, true);
+  xhr.setRequestHeader("Content-Type", "application/json");
+  var token = sessionStorage.getItem("lsjy_jwt") || "";
+  if (token) xhr.setRequestHeader("Authorization", "Bearer " + token);
+  xhr.onload = function() {
+    if (xhr.status === 200) { toast("已通过", "success"); AdminAPI.loadRechargeApps(); }
+    else { toast("操作失败", "error"); }
+  };
+  xhr.onerror = function() { toast("网络错误", "error"); };
+  xhr.send(JSON.stringify({ action: "approve" }));
+};
+
+AdminAPI.rejectRechargeApp = function(id) {
+  var reason = prompt("请输入拒绝原因：");
+  if (reason === null) return;
+  var apiBase = APP.apiBase;
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", apiBase.replace("/api/v1","") + "/api/v1/payment/coin/approve/" + id, true);
+  xhr.setRequestHeader("Content-Type", "application/json");
+  var token = sessionStorage.getItem("lsjy_jwt") || "";
+  if (token) xhr.setRequestHeader("Authorization", "Bearer " + token);
+  xhr.onload = function() {
+    if (xhr.status === 200) { toast("已拒绝", "success"); AdminAPI.loadRechargeApps(); }
+    else { toast("操作失败", "error"); }
+  };
+  xhr.onerror = function() { toast("网络错误", "error"); };
+  xhr.send(JSON.stringify({ action: "reject", remark: reason }));
+};
+
+AdminAPI.filterRechargeApps = function() { AdminAPI.loadRechargeApps(); };
+
+// ========== 访客管理 AdminAPI ==========
+AdminAPI.loadVisitors = function() {
+  var apiBase = APP.apiBase;
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", apiBase + "/visitors?pageSize=200", true);
+  xhr.setRequestHeader("Content-Type", "application/json");
+  var token = sessionStorage.getItem("lsjy_jwt") || "";
+  if (token) xhr.setRequestHeader("Authorization", "Bearer " + token);
+  xhr.onload = function() {
+    if (xhr.status === 200) {
+      try {
+        var res = JSON.parse(xhr.responseText);
+        var list = (res.data && res.data.list) ? res.data.list : (res.data || []);
+        if (!Array.isArray(list)) list = [];
+        var today = new Date().toISOString().slice(0,10);
+        var todayCount = list.filter(function(v){ return (v.visitTime||"").indexOf(today) === 0; }).length;
+        var totalEl = document.querySelectorAll(".stat-value");
+        if (totalEl.length >= 5) { totalEl[3].textContent = todayCount; totalEl[4].textContent = list.length; }
+        AdminAPI._renderVisitors(list);
+      } catch(e) { AdminAPI._renderVisitors([]); }
+    } else { AdminAPI._renderVisitors([]); }
+  };
+  xhr.onerror = function() { AdminAPI._renderVisitors([]); };
+  xhr.send();
+};
+
+AdminAPI._renderVisitors = function(list) {
+  var tbody = document.getElementById("visitors-body");
+  if (!tbody || !list.length) { if(tbody) tbody.innerHTML = "<tr><td colspan=5 style="text-align:center;padding:40px;color:var(--nd);">暂无访客数据</td></tr>"; return; }
+  var search = (document.getElementById("visitor-search") || {}).value || "";
+  if (search) { var s = search.toLowerCase(); list = list.filter(function(v){ return (v.ip||"").toLowerCase().indexOf(s)>=0 || (v.path||"").toLowerCase().indexOf(s)>=0; }); }
+  var html = "";
+  list.forEach(function(v) {
+    html += "<tr><td>" + (v.visitTimeFormatted || v.visitTime || "--") + "</td>";
+    html += "<td>" + (v.ip || "--") + "</td>";
+    html += "<td>" + (v.path || "--") + "</td>";
+    html += "<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">" + (v.userAgent || "--") + "</td>";
+    html += "<td>" + (v.referer || "--") + "</td></tr>";
+  });
+  if (!html) html = "<tr><td colspan=5 style="text-align:center;padding:40px;color:var(--nd);">无匹配结果</td></tr>";
+  tbody.innerHTML = html;
+};
+
+AdminAPI.filterVisitors = function() { AdminAPI.loadVisitors(); };
 
 })();

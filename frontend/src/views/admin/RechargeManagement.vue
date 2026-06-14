@@ -95,6 +95,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { formatDate } from '@/utils'
+import service from '@/api/request'
 
 interface RechargeOrder {
   id: number
@@ -164,9 +165,8 @@ function payMethodStyle(m: string) {
 async function fetchOrders() {
   loading.value = true
   try {
-    const res = await fetch('/api/v1/payment/coin/orders')
-    const json = await res.json()
-    orders.value = json.data?.items || []
+    const res = await service.get('/payment/coin/orders')
+    orders.value = res.data?.data?.items || []
   } catch (e) {
     console.error('Failed to fetch orders:', e)
     ElMessage.error('获取订单列表失败')
@@ -178,17 +178,12 @@ async function fetchOrders() {
 async function handleApprove(order: RechargeOrder) {
   try {
     await ElMessageBox.confirm(`确认通过用户 ${order.username} 的充值订单？\n金额: ¥${order.price}，圣点: ${order.coinAmount}`, '审批确认')
-    const res = await fetch(`/api/v1/payment/coin/approve/${order.id}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'approve', remark: '管理员审批通过' })
-    })
-    const json = await res.json()
-    if (json.code === 0) {
-      ElMessage.success(json.message)
+    const res = await service.post(`/payment/coin/approve/${order.id}`, { action: 'approve', remark: '管理员审批通过' })
+    if (res.data?.code === 0) {
+      ElMessage.success(res.data.message)
       fetchOrders()
     } else {
-      ElMessage.error(json.message || '审批失败')
+      ElMessage.error(res.data?.message || '审批失败')
     }
   } catch (e: any) {
     if (e !== 'cancel') ElMessage.error('审批失败')
@@ -201,17 +196,12 @@ async function handleReject(order: RechargeOrder) {
       confirmButtonText: '确定',
       cancelButtonText: '取消'
     })
-    const res = await fetch(`/api/v1/payment/coin/approve/${order.id}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'reject', remark: reason || '管理员拒绝' })
-    })
-    const json = await res.json()
-    if (json.code === 0) {
+    const res = await service.post(`/payment/coin/approve/${order.id}`, { action: 'reject', remark: reason || '管理员拒绝' })
+    if (res.data?.code === 0) {
       ElMessage.success('已拒绝')
       fetchOrders()
     } else {
-      ElMessage.error(json.message || '操作失败')
+      ElMessage.error(res.data?.message || '操作失败')
     }
   } catch (e: any) {
     if (e !== 'cancel') ElMessage.error('操作失败')
