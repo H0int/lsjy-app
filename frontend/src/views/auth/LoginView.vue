@@ -3,7 +3,7 @@
     <div class="w-full max-w-md">
       <!-- Logo -->
       <div class="text-center mb-8">
-        <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-blue-600 text-white text-2xl font-bold shadow-lg shadow-blue-500/30 mb-4">罗</div>
+        <img src="/logo.png" alt="罗圣纪元" class="w-20 h-20 rounded-2xl object-cover shadow-lg shadow-blue-500/30 mb-4" />
         <h1 class="text-2xl font-bold text-white">欢迎回到罗圣纪元</h1>
         <p class="text-gray-400 mt-1">AI赋能实体经济，一站式数字化转型平台</p>
       </div>

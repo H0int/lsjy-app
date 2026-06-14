@@ -9,7 +9,7 @@
     <!-- 侧边栏（桌面固定/移动抽屉） -->
     <aside class="cyber-sidebar" :class="{ 'sidebar-open': mobileMenuOpen }">
       <div class="sidebar-logo">
-        <div class="logo-icon">罗</div>
+        <img src="/logo.png" alt="罗圣纪元" class="logo-icon" style="width:40px;height:40px;border-radius:8px;object-fit:cover;" />
         <div class="logo-text">
           <div class="logo-title">罗圣纪元</div>
           <div class="logo-subtitle">公司后台管理系统</div>
