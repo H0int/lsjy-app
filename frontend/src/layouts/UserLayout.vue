@@ -7,7 +7,7 @@
         <div class="flex items-center gap-3 cursor-pointer" @click="$router.push('/dashboard')">
           <div class="w-9 h-9 rounded-lg flex items-center justify-center text-black font-bold text-lg"
             style="background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple)); box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);">罗</div>
-          <span class="text-lg font-bold hidden sm:block glow-cyan" style="color: var(--cyber-cyan); font-family: 'JetBrains Mono', monospace;">罗圣纪元</span>
+          <span class="text-lg font-bold hidden sm:block glow-cyan" style="color: var(--cyber-cyan); font-family: 'JetBrains Mono', monospace;">罗圣纪元 <span style="font-size: 11px; opacity: 0.7; font-weight: normal;">官方网站</span></span>
         </div>
 
         <!-- 导航菜单 -->
