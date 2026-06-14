@@ -9,7 +9,7 @@
           <el-option label="封禁" value="banned" />
         </el-select>
       </div>
-      <el-button type="primary">+ 添加用户</el-button>
+      <el-button type="primary" @click="openAddDialog">+ 添加用户</el-button>
     </div>
 
     <el-table :data="filteredUsers" stripe class="cyber-table">
@@ -46,7 +46,7 @@
       </el-table-column>
       <el-table-column label="操作" width="150" fixed="right">
         <template #default="{ row }">
-          <el-button size="small" link type="primary">编辑</el-button>
+          <el-button size="small" link type="primary" @click="openEditDialog(row)">编辑</el-button>
           <el-button size="small" link :type="row.status === 'active' ? 'danger' : 'success'"
             @click="handleStatusChange(row)">
             {{ row.status === 'active' ? '冻结' : '解冻' }}
@@ -59,6 +59,46 @@
       <el-pagination layout="total, prev, pager, next" :total="total" :page-size="pageSize"
         @current-change="handlePageChange" />
     </div>
+
+    <!-- 添加/编辑用户对话框 -->
+    <el-dialog v-model="dialogVisible" :title="isEditing ? '编辑用户' : '添加用户'" width="520px" destroy-on-close>
+      <el-form :model="form" label-width="80px" class="cyber-form">
+        <el-form-item label="用户名">
+          <el-input v-model="form.username" placeholder="请输入用户名" :disabled="isEditing" />
+        </el-form-item>
+        <el-form-item label="昵称">
+          <el-input v-model="form.nickname" placeholder="请输入昵称" />
+        </el-form-item>
+        <el-form-item label="手机号">
+          <el-input v-model="form.phone" placeholder="请输入手机号" />
+        </el-form-item>
+        <el-form-item label="邮箱">
+          <el-input v-model="form.email" placeholder="请输入邮箱" />
+        </el-form-item>
+        <el-form-item label="角色">
+          <el-select v-model="form.roles" multiple placeholder="请选择角色" class="w-full">
+            <el-option label="超级管理员" value="super_admin" />
+            <el-option label="运营" value="operator" />
+            <el-option label="商户" value="merchant" />
+            <el-option label="普通用户" value="user" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-select v-model="form.status" placeholder="请选择状态" class="w-full">
+            <el-option label="正常" value="active" />
+            <el-option label="冻结" value="frozen" />
+            <el-option label="封禁" value="banned" />
+          </el-select>
+        </el-form-item>
+        <el-form-item v-if="!isEditing" label="密码">
+          <el-input v-model="form.password" type="password" placeholder="请输入初始密码" show-password />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleSaveUser" :loading="saving">保存</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -74,6 +114,20 @@ const statusFilter = ref('')
 const users = ref<User[]>([])
 const total = ref(0)
 const pageSize = 20
+const dialogVisible = ref(false)
+const isEditing = ref(false)
+const saving = ref(false)
+const editingUserId = ref<number | null>(null)
+
+const form = ref({
+  username: '',
+  nickname: '',
+  phone: '',
+  email: '',
+  roles: [] as string[],
+  status: 'active',
+  password: ''
+})
 
 const filteredUsers = computed(() => {
   let list = users.value
@@ -110,6 +164,63 @@ async function handleStatusChange(user: User) {
     ElMessage.success('操作成功')
     fetchUsers()
   } catch { /* cancelled */ }
+}
+
+function openAddDialog() {
+  isEditing.value = false
+  editingUserId.value = null
+  form.value = { username: '', nickname: '', phone: '', email: '', roles: ['user'], status: 'active', password: '' }
+  dialogVisible.value = true
+}
+
+function openEditDialog(user: User) {
+  isEditing.value = true
+  editingUserId.value = user.id
+  form.value = {
+    username: user.username,
+    nickname: user.nickname,
+    phone: user.phone || '',
+    email: user.email || '',
+    roles: user.roles || ['user'],
+    status: user.status,
+    password: ''
+  }
+  dialogVisible.value = true
+}
+
+async function handleSaveUser() {
+  if (!form.value.username.trim()) {
+    ElMessage.warning('请输入用户名')
+    return
+  }
+  if (!form.value.nickname.trim()) {
+    ElMessage.warning('请输入昵称')
+    return
+  }
+  if (!isEditing.value && !form.value.password.trim()) {
+    ElMessage.warning('请输入初始密码')
+    return
+  }
+  saving.value = true
+  try {
+    await adminApi.saveUser({
+      id: editingUserId.value,
+      username: form.value.username,
+      nickname: form.value.nickname,
+      phone: form.value.phone,
+      email: form.value.email,
+      roles: form.value.roles,
+      status: form.value.status,
+      password: form.value.password || undefined
+    })
+    ElMessage.success(isEditing.value ? '用户信息已更新' : '用户添加成功')
+    dialogVisible.value = false
+    fetchUsers()
+  } catch {
+    ElMessage.error('操作失败')
+  } finally {
+    saving.value = false
+  }
 }
 
 onMounted(() => fetchUsers())
@@ -163,4 +274,6 @@ onMounted(() => fetchUsers())
   color: #ff4466;
   border: 1px solid rgba(255, 68, 102, 0.2);
 }
+
+.w-full { width: 100%; }
 </style>
