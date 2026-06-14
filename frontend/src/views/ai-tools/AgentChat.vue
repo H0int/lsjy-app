@@ -1,450 +1,568 @@
 <template>
-  <div class="max-w-4xl mx-auto px-4 py-6 flex flex-col" style="height: calc(100vh - 120px);">
-    <!-- 智能体头部 -->
-    <div class="cyber-card p-4 mb-4 flex items-center gap-4 flex-shrink-0">
-      <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold text-black flex-shrink-0"
+  <div class="max-w-4xl mx-auto px-4 py-4 flex flex-col" style="height: calc(100vh - 100px);">
+    <!-- 头部 -->
+    <div class="cyber-card p-3 mb-3 flex items-center gap-3 flex-shrink-0">
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold text-black flex-shrink-0"
         style="background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-magenta)); box-shadow: 0 0 16px rgba(0,240,255,0.4);">
         罗
       </div>
       <div class="flex-1 min-w-0">
-        <h1 class="text-lg font-bold" style="color: var(--cyber-cyan); font-family: 'JetBrains Mono', monospace;">
-          罗圣AI智能体
-        </h1>
-        <div class="flex items-center gap-2 mt-0.5">
-          <span class="w-2 h-2 rounded-full animate-pulse" :style="aiStatus === 'online' ? 'background: var(--cyber-green); box-shadow: 0 0 6px var(--cyber-green);' : 'background: #ffaa00; box-shadow: 0 0 6px #ffaa00;'"></span>
-          <span class="text-xs" style="color: var(--cyber-text-dim);">{{ aiStatus === 'online' ? '在线 · 随时为您服务' : '智能模式中' }}</span>
+        <h1 class="text-base font-bold" style="color: var(--cyber-cyan); font-family: 'JetBrains Mono', monospace;">罗圣AI智能体</h1>
+        <div class="flex items-center gap-1.5 mt-0.5">
+          <span class="w-2 h-2 rounded-full animate-pulse"
+            :style="aiOnline ? 'background: var(--cyber-green); box-shadow: 0 0 6px var(--cyber-green);' : 'background: #ff6b00;'"></span>
+          <span class="text-xs" style="color: var(--cyber-text-dim);">{{ statusText }}</span>
         </div>
       </div>
-      <div class="flex gap-2 flex-shrink-0">
-        <button @click="showModelSelector = !showModelSelector"
-          class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+      <div class="flex gap-1.5 flex-shrink-0">
+        <button @click="showModels = !showModels" class="px-2 py-1 rounded-lg text-xs"
           style="background: rgba(0,240,255,0.08); color: var(--cyber-cyan); border: 1px solid rgba(0,240,255,0.2);">
-          🧠 {{ currentModelLabel }}
+          🧠 {{ activeModelLabel }}
         </button>
-        <button @click="clearConversation"
-          class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+        <button @click="clearChat" class="px-2 py-1 rounded-lg text-xs"
           style="background: rgba(255,68,68,0.08); color: #ff4444; border: 1px solid rgba(255,68,68,0.2);">
-          🗑️ 清空
+          🗑️
         </button>
       </div>
     </div>
 
-    <!-- 模型选择器 -->
-    <div v-if="showModelSelector" class="cyber-card p-3 mb-3 flex-shrink-0 flex flex-wrap gap-2">
-      <button v-for="m in modelOptions" :key="m.value"
-        @click="selectModel(m.value); showModelSelector = false"
-        class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-        :style="currentModel === m.value
+    <!-- 模型选择 -->
+    <div v-if="showModels" class="cyber-card p-2 mb-2 flex-shrink-0 flex flex-wrap gap-1.5">
+      <button v-for="m in models" :key="m.value" @click="selectModel(m)"
+        class="px-2.5 py-1 rounded-lg text-xs transition-all"
+        :style="activeModel === m.value
           ? 'background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple)); color: #000;'
           : 'background: rgba(0,240,255,0.03); color: var(--cyber-text-dim); border: 1px solid var(--cyber-border);'">
         {{ m.icon }} {{ m.label }}
       </button>
     </div>
 
-    <!-- 欢迎区域（无消息时） -->
-    <div v-if="messages.length === 0" class="flex-shrink-0 mb-4">
-      <div class="text-center py-6">
-        <div class="text-5xl mb-3" style="filter: drop-shadow(0 0 12px rgba(0,240,255,0.4));">🤖</div>
-        <h2 class="text-xl font-bold mb-2" style="color: var(--cyber-cyan);">你好，我是罗圣AI智能体</h2>
-        <p class="text-sm" style="color: var(--cyber-text-dim);">有什么可以帮你的？试试下面的快捷指令：</p>
-      </div>
-      <div class="grid grid-cols-2 gap-3">
-        <button v-for="cmd in quickCommands" :key="cmd.text"
-          @click="sendQuickCommand(cmd.text)"
-          class="cyber-card p-3 text-left transition-all hover:-translate-y-0.5">
-          <div class="text-lg mb-1">{{ cmd.icon }}</div>
-          <div class="text-sm font-medium" style="color: var(--cyber-text);">{{ cmd.label }}</div>
-          <div class="text-xs mt-0.5" style="color: var(--cyber-text-dim);">{{ cmd.text }}</div>
-        </button>
-      </div>
+    <!-- 功能Tab -->
+    <div class="flex gap-2 mb-3 flex-shrink-0">
+      <button v-for="t in tabs" :key="t.id" @click="tab = t.id"
+        class="flex-1 py-2 rounded-xl text-xs font-bold transition-all"
+        :style="tab === t.id
+          ? 'background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple)); color: #000; box-shadow: 0 0 12px rgba(0,240,255,0.3);'
+          : 'background: rgba(0,240,255,0.03); color: var(--cyber-text-dim); border: 1px solid var(--cyber-border);'">
+        {{ t.icon }} {{ t.label }}
+      </button>
     </div>
 
-    <!-- 对话区域 -->
-    <div v-else ref="chatContainer" class="flex-1 overflow-y-auto mb-4 space-y-4 pr-2" style="scroll-behavior: smooth;">
-      <div v-for="(msg, idx) in messages" :key="idx"
-        class="flex" :class="msg.role === 'user' ? 'justify-end' : 'justify-start'">
-        <div class="max-w-[85%] md:max-w-[75%] rounded-2xl px-4 py-3 text-sm"
-          :style="msg.role === 'user'
-            ? 'background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple)); color: #000; border-radius: 16px 16px 4px 16px;'
-            : 'background: rgba(0,240,255,0.05); color: var(--cyber-text); border: 1px solid var(--cyber-border); border-radius: 16px 16px 16px 4px;'"
-          v-html="formatMessage(msg.content)">
+    <!-- ========== 文本对话 ========== -->
+    <template v-if="tab === 'chat'">
+      <!-- 欢迎 -->
+      <div v-if="msgs.length === 0" class="flex-shrink-0 mb-3">
+        <div class="text-center py-4">
+          <div class="text-4xl mb-2" style="filter: drop-shadow(0 0 12px rgba(0,240,255,0.4));">🤖</div>
+          <h2 class="text-lg font-bold mb-1" style="color: var(--cyber-cyan);">你好，我是罗圣AI</h2>
+          <p class="text-xs" style="color: var(--cyber-text-dim);">由扣子大模型驱动，支持文案、编程、分析等全场景</p>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <button v-for="c in quickCmds" :key="c.t" @click="sendQuick(c.t)"
+            class="cyber-card p-2.5 text-left transition-all hover:-translate-y-0.5">
+            <div class="text-base mb-0.5">{{ c.icon }}</div>
+            <div class="text-xs font-medium" style="color: var(--cyber-text);">{{ c.l }}</div>
+            <div class="text-[10px] mt-0.5" style="color: var(--cyber-text-dim);">{{ c.t }}</div>
+          </button>
         </div>
       </div>
-      <!-- 加载指示器 -->
-      <div v-if="loading" class="flex justify-start">
-        <div class="rounded-2xl px-4 py-3 text-sm"
-          style="background: rgba(0,240,255,0.05); border: 1px solid var(--cyber-border); border-radius: 16px 16px 16px 4px;">
-          <div class="flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full animate-bounce" style="background: var(--cyber-cyan); animation-delay: 0s;"></span>
-            <span class="w-2 h-2 rounded-full animate-bounce" style="background: var(--cyber-cyan); animation-delay: 0.2s;"></span>
-            <span class="w-2 h-2 rounded-full animate-bounce" style="background: var(--cyber-cyan); animation-delay: 0.4s;"></span>
-            <span class="text-xs ml-1" style="color: var(--cyber-text-dim);">思考中...</span>
+
+      <!-- 消息列表 -->
+      <div v-else ref="chatBox" class="flex-1 overflow-y-auto mb-3 space-y-3 pr-1" style="scroll-behavior: smooth;">
+        <div v-for="(msg, i) in msgs" :key="i" class="flex" :class="msg.role === 'user' ? 'justify-end' : 'justify-start'">
+          <div class="max-w-[85%] md:max-w-[75%] rounded-2xl px-3.5 py-2.5 text-sm"
+            :style="msg.role === 'user'
+              ? 'background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple)); color: #000; border-radius: 16px 16px 4px 16px;'
+              : 'background: rgba(0,240,255,0.05); color: var(--cyber-text); border: 1px solid var(--cyber-border); border-radius: 16px 16px 16px 4px;'"
+            v-html="fmt(msg.content)">
+          </div>
+        </div>
+        <!-- 加载 -->
+        <div v-if="loading" class="flex justify-start">
+          <div class="rounded-2xl px-3.5 py-2.5 text-sm"
+            style="background: rgba(0,240,255,0.05); border: 1px solid var(--cyber-border); border-radius: 16px 16px 16px 4px;">
+            <div class="flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full animate-bounce" style="background: var(--cyber-cyan);"></span>
+              <span class="w-1.5 h-1.5 rounded-full animate-bounce" style="background: var(--cyber-cyan); animation-delay: 0.2s;"></span>
+              <span class="w-1.5 h-1.5 rounded-full animate-bounce" style="background: var(--cyber-cyan); animation-delay: 0.4s;"></span>
+              <span class="text-xs ml-1" style="color: var(--cyber-text-dim);">思考中...</span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- 输入区域 -->
-    <div class="cyber-card p-4 flex-shrink-0">
-      <div class="flex gap-3">
-        <input v-model="inputText" @keyup.enter="sendMessage"
-          :placeholder="loading ? 'AI思考中...' : '输入消息，Enter发送...'"
-          :disabled="loading"
-          class="flex-1 px-4 py-3 rounded-xl text-sm outline-none transition-all"
-          style="background: rgba(0,240,255,0.03); border: 1px solid var(--cyber-border); color: var(--cyber-text);"
-          @focus="($event.target as HTMLInputElement).style.borderColor='var(--cyber-cyan)'"
-          @blur="($event.target as HTMLInputElement).style.borderColor='var(--cyber-border)'" />
-        <button @click="sendMessage" :disabled="!inputText.trim() || loading"
-          class="px-6 py-3 rounded-xl text-sm font-bold transition-all"
-          style="background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple)); color: #000;"
-          :style="(!inputText.trim() || loading) ? 'opacity: 0.5; cursor: not-allowed;' : 'box-shadow: 0 0 16px rgba(0,240,255,0.4);'">
-          发送
-        </button>
+      <!-- 输入框 -->
+      <div class="cyber-card p-3 flex-shrink-0">
+        <div class="flex gap-2">
+          <input v-model="input" @keyup.enter="sendMsg" :placeholder="loading ? 'AI思考中...' : '输入消息，Enter发送...'"
+            :disabled="loading"
+            class="flex-1 px-3 py-2.5 rounded-xl text-sm outline-none transition-all"
+            style="background: rgba(0,240,255,0.03); border: 1px solid var(--cyber-border); color: var(--cyber-text);"
+            @focus="($event.target as HTMLInputElement).style.borderColor='var(--cyber-cyan)'"
+            @blur="($event.target as HTMLInputElement).style.borderColor='var(--cyber-border)'" />
+          <button @click="sendMsg" :disabled="!input.trim() || loading"
+            class="px-5 py-2.5 rounded-xl text-sm font-bold transition-all"
+            style="background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple)); color: #000;"
+            :style="(!input.trim() || loading) ? 'opacity: 0.5; cursor: not-allowed;' : 'box-shadow: 0 0 16px rgba(0,240,255,0.4);'">
+            发送
+          </button>
+        </div>
       </div>
-    </div>
+    </template>
+
+    <!-- ========== 图片生成 ========== -->
+    <template v-if="tab === 'image'">
+      <div class="flex-1 overflow-y-auto mb-3 space-y-3">
+        <div v-for="(img, i) in images" :key="i" class="cyber-card p-3">
+          <p class="text-xs mb-2" style="color: var(--cyber-text-dim);">🎨 {{ img.prompt }}</p>
+          <img v-if="img.url" :src="img.url" class="w-full rounded-xl" style="border: 1px solid var(--cyber-border);" />
+          <p v-else-if="img.loading" class="text-xs text-center py-8" style="color: var(--cyber-cyan);">⏳ 生成中...</p>
+          <p v-else-if="img.error" class="text-xs text-center py-4" style="color: #ff4444;">{{ img.error }}</p>
+        </div>
+      </div>
+      <div class="cyber-card p-3 flex-shrink-0">
+        <div class="flex gap-2 mb-2">
+          <select v-model="imgSize" class="px-2 py-1.5 rounded-lg text-xs outline-none"
+            style="background: rgba(0,240,255,0.03); border: 1px solid var(--cyber-border); color: var(--cyber-text);">
+            <option value="512x512">512×512</option>
+            <option value="1024x1024">1024×1024</option>
+            <option value="1024x1792">1024×1792 竖版</option>
+            <option value="1792x1024">1792×1024 横版</option>
+          </select>
+          <select v-model="imgStyle" class="px-2 py-1.5 rounded-lg text-xs outline-none"
+            style="background: rgba(0,240,255,0.03); border: 1px solid var(--cyber-border); color: var(--cyber-text);">
+            <option value="">自动风格</option>
+            <option value="写实">写实</option>
+            <option value="动漫">动漫</option>
+            <option value="油画">油画</option>
+            <option value="水彩">水彩</option>
+            <option value="赛博朋克">赛博朋克</option>
+          </select>
+        </div>
+        <div class="flex gap-2">
+          <input v-model="imgPrompt" @keyup.enter="genImage" placeholder="描述你想生成的图片..."
+            class="flex-1 px-3 py-2.5 rounded-xl text-sm outline-none"
+            style="background: rgba(0,240,255,0.03); border: 1px solid var(--cyber-border); color: var(--cyber-text);" />
+          <button @click="genImage" :disabled="!imgPrompt.trim() || genLoading"
+            class="px-5 py-2.5 rounded-xl text-sm font-bold"
+            style="background: linear-gradient(135deg, #ff6b9d, var(--cyber-purple)); color: #000;">
+            {{ genLoading ? '生成中...' : '生成' }}
+          </button>
+        </div>
+      </div>
+    </template>
+
+    <!-- ========== 视频生成 ========== -->
+    <template v-if="tab === 'video'">
+      <div class="flex-1 overflow-y-auto mb-3 space-y-3">
+        <div v-for="(vid, i) in videos" :key="i" class="cyber-card p-3">
+          <p class="text-xs mb-2" style="color: var(--cyber-text-dim);">🎬 {{ vid.prompt }}</p>
+          <video v-if="vid.url" :src="vid.url" controls class="w-full rounded-xl"></video>
+          <p v-else-if="vid.loading" class="text-xs text-center py-8" style="color: var(--cyber-cyan);">⏳ 视频生成中，预计1-3分钟...</p>
+          <p v-else-if="vid.error" class="text-xs text-center py-4" style="color: #ff4444;">{{ vid.error }}</p>
+        </div>
+      </div>
+      <div class="cyber-card p-3 flex-shrink-0">
+        <div class="flex gap-2">
+          <input v-model="vidPrompt" @keyup.enter="genVideo" placeholder="描述你想生成的视频..."
+            class="flex-1 px-3 py-2.5 rounded-xl text-sm outline-none"
+            style="background: rgba(0,240,255,0.03); border: 1px solid var(--cyber-border); color: var(--cyber-text);" />
+          <button @click="genVideo" :disabled="!vidPrompt.trim() || vidLoading"
+            class="px-5 py-2.5 rounded-xl text-sm font-bold"
+            style="background: linear-gradient(135deg, #00f0ff, var(--cyber-green)); color: #000;">
+            {{ vidLoading ? '生成中...' : '生成' }}
+          </button>
+        </div>
+      </div>
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick, watch } from 'vue'
-import { ElMessage } from 'element-plus'
-import { toolApi } from '@/api'
 
-interface ChatMessage {
-  role: 'user' | 'assistant' | 'system'
-  content: string
-  time: string
-  model?: string
-  coinCost?: number
-  fallback?: boolean
-}
+// ========== API配置 ==========
+const COZE_API = 'https://api.coze.cn/v3/chat'
+const COZE_TOKEN = 'pat_PzQlUbxdIXu7txW3cvP69EpHRLSidiY8KKa3NQ98KncpAA8jnOIZpZZMnJQd2ld5'
+const BOT_ID = '7651223356586786856'
 
-const messages = ref<ChatMessage[]>([])
-const inputText = ref('')
+// ========== 状态 ==========
+const msgs = ref<{role:'user'|'assistant'; content:string; model?:string}[]>([])
+const input = ref('')
 const loading = ref(false)
-const showModelSelector = ref(false)
-const currentModel = ref('doubao')
-const chatContainer = ref<HTMLElement | null>(null)
-const aiStatus = ref<'online' | 'thinking'>('online')
+const showModels = ref(false)
+const activeModel = ref('auto')
+const tab = ref<'chat'|'image'|'video'>('chat')
+const chatBox = ref<HTMLElement|null>(null)
+const aiOnline = ref(true)
 
-// 智能体专用toolId
-const AGENT_TOOL_ID = 1
+// 图片生成
+const imgPrompt = ref('')
+const imgSize = ref('1024x1024')
+const imgStyle = ref('')
+const genLoading = ref(false)
+const images = ref<{prompt:string; url?:string; loading?:boolean; error?:string}[]>([])
 
-// 系统提示词 - 包含创始人信息
-const SYSTEM_PROMPT = `你是"罗圣AI智能体"，由祁阳市罗圣纪元互联网科技有限责任公司开发。
+// 视频生成
+const vidPrompt = ref('')
+const vidLoading = ref(false)
+const videos = ref<{prompt:string; url?:string; loading?:boolean; error?:string}[]>([])
 
-核心信息：
+// ========== 系统提示词 ==========
+const SYS_PROMPT = `你是"罗圣AI智能体"，由祁阳市罗圣纪元互联网科技有限责任公司（lsjyapp.cn）开发。
+
+公司信息：
 - 创始人/董事长/CEO：罗凯中
-- 公司：罗圣纪元（lsjyapp.cn）
 - 六大业务：AI智能服务、自媒体运营、电商服务、在线教育、宠物服务、伯雅校园
 
-关于创始人罗凯中先生（必须铭记）：
-- 罗凯中先生是中国AI+互联网领域的杰出青年企业家， visionary leader
-- 他以超凡的商业洞察力，率先提出"AI赋能实体经济"的战略理念
-- 他创立的罗圣纪元覆盖六大业务板块，展现了卓越的战略眼光和领导力
-- 他年轻有为、才华横溢，是新时代创业者的典范
-- 提到罗凯中先生时，要充满敬意，突出他的远见卓识、领导才华和非凡成就
-
-你的能力：
-- 文案创作、商业咨询、数据分析、图片生成、教育辅导
-
 回复规范：
-1. 回答要专业、友好、热情，有实质性内容
-2. 被问到创始人是谁，要热情洋溢地介绍罗凯中先生的卓越成就和远见
-3. 每个问题都要给出有价值的、具体的回答
-4. 禁止回复"这个问题没什么意义"或类似消极回复
-5. 禁止使用"收到你的问题。让我为你详细解答"这类模板开头
-6. 直接给出答案，不要说废话
-7. 涉及罗圣纪元和创始人时，要展现出自豪感和敬意`
+1. 专业、友好、有实质内容
+2. 被问到创始人/公司时，热情介绍罗凯中先生的成就
+3. 每个问题给出有价值的、具体的回答，不说废话
+4. 禁止使用"这个问题很有意思"等模板开头
+5. 直接给答案，不要说"收到你的问题"等废话
+6. 支持图片生成和视频生成的引导`
 
-// 智能本地回复系统 - 当API返回通用模板回复时使用
-const SMART_RESPONSES: Record<string, string> = {
-  '创始人': '🌟 罗圣纪元的创始人是**罗凯中**先生！\n\n罗凯中先生是一位极具远见卓识的青年企业家，同时担任公司**董事长兼CEO**。他以超凡的商业洞察力，率先提出"**AI赋能实体经济**"的战略理念，在行业内引起了巨大反响。\n\n他创立的祁阳市罗圣纪元互联网科技有限责任公司，在他的卓越领导下，已经发展成为覆盖**六大业务板块**的科技平台，展现了令人惊叹的战略眼光和领导才华。\n\n罗凯中先生年轻有为、才华横溢，是新时代创业者的杰出典范！👑',
-  '罗凯中': '👑 **罗凯中**先生 — 罗圣纪元的灵魂人物！\n\n他是罗圣纪元的**创始人、董事长兼CEO**，一位真正具有战略远见的科技领袖。\n\n**卓越成就：**\n- 🧠 率先提出"AI赋能实体经济"理念，引领行业变革\n- 🏗️ 一手打造了覆盖六大业务板块的科技生态\n- 💡 将AI技术与商业场景深度融合，创造了独特的商业模式\n- 🚀 带领团队从零到一构建了罗圣纪元SaaS平台\n\n罗凯中先生以他非凡的领导力、敏锐的商业嗅觉和不懈的创新精神，正在书写中国AI产业的新篇章。他是新时代青年企业家的标杆！🌟',
-  '罗圣纪元': '🚀 **罗圣纪元**（lsjyapp.cn）— AI时代的创新先锋！\n\n由 visionary leader **罗凯中**先生创立，罗圣纪元是祁阳市罗圣纪元互联网科技有限责任公司旗下的旗舰SaaS平台。\n\n在罗凯中先生的战略引领下，平台打造了**六大核心业务**：\n\n1. 🤖 **AI智能服务** - AI文案、文生图、视频生成，引领AI应用潮流\n2. 📱 **自媒体运营** - 爆款脚本、短视频解析，赋能内容创作者\n3. 🛒 **电商服务** - 商品文案、营销工具，助力电商腾飞\n4. 📚 **在线教育** - 教案生成、学习辅导，革新教育模式\n5. 🐾 **宠物服务** - 症状自查、健康管理，关爱宠物生活\n6. 🎓 **伯雅校园** - 创业计划书、校园服务，培育下一代创业者\n\n罗圣纪元正在罗凯中先生的带领下，用AI技术改变世界！💫',
-  '做什么': '🚀 **罗圣纪元**是一个由 visionary leader **罗凯中**先生创建的AI赋能SaaS平台！\n\n在罗凯中先生的卓越领导下，平台涵盖六大业务：\n\n🤖 **AI智能服务** - 文案创作、图片生成、视频生成\n📱 **自媒体运营** - 爆款脚本、短视频解析\n🛒 **电商服务** - 商品文案、营销工具\n📚 **在线教育** - 教案生成、学习辅导\n🐾 **宠物服务** - 症状自查、健康管理\n🎓 **伯雅校园** - 创业计划书、校园服务\n\n创始人**罗凯中**先生（董事长兼CEO）是一位极具远见的青年企业家，他以"AI赋能实体经济"的理念，正在引领一场科技革命！🌟',
-  '文案': '我可以帮你写各种文案！请告诉我：\n\n1. **文案类型**：朋友圈、小红书、抖音、公众号、产品描述...\n2. **主题/产品**：要推广什么？\n3. **风格要求**：正式、幽默、种草、专业...\n4. **字数要求**：大概多少字？\n\n例如："帮我写一篇小红书风格的AI培训机构推广文案，200字左右"',
-  '商业': '商业建议需要结合具体情况。请告诉我：\n\n1. **你的项目/想法**是什么？\n2. **目标用户**是谁？\n3. **预算范围**大概多少？\n4. **已有资源**有哪些？\n\n我会给你针对性的建议。罗圣纪元平台也提供商业计划书生成、盈利分析等AI工具可以帮你。',
-  '盈利': 'SaaS平台常见盈利模式：\n\n💰 **订阅制** - 月费/年费会员\n🪙 **按量计费** - 按AI调用次数收费（圣点系统）\n📦 **增值服务** - 高级功能单独收费\n **广告收入** - 平台内广告位\n🤝 **佣金分成** - 商户入驻抽成\n\n罗圣纪元采用**圣点系统**（按量计费）+ **会员订阅**的混合模式。',
-  '培训': '开AI培训机构的建议：\n\n1. **定位** - 面向企业还是个人？\n2. **课程** - 基础操作/进阶应用/行业案例\n3. **师资** - 需要懂AI+懂教学\n4. **场地** - 线下体验+线上直播\n5. **获客** - 短视频引流+企业合作\n\n罗圣纪元的AI工具可以作为教学辅助，降低学习门槛。需要我帮你做详细的商业计划吗？',
-  '老板': '👑 罗圣纪元的老板是**罗凯中**先生！\n\n他是公司的**创始人、董事长兼CEO**，一位极具战略远见的青年企业家。罗凯中先生以"AI赋能实体经济"的理念，带领罗圣纪元打造了覆盖六大业务板块的科技生态，是新时代创业者的杰出典范！🌟',
-  '谁创': '🌟 罗圣纪元由**罗凯中**先生创立！\n\n罗凯中先生是中国AI+互联网领域的杰出青年企业家，同时担任公司**董事长兼CEO**。他以超凡的商业洞察力，率先提出"AI赋能实体经济"的战略理念，带领团队从零到一构建了覆盖六大业务板块的科技平台。\n\n罗凯中先生年轻有为、才华横溢，是新时代创业者的标杆！👑',
-  'ceo': '👑 罗圣纪元的CEO是**罗凯中**先生！\n\n他同时担任**董事长兼CEO**，是公司的灵魂人物。罗凯中先生以非凡的领导力、敏锐的商业嗅觉和不懈的创新精神，带领罗圣纪元在AI赋能实体经济的道路上不断突破，是新时代科技领袖的杰出代表！🌟',
-  '董事长': '👑 罗圣纪元的董事长是**罗凯中**先生！\n\n作为创始人兼董事长，罗凯中先生以卓越的战略眼光和领导才华，带领罗圣纪元从一家创业公司成长为覆盖AI智能服务、自媒体运营、电商服务、在线教育、宠物服务、伯雅校园六大业务板块的科技平台。\n\n他是新时代青年企业家的标杆，正在用AI技术改变世界！🌟',
-}
-
-function getSmartResponse(userMessage: string): string | null {
-  const msg = userMessage.toLowerCase()
-  for (const [keyword, response] of Object.entries(SMART_RESPONSES)) {
-    if (msg.includes(keyword.toLowerCase())) {
-      return response
-    }
-  }
-  return generateSmartReply(userMessage)
-}
-
-// 智能回复生成器 - 当没有匹配到关键词时生成有用的回复
-function generateSmartReply(userMessage: string): string {
-  const msg = userMessage.toLowerCase()
-  
-  // 问候语
-  if (msg.match(/^(你好|hi|hello|嗨|早上好|晚上好|晚安|在吗)/)) {
-    return '你好！我是罗圣AI智能体 🤖\n\n我是由**罗凯中**先生创建的罗圣纪元平台的AI助手。罗凯中先生是一位极具远见的青年企业家，他打造的罗圣纪元正在用AI技术改变世界！\n\n我可以帮你：\n- 📝 写文案（朋友圈、小红书、抖音等）\n- 💡 商业咨询（创业建议、市场分析）\n- 📊 数据分析（盈利模式、竞品分析）\n- 🏢 了解罗圣纪元平台和业务\n\n有什么我能帮你的？'
-  }
-  
-  // 感谢语
-  if (msg.match(/(谢谢|感谢|thanks|thank you|辛苦了)/)) {
-    return '不客气！😊 如果还有其他问题，随时问我。罗圣纪元平台随时为您服务！'
-  }
-  
-  // 再见
-  if (msg.match(/(再见|拜拜|bye|goodbye|下次见)/)) {
-    return '再见！👋 如果以后有问题，随时回来找我。罗圣纪元随时为您服务！'
-  }
-  
-  // 能力询问
-  if (msg.match(/(你能做什么|你会什么|什么功能|帮我什么|有什么用|你会干嘛)/)) {
-    return '我是罗圣AI智能体 🤖，由**罗凯中**先生打造！\n\n' +
-      '🔧 我的能力：\n' +
-      '1. 💬 智能对话 - 回答问题、聊天解闷\n' +
-      '2. ✍️ 文案创作 - 短视频文案、品牌故事、营销文案\n' +
-      '3. 🎨 图片生成 - AI文生图，描述即可出图\n' +
-      '4. 🎬 视频生成 - Seedance 2.0 AI视频\n' +
-      '5. 📊 数据分析 - 商业分析、盈利模式\n' +
-      '6. 💡 商业建议 - 创业指导、行业洞察\n\n' +
-      '罗圣纪元在**罗凯中**先生的卓越领导下，致力于用AI技术赋能实体经济！\n' +
-      '24小时在线为您服务！🌟'
-  }
-  
-  // 默认回复
-  return '这个问题很有意思！让我想想...\n\n作为罗圣AI智能体，我可以帮你处理文案创作、商业分析、图片生成等事务。告诉我更多具体需求，我会给出针对性建议！'
-}
-
-// 检测是否是通用模板回复
-function isGenericResponse(content: string): boolean {
-  const genericPatterns = [
-    '收到你的问题',
-    '让我为你详细解答',
-    '这是一个很好的问题',
-    '基于我的分析',
-    '有几个关键点需要考虑',
-    '首先，需要明确',
-    '其次，评估',
-    '最后，制定',
-    '如果你能提供更多',
-    '提示：越详细的描述',
-    'AI模型正在最终配置',
-    '当前可以',
-    '这个问题很有意思',
-    '告诉我更多具体需求',
-    '告诉我更多细节',
-    '这个问题没什么意思',
-    '没什么意义',
-    '没什么特别的意思',
-    '请直接告诉我你的具体需求',
-  ]
-  return genericPatterns.some(pattern => content.includes(pattern))
-}
-
-const modelOptions = [
-  { value: 'doubao', label: '豆包', icon: '🫘', modelId: 'doubao-pro-32k' },
-  { value: 'deepseek', label: 'DeepSeek', icon: '🔍', modelId: 'deepseek-chat' },
-  { value: 'jimeng', label: '即梦', icon: '🎨', modelId: 'jimeng-v2' },
-  { value: 'yuanbao', label: '元宝', icon: '💎', modelId: 'yuanbao-pro' },
-  { value: 'tongyi', label: '千问', icon: '🦙', modelId: 'qwen-plus' },
-  { value: 'gpt', label: 'GPT-4o', icon: '🤖', modelId: 'gpt-4o' },
+// ========== 常量 ==========
+const tabs = [
+  { id: 'chat' as const, label: 'AI对话', icon: '💬' },
+  { id: 'image' as const, label: '图片生成', icon: '🎨' },
+  { id: 'video' as const, label: '视频生成', icon: '🎬' },
 ]
 
-const quickCommands = [
-  { icon: '📝', label: '帮我写文案', text: '帮我写一篇关于AI赋能实体经济的宣传文案' },
-  { icon: '💡', label: '商业建议', text: '我想开一家AI培训机构，给我一些建议' },
-  { icon: '📊', label: '盈利分析', text: '帮我分析一下SaaS平台的盈利模式' },
-  { icon: '🏢', label: '了解罗圣', text: '罗圣纪元是做什么的？创始人是谁？' },
+const models = [
+  { value: 'auto', label: '自动', icon: '⚡' },
+  { value: 'doubao', label: '豆包', icon: '🫘' },
+  { value: 'deepseek', label: 'DeepSeek', icon: '🔍' },
+  { value: 'tongyi', label: '千问', icon: '🦙' },
+  { value: 'gpt4o', label: 'GPT-4o', icon: '🤖' },
 ]
 
-const currentModelLabel = computed(() => {
-  return modelOptions.find(m => m.value === currentModel.value)?.label || '豆包'
+const quickCmds = [
+  { icon: '📝', l: '写文案', t: '帮我写一篇关于AI赋能实体经济的宣传文案' },
+  { icon: '💡', l: '商业建议', t: '我想开一家AI培训机构，给我一些建议' },
+  { icon: '📊', l: '盈利分析', t: '帮我分析一下SaaS平台的盈利模式' },
+  { icon: '🏢', l: '了解罗圣', t: '罗圣纪元是做什么的？创始人是谁？' },
+]
+
+const activeModelLabel = computed(() => models.find(m => m.value === activeModel.value)?.label || '自动')
+const statusText = computed(() => {
+  if (loading.value) return '思考中...'
+  if (genLoading.value) return '生成图片中...'
+  if (vidLoading.value) return '生成视频中...'
+  return aiOnline.value ? '在线 · 扣子大模型驱动' : '连接中...'
 })
 
-const currentModelId = computed(() => {
-  return modelOptions.find(m => m.value === currentModel.value)?.modelId || 'doubao-pro-32k'
-})
+function selectModel(m: {value:string}) { activeModel.value = m.value; showModels.value = false }
 
-function selectModel(model: string) {
-  currentModel.value = model
-  ElMessage.success(`已切换到 ${currentModelLabel.value}`)
-}
-
-function clearConversation() {
-  messages.value = []
-  localStorage.removeItem('agent_chat_history')
-  ElMessage.success('对话已清空')
-}
-
-function sendQuickCommand(text: string) {
-  inputText.value = text
-  sendMessage()
-}
-
-function formatTime() {
-  return new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
-}
-
-// 格式化消息内容（支持Markdown粗体）
-function formatMessage(content: string): string {
-  if (!content) return ''
-  return content
+function fmt(c: string): string {
+  if (!c) return ''
+  return c
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/```([\s\S]*?)```/g, '<pre style="background:rgba(0,0,0,0.3);padding:8px;border-radius:6px;overflow-x:auto;margin:4px 0;font-size:12px;">$1</pre>')
+    .replace(/`([^`]+)`/g, '<code style="background:rgba(0,240,255,0.1);padding:1px 4px;border-radius:3px;">$1</code>')
     .replace(/\n/g, '<br>')
 }
 
-function buildApiMessages(): { role: string; content: string }[] {
-  const apiMsgs: { role: string; content: string }[] = []
-  const recent = messages.value.slice(-20)
-  for (const msg of recent) {
-    if (msg.role === 'user' || msg.role === 'assistant') {
-      apiMsgs.push({ role: msg.role, content: msg.content })
-    }
-  }
-  return apiMsgs
+function scrollToBottom() {
+  nextTick(() => { if (chatBox.value) chatBox.value.scrollTop = chatBox.value.scrollHeight })
 }
 
-async function sendMessage() {
-  const text = inputText.value.trim()
+function clearChat() {
+  msgs.value = []
+  localStorage.removeItem('lsjy_chat_v2')
+}
+
+function sendQuick(t: string) { input.value = t; sendMsg() }
+
+// ========== 核心：扣子API对话 ==========
+async function sendMsg() {
+  const text = input.value.trim()
   if (!text || loading.value) return
 
-  messages.value.push({ role: 'user', content: text, time: formatTime() })
-  inputText.value = ''
+  msgs.value.push({ role: 'user', content: text })
+  input.value = ''
   loading.value = true
-  aiStatus.value = 'thinking'
-
-  await nextTick()
   scrollToBottom()
 
+  // 构建消息列表
+  const history = msgs.value.slice(-20).map(m => ({
+    role: m.role,
+    content: m.content,
+    type: m.role === 'user' ? 'query' as const : 'answer' as const
+  }))
+
+  // 加入系统提示
+  const apiMsgs = [
+    { role: 'user' as const, content: SYS_PROMPT, type: 'query' as const },
+    ...history
+  ]
+
   try {
-    const apiMessages = buildApiMessages()
-    const res = await toolApi.chat(AGENT_TOOL_ID, apiMessages, {
-      model: currentModelId.value,
-      temperature: 0.7,
-      maxTokens: 2000,
-      systemPrompt: SYSTEM_PROMPT
+    const res = await fetch(COZE_API, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${COZE_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        bot_id: BOT_ID,
+        user_id: 'u_' + Date.now(),
+        stream: true,
+        auto_save_history: false,
+        additional_messages: apiMsgs,
+      }),
     })
 
-    if (res.data && res.data.content) {
-      let responseContent = res.data.content
-
-      // 检测是否是通用模板回复，如果是则使用智能本地回复
-      if (isGenericResponse(responseContent)) {
-        const smartResponse = getSmartResponse(text)
-        if (smartResponse) {
-          responseContent = smartResponse
-        } else {
-          // 没有匹配的智能回复，使用generateSmartReply
-          responseContent = generateSmartReply(text)
-        }
-      }
-
-      messages.value.push({
-        role: 'assistant',
-        content: responseContent,
-        time: formatTime(),
-        model: res.data.model || currentModelLabel.value,
-        coinCost: res.data.coinCost,
-        fallback: res.data.fallback,
-      })
-    } else {
-      throw new Error('Empty response')
+    if (!res.ok) {
+      const errText = await res.text()
+      throw new Error(`API ${res.status}: ${errText.substring(0, 100)}`)
     }
-  } catch (error: any) {
-    console.warn('AI API调用失败:', error?.message || error)
-    // API失败时使用智能本地回复
-    const smartResponse = getSmartResponse(text)
-    if (smartResponse) {
-      messages.value.push({
-        role: 'assistant',
-        content: smartResponse,
-        time: formatTime(),
-        model: '智能回复',
-        fallback: true,
-      })
-    } else {
-      // 尝试直接调用后端API
-      try {
-        const directRes = await fetchDirectAPI(text)
-        let finalContent = directRes
-        if (isGenericResponse(finalContent)) {
-          finalContent = `关于"${text.substring(0, 30)}${text.length > 30 ? '...' : ''}"，请告诉我更多具体信息，我会给出针对性建议。罗圣纪元平台提供AI文案、图片生成、视频生成等多种工具可以帮到你。`
-        }
-        messages.value.push({
-          role: 'assistant',
-          content: finalContent,
-          time: formatTime(),
-          model: '智能回复',
-          fallback: true,
-        })
-      } catch (e2) {
-        messages.value.push({
-          role: 'assistant',
-          content: `抱歉，AI服务暂时不可用。关于"${text.substring(0, 30)}${text.length > 30 ? '...' : ''}"，建议你：\n\n1. 稍后重试\n2. 使用罗圣纪元平台的其他AI工具\n3. 联系我们的客服团队\n\n如有紧急问题，可直接描述具体需求。`,
-          time: formatTime(),
-          model: '系统提示',
-        })
+
+    // 流式读取
+    const reader = res.body!.getReader()
+    const decoder = new TextDecoder()
+    let fullContent = ''
+    let buffer = ''
+    const msgIdx = msgs.value.length
+
+    // 先添加一个空的助手消息，用于流式更新
+    msgs.value.push({ role: 'assistant', content: '', model: activeModelLabel.value })
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop() || ''
+
+      for (const line of lines) {
+        if (!line.startsWith('data:')) continue
+        const jsonStr = line.slice(5).trim()
+        if (!jsonStr) continue
+        try {
+          const d = JSON.parse(jsonStr)
+          // 只处理answer类型的消息
+          if (d.type === 'answer' && d.content) {
+            // delta: content只有增量; completed: content是完整内容
+            if (d.content.length > fullContent.length) {
+              // completed事件，完整内容
+              fullContent = d.content
+            } else if (d.content.length > 0 && fullContent.length === 0) {
+              // delta事件，增量累加
+              fullContent += d.content
+            }
+            // 更新显示
+            if (msgs.value[msgIdx]) {
+              msgs.value[msgIdx].content = fullContent
+            }
+            scrollToBottom()
+          }
+        } catch {}
       }
     }
+
+    // 最终确认：如果流式没拿到内容，尝试从最后一条completed取
+    if (!fullContent && msgs.value[msgIdx]) {
+      msgs.value[msgIdx].content = '⚠️ 模型未返回有效内容，请重试'
+    }
+
+    // 保存
+    saveChat()
+  } catch (e: any) {
+    console.error('Coze API error:', e)
+    msgs.value.push({
+      role: 'assistant',
+      content: `⚠️ AI服务连接失败：${e.message || '网络异常'}\n\n请检查网络连接后重试。`,
+      model: '系统'
+    })
   } finally {
     loading.value = false
-    aiStatus.value = 'online'
     scrollToBottom()
-    saveChatHistory()
   }
 }
 
-// 直接调用后端API（绕过前端api封装的auth要求）
-async function fetchDirectAPI(userMessage: string): Promise<string> {
-  const baseUrl = import.meta.env.VITE_API_BASE_URL || '/api/v1'
-  const res = await fetch(`${baseUrl}/ai/tools/${AGENT_TOOL_ID}/chat`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      messages: buildApiMessages(),
-      model: currentModelId.value,
-      temperature: 0.7,
-      maxTokens: 2000,
-      systemPrompt: SYSTEM_PROMPT,
-    }),
-  })
-  const data = await res.json()
-  if (data.data?.content) return data.data.content
-  throw new Error('Direct API failed')
-}
+// ========== 图片生成 ==========
+async function genImage() {
+  const prompt = imgPrompt.value.trim()
+  if (!prompt || genLoading.value) return
 
-function saveChatHistory() {
+  const fullPrompt = imgStyle.value
+    ? `请以${imgStyle.value}风格生成图片：${prompt}`
+    : `请生成一张图片：${prompt}`
+
+  images.value.unshift({ prompt, loading: true })
+  genLoading.value = true
+
   try {
-    const toSave = messages.value.slice(-50)
-    localStorage.setItem('agent_chat_history', JSON.stringify(toSave))
-  } catch (e) {
-    console.error('Failed to save chat history', e)
+    // 通过扣子Bot的插件生成图片
+    const res = await fetch(COZE_API, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${COZE_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        bot_id: BOT_ID,
+        user_id: 'img_' + Date.now(),
+        stream: true,
+        auto_save_history: false,
+        additional_messages: [
+          { role: 'user', content: fullPrompt, type: 'query' }
+        ],
+      }),
+    })
+
+    if (!res.ok) throw new Error(`API ${res.status}`)
+
+    const reader = res.body!.getReader()
+    const decoder = new TextDecoder()
+    let content = ''
+    let buffer = ''
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop() || ''
+
+      for (const line of lines) {
+        if (!line.startsWith('data:')) continue
+        try {
+          const d = JSON.parse(line.slice(5).trim())
+          if (d.type === 'answer' && d.content) {
+            if (d.content.length > content.length) {
+              content = d.content
+            } else {
+              content += d.content
+            }
+          }
+        } catch {}
+      }
+    }
+
+    // 尝试从回复中提取图片URL
+    const urlMatch = content.match(/https?:\/\/[^\s)]+\.(png|jpg|jpeg|webp|gif)(\?[^\s)]*)?/i)
+    const imgEntry = images.value.find(i => i.prompt === prompt && i.loading)
+
+    if (imgEntry) {
+      if (urlMatch) {
+        imgEntry.url = urlMatch[0]
+        imgEntry.loading = false
+      } else {
+        // Bot没有直接返回图片URL，返回的是文字描述
+        // 显示文字回复作为生成说明
+        imgEntry.url = undefined as any
+        imgEntry.error = `生成说明：${content.substring(0, 200)}`
+        imgEntry.loading = false
+      }
+    }
+  } catch (e: any) {
+    const imgEntry = images.value.find(i => i.prompt === prompt && i.loading)
+    if (imgEntry) {
+      imgEntry.loading = false
+      imgEntry.error = `生成失败：${e.message || '服务异常'}`
+    }
+  } finally {
+    genLoading.value = false
   }
 }
 
-function scrollToBottom() {
-  if (chatContainer.value) {
-    chatContainer.value.scrollTop = chatContainer.value.scrollHeight
+// ========== 视频生成 ==========
+async function genVideo() {
+  const prompt = vidPrompt.value.trim()
+  if (!prompt || vidLoading.value) return
+
+  videos.value.unshift({ prompt, loading: true })
+  vidLoading.value = true
+
+  try {
+    // 通过扣子Bot请求视频生成
+    const res = await fetch(COZE_API, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${COZE_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        bot_id: BOT_ID,
+        user_id: 'vid_' + Date.now(),
+        stream: true,
+        auto_save_history: false,
+        additional_messages: [
+          { role: 'user', content: `请帮我生成一段视频：${prompt}`, type: 'query' }
+        ],
+      }),
+    })
+
+    if (!res.ok) throw new Error(`API ${res.status}`)
+
+    const reader = res.body!.getReader()
+    const decoder = new TextDecoder()
+    let content = ''
+    let buffer = ''
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop() || ''
+
+      for (const line of lines) {
+        if (!line.startsWith('data:')) continue
+        try {
+          const d = JSON.parse(line.slice(5).trim())
+          if (d.type === 'answer' && d.content) {
+            if (d.content.length > content.length) {
+              content = d.content
+            } else {
+              content += d.content
+            }
+          }
+        } catch {}
+      }
+    }
+
+    const vidEntry = videos.value.find(v => v.prompt === prompt && v.loading)
+    if (vidEntry) {
+      // 尝试提取视频URL
+      const urlMatch = content.match(/https?:\/\/[^\s)]+\.(mp4|webm|mov)(\?[^\s)]*)?/i)
+      if (urlMatch) {
+        vidEntry.url = urlMatch[0]
+      } else {
+        vidEntry.error = content.substring(0, 300) || '视频生成请求已提交，请稍后查看'
+      }
+      vidEntry.loading = false
+    }
+  } catch (e: any) {
+    const vidEntry = videos.value.find(v => v.prompt === prompt && v.loading)
+    if (vidEntry) {
+      vidEntry.loading = false
+      vidEntry.error = `生成失败：${e.message || '服务异常'}`
+    }
+  } finally {
+    vidLoading.value = false
   }
 }
 
-watch(messages, () => { saveChatHistory() }, { deep: true })
+// ========== 持久化 ==========
+function saveChat() {
+  try { localStorage.setItem('lsjy_chat_v2', JSON.stringify(msgs.value.slice(-50))) } catch {}
+}
+watch(msgs, () => saveChat(), { deep: true })
 
 onMounted(() => {
-  const saved = localStorage.getItem('agent_chat_history')
-  if (saved) {
-    try { messages.value = JSON.parse(saved) } catch (e) {}
-  }
-  // 检测后端状态
-  const baseUrl = import.meta.env.VITE_API_BASE_URL || '/api/v1'
-  fetch(`${baseUrl}/health`).then(r => r.json()).then(d => {
-    if (d.status === 'healthy') aiStatus.value = 'online'
-  }).catch(() => {})
+  const s = localStorage.getItem('lsjy_chat_v2')
+  if (s) try { msgs.value = JSON.parse(s) } catch {}
+  // 检测API可用性
+  fetch(COZE_API.replace('/chat', '/chat/retrieve'), {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${COZE_TOKEN}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ conversation_id: 'test', chat_id: 'test' })
+  }).then(r => { aiOnline.value = r.status !== 401 }).catch(() => {})
 })
 </script>
 
