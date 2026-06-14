@@ -554,13 +554,18 @@ app.post('/api/v1/ai/tools/:id/generate', authCheck, (req, res) => {
   const tool = aiToolsStore.find(t => t.id === Number(req.params.id));
   if (!tool) return res.status(404).json({ code: 404, message: '工具不存在', data: null });
   const { prompt, width, height, style } = req.body;
+  const count = Number(req.body.count) || 1;
+  const urls = [];
+  for (let i = 0; i < count; i++) {
+    urls.push(`https://picsum.photos/${width || 512}/${height || 512}?random=${Date.now()}_${i}`);
+  }
   res.json({
     code: 0, message: 'success',
     data: {
-      imageUrl: `https://placeholder.lsjyapp.cn/ai-generated/${Date.now()}.png`,
-      thumbnailUrl: `https://placeholder.lsjyapp.cn/ai-generated/${Date.now()}_thumb.png`,
+      urls: urls,
       model: 'jimeng-v2', prompt: prompt || '', width: width || 512, height: height || 512,
-      coinCost: tool.coinCost || 20, createdAt: new Date().toISOString(),
+      coinCost: tool.coinCost || 20, durationMs: Math.floor(Math.random() * 3000) + 1500,
+      createdAt: new Date().toISOString(),
     },
   });
 });
