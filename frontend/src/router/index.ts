@@ -1,4 +1,5 @@
-import { createRouter, createWebHistory, createWebHashHistory, defineComponent, h } from 'vue'
+import { defineComponent, h } from 'vue'
+import { createRouter, createWebHistory, createWebHashHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import { getToken } from '@/utils'
 
@@ -265,3 +266,4 @@ router.beforeEach(async (to, _from, next) => {
 })
 
 export default router
+
