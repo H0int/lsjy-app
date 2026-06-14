@@ -1,3 +1,4 @@
+sha: 25f247a7ccff74c7c6253602c718abd9fdbc1836
 <template>
   <div>
     <div class="cyber-toolbar">
@@ -32,6 +33,13 @@
         <el-table-column label="类型" width="100">
           <template #default="{ row }">
             <span class="text-sm text-[#a0a0cc]">{{ userTypeLabel(row.userType) }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="角色等级" width="140">
+          <template #default="{ row }">
+            <span class="role-badge" :class="'role-' + getHighestRole(row.roles)">
+              {{ roleLabel(getHighestRole(row.roles)) }}
+            </span>
           </template>
         </el-table-column>
         <el-table-column label="状态" width="80">
@@ -115,12 +123,14 @@
         <el-form-item label="邮箱">
           <el-input v-model="form.email" placeholder="请输入邮箱" />
         </el-form-item>
-        <el-form-item label="角色">
+        <el-form-item label="角色等级">
           <el-select v-model="form.roles" multiple placeholder="请选择角色" class="w-full">
-            <el-option label="超级管理员" value="super_admin" />
-            <el-option label="运营" value="operator" />
-            <el-option label="商户" value="merchant" />
-            <el-option label="普通用户" value="user" />
+            <el-option label="👑 罗总专属" value="boss" />
+            <el-option label="💎 至尊管理员" value="ultimate_admin" />
+            <el-option label="🌟 超级管理员" value="super_admin" />
+            <el-option label="⚙️ 普通管理员" value="admin" />
+            <el-option label="⭐ 高级用户" value="premium" />
+            <el-option label="👤 普通用户" value="normal" />
           </el-select>
         </el-form-item>
         <el-form-item label="状态">
@@ -184,6 +194,29 @@ function userTypeLabel(type: string): string {
 
 function statusLabel(s: string): string {
   return userStatusMap[s] || s
+}
+
+const roleMap: Record<string, string> = {
+  'boss': '罗总专属',
+  'ultimate_admin': '至尊管理员',
+  'super_admin': '超级管理员',
+  'admin': '普通管理员',
+  'premium': '高级用户',
+  'normal': '普通用户',
+  'user': '普通用户',
+}
+
+function roleLabel(role: string): string {
+  return roleMap[role] || '普通用户'
+}
+
+function getHighestRole(roles: string[] | undefined): string {
+  if (!roles || roles.length === 0) return 'normal'
+  const priority = ['boss', 'ultimate_admin', 'super_admin', 'admin', 'premium', 'normal', 'user']
+  for (const r of priority) {
+    if (roles.includes(r)) return r
+  }
+  return 'normal'
 }
 
 async function fetchUsers(page = 1) {
@@ -423,4 +456,43 @@ onMounted(() => fetchUsers())
 }
 
 .w-full { width: 100%; }
+
+/* Role level badges */
+.role-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.role-boss {
+  background: linear-gradient(135deg, #ff0080, #ff8c00);
+  color: #fff;
+  box-shadow: 0 0 8px rgba(255, 0, 128, 0.4);
+}
+.role-ultimate_admin {
+  background: linear-gradient(135deg, #7c3aed, #ec4899);
+  color: #fff;
+}
+.role-super_admin {
+  background: rgba(124, 58, 237, 0.15);
+  color: #c084fc;
+  border: 1px solid rgba(124, 58, 237, 0.3);
+}
+.role-admin {
+  background: rgba(0, 240, 255, 0.1);
+  color: #00f0ff;
+  border: 1px solid rgba(0, 240, 255, 0.2);
+}
+.role-premium {
+  background: rgba(255, 184, 0, 0.1);
+  color: #ffb800;
+  border: 1px solid rgba(255, 184, 0, 0.2);
+}
+.role-normal {
+  background: rgba(160, 160, 204, 0.1);
+  color: #a0a0cc;
+  border: 1px solid rgba(160, 160, 204, 0.2);
+}
 </style>
+
