@@ -36,12 +36,6 @@ const routes: RouteRecordRaw[] = [
         meta: { title: 'AI工具中心', icon: '🤖' }
       },
       {
-        path: 'agent',
-        name: 'AgentChat',
-        component: () => import('@/views/ai-tools/AgentChat.vue'),
-        meta: { title: 'AI智能体', icon: '🧠' }
-      },
-      {
         path: 'tools/:id',
         name: 'ToolDetail',
         component: () => import('@/views/ai-tools/ToolDetail.vue'),
@@ -146,34 +140,34 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '系统配置' }
       },
       {
-        path: 'agent',
-        name: 'AdminAgent',
-        component: () => import('@/views/admin/AgentManagement.vue'),
-        meta: { title: 'AI智能体管理' }
+        path: 'ai-agent',
+        name: 'AdminAIAgent',
+        component: () => import('@/views/admin/AIAgent.vue'),
+        meta: { title: 'AI智能体' }
       },
       {
-        path: 'ai-models',
-        name: 'AdminAIModels',
-        component: () => import('@/views/admin/AIModelsConfig.vue'),
-        meta: { title: 'AI模型配置' }
+        path: 'chat-logs',
+        name: 'AdminChatLogs',
+        component: () => import('@/views/admin/ChatLogs.vue'),
+        meta: { title: '对话记录' }
       },
       {
-        path: 'coin-packages',
-        name: 'AdminCoinPackages',
-        component: () => import('@/views/admin/CoinPackages.vue'),
-        meta: { title: '圣点套餐' }
+        path: 'model-config',
+        name: 'AdminModelConfig',
+        component: () => import('@/views/admin/ModelConfig.vue'),
+        meta: { title: '模型配置' }
       },
       {
-        path: 'payments',
-        name: 'AdminPayments',
-        component: () => import('@/views/admin/PaymentRecords.vue'),
-        meta: { title: '支付记录' }
+        path: 'content-library',
+        name: 'AdminContentLibrary',
+        component: () => import('@/views/admin/ContentLibrary.vue'),
+        meta: { title: '内容库' }
       },
       {
-        path: 'recharge',
-        name: 'AdminRecharge',
-        component: () => import('@/views/admin/RechargeManagement.vue'),
-        meta: { title: '充值管理' }
+        path: 'audit-log',
+        name: 'AdminAuditLog',
+        component: () => import('@/views/admin/AuditLog.vue'),
+        meta: { title: '操作日志' }
       }
     ]
   }
