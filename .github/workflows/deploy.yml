@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'frontend/**'
+      - 'admin/**'
       - '.github/workflows/deploy.yml'
   workflow_dispatch:
 
@@ -51,6 +52,13 @@ jobs:
       - name: Create SPA 404.html
         working-directory: frontend
         run: cp dist/index.html dist/404.html
+
+      - name: Copy admin panel to dist
+        run: |
+          mkdir -p frontend/dist/admin
+          cp admin/index.html frontend/dist/admin/
+          cp admin/admin-app.js frontend/dist/admin/
+          cp admin/logo.png frontend/dist/admin/
 
       - name: Create CNAME
         working-directory: frontend
