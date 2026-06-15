@@ -34,7 +34,7 @@ const CONFIG = {
   // 即梦（字节跳动 AI 绘画）
   JIMENG_API_KEY: process.env.JIMENG_API_KEY || "ark-3c2a939f-9aec-4930-946e-29a97d476611-e6c69",
   JIMENG_BASE_URL: process.env.JIMENG_BASE_URL || 'https://ark.cn-beijing.volces.com/api/v3',
-  JIMENG_MODEL: process.env.JIMENG_MODEL || 'doubao-seedream-5-0-lite',
+  JIMENG_MODEL: process.env.JIMENG_MODEL || 'doubao-seedream-5-0-260128',
 
   // DeepSeek
   DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY || 'sk-4f60d83ebf904321b99000888baf313c',
