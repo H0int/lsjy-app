@@ -5,7 +5,9 @@
     "nickname": "罗总",
     "email": "ceo@lsjyapp.cn",
     "phone": "",
-    "roles": ["boss"],
+    "roles": [
+      "boss"
+    ],
     "status": "active",
     "avatar": "",
     "gender": 1,
@@ -20,7 +22,9 @@
     "nickname": "测试用户",
     "email": "test@test.com",
     "phone": "13800138000",
-    "roles": ["user"],
+    "roles": [
+      "user"
+    ],
     "status": "active",
     "avatar": "",
     "gender": 0,
@@ -35,7 +39,9 @@
     "nickname": "管理员",
     "email": "admin@lsjyapp.cn",
     "phone": "",
-    "roles": ["admin"],
+    "roles": [
+      "admin"
+    ],
     "status": "active",
     "avatar": "",
     "gender": 1,
@@ -43,5 +49,18 @@
     "coins": 0,
     "totalRecharge": 0,
     "createdAt": "2026-03-01T00:00:00Z"
+  },
+  {
+    "id": 4,
+    "username": "1185368527",
+    "password": "20040219",
+    "nickname": "屾.",
+    "status": "active",
+    "roles": [
+      "normal"
+    ],
+    "coins": 0,
+    "totalRecharge": 0,
+    "createdAt": "2026-06-15T05:29:38.626Z"
   }
 ]

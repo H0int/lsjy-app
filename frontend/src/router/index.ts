@@ -224,7 +224,7 @@ const routes: RouteRecordRaw[] = [
 ]
 
 const router = createRouter({
-  history: isGitHubPages ? createWebHashHistory() : createWebHistory('/'),
+  history: createWebHashHistory(),
   routes,
   scrollBehavior: () => ({ top: 0 })
 })
