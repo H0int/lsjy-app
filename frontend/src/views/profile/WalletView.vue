@@ -35,7 +35,7 @@
       <h3 class="font-bold mb-3" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">
         <span style="color: var(--cyber-green);">▍</span>充值套餐
       </h3>
-      <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div v-for="pkg in packages" :key="pkg.id"
           @click="selectedPkgId = pkg.id"
           class="cyber-card p-4 text-center cursor-pointer transition-all duration-300"
@@ -44,7 +44,7 @@
             : ''">
           <div v-if="pkg.isRecommended" class="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 text-white text-xs rounded-full"
             style="background: linear-gradient(135deg, var(--cyber-magenta), var(--cyber-purple));">推荐</div>
-          <div class="text-2xl font-bold" style="color: var(--cyber-cyan); font-family: 'JetBrains Mono', monospace;">{{ pkg.coins }}</div>
+          <div class="text-2xl font-bold" style="color: var(--cyber-cyan); font-family: 'JetBrains Mono', monospace;">{{ pkg.coinAmount }}</div>
           <div class="text-xs mt-1" style="color: var(--cyber-text-dim);">圣点</div>
           <div class="text-sm font-bold mt-2" style="color: var(--cyber-amber);">¥{{ pkg.price }}</div>
           <div v-if="pkg.bonusCoins" class="text-xs mt-1" style="color: var(--cyber-green);">送{{ pkg.bonusCoins }}圣点</div>

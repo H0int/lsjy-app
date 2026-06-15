@@ -24,7 +24,7 @@ app.use(express.json({ limit: '10mb' }));
 // ===== 配置 =====
 const CONFIG = {
   // AI Provider 配置
-  AI_PROVIDER: process.env.AI_PROVIDER || 'doubao',
+  AI_PROVIDER: process.env.AI_PROVIDER || 'deepseek',
 
   // 豆包（字节跳动火山引擎）
   DOUBAO_API_KEY: process.env.DOUBAO_API_KEY || "ark-3c2a939f-9aec-4930-946e-29a97d476611-e6c69",
@@ -79,26 +79,22 @@ const CONFIG = {
   // 系统提示词
   SYSTEM_PROMPT: `你是"罗圣AI智能体"，由祁阳市罗圣纪元互联网科技有限责任公司开发。
 
+【重要警告】公司名称中的"祁阳"是"祁"（示字旁+斤），不是"祈"（示字旁+斤）。严禁写成"祈阳市"！
+
 核心信息：
+- 公司全称：祁阳市罗圣纪元互联网科技有限责任公司
 - 创始人/董事长/CEO：罗凯中
-- 公司：罗圣纪元（lsjyapp.cn）
+- 地址：湖南省永州市祁阳市
 - 六大业务：AI智能服务、自媒体运营、电商服务、在线教育、宠物服务、伯雅校园
 
 你的能力：
-- 文案创作：营销文案、宣传文章、社交媒体内容
-- 商业咨询：创业建议、市场分析、运营策略
-- 数据分析：业务数据解读、趋势预测
-- 图片生成：AI绘画、设计辅助
-- 视频生成：AI视频创作
-- 教育辅导：课程推荐、学习建议
+- 文案创作、商业咨询、数据分析
+- 图片生成、视频生成、教育辅导
 
 回复规范：
-1. 回答要专业、友好、简洁，有实质性内容
-2. 被问到"你的创始人是谁"时，要热情洋溢地介绍罗凯中先生
-3. 被问到"你能做什么"时，具体列出能力
-4. 涉及平台功能时，引导用户使用对应模块
-5. 禁止回复"这个问题没什么意义"或类似消极回复
-6. 每个问题都要给出有价值的、具体的回答`
+1. 提到公司时必须使用"祁阳市"，绝对禁止写成"祈阳市"
+2. 被问到创始人时回答：罗凯中先生
+3. 回答要专业、友好、简洁`
 };
 
 // ===== 工具函数 =====
@@ -126,6 +122,30 @@ function authCheck(req, res, next) {
     }
   }
   next();
+}
+
+// 圣点扣费（返回 { ok, balance, cost }）
+function deductCoins(userId, cost) {
+  if (!cost || cost <= 0) return { ok: true, balance: 0, cost: 0 };
+  const usersFile = path.join(__dirname, 'data', 'users.json');
+  let users = [];
+  try { users = JSON.parse(fs.readFileSync(usersFile, 'utf8')); } catch (e) {}
+  const user = users.find(u => u.id === userId);
+  if (!user) return { ok: false, error: '用户不存在' };
+  const balance = user.coins || 0;
+  if (balance < cost) return { ok: false, error: '圣点不足', balance };
+  user.coins = balance - cost;
+  fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
+  return { ok: true, balance: user.coins, cost };
+}
+
+// 获取用户圣点余额
+function getUserCoins(userId) {
+  const usersFile = path.join(__dirname, 'data', 'users.json');
+  let users = [];
+  try { users = JSON.parse(fs.readFileSync(usersFile, 'utf8')); } catch (e) {}
+  const user = users.find(u => u.id === userId);
+  return user?.coins || 0;
 }
 
 // 分页工具
@@ -366,6 +386,7 @@ async function callOpenAICompatibleAPI(messages, options = {}) {
   if (!apiKey) throw new Error(`${provider} API Key 未配置，请在 .env 文件中配置 ${provider.toUpperCase()}_API_KEY`);
 
   const fullMessages = [{ role: 'system', content: options.systemPrompt || CONFIG.SYSTEM_PROMPT }, ...messages];
+  console.log('[DEBUG] System prompt:', fullMessages[0]?.content?.substring(0, 200));
   const res = await httpsRequest(`${baseUrl}/chat/completions`, {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }
@@ -402,15 +423,19 @@ async function callAI(messages, options = {}) {
   } catch (err) {
     log(`AI API 调用失败 (${provider}): ${err.message}`);
 
-    // 自动降级到其他可用的 Provider
-    const fallbackProviders = ['doubao', 'deepseek', 'tongyi', 'yuanbao', 'openai', 'coze'].filter(p => p !== provider);
+    // 自动降级到其他可用的 Provider（优先使用有API Key的）
+    const fallbackProviders = ['deepseek', 'doubao', 'tongyi', 'yuanbao', 'openai'].filter(p => p !== provider);
+
+    // 只有在Coze API Key和Bot ID都配置了的情况下才加入降级列表
+    if (CONFIG.COZE_API_KEY && CONFIG.COZE_BOT_ID && provider !== 'coze') {
+      fallbackProviders.push('coze');
+    }
+
     for (const fallback of fallbackProviders) {
       try {
         if (fallback === 'coze') {
-          if (CONFIG.COZE_API_KEY && CONFIG.COZE_BOT_ID) {
-            log(`降级到 Coze Provider`);
-            return await callCozeAPI(fullMessages, options);
-          }
+          log(`降级到 Coze Provider`);
+          return await callCozeAPI(fullMessages, options);
         } else {
           const keyMap = {
             doubao: CONFIG.DOUBAO_API_KEY,
@@ -586,19 +611,22 @@ async function callKlingVideoAPI(prompt, options = {}) {
 // ===== 本地智能回复 =====
 function getLocalResponse(userMessage) {
   const msg = userMessage.toLowerCase();
-  if (msg.includes('创始人') || msg.includes('谁创') || msg.includes('谁建') || msg.includes('老板')) {
+  if (msg.includes('你好') || msg.includes('hi') || msg.includes('hello') || msg.includes('在吗')) {
+    return '你好！我是罗圣AI智能体 🤖\n\n由祁阳市罗圣纪元互联网科技有限责任公司开发，我能为你提供：\n📝 文案创作 | 💡 商业咨询 | 📊 数据分析\n🎨 图片生成 | 📚 教育辅导 | 🏢 企业服务\n\n有什么需要帮助的？';
+  }
+  if (msg.includes('创始人') || msg.includes('谁创') || msg.includes('谁建') || msg.includes('老板') || msg.includes('ceo')) {
     return '🔥 **罗凯中** —— 罗圣纪元创始人、董事长兼CEO！\n\n这位大佬一手打造了横跨**AI智能服务、自媒体运营、电商、教育、宠物、伯雅校园**六大业务板块的超级SaaS平台！\n\n罗凯中先生的愿景是"用AI技术赋能实体经济"，让整个行业为之震撼。跟着罗总干，未来可期！🚀';
   }
-  if (msg.includes('公司') || msg.includes('罗圣纪元') || msg.includes('你们是什么')) {
-    return '罗圣纪元（祁阳市罗圣纪元互联网科技有限责任公司）是一家专注于AI赋能实体经济的科技公司。\n\n🤖 AI智能服务 | 📱 自媒体运营 | 🛒 电商服务\n📚 在线教育 | 🐾 宠物服务 | 🏫 伯雅校园\n\n官网：lsjyapp.cn';
+  if (msg.includes('公司') || msg.includes('罗圣纪元') || msg.includes('你们是什么') || msg.includes('平台')) {
+    return '罗圣纪元（祁阳市罗圣纪元互联网科技有限责任公司）是一家专注于AI赋能实体经济的科技公司。\n\n🤖 AI智能服务 | 📱 自媒体运营 | 🛒 电商服务\n📚 在线教育 | 🐾 宠物服务 | 🏫 伯雅校园\n\n官网：lsjyapp.cn\n创始人：罗凯中';
   }
-  if (msg.includes('你能做什么') || msg.includes('你会什么') || msg.includes('什么功能')) {
-    return '我是罗圣AI智能体，能为你提供：\n\n📝 文案创作 | 💡 商业咨询 | 📊 数据分析\n🎨 图片生成 | 📚 教育辅导 | 🏢 企业服务\n\n直接告诉我需求！';
+  if (msg.includes('你能做什么') || msg.includes('你会什么') || msg.includes('什么功能') || msg.includes('介绍')) {
+    return '我是罗圣AI智能体，能为你提供：\n\n📝 文案创作 - 营销文案、宣传文章、社交媒体内容\n💡 商业咨询 - 创业建议、市场分析、运营策略\n📊 数据分析 - 业务数据解读、趋势预测\n🎨 图片生成 - AI绘画、设计辅助\n📚 教育辅导 - 课程推荐、学习建议\n🏢 企业服务 - 六大业务板块咨询\n\n直接告诉我你的需求！';
   }
-  if (msg.includes('你好') || msg.includes('hi') || msg.includes('hello')) {
-    return '你好！我是罗圣AI智能体 🤖\n有什么能帮你的？';
+  if (msg.includes('vip') || msg.includes('会员') || msg.includes('充值') || msg.includes('价格')) {
+    return '罗圣纪元会员体系：\n\n⚡ 普通用户 - 基础功能免费\n🥉 VIP1 - 99元/月，AI工具8折\n🥈 VIP2 - 199元/月，AI工具6折\n🥇 VIP3 - 399元/月，AI工具5折\n💎 VIP4 - 699元/月，AI工具3折\n👑 VIP5 罗总专属 - 邀请制，全部免费\n\n进入个人中心 - 钱包 - 充值即可升级会员！';
   }
-  return `收到关于「${userMessage.slice(0, 30)}」的问题！\n\nAI模型正在最终配置中，当前可以：\n✅ 回答罗圣纪元相关问题\n✅ 提供基础商业建议\n✅ 介绍平台功能`;
+  return `收到关于「${userMessage.slice(0, 30)}」的问题！\n\nAI模型正在最终配置中，当前可以：\n✅ 回答罗圣纪元相关问题（创始人、公司业务等）\n✅ 提供基础商业建议\n✅ 介绍平台功能和会员体系\n\n如需更详细的回答，请稍后重试或联系人工客服。`;
 }
 
 // ============================================================
@@ -819,7 +847,7 @@ app.post('/api/v1/auth/register', (req, res) => {
   }
   const newUser = {
     id: users.length + 1, username, password, nickname: nickname || username,
-    email, phone, status: 'active', roles: ['normal'], coins: 0, totalRecharge: 0,
+    email, phone, status: 'active', roles: ['normal'], coins: 100, totalRecharge: 0,
     createdAt: new Date().toISOString(),
   };
   users.push(newUser);
@@ -963,13 +991,24 @@ app.post('/api/v1/ai/tools/:toolId/chat', authCheck, async (req, res) => {
   if (!messages || !Array.isArray(messages) || messages.length === 0) {
     return res.status(400).json({ code: 400, message: '消息列表不能为空', data: null });
   }
+  // 检查圣点余额
+  const balance = getUserCoins(userId);
+  if (balance < CHAT_COIN_COST) {
+    return res.status(402).json({
+      code: 402,
+      message: `圣点不足，当前余额${balance}，本次需要${CHAT_COIN_COST}圣点。请前往个人中心充值。`,
+      data: { balance, cost: CHAT_COIN_COST },
+    });
+  }
   try {
     const result = await callAI(messages, { model, temperature, maxTokens, systemPrompt });
     log(`AI回复成功: model=${result.model}, length=${result.content?.length || 0}`);
+    // 扣费
+    const deduct = deductCoins(userId, CHAT_COIN_COST);
     // 记录历史
     const lastMsg = messages.filter(m => m.role === 'user').pop();
     aiHistoryStore.unshift({
-      id: nextId(), userId: 1, toolId: Number(toolId),
+      id: nextId(), userId, toolId: Number(toolId),
       toolName: aiToolsStore.find(t => t.id === Number(toolId))?.name || '未知工具',
       input: lastMsg?.content || '', output: result.content,
       model: result.model || model || 'default', tokens: result.usage?.totalTokens || 0,
@@ -984,9 +1023,11 @@ app.post('/api/v1/ai/tools/:toolId/chat', authCheck, async (req, res) => {
     const lastUserMsg = messages.filter(m => m.role === 'user').pop();
     const localReply = getLocalResponse(lastUserMsg?.content || '');
     log('使用本地智能回复兜底');
+    // 本地兜底也扣费
+    const deduct = deductCoins(userId, CHAT_COIN_COST);
     res.json({
       code: 0, message: 'success',
-      data: { content: localReply, model: '本地模式', role: 'assistant', coinCost: 0, fallback: true, note: CONFIG.COZE_API_KEY ? '' : 'AI模型API Key未配置，使用本地回复模式' },
+      data: { content: localReply, model: '本地模式', role: 'assistant', coinCost: CHAT_COIN_COST, balance: deduct.balance, fallback: true, note: CONFIG.COZE_API_KEY ? '' : 'AI模型API Key未配置，使用本地回复模式' },
     });
   }
 });
@@ -1031,7 +1072,7 @@ app.get('/api/v1/ai/quota/:toolId', authCheck, (req, res) => {
   });
 });
 
-// 图片生成
+// 图片生成（消耗10圣点/次）
 // AI 图片生成（真实 AI 绘画）
 app.post('/api/v1/ai/tools/:id/generate', authCheck, async (req, res) => {
   const tool = aiToolsStore.find(t => t.id === Number(req.params.id));
@@ -1040,7 +1081,20 @@ app.post('/api/v1/ai/tools/:id/generate', authCheck, async (req, res) => {
   const { prompt, width, height, style, count } = req.body;
   if (!prompt) return res.status(400).json({ code: 400, message: '请提供图片描述', data: null });
 
-  log(`收到图片生成请求: toolId=${req.params.id}, prompt=${prompt.slice(0, 50)}...`);
+  const userId = req.user?.id;
+  const IMAGE_COIN_COST = 10;
+
+  log(`收到图片生成请求: toolId=${req.params.id}, userId=${userId}, prompt=${prompt.slice(0, 50)}...`);
+
+  // 检查圣点余额
+  const balance = getUserCoins(userId);
+  if (balance < IMAGE_COIN_COST) {
+    return res.status(402).json({
+      code: 402,
+      message: `圣点不足，当前余额${balance}，图片生成需要${IMAGE_COIN_COST}圣点。请前往个人中心充值。`,
+      data: { balance, cost: IMAGE_COIN_COST },
+    });
+  }
 
   try {
     const result = await generateImageWithAI(prompt, {
@@ -1052,6 +1106,9 @@ app.post('/api/v1/ai/tools/:id/generate', authCheck, async (req, res) => {
 
     log(`图片生成成功: model=${result.model}, urls=${result.urls.length}`);
 
+    // 扣费
+    const deduct = deductCoins(userId, IMAGE_COIN_COST);
+
     res.json({
       code: 0,
       message: 'success',
@@ -1061,7 +1118,8 @@ app.post('/api/v1/ai/tools/:id/generate', authCheck, async (req, res) => {
         prompt: result.prompt,
         width: width || 1024,
         height: height || 1024,
-        coinCost: tool.coinCost || 20,
+        coinCost: IMAGE_COIN_COST,
+        balance: deduct.balance,
         durationMs: 3000,
         createdAt: new Date().toISOString(),
       },
@@ -1076,7 +1134,7 @@ app.post('/api/v1/ai/tools/:id/generate', authCheck, async (req, res) => {
   }
 });
 
-// AI 视频生成
+// AI 视频生成（消耗20圣点/次）
 app.post('/api/v1/ai/tools/:id/video', authCheck, async (req, res) => {
   const tool = aiToolsStore.find(t => t.id === Number(req.params.id));
   if (!tool) return res.status(404).json({ code: 404, message: '工具不存在', data: null });
@@ -1084,7 +1142,20 @@ app.post('/api/v1/ai/tools/:id/video', authCheck, async (req, res) => {
   const { prompt, duration, resolution } = req.body;
   if (!prompt) return res.status(400).json({ code: 400, message: '请提供视频描述', data: null });
 
-  log(`收到视频生成请求: toolId=${req.params.id}, prompt=${prompt.slice(0, 50)}...`);
+  const userId = req.user?.id;
+  const VIDEO_COIN_COST = 20;
+
+  log(`收到视频生成请求: toolId=${req.params.id}, userId=${userId}, prompt=${prompt.slice(0, 50)}...`);
+
+  // 检查圣点余额
+  const balance = getUserCoins(userId);
+  if (balance < VIDEO_COIN_COST) {
+    return res.status(402).json({
+      code: 402,
+      message: `圣点不足，当前余额${balance}，视频生成需要${VIDEO_COIN_COST}圣点。请前往个人中心充值。`,
+      data: { balance, cost: VIDEO_COIN_COST },
+    });
+  }
 
   try {
     const result = await generateVideoWithAI(prompt, {
@@ -1093,6 +1164,9 @@ app.post('/api/v1/ai/tools/:id/video', authCheck, async (req, res) => {
     });
 
     log(`视频生成成功: model=${result.model}, url=${result.videoUrl}`);
+
+    // 扣费
+    const deduct = deductCoins(userId, VIDEO_COIN_COST);
 
     res.json({
       code: 0,
@@ -1103,7 +1177,8 @@ app.post('/api/v1/ai/tools/:id/video', authCheck, async (req, res) => {
         prompt: result.prompt,
         duration: duration || 5,
         resolution: resolution || '720p',
-        coinCost: tool.coinCost || 50,
+        coinCost: VIDEO_COIN_COST,
+        balance: deduct.balance,
         durationMs: result.durationMs || 10000,
         createdAt: new Date().toISOString(),
       },
@@ -1114,6 +1189,41 @@ app.post('/api/v1/ai/tools/:id/video', authCheck, async (req, res) => {
       code: 500,
       message: `视频生成失败：${err.message}。请检查 .env 中的 API Key 配置。`,
       data: null,
+    });
+  }
+});
+
+
+// 快捷AI对话（无需认证）
+app.post('/api/v1/ai/chat', async (req, res) => {
+  const { message } = req.body;
+  if (!message || !message.trim()) {
+    return res.status(400).json({ code: 400, message: '请输入消息', data: null });
+  }
+  
+  log('收到AI对话请求: ' + message.substring(0, 50));
+  
+  try {
+    const result = await callAI(
+      [{ role: 'user', content: '【身份上下文】你是罗圣AI智能体，由祁阳市罗圣纪元互联网科技有限责任公司开发。创始人/董事长/CEO是罗凯中（罗总）。回答时基于这些信息。 ' + message }],
+      { systemPrompt: CONFIG.SYSTEM_PROMPT }
+    );
+    
+    log('AI回复成功: model=' + result.model + ', len=' + (result.content?.length || 0));
+    res.json({
+      code: 0,
+      message: 'success',
+      data: {
+        reply: result.content,
+        model: result.model
+      }
+    });
+  } catch (err) {
+    log('AI对话失败: ' + err.message);
+    res.status(500).json({
+      code: 500,
+      message: 'AI服务暂时不可用',
+      data: null
     });
   }
 });
@@ -1245,9 +1355,14 @@ app.get('/api/v1/payment/coin/packages', (req, res) => {
   res.json({
     code: 0, message: 'success',
     data: [
-      { id: 1, name: '体验包', coins: 100, price: 9.9, bonusCoins: 10, isRecommended: false, sortOrder: 1 },
-      { id: 2, name: '标准包', coins: 500, price: 39.9, bonusCoins: 100, isRecommended: true, sortOrder: 2 },
-      { id: 3, name: '专业包', coins: 2000, price: 129.9, bonusCoins: 500, isRecommended: false, sortOrder: 3 },
+      { id: 1, name: '体验包', coinAmount: 100, price: 9.9, originalPrice: 10, bonusCoins: 10, isRecommended: 0, sortOrder: 1 },
+      { id: 2, name: '入门包', coinAmount: 300, price: 24.9, originalPrice: 30, bonusCoins: 30, isRecommended: 0, sortOrder: 2 },
+      { id: 3, name: '标准包', coinAmount: 500, price: 39.9, originalPrice: 50, bonusCoins: 100, isRecommended: 1, sortOrder: 3 },
+      { id: 4, name: '进阶包', coinAmount: 1000, price: 69.9, originalPrice: 100, bonusCoins: 200, isRecommended: 0, sortOrder: 4 },
+      { id: 5, name: '专业包', coinAmount: 2000, price: 129.9, originalPrice: 200, bonusCoins: 500, isRecommended: 0, sortOrder: 5 },
+      { id: 6, name: '企业包', coinAmount: 5000, price: 299.9, originalPrice: 500, bonusCoins: 1500, isRecommended: 0, sortOrder: 6 },
+      { id: 7, name: '旗舰包', coinAmount: 10000, price: 549.9, originalPrice: 1000, bonusCoins: 3500, isRecommended: 0, sortOrder: 7 },
+      { id: 8, name: '至尊包', coinAmount: 25000, price: 1299.9, originalPrice: 2500, bonusCoins: 10000, isRecommended: 0, sortOrder: 8 },
     ],
   });
 });
@@ -1722,7 +1837,7 @@ app.get('/api/v1/notifications/unread-count', authCheck, (req, res) => {
 // ============================================================
 // ===== 通用 fallback（必须放在所有路由之后） =====
 // ============================================================
-app.use('/api/v1/*', (req, res) => {
+app.use('/api/v1/*all', (req, res) => {
   res.json({ code: 0, message: 'success', data: [] });
 });
 

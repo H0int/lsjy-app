@@ -19,19 +19,25 @@
 
       <nav class="sidebar-nav">
         <div v-for="group in menuGroups" :key="group.label" class="menu-group">
-          <div class="menu-group-label">{{ group.label }}</div>
-          <router-link v-for="item in group.items" :key="item.path" :to="item.path"
-            class="menu-item"
-            :class="{ 'menu-active': isActive(item.path) }"
-            @click="mobileMenuOpen = false">
-            <span class="menu-icon">{{ item.icon }}</span>
-            <span class="menu-label">{{ item.label }}</span>
-            <span v-if="isActive(item.path)" class="menu-indicator"></span>
-          </router-link>
+          <div class="menu-group-label">
+            <span class="group-dot"></span>
+            <span>{{ group.label }}</span>
+          </div>
+          <div class="menu-group-items">
+            <router-link v-for="item in group.items" :key="item.path" :to="item.path"
+              class="menu-item"
+              :class="{ 'menu-active': isActive(item.path) }"
+              @click="mobileMenuOpen = false">
+              <span class="menu-icon">{{ item.icon }}</span>
+              <span class="menu-label">{{ item.label }}</span>
+              <span v-if="isActive(item.path)" class="menu-indicator"></span>
+            </router-link>
+          </div>
         </div>
       </nav>
 
       <div class="sidebar-footer">
+        <div class="footer-divider"></div>
         <router-link to="/dashboard" class="back-link" @click="mobileMenuOpen = false">
           <span>↩️</span><span>返回前台</span>
         </router-link>
@@ -140,13 +146,17 @@ const menuGroups = [
     label: '概览',
     items: [
       { path: '/admin/dashboard', label: '数据看板', icon: '📊' },
+      { path: '/admin/visitors', label: '访客中心', icon: '👁️' },
+      { path: '/admin/realtime-location', label: '实时定位', icon: '📍' },
     ]
   },
   {
-    label: '业务管理',
+    label: '用户管理',
     items: [
       { path: '/admin/users', label: '用户管理', icon: '👥' },
-      { path: '/admin/tools', label: '工具管理', icon: '🔧' },
+      { path: '/admin/online-users', label: '在线用户', icon: '🟢' },
+      { path: '/admin/user-tags', label: '用户标签', icon: '🏷️' },
+      { path: '/admin/blacklist', label: '黑名单管理', icon: '🚫' },
     ]
   },
   {
@@ -155,6 +165,7 @@ const menuGroups = [
       { path: '/admin/ai-agent', label: 'AI智能体', icon: '🤖' },
       { path: '/admin/chat-logs', label: '对话记录', icon: '💬' },
       { path: '/admin/model-config', label: '模型配置', icon: '🧠' },
+      { path: '/admin/knowledge-base', label: '知识库管理', icon: '📚' },
     ]
   },
   {
@@ -164,6 +175,8 @@ const menuGroups = [
       { path: '/admin/payments', label: '支付记录', icon: '💳' },
       { path: '/admin/recharge', label: '充值管理', icon: '💎' },
       { path: '/admin/orders', label: '订单管理', icon: '📦' },
+      { path: '/admin/commission', label: '佣金记录', icon: '💸' },
+      { path: '/admin/withdraw', label: '提现管理', icon: '🏦' },
     ]
   },
   {
@@ -174,6 +187,14 @@ const menuGroups = [
       { path: '/admin/coupons', label: '优惠券', icon: '🎫' },
       { path: '/admin/campaigns', label: '活动管理', icon: '🎯' },
       { path: '/admin/content-library', label: '内容库', icon: '📚' },
+      { path: '/admin/push-messages', label: '消息推送', icon: '🔔' },
+    ]
+  },
+  {
+    label: '分销与推广',
+    items: [
+      { path: '/admin/distribution', label: '分销管理', icon: '🔗' },
+      { path: '/admin/affiliates', label: '合作伙伴', icon: '🤝' },
     ]
   },
   {
@@ -181,13 +202,19 @@ const menuGroups = [
     items: [
       { path: '/admin/tickets', label: '工单管理', icon: '🎧' },
       { path: '/admin/faq', label: 'FAQ管理', icon: '❓' },
-      { path: '/admin/automation', label: '自动化规则', icon: '🤖' },
+      { path: '/admin/feedback', label: '意见反馈', icon: '💭' },
+      { path: '/admin/automation', label: '自动化规则', icon: '⚡' },
     ]
   },
   {
-    label: '数据与配置',
+    label: '系统管理',
     items: [
-      { path: '/admin/reports', label: '数据报表', icon: '📈' },
+      { path: '/admin/system-monitor', label: '系统监控', icon: '🖥️' },
+      { path: '/admin/api-management', label: 'API管理', icon: '🔌' },
+      { path: '/admin/permissions', label: '权限管理', icon: '🔐' },
+      { path: '/admin/sensitive-words', label: '敏感词库', icon: '🚫' },
+      { path: '/admin/cache-management', label: '缓存管理', icon: '💾' },
+      { path: '/admin/data-backup', label: '数据备份', icon: '💿' },
       { path: '/admin/settings', label: '系统配置', icon: '⚙️' },
       { path: '/admin/audit-log', label: '操作日志', icon: '🛡️' },
     ]
@@ -250,7 +277,7 @@ function handleLogout() {
   z-index: 40;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
+  overflow: hidden;
   transition: transform 0.3s ease;
 }
 
@@ -273,13 +300,7 @@ function handleLogout() {
 .logo-icon {
   width: 40px; height: 40px;
   border-radius: 10px;
-  background: linear-gradient(135deg, #00f0ff, #7c3aed);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  font-size: 18px;
-  color: #fff;
+  object-fit: cover;
   box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
   flex-shrink: 0;
 }
@@ -293,34 +314,40 @@ function handleLogout() {
   background: linear-gradient(90deg, transparent, #1a1a2e, #00f0ff33, transparent);
 }
 
-.sidebar-nav { flex: 1; padding: 12px 8px 80px; }
+.sidebar-nav { flex: 1; overflow-y: auto; padding: 12px 0; }
+.sidebar-nav::-webkit-scrollbar { width: 3px; }
+.sidebar-nav::-webkit-scrollbar-thumb { background: rgba(0,240,255,0.15); border-radius: 3px; }
 
-.menu-group { margin-bottom: 8px; }
-.menu-group-label { padding: 8px 12px 4px; font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #4a4a6a; font-weight: 600; }
+.menu-group { margin-bottom: 4px; }
+.menu-group-label { display: flex; align-items: center; gap: 8px; padding: 10px 20px 4px; font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #4a4a6a; font-weight: 600; }
+.group-dot { width: 4px; height: 4px; border-radius: 50%; background: #4a4a6a; flex-shrink: 0; }
+
+.menu-group-items { padding: 0; }
 
 .menu-item {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 14px;
-  border-radius: 8px;
+  padding: 9px 20px 9px 32px;
   font-size: 13px;
-  color: #8888aa;
+  color: #7a7a9a;
   text-decoration: none;
   transition: all 0.2s;
   position: relative;
-  margin-bottom: 2px;
+  margin: 1px 8px;
+  border-radius: 6px;
 }
-.menu-item:hover { color: #c0c0ff; background: rgba(0, 240, 255, 0.05); }
-.menu-active { color: #00f0ff !important; background: rgba(0, 240, 255, 0.08) !important; box-shadow: inset 0 0 20px rgba(0, 240, 255, 0.05); }
+.menu-item:hover { color: #c0c0ff; background: rgba(0, 240, 255, 0.04); }
+.menu-active { color: #00f0ff !important; background: rgba(0, 240, 255, 0.08) !important; }
 .menu-active::before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 3px; height: 60%; background: #00f0ff; border-radius: 0 2px 2px 0; box-shadow: 0 0 8px #00f0ff; }
 .menu-indicator { margin-left: auto; width: 6px; height: 6px; border-radius: 50%; background: #00f0ff; box-shadow: 0 0 6px #00f0ff; }
-.menu-icon { font-size: 16px; }
-.menu-label { font-weight: 500; }
+.menu-icon { font-size: 15px; flex-shrink: 0; width: 20px; text-align: center; }
+.menu-label { font-weight: 500; white-space: nowrap; }
 
-.sidebar-footer { padding: 12px 8px; border-top: 1px solid #1a1a2e; }
-.back-link { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 8px; font-size: 13px; color: #6666aa; text-decoration: none; transition: all 0.2s; }
-.back-link:hover { color: #ff00ff; background: rgba(255, 0, 255, 0.05); }
+.sidebar-footer { flex-shrink: 0; padding: 0; }
+.footer-divider { height: 1px; margin: 0 16px; background: linear-gradient(90deg, transparent, #1a1a2e, #00f0ff33, transparent); }
+.back-link { display: flex; align-items: center; gap: 10px; padding: 14px 20px; border-radius: 0; font-size: 13px; color: #5a5a8a; text-decoration: none; transition: all 0.2s; }
+.back-link:hover { color: #ff00ff; background: rgba(255, 0, 255, 0.04); }
 
 /* ========== HEADER ========== */
 .cyber-header {

@@ -79,7 +79,7 @@
 
     <div class="mt-4 flex justify-end">
       <el-pagination layout="total, prev, pager, next" :total="total" :page-size="pageSize"
-        @current-change="p => page = p" />
+        @current-change="(p: number) => page = p" />
     </div>
   </div>
 </template>

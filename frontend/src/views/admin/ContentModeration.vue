@@ -106,6 +106,7 @@ const selectedIds = ref<number[]>([])
 const stats = ref({ pending: 0, approved: 0, rejected: 0, todayReviewed: 0 })
 const list = ref<ModerationItem[]>([])
 
+const total = computed(() => list.value.length)
 const totalPages = computed(() => Math.ceil(list.value.length / pageSize))
 const allSelected = computed(() => list.value.length > 0 && selectedIds.value.length === list.value.length)
 
