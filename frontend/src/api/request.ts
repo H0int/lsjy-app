@@ -6,7 +6,7 @@ import { getToken, removeToken } from '@/utils'
 
 const service: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1',
-  timeout: 15000,
+  timeout: 120000,
   headers: { 'Content-Type': 'application/json' }
 })
 

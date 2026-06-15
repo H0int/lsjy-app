@@ -1,1 +1,11 @@
-[]
+[
+  {
+    "id": 1,
+    "ip": "223.104.134.200",
+    "userAgent": "Mozilla/5.0 (Linux; U; Android 16; zh-cn; 25098PN5AC Build/BP2A.250605.031.A3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.7049.79 Mobile Safari/537.36 XiaoMi/MiuiBrowser/20.16.1020421",
+    "path": "/dashboard",
+    "referer": "http://8.154.16.5/dashboard",
+    "visitTime": "2026-06-15T04:22:11.097Z",
+    "visitTimeFormatted": "2026-06-15 12:22:11"
+  }
+]
