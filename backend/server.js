@@ -1,7 +1,7 @@
 /**
  * 罗圣纪元 SaaS 后端服务器 v2
  * Express.js + AI API 集成
- * 支持 Coze / DeepSeek / OpenAI / 豆包 / 即梦 / 通义千问 兼容 API
+ * 支持 Coze / DeepSeek / 豆包 / 即梦 / 通义千问 / 腾讯元宝
  * 完整版：包含所有管理后台所需API
  */
 const express = require('express');
@@ -40,11 +40,6 @@ const CONFIG = {
   DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY || 'sk-4f60d83ebf904321b99000888baf313c',
   DEEPSEEK_BASE_URL: process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com/v1',
   DEEPSEEK_MODEL: process.env.DEEPSEEK_MODEL || 'deepseek-chat',
-
-  // OpenAI
-  OPENAI_API_KEY: process.env.OPENAI_API_KEY || '',
-  OPENAI_BASE_URL: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
-  OPENAI_MODEL: process.env.OPENAI_MODEL || 'gpt-4o',
 
   // 通义千问（阿里云）
   TONGYI_API_KEY: process.env.TONGYI_API_KEY || 'sk-c4212c9d7e4644e6825d796f6365668e',
@@ -124,27 +119,32 @@ function authCheck(req, res, next) {
   next();
 }
 
-// 圣点扣费（返回 { ok, balance, cost }）
+// 圣力扣费（返回 { ok, balance, cost }）
+// 支持无限算力用户（unlimited: true）
 function deductCoins(userId, cost) {
-  if (!cost || cost <= 0) return { ok: true, balance: 0, cost: 0 };
+  if (!cost || cost <= 0) return { ok: true, balance: 999999, cost: 0 };
   const usersFile = path.join(__dirname, 'data', 'users.json');
   let users = [];
   try { users = JSON.parse(fs.readFileSync(usersFile, 'utf8')); } catch (e) {}
   const user = users.find(u => u.id === userId);
   if (!user) return { ok: false, error: '用户不存在' };
+  // 无限算力用户跳过扣费
+  if (user.unlimited) return { ok: true, balance: 999999, cost: 0 };
   const balance = user.coins || 0;
-  if (balance < cost) return { ok: false, error: '圣点不足', balance };
+  if (balance < cost) return { ok: false, error: '圣力不足', balance };
   user.coins = balance - cost;
   fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
   return { ok: true, balance: user.coins, cost };
 }
 
-// 获取用户圣点余额
+// 获取用户圣力余额
 function getUserCoins(userId) {
   const usersFile = path.join(__dirname, 'data', 'users.json');
   let users = [];
   try { users = JSON.parse(fs.readFileSync(usersFile, 'utf8')); } catch (e) {}
   const user = users.find(u => u.id === userId);
+  // 无限算力用户返回999999
+  if (user?.unlimited) return 999999;
   return user?.coins || 0;
 }
 
@@ -349,7 +349,7 @@ async function callCozeAPI(messages, options = {}) {
   return { content: answerMsg.content, model: 'coze', usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 } };
 }
 
-// OpenAI 兼容 API 调用（支持 DeepSeek/豆包/通义千问/元宝/OpenAI）
+// OpenAI 兼容 API 调用（支持 DeepSeek/豆包/通义千问/元宝）
 async function callOpenAICompatibleAPI(messages, options = {}) {
   const provider = options.provider || 'deepseek';
   let apiKey, baseUrl, model;
@@ -375,12 +375,8 @@ async function callOpenAICompatibleAPI(messages, options = {}) {
       baseUrl = CONFIG.YUANBAO_BASE_URL;
       model = options.model || CONFIG.YUANBAO_MODEL;
       break;
-    case 'openai':
     default:
-      apiKey = CONFIG.OPENAI_API_KEY;
-      baseUrl = CONFIG.OPENAI_BASE_URL;
-      model = options.model || CONFIG.OPENAI_MODEL;
-      break;
+      throw new Error(`未知的provider: ${provider}`);
   }
 
   if (!apiKey) throw new Error(`${provider} API Key 未配置，请在 .env 文件中配置 ${provider.toUpperCase()}_API_KEY`);
@@ -417,14 +413,13 @@ async function callAI(messages, options = {}) {
       case 'deepseek': return await callOpenAICompatibleAPI(messages, { ...options, provider: 'deepseek' });
       case 'tongyi': return await callOpenAICompatibleAPI(messages, { ...options, provider: 'tongyi' });
       case 'yuanbao': return await callOpenAICompatibleAPI(messages, { ...options, provider: 'yuanbao' });
-      case 'openai': return await callOpenAICompatibleAPI(messages, { ...options, provider: 'openai' });
       default: throw new Error(`未知的AI Provider: ${provider}`);
     }
   } catch (err) {
     log(`AI API 调用失败 (${provider}): ${err.message}`);
 
     // 自动降级到其他可用的 Provider（优先使用有API Key的）
-    const fallbackProviders = ['deepseek', 'doubao', 'tongyi', 'yuanbao', 'openai'].filter(p => p !== provider);
+    const fallbackProviders = ['deepseek', 'doubao', 'tongyi', 'yuanbao'].filter(p => p !== provider);
 
     // 只有在Coze API Key和Bot ID都配置了的情况下才加入降级列表
     if (CONFIG.COZE_API_KEY && CONFIG.COZE_BOT_ID && provider !== 'coze') {
@@ -442,7 +437,6 @@ async function callAI(messages, options = {}) {
             deepseek: CONFIG.DEEPSEEK_API_KEY,
             tongyi: CONFIG.TONGYI_API_KEY,
             yuanbao: CONFIG.YUANBAO_API_KEY,
-            openai: CONFIG.OPENAI_API_KEY,
           };
           if (keyMap[fallback]) {
             log(`降级到 ${fallback} Provider`);
@@ -467,8 +461,6 @@ async function generateImageWithAI(prompt, options = {}) {
 
   if (provider === 'jimeng') {
     return await callJimengImageAPI(prompt, { width, height, style });
-  } else if (provider === 'openai') {
-    return await callDALLEImageAPI(prompt, { width, height, style });
   } else {
     throw new Error(`不支持的图片生成 Provider: ${provider}`);
   }
@@ -526,31 +518,7 @@ async function callJimengImageAPI(prompt, options = {}) {
   return { urls, model: 'jimeng-v2', prompt };
 }
 
-// DALL-E 图片生成（OpenAI）
-async function callDALLEImageAPI(prompt, options = {}) {
-  const apiKey = CONFIG.OPENAI_API_KEY;
-  if (!apiKey) throw new Error('OpenAI API Key 未配置，请在 .env 中配置 OPENAI_API_KEY');
-
-  const baseUrl = CONFIG.OPENAI_BASE_URL;
-
-  const res = await httpsRequest(`${baseUrl}/images/generations`, {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }
-  }, {
-    model: 'dall-e-3',
-    prompt,
-    size: `${options.width}x${options.height}`,
-    quality: 'standard',
-    n: options.count || 1
-  });
-
-  if (res.status !== 200) throw new Error(`DALL-E API 调用失败 (${res.status}): ${JSON.stringify(res.data)}`);
-
-  const urls = (res.data.data || []).map(item => item.url).filter(Boolean);
-  if (urls.length === 0) throw new Error('DALL-E API 未返回图片');
-
-  return { urls, model: 'dall-e-3', prompt };
-}
+// DALL-E 图片生成已移除（OpenAI未配置）
 
 // ===== 视频生成 API =====
 async function generateVideoWithAI(prompt, options = {}) {
@@ -764,7 +732,7 @@ app.get('/api/v1/health', (req, res) => {
   res.json({
     status: 'healthy', uptime: process.uptime(),
     ai_provider: CONFIG.AI_PROVIDER,
-    ai_configured: !!(CONFIG.COZE_API_KEY || CONFIG.DEEPSEEK_API_KEY || CONFIG.OPENAI_API_KEY),
+    ai_configured: !!(CONFIG.COZE_API_KEY || CONFIG.DEEPSEEK_API_KEY),
     memory: process.memoryUsage(),
   });
 });
@@ -974,7 +942,7 @@ app.post('/api/v1/users', authCheck, (req, res) => {
 // ===== AI模块 =====
 // ============================================================
 
-// AI对话
+// AI对话（消耗1圣力/次）
 app.post('/api/v1/ai/tools/:toolId/chat', authCheck, async (req, res) => {
   const { toolId } = req.params;
   const { messages, model, temperature, maxTokens, systemPrompt } = req.body;
@@ -991,12 +959,12 @@ app.post('/api/v1/ai/tools/:toolId/chat', authCheck, async (req, res) => {
   if (!messages || !Array.isArray(messages) || messages.length === 0) {
     return res.status(400).json({ code: 400, message: '消息列表不能为空', data: null });
   }
-  // 检查圣点余额
+  // 检查圣力余额
   const balance = getUserCoins(userId);
   if (balance < CHAT_COIN_COST) {
     return res.status(402).json({
       code: 402,
-      message: `圣点不足，当前余额${balance}，本次需要${CHAT_COIN_COST}圣点。请前往个人中心充值。`,
+      message: `圣力不足，当前余额${balance}，本次需要${CHAT_COIN_COST}圣力。请前往个人中心充值。`,
       data: { balance, cost: CHAT_COIN_COST },
     });
   }
@@ -1072,7 +1040,7 @@ app.get('/api/v1/ai/quota/:toolId', authCheck, (req, res) => {
   });
 });
 
-// 图片生成（消耗10圣点/次）
+// 图片生成（消耗10圣力/次）
 // AI 图片生成（真实 AI 绘画）
 app.post('/api/v1/ai/tools/:id/generate', authCheck, async (req, res) => {
   const tool = aiToolsStore.find(t => t.id === Number(req.params.id));
@@ -1086,12 +1054,12 @@ app.post('/api/v1/ai/tools/:id/generate', authCheck, async (req, res) => {
 
   log(`收到图片生成请求: toolId=${req.params.id}, userId=${userId}, prompt=${prompt.slice(0, 50)}...`);
 
-  // 检查圣点余额
+  // 检查圣力余额
   const balance = getUserCoins(userId);
   if (balance < IMAGE_COIN_COST) {
     return res.status(402).json({
       code: 402,
-      message: `圣点不足，当前余额${balance}，图片生成需要${IMAGE_COIN_COST}圣点。请前往个人中心充值。`,
+      message: `圣力不足，当前余额${balance}，图片生成需要${IMAGE_COIN_COST}圣力。请前往个人中心充值。`,
       data: { balance, cost: IMAGE_COIN_COST },
     });
   }
@@ -1134,7 +1102,7 @@ app.post('/api/v1/ai/tools/:id/generate', authCheck, async (req, res) => {
   }
 });
 
-// AI 视频生成（消耗20圣点/次）
+// AI 视频生成（消耗20圣力/次）
 app.post('/api/v1/ai/tools/:id/video', authCheck, async (req, res) => {
   const tool = aiToolsStore.find(t => t.id === Number(req.params.id));
   if (!tool) return res.status(404).json({ code: 404, message: '工具不存在', data: null });
@@ -1147,12 +1115,12 @@ app.post('/api/v1/ai/tools/:id/video', authCheck, async (req, res) => {
 
   log(`收到视频生成请求: toolId=${req.params.id}, userId=${userId}, prompt=${prompt.slice(0, 50)}...`);
 
-  // 检查圣点余额
+  // 检查圣力余额
   const balance = getUserCoins(userId);
   if (balance < VIDEO_COIN_COST) {
     return res.status(402).json({
       code: 402,
-      message: `圣点不足，当前余额${balance}，视频生成需要${VIDEO_COIN_COST}圣点。请前往个人中心充值。`,
+      message: `圣力不足，当前余额${balance}，视频生成需要${VIDEO_COIN_COST}圣力。请前往个人中心充值。`,
       data: { balance, cost: VIDEO_COIN_COST },
     });
   }
@@ -1235,7 +1203,6 @@ app.get('/api/v1/ai/providers', (req, res) => {
     { name: 'deepseek', displayName: 'DeepSeek', status: CONFIG.DEEPSEEK_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
     { name: 'tongyi', displayName: '通义千问', status: CONFIG.TONGYI_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
     { name: 'yuanbao', displayName: '腾讯元宝', status: CONFIG.YUANBAO_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
-    { name: 'openai', displayName: 'OpenAI', status: CONFIG.OPENAI_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
     { name: 'jimeng', displayName: '即梦 (图片)', status: CONFIG.JIMENG_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
     { name: 'kling', displayName: '可灵 (视频)', status: CONFIG.KLING_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
     { name: 'coze', displayName: 'Coze 智能体', status: CONFIG.COZE_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
@@ -1250,10 +1217,6 @@ app.get('/api/v1/ai/models', (req, res) => {
     { group: 'deepseek', provider: 'deepseek', models: [{ id: 'deepseek-chat', name: 'DeepSeek Chat', capabilities: ['text'] }] },
     { group: 'tongyi', provider: 'tongyi', models: [{ id: 'qwen-plus', name: '通义千问 Plus', capabilities: ['text'] }] },
     { group: 'yuanbao', provider: 'yuanbao', models: [{ id: 'hy3-preview', name: '腾讯元宝 Hy3 (混元)', capabilities: ['text'] }] },
-    { group: 'openai', provider: 'openai', models: [
-      { id: 'gpt-4o', name: 'GPT-4o', capabilities: ['text', 'image'] },
-      { id: 'dall-e-3', name: 'DALL-E 3', capabilities: ['image'] }
-    ] },
     { group: 'jimeng', provider: 'jimeng', models: [{ id: 'jimeng-v2', name: '即梦 AI 绘画', capabilities: ['image'] }] },
     { group: 'kling', provider: 'kling', models: [{ id: 'kling-v1', name: '可灵 AI 视频', capabilities: ['video'] }] },
     { group: 'coze', provider: 'coze', models: [{ id: 'coze-bot', name: 'Coze 智能体', capabilities: ['text'] }] },
@@ -1345,9 +1308,10 @@ app.get('/api/v1/payment/coin/balance', authCheck, (req, res) => {
   let users = [];
   try { users = JSON.parse(fs.readFileSync(usersFile, 'utf8')); } catch (e) {}
   const user = users.find(u => u.id === userId);
-  const balance = user?.coins || 0;
+  // 无限圣力用户返回999999
+  const balance = user?.unlimited ? 999999 : (user?.coins || 0);
   const totalRecharge = user?.totalRecharge || 0;
-  res.json({ code: 0, message: 'success', data: { balance, frozenAmount: 0, totalRecharge } });
+  res.json({ code: 0, message: 'success', data: { balance, frozenAmount: 0, totalRecharge, unlimited: user?.unlimited || false } });
 });
 
 // 充值套餐
@@ -1355,14 +1319,16 @@ app.get('/api/v1/payment/coin/packages', (req, res) => {
   res.json({
     code: 0, message: 'success',
     data: [
-      { id: 1, name: '体验包', coinAmount: 100, price: 9.9, originalPrice: 10, bonusCoins: 10, isRecommended: 0, sortOrder: 1 },
-      { id: 2, name: '入门包', coinAmount: 300, price: 24.9, originalPrice: 30, bonusCoins: 30, isRecommended: 0, sortOrder: 2 },
-      { id: 3, name: '标准包', coinAmount: 500, price: 39.9, originalPrice: 50, bonusCoins: 100, isRecommended: 1, sortOrder: 3 },
-      { id: 4, name: '进阶包', coinAmount: 1000, price: 69.9, originalPrice: 100, bonusCoins: 200, isRecommended: 0, sortOrder: 4 },
-      { id: 5, name: '专业包', coinAmount: 2000, price: 129.9, originalPrice: 200, bonusCoins: 500, isRecommended: 0, sortOrder: 5 },
-      { id: 6, name: '企业包', coinAmount: 5000, price: 299.9, originalPrice: 500, bonusCoins: 1500, isRecommended: 0, sortOrder: 6 },
-      { id: 7, name: '旗舰包', coinAmount: 10000, price: 549.9, originalPrice: 1000, bonusCoins: 3500, isRecommended: 0, sortOrder: 7 },
-      { id: 8, name: '至尊包', coinAmount: 25000, price: 1299.9, originalPrice: 2500, bonusCoins: 10000, isRecommended: 0, sortOrder: 8 },
+      { id: 1, name: '体验包', coinAmount: 10, price: 1, originalPrice: 1, bonusCoins: 0, isRecommended: 0, sortOrder: 1 },
+      { id: 2, name: '入门包', coinAmount: 100, price: 9.9, originalPrice: 10, bonusCoins: 10, isRecommended: 0, sortOrder: 2 },
+      { id: 3, name: '标准包', coinAmount: 300, price: 24.9, originalPrice: 30, bonusCoins: 30, isRecommended: 0, sortOrder: 3 },
+      { id: 4, name: '进阶包', coinAmount: 500, price: 39.9, originalPrice: 50, bonusCoins: 100, isRecommended: 1, sortOrder: 4 },
+      { id: 5, name: '专业包', coinAmount: 1000, price: 69.9, originalPrice: 100, bonusCoins: 200, isRecommended: 0, sortOrder: 5 },
+      { id: 6, name: '企业包', coinAmount: 2000, price: 129.9, originalPrice: 200, bonusCoins: 500, isRecommended: 0, sortOrder: 6 },
+      { id: 7, name: '旗舰包', coinAmount: 5000, price: 299.9, originalPrice: 500, bonusCoins: 1500, isRecommended: 0, sortOrder: 7 },
+      { id: 8, name: '至尊包', coinAmount: 10000, price: 549.9, originalPrice: 1000, bonusCoins: 3500, isRecommended: 0, sortOrder: 8 },
+      { id: 9, name: '豪华包', coinAmount: 25000, price: 1299.9, originalPrice: 2500, bonusCoins: 10000, isRecommended: 0, sortOrder: 9 },
+      { id: 10, name: '王者包', coinAmount: 50000, price: 1999.9, originalPrice: 5000, bonusCoins: 25000, isRecommended: 0, sortOrder: 10 },
     ],
   });
 });
@@ -1390,15 +1356,15 @@ function saveRechargeOrders(orders) {
 app.post('/api/v1/payment/coin/recharge', authCheck, (req, res) => {
   const { packageId, paymentMethod } = req.body;
   const packages = [
-    { id: 1, coins: 10, price: 1, coinAmount: 10, name: '10圣点' },
-    { id: 2, coins: 50, price: 4.9, coinAmount: 50, name: '50圣点' },
-    { id: 3, coins: 100, price: 9.9, coinAmount: 100, name: '100圣点' },
-    { id: 4, coins: 300, price: 24.9, coinAmount: 300, name: '300圣点' },
-    { id: 5, coins: 500, price: 39.9, coinAmount: 500, name: '500圣点' },
-    { id: 6, coins: 1000, price: 69.9, coinAmount: 1000, name: '1000圣点' },
-    { id: 7, coins: 2000, price: 129, coinAmount: 2000, name: '2000圣点' },
-    { id: 8, coins: 5000, price: 299, coinAmount: 5000, name: '5000圣点' },
-    { id: 9, coins: 10000, price: 499, coinAmount: 10000, name: '10000圣点' },
+    { id: 1, coins: 10, price: 1, coinAmount: 10, name: '10圣力' },
+    { id: 2, coins: 50, price: 4.9, coinAmount: 50, name: '50圣力' },
+    { id: 3, coins: 100, price: 9.9, coinAmount: 100, name: '100圣力' },
+    { id: 4, coins: 300, price: 24.9, coinAmount: 300, name: '300圣力' },
+    { id: 5, coins: 500, price: 39.9, coinAmount: 500, name: '500圣力' },
+    { id: 6, coins: 1000, price: 69.9, coinAmount: 1000, name: '1000圣力' },
+    { id: 7, coins: 2000, price: 129, coinAmount: 2000, name: '2000圣力' },
+    { id: 8, coins: 5000, price: 299, coinAmount: 5000, name: '5000圣力' },
+    { id: 9, coins: 10000, price: 499, coinAmount: 10000, name: '10000圣力' },
     { id: 10, coins: 50000, price: 1999, coinAmount: 50000, name: '至尊包' },
   ];
   const pkg = packages.find(p => p.id === packageId);
@@ -1475,7 +1441,7 @@ app.post('/api/v1/payment/coin/approve/:orderId', (req, res) => {
     }
     
     saveRechargeOrders(orders);
-    res.json({ code: 0, message: '已审批，用户获得' + order.coinAmount + '圣点', data: { order } });
+    res.json({ code: 0, message: '已审批，用户获得' + order.coinAmount + '圣力', data: { order } });
   } else {
     order.status = 'rejected';
     order.remark = remark || '审批拒绝';
@@ -1852,7 +1818,6 @@ app.listen(PORT, '0.0.0.0', () => {
   log(`   DeepSeek: ${CONFIG.DEEPSEEK_API_KEY ? '✅ 已配置' : ' 未配置'}`);
   log(`   通义千问 (Tongyi): ${CONFIG.TONGYI_API_KEY ? '✅ 已配置' : '❌ 未配置'}`);
   log(`   腾讯元宝 (Yuanbao): ${CONFIG.YUANBAO_API_KEY ? '✅ 已配置' : '❌ 未配置'}`);
-  log(`   OpenAI: ${CONFIG.OPENAI_API_KEY ? '✅ 已配置' : '❌ 未配置'}`);
   log(`   即梦 (Jimeng 图片): ${CONFIG.JIMENG_API_KEY ? '✅ 已配置' : '❌ 未配置'}`);
   log(`   可灵 (Kling 视频): ${CONFIG.KLING_API_KEY ? '✅ 已配置' : '❌ 未配置'}`);
   log(`   Coze 智能体: ${CONFIG.COZE_API_KEY && CONFIG.COZE_BOT_ID ? '✅ 已配置' : '❌ 未配置'}`);

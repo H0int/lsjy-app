@@ -1,0 +1,5 @@
+[
+  {"id":1,"name":"月卡","price":29.9,"dailyCoins":100,"duration":30,"priority":false,"support":false},
+  {"id":2,"name":"季卡","price":79.9,"dailyCoins":150,"duration":90,"priority":true,"support":false},
+  {"id":3,"name":"年卡","price":299.9,"dailyCoins":200,"duration":365,"priority":true,"support":true}
+]
