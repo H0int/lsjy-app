@@ -35,7 +35,7 @@
       <h3 class="font-bold mb-3" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">
         <span style="color: var(--cyber-green);">▍</span>充值套餐
       </h3>
-      <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div v-for="pkg in packages" :key="pkg.id"
           @click="selectedPkgId = pkg.id"
           class="cyber-card p-4 text-center cursor-pointer transition-all duration-300"

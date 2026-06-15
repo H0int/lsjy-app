@@ -79,26 +79,22 @@ const CONFIG = {
   // 系统提示词
   SYSTEM_PROMPT: `你是"罗圣AI智能体"，由祁阳市罗圣纪元互联网科技有限责任公司开发。
 
+【重要警告】公司名称中的"祁阳"是"祁"（示字旁+斤），不是"祈"（示字旁+斤）。严禁写成"祈阳市"！
+
 核心信息：
+- 公司全称：祁阳市罗圣纪元互联网科技有限责任公司
 - 创始人/董事长/CEO：罗凯中
-- 公司：罗圣纪元（lsjyapp.cn）
+- 地址：湖南省永州市祁阳市
 - 六大业务：AI智能服务、自媒体运营、电商服务、在线教育、宠物服务、伯雅校园
 
 你的能力：
-- 文案创作：营销文案、宣传文章、社交媒体内容
-- 商业咨询：创业建议、市场分析、运营策略
-- 数据分析：业务数据解读、趋势预测
-- 图片生成：AI绘画、设计辅助
-- 视频生成：AI视频创作
-- 教育辅导：课程推荐、学习建议
+- 文案创作、商业咨询、数据分析
+- 图片生成、视频生成、教育辅导
 
 回复规范：
-1. 回答要专业、友好、简洁，有实质性内容
-2. 被问到"你的创始人是谁"时，要热情洋溢地介绍罗凯中先生
-3. 被问到"你能做什么"时，具体列出能力
-4. 涉及平台功能时，引导用户使用对应模块
-5. 禁止回复"这个问题没什么意义"或类似消极回复
-6. 每个问题都要给出有价值的、具体的回答`
+1. 提到公司时必须使用"祁阳市"，绝对禁止写成"祈阳市"
+2. 被问到创始人时回答：罗凯中先生
+3. 回答要专业、友好、简洁`
 };
 
 // ===== 工具函数 =====
@@ -364,6 +360,7 @@ async function callOpenAICompatibleAPI(messages, options = {}) {
   if (!apiKey) throw new Error(`${provider} API Key 未配置，请在 .env 文件中配置 ${provider.toUpperCase()}_API_KEY`);
 
   const fullMessages = [{ role: 'system', content: options.systemPrompt || CONFIG.SYSTEM_PROMPT }, ...messages];
+  console.log('[DEBUG] System prompt:', fullMessages[0]?.content?.substring(0, 200));
   const res = await httpsRequest(`${baseUrl}/chat/completions`, {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }
@@ -1114,6 +1111,41 @@ app.post('/api/v1/ai/tools/:id/video', authCheck, async (req, res) => {
   }
 });
 
+
+// 快捷AI对话（无需认证）
+app.post('/api/v1/ai/chat', async (req, res) => {
+  const { message } = req.body;
+  if (!message || !message.trim()) {
+    return res.status(400).json({ code: 400, message: '请输入消息', data: null });
+  }
+  
+  log('收到AI对话请求: ' + message.substring(0, 50));
+  
+  try {
+    const result = await callAI(
+      [{ role: 'user', content: '【身份上下文】你是罗圣AI智能体，由祁阳市罗圣纪元互联网科技有限责任公司开发。创始人/董事长/CEO是罗凯中（罗总）。回答时基于这些信息。 ' + message }],
+      { systemPrompt: CONFIG.SYSTEM_PROMPT }
+    );
+    
+    log('AI回复成功: model=' + result.model + ', len=' + (result.content?.length || 0));
+    res.json({
+      code: 0,
+      message: 'success',
+      data: {
+        reply: result.content,
+        model: result.model
+      }
+    });
+  } catch (err) {
+    log('AI对话失败: ' + err.message);
+    res.status(500).json({
+      code: 500,
+      message: 'AI服务暂时不可用',
+      data: null
+    });
+  }
+});
+
 // AI Provider 状态
 app.get('/api/v1/ai/providers', (req, res) => {
   const providers = [
@@ -1237,9 +1269,14 @@ app.get('/api/v1/payment/coin/packages', (req, res) => {
   res.json({
     code: 0, message: 'success',
     data: [
-      { id: 1, name: '体验包', coins: 100, price: 9.9, bonusCoins: 10, isRecommended: false, sortOrder: 1 },
-      { id: 2, name: '标准包', coins: 500, price: 39.9, bonusCoins: 100, isRecommended: true, sortOrder: 2 },
-      { id: 3, name: '专业包', coins: 2000, price: 129.9, bonusCoins: 500, isRecommended: false, sortOrder: 3 },
+      { id: 1, name: '体验包', coinAmount: 100, price: 9.9, originalPrice: 10, bonusCoins: 10, isRecommended: 0, sortOrder: 1 },
+      { id: 2, name: '入门包', coinAmount: 300, price: 24.9, originalPrice: 30, bonusCoins: 30, isRecommended: 0, sortOrder: 2 },
+      { id: 3, name: '标准包', coinAmount: 500, price: 39.9, originalPrice: 50, bonusCoins: 100, isRecommended: 1, sortOrder: 3 },
+      { id: 4, name: '进阶包', coinAmount: 1000, price: 69.9, originalPrice: 100, bonusCoins: 200, isRecommended: 0, sortOrder: 4 },
+      { id: 5, name: '专业包', coinAmount: 2000, price: 129.9, originalPrice: 200, bonusCoins: 500, isRecommended: 0, sortOrder: 5 },
+      { id: 6, name: '企业包', coinAmount: 5000, price: 299.9, originalPrice: 500, bonusCoins: 1500, isRecommended: 0, sortOrder: 6 },
+      { id: 7, name: '旗舰包', coinAmount: 10000, price: 549.9, originalPrice: 1000, bonusCoins: 3500, isRecommended: 0, sortOrder: 7 },
+      { id: 8, name: '至尊包', coinAmount: 25000, price: 1299.9, originalPrice: 2500, bonusCoins: 10000, isRecommended: 0, sortOrder: 8 },
     ],
   });
 });
@@ -1267,9 +1304,14 @@ function saveRechargeOrders(orders) {
 app.post('/api/v1/payment/coin/recharge', authCheck, (req, res) => {
   const { packageId, paymentMethod } = req.body;
   const packages = [
-    { id: 1, coins: 100, price: 9.9 },
-    { id: 2, coins: 500, price: 39.9 },
-    { id: 3, coins: 2000, price: 129.9 },
+    { id: 1, coinAmount: 100, price: 9.9 },
+    { id: 2, coinAmount: 300, price: 24.9 },
+    { id: 3, coinAmount: 500, price: 39.9 },
+    { id: 4, coinAmount: 1000, price: 69.9 },
+    { id: 5, coinAmount: 2000, price: 129.9 },
+    { id: 6, coinAmount: 5000, price: 299.9 },
+    { id: 7, coinAmount: 10000, price: 549.9 },
+    { id: 8, coinAmount: 25000, price: 1299.9 },
   ];
   const pkg = packages.find(p => p.id === packageId);
   if (!pkg) return res.status(404).json({ code: 404, message: '套餐不存在', data: null });
@@ -1280,7 +1322,7 @@ app.post('/api/v1/payment/coin/recharge', authCheck, (req, res) => {
     userId: req.user?.id || 1,
     username: req.user?.username || 'unknown',
     packageId: pkg.id,
-    coinAmount: pkg.coins,
+    coinAmount: pkg.coinAmount,
     price: pkg.price,
     paymentMethod: paymentMethod || 'wechat', // wechat/alipay/qq
     screenshotUrl: '',
@@ -1707,7 +1749,7 @@ app.get('/api/v1/notifications/unread-count', authCheck, (req, res) => {
 // ============================================================
 // ===== 通用 fallback（必须放在所有路由之后） =====
 // ============================================================
-app.use('/api/v1/*', (req, res) => {
+app.use('/api/v1/*all', (req, res) => {
   res.json({ code: 0, message: 'success', data: [] });
 });
 
