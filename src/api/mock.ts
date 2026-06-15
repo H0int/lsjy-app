@@ -44,13 +44,17 @@ export const mockTools: Tool[] = [
 ]
 
 export const mockPackages: RechargePackage[] = [
-  { id: 1, name: '50圣点', coinAmount: 50, price: 29.9, originalPrice: null, bonusCoins: 0, isRecommended: 0, sortOrder: 1 },
-  { id: 2, name: '100圣点', coinAmount: 100, price: 49.9, originalPrice: 59.9, bonusCoins: 10, isRecommended: 0, sortOrder: 2 },
-  { id: 3, name: '500圣点', coinAmount: 500, price: 199, originalPrice: 299, bonusCoins: 80, isRecommended: 1, sortOrder: 3 },
-  { id: 4, name: '1000圣点', coinAmount: 1000, price: 349, originalPrice: 499, bonusCoins: 200, isRecommended: 0, sortOrder: 4 },
-  { id: 5, name: '5000圣点', coinAmount: 5000, price: 1499, originalPrice: 2499, bonusCoins: 1500, isRecommended: 0, sortOrder: 5 },
-]
-
+  { id: 1, name: '10圣点', coinAmount: 10, price: 1, originalPrice: null, bonusCoins: 0, isRecommended: 0, sortOrder: 1 },
+  { id: 2, name: '50圣点', coinAmount: 50, price: 4.9, originalPrice: 5.9, bonusCoins: 0, isRecommended: 0, sortOrder: 2 },
+  { id: 3, name: '100圣点', coinAmount: 100, price: 9.9, originalPrice: 12.9, bonusCoins: 10, isRecommended: 0, sortOrder: 3 },
+  { id: 4, name: '300圣点', coinAmount: 300, price: 24.9, originalPrice: 32.9, bonusCoins: 30, isRecommended: 0, sortOrder: 4 },
+  { id: 5, name: '500圣点', coinAmount: 500, price: 39.9, originalPrice: 54.9, bonusCoins: 80, isRecommended: 1, sortOrder: 5 },
+  { id: 6, name: '1000圣点', coinAmount: 1000, price: 69.9, originalPrice: 99.9, bonusCoins: 200, isRecommended: 0, sortOrder: 6 },
+  { id: 7, name: '2000圣点', coinAmount: 2000, price: 129, originalPrice: 199, bonusCoins: 500, isRecommended: 0, sortOrder: 7 },
+  { id: 8, name: '5000圣点', coinAmount: 5000, price: 299, originalPrice: 499, bonusCoins: 1500, isRecommended: 0, sortOrder: 8 },
+  { id: 9, name: '10000圣点', coinAmount: 10000, price: 499, originalPrice: 899, bonusCoins: 3500, isRecommended: 0, sortOrder: 9 },
+  { id: 10, name: '至尊包', coinAmount: 50000, price: 1999, originalPrice: 3999, bonusCoins: 20000, isRecommended: 0, sortOrder: 10 },
+];
 export const mockTransactions: CoinTransaction[] = [
   { id: 1, userId: 1, transactionType: 'recharge', amount: 500, balanceBefore: 2080, balanceAfter: 2580, refType: 'recharge', refId: 1, remark: '套餐充值 - 500圣点', createdAt: '2026-06-09T09:00:00.000Z' },
   { id: 2, userId: 1, transactionType: 'consume', amount: -80, balanceBefore: 2580, balanceAfter: 2500, refType: 'ai_tool_call', refId: 3, remark: '调用AI工具: AI视频生成', createdAt: '2026-06-10T14:20:00.000Z' },

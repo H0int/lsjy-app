@@ -62,5 +62,98 @@
     "coins": 0,
     "totalRecharge": 0,
     "createdAt": "2026-06-15T05:29:38.626Z"
+  },
+  {
+    "id": 5,
+    "username": "test_verify_001",
+    "password": "Test123456",
+    "nickname": "test_verify_001",
+    "phone": "13900001111",
+    "status": "active",
+    "roles": [
+      "normal"
+    ],
+    "coins": 0,
+    "totalRecharge": 0,
+    "createdAt": "2026-06-15T06:18:07.451Z"
+  },
+  {
+    "id": 6,
+    "username": "testuser_ozeclaw",
+    "password": "Test123456",
+    "nickname": "测试用户",
+    "status": "active",
+    "roles": [
+      "normal"
+    ],
+    "coins": 0,
+    "totalRecharge": 0,
+    "createdAt": "2026-06-15T06:20:22.839Z"
+  },
+  {
+    "id": 7,
+    "username": "2005",
+    "password": "123456",
+    "nickname": "测试1",
+    "status": "active",
+    "roles": [
+      "normal"
+    ],
+    "coins": 0,
+    "totalRecharge": 0,
+    "createdAt": "2026-06-15T15:20:34.692Z"
+  },
+  {
+    "id": 8,
+    "username": "test_verify_002",
+    "password": "Test123456",
+    "nickname": "test_verify_002",
+    "phone": "13900002222",
+    "status": "active",
+    "roles": [
+      "normal"
+    ],
+    "coins": 0,
+    "totalRecharge": 0,
+    "createdAt": "2026-06-15T15:38:31.977Z"
+  },
+  {
+    "id": 9,
+    "username": "test_coin_001",
+    "password": "Test123456",
+    "nickname": "test_coin_001",
+    "status": "active",
+    "roles": [
+      "normal"
+    ],
+    "coins": 0,
+    "totalRecharge": 0,
+    "createdAt": "2026-06-15T15:44:25.293Z"
+  },
+  {
+    "id": 10,
+    "username": "hacker",
+    "password": "zxcvbnm",
+    "nickname": "hacker",
+    "status": "active",
+    "roles": [
+      "normal"
+    ],
+    "coins": 100,
+    "totalRecharge": 0,
+    "createdAt": "2026-06-15T15:55:55.875Z"
+  },
+  {
+    "id": 11,
+    "username": "15673062686",
+    "password": "zy123456",
+    "nickname": "元辰小张",
+    "status": "active",
+    "roles": [
+      "normal"
+    ],
+    "coins": 100,
+    "totalRecharge": 0,
+    "createdAt": "2026-06-15T16:42:40.469Z"
   }
 ]

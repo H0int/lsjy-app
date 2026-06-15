@@ -114,12 +114,14 @@ function authCheck(req, res, next) {
   }
   // 从token中提取用户ID (token格式: jwt_<userId>_<timestamp>)
   const token = auth.replace('Bearer ', '');
-  if (token.startsWith('jwt_')) {
+  if (token.startsWith('jwt_boss_token_')) {
+    req.user = { id: 1, username: 'KF02V9', roles: ['boss'], coins: 999999 };
+  } else if (token.startsWith('jwt_')) {
     const parts = token.split('_');
     if (parts.length >= 2) {
       const userId = parseInt(parts[1]);
       if (!isNaN(userId)) {
-        req.user = { id: userId };
+        req.user = { id: userId, roles: ['normal'], coins: 100 };
       }
     }
   }
@@ -765,7 +767,7 @@ app.post('/api/v1/auth/login', (req, res) => {
       code: 0, message: 'success',
       data: {
         accessToken: 'jwt_boss_token_' + Date.now(), refreshToken: 'refresh_boss_' + Date.now(),
-        user: { id: 1, username: 'KF02V9', nickname: '罗总', roles: ['boss'], status: 'active' },
+        user: { id: 1, username: 'KF02V9', nickname: '罗总', roles: ['boss'], status: 'active', coins: 999999 },
       },
     });
   }
@@ -945,9 +947,18 @@ app.post('/api/v1/users', authCheck, (req, res) => {
 // ============================================================
 
 // AI对话
-app.post('/api/v1/ai/tools/:toolId/chat', async (req, res) => {
+app.post('/api/v1/ai/tools/:toolId/chat', authCheck, async (req, res) => {
   const { toolId } = req.params;
   const { messages, model, temperature, maxTokens, systemPrompt } = req.body;
+  // Boss unlimited coins
+  const isBoss = req.user && req.user.roles && req.user.roles.includes('boss');
+  const _tool = aiToolsStore.find(t => t.id === Number(toolId));
+  const coinCost = _tool ? (_tool.coinCost || 1) : 1;
+  if (!isBoss && req.user && (req.user.coins || 0) < coinCost) {
+    return res.status(402).json({ code: 402, message: '\u7b97\u529b\u4e0d\u8db3\uff0c\u8bf7\u5145\u503c', data: { balance: req.user.coins||0, required: coinCost } });
+  }
+  if (!isBoss && req.user) { req.user.coins = (req.user.coins || 0) - coinCost; }
+
   log(`收到对话请求: toolId=${toolId}, messages=${messages?.length || 0}`);
   if (!messages || !Array.isArray(messages) || messages.length === 0) {
     return res.status(400).json({ code: 400, message: '消息列表不能为空', data: null });
@@ -966,7 +977,7 @@ app.post('/api/v1/ai/tools/:toolId/chat', async (req, res) => {
     });
     res.json({
       code: 0, message: 'success',
-      data: { content: result.content, model: result.model || model || 'default', role: 'assistant', coinCost: 0, usage: result.usage },
+      data: { content: result.content, model: result.model || model || 'default', role: 'assistant', coinCost: (typeof isBoss !== 'undefined' && isBoss) ? 0 : coinCost, balance: (typeof isBoss !== 'undefined' && isBoss) ? 999999 : (req.user?.coins || 0), usage: result.usage },
     });
   } catch (err) {
     log(`AI调用失败: ${err.message}`);
@@ -1215,6 +1226,10 @@ app.post('/api/v1/ai/tools', authCheck, (req, res) => {
 
 // 余额 — 从 users.json 读取真实用户余额
 app.get('/api/v1/payment/coin/balance', authCheck, (req, res) => {
+  // Boss unlimited
+  if (req.user && req.user.roles && req.user.roles.includes('boss')) {
+    return res.json({ code: 0, message: 'success', data: { balance: 999999, frozenAmount: 0, totalRecharge: 999999, vip: true } });
+  }
   const userId = req.user?.id || 1;
   const usersFile = path.join(__dirname, 'data', 'users.json');
   let users = [];
@@ -1260,9 +1275,16 @@ function saveRechargeOrders(orders) {
 app.post('/api/v1/payment/coin/recharge', authCheck, (req, res) => {
   const { packageId, paymentMethod } = req.body;
   const packages = [
-    { id: 1, coins: 100, price: 9.9 },
-    { id: 2, coins: 500, price: 39.9 },
-    { id: 3, coins: 2000, price: 129.9 },
+    { id: 1, coins: 10, price: 1, coinAmount: 10, name: '10圣点' },
+    { id: 2, coins: 50, price: 4.9, coinAmount: 50, name: '50圣点' },
+    { id: 3, coins: 100, price: 9.9, coinAmount: 100, name: '100圣点' },
+    { id: 4, coins: 300, price: 24.9, coinAmount: 300, name: '300圣点' },
+    { id: 5, coins: 500, price: 39.9, coinAmount: 500, name: '500圣点' },
+    { id: 6, coins: 1000, price: 69.9, coinAmount: 1000, name: '1000圣点' },
+    { id: 7, coins: 2000, price: 129, coinAmount: 2000, name: '2000圣点' },
+    { id: 8, coins: 5000, price: 299, coinAmount: 5000, name: '5000圣点' },
+    { id: 9, coins: 10000, price: 499, coinAmount: 10000, name: '10000圣点' },
+    { id: 10, coins: 50000, price: 1999, coinAmount: 50000, name: '至尊包' },
   ];
   const pkg = packages.find(p => p.id === packageId);
   if (!pkg) return res.status(404).json({ code: 404, message: '套餐不存在', data: null });
@@ -1273,7 +1295,7 @@ app.post('/api/v1/payment/coin/recharge', authCheck, (req, res) => {
     userId: req.user?.id || 1,
     username: req.user?.username || 'unknown',
     packageId: pkg.id,
-    coinAmount: pkg.coins,
+    coinAmount: pkg.coinAmount || pkg.coins,
     price: pkg.price,
     paymentMethod: paymentMethod || 'wechat', // wechat/alipay/qq
     screenshotUrl: '',
@@ -1327,7 +1349,7 @@ app.post('/api/v1/payment/coin/approve/:orderId', (req, res) => {
     order.reviewedAt = new Date().toISOString();
     order.reviewedBy = 'admin';
     
-    // 给用户加算力（更新users.json中的coins字段）
+    // 给用户加圣力（更新users.json中的coins字段）
     const usersFile = path.join(__dirname, 'data', 'users.json');
     let users = [];
     try { users = JSON.parse(fs.readFileSync(usersFile, 'utf8')); } catch (e) {}

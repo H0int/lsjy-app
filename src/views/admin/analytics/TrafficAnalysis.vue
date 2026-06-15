@@ -1,0 +1,11 @@
+<template><div class="space-y-4"><div class="cyber-card rounded-xl p-6"><h2 class="text-xl font-bold mb-4" style="color:#00f0ff">🚦 流量分析</h2><p class="text-xs mb-4" style="color:#a0a0cc">PV/UV/跳出率/停留时长分析</p><div class="grid grid-cols-2 md:grid-cols-4 gap-4"><div class="rounded-xl p-4" style="background:#0d0d1a;border:1px solid #00f0ff30"><div class="text-xs" style="color:#a0a0cc">今日PV</div><div class="text-2xl font-bold mt-1" style="color:#00f0ff">{{m.val}}</div><div class="text-xs mt-1" style="color:#00ff88">↑12.5%</div></div>
+<div class="rounded-xl p-4" style="background:#0d0d1a;border:1px solid #ff2d9530"><div class="text-xs" style="color:#a0a0cc">今日UV</div><div class="text-2xl font-bold mt-1" style="color:#ff2d95">{{m.val}}</div><div class="text-xs mt-1" style="color:#00ff88">↑8.3%</div></div>
+<div class="rounded-xl p-4" style="background:#0d0d1a;border:1px solid #b700ff30"><div class="text-xs" style="color:#a0a0cc">跳出率</div><div class="text-2xl font-bold mt-1" style="color:#b700ff">{{m.val}}</div><div class="text-xs mt-1" style="color:#00ff88">↓2.1%</div></div>
+<div class="rounded-xl p-4" style="background:#0d0d1a;border:1px solid #ffe60030"><div class="text-xs" style="color:#a0a0cc">平均停留</div><div class="text-2xl font-bold mt-1" style="color:#ffe600">{{m.val}}</div><div class="text-xs mt-1" style="color:#00ff88">4分32秒</div></div>
+</div></div><div class="cyber-card rounded-xl p-6"><h3 class="text-sm font-bold mb-2" style="color:#ff2d95">趋势图</h3><div class="flex items-end gap-1 h-40"><div v-for="(v,i) in cd" :key="i" class="flex-1 rounded-t" :style="{height:v+'%',background:'linear-gradient(180deg,#00f0ff,#b700ff)',minWidth:'6px'}"></div></div></div></div></template>
+<script setup lang="ts">
+import {ref} from 'vue'
+const m:any=[{label:'今日PV',val:'↑12.5%',color:'#00f0ff'}, {label:'今日UV',val:'↑8.3%',color:'#ff2d95'}, {label:'跳出率',val:'↓2.1%',color:'#b700ff'}, {label:'平均停留',val:'4分32秒',color:'#ffe600'}]
+const cd=ref(Array(30).fill(0).map(()=>Math.floor(Math.random()*80+10)))
+const lp=cd.value.map((v,i)=>i*10+','+(100-v)).join(' ')
+</script>

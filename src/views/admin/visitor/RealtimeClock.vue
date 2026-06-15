@@ -1,0 +1,11 @@
+<template><div class="space-y-4"><div class="cyber-card rounded-xl p-8 text-center"><div class="text-7xl font-bold mb-2" style="color:#00f0ff;text-shadow:0 0 30px #00f0ff">{{ct}}</div><div class="text-lg" style="color:#ff2d95">{{cd}}</div><div class="text-sm mt-1" style="color:#a0a0cc">{{wd}}</div></div><div class="grid grid-cols-2 md:grid-cols-4 gap-3"><div v-for="tz in tzs" :key="tz.c" class="cyber-card rounded-xl p-4 text-center"><div class="text-xs" style="color:#ff2d95">{{tz.c}}</div><div class="text-xl font-bold" style="color:#00f0ff">{{tz.t}}</div><div class="text-xs" style="color:#a0a0cc">{{tz.l}}</div></div></div><div class="cyber-card rounded-xl p-6"><h3 class="text-sm font-bold mb-3" style="color:#ff2d95">服务器时间</h3><div class="grid grid-cols-2 gap-4 text-sm"><div style="color:#a0a0cc">时间戳: <span style="color:#00f0ff">{{ts}}</span></div><div style="color:#a0a0cc">ISO: <span style="color:#00f0ff">{{iso}}</span></div><div style="color:#a0a0cc">今年第 <span style="color:#00f0ff">{{doy}}</span> 天</div><div style="color:#a0a0cc">第 <span style="color:#00f0ff">{{woy}}</span> 周</div></div></div></div></template>
+<script setup lang="ts">
+import {ref,onMounted,onUnmounted} from 'vue'
+const ct=ref(''),cd=ref(''),wd=ref(''),ts=ref(''),iso=ref(''),doy=ref(''),woy=ref('')
+const tzs=ref<any[]>([])
+const wks=['日','一','二','三','四','五','六']
+let tm:any
+function u(){const n=new Date();ct.value=n.toTimeString().slice(0,8);cd.value=n.toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric'});wd.value='星期'+wks[n.getDay()];ts.value=String(Math.floor(n.getTime()/1000));iso.value=n.toISOString();const s=new Date(n.getFullYear(),0,0);const d=n.getTime()-s.getTime();doy.value=String(Math.floor(d/864e5));woy.value=String(Math.ceil(d/6048e5));tzs.value=[{c:'北京',l:'UTC+8',o:8},{c:'东京',l:'UTC+9',o:9},{c:'伦敦',l:'UTC+0',o:1},{c:'纽约',l:'UTC-5',o:-4},{c:'洛杉矶',l:'UTC-8',o:-7},{c:'迪拜',l:'UTC+4',o:4},{c:'悉尼',l:'UTC+10',o:10},{c:'莫斯科',l:'UTC+3',o:3}].map(z=>{const utc=n.getTime()+n.getTimezoneOffset()*6e4;const l=new Date(utc+z.o*36e5);return{...z,t:l.toTimeString().slice(0,8)}})}
+onMounted(()=>{u();tm=setInterval(u,1000)})
+onUnmounted(()=>clearInterval(tm))
+</script>

@@ -2,78 +2,44 @@
 @tailwind components;
 @tailwind utilities;
 
-/* 全局样式 */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+:root {
+  --cyber-bg: #0d0d1a;
+  --cyber-surface: #1a1a2e;
+  --cyber-border: #00f0ff30;
+  --cyber-text: #e0e0ff;
+  --cyber-accent: #00f0ff;
+  --cyber-pink: #ff2d95;
+  --cyber-purple: #b700ff;
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
-    'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  background: var(--cyber-bg);
+  color: var(--cyber-text);
+  font-family: 'Segoe UI', system-ui, sans-serif;
 }
 
-/* 暗黑模式基础 */
-.dark body {
-  background-color: #0f172a;
-  color: #e2e8f0;
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--cyber-bg); }
+::-webkit-scrollbar-thumb { background: var(--cyber-accent); border-radius: 3px; }
+
+@keyframes neon-pulse {
+  0%,100% { box-shadow: 0 0 5px var(--cyber-accent), 0 0 15px #00f0ff20; }
+  50% { box-shadow: 0 0 10px var(--cyber-accent), 0 0 30px #00f0ff40; }
 }
 
-/* 自定义滚动条 */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
+.cyber-glow-text { text-shadow: 0 0 10px var(--cyber-accent), 0 0 20px #00f0ff40; }
 
-::-webkit-scrollbar-track {
-  background: transparent;
+.cyber-btn {
+  background: linear-gradient(135deg, #00f0ff20, #ff2d9520);
+  border: 1px solid var(--cyber-accent);
+  color: var(--cyber-accent);
+  transition: all 0.3s;
+  letter-spacing: 2px;
+  font-weight: 700;
+  cursor: pointer;
 }
-
-::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 3px;
-}
-
-.dark ::-webkit-scrollbar-thumb {
-  background: #475569;
-}
-
-/* Element Plus 暗黑模式适配 */
-.dark .el-table {
-  --el-table-bg-color: #1e293b;
-  --el-table-tr-bg-color: #1e293b;
-  --el-table-header-bg-color: #334155;
-  --el-table-border-color: #334155;
-  --el-table-text-color: #e2e8f0;
-}
-
-.dark .el-input__wrapper {
-  background-color: #334155;
-  box-shadow: 0 0 0 1px #475569 inset;
-}
-
-.dark .el-select-dropdown {
-  background-color: #1e293b;
-  border-color: #475569;
-}
-
-/* 动画 */
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
-
-/* 文本截断 */
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+.cyber-btn:hover {
+  background: linear-gradient(135deg, #00f0ff40, #ff2d9540);
+  box-shadow: 0 0 15px #00f0ff60, 0 0 30px #ff2d9530;
+  transform: translateY(-1px);
 }

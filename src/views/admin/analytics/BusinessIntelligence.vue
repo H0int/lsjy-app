@@ -1,0 +1,11 @@
+<template><div class="space-y-4"><div class="cyber-card rounded-xl p-6"><h2 class="text-xl font-bold mb-4" style="color:#00f0ff">🧠 商业智能</h2><p class="text-xs mb-4" style="color:#a0a0cc">AI驱动的经营洞察</p><div class="grid grid-cols-2 md:grid-cols-4 gap-4"><div class="rounded-xl p-4" style="background:#0d0d1a;border:1px solid #00f0ff30"><div class="text-xs" style="color:#a0a0cc">月收入</div><div class="text-2xl font-bold mt-1" style="color:#00f0ff">{{m.val}}</div><div class="text-xs mt-1" style="color:#00ff88">¥128.5K</div></div>
+<div class="rounded-xl p-4" style="background:#0d0d1a;border:1px solid #ff2d9530"><div class="text-xs" style="color:#a0a0cc">转化率</div><div class="text-2xl font-bold mt-1" style="color:#ff2d95">{{m.val}}</div><div class="text-xs mt-1" style="color:#00ff88">3.82%</div></div>
+<div class="rounded-xl p-4" style="background:#0d0d1a;border:1px solid #b700ff30"><div class="text-xs" style="color:#a0a0cc">客单价</div><div class="text-2xl font-bold mt-1" style="color:#b700ff">{{m.val}}</div><div class="text-xs mt-1" style="color:#00ff88">¥89.5</div></div>
+<div class="rounded-xl p-4" style="background:#0d0d1a;border:1px solid #ffe60030"><div class="text-xs" style="color:#a0a0cc">复购率</div><div class="text-2xl font-bold mt-1" style="color:#ffe600">{{m.val}}</div><div class="text-xs mt-1" style="color:#00ff88">24.6%</div></div>
+</div></div><div class="cyber-card rounded-xl p-6"><h3 class="text-sm font-bold mb-2" style="color:#ff2d95">趋势图</h3><svg viewBox="0 0 300 100" class="w-full h-40"><polyline :points="lp" fill="none" stroke="#00f0ff" stroke-width="2"/><polyline :points="lp" fill="none" stroke="#ff2d95" stroke-width="1" stroke-dasharray="4"/></svg></div></div></template>
+<script setup lang="ts">
+import {ref} from 'vue'
+const m:any=[{label:'月收入',val:'¥128.5K',color:'#00f0ff'}, {label:'转化率',val:'3.82%',color:'#ff2d95'}, {label:'客单价',val:'¥89.5',color:'#b700ff'}, {label:'复购率',val:'24.6%',color:'#ffe600'}]
+const cd=ref(Array(30).fill(0).map(()=>Math.floor(Math.random()*80+10)))
+const lp=cd.value.map((v,i)=>i*10+','+(100-v)).join(' ')
+</script>

@@ -5,19 +5,11 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { useAuthStore } from './stores/auth'
-import { useAppStore } from './stores/app'
-import { getTheme } from './utils'
 
 const authStore = useAuthStore()
-const appStore = useAppStore()
 
 onMounted(() => {
-  // 初始化主题
-  const theme = getTheme()
-  appStore.theme = theme
-  document.documentElement.classList.toggle('dark', theme === 'dark')
-  
-  // 已登录则获取用户信息
+  document.documentElement.classList.add('dark')
   if (authStore.isLoggedIn) {
     authStore.fetchUserProfile()
   }

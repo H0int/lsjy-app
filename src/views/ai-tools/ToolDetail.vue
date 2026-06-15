@@ -109,7 +109,7 @@ async function handleGenerate() {
   result.value = ''
   try {
     const res = await toolApi.callTool(Number(route.params.id), { text: inputContent.value })
-    result.value = res.outputText || '生成完成，暂无详细输出'
+    result.value = res.data?.outputText || '生成完成，暂无详细输出'
     ElMessage.success('生成完成！')
   } catch (e: any) {
     // 错误由拦截器处理

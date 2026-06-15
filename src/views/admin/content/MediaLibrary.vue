@@ -1,0 +1,8 @@
+<template><div class="space-y-4"><div class="flex items-center justify-between"><h2 class="text-xl font-bold" style="color:#00f0ff">🖼️ 媒体库</h2><div class="flex gap-2"><button v-for="t in ['image','video','file']" :key="t" @click="tab=t" :style="tab===t?'background:#00f0ff;color:#0d0d1a':'color:#a0a0cc;background:#00f0ff10'" class="px-3 py-1.5 rounded-lg text-sm">{{{image:'图片',video:'视频',file:'文件'}[t]}}</button><button class="px-3 py-1.5 rounded-lg text-sm" style="background:#ff2d9520;color:#ff2d95;border:1px solid #ff2d9540">+上传</button></div></div><div class="grid grid-cols-3 md:grid-cols-5 gap-3"><div v-for="m in media" :key="m.id" class="rounded-xl overflow-hidden cursor-pointer transition-transform hover:scale-105" style="background:#0d0d1a;border:1px solid #00f0ff20"><div class="aspect-square flex items-center justify-center text-4xl" :style="{background:m.bg}">{{m.icon}}</div><div class="p-2"><div class="text-xs truncate" style="color:#e0e0ff">{{m.name}}</div><div class="text-xs" style="color:#a0a0cc">{{m.size}}</div></div></div></div><div class="text-center text-xs" style="color:#a0a0cc">共 {{media.length}} 个文件 | 总占用 2.4GB</div></div></template>
+<script setup lang="ts">
+import {ref} from 'vue'
+const tab=ref('image')
+const icons=['🖼️','🎬','📄','🎵','📦','🎨','📊','🗂️']
+const bgs=['linear-gradient(135deg,#1a1a2e,#0d0d1a)','linear-gradient(135deg,#16213e,#0a0a14)']
+const media=ref(Array.from({length:20},(_,i)=>({id:i,name:['产品图','宣传视频','用户手册','背景音乐','安装包','Logo','数据报表','压缩包'][i%8]+'_'+(i+1)+['.png','.mp4','.pdf','.mp3','.zip','.svg','.xlsx','.rar'][i%8],size:Math.floor(Math.random()*50+1)+'MB',icon:icons[i%8],bg:bgs[i%2]})))
+</script>
