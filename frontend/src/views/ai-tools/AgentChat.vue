@@ -190,7 +190,7 @@
 import { ref, computed, onMounted, nextTick, watch } from 'vue'
 
 // ========== API配置 ==========
-const API_BASE = 'http://8.154.16.5:3000/api/v1'
+const API_BASE = '/api/v1'
 const authToken = localStorage.getItem('lsjy_token') || ''
 // 视频生成暂时使用Coze API
 const COZE_API = 'https://api.coze.cn/v3/chat'
