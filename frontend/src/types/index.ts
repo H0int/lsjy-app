@@ -57,6 +57,9 @@ export interface LoginResult {
   user: User
   accessToken: string
   refreshToken: string
+  // 兼容后端不同返回格式
+  token?: string
+  userInfo?: User
 }
 
 // ===== Token信息 =====

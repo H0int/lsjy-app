@@ -39,7 +39,7 @@ export const userApi = {
     if (useMock) return mockApi.getProfile() as any
     return service.get('/users/me').then(r => r.data)
   },
-  updateProfile(data: { nickname?: string; avatar?: string; gender?: number; bio?: string; birthday?: string }): Promise<ApiResponse<User>> {
+  updateProfile(data: { nickname?: string; avatar?: string; gender?: number; bio?: string; birthday?: string; phone?: string; email?: string }): Promise<ApiResponse<User>> {
     if (useMock) return Promise.resolve({ code: 0, message: 'ok', data: { ...data } as User })
     return service.put('/users/me', data).then(r => r.data)
   },

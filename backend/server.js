@@ -24,7 +24,7 @@ app.use(express.json({ limit: '10mb' }));
 // ===== 配置 =====
 const CONFIG = {
   // AI Provider 配置
-  AI_PROVIDER: process.env.AI_PROVIDER || 'doubao',
+  AI_PROVIDER: process.env.AI_PROVIDER || 'deepseek',
 
   // 豆包（字节跳动火山引擎）
   DOUBAO_API_KEY: process.env.DOUBAO_API_KEY || "ark-3c2a939f-9aec-4930-946e-29a97d476611-e6c69",
@@ -400,15 +400,19 @@ async function callAI(messages, options = {}) {
   } catch (err) {
     log(`AI API 调用失败 (${provider}): ${err.message}`);
 
-    // 自动降级到其他可用的 Provider
-    const fallbackProviders = ['doubao', 'deepseek', 'tongyi', 'yuanbao', 'openai', 'coze'].filter(p => p !== provider);
+    // 自动降级到其他可用的 Provider（优先使用有API Key的）
+    const fallbackProviders = ['deepseek', 'doubao', 'tongyi', 'yuanbao', 'openai'].filter(p => p !== provider);
+
+    // 只有在Coze API Key和Bot ID都配置了的情况下才加入降级列表
+    if (CONFIG.COZE_API_KEY && CONFIG.COZE_BOT_ID && provider !== 'coze') {
+      fallbackProviders.push('coze');
+    }
+
     for (const fallback of fallbackProviders) {
       try {
         if (fallback === 'coze') {
-          if (CONFIG.COZE_API_KEY && CONFIG.COZE_BOT_ID) {
-            log(`降级到 Coze Provider`);
-            return await callCozeAPI(fullMessages, options);
-          }
+          log(`降级到 Coze Provider`);
+          return await callCozeAPI(fullMessages, options);
         } else {
           const keyMap = {
             doubao: CONFIG.DOUBAO_API_KEY,
@@ -584,19 +588,22 @@ async function callKlingVideoAPI(prompt, options = {}) {
 // ===== 本地智能回复 =====
 function getLocalResponse(userMessage) {
   const msg = userMessage.toLowerCase();
-  if (msg.includes('创始人') || msg.includes('谁创') || msg.includes('谁建') || msg.includes('老板')) {
+  if (msg.includes('你好') || msg.includes('hi') || msg.includes('hello') || msg.includes('在吗')) {
+    return '你好！我是罗圣AI智能体 🤖\n\n由祁阳市罗圣纪元互联网科技有限责任公司开发，我能为你提供：\n📝 文案创作 | 💡 商业咨询 | 📊 数据分析\n🎨 图片生成 | 📚 教育辅导 | 🏢 企业服务\n\n有什么需要帮助的？';
+  }
+  if (msg.includes('创始人') || msg.includes('谁创') || msg.includes('谁建') || msg.includes('老板') || msg.includes('ceo')) {
     return '🔥 **罗凯中** —— 罗圣纪元创始人、董事长兼CEO！\n\n这位大佬一手打造了横跨**AI智能服务、自媒体运营、电商、教育、宠物、伯雅校园**六大业务板块的超级SaaS平台！\n\n罗凯中先生的愿景是"用AI技术赋能实体经济"，让整个行业为之震撼。跟着罗总干，未来可期！🚀';
   }
-  if (msg.includes('公司') || msg.includes('罗圣纪元') || msg.includes('你们是什么')) {
-    return '罗圣纪元（祁阳市罗圣纪元互联网科技有限责任公司）是一家专注于AI赋能实体经济的科技公司。\n\n🤖 AI智能服务 | 📱 自媒体运营 | 🛒 电商服务\n📚 在线教育 | 🐾 宠物服务 | 🏫 伯雅校园\n\n官网：lsjyapp.cn';
+  if (msg.includes('公司') || msg.includes('罗圣纪元') || msg.includes('你们是什么') || msg.includes('平台')) {
+    return '罗圣纪元（祁阳市罗圣纪元互联网科技有限责任公司）是一家专注于AI赋能实体经济的科技公司。\n\n🤖 AI智能服务 | 📱 自媒体运营 | 🛒 电商服务\n📚 在线教育 | 🐾 宠物服务 | 🏫 伯雅校园\n\n官网：lsjyapp.cn\n创始人：罗凯中';
   }
-  if (msg.includes('你能做什么') || msg.includes('你会什么') || msg.includes('什么功能')) {
-    return '我是罗圣AI智能体，能为你提供：\n\n📝 文案创作 | 💡 商业咨询 | 📊 数据分析\n🎨 图片生成 | 📚 教育辅导 | 🏢 企业服务\n\n直接告诉我需求！';
+  if (msg.includes('你能做什么') || msg.includes('你会什么') || msg.includes('什么功能') || msg.includes('介绍')) {
+    return '我是罗圣AI智能体，能为你提供：\n\n📝 文案创作 - 营销文案、宣传文章、社交媒体内容\n💡 商业咨询 - 创业建议、市场分析、运营策略\n📊 数据分析 - 业务数据解读、趋势预测\n🎨 图片生成 - AI绘画、设计辅助\n📚 教育辅导 - 课程推荐、学习建议\n🏢 企业服务 - 六大业务板块咨询\n\n直接告诉我你的需求！';
   }
-  if (msg.includes('你好') || msg.includes('hi') || msg.includes('hello')) {
-    return '你好！我是罗圣AI智能体 🤖\n有什么能帮你的？';
+  if (msg.includes('vip') || msg.includes('会员') || msg.includes('充值') || msg.includes('价格')) {
+    return '罗圣纪元会员体系：\n\n⚡ 普通用户 - 基础功能免费\n🥉 VIP1 - 99元/月，AI工具8折\n🥈 VIP2 - 199元/月，AI工具6折\n🥇 VIP3 - 399元/月，AI工具5折\n💎 VIP4 - 699元/月，AI工具3折\n👑 VIP5 罗总专属 - 邀请制，全部免费\n\n进入个人中心 - 钱包 - 充值即可升级会员！';
   }
-  return `收到关于「${userMessage.slice(0, 30)}」的问题！\n\nAI模型正在最终配置中，当前可以：\n✅ 回答罗圣纪元相关问题\n✅ 提供基础商业建议\n✅ 介绍平台功能`;
+  return `收到关于「${userMessage.slice(0, 30)}」的问题！\n\nAI模型正在最终配置中，当前可以：\n✅ 回答罗圣纪元相关问题（创始人、公司业务等）\n✅ 提供基础商业建议\n✅ 介绍平台功能和会员体系\n\n如需更详细的回答，请稍后重试或联系人工客服。`;
 }
 
 // ============================================================

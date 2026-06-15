@@ -211,6 +211,115 @@ const routes: RouteRecordRaw[] = [
         name: 'AdminAuditLog',
         component: () => import('@/views/admin/AuditLog.vue'),
         meta: { title: '操作日志' }
+      },
+      // 新增功能模块
+      {
+        path: 'visitors',
+        name: 'AdminVisitors',
+        component: () => import('@/views/admin/Visitors.vue'),
+        meta: { title: '访客中心' }
+      },
+      {
+        path: 'realtime-location',
+        name: 'AdminRealtimeLocation',
+        component: () => import('@/views/admin/RealtimeLocation.vue'),
+        meta: { title: '实时定位' }
+      },
+      {
+        path: 'online-users',
+        name: 'AdminOnlineUsers',
+        component: () => import('@/views/admin/OnlineUsers.vue'),
+        meta: { title: '在线用户' }
+      },
+      {
+        path: 'user-tags',
+        name: 'AdminUserTags',
+        component: () => import('@/views/admin/UserTags.vue'),
+        meta: { title: '用户标签' }
+      },
+      {
+        path: 'blacklist',
+        name: 'AdminBlacklist',
+        component: () => import('@/views/admin/Blacklist.vue'),
+        meta: { title: '黑名单管理' }
+      },
+      {
+        path: 'knowledge-base',
+        name: 'AdminKnowledgeBase',
+        component: () => import('@/views/admin/KnowledgeBase.vue'),
+        meta: { title: '知识库管理' }
+      },
+      {
+        path: 'commission',
+        name: 'AdminCommission',
+        component: () => import('@/views/admin/Commission.vue'),
+        meta: { title: '佣金记录' }
+      },
+      {
+        path: 'withdraw',
+        name: 'AdminWithdraw',
+        component: () => import('@/views/admin/Withdraw.vue'),
+        meta: { title: '提现管理' }
+      },
+      {
+        path: 'push-messages',
+        name: 'AdminPushMessages',
+        component: () => import('@/views/admin/PushMessages.vue'),
+        meta: { title: '消息推送' }
+      },
+      {
+        path: 'distribution',
+        name: 'AdminDistribution',
+        component: () => import('@/views/admin/Distribution.vue'),
+        meta: { title: '分销管理' }
+      },
+      {
+        path: 'affiliates',
+        name: 'AdminAffiliates',
+        component: () => import('@/views/admin/Affiliates.vue'),
+        meta: { title: '合作伙伴' }
+      },
+      {
+        path: 'feedback',
+        name: 'AdminFeedback',
+        component: () => import('@/views/admin/Feedback.vue'),
+        meta: { title: '意见反馈' }
+      },
+      {
+        path: 'system-monitor',
+        name: 'AdminSystemMonitor',
+        component: () => import('@/views/admin/SystemMonitor.vue'),
+        meta: { title: '系统监控' }
+      },
+      {
+        path: 'api-management',
+        name: 'AdminAPIManagement',
+        component: () => import('@/views/admin/APIManagement.vue'),
+        meta: { title: 'API管理' }
+      },
+      {
+        path: 'permissions',
+        name: 'AdminPermissions',
+        component: () => import('@/views/admin/Permissions.vue'),
+        meta: { title: '权限管理' }
+      },
+      {
+        path: 'sensitive-words',
+        name: 'AdminSensitiveWords',
+        component: () => import('@/views/admin/SensitiveWords.vue'),
+        meta: { title: '敏感词库' }
+      },
+      {
+        path: 'cache-management',
+        name: 'AdminCacheManagement',
+        component: () => import('@/views/admin/CacheManagement.vue'),
+        meta: { title: '缓存管理' }
+      },
+      {
+        path: 'data-backup',
+        name: 'AdminDataBackup',
+        component: () => import('@/views/admin/DataBackup.vue'),
+        meta: { title: '数据备份' }
       }
     ]
   },

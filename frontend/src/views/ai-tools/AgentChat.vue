@@ -212,7 +212,7 @@ const imgPrompt = ref('')
 const imgSize = ref('1024x1024')
 const imgStyle = ref('')
 const genLoading = ref(false)
-const images = ref<{prompt:string; url?:string; loading?:boolean; error?:string}[]>([])
+const images = ref<{prompt:string; url?:string; loading?:boolean; error?:string; model?:string}[]>([])
 
 // 视频生成
 const vidPrompt = ref('')
@@ -402,11 +402,11 @@ async function genImage() {
     } else {
       throw new Error(data.message || '图片生成失败')
     }
-  } catch (err) {
+  } catch (err: any) {
     console.error('图片生成失败:', err)
     images.value[0] = {
       prompt,
-      error: `生成失败：${err.message}。请检查API Key配置或使用更详细的描述。`,
+      error: `生成失败：${err?.message || '未知错误'}。请检查API Key配置或使用更详细的描述。`,
     }
   } finally {
     genLoading.value = false
