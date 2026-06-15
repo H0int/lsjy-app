@@ -1,7 +1,7 @@
 /**
  * 罗圣纪元 SaaS 后端服务器 v2
  * Express.js + AI API 集成
- * 支持 Coze / DeepSeek / OpenAI / 豆包 / 即梦 / 通义千问 兼容 API
+ * 支持 Coze / DeepSeek / 豆包 / 即梦 / 通义千问 / 腾讯元宝
  * 完整版：包含所有管理后台所需API
  */
 const express = require('express');
@@ -40,11 +40,6 @@ const CONFIG = {
   DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY || 'sk-4f60d83ebf904321b99000888baf313c',
   DEEPSEEK_BASE_URL: process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com/v1',
   DEEPSEEK_MODEL: process.env.DEEPSEEK_MODEL || 'deepseek-chat',
-
-  // OpenAI
-  OPENAI_API_KEY: process.env.OPENAI_API_KEY || '',
-  OPENAI_BASE_URL: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
-  OPENAI_MODEL: process.env.OPENAI_MODEL || 'gpt-4o',
 
   // 通义千问（阿里云）
   TONGYI_API_KEY: process.env.TONGYI_API_KEY || 'sk-c4212c9d7e4644e6825d796f6365668e',
@@ -354,7 +349,7 @@ async function callCozeAPI(messages, options = {}) {
   return { content: answerMsg.content, model: 'coze', usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 } };
 }
 
-// OpenAI 兼容 API 调用（支持 DeepSeek/豆包/通义千问/元宝/OpenAI）
+// OpenAI 兼容 API 调用（支持 DeepSeek/豆包/通义千问/元宝）
 async function callOpenAICompatibleAPI(messages, options = {}) {
   const provider = options.provider || 'deepseek';
   let apiKey, baseUrl, model;
@@ -380,12 +375,8 @@ async function callOpenAICompatibleAPI(messages, options = {}) {
       baseUrl = CONFIG.YUANBAO_BASE_URL;
       model = options.model || CONFIG.YUANBAO_MODEL;
       break;
-    case 'openai':
     default:
-      apiKey = CONFIG.OPENAI_API_KEY;
-      baseUrl = CONFIG.OPENAI_BASE_URL;
-      model = options.model || CONFIG.OPENAI_MODEL;
-      break;
+      throw new Error(`未知的provider: ${provider}`);
   }
 
   if (!apiKey) throw new Error(`${provider} API Key 未配置，请在 .env 文件中配置 ${provider.toUpperCase()}_API_KEY`);
@@ -422,14 +413,13 @@ async function callAI(messages, options = {}) {
       case 'deepseek': return await callOpenAICompatibleAPI(messages, { ...options, provider: 'deepseek' });
       case 'tongyi': return await callOpenAICompatibleAPI(messages, { ...options, provider: 'tongyi' });
       case 'yuanbao': return await callOpenAICompatibleAPI(messages, { ...options, provider: 'yuanbao' });
-      case 'openai': return await callOpenAICompatibleAPI(messages, { ...options, provider: 'openai' });
       default: throw new Error(`未知的AI Provider: ${provider}`);
     }
   } catch (err) {
     log(`AI API 调用失败 (${provider}): ${err.message}`);
 
     // 自动降级到其他可用的 Provider（优先使用有API Key的）
-    const fallbackProviders = ['deepseek', 'doubao', 'tongyi', 'yuanbao', 'openai'].filter(p => p !== provider);
+    const fallbackProviders = ['deepseek', 'doubao', 'tongyi', 'yuanbao'].filter(p => p !== provider);
 
     // 只有在Coze API Key和Bot ID都配置了的情况下才加入降级列表
     if (CONFIG.COZE_API_KEY && CONFIG.COZE_BOT_ID && provider !== 'coze') {
@@ -447,7 +437,6 @@ async function callAI(messages, options = {}) {
             deepseek: CONFIG.DEEPSEEK_API_KEY,
             tongyi: CONFIG.TONGYI_API_KEY,
             yuanbao: CONFIG.YUANBAO_API_KEY,
-            openai: CONFIG.OPENAI_API_KEY,
           };
           if (keyMap[fallback]) {
             log(`降级到 ${fallback} Provider`);
@@ -472,8 +461,6 @@ async function generateImageWithAI(prompt, options = {}) {
 
   if (provider === 'jimeng') {
     return await callJimengImageAPI(prompt, { width, height, style });
-  } else if (provider === 'openai') {
-    return await callDALLEImageAPI(prompt, { width, height, style });
   } else {
     throw new Error(`不支持的图片生成 Provider: ${provider}`);
   }
@@ -531,31 +518,7 @@ async function callJimengImageAPI(prompt, options = {}) {
   return { urls, model: 'jimeng-v2', prompt };
 }
 
-// DALL-E 图片生成（OpenAI）
-async function callDALLEImageAPI(prompt, options = {}) {
-  const apiKey = CONFIG.OPENAI_API_KEY;
-  if (!apiKey) throw new Error('OpenAI API Key 未配置，请在 .env 中配置 OPENAI_API_KEY');
-
-  const baseUrl = CONFIG.OPENAI_BASE_URL;
-
-  const res = await httpsRequest(`${baseUrl}/images/generations`, {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }
-  }, {
-    model: 'dall-e-3',
-    prompt,
-    size: `${options.width}x${options.height}`,
-    quality: 'standard',
-    n: options.count || 1
-  });
-
-  if (res.status !== 200) throw new Error(`DALL-E API 调用失败 (${res.status}): ${JSON.stringify(res.data)}`);
-
-  const urls = (res.data.data || []).map(item => item.url).filter(Boolean);
-  if (urls.length === 0) throw new Error('DALL-E API 未返回图片');
-
-  return { urls, model: 'dall-e-3', prompt };
-}
+// DALL-E 图片生成已移除（OpenAI未配置）
 
 // ===== 视频生成 API =====
 async function generateVideoWithAI(prompt, options = {}) {
@@ -769,7 +732,7 @@ app.get('/api/v1/health', (req, res) => {
   res.json({
     status: 'healthy', uptime: process.uptime(),
     ai_provider: CONFIG.AI_PROVIDER,
-    ai_configured: !!(CONFIG.COZE_API_KEY || CONFIG.DEEPSEEK_API_KEY || CONFIG.OPENAI_API_KEY),
+    ai_configured: !!(CONFIG.COZE_API_KEY || CONFIG.DEEPSEEK_API_KEY),
     memory: process.memoryUsage(),
   });
 });
@@ -1240,7 +1203,6 @@ app.get('/api/v1/ai/providers', (req, res) => {
     { name: 'deepseek', displayName: 'DeepSeek', status: CONFIG.DEEPSEEK_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
     { name: 'tongyi', displayName: '通义千问', status: CONFIG.TONGYI_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
     { name: 'yuanbao', displayName: '腾讯元宝', status: CONFIG.YUANBAO_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
-    { name: 'openai', displayName: 'OpenAI', status: CONFIG.OPENAI_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
     { name: 'jimeng', displayName: '即梦 (图片)', status: CONFIG.JIMENG_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
     { name: 'kling', displayName: '可灵 (视频)', status: CONFIG.KLING_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
     { name: 'coze', displayName: 'Coze 智能体', status: CONFIG.COZE_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
@@ -1255,10 +1217,6 @@ app.get('/api/v1/ai/models', (req, res) => {
     { group: 'deepseek', provider: 'deepseek', models: [{ id: 'deepseek-chat', name: 'DeepSeek Chat', capabilities: ['text'] }] },
     { group: 'tongyi', provider: 'tongyi', models: [{ id: 'qwen-plus', name: '通义千问 Plus', capabilities: ['text'] }] },
     { group: 'yuanbao', provider: 'yuanbao', models: [{ id: 'hy3-preview', name: '腾讯元宝 Hy3 (混元)', capabilities: ['text'] }] },
-    { group: 'openai', provider: 'openai', models: [
-      { id: 'gpt-4o', name: 'GPT-4o', capabilities: ['text', 'image'] },
-      { id: 'dall-e-3', name: 'DALL-E 3', capabilities: ['image'] }
-    ] },
     { group: 'jimeng', provider: 'jimeng', models: [{ id: 'jimeng-v2', name: '即梦 AI 绘画', capabilities: ['image'] }] },
     { group: 'kling', provider: 'kling', models: [{ id: 'kling-v1', name: '可灵 AI 视频', capabilities: ['video'] }] },
     { group: 'coze', provider: 'coze', models: [{ id: 'coze-bot', name: 'Coze 智能体', capabilities: ['text'] }] },
@@ -1857,7 +1815,6 @@ app.listen(PORT, '0.0.0.0', () => {
   log(`   DeepSeek: ${CONFIG.DEEPSEEK_API_KEY ? '✅ 已配置' : ' 未配置'}`);
   log(`   通义千问 (Tongyi): ${CONFIG.TONGYI_API_KEY ? '✅ 已配置' : '❌ 未配置'}`);
   log(`   腾讯元宝 (Yuanbao): ${CONFIG.YUANBAO_API_KEY ? '✅ 已配置' : '❌ 未配置'}`);
-  log(`   OpenAI: ${CONFIG.OPENAI_API_KEY ? '✅ 已配置' : '❌ 未配置'}`);
   log(`   即梦 (Jimeng 图片): ${CONFIG.JIMENG_API_KEY ? '✅ 已配置' : '❌ 未配置'}`);
   log(`   可灵 (Kling 视频): ${CONFIG.KLING_API_KEY ? '✅ 已配置' : '❌ 未配置'}`);
   log(`   Coze 智能体: ${CONFIG.COZE_API_KEY && CONFIG.COZE_BOT_ID ? '✅ 已配置' : '❌ 未配置'}`);
