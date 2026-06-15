@@ -1526,7 +1526,7 @@ app.post('/api/v1/ai/tools', authCheck, (req, res) => {
 // 余额 — 从 users.json 读取真实用户余额
 app.get('/api/v1/payment/coin/balance', authCheck, (req, res) => {
   const userId = req.user?.id || 1;
-  const balance = getUserCoins(userId);
+  // balance is computed below from users.json
   const usersFile = path.join(__dirname, 'data', 'users.json');
   let users = [];
   try { users = JSON.parse(fs.readFileSync(usersFile, 'utf8')); } catch (e) {}
@@ -2037,6 +2037,90 @@ app.get('/api/v1/notifications/unread-count', authCheck, (req, res) => {
 });
 
 // ============================================================
+
+// ===== 知识库系统 =====
+const _kbFile = path.join(__dirname, 'data', 'knowledge_base.json');
+let _kb = [];
+try { _kb = JSON.parse(fs.readFileSync(_kbFile, 'utf8')); } catch(e) {
+  _kb = [
+    { id: 1, type: 'faq', title: '什么是圣力？', content: '圣力是罗圣纪元平台的虚拟货币，用于调用AI工具和服务。', createdAt: new Date().toISOString() },
+    { id: 2, type: 'guide', title: '如何充值圣力？', content: '进入圣力中心，选择套餐，扫码支付即可。', createdAt: new Date().toISOString() },
+    { id: 3, type: 'policy', title: '退款政策', content: '未使用的圣力可在7天内申请退款。', createdAt: new Date().toISOString() }
+  ];
+  fs.writeFileSync(_kbFile, JSON.stringify(_kb, null, 2));
+}
+app.get('/api/v1/knowledge', (req, res) => {
+  let list = [..._kb];
+  if (req.query.type) list = list.filter(k => k.type === req.query.type);
+  if (req.query.keyword) list = list.filter(k => k.title.includes(req.query.keyword) || k.content.includes(req.query.keyword));
+  res.json({ code: 0, message: 'success', data: list });
+});
+app.post('/api/v1/knowledge', authCheck, (req, res) => {
+  const item = { id: _kb.length + 1, ...req.body, createdAt: new Date().toISOString() };
+  _kb.push(item); fs.writeFileSync(_kbFile, JSON.stringify(_kb, null, 2));
+  res.json({ code: 0, message: 'success', data: item });
+});
+app.delete('/api/v1/knowledge/:id', authCheck, (req, res) => {
+  _kb = _kb.filter(k => k.id !== Number(req.params.id));
+  fs.writeFileSync(_kbFile, JSON.stringify(_kb, null, 2));
+  res.json({ code: 0, message: 'success' });
+});
+app.get('/api/v1/knowledge/search', (req, res) => {
+  const q = (req.query.q || '').toLowerCase();
+  res.json({ code: 0, message: 'success', data: _kb.filter(k => k.title.toLowerCase().includes(q) || k.content.toLowerCase().includes(q)) });
+});
+
+// ===== VIP系统 =====
+const _vipFile = path.join(__dirname, 'data', 'vip_plans.json');
+let _vip = [];
+try { _vip = JSON.parse(fs.readFileSync(_vipFile, 'utf8')); } catch(e) {
+  _vip = [
+    { id: 1, name: '月卡VIP', price: 29.9, duration: 30, dailyCoins: 100 },
+    { id: 2, name: '季卡VIP', price: 79.9, duration: 90, dailyCoins: 150 },
+    { id: 3, name: '年卡VIP', price: 299.9, duration: 365, dailyCoins: 200 }
+  ];
+  fs.writeFileSync(_vipFile, JSON.stringify(_vip, null, 2));
+}
+app.get('/api/v1/vip/plans', (req, res) => { res.json({ code: 0, message: 'success', data: _vip }); });
+app.post('/api/v1/vip/subscribe', authCheck, (req, res) => {
+  const plan = _vip.find(p => p.id === Number(req.body.planId));
+  if (!plan) return res.json({ code: 400, message: '计划不存在' });
+  res.json({ code: 0, message: 'success', data: { plan } });
+});
+
+// ===== 推荐系统 =====
+const _refFile = path.join(__dirname, 'data', 'referrals.json');
+let _refs = [];
+try { _refs = JSON.parse(fs.readFileSync(_refFile, 'utf8')); } catch(e) { _refs = []; }
+app.post('/api/v1/referral/generate-code', authCheck, (req, res) => {
+  const code = 'LSJY' + Date.now().toString(36).toUpperCase();
+  _refs.push({ code, userId: req.user.id, createdAt: new Date().toISOString(), bindings: [] });
+  fs.writeFileSync(_refFile, JSON.stringify(_refs, null, 2));
+  res.json({ code: 0, message: 'success', data: { code } });
+});
+
+// ===== 订单系统 =====
+const _poFile = path.join(__dirname, 'data', 'payment_orders.json');
+let _po = [];
+try { _po = JSON.parse(fs.readFileSync(_poFile, 'utf8')); } catch(e) { _po = []; }
+app.post('/api/v1/payment/create-order', authCheck, (req, res) => {
+  const orderNo = 'LSJY-' + Date.now() + '-' + Math.floor(100000 + Math.random() * 900000);
+  const order = { orderNo, userId: req.user.id, amount: req.body.amount || 0, payMethod: req.body.payMethod || 'wechat', status: 'pending', createdAt: new Date().toISOString() };
+  _po.push(order); fs.writeFileSync(_poFile, JSON.stringify(_po, null, 2));
+  res.json({ code: 0, message: 'success', data: { order } });
+});
+app.get('/api/v1/payment/order-status/:orderNo', authCheck, (req, res) => {
+  const order = _po.find(o => o.orderNo === req.params.orderNo);
+  if (!order) return res.json({ code: 404, message: '订单不存在' });
+  res.json({ code: 0, message: 'success', data: order });
+});
+
+// ===== 管理看板 =====
+app.get('/api/v1/admin/dashboard', authCheck, (req, res) => {
+  let uc = 0; try { uc = JSON.parse(fs.readFileSync(path.join(__dirname, 'data', 'users.json'), 'utf8')).length; } catch(e) {}
+  res.json({ code: 0, message: 'success', data: { totalOrders: _po.length, userCount: uc, knowledgeCount: _kb.length, vipPlanCount: _vip.length } });
+});
+
 // ===== 通用 fallback（必须放在所有路由之后） =====
 // ============================================================
 app.use('/api/v1/*all', (req, res) => {

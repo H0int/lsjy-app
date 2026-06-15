@@ -1,1 +1,10 @@
-[]
+[
+  {
+    "orderNo": "LSJY-1781548759977-349680",
+    "userId": 1,
+    "amount": 10,
+    "payMethod": "wechat",
+    "status": "pending",
+    "createdAt": "2026-06-15T18:39:19.977Z"
+  }
+]
