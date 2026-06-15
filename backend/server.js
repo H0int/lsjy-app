@@ -122,6 +122,30 @@ function authCheck(req, res, next) {
   next();
 }
 
+// 圣点扣费（返回 { ok, balance, cost }）
+function deductCoins(userId, cost) {
+  if (!cost || cost <= 0) return { ok: true, balance: 0, cost: 0 };
+  const usersFile = path.join(__dirname, 'data', 'users.json');
+  let users = [];
+  try { users = JSON.parse(fs.readFileSync(usersFile, 'utf8')); } catch (e) {}
+  const user = users.find(u => u.id === userId);
+  if (!user) return { ok: false, error: '用户不存在' };
+  const balance = user.coins || 0;
+  if (balance < cost) return { ok: false, error: '圣点不足', balance };
+  user.coins = balance - cost;
+  fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
+  return { ok: true, balance: user.coins, cost };
+}
+
+// 获取用户圣点余额
+function getUserCoins(userId) {
+  const usersFile = path.join(__dirname, 'data', 'users.json');
+  let users = [];
+  try { users = JSON.parse(fs.readFileSync(usersFile, 'utf8')); } catch (e) {}
+  const user = users.find(u => u.id === userId);
+  return user?.coins || 0;
+}
+
 // 分页工具
 function paginate(arr, page, pageSize) {
   page = parseInt(page) || 1;
@@ -821,7 +845,7 @@ app.post('/api/v1/auth/register', (req, res) => {
   }
   const newUser = {
     id: users.length + 1, username, password, nickname: nickname || username,
-    email, phone, status: 'active', roles: ['normal'], coins: 0, totalRecharge: 0,
+    email, phone, status: 'active', roles: ['normal'], coins: 100, totalRecharge: 0,
     createdAt: new Date().toISOString(),
   };
   users.push(newUser);
@@ -948,21 +972,34 @@ app.post('/api/v1/users', authCheck, (req, res) => {
 // ===== AI模块 =====
 // ============================================================
 
-// AI对话
-app.post('/api/v1/ai/tools/:toolId/chat', async (req, res) => {
+// AI对话（消耗1圣点/次）
+app.post('/api/v1/ai/tools/:toolId/chat', authCheck, async (req, res) => {
   const { toolId } = req.params;
   const { messages, model, temperature, maxTokens, systemPrompt } = req.body;
-  log(`收到对话请求: toolId=${toolId}, messages=${messages?.length || 0}`);
+  const userId = req.user?.id;
+  const CHAT_COIN_COST = 1;
+  log(`收到对话请求: toolId=${toolId}, userId=${userId}, messages=${messages?.length || 0}`);
   if (!messages || !Array.isArray(messages) || messages.length === 0) {
     return res.status(400).json({ code: 400, message: '消息列表不能为空', data: null });
+  }
+  // 检查圣点余额
+  const balance = getUserCoins(userId);
+  if (balance < CHAT_COIN_COST) {
+    return res.status(402).json({
+      code: 402,
+      message: `圣点不足，当前余额${balance}，本次需要${CHAT_COIN_COST}圣点。请前往个人中心充值。`,
+      data: { balance, cost: CHAT_COIN_COST },
+    });
   }
   try {
     const result = await callAI(messages, { model, temperature, maxTokens, systemPrompt });
     log(`AI回复成功: model=${result.model}, length=${result.content?.length || 0}`);
+    // 扣费
+    const deduct = deductCoins(userId, CHAT_COIN_COST);
     // 记录历史
     const lastMsg = messages.filter(m => m.role === 'user').pop();
     aiHistoryStore.unshift({
-      id: nextId(), userId: 1, toolId: Number(toolId),
+      id: nextId(), userId, toolId: Number(toolId),
       toolName: aiToolsStore.find(t => t.id === Number(toolId))?.name || '未知工具',
       input: lastMsg?.content || '', output: result.content,
       model: result.model || model || 'default', tokens: result.usage?.totalTokens || 0,
@@ -970,16 +1007,18 @@ app.post('/api/v1/ai/tools/:toolId/chat', async (req, res) => {
     });
     res.json({
       code: 0, message: 'success',
-      data: { content: result.content, model: result.model || model || 'default', role: 'assistant', coinCost: 0, usage: result.usage },
+      data: { content: result.content, model: result.model || model || 'default', role: 'assistant', coinCost: CHAT_COIN_COST, balance: deduct.balance, usage: result.usage },
     });
   } catch (err) {
     log(`AI调用失败: ${err.message}`);
     const lastUserMsg = messages.filter(m => m.role === 'user').pop();
     const localReply = getLocalResponse(lastUserMsg?.content || '');
     log('使用本地智能回复兜底');
+    // 本地兜底也扣费
+    const deduct = deductCoins(userId, CHAT_COIN_COST);
     res.json({
       code: 0, message: 'success',
-      data: { content: localReply, model: '本地模式', role: 'assistant', coinCost: 0, fallback: true, note: CONFIG.COZE_API_KEY ? '' : 'AI模型API Key未配置，使用本地回复模式' },
+      data: { content: localReply, model: '本地模式', role: 'assistant', coinCost: CHAT_COIN_COST, balance: deduct.balance, fallback: true, note: CONFIG.COZE_API_KEY ? '' : 'AI模型API Key未配置，使用本地回复模式' },
     });
   }
 });
@@ -1024,7 +1063,7 @@ app.get('/api/v1/ai/quota/:toolId', authCheck, (req, res) => {
   });
 });
 
-// 图片生成
+// 图片生成（消耗10圣点/次）
 // AI 图片生成（真实 AI 绘画）
 app.post('/api/v1/ai/tools/:id/generate', authCheck, async (req, res) => {
   const tool = aiToolsStore.find(t => t.id === Number(req.params.id));
@@ -1033,7 +1072,20 @@ app.post('/api/v1/ai/tools/:id/generate', authCheck, async (req, res) => {
   const { prompt, width, height, style, count } = req.body;
   if (!prompt) return res.status(400).json({ code: 400, message: '请提供图片描述', data: null });
 
-  log(`收到图片生成请求: toolId=${req.params.id}, prompt=${prompt.slice(0, 50)}...`);
+  const userId = req.user?.id;
+  const IMAGE_COIN_COST = 10;
+
+  log(`收到图片生成请求: toolId=${req.params.id}, userId=${userId}, prompt=${prompt.slice(0, 50)}...`);
+
+  // 检查圣点余额
+  const balance = getUserCoins(userId);
+  if (balance < IMAGE_COIN_COST) {
+    return res.status(402).json({
+      code: 402,
+      message: `圣点不足，当前余额${balance}，图片生成需要${IMAGE_COIN_COST}圣点。请前往个人中心充值。`,
+      data: { balance, cost: IMAGE_COIN_COST },
+    });
+  }
 
   try {
     const result = await generateImageWithAI(prompt, {
@@ -1045,6 +1097,9 @@ app.post('/api/v1/ai/tools/:id/generate', authCheck, async (req, res) => {
 
     log(`图片生成成功: model=${result.model}, urls=${result.urls.length}`);
 
+    // 扣费
+    const deduct = deductCoins(userId, IMAGE_COIN_COST);
+
     res.json({
       code: 0,
       message: 'success',
@@ -1054,7 +1109,8 @@ app.post('/api/v1/ai/tools/:id/generate', authCheck, async (req, res) => {
         prompt: result.prompt,
         width: width || 1024,
         height: height || 1024,
-        coinCost: tool.coinCost || 20,
+        coinCost: IMAGE_COIN_COST,
+        balance: deduct.balance,
         durationMs: 3000,
         createdAt: new Date().toISOString(),
       },
@@ -1069,7 +1125,7 @@ app.post('/api/v1/ai/tools/:id/generate', authCheck, async (req, res) => {
   }
 });
 
-// AI 视频生成
+// AI 视频生成（消耗20圣点/次）
 app.post('/api/v1/ai/tools/:id/video', authCheck, async (req, res) => {
   const tool = aiToolsStore.find(t => t.id === Number(req.params.id));
   if (!tool) return res.status(404).json({ code: 404, message: '工具不存在', data: null });
@@ -1077,7 +1133,20 @@ app.post('/api/v1/ai/tools/:id/video', authCheck, async (req, res) => {
   const { prompt, duration, resolution } = req.body;
   if (!prompt) return res.status(400).json({ code: 400, message: '请提供视频描述', data: null });
 
-  log(`收到视频生成请求: toolId=${req.params.id}, prompt=${prompt.slice(0, 50)}...`);
+  const userId = req.user?.id;
+  const VIDEO_COIN_COST = 20;
+
+  log(`收到视频生成请求: toolId=${req.params.id}, userId=${userId}, prompt=${prompt.slice(0, 50)}...`);
+
+  // 检查圣点余额
+  const balance = getUserCoins(userId);
+  if (balance < VIDEO_COIN_COST) {
+    return res.status(402).json({
+      code: 402,
+      message: `圣点不足，当前余额${balance}，视频生成需要${VIDEO_COIN_COST}圣点。请前往个人中心充值。`,
+      data: { balance, cost: VIDEO_COIN_COST },
+    });
+  }
 
   try {
     const result = await generateVideoWithAI(prompt, {
@@ -1086,6 +1155,9 @@ app.post('/api/v1/ai/tools/:id/video', authCheck, async (req, res) => {
     });
 
     log(`视频生成成功: model=${result.model}, url=${result.videoUrl}`);
+
+    // 扣费
+    const deduct = deductCoins(userId, VIDEO_COIN_COST);
 
     res.json({
       code: 0,
@@ -1096,7 +1168,8 @@ app.post('/api/v1/ai/tools/:id/video', authCheck, async (req, res) => {
         prompt: result.prompt,
         duration: duration || 5,
         resolution: resolution || '720p',
-        coinCost: tool.coinCost || 50,
+        coinCost: VIDEO_COIN_COST,
+        balance: deduct.balance,
         durationMs: result.durationMs || 10000,
         createdAt: new Date().toISOString(),
       },

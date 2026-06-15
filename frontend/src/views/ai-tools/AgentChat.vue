@@ -15,6 +15,12 @@
         </div>
       </div>
       <div class="flex gap-1.5 flex-shrink-0">
+        <button @click="$router.push('/profile/wallet')" class="px-2 py-1 rounded-lg text-xs flex items-center gap-1 cursor-pointer"
+          style="background: rgba(255,184,0,0.08); color: var(--cyber-amber); border: 1px solid rgba(255,184,0,0.2);"
+          title="点击前往充值">
+          <span>⚡</span>
+          <span class="font-bold" style="font-family: 'JetBrains Mono', monospace;">{{ coinBalance }}</span>
+        </button>
         <button @click="showModels = !showModels" class="px-2 py-1 rounded-lg text-xs"
           style="background: rgba(0,240,255,0.08); color: var(--cyber-cyan); border: 1px solid rgba(0,240,255,0.2);">
           🧠 {{ activeModelLabel }}
@@ -94,7 +100,7 @@
       <!-- 输入框 -->
       <div class="cyber-card p-3 flex-shrink-0">
         <div class="flex gap-2">
-          <input v-model="input" @keyup.enter="sendMsg" :placeholder="loading ? 'AI思考中...' : '输入消息，Enter发送...'"
+          <input v-model="input" @keyup.enter="sendMsg" :placeholder="loading ? 'AI思考中...' : `输入消息，Enter发送（消耗1圣点/次）`"
             :disabled="loading"
             class="flex-1 px-3 py-2.5 rounded-xl text-sm outline-none transition-all"
             style="background: rgba(0,240,255,0.03); border: 1px solid var(--cyber-border); color: var(--cyber-text);"
@@ -198,7 +204,7 @@ const COZE_TOKEN = 'pat_PzQlUbxdIXu7txW3cvP69EpHRLSidiY8KKa3NQ98KncpAA8jnOIZpZZM
 const BOT_ID = '7651223356586786856'
 
 // ========== 状态 ==========
-const msgs = ref<{role:'user'|'assistant'; content:string; model?:string}[]>([])
+const msgs = ref<{role:'user'|'assistant'; content:string; model?:string; coinCost?:number}[]>([])
 const input = ref('')
 const loading = ref(false)
 const showModels = ref(false)
@@ -206,6 +212,7 @@ const activeModel = ref('auto')
 const tab = ref<'chat'|'image'|'video'>('chat')
 const chatBox = ref<HTMLElement|null>(null)
 const aiOnline = ref(true)
+const coinBalance = ref(100) // 默认100，onMounted会获取真实值
 
 // 图片生成
 const imgPrompt = ref('')
@@ -286,7 +293,7 @@ function clearChat() {
 
 function sendQuick(t: string) { input.value = t; sendMsg() }
 
-// ========== 核心：扣子API对话 ==========
+// ========== 核心：AI对话（消耗1圣点/次） ==========
 async function sendMsg() {
   const text = input.value.trim()
   if (!text || loading.value) return
@@ -295,19 +302,6 @@ async function sendMsg() {
   input.value = ''
   loading.value = true
   scrollToBottom()
-
-  // 构建消息列表
-  const history = msgs.value.slice(-20).map(m => ({
-    role: m.role,
-    content: m.content,
-    type: m.role === 'user' ? 'query' as const : 'answer' as const
-  }))
-
-  // 加入系统提示
-  const apiMsgs = [
-    { role: 'user' as const, content: SYS_PROMPT, type: 'query' as const },
-    ...history
-  ]
 
   try {
     // 构建后端API需要的消息格式
@@ -328,6 +322,20 @@ async function sendMsg() {
       }),
     })
 
+    // 处理圣点不足 (402)
+    if (res.status === 402) {
+      const errData = await res.json()
+      coinBalance.value = errData.data?.balance || 0
+      msgs.value.push({
+        role: 'assistant',
+        content: `⚡ **圣点不足**\n\n当前余额：${coinBalance.value} 圣点\n本次需要：${errData.data?.cost || 1} 圣点\n\n请点击右上角「⚡」前往充值，或返回[个人中心](/profile/wallet)充值。`,
+        model: '系统'
+      })
+      loading.value = false
+      scrollToBottom()
+      return
+    }
+
     if (!res.ok) {
       const errText = await res.text()
       throw new Error(`API ${res.status}: ${errText.substring(0, 100)}`)
@@ -338,11 +346,17 @@ async function sendMsg() {
       throw new Error(result.message || 'AI服务返回错误')
     }
 
+    // 更新余额
+    if (result.data.balance !== undefined) {
+      coinBalance.value = result.data.balance
+    }
+
     // 添加助手回复
     msgs.value.push({
       role: 'assistant',
       content: result.data.content || '⚠️ 模型未返回有效内容',
-      model: result.data.model || activeModelLabel.value
+      model: result.data.model || activeModelLabel.value,
+      coinCost: result.data.coinCost || 1
     })
 
     // 保存
@@ -360,7 +374,7 @@ async function sendMsg() {
   }
 }
 
-// ========== 图片生成 ==========
+// ========== 图片生成（消耗10圣点/次） ==========
 async function genImage() {
   const prompt = imgPrompt.value.trim()
   if (!prompt || genLoading.value) return
@@ -373,12 +387,11 @@ async function genImage() {
   genLoading.value = true
 
   try {
-    // 直接调用后端图片生成API（即梦/DALL-E）
     const res = await fetch(`${API_BASE}/ai/tools/2/generate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
+        'Authorization': `Bearer ${authToken}`,
       },
       body: JSON.stringify({
         prompt: fullPrompt,
@@ -389,11 +402,27 @@ async function genImage() {
       }),
     })
 
+    // 处理圣点不足
+    if (res.status === 402) {
+      const errData = await res.json()
+      coinBalance.value = errData.data?.balance || 0
+      images.value[0] = {
+        prompt,
+        error: `⚡ 圣点不足！当前余额${coinBalance.value}，图片生成需要10圣点。请前往个人中心充值。`,
+      }
+      genLoading.value = false
+      return
+    }
+
     if (!res.ok) throw new Error(`API ${res.status}`)
 
     const data = await res.json()
-    
+
     if (data.code === 0 && data.data?.urls?.length > 0) {
+      // 更新余额
+      if (data.data.balance !== undefined) {
+        coinBalance.value = data.data.balance
+      }
       images.value[0] = {
         prompt,
         url: data.data.urls[0],
@@ -437,13 +466,27 @@ function saveChat() {
 }
 watch(msgs, () => saveChat(), { deep: true })
 
-onMounted(() => {
+onMounted(async () => {
   const s = localStorage.getItem('lsjy_chat_v2')
   if (s) try { msgs.value = JSON.parse(s) } catch {}
   // 检测后端API可用性
   fetch(`${API_BASE}/ai/providers`)
     .then(r => { aiOnline.value = r.ok })
     .catch(() => { aiOnline.value = false })
+  // 获取用户圣点余额
+  try {
+    const res = await fetch(`${API_BASE}/payment/coin/balance`, {
+      headers: { 'Authorization': `Bearer ${authToken}` }
+    })
+    if (res.ok) {
+      const data = await res.json()
+      if (data.code === 0 && data.data?.balance !== undefined) {
+        coinBalance.value = data.data.balance
+      }
+    }
+  } catch (e) {
+    console.error('获取余额失败:', e)
+  }
 })
 </script>
 
