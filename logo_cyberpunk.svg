@@ -1,0 +1,134 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- 赛博朋克渐变背景 -->
+    <radialGradient id="bgGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#1a0033;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#0a0015;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#000000;stop-opacity:1" />
+    </radialGradient>
+
+    <!-- 霓虹青色渐变 -->
+    <linearGradient id="cyanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00f0ff;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#00d4ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#00a8ff;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- 霓虹紫色渐变 -->
+    <linearGradient id="purpleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#b400ff;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#9d00ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7c00ff;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- 发光效果 -->
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="glowStrong">
+      <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- 网格图案 -->
+    <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#00f0ff" stroke-width="0.5" opacity="0.1"/>
+    </pattern>
+  </defs>
+
+  <!-- 背景 -->
+  <rect width="512" height="512" fill="url(#bgGrad)"/>
+
+  <!-- 网格层 -->
+  <rect width="512" height="512" fill="url(#grid)" opacity="0.3"/>
+
+  <!-- 装饰性电路线条 -->
+  <g opacity="0.4" filter="url(#glow)">
+    <!-- 左侧电路 -->
+    <path d="M 50 100 L 100 100 L 100 150 L 150 150" stroke="#00f0ff" stroke-width="2" fill="none"/>
+    <circle cx="150" cy="150" r="4" fill="#00f0ff"/>
+
+    <path d="M 50 400 L 120 400 L 120 350 L 180 350" stroke="#b400ff" stroke-width="2" fill="none"/>
+    <circle cx="180" cy="350" r="4" fill="#b400ff"/>
+
+    <!-- 右侧电路 -->
+    <path d="M 462 120 L 400 120 L 400 180 L 350 180" stroke="#00f0ff" stroke-width="2" fill="none"/>
+    <circle cx="350" cy="180" r="4" fill="#00f0ff"/>
+
+    <path d="M 462 380 L 380 380 L 380 320 L 320 320" stroke="#b400ff" stroke-width="2" fill="none"/>
+    <circle cx="320" cy="320" r="4" fill="#b400ff"/>
+  </g>
+
+  <!-- 六边形外框 -->
+  <g transform="translate(256, 256)">
+    <polygon points="0,-180 156,-90 156,90 0,180 -156,90 -156,-90"
+             fill="none" stroke="url(#cyanGrad)" stroke-width="3"
+             filter="url(#glowStrong)" opacity="0.6"/>
+    <polygon points="0,-160 139,-80 139,80 0,160 -139,80 -139,-80"
+             fill="none" stroke="url(#purpleGrad)" stroke-width="2"
+             filter="url(#glow)" opacity="0.4"/>
+  </g>
+
+  <!-- 中心装饰圆环 -->
+  <circle cx="256" cy="256" r="140" fill="none" stroke="#00f0ff" stroke-width="1" opacity="0.3" filter="url(#glow)"/>
+  <circle cx="256" cy="256" r="130" fill="none" stroke="#b400ff" stroke-width="1" opacity="0.3" filter="url(#glow)"/>
+
+  <!-- 主文字：罗圣 -->
+  <text x="256" y="240" text-anchor="middle" font-family="'Microsoft YaHei', 'PingFang SC', sans-serif"
+        font-size="120" font-weight="bold" fill="url(#cyanGrad)" filter="url(#glowStrong)">
+    罗圣
+  </text>
+
+  <!-- 副文字：纪元 -->
+  <text x="256" y="310" text-anchor="middle" font-family="'Microsoft YaHei', 'PingFang SC', sans-serif"
+        font-size="60" font-weight="bold" fill="url(#purpleGrad)" filter="url(#glow)">
+    纪元
+  </text>
+
+  <!-- 装饰性小字 -->
+  <text x="256" y="360" text-anchor="middle" font-family="'Courier New', monospace"
+        font-size="14" fill="#00f0ff" opacity="0.6" letter-spacing="2">
+    LUOSHENG ERA
+  </text>
+
+  <!-- 顶部装饰线 -->
+  <line x1="156" y1="100" x2="356" y2="100" stroke="#00f0ff" stroke-width="2" opacity="0.5" filter="url(#glow)"/>
+  <circle cx="156" cy="100" r="5" fill="#00f0ff" filter="url(#glow)"/>
+  <circle cx="356" cy="100" r="5" fill="#00f0ff" filter="url(#glow)"/>
+
+  <!-- 底部装饰线 -->
+  <line x1="156" y1="412" x2="356" y2="412" stroke="#b400ff" stroke-width="2" opacity="0.5" filter="url(#glow)"/>
+  <circle cx="156" cy="412" r="5" fill="#b400ff" filter="url(#glow)"/>
+  <circle cx="356" cy="412" r="5" fill="#b400ff" filter="url(#glow)"/>
+
+  <!-- 角落装饰 -->
+  <g opacity="0.6">
+    <rect x="30" y="30" width="40" height="4" fill="#00f0ff" filter="url(#glow)"/>
+    <rect x="30" y="30" width="4" height="40" fill="#00f0ff" filter="url(#glow)"/>
+
+    <rect x="442" y="30" width="40" height="4" fill="#00f0ff" filter="url(#glow)"/>
+    <rect x="478" y="30" width="4" height="40" fill="#00f0ff" filter="url(#glow)"/>
+
+    <rect x="30" y="478" width="40" height="4" fill="#b400ff" filter="url(#glow)"/>
+    <rect x="30" y="442" width="4" height="40" fill="#b400ff" filter="url(#glow)"/>
+
+    <rect x="442" y="478" width="40" height="4" fill="#b400ff" filter="url(#glow)"/>
+    <rect x="478" y="442" width="4" height="40" fill="#b400ff" filter="url(#glow)"/>
+  </g>
+
+  <!-- 数据流动效果装饰 -->
+  <g opacity="0.3">
+    <text x="80" y="200" font-family="monospace" font-size="10" fill="#00f0ff">01001</text>
+    <text x="400" y="220" font-family="monospace" font-size="10" fill="#b400ff">11010</text>
+    <text x="90" y="320" font-family="monospace" font-size="10" fill="#00f0ff">10110</text>
+    <text x="390" y="300" font-family="monospace" font-size="10" fill="#b400ff">01101</text>
+  </g>
+</svg>

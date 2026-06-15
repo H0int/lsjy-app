@@ -55,6 +55,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: 'AI工具中心', icon: '🤖' }
       },
       {
+        path: 'agent-hub',
+        name: 'AgentHub',
+        component: () => import('@/views/ai-tools/AgentHubView.vue'),
+        meta: { title: 'AI员工中心', icon: '🤖' }
+      },
+      {
         path: 'agent',
         name: 'AgentChat',
         component: () => import('@/views/ai-tools/AgentChat.vue'),
@@ -76,7 +82,7 @@ const routes: RouteRecordRaw[] = [
         path: 'profile/wallet',
         name: 'Wallet',
         component: () => import('@/views/profile/WalletView.vue'),
-        meta: { title: '圣点账户', icon: '💰' }
+        meta: { title: '圣力中心', icon: '💰' }
       }
     ]
   },
@@ -168,7 +174,7 @@ const routes: RouteRecordRaw[] = [
         path: 'coin-packages',
         name: 'AdminCoinPackages',
         component: () => import('@/views/admin/CoinPackages.vue'),
-        meta: { title: '圣点套餐' }
+        meta: { title: '圣力套餐' }
       },
       {
         path: 'payments',

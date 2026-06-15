@@ -73,7 +73,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  // 获取圣点余额
+  // 获取圣力余额
   async function fetchBalance() {
     try {
       const res = await paymentApi.getBalance()

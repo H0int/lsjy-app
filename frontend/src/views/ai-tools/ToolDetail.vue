@@ -31,7 +31,7 @@
               <span style="color: var(--cyber-text-dim);">{{ tool.modelId }}</span>
               <span style="color: var(--cyber-text-dim);">{{ tool.usageCount.toLocaleString() }}次使用</span>
               <span class="font-bold" :style="{ color: tool.isFree ? 'var(--cyber-green)' : 'var(--cyber-amber)' }">
-                {{ tool.isFree ? `免费(每日${tool.freeDailyLimit}次)` : `${tool.coinCost} 圣点/次` }}
+                {{ tool.isFree ? `免费(每日${tool.freeDailyLimit}次)` : `${tool.coinCost} 圣力/次` }}
               </span>
             </div>
           </div>
@@ -77,7 +77,7 @@
               <div class="flex items-center gap-3">
                 <span class="text-sm" style="color: var(--cyber-text-dim);">
                   消耗：<strong :style="{ color: tool.isFree ? 'var(--cyber-green)' : 'var(--cyber-amber)' }">
-                    {{ tool.isFree ? '免费' : `${tool.coinCost} 圣点` }}
+                    {{ tool.isFree ? '免费' : `${tool.coinCost} 圣力` }}
                   </strong>
                 </span>
                 <button v-if="chatHistory.length > 0" @click="clearChat"
@@ -166,7 +166,7 @@
             <div class="flex items-center justify-between pt-2 flex-wrap gap-3">
               <span class="text-sm" style="color: var(--cyber-text-dim);">
                 消耗：<strong :style="{ color: tool.isFree ? 'var(--cyber-green)' : 'var(--cyber-amber)' }">
-                  {{ tool.isFree ? '免费' : `${tool.coinCost * imageCount} 圣点` }}
+                  {{ tool.isFree ? '免费' : `${tool.coinCost * imageCount} 圣力` }}
                 </strong>
               </span>
               <el-button type="primary" size="large" :loading="generating" @click="handleGenerateImage"
@@ -257,7 +257,7 @@
             <div class="flex items-center justify-between pt-2 flex-wrap gap-3">
               <span class="text-sm" style="color: var(--cyber-text-dim);">
                 消耗：<strong :style="{ color: tool.isFree ? 'var(--cyber-green)' : 'var(--cyber-amber)' }">
-                  {{ tool.isFree ? '免费' : `${tool.coinCost} 圣点` }}
+                  {{ tool.isFree ? '免费' : `${tool.coinCost} 圣力` }}
                 </strong>
               </span>
               <el-button type="primary" size="large" :loading="generating" @click="handleGenerateVideo"
@@ -315,7 +315,7 @@
         <!-- 消耗提示 -->
         <div v-if="lastCoinCost > 0" class="mt-4 p-3 rounded-xl text-sm"
           style="background: rgba(255,184,0,0.08); border: 1px solid rgba(255,184,0,0.2); color: var(--cyber-amber);">
-          💰 本次消耗 {{ lastCoinCost }} 圣点 | 耗时 {{ lastDurationMs }}ms | 模型: {{ lastModel }}
+          💰 本次消耗 {{ lastCoinCost }} 圣力 | 耗时 {{ lastDurationMs }}ms | 模型: {{ lastModel }}
         </div>
       </div>
     </template>

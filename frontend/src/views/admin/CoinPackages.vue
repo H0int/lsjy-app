@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="flex items-center justify-between mb-6">
-      <h2 class="text-xl font-bold" style="color: #e0e0ff;">💰 圣点套餐管理</h2>
+      <h2 class="text-xl font-bold" style="color: #e0e0ff;">💰 圣力套餐管理</h2>
       <button class="px-4 py-2 rounded-lg text-sm font-bold"
         style="background: linear-gradient(135deg, #00f0ff, #7c3aed); color: #000;">
         + 新建套餐
@@ -15,7 +15,7 @@
         <div v-if="pkg.highlight" class="text-xs font-bold mb-2 px-2 py-0.5 rounded inline-block"
           style="background: rgba(0,240,255,0.1); color: #00f0ff;">推荐</div>
         <div class="text-3xl font-bold mb-1" style="color: #e0e0ff;">{{ pkg.coins }}</div>
-        <div class="text-sm mb-3" style="color: #5a5a7a;">圣点</div>
+        <div class="text-sm mb-3" style="color: #5a5a7a;">圣力</div>
         <div class="text-2xl font-bold mb-1" style="color: #ffb800;">¥{{ pkg.price }}</div>
         <div class="text-xs mb-4" style="color: #5a5a7a;">原价 ¥{{ pkg.originalPrice }}</div>
         <div class="text-xs mb-4 p-2 rounded" style="background: rgba(0,240,255,0.05); color: #00f0ff;">
@@ -39,11 +39,18 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 const packages = ref([
-  { id: 1, coins: 100, price: 9.9, originalPrice: 10, bonus: '无赠品', sold: 1256, status: 'active', highlight: false },
-  { id: 2, coins: 500, price: 39.9, originalPrice: 50, bonus: '送50圣点', sold: 3421, status: 'active', highlight: true },
-  { id: 3, coins: 1000, price: 69.9, originalPrice: 100, bonus: '送150圣点', sold: 2187, status: 'active', highlight: false },
-  { id: 4, coins: 5000, price: 299, originalPrice: 500, bonus: '送1000圣点', sold: 876, status: 'active', highlight: false },
-  { id: 5, coins: 10000, price: 499, originalPrice: 1000, bonus: '送2500圣点', sold: 432, status: 'inactive', highlight: false },
+  { id: 1, coins: 50, price: 4.9, originalPrice: 5, bonus: '送5圣力', sold: 523, status: 'active', highlight: false },
+  { id: 2, coins: 100, price: 9.9, originalPrice: 10, bonus: '送10圣力', sold: 1256, status: 'active', highlight: false },
+  { id: 3, coins: 200, price: 14.9, originalPrice: 20, bonus: '送20圣力', sold: 892, status: 'active', highlight: false },
+  { id: 4, coins: 300, price: 24.9, originalPrice: 30, bonus: '送30圣力', sold: 1567, status: 'active', highlight: false },
+  { id: 5, coins: 500, price: 39.9, originalPrice: 50, bonus: '送100圣力', sold: 3421, status: 'active', highlight: true },
+  { id: 6, coins: 1000, price: 69.9, originalPrice: 100, bonus: '送200圣力', sold: 2187, status: 'active', highlight: false },
+  { id: 7, coins: 2000, price: 129.9, originalPrice: 200, bonus: '送500圣力', sold: 1345, status: 'active', highlight: false },
+  { id: 8, coins: 3500, price: 199.9, originalPrice: 350, bonus: '送1000圣力', sold: 987, status: 'active', highlight: false },
+  { id: 9, coins: 5000, price: 299.9, originalPrice: 500, bonus: '送1500圣力', sold: 876, status: 'active', highlight: false },
+  { id: 10, coins: 10000, price: 549.9, originalPrice: 1000, bonus: '送3500圣力', sold: 432, status: 'active', highlight: false },
+  { id: 11, coins: 25000, price: 1299.9, originalPrice: 2500, bonus: '送10000圣力', sold: 198, status: 'active', highlight: false },
+  { id: 12, coins: 50000, price: 2499.9, originalPrice: 5000, bonus: '送25000圣力', sold: 56, status: 'active', highlight: false },
 ])
 </script>
 

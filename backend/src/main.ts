@@ -56,7 +56,7 @@ async function bootstrap() {
     .addTag('users', '用户管理')
     .addTag('roles', '角色权限')
     .addTag('ai-tools', 'AI工具')
-    .addTag('payment', '支付中心(圣点)')
+    .addTag('payment', '支付中心(圣力)')
     .addTag('system', '系统管理')
     .build();
   const document = SwaggerModule.createDocument(app, swaggerConfig);

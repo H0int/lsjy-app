@@ -34,7 +34,7 @@
           <span class="font-medium text-white font-mono">¥{{ Number(row.amount).toFixed(2) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="圣点" width="80">
+      <el-table-column label="圣力" width="80">
         <template #default="{ row }">
           <span class="text-amber-400 font-medium font-mono">{{ row.coinAmount }}</span>
         </template>
@@ -84,7 +84,7 @@
           <span class="detail-value text-white font-medium">¥{{ Number(selectedOrder.amount).toFixed(2) }}</span>
         </div>
         <div class="detail-row">
-          <span class="detail-label">圣点数</span>
+          <span class="detail-label">圣力数</span>
           <span class="detail-value text-amber-400">{{ selectedOrder.coinAmount }}</span>
         </div>
         <div class="detail-row">
@@ -147,7 +147,7 @@ function bizTypeLabel(t: string): string {
 }
 
 function channelLabel(c: string): string {
-  return { coin: '圣点', wechat: '微信', alipay: '支付宝', qq: 'QQ' }[c] || c
+  return { coin: '圣力', wechat: '微信', alipay: '支付宝', qq: 'QQ' }[c] || c
 }
 
 async function fetchOrders(page = 1) {
@@ -180,7 +180,7 @@ function handleExport() {
     ElMessage.warning('没有可导出的数据')
     return
   }
-  const headers = ['订单号', '业务类型', '支付渠道', '金额', '圣点', '状态', '创建时间']
+  const headers = ['订单号', '业务类型', '支付渠道', '金额', '圣力', '状态', '创建时间']
   const rows = data.map(o => [
     o.transactionNo,
     bizTypeLabel(o.bizType),

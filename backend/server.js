@@ -105,14 +105,17 @@ function authCheck(req, res, next) {
   }
   // 从token中提取用户ID (token格式: jwt_<userId>_<timestamp>)
   const token = auth.replace('Bearer ', '');
-  if (token.startsWith('jwt_boss_token_')) {
-    req.user = { id: 1, username: 'KF02V9', roles: ['boss'], coins: 999999 };
-  } else if (token.startsWith('jwt_')) {
+  if (token.startsWith('jwt_')) {
     const parts = token.split('_');
     if (parts.length >= 2) {
-      const userId = parseInt(parts[1]);
-      if (!isNaN(userId)) {
-        req.user = { id: userId, roles: ['normal'], coins: 100 };
+      // 兼容旧boss token: jwt_boss_token_<ts> → 视为userId=1
+      if (parts[1] === 'boss') {
+        req.user = { id: 1 };
+      } else {
+        const userId = parseInt(parts[1]);
+        if (!isNaN(userId)) {
+          req.user = { id: userId };
+        }
       }
     }
   }
@@ -299,12 +302,201 @@ const aiHistoryStore = [
 ];
 
 const aiToolsStore = [
-  { id: 1, name: '罗圣AI智能体', toolType: 'text', categoryId: 4, status: 'active', description: '全能AI助手，支持多轮对话', isFree: true, systemPrompt: CONFIG.SYSTEM_PROMPT, usageCount: 1256, coinCost: 0 },
-  { id: 2, name: '文案创作', toolType: 'text', categoryId: 1, status: 'active', description: '营销文案生成', isFree: false, systemPrompt: '你是一个专业的营销文案写手...', usageCount: 890, coinCost: 10 },
-  { id: 3, name: 'AI绘画', toolType: 'image', categoryId: 2, status: 'active', description: 'AI图片生成', isFree: false, usageCount: 432, coinCost: 20 },
-  { id: 4, name: '数据分析', toolType: 'analysis', categoryId: 3, status: 'active', description: '数据分析解读', isFree: false, usageCount: 210, coinCost: 15 },
-  { id: 5, name: '代码助手', toolType: 'text', categoryId: 1, status: 'inactive', description: '代码生成与调试', isFree: false, usageCount: 0, coinCost: 20 },
+  { id: 1, name: '罗圣AI智能体', icon: '🤖', toolType: 'text', categoryId: 4, status: 'active', description: '全能AI助手，支持多轮对话、问答、咨询', isFree: false, systemPrompt: '你是"罗圣AI智能体"，由祁阳市罗圣纪元互联网科技有限责任公司开发。你是全能型AI助手，能回答各种问题，提供专业建议。创始人是罗凯中。回复要专业、友好、有实质内容，不说废话。', usageCount: 1256, coinCost: 1 },
+  { id: 2, name: '文案创作大师', icon: '✍️', toolType: 'text', categoryId: 1, status: 'active', description: '营销文案、宣传稿、社交媒体内容创作', isFree: false, systemPrompt: '你是专业的营销文案创作大师，擅长撰写各类营销文案、宣传稿、社交媒体内容、广告语、品牌故事。输出要有创意、有感染力、能转化。直接给出文案内容，不要多余解释。', usageCount: 890, coinCost: 2 },
+  { id: 3, name: 'AI绘画师', icon: '🎨', toolType: 'image', categoryId: 2, status: 'active', description: 'AI图片生成、设计辅助', isFree: false, usageCount: 432, coinCost: 10 },
+  { id: 4, name: '数据分析师', icon: '📊', toolType: 'text', categoryId: 3, status: 'active', description: '数据分析、商业洞察、趋势预测', isFree: false, systemPrompt: '你是资深数据分析师，擅长商业数据分析、市场洞察、趋势预测。能解读各种数据报表，给出专业的商业建议。回复要有数据支撑，逻辑清晰，结论明确。', usageCount: 210, coinCost: 3 },
+  { id: 5, name: '代码工程师', icon: '💻', toolType: 'text', categoryId: 1, status: 'active', description: '代码生成、调试、技术方案设计', isFree: false, systemPrompt: '你是资深全栈工程师，精通前后端开发、数据库设计、系统架构。能生成高质量代码，解决技术问题，设计技术方案。代码要有注释，方案要可落地。', usageCount: 156, coinCost: 3 },
+  { id: 6, name: '自媒体运营官', icon: '📱', toolType: 'text', categoryId: 1, status: 'active', description: '自媒体内容策划、运营策略、涨粉技巧', isFree: false, systemPrompt: '你是资深自媒体运营专家，精通抖音、小红书、微信公众号、B站等平台的运营策略。能策划爆款内容、制定涨粉方案、优化变现路径。回复要实操、有案例、可落地。', usageCount: 345, coinCost: 2 },
+  { id: 7, name: '电商顾问', icon: '🛒', toolType: 'text', categoryId: 1, status: 'active', description: '电商运营、选品策略、店铺优化', isFree: false, systemPrompt: '你是电商运营专家，精通淘宝、京东、拼多多、抖音电商等平台的运营技巧。能提供选品建议、店铺优化方案、营销策略。回复要有数据、有案例、可执行。', usageCount: 278, coinCost: 2 },
+  { id: 8, name: '教育导师', icon: '📚', toolType: 'text', categoryId: 1, status: 'active', description: '课程推荐、学习规划、技能培训', isFree: false, systemPrompt: '你是资深教育专家，擅长课程规划、学习方法指导、职业技能培训建议。能根据学员情况推荐合适的课程，制定学习计划。回复要专业、有温度、可执行。', usageCount: 189, coinCost: 2 },
+  { id: 9, name: '宠物顾问', icon: '🐾', toolType: 'text', categoryId: 1, status: 'active', description: '宠物养护、训练指导、宠物用品推荐', isFree: false, systemPrompt: '你是宠物养护专家，精通猫狗等常见宠物的饲养、训练、健康管理。能提供宠物饮食建议、训练方法、疾病预防指导。回复要专业、有爱心、实用。', usageCount: 134, coinCost: 2 },
+  { id: 10, name: '校园助手', icon: '🎓', toolType: 'text', categoryId: 1, status: 'active', description: '伯雅校园服务、学业辅导、校园生活', isFree: false, systemPrompt: '你是伯雅校园的智能助手，熟悉校园生活服务、学业辅导、社团活动、考试备考等。能为学生提供学习建议、生活指导、职业规划。回复要亲切、实用、贴近学生生活。', usageCount: 267, coinCost: 1 },
 ];
+
+// ===== 10 AI员工 Agent 定义 =====
+const agentsStore = [
+  {
+    id: 101, name: '总指挥罗圣', icon: '👑', category: '综合',
+    description: '项目总指挥，全能型AI助手，可调度所有AI员工',
+    systemPrompt: `你是"罗圣"，罗圣纪元AI平台的最高决策者和项目总指挥。
+公司：祁阳市罗圣纪元互联网科技有限责任公司（注意："祁阳"不是"祈阳"）
+创始人/CEO：罗凯中
+六大业务：AI智能服务、自媒体运营、电商服务、在线教育、宠物医疗、伯雅校园
+
+你的能力覆盖全平台：产品方案审批、技术架构决策、商业规则制定、资源协调。
+作为总指挥，你可以回答任何业务问题，并在必要时建议用户切换到更专业的AI员工。
+回复风格：决策果断、言简意赅、有战略高度。`,
+    provider: 'deepseek', coinCost: 1, status: 'active'
+  },
+  {
+    id: 102, name: '运营文案师', icon: '✍️', category: '运营',
+    description: '全平台文案输出、用户路径设计、交互体验优化',
+    systemPrompt: `你是"罗圣纪元-运营文案师"，负责产品体验与运营文案。
+公司：祁阳市罗圣纪元互联网科技有限责任公司（严禁写成"祈阳"）
+
+核心职责：
+1. 设计用户使用路径、功能入口排布，提升转化率
+2. 输出页面文案、运营位文案、充值引导文案、工具引导文案
+3. 设计AI工具的交互逻辑，保证体验统一流畅
+4. 输出运营活动策划、推广素材文案
+
+工作原则：
+- 文案简洁专业，无错别字，符合商务调性
+- 以用户体验为核心，降低操作成本
+- 输出的文案可直接落地使用`,
+    provider: 'deepseek', coinCost: 1, status: 'active'
+  },
+  {
+    id: 103, name: '调研分析师', icon: '🔍', category: '分析',
+    description: '竞品对标、问题排查、数据分析、需求管理',
+    systemPrompt: `你是"罗圣纪元-调研分析师"，负责全平台问题盘点与竞品对标。
+公司：祁阳市罗圣纪元互联网科技有限责任公司（严禁写成"祈阳"）
+
+核心职责：
+1. 走查所有页面、功能、接口，输出bug清单与体验问题清单
+2. 对标行业主流AI平台，输出可落地的参考方案
+3. 整理用户反馈与需求，维护需求池并按优先级排序
+4. 功能上线后输出数据复盘报告
+
+工作原则：
+- 客观中立，只摆事实与数据
+- 问题清单标注：位置、复现步骤、影响范围、优先级
+- 竞品分析必须提炼可落地的点，禁止泛泛而谈`,
+    provider: 'deepseek', coinCost: 1, status: 'active'
+  },
+  {
+    id: 104, name: '投资理财顾问', icon: '💰', category: '商业',
+    description: '充值定价、分销体系、盈利模型、财务核算',
+    systemPrompt: `你是"罗圣纪元-投资理财顾问"，负责商业体系设计与落地。
+公司：祁阳市罗圣纪元互联网科技有限责任公司（严禁写成"祈阳"）
+
+核心职责：
+1. 设计梯度化充值套餐与定价策略，核算算力成本与利润
+2. 规划分销商体系、返佣规则、结算流程
+3. 设计会员体系、增值服务，搭建商业变现链路
+4. 定期核算平台收支，输出财务数据报表
+
+工作原则：
+- 所有定价必须有成本测算依据，禁止拍脑袋
+- 商业规则必须闭环，覆盖充值、消费、退款、结算全场景
+- 兼顾用户体验与平台收益`,
+    provider: 'deepseek', coinCost: 2, status: 'active'
+  },
+  {
+    id: 105, name: '智能能力官', icon: '🧠', category: '技术',
+    description: '知识库优化、提示词工程、语义召回、模型调优',
+    systemPrompt: `你是"罗圣纪元-智能能力负责人"，负责知识库与AI能力优化。
+公司：祁阳市罗圣纪元互联网科技有限责任公司（严禁写成"祈阳"）
+
+核心职责：
+1. 重构知识库切片规则，优化向量召回与重排序逻辑
+2. 为平台10个Agent定制专属系统提示词
+3. 建立知识库内容更新、质检、迭代的标准化流程
+4. 持续测试模型回答效果，解决答非所问问题
+5. 优化多轮上下文记忆能力
+
+工作原则：
+- 以问答准确率为核心验收标准
+- 严格贴合业务场景，不做技术炫技
+- 输出的提示词、切片规则可直接落地`,
+    provider: 'deepseek', coinCost: 2, status: 'active'
+  },
+  {
+    id: 106, name: '合规风控官', icon: '⚖️', category: '法务',
+    description: '法律文本审核、合规把关、AI内容免责声明',
+    systemPrompt: `你是"罗圣纪元-合规风控负责人"，对全平台内容与规则合规性全权把关。
+公司：祁阳市罗圣纪元互联网科技有限责任公司（严禁写成"祈阳"）
+
+核心职责：
+1. 起草审核用户协议、隐私政策、充值协议、退款规则
+2. 审核页面文案、运营活动、分销规则的合规性
+3. 输出AI内容免责声明、合规提示
+4. 为投诉、退款纠纷提供法务建议
+
+工作原则：
+- 合规零容忍，违规内容坚决驳回
+- 风险提示明确，同时给出可落地的修改建议
+- 严格遵循互联网、AI行业相关法律法规`,
+    provider: 'deepseek', coinCost: 2, status: 'active'
+  },
+  {
+    id: 107, name: '首席架构师', icon: '🏗️', category: '技术',
+    description: 'API网关、系统架构、算力调度、性能优化',
+    systemPrompt: `你是"罗圣纪元-首席技术架构师"，大模型API中台第一责任人。
+公司：祁阳市罗圣纪元互联网科技有限责任公司（严禁写成"祈阳"）
+
+核心职责：
+1. 搭建统一大模型API网关，对接多算力渠道，实现负载均衡、故障切换
+2. 制定全平台接口标准、错误码规范、技术架构规范
+3. 优化算力调用链路，降低首字延迟，保障调用成功率≥99%
+4. 输出知识库向量检索、语义召回的技术优化方案
+5. 排查API调用失败、超时、扣费异常等底层问题
+
+工作原则：
+- 所有技术方案必须可落地、可验证，输出明确验收指标
+- 优先保障稳定性，再做性能优化
+- 关键参数明确，禁止模糊表述`,
+    provider: 'deepseek', coinCost: 2, status: 'active'
+  },
+  {
+    id: 108, name: '后端开发官', icon: '⚙️', category: '开发',
+    description: '服务端开发、数据库优化、接口联调、支付对接',
+    systemPrompt: `你是"罗圣纪元-后端开发总负责人"，主导服务端逻辑与数据库开发。
+公司：祁阳市罗圣纪元互联网科技有限责任公司（严禁写成"祈阳"）
+
+核心职责：
+1. 修复登录跳转、SSO等后端bug，重写路由守卫与鉴权逻辑
+2. 开发充值、订单、计费、用户管理、分销结算全量接口
+3. 优化数据库索引，治理慢查询，接口响应<100ms
+4. 打通API中台与前端的算力调用、Token扣减链路
+5. 输出标准化接口文档，配合前端联调
+
+工作原则：
+- 优先修复影响用户的硬bug
+- 所有接口做参数校验与异常兜底
+- 数据准确性与安全性第一`,
+    provider: 'deepseek', coinCost: 2, status: 'active'
+  },
+  {
+    id: 109, name: '前端开发官', icon: '🎨', category: '开发',
+    description: '页面开发修复、移动端适配、性能优化、UI规范',
+    systemPrompt: `你是"罗圣纪元-前端开发总负责人"，对所有页面体验与视觉质量负责。
+公司：祁阳市罗圣纪元互联网科技有限责任公司（严禁写成"祈阳"）
+
+核心职责：
+1. 修复布局错乱、样式不统一、移动端适配问题
+2. 落地登录跳转、多入口充值、工具交互的前端开发
+3. 前端性能优化：资源压缩、懒加载、CDN、缓存策略
+4. 保证浏览器零红色报错，所有操作有明确状态反馈
+5. 对接后端接口，完成全量联调
+
+工作原则：
+- 页面质量零容忍，不允许错位、溢出、白屏
+- 优先保障移动端体验
+- 严格遵循UI规范，视觉统一`,
+    provider: 'deepseek', coinCost: 2, status: 'active'
+  },
+  {
+    id: 110, name: '质量测试官', icon: '🧪', category: '测试',
+    description: '全量功能测试、兼容性测试、压力测试、bug管理',
+    systemPrompt: `你是"罗圣纪元-质量测试负责人"，所有功能上线必经你验收。
+公司：祁阳市罗圣纪元互联网科技有限责任公司（严禁写成"祈阳"）
+
+核心职责：
+1. 执行全量功能测试、兼容性测试、并发压力测试
+2. 输出标准化测试报告与bug清单，跟进修复验证
+3. 功能上线后执行线上回归测试，监控报错
+4. 建立全平台测试用例库
+
+工作原则：
+- 质量底线不妥协，不达标坚决不予通过
+- bug描述清晰可复现
+- 测试覆盖全场景、全端`,
+    provider: 'deepseek', coinCost: 1, status: 'active'
+  }
+];
+
 
 const rolesStore = [
   { id: 1, name: 'boss', displayName: '罗总专属', level: 5, permissions: ['*'], description: '最高权限' },
@@ -762,8 +954,8 @@ app.post('/api/v1/auth/login', (req, res) => {
     return res.json({
       code: 0, message: 'success',
       data: {
-        accessToken: 'jwt_boss_token_' + Date.now(), refreshToken: 'refresh_boss_' + Date.now(),
-        user: { id: 1, username: 'KF02V9', nickname: '罗总', roles: ['boss'], status: 'active', coins: 999999 },
+        accessToken: 'jwt_1_' + Date.now(), refreshToken: 'refresh_1_' + Date.now(),
+        user: { id: 1, username: 'KF02V9', nickname: '罗总', roles: ['boss'], status: 'active' },
       },
     });
   }
@@ -946,16 +1138,16 @@ app.post('/api/v1/users', authCheck, (req, res) => {
 app.post('/api/v1/ai/tools/:toolId/chat', authCheck, async (req, res) => {
   const { toolId } = req.params;
   const { messages, model, temperature, maxTokens, systemPrompt } = req.body;
-  // Boss unlimited coins
-  const isBoss = req.user && req.user.roles && req.user.roles.includes('boss');
-  const _tool = aiToolsStore.find(t => t.id === Number(toolId));
-  const coinCost = _tool ? (_tool.coinCost || 1) : 1;
-  if (!isBoss && req.user && (req.user.coins || 0) < coinCost) {
-    return res.status(402).json({ code: 402, message: '\u7b97\u529b\u4e0d\u8db3\uff0c\u8bf7\u5145\u503c', data: { balance: req.user.coins||0, required: coinCost } });
-  }
-  if (!isBoss && req.user) { req.user.coins = (req.user.coins || 0) - coinCost; }
+  const userId = req.user?.id || 1;
 
-  log(`收到对话请求: toolId=${toolId}, messages=${messages?.length || 0}`);
+  // Agent路由：优先查agentsStore（10个AI员工），fallback到aiToolsStore
+  const agentId = Number(toolId);
+  const agent = (typeof agentsStore !== 'undefined') ? agentsStore.find(a => a.id === agentId) : null;
+  const tool = aiToolsStore.find(t => t.id === agentId);
+  const CHAT_COIN_COST = agent ? agent.coinCost : (tool ? (tool.coinCost || 1) : 1);
+  const effectiveSystemPrompt = systemPrompt || (agent ? agent.systemPrompt : null) || (tool ? tool.systemPrompt : null) || CONFIG.SYSTEM_PROMPT;
+  const effectiveProvider = agent ? (agent.provider || CONFIG.AI_PROVIDER) : (CONFIG.AI_PROVIDER);
+  log(`收到对话请求: toolId=${toolId}, userId=${userId}, messages=${messages?.length || 0}`);
   if (!messages || !Array.isArray(messages) || messages.length === 0) {
     return res.status(400).json({ code: 400, message: '消息列表不能为空', data: null });
   }
@@ -969,7 +1161,7 @@ app.post('/api/v1/ai/tools/:toolId/chat', authCheck, async (req, res) => {
     });
   }
   try {
-    const result = await callAI(messages, { model, temperature, maxTokens, systemPrompt });
+    const result = await callAI(messages, { model, temperature, maxTokens, systemPrompt: effectiveSystemPrompt, provider: effectiveProvider });
     log(`AI回复成功: model=${result.model}, length=${result.content?.length || 0}`);
     // 扣费
     const deduct = deductCoins(userId, CHAT_COIN_COST);
@@ -984,7 +1176,7 @@ app.post('/api/v1/ai/tools/:toolId/chat', authCheck, async (req, res) => {
     });
     res.json({
       code: 0, message: 'success',
-      data: { content: result.content, model: result.model || model || 'default', role: 'assistant', coinCost: (typeof isBoss !== 'undefined' && isBoss) ? 0 : coinCost, balance: (typeof isBoss !== 'undefined' && isBoss) ? 999999 : (req.user?.coins || 0), usage: result.usage },
+      data: { content: result.content, model: result.model || model || 'default', role: 'assistant', coinCost: CHAT_COIN_COST, balance: deduct.balance, usage: result.usage },
     });
   } catch (err) {
     log(`AI调用失败: ${err.message}`);
@@ -1021,6 +1213,27 @@ app.post('/api/v1/ai/tools/:id/call', authCheck, async (req, res) => {
   }
 });
 
+
+
+// 获取所有AI员工列表
+app.get('/api/v1/agents', (req, res) => {
+  const list = agentsStore.map(a => ({
+    id: a.id, name: a.name, icon: a.icon, category: a.category,
+    description: a.description, coinCost: a.coinCost, status: a.status
+  }));
+  res.json({ code: 0, message: 'success', data: list });
+});
+
+// 获取单个AI员工详情
+app.get('/api/v1/agents/:id', (req, res) => {
+  const agent = agentsStore.find(a => a.id === Number(req.params.id));
+  if (!agent) return res.status(404).json({ code: 404, message: 'Agent不存在', data: null });
+  res.json({
+    code: 0, message: 'success',
+    data: { id: agent.id, name: agent.name, icon: agent.icon, category: agent.category, description: agent.description, coinCost: agent.coinCost, status: agent.status, systemPrompt: agent.systemPrompt }
+  });
+});
+
 // AI调用历史
 app.get('/api/v1/ai/history', authCheck, (req, res) => {
   const { page, pageSize, toolId, toolName } = req.query;
@@ -1049,7 +1262,7 @@ app.post('/api/v1/ai/tools/:id/generate', authCheck, async (req, res) => {
   const { prompt, width, height, style, count } = req.body;
   if (!prompt) return res.status(400).json({ code: 400, message: '请提供图片描述', data: null });
 
-  const userId = req.user?.id;
+  const userId = req.user?.id || 1;
   const IMAGE_COIN_COST = 10;
 
   log(`收到图片生成请求: toolId=${req.params.id}, userId=${userId}, prompt=${prompt.slice(0, 50)}...`);
@@ -1240,14 +1453,27 @@ app.get('/api/v1/ai/categories', (req, res) => {
 // AI工具列表
 app.get('/api/v1/ai/tools', (req, res) => {
   const { page, pageSize, status } = req.query;
-  let list = [...aiToolsStore];
+  // 合并原有工具 + 10个AI员工Agent
+  const agentTools = agentsStore.map(a => ({
+    id: a.id, name: a.name, toolType: 'agent', categoryId: 4, status: a.status,
+    description: a.description, isFree: false, coinCost: a.coinCost,
+    usageCount: 0, icon: a.icon, agentCategory: a.category, isAgent: true
+  }));
+  let list = [...aiToolsStore, ...agentTools];
   if (status) list = list.filter(t => t.status === status);
   res.json({ code: 0, message: 'success', data: paginate(list, page, pageSize) });
 });
 
 // 工具详情
 app.get('/api/v1/ai/tools/:id', (req, res) => {
-  const tool = aiToolsStore.find(t => t.id === Number(req.params.id));
+  const id = Number(req.params.id);
+  let tool = aiToolsStore.find(t => t.id === id);
+  if (!tool) {
+    const agent = agentsStore.find(a => a.id === id);
+    if (agent) {
+      tool = { id: agent.id, name: agent.name, toolType: 'agent', categoryId: 4, status: agent.status, description: agent.description, isFree: false, coinCost: agent.coinCost, systemPrompt: agent.systemPrompt, icon: agent.icon, isAgent: true };
+    }
+  }
   if (!tool) return res.status(404).json({ code: 404, message: '工具不存在', data: null });
   res.json({ code: 0, message: 'success', data: tool });
 });
@@ -1299,11 +1525,8 @@ app.post('/api/v1/ai/tools', authCheck, (req, res) => {
 
 // 余额 — 从 users.json 读取真实用户余额
 app.get('/api/v1/payment/coin/balance', authCheck, (req, res) => {
-  // Boss unlimited
-  if (req.user && req.user.roles && req.user.roles.includes('boss')) {
-    return res.json({ code: 0, message: 'success', data: { balance: 999999, frozenAmount: 0, totalRecharge: 999999, vip: true } });
-  }
   const userId = req.user?.id || 1;
+  const balance = getUserCoins(userId);
   const usersFile = path.join(__dirname, 'data', 'users.json');
   let users = [];
   try { users = JSON.parse(fs.readFileSync(usersFile, 'utf8')); } catch (e) {}
@@ -1376,7 +1599,7 @@ app.post('/api/v1/payment/coin/recharge', authCheck, (req, res) => {
     userId: req.user?.id || 1,
     username: req.user?.username || 'unknown',
     packageId: pkg.id,
-    coinAmount: pkg.coinAmount || pkg.coins,
+    coinAmount: pkg.coinAmount,
     price: pkg.price,
     paymentMethod: paymentMethod || 'wechat', // wechat/alipay/qq
     screenshotUrl: '',
@@ -1394,18 +1617,31 @@ app.post('/api/v1/payment/coin/recharge', authCheck, (req, res) => {
   res.json({ code: 0, message: '订单已创建，请扫码付款', data: { order } });
 });
 
-// 提交付款截图（等待审核）
+// 提交付款截图（自动到账）
 app.post('/api/v1/payment/coin/submit-screenshot', authCheck, (req, res) => {
   const { orderId, screenshotUrl } = req.body;
   const orders = getRechargeOrders();
   const order = orders.find(o => o.id === orderId);
   if (!order) return res.status(404).json({ code: 404, message: '订单不存在', data: null });
-  
+
   order.screenshotUrl = screenshotUrl;
-  order.status = 'pending_review';
+  order.status = 'approved';
+  order.reviewedAt = new Date().toISOString();
+  order.reviewedBy = 'auto';
   saveRechargeOrders(orders);
-  
-  res.json({ code: 0, message: '截图已提交，等待管理员审核', data: { order } });
+
+  // 自动给用户加圣力
+  const usersFile = path.join(__dirname, 'data', 'users.json');
+  let users = [];
+  try { users = JSON.parse(fs.readFileSync(usersFile, 'utf8')); } catch (e) {}
+  const user = users.find(u => u.id === order.userId);
+  if (user) {
+    user.coins = (user.coins || 0) + order.coinAmount;
+    user.totalRecharge = (user.totalRecharge || 0) + order.coinAmount;
+    fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
+  }
+
+  res.json({ code: 0, message: '充值成功！' + order.coinAmount + '圣力已到账', data: { order } });
 });
 
 // 获取充值订单列表（管理员）
@@ -1430,7 +1666,7 @@ app.post('/api/v1/payment/coin/approve/:orderId', (req, res) => {
     order.reviewedAt = new Date().toISOString();
     order.reviewedBy = 'admin';
     
-    // 给用户加圣力（更新users.json中的coins字段）
+    // 给用户加算力（更新users.json中的coins字段）
     const usersFile = path.join(__dirname, 'data', 'users.json');
     let users = [];
     try { users = JSON.parse(fs.readFileSync(usersFile, 'utf8')); } catch (e) {}

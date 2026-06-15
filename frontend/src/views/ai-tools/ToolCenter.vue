@@ -53,7 +53,7 @@
         <p class="text-sm mb-3 line-clamp-2" style="color: var(--cyber-text-dim);">{{ tool.description }}</p>
         <div class="flex items-center justify-between">
           <span class="text-sm font-bold" :style="{ color: tool.isFree ? 'var(--cyber-green)' : 'var(--cyber-amber)' }">
-            {{ tool.isFree ? '免费' : `${tool.coinCost} 圣点` }}
+            {{ tool.isFree ? '免费' : `${tool.coinCost} 圣力` }}
           </span>
           <span class="text-xs" style="color: var(--cyber-text-dim);">{{ formatUseCount(tool.usageCount) }}次使用</span>
         </div>
@@ -75,7 +75,7 @@
         </div>
         <div class="text-right flex-shrink-0">
           <div class="text-sm font-bold" :style="{ color: tool.isFree ? 'var(--cyber-green)' : 'var(--cyber-amber)' }">
-            {{ tool.isFree ? '免费' : `${tool.coinCost} 圣点` }}
+            {{ tool.isFree ? '免费' : `${tool.coinCost} 圣力` }}
           </div>
           <div class="text-xs" style="color: var(--cyber-text-dim);">{{ formatUseCount(tool.usageCount) }}次使用</div>
         </div>

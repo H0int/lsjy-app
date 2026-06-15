@@ -24,7 +24,7 @@
         <option value="">全部类型</option>
         <option value="full_reduce">满减券</option>
         <option value="discount">折扣券</option>
-        <option value="coin_gift">圣点赠送</option>
+        <option value="coin_gift">圣力赠送</option>
       </select>
       <button @click="showDialog = true" class="cyber-btn cyber-btn-cyan">+ 创建优惠券</button>
     </div>
@@ -62,7 +62,7 @@
         <div class="space-y-4">
           <div><label class="cyber-label">名称</label><input v-model="form.name" class="cyber-text-input w-full" /></div>
           <div class="cyber-grid-2">
-            <div><label class="cyber-label">类型</label><select v-model="form.type" class="cyber-select w-full"><option value="full_reduce">满减券</option><option value="discount">折扣券</option><option value="coin_gift">圣点赠送</option></select></div>
+            <div><label class="cyber-label">类型</label><select v-model="form.type" class="cyber-select w-full"><option value="full_reduce">满减券</option><option value="discount">折扣券</option><option value="coin_gift">圣力赠送</option></select></div>
             <div><label class="cyber-label">面值</label><input v-model.number="form.discountValue" type="number" class="cyber-text-input w-full" /></div>
           </div>
           <div class="cyber-grid-2">
@@ -101,7 +101,7 @@ const usageRate = computed(() => {
   return total > 0 ? ((used / total) * 100).toFixed(1) : '0'
 })
 
-function couponTypeLabel(t: string) { return { full_reduce: '满减券', discount: '折扣券', coin_gift: '圣点赠送' }[t] || t }
+function couponTypeLabel(t: string) { return { full_reduce: '满减券', discount: '折扣券', coin_gift: '圣力赠送' }[t] || t }
 function couponStatusLabel(s: string) { return { active: '生效中', paused: '已暂停', expired: '已过期' }[s] || s }
 function issueRuleLabel(r: string) { return { new_user: '新用户', consume_threshold: '消费满额', activity: '活动发放', manual: '手动发放' }[r] || r }
 

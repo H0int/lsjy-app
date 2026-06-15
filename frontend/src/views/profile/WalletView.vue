@@ -8,21 +8,21 @@
     </button>
 
     <h1 class="text-2xl font-bold mb-6" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">
-      <span style="color: var(--cyber-amber);">▍</span>圣点账户
+      <span style="color: var(--cyber-amber);">▍</span>圣力中心
     </h1>
 
     <!-- 余额卡片 -->
     <div class="relative rounded-2xl p-6 mb-6 overflow-hidden cyber-scanline"
       style="background: linear-gradient(135deg, rgba(255,184,0,0.08), rgba(124,58,237,0.1), rgba(255,0,255,0.06)); border: 1px solid rgba(255,184,0,0.3);">
       <div class="relative z-10">
-        <p class="text-sm" style="color: var(--cyber-amber); opacity: 0.8;">当前余额</p>
+        <p class="text-sm" style="color: var(--cyber-amber); opacity: 0.8;">当前圣力余额</p>
         <p class="text-4xl font-bold mt-1 glow-cyan" style="color: var(--cyber-cyan); font-family: 'JetBrains Mono', monospace;">
-          {{ coinBalance }} <span class="text-lg font-normal" style="color: var(--cyber-text-dim);">圣点</span>
+          {{ coinBalance >= 999999 ? '∞ 无限' : coinBalance }} <span class="text-lg font-normal" style="color: var(--cyber-text-dim);">圣力</span>
         </p>
       </div>
       <div class="absolute right-6 top-1/2 -translate-y-1/2 text-6xl opacity-15" style="filter: drop-shadow(0 0 10px rgba(255,184,0,0.5));">⚡</div>
       <div class="mt-4 flex gap-3 relative z-10 flex-wrap">
-        <el-button type="warning" @click="showRecharge = true" style="min-width: 80px;">充值</el-button>
+        <el-button type="warning" @click="showRecharge = true" style="min-width: 80px;">⚡ 充值圣力</el-button>
         <el-button plain @click="showMyOrders = !showMyOrders"
           :style="{ borderColor: 'var(--cyber-green)', color: 'var(--cyber-green)' }">
           {{ showMyOrders ? '隐藏订单' : '我的订单' }}
@@ -30,98 +30,177 @@
       </div>
     </div>
 
-    <!-- 充值套餐 -->
+    <!-- ========== 充值套餐选择 ========== -->
     <div class="mb-6" v-if="showRecharge">
       <h3 class="font-bold mb-3" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">
-        <span style="color: var(--cyber-green);">▍</span>充值套餐
+        <span style="color: var(--cyber-green);">▍</span>选择充值套餐
       </h3>
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div v-for="pkg in packages" :key="pkg.id"
-          @click="selectedPkgId = pkg.id"
-          class="cyber-card p-4 text-center cursor-pointer transition-all duration-300"
-          :style="selectedPkgId === pkg.id
-            ? 'border-color: var(--cyber-cyan); box-shadow: 0 0 15px rgba(0,240,255,0.2);'
-            : ''">
-          <div v-if="pkg.isRecommended" class="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 text-white text-xs rounded-full"
-            style="background: linear-gradient(135deg, var(--cyber-magenta), var(--cyber-purple));">推荐</div>
-          <div class="text-2xl font-bold" style="color: var(--cyber-cyan); font-family: 'JetBrains Mono', monospace;">{{ pkg.coinAmount }}</div>
-          <div class="text-xs mt-1" style="color: var(--cyber-text-dim);">圣点</div>
-          <div class="text-sm font-bold mt-2" style="color: var(--cyber-amber);">¥{{ pkg.price }}</div>
-          <div v-if="pkg.bonusCoins" class="text-xs mt-1" style="color: var(--cyber-green);">送{{ pkg.bonusCoins }}圣点</div>
+
+      <!-- 轻量档 -->
+      <div class="mb-3">
+        <div class="text-[10px] mb-1.5 px-1" style="color: var(--cyber-text-dim);">── 轻量体验 ──</div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          <div v-for="pkg in lightPackages" :key="pkg.id"
+            @click="selectedPkgId = pkg.id"
+            class="cyber-card p-3 text-center cursor-pointer transition-all duration-300 relative"
+            :style="selectedPkgId === pkg.id
+              ? 'border-color: var(--cyber-cyan); box-shadow: 0 0 15px rgba(0,240,255,0.2);'
+              : ''">
+            <div v-if="pkg.isRecommended" class="absolute -top-1.5 left-1/2 -translate-x-1/2 px-2 py-0.5 text-white text-[10px] rounded-full whitespace-nowrap"
+              style="background: linear-gradient(135deg, var(--cyber-magenta), var(--cyber-purple));">🔥 推荐</div>
+            <div class="text-xl font-bold" style="color: var(--cyber-cyan); font-family: 'JetBrains Mono', monospace;">{{ pkg.coinAmount }}</div>
+            <div class="text-[10px] mt-0.5" style="color: var(--cyber-text-dim);">圣力</div>
+            <div class="text-sm font-bold mt-1.5" style="color: var(--cyber-amber);">¥{{ pkg.price }}</div>
+            <div v-if="pkg.bonusCoins" class="text-[10px] mt-0.5" style="color: var(--cyber-green);">+{{ pkg.bonusCoins }}赠送</div>
+          </div>
         </div>
       </div>
+
+      <!-- 标准档 -->
+      <div class="mb-3">
+        <div class="text-[10px] mb-1.5 px-1" style="color: var(--cyber-text-dim);">── 标准畅用 ──</div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          <div v-for="pkg in standardPackages" :key="pkg.id"
+            @click="selectedPkgId = pkg.id"
+            class="cyber-card p-3 text-center cursor-pointer transition-all duration-300 relative"
+            :style="selectedPkgId === pkg.id
+              ? 'border-color: var(--cyber-cyan); box-shadow: 0 0 15px rgba(0,240,255,0.2);'
+              : ''">
+            <div v-if="pkg.isRecommended" class="absolute -top-1.5 left-1/2 -translate-x-1/2 px-2 py-0.5 text-white text-[10px] rounded-full whitespace-nowrap"
+              style="background: linear-gradient(135deg, var(--cyber-magenta), var(--cyber-purple));">🔥 推荐</div>
+            <div class="text-xl font-bold" style="color: var(--cyber-cyan); font-family: 'JetBrains Mono', monospace;">{{ pkg.coinAmount }}</div>
+            <div class="text-[10px] mt-0.5" style="color: var(--cyber-text-dim);">圣力</div>
+            <div class="text-sm font-bold mt-1.5" style="color: var(--cyber-amber);">¥{{ pkg.price }}</div>
+            <div v-if="pkg.bonusCoins" class="text-[10px] mt-0.5" style="color: var(--cyber-green);">+{{ pkg.bonusCoins }}赠送</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 高端档 -->
+      <div class="mb-3">
+        <div class="text-[10px] mb-1.5 px-1" style="color: var(--cyber-text-dim);">── 高端尊享 ──</div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          <div v-for="pkg in premiumPackages" :key="pkg.id"
+            @click="selectedPkgId = pkg.id"
+            class="cyber-card p-3 text-center cursor-pointer transition-all duration-300 relative"
+            :style="selectedPkgId === pkg.id
+              ? 'border-color: var(--cyber-amber); box-shadow: 0 0 15px rgba(255,184,0,0.3);'
+              : ''">
+            <div v-if="pkg.isRecommended" class="absolute -top-1.5 left-1/2 -translate-x-1/2 px-2 py-0.5 text-white text-[10px] rounded-full whitespace-nowrap"
+              style="background: linear-gradient(135deg, var(--cyber-amber), #ff6b00);">👑 超值</div>
+            <div class="text-xl font-bold" style="color: var(--cyber-amber); font-family: 'JetBrains Mono', monospace;">{{ pkg.coinAmount }}</div>
+            <div class="text-[10px] mt-0.5" style="color: var(--cyber-text-dim);">圣力</div>
+            <div class="text-sm font-bold mt-1.5" style="color: var(--cyber-amber);">¥{{ pkg.price }}</div>
+            <div v-if="pkg.bonusCoins" class="text-[10px] mt-0.5" style="color: var(--cyber-green);">+{{ pkg.bonusCoins }}赠送</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 支付方式选择 -->
+      <div class="mt-4 mb-3">
+        <div class="text-[10px] mb-1.5 px-1" style="color: var(--cyber-text-dim);">── 支付方式 ──</div>
+        <div class="flex gap-3">
+          <div @click="payMethod = 'wechat'" class="flex-1 cyber-card p-3 text-center cursor-pointer transition-all"
+            :style="payMethod === 'wechat' ? 'border-color: #07C160; background: rgba(7,193,96,0.05);' : ''">
+            <div class="text-xl"></div>
+            <div class="text-[11px] mt-1" style="color: #07C160;">微信支付</div>
+          </div>
+          <div @click="payMethod = 'alipay'" class="flex-1 cyber-card p-3 text-center cursor-pointer transition-all"
+            :style="payMethod === 'alipay' ? 'border-color: #00A0FF; background: rgba(0,160,255,0.05);' : ''">
+            <div class="text-xl"></div>
+            <div class="text-[11px] mt-1" style="color: #00A0FF;">支付宝</div>
+          </div>
+          <div @click="payMethod = 'qq'" class="flex-1 cyber-card p-3 text-center cursor-pointer transition-all"
+            :style="payMethod === 'qq' ? 'border-color: #12B7F5; background: rgba(18,183,245,0.05);' : ''">
+            <div class="text-xl">🐧</div>
+            <div class="text-[11px] mt-1" style="color: #12B7F5;">QQ支付</div>
+          </div>
+        </div>
+      </div>
+
       <div class="mt-4 text-center">
-        <el-button type="primary" size="large" :loading="recharging" @click="handleRecharge">
-          确认充值
+        <el-button type="warning" size="large" :loading="recharging" @click="handleRecharge"
+          style="min-width: 200px; font-weight: bold;">
+          ⚡ 确认充值 {{ selectedPkg?.coinAmount || 0 }} 圣力（¥{{ selectedPkg?.price || 0 }}）
         </el-button>
       </div>
     </div>
 
-    <!-- 支付二维码弹窗 -->
-    <el-dialog v-model="showPayDialog" title="扫码支付" width="400px" :close-on-click-modal="false">
-      <div class="text-center mb-4">
-        <p class="text-lg font-bold mb-2" style="color: var(--cyber-text);">订单金额：<span style="color: var(--cyber-amber);">¥{{ currentOrder?.price }}</span></p>
-        <p class="text-sm" style="color: var(--cyber-text-dim);">获得 {{ currentOrder?.coinAmount }} 圣点</p>
+    <!-- ========== 支付二维码弹窗 ========== -->
+    <el-dialog v-model="showPayDialog" title="扫码支付" width="420px" :close-on-click-modal="false">
+      <div class="text-center mb-3">
+        <p class="text-lg font-bold mb-1" style="color: var(--cyber-text);">
+          订单金额：<span style="color: var(--cyber-amber); font-family: 'JetBrains Mono', monospace;">¥{{ currentOrder?.price }}</span>
+        </p>
+        <p class="text-sm" style="color: var(--cyber-text-dim);">
+          获得 <span style="color: var(--cyber-cyan); font-weight: bold;">{{ currentOrder?.coinAmount }}</span> 圣力
+        </p>
       </div>
-      
-      <!-- 支付方式选择 -->
-      <div class="flex justify-center gap-4 mb-4">
-        <div @click="switchPayMethod('wechat')" class="cursor-pointer p-3 rounded-lg transition-all"
+
+      <!-- 支付方式切换 -->
+      <div class="flex justify-center gap-3 mb-4">
+        <div @click="switchPayMethod('wechat')" class="cursor-pointer p-2.5 rounded-lg transition-all flex flex-col items-center"
           :style="payMethod === 'wechat' ? 'background: rgba(7,193,96,0.1); border: 2px solid #07C160;' : 'border: 2px solid transparent;'">
-          <div class="text-2xl">💚</div>
-          <div class="text-xs mt-1">微信</div>
+          <div class="text-xl">💚</div>
+          <div class="text-[10px] mt-0.5" style="color: #07C160;">微信</div>
         </div>
-        <div @click="switchPayMethod('alipay')" class="cursor-pointer p-3 rounded-lg transition-all"
+        <div @click="switchPayMethod('alipay')" class="cursor-pointer p-2.5 rounded-lg transition-all flex flex-col items-center"
           :style="payMethod === 'alipay' ? 'background: rgba(0,160,255,0.1); border: 2px solid #00A0FF;' : 'border: 2px solid transparent;'">
-          <div class="text-2xl">💙</div>
-          <div class="text-xs mt-1">支付宝</div>
+          <div class="text-xl">💙</div>
+          <div class="text-[10px] mt-0.5" style="color: #00A0FF;">支付宝</div>
         </div>
-        <div @click="switchPayMethod('qq')" class="cursor-pointer p-3 rounded-lg transition-all"
+        <div @click="switchPayMethod('qq')" class="cursor-pointer p-2.5 rounded-lg transition-all flex flex-col items-center"
           :style="payMethod === 'qq' ? 'background: rgba(18,183,245,0.1); border: 2px solid #12B7F5;' : 'border: 2px solid transparent;'">
-          <div class="text-2xl">🐧</div>
-          <div class="text-xs mt-1">QQ</div>
+          <div class="text-xl">🐧</div>
+          <div class="text-[10px] mt-0.5" style="color: #12B7F5;">QQ</div>
         </div>
       </div>
 
-      <!-- 二维码显示 -->
-      <div class="flex justify-center mb-4">
-        <div class="w-64 h-64 rounded-lg overflow-hidden" style="border: 2px solid var(--cyber-border);">
-          <img :src="qrCodeUrl" class="w-full h-full object-contain" alt="收款二维码" />
+      <!-- 二维码显示区 -->
+      <div class="flex justify-center mb-3">
+        <div class="rounded-xl overflow-hidden p-2"
+          :style="payMethod === 'wechat' ? 'background: #07C160;' : payMethod === 'alipay' ? 'background: #00A0FF;' : 'background: #12B7F5;'">
+          <div class="bg-white rounded-lg p-3">
+            <img :src="qrCodeUrl" class="w-56 h-56 object-contain" alt="收款二维码" />
+          </div>
         </div>
       </div>
 
-      <div class="text-center text-sm mb-4" style="color: var(--cyber-text-dim);">
-        请使用{{ payMethodName }}扫描上方二维码完成支付
+      <div class="text-center text-xs mb-4" style="color: var(--cyber-text-dim);">
+        请使用 <span style="font-weight: bold;" :style="{
+          color: payMethod === 'wechat' ? '#07C160' : payMethod === 'alipay' ? '#00A0FF' : '#12B7F5'
+        }">{{ payMethodName }}</span> 扫描上方二维码完成支付
       </div>
 
       <!-- 上传付款截图 -->
       <div class="border-t pt-4" style="border-color: var(--cyber-border);">
-        <p class="text-sm font-bold mb-2" style="color: var(--cyber-text);">上传付款截图</p>
+        <p class="text-sm font-bold mb-2" style="color: var(--cyber-text);">📸 上传付款截图（提交后自动到账）</p>
         <el-upload
           action="#"
           :auto-upload="false"
           :show-file-list="false"
           accept="image/*"
           @change="handleScreenshotUpload">
-          <el-button type="primary" :loading="uploading">
-            {{ uploading ? '上传中...' : '选择图片' }}
+          <el-button type="primary" :loading="uploading" size="small">
+            {{ uploading ? '上传中...' : '选择截图' }}
           </el-button>
         </el-upload>
-        <p v-if="screenshotUrl" class="text-xs mt-2" style="color: var(--cyber-green);">✓ 截图已上传</p>
+        <p v-if="screenshotUrl" class="text-xs mt-2" style="color: var(--cyber-green);">✅ 截图已上传，点击"确认到账"完成充值</p>
+        <p v-else class="text-[10px] mt-1" style="color: var(--cyber-text-dim);">支持 JPG/PNG 格式</p>
       </div>
 
       <template #footer>
         <el-button @click="showPayDialog = false">取消</el-button>
-        <el-button type="primary" :disabled="!screenshotUrl" :loading="submitting" @click="submitScreenshot">
-          提交审核
+        <el-button type="success" :disabled="!screenshotUrl" :loading="submitting" @click="submitScreenshot">
+          ✅ 确认到账
         </el-button>
       </template>
     </el-dialog>
 
-    <!-- 我的订单 -->
+    <!-- ========== 我的订单 ========== -->
     <div class="cyber-card p-6" v-if="showMyOrders">
       <h3 class="font-bold mb-4" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">
-        <span style="color: var(--cyber-green);">▍</span>我的充值订单
+        <span style="color: var(--cyber-green);"></span>我的充值订单
       </h3>
       <div class="space-y-3">
         <div v-for="order in myOrders" :key="order.id"
@@ -137,7 +216,7 @@
               {{ order.status === 'approved' ? '✅' : order.status === 'rejected' ? '❌' : '⏳' }}
             </div>
             <div>
-              <div class="text-sm font-medium" style="color: var(--cyber-text);">{{ order.coinAmount }} 圣点</div>
+              <div class="text-sm font-medium" style="color: var(--cyber-text);">{{ order.coinAmount }} 圣力</div>
               <div class="text-xs" style="color: var(--cyber-text-dim);">{{ formatDate(order.createdAt) }}</div>
             </div>
           </div>
@@ -146,7 +225,7 @@
             <div class="text-xs" :style="{
               color: order.status === 'approved' ? 'var(--cyber-green)' : order.status === 'rejected' ? '#ff4466' : 'var(--cyber-amber)'
             }">
-              {{ order.status === 'approved' ? '已通过' : order.status === 'rejected' ? '已拒绝' : order.status === 'pending_review' ? '审核中' : '待付款' }}
+              {{ order.status === 'approved' ? '已到账' : order.status === 'rejected' ? '已拒绝' : order.status === 'pending_review' ? '审核中' : '待付款' }}
             </div>
           </div>
         </div>
@@ -180,6 +259,20 @@ const screenshotUrl = ref('')
 const uploading = ref(false)
 const submitting = ref(false)
 
+// 套餐分组
+const lightPackages = computed(() => packages.value.filter(p => p.price < 50))
+const standardPackages = computed(() => packages.value.filter(p => p.price >= 50 && p.price < 300))
+const premiumPackages = computed(() => packages.value.filter(p => p.price >= 300))
+
+const selectedPkg = computed(() => packages.value.find(p => p.id === selectedPkgId.value))
+
+// 二维码URL映射
+const qrCodeMap: Record<string, string> = {
+  wechat: 'qrcodes/wechat_pay.jpg',
+  alipay: 'qrcodes/alipay.jpg',
+  qq: 'qrcodes/qq_pay.jpg',
+}
+
 const qrCodeUrl = computed(() => {
   const baseUrl = import.meta.env.BASE_URL || '/'
   if (payMethod.value === 'wechat') return baseUrl + 'payment/wechat.png'
@@ -188,9 +281,9 @@ const qrCodeUrl = computed(() => {
 })
 
 const payMethodName = computed(() => {
-  if (payMethod.value === 'wechat') return '微信'
+  if (payMethod.value === 'wechat') return '微信支付'
   if (payMethod.value === 'alipay') return '支付宝'
-  return 'QQ'
+  return 'QQ支付'
 })
 
 onMounted(async () => {
@@ -215,7 +308,7 @@ async function handleRecharge() {
     })
     currentOrder.value = res.data.data.order
     showPayDialog.value = true
-    ElMessage.success('订单已创建，请扫码付款')
+    ElMessage.success('订单已创建，请扫码付款后上传截图')
   } catch (e: any) {
     ElMessage.error(e?.response?.data?.message || '创建订单失败')
   } finally {
@@ -233,7 +326,7 @@ function switchPayMethod(method: string) {
 async function handleScreenshotUpload(file: any) {
   const rawFile = file.raw || file
   if (!rawFile) return
-  
+
   uploading.value = true
   try {
     const reader = new FileReader()
@@ -257,14 +350,21 @@ async function submitScreenshot() {
   if (!currentOrder.value || !screenshotUrl.value) return
   submitting.value = true
   try {
-    await service.post('/payment/coin/submit-screenshot', {
+    const res = await service.post('/payment/coin/submit-screenshot', {
       orderId: currentOrder.value.id,
       screenshotUrl: screenshotUrl.value
     })
-    ElMessage.success('截图已提交，等待管理员审核')
+    // 后端已改为自动到账，检查返回
+    if (res.data.code === 0) {
+      ElMessage.success(` 充值成功！${currentOrder.value.coinAmount} 圣力已到账`)
+      // 刷新余额
+      const balRes = await paymentApi.getBalance()
+      coinBalance.value = balRes.data.balance
+    } else {
+      ElMessage.success('截图已提交，等待管理员审核')
+    }
     showPayDialog.value = false
     screenshotUrl.value = ''
-    // 刷新订单列表
     loadMyOrders()
   } catch (e: any) {
     ElMessage.error(e?.response?.data?.message || '提交失败')

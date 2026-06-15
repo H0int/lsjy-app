@@ -30,7 +30,7 @@
       <el-table-column label="费用" width="100">
         <template #default="{ row }">
           <span :class="row.isFree ? 'text-green-400' : 'text-amber-400'" class="font-medium">
-            {{ row.isFree ? '免费' : `${row.coinCost}圣点` }}
+            {{ row.isFree ? '免费' : `${row.coinCost}圣力` }}
           </span>
         </template>
       </el-table-column>
@@ -105,7 +105,7 @@
               <el-option v-for="(label, key) in toolTypeMap" :key="key" :label="label" :value="key" />
             </el-select>
           </el-form-item>
-          <el-form-item label="圣点价格">
+          <el-form-item label="圣力价格">
             <el-input-number v-model="form.coinCost" :min="0" :max="9999" class="w-full" />
           </el-form-item>
         </div>

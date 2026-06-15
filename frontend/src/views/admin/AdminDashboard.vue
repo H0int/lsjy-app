@@ -127,7 +127,7 @@ const realtimeStats = ref([
   { icon: '👥', label: '在线用户', value: '3,256', change: 12.5, valueColor: '#00f0ff', glowColor: 'radial-gradient(circle, rgba(0,240,255,0.15) 0%, transparent 70%)' },
   { icon: '📝', label: '今日注册', value: '234', change: 8.3, valueColor: '#00ff88', glowColor: 'radial-gradient(circle, rgba(0,255,136,0.15) 0%, transparent 70%)' },
   { icon: '💰', label: '今日营收', value: '¥18,900', change: 15.2, valueColor: '#f59e0b', glowColor: 'radial-gradient(circle, rgba(245,158,11,0.15) 0%, transparent 70%)' },
-  { icon: '⚡', label: '圣点消耗', value: '45,600', change: -3.1, valueColor: '#c084fc', glowColor: 'radial-gradient(circle, rgba(192,132,252,0.15) 0%, transparent 70%)' },
+  { icon: '⚡', label: '圣力消耗', value: '45,600', change: -3.1, valueColor: '#c084fc', glowColor: 'radial-gradient(circle, rgba(192,132,252,0.15) 0%, transparent 70%)' },
 ])
 
 // ===== 预警 =====

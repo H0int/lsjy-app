@@ -106,9 +106,9 @@ export interface ModelInfo {
   maxContextLength?: number;
   /** 是否支持流式 */
   supportStream?: boolean;
-  /** 输入价格(圣点/千token) */
+  /** 输入价格(圣力/千token) */
   inputPrice?: number;
-  /** 输出价格(圣点/千token) */
+  /** 输出价格(圣力/千token) */
   outputPrice?: number;
 }
 

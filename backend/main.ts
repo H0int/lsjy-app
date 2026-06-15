@@ -60,7 +60,7 @@ async function bootstrap() {
     .addTag('roles', '角色权限')
     .addTag('ai', 'AI能力')
     .addTag('ai-tools', 'AI工具')
-    .addTag('payment', '支付中心(圣点)')
+    .addTag('payment', '支付中心(圣力)')
     .addTag('announcements', '公告管理')
     .addTag('coupons', '优惠券管理')
     .addTag('campaigns', '活动管理')

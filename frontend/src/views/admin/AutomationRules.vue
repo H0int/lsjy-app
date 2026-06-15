@@ -103,7 +103,7 @@
           </div>
           <div><label class="cyber-label">执行动作</label>
             <select v-model="form.actionType" class="cyber-select w-full">
-              <option value="send_coins">发放圣点</option>
+              <option value="send_coins">发放圣力</option>
               <option value="send_notification">发送通知</option>
               <option value="send_coupon">发放优惠券</option>
               <option value="change_role">变更角色/VIP</option>
@@ -139,13 +139,13 @@ const lastExecuted = computed(() => {
 })
 
 const executionLogs = ref([
-  { id: 1, message: '用户 张三(id:1001) 注册触发，发放20圣点', success: true, time: '2025-07-18 14:30:22' },
-  { id: 2, message: '用户 李四(id:1002) 注册触发，发放20圣点', success: true, time: '2025-07-18 14:28:10' },
+  { id: 1, message: '用户 张三(id:1001) 注册触发，发放20圣力', success: true, time: '2025-07-18 14:30:22' },
+  { id: 2, message: '用户 李四(id:1002) 注册触发，发放20圣力', success: true, time: '2025-07-18 14:28:10' },
   { id: 3, message: '用户 王五(id:1003) 注册触发，发送通知失败', success: false, time: '2025-07-18 13:45:33' },
 ])
 
 function triggerLabel(t: string) { return { user_register: '用户注册', first_recharge: '首次充值', consume_threshold: '消费达标', tool_call_count: '工具调用达标', course_complete: '完成课程', invite_success: '邀请成功' }[t] || t }
-function actionLabel(a: string) { return { send_coins: '发放圣点', send_notification: '发送通知', send_coupon: '发放优惠券', change_role: '变更角色' }[a] || a }
+function actionLabel(a: string) { return { send_coins: '发放圣力', send_notification: '发送通知', send_coupon: '发放优惠券', change_role: '变更角色' }[a] || a }
 
 async function fetchData() {
   const res = await adminApi.getAutomationRules()

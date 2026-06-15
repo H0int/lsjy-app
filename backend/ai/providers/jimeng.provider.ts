@@ -206,7 +206,7 @@ export class JimengProvider extends BaseAIProvider {
         capabilities: ['image'],
         supportStream: false,
         inputPrice: 0,
-        outputPrice: 10, // 按次计费：10圣点/次
+        outputPrice: 10, // 按次计费：10圣力/次
       },
       {
         id: 'jimeng-v2-pro',
@@ -214,7 +214,7 @@ export class JimengProvider extends BaseAIProvider {
         capabilities: ['image'],
         supportStream: false,
         inputPrice: 0,
-        outputPrice: 20, // 按次计费：20圣点/次
+        outputPrice: 20, // 按次计费：20圣力/次
       },
     ];
   }

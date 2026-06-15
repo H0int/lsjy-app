@@ -16,7 +16,7 @@ export class PaymentController {
   @UseGuards(JwtAuthGuard)
   @Get('coin/balance')
   @ApiBearerAuth()
-  @ApiOperation({ summary: '查询圣点余额' })
+  @ApiOperation({ summary: '查询圣力余额' })
   async getBalance(@CurrentUser('id') userId: number) {
     const account = await this.paymentService.getBalance(userId);
     return { data: account };
@@ -45,7 +45,7 @@ export class PaymentController {
   @UseGuards(JwtAuthGuard)
   @Get('coin/transactions')
   @ApiBearerAuth()
-  @ApiOperation({ summary: '查询圣点交易记录' })
+  @ApiOperation({ summary: '查询圣力交易记录' })
   @ApiQuery({ name: 'type', required: false })
   @ApiQuery({ name: 'page', required: false })
   @ApiQuery({ name: 'pageSize', required: false })

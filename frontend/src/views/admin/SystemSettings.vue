@@ -13,7 +13,7 @@
           <el-form-item label="管理员邮箱">
             <el-input v-model="settings.adminEmail" />
           </el-form-item>
-          <el-form-item label="新用户注册赠送算力">
+          <el-form-item label="新用户注册赠送圣力">
             <el-input-number v-model="settings.newUserBonus" :min="0" :max="1000" class="w-full" />
           </el-form-item>
         </div>
@@ -24,7 +24,7 @@
       <h3 class="card-title mb-4">💰 计费配置</h3>
       <el-form label-position="top">
         <div class="cyber-grid-2">
-          <el-form-item label="默认算力单价（元）">
+          <el-form-item label="默认圣力单价（元）">
             <el-input-number v-model="settings.unitPrice" :min="0.1" :step="0.1" class="w-full" />
           </el-form-item>
           <el-form-item label="企业版折扣">
