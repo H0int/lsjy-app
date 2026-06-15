@@ -1308,9 +1308,10 @@ app.get('/api/v1/payment/coin/balance', authCheck, (req, res) => {
   let users = [];
   try { users = JSON.parse(fs.readFileSync(usersFile, 'utf8')); } catch (e) {}
   const user = users.find(u => u.id === userId);
-  const balance = user?.coins || 0;
+  // 无限圣力用户返回999999
+  const balance = user?.unlimited ? 999999 : (user?.coins || 0);
   const totalRecharge = user?.totalRecharge || 0;
-  res.json({ code: 0, message: 'success', data: { balance, frozenAmount: 0, totalRecharge } });
+  res.json({ code: 0, message: 'success', data: { balance, frozenAmount: 0, totalRecharge, unlimited: user?.unlimited || false } });
 });
 
 // 充值套餐

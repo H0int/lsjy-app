@@ -17,7 +17,7 @@
       <div class="relative z-10">
         <p class="text-sm" style="color: var(--cyber-amber); opacity: 0.8;">当前余额</p>
         <p class="text-4xl font-bold mt-1 glow-cyan" style="color: var(--cyber-cyan); font-family: 'JetBrains Mono', monospace;">
-          {{ coinBalance }} <span class="text-lg font-normal" style="color: var(--cyber-text-dim);">圣力</span>
+          {{ isUnlimited ? '无限' : coinBalance }} <span class="text-lg font-normal" style="color: var(--cyber-text-dim);">圣力</span>
         </p>
       </div>
       <div class="absolute right-6 top-1/2 -translate-y-1/2 text-6xl opacity-15" style="filter: drop-shadow(0 0 10px rgba(255,184,0,0.5));">⚡</div>
@@ -165,6 +165,7 @@ import { ElMessage } from 'element-plus'
 import service from '@/api/request'
 
 const coinBalance = ref(0)
+const isUnlimited = ref(false) // 是否为无限圣力用户
 const showRecharge = ref(false)
 const showMyOrders = ref(false)
 const selectedPkgId = ref<number | null>(null)
@@ -197,6 +198,7 @@ const payMethodName = computed(() => {
 onMounted(async () => {
   const balRes = await paymentApi.getBalance()
   coinBalance.value = balRes.data.balance
+  isUnlimited.value = balRes.data.unlimited || false
 
   const pkgRes = await paymentApi.getPackages()
   packages.value = pkgRes.data

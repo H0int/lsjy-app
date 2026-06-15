@@ -1,13 +1,13 @@
 <template>
   <div class="max-w-4xl mx-auto px-4 py-4 flex flex-col" style="height: calc(100vh - 100px);">
-    <!-- 头部 -->
-    <div class="cyber-card p-3 mb-3 flex items-center gap-3 flex-shrink-0">
-      <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-        style="box-shadow: 0 0 16px rgba(0,240,255,0.4);">
-        <img src="/logo.png" alt="罗圣纪元" style="width:100%;height:100%;border-radius:12px;object-fit:cover;" />
+    <!-- 头部（紧凑版） -->
+    <div class="cyber-card p-2 mb-2 flex items-center gap-2 flex-shrink-0">
+      <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+        style="box-shadow: 0 0 12px rgba(0,240,255,0.4);">
+        <img src="/logo.png" alt="罗圣纪元" style="width:100%;height:100%;border-radius:8px;object-fit:cover;" />
       </div>
       <div class="flex-1 min-w-0">
-        <h1 class="text-base font-bold" style="color: var(--cyber-cyan); font-family: 'JetBrains Mono', monospace;">罗圣AI智能体</h1>
+        <h1 class="text-sm font-bold" style="color: var(--cyber-cyan); font-family: 'JetBrains Mono', monospace;">罗圣AI智能体</h1>
         <div class="flex items-center gap-1.5 mt-0.5">
           <span class="w-2 h-2 rounded-full animate-pulse"
             :style="aiOnline ? 'background: var(--cyber-green); box-shadow: 0 0 6px var(--cyber-green);' : 'background: #ff6b00;'"></span>
@@ -21,10 +21,6 @@
           <span>⚡</span>
           <span class="font-bold" style="font-family: 'JetBrains Mono', monospace;">{{ coinBalance }}</span>
         </button>
-        <button @click="showModels = !showModels" class="px-2 py-1 rounded-lg text-xs"
-          style="background: rgba(0,240,255,0.08); color: var(--cyber-cyan); border: 1px solid rgba(0,240,255,0.2);">
-          🧠 {{ activeModelLabel }}
-        </button>
         <button @click="clearChat" class="px-2 py-1 rounded-lg text-xs"
           style="background: rgba(255,68,68,0.08); color: #ff4444; border: 1px solid rgba(255,68,68,0.2);">
           🗑️
@@ -32,41 +28,37 @@
       </div>
     </div>
 
-    <!-- AI员工选择 -->
-    <div class="cyber-card p-2 mb-2 flex-shrink-0">
-      <div class="flex items-center gap-2 mb-2">
-        <span class="text-xs font-bold" style="color: var(--cyber-cyan);">🤖 AI员工</span>
-        <span class="text-xs" style="color: var(--cyber-text-dim);">{{ currentAgent.name }}</span>
-      </div>
-      <div class="grid grid-cols-5 gap-1.5">
+    <!-- 融合选择器：AI员工 + 模型（一行横向滚动） -->
+    <div class="cyber-card p-1.5 mb-2 flex-shrink-0">
+      <div class="flex items-center gap-1 overflow-x-auto pb-0.5" style="scrollbar-width: thin;">
+        <!-- AI员工 -->
         <button v-for="a in agents" :key="a.id" @click="selectAgent(a)"
-          class="p-2 rounded-lg text-center transition-all"
+          class="flex-shrink-0 px-2 py-1 rounded-lg text-center transition-all"
           :style="currentAgent.id === a.id
-            ? 'background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple)); color: #000; box-shadow: 0 0 12px rgba(0,240,255,0.3);'
+            ? 'background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple)); color: #000; box-shadow: 0 0 8px rgba(0,240,255,0.3);'
             : 'background: rgba(0,240,255,0.03); color: var(--cyber-text-dim); border: 1px solid var(--cyber-border);'">
-          <div class="text-lg">{{ a.icon }}</div>
-          <div class="text-[10px] mt-0.5 truncate">{{ a.shortName }}</div>
+          <span class="text-sm">{{ a.icon }}</span>
+          <span class="text-[10px] ml-0.5">{{ a.shortName }}</span>
+        </button>
+        <!-- 分隔线 -->
+        <div class="flex-shrink-0 w-px h-5 mx-0.5" style="background: var(--cyber-border);"></div>
+        <!-- 模型选择（默认"自定义"） -->
+        <button v-for="m in models" :key="m.value" @click="selectModel(m)"
+          class="flex-shrink-0 px-2 py-1 rounded-lg text-[11px] transition-all"
+          :style="activeModel === m.value
+            ? 'background: linear-gradient(135deg, var(--cyber-magenta), var(--cyber-purple)); color: #fff; box-shadow: 0 0 8px rgba(183,0,255,0.3);'
+            : 'background: rgba(183,0,255,0.03); color: var(--cyber-text-dim); border: 1px solid var(--cyber-border);'">
+          {{ m.icon }} {{ m.label }}
         </button>
       </div>
     </div>
 
-    <!-- 模型选择 -->
-    <div v-if="showModels" class="cyber-card p-2 mb-2 flex-shrink-0 flex flex-wrap gap-1.5">
-      <button v-for="m in models" :key="m.value" @click="selectModel(m)"
-        class="px-2.5 py-1 rounded-lg text-xs transition-all"
-        :style="activeModel === m.value
-          ? 'background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple)); color: #000;'
-          : 'background: rgba(0,240,255,0.03); color: var(--cyber-text-dim); border: 1px solid var(--cyber-border);'">
-        {{ m.icon }} {{ m.label }}
-      </button>
-    </div>
-
-    <!-- 功能Tab -->
-    <div class="flex gap-2 mb-3 flex-shrink-0">
+    <!-- 功能Tab（紧凑版） -->
+    <div class="flex gap-1 mb-1.5 flex-shrink-0">
       <button v-for="t in tabs" :key="t.id" @click="tab = t.id"
-        class="flex-1 py-2 rounded-xl text-xs font-bold transition-all"
+        class="flex-1 py-1.5 rounded-lg text-[11px] font-bold transition-all"
         :style="tab === t.id
-          ? 'background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple)); color: #000; box-shadow: 0 0 12px rgba(0,240,255,0.3);'
+          ? 'background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple)); color: #000; box-shadow: 0 0 8px rgba(0,240,255,0.3);'
           : 'background: rgba(0,240,255,0.03); color: var(--cyber-text-dim); border: 1px solid var(--cyber-border);'">
         {{ t.icon }} {{ t.label }}
       </button>
@@ -225,8 +217,7 @@ const BOT_ID = '7651223356586786856'
 const msgs = ref<{role:'user'|'assistant'; content:string; model?:string; coinCost?:number}[]>([])
 const input = ref('')
 const loading = ref(false)
-const showModels = ref(false)
-const activeModel = ref('auto')
+const activeModel = ref('none') // 默认"自定义"，用户自己选
 const tab = ref<'chat'|'image'|'video'>('chat')
 const chatBox = ref<HTMLElement|null>(null)
 const aiOnline = ref(true)
@@ -287,6 +278,7 @@ const tabs = [
 ]
 
 const models = [
+  { value: 'none', label: '自定义', icon: '🎯' },
   { value: 'auto', label: '自动', icon: '⚡' },
   { value: 'doubao', label: '豆包', icon: '🫘' },
   { value: 'deepseek', label: 'DeepSeek', icon: '🔍' },
@@ -301,7 +293,7 @@ const quickCmds = [
   { icon: '🏢', l: '了解罗圣', t: '罗圣纪元是做什么的？创始人是谁？' },
 ]
 
-const activeModelLabel = computed(() => models.find(m => m.value === activeModel.value)?.label || '自动')
+const activeModelLabel = computed(() => models.find(m => m.value === activeModel.value)?.label || '自定义')
 const statusText = computed(() => {
   if (loading.value) return '思考中...'
   if (genLoading.value) return '生成图片中...'
@@ -309,7 +301,7 @@ const statusText = computed(() => {
   return aiOnline.value ? '在线 · 扣子大模型驱动' : '连接中...'
 })
 
-function selectModel(m: {value:string}) { activeModel.value = m.value; showModels.value = false }
+function selectModel(m: {value:string}) { activeModel.value = m.value }
 
 function fmt(c: string): string {
   if (!c) return ''
@@ -356,7 +348,7 @@ async function sendMsg() {
       },
       body: JSON.stringify({
         messages: backendMessages,
-        provider: activeModel.value === 'auto' ? undefined : activeModel.value
+        provider: (activeModel.value === 'auto' || activeModel.value === 'none') ? undefined : activeModel.value
       }),
     })
 
