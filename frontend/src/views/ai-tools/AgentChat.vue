@@ -32,6 +32,24 @@
       </div>
     </div>
 
+    <!-- AI员工选择 -->
+    <div class="cyber-card p-2 mb-2 flex-shrink-0">
+      <div class="flex items-center gap-2 mb-2">
+        <span class="text-xs font-bold" style="color: var(--cyber-cyan);">🤖 AI员工</span>
+        <span class="text-xs" style="color: var(--cyber-text-dim);">{{ currentAgent.name }}</span>
+      </div>
+      <div class="grid grid-cols-5 gap-1.5">
+        <button v-for="a in agents" :key="a.id" @click="selectAgent(a)"
+          class="p-2 rounded-lg text-center transition-all"
+          :style="currentAgent.id === a.id
+            ? 'background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple)); color: #000; box-shadow: 0 0 12px rgba(0,240,255,0.3);'
+            : 'background: rgba(0,240,255,0.03); color: var(--cyber-text-dim); border: 1px solid var(--cyber-border);'">
+          <div class="text-lg">{{ a.icon }}</div>
+          <div class="text-[10px] mt-0.5 truncate">{{ a.shortName }}</div>
+        </button>
+      </div>
+    </div>
+
     <!-- 模型选择 -->
     <div v-if="showModels" class="cyber-card p-2 mb-2 flex-shrink-0 flex flex-wrap gap-1.5">
       <button v-for="m in models" :key="m.value" @click="selectModel(m)"
@@ -225,6 +243,26 @@ const images = ref<{prompt:string; url?:string; loading?:boolean; error?:string;
 const vidPrompt = ref('')
 const vidLoading = ref(false)
 const videos = ref<{prompt:string; url?:string; loading?:boolean; error?:string}[]>([])
+
+// ========== 10个AI员工 ==========
+const agents = [
+  { id: 'general', icon: '🤖', name: '罗圣AI', shortName: '通用', desc: '全能AI助手，解答各类问题' },
+  { id: 'architect', icon: '🏗️', name: '技术架构师', shortName: '架构', desc: '系统架构、API设计、技术选型' },
+  { id: 'copywriter', icon: '✍️', name: '文案大师', shortName: '文案', desc: '营销文案、运营文案、UI文案' },
+  { id: 'business', icon: '💼', name: '商业顾问', shortName: '商业', desc: '定价策略、分销体系、盈利模型' },
+  { id: 'researcher', icon: '🔍', name: '产品调研', shortName: '调研', desc: '竞品分析、需求整理、bug排查' },
+  { id: 'legal', icon: '⚖️', name: '合规顾问', shortName: '合规', desc: '法务文本、合规检查、风险评估' },
+  { id: 'backend', icon: '⚙️', name: '后端开发', shortName: '后端', desc: '接口开发、数据库设计、bug修复' },
+  { id: 'frontend', icon: '🎨', name: '前端开发', shortName: '前端', desc: '页面开发、UI修复、性能优化' },
+  { id: 'tester', icon: '🧪', name: '质量测试', shortName: '测试', desc: '功能测试、验收报告、bug清单' },
+  { id: 'codehelper', icon: '💻', name: '代码助手', shortName: '代码', desc: '代码生成、代码审查、bug分析' },
+]
+const currentAgent = ref(agents[0])
+
+function selectAgent(agent: any) {
+  currentAgent.value = agent
+  msgs.value = [] // 切换员工时清空聊天记录
+}
 
 // ========== 系统提示词 ==========
 const SYS_PROMPT = `你是"罗圣AI智能体"，由祁阳市罗圣纪元互联网科技有限责任公司（lsjyapp.cn）开发。

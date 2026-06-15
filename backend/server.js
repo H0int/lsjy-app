@@ -125,13 +125,16 @@ function authCheck(req, res, next) {
 }
 
 // 圣点扣费（返回 { ok, balance, cost }）
+// 支持无限算力用户（unlimited: true）
 function deductCoins(userId, cost) {
-  if (!cost || cost <= 0) return { ok: true, balance: 0, cost: 0 };
+  if (!cost || cost <= 0) return { ok: true, balance: 999999, cost: 0 };
   const usersFile = path.join(__dirname, 'data', 'users.json');
   let users = [];
   try { users = JSON.parse(fs.readFileSync(usersFile, 'utf8')); } catch (e) {}
   const user = users.find(u => u.id === userId);
   if (!user) return { ok: false, error: '用户不存在' };
+  // 无限算力用户跳过扣费
+  if (user.unlimited) return { ok: true, balance: 999999, cost: 0 };
   const balance = user.coins || 0;
   if (balance < cost) return { ok: false, error: '圣点不足', balance };
   user.coins = balance - cost;
@@ -145,6 +148,8 @@ function getUserCoins(userId) {
   let users = [];
   try { users = JSON.parse(fs.readFileSync(usersFile, 'utf8')); } catch (e) {}
   const user = users.find(u => u.id === userId);
+  // 无限算力用户返回999999
+  if (user?.unlimited) return 999999;
   return user?.coins || 0;
 }
 
