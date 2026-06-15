@@ -1,200 +1,160 @@
 <template>
-  <div class="max-w-4xl mx-auto px-4 py-4 flex flex-col" style="height: calc(100vh - 100px);">
-    <!-- 头部（紧凑版） -->
-    <div class="cyber-card p-2 mb-2 flex items-center gap-2 flex-shrink-0">
-      <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+  <div class="max-w-4xl mx-auto px-4 py-3 flex flex-col" style="height: calc(100vh - 80px);">
+    <!-- 头部 -->
+    <div class="cyber-card p-2.5 mb-2 flex items-center gap-2 flex-shrink-0">
+      <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
         style="box-shadow: 0 0 12px rgba(0,240,255,0.4);">
-        <img src="/logo.png" alt="罗圣纪元" style="width:100%;height:100%;border-radius:8px;object-fit:cover;" />
+        <img src="/logo.png" alt="罗圣纪元" style="width:100%;height:100%;border-radius:10px;object-fit:cover;" />
       </div>
       <div class="flex-1 min-w-0">
-        <h1 class="text-sm font-bold" style="color: var(--cyber-cyan); font-family: 'JetBrains Mono', monospace;">罗圣AI智能体</h1>
-        <div class="flex items-center gap-1.5 mt-0.5">
-          <span class="w-2 h-2 rounded-full animate-pulse"
-            :style="aiOnline ? 'background: var(--cyber-green); box-shadow: 0 0 6px var(--cyber-green);' : 'background: #ff6b00;'"></span>
-          <span class="text-xs" style="color: var(--cyber-text-dim);">{{ statusText }}</span>
+        <h1 class="text-sm font-bold" style="color: var(--cyber-cyan); font-family: 'JetBrains Mono', monospace;">罗圣AI中心</h1>
+        <div class="flex items-center gap-1 mt-0.5">
+          <span class="w-1.5 h-1.5 rounded-full animate-pulse"
+            :style="aiOnline ? 'background: var(--cyber-green);' : 'background: #ff6b00;'"></span>
+          <span class="text-[10px]" style="color: var(--cyber-text-dim);">{{ statusText }}</span>
         </div>
       </div>
-      <div class="flex gap-1.5 flex-shrink-0">
-        <button @click="$router.push('/profile/wallet')" class="px-2 py-1 rounded-lg text-xs flex items-center gap-1 cursor-pointer"
-          style="background: rgba(255,184,0,0.08); color: var(--cyber-amber); border: 1px solid rgba(255,184,0,0.2);"
-          title="点击前往充值">
-          <span>⚡</span>
-          <span class="font-bold" style="font-family: 'JetBrains Mono', monospace;">{{ coinBalance }}</span>
+      <div class="flex gap-1 flex-shrink-0">
+        <button @click="$router.push('/profile/wallet')" class="px-2 py-1 rounded-lg text-[11px] flex items-center gap-0.5"
+          style="background: rgba(255,184,0,0.08); color: var(--cyber-amber); border: 1px solid rgba(255,184,0,0.2);" title="点击充值">
+          <span>⚡</span><span class="font-bold" style="font-family: 'JetBrains Mono', monospace;">{{ coinBalance >= 999999 ? '∞' : coinBalance }}</span>
         </button>
-        <button @click="clearChat" class="px-2 py-1 rounded-lg text-xs"
-          style="background: rgba(255,68,68,0.08); color: #ff4444; border: 1px solid rgba(255,68,68,0.2);">
-          🗑️
-        </button>
+        <button @click="clearChat" class="px-2 py-1 rounded-lg text-[11px]"
+          style="background: rgba(255,68,68,0.08); color: #ff4444; border: 1px solid rgba(255,68,68,0.2);">🗑️</button>
       </div>
     </div>
 
-    <!-- 融合选择器：AI员工 + 模型（一行横向滚动） -->
-    <div class="cyber-card p-1.5 mb-2 flex-shrink-0">
-      <div class="flex items-center gap-1 overflow-x-auto pb-0.5" style="scrollbar-width: thin;">
-        <!-- AI员工 -->
-        <button v-for="a in agents" :key="a.id" @click="selectAgent(a)"
-          class="flex-shrink-0 px-2 py-1 rounded-lg text-center transition-all"
-          :style="currentAgent.id === a.id
-            ? 'background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple)); color: #000; box-shadow: 0 0 8px rgba(0,240,255,0.3);'
+    <!-- AI员工选择器 -->
+    <div class="flex-shrink-0 mb-2 overflow-x-auto" style="-webkit-overflow-scrolling: touch;">
+      <div class="flex gap-1.5 pb-1" style="min-width: max-content;">
+        <button v-for="agent in agents" :key="agent.id" @click="selectAgent(agent)"
+          class="flex-shrink-0 px-2.5 py-1.5 rounded-xl text-left transition-all"
+          :style="selectedAgent?.id === agent.id
+            ? 'background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple)); color: #000; box-shadow: 0 0 12px rgba(0,240,255,0.3);'
             : 'background: rgba(0,240,255,0.03); color: var(--cyber-text-dim); border: 1px solid var(--cyber-border);'">
-          <span class="text-sm">{{ a.icon }}</span>
-          <span class="text-[10px] ml-0.5">{{ a.shortName }}</span>
-        </button>
-        <!-- 分隔线 -->
-        <div class="flex-shrink-0 w-px h-5 mx-0.5" style="background: var(--cyber-border);"></div>
-        <!-- 模型选择（默认"自定义"） -->
-        <button v-for="m in models" :key="m.value" @click="selectModel(m)"
-          class="flex-shrink-0 px-2 py-1 rounded-lg text-[11px] transition-all"
-          :style="activeModel === m.value
-            ? 'background: linear-gradient(135deg, var(--cyber-magenta), var(--cyber-purple)); color: #fff; box-shadow: 0 0 8px rgba(183,0,255,0.3);'
-            : 'background: rgba(183,0,255,0.03); color: var(--cyber-text-dim); border: 1px solid var(--cyber-border);'">
-          {{ m.icon }} {{ m.label }}
+          <div class="flex items-center gap-1">
+            <span class="text-sm">{{ agent.icon }}</span>
+            <span class="text-[11px] font-bold whitespace-nowrap">{{ agent.name }}</span>
+          </div>
+          <div class="text-[9px] mt-0.5 opacity-70">⚡{{ agent.coinCost }}/次</div>
         </button>
       </div>
     </div>
 
-    <!-- 功能Tab（紧凑版） -->
-    <div class="flex gap-1 mb-1.5 flex-shrink-0">
-      <button v-for="t in tabs" :key="t.id" @click="tab = t.id"
-        class="flex-1 py-1.5 rounded-lg text-[11px] font-bold transition-all"
-        :style="tab === t.id
-          ? 'background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple)); color: #000; box-shadow: 0 0 8px rgba(0,240,255,0.3);'
-          : 'background: rgba(0,240,255,0.03); color: var(--cyber-text-dim); border: 1px solid var(--cyber-border);'">
-        {{ t.icon }} {{ t.label }}
-      </button>
+    <!-- 当前选中Agent信息 -->
+    <div v-if="selectedAgent" class="cyber-card p-2 mb-2 flex-shrink-0 flex items-center gap-2">
+      <span class="text-xl">{{ selectedAgent.icon }}</span>
+      <div class="flex-1 min-w-0">
+        <div class="text-xs font-bold" style="color: var(--cyber-text);">{{ selectedAgent.name }}</div>
+        <div class="text-[10px]" style="color: var(--cyber-text-dim);">{{ selectedAgent.description }}</div>
+      </div>
+      <div class="text-[10px] px-1.5 py-0.5 rounded" style="background: rgba(255,184,0,0.1); color: var(--cyber-amber);">
+        ⚡{{ selectedAgent.coinCost }}/次
+      </div>
     </div>
 
-    <!-- ========== 文本对话 ========== -->
-    <template v-if="tab === 'chat'">
-      <!-- 欢迎 -->
-      <div v-if="msgs.length === 0" class="flex-shrink-0 mb-3">
-        <div class="text-center py-4">
-          <div class="text-4xl mb-2" style="filter: drop-shadow(0 0 12px rgba(0,240,255,0.4));">🤖</div>
-          <h2 class="text-lg font-bold mb-1" style="color: var(--cyber-cyan);">你好，我是罗圣AI</h2>
-          <p class="text-xs" style="color: var(--cyber-text-dim);">由扣子大模型驱动，支持文案、编程、分析等全场景</p>
+    <!-- ========== 文本对话（非图片Agent） ========== -->
+    <template v-if="selectedAgent && selectedAgent.toolType !== 'image'">
+      <!-- 欢迎页 -->
+      <div v-if="msgs.length === 0" class="flex-1 overflow-y-auto mb-2">
+        <div class="text-center py-3">
+          <div class="text-3xl mb-1">{{ selectedAgent.icon }}</div>
+          <h2 class="text-sm font-bold" style="color: var(--cyber-cyan);">{{ selectedAgent.name }}</h2>
+          <p class="text-[10px]" style="color: var(--cyber-text-dim);">{{ selectedAgent.description }}</p>
         </div>
-        <div class="grid grid-cols-2 gap-2">
-          <button v-for="c in quickCmds" :key="c.t" @click="sendQuick(c.t)"
-            class="cyber-card p-2.5 text-left transition-all hover:-translate-y-0.5">
-            <div class="text-base mb-0.5">{{ c.icon }}</div>
-            <div class="text-xs font-medium" style="color: var(--cyber-text);">{{ c.l }}</div>
-            <div class="text-[10px] mt-0.5" style="color: var(--cyber-text-dim);">{{ c.t }}</div>
+        <div class="grid grid-cols-2 gap-1.5">
+          <button v-for="c in currentQuickCmds" :key="c.t" @click="sendQuick(c.t)"
+            class="cyber-card p-2 text-left transition-all hover:-translate-y-0.5">
+            <div class="text-sm mb-0.5">{{ c.icon }}</div>
+            <div class="text-[11px] font-medium" style="color: var(--cyber-text);">{{ c.l }}</div>
           </button>
         </div>
       </div>
 
       <!-- 消息列表 -->
-      <div v-else ref="chatBox" class="flex-1 overflow-y-auto mb-3 space-y-3 pr-1" style="scroll-behavior: smooth;">
+      <div v-else ref="chatBox" class="flex-1 overflow-y-auto mb-2 space-y-2 pr-1" style="scroll-behavior: smooth;">
         <div v-for="(msg, i) in msgs" :key="i" class="flex" :class="msg.role === 'user' ? 'justify-end' : 'justify-start'">
-          <div class="max-w-[85%] md:max-w-[75%] rounded-2xl px-3.5 py-2.5 text-sm"
+          <div class="max-w-[85%] rounded-xl px-3 py-2 text-xs"
             :style="msg.role === 'user'
-              ? 'background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple)); color: #000; border-radius: 16px 16px 4px 16px;'
-              : 'background: rgba(0,240,255,0.05); color: var(--cyber-text); border: 1px solid var(--cyber-border); border-radius: 16px 16px 16px 4px;'"
+              ? 'background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple)); color: #000; border-radius: 12px 12px 4px 12px;'
+              : 'background: rgba(0,240,255,0.05); color: var(--cyber-text); border: 1px solid var(--cyber-border); border-radius: 12px 12px 12px 4px;'"
             v-html="fmt(msg.content)">
           </div>
         </div>
-        <!-- 加载 -->
         <div v-if="loading" class="flex justify-start">
-          <div class="rounded-2xl px-3.5 py-2.5 text-sm"
-            style="background: rgba(0,240,255,0.05); border: 1px solid var(--cyber-border); border-radius: 16px 16px 16px 4px;">
-            <div class="flex items-center gap-1.5">
+          <div class="rounded-xl px-3 py-2 text-xs"
+            style="background: rgba(0,240,255,0.05); border: 1px solid var(--cyber-border);">
+            <div class="flex items-center gap-1">
               <span class="w-1.5 h-1.5 rounded-full animate-bounce" style="background: var(--cyber-cyan);"></span>
               <span class="w-1.5 h-1.5 rounded-full animate-bounce" style="background: var(--cyber-cyan); animation-delay: 0.2s;"></span>
               <span class="w-1.5 h-1.5 rounded-full animate-bounce" style="background: var(--cyber-cyan); animation-delay: 0.4s;"></span>
-              <span class="text-xs ml-1" style="color: var(--cyber-text-dim);">思考中...</span>
+              <span class="text-[10px] ml-1" style="color: var(--cyber-text-dim);">{{ selectedAgent.name }}思考中...</span>
             </div>
           </div>
         </div>
       </div>
 
       <!-- 输入框 -->
-      <div class="cyber-card p-3 flex-shrink-0">
-        <div class="flex gap-2">
-          <input v-model="input" @keyup.enter="sendMsg" :placeholder="loading ? 'AI思考中...' : `输入消息，Enter发送（消耗1圣力/次）`"
+      <div class="cyber-card p-2 flex-shrink-0">
+        <div class="flex gap-1.5">
+          <input v-model="input" @keyup.enter="sendMsg"
+            :placeholder="loading ? '思考中...' : '向' + selectedAgent?.name + '提问（⚡' + selectedAgent?.coinCost + '/次）'"
             :disabled="loading"
-            class="flex-1 px-3 py-2.5 rounded-xl text-sm outline-none transition-all"
+            class="flex-1 px-2.5 py-2 rounded-lg text-xs outline-none"
             style="background: rgba(0,240,255,0.03); border: 1px solid var(--cyber-border); color: var(--cyber-text);"
             @focus="($event.target as HTMLInputElement).style.borderColor='var(--cyber-cyan)'"
             @blur="($event.target as HTMLInputElement).style.borderColor='var(--cyber-border)'" />
           <button @click="sendMsg" :disabled="!input.trim() || loading"
-            class="px-5 py-2.5 rounded-xl text-sm font-bold transition-all"
+            class="px-4 py-2 rounded-lg text-xs font-bold"
             style="background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple)); color: #000;"
-            :style="(!input.trim() || loading) ? 'opacity: 0.5; cursor: not-allowed;' : 'box-shadow: 0 0 16px rgba(0,240,255,0.4);'">
+            :style="(!input.trim() || loading) ? 'opacity: 0.5;' : 'box-shadow: 0 0 12px rgba(0,240,255,0.4);'">
             发送
           </button>
         </div>
       </div>
     </template>
 
-    <!-- ========== 图片生成 ========== -->
-    <template v-if="tab === 'image'">
-      <div class="flex-1 overflow-y-auto mb-3 space-y-3" style="min-height: 100px;">
-        <div v-if="images.length === 0" class="text-center py-8">
-          <div class="text-3xl mb-2">🎨</div>
-          <p class="text-sm" style="color: var(--cyber-text-dim);">输入描述，AI为你生成图片</p>
+    <!-- ========== 图片生成（AI绘画师） ========== -->
+    <template v-if="selectedAgent && selectedAgent.toolType === 'image'">
+      <div class="flex-1 overflow-y-auto mb-2 space-y-2">
+        <div v-if="images.length === 0" class="text-center py-6">
+          <div class="text-3xl mb-1">🎨</div>
+          <p class="text-xs" style="color: var(--cyber-text-dim);">描述你想生成的图片，AI为你创作</p>
+          <p class="text-[10px] mt-1" style="color: var(--cyber-amber);">⚡ 每次生成消耗{{ selectedAgent.coinCost }}圣力</p>
         </div>
-        <div v-for="(img, i) in images" :key="i" class="cyber-card p-3">
-          <p class="text-xs mb-2" style="color: var(--cyber-text-dim);">🎨 {{ img.prompt }}</p>
-          <img v-if="img.url" :src="img.url" class="w-full rounded-xl" style="border: 1px solid var(--cyber-border);" />
-          <p v-else-if="img.loading" class="text-xs text-center py-8" style="color: var(--cyber-cyan);">⏳ 生成中...</p>
-          <p v-else-if="img.error" class="text-xs text-center py-4" style="color: #ff4444;">{{ img.error }}</p>
+        <div v-for="(img, i) in images" :key="i" class="cyber-card p-2.5">
+          <p class="text-[10px] mb-1.5" style="color: var(--cyber-text-dim);">🎨 {{ img.prompt }}</p>
+          <img v-if="img.url" :src="img.url" class="w-full rounded-lg" style="border: 1px solid var(--cyber-border);" />
+          <p v-else-if="img.loading" class="text-xs text-center py-6" style="color: var(--cyber-cyan);">⏳ 生成中...</p>
+          <p v-else-if="img.error" class="text-[10px] text-center py-3" style="color: #ff4444;">{{ img.error }}</p>
         </div>
       </div>
-      <div class="cyber-card p-3 flex-shrink-0">
-        <div class="flex gap-2 mb-2">
-          <select v-model="imgSize" class="px-2 py-1.5 rounded-lg text-xs outline-none"
+      <div class="cyber-card p-2 flex-shrink-0">
+        <div class="flex gap-1.5 mb-1.5">
+          <select v-model="imgSize" class="px-2 py-1 rounded text-[10px] outline-none"
             style="background: rgba(0,240,255,0.03); border: 1px solid var(--cyber-border); color: var(--cyber-text);">
             <option value="512x512">512×512</option>
             <option value="1024x1024">1024×1024</option>
             <option value="1024x1792">1024×1792 竖版</option>
             <option value="1792x1024">1792×1024 横版</option>
           </select>
-          <select v-model="imgStyle" class="px-2 py-1.5 rounded-lg text-xs outline-none"
+          <select v-model="imgStyle" class="px-2 py-1 rounded text-[10px] outline-none"
             style="background: rgba(0,240,255,0.03); border: 1px solid var(--cyber-border); color: var(--cyber-text);">
             <option value="">自动风格</option>
             <option value="写实">写实</option>
             <option value="动漫">动漫</option>
             <option value="油画">油画</option>
-            <option value="水彩">水彩</option>
             <option value="赛博朋克">赛博朋克</option>
           </select>
         </div>
-        <div class="flex gap-2">
+        <div class="flex gap-1.5">
           <input v-model="imgPrompt" @keyup.enter="genImage" placeholder="描述你想生成的图片..."
-            class="flex-1 px-3 py-2.5 rounded-xl text-sm outline-none"
+            class="flex-1 px-2.5 py-2 rounded-lg text-xs outline-none"
             style="background: rgba(0,240,255,0.03); border: 1px solid var(--cyber-border); color: var(--cyber-text);" />
           <button @click="genImage" :disabled="!imgPrompt.trim() || genLoading"
-            class="px-5 py-2.5 rounded-xl text-sm font-bold"
+            class="px-4 py-2 rounded-lg text-xs font-bold"
             style="background: linear-gradient(135deg, #ff6b9d, var(--cyber-purple)); color: #000;">
             {{ genLoading ? '生成中...' : '生成' }}
-          </button>
-        </div>
-      </div>
-    </template>
-
-    <!-- ========== 视频生成 ========== -->
-    <template v-if="tab === 'video'">
-      <div class="flex-1 overflow-y-auto mb-3 space-y-3" style="min-height: 100px;">
-        <div v-if="videos.length === 0" class="text-center py-8">
-          <div class="text-3xl mb-2">🎬</div>
-          <p class="text-sm" style="color: var(--cyber-text-dim);">视频生成功能即将开放，敬请期待</p>
-        </div>
-        <div v-for="(vid, i) in videos" :key="i" class="cyber-card p-3">
-          <p class="text-xs mb-2" style="color: var(--cyber-text-dim);">🎬 {{ vid.prompt }}</p>
-          <video v-if="vid.url" :src="vid.url" controls class="w-full rounded-xl"></video>
-          <p v-else-if="vid.loading" class="text-xs text-center py-8" style="color: var(--cyber-cyan);">⏳ 视频生成中，预计1-3分钟...</p>
-          <p v-else-if="vid.error" class="text-xs text-center py-4" style="color: #ff4444;">{{ vid.error }}</p>
-        </div>
-      </div>
-      <div class="cyber-card p-3 flex-shrink-0">
-        <div class="flex gap-2">
-          <input v-model="vidPrompt" @keyup.enter="genVideo" placeholder="描述你想生成的视频..."
-            class="flex-1 px-3 py-2.5 rounded-xl text-sm outline-none"
-            style="background: rgba(0,240,255,0.03); border: 1px solid var(--cyber-border); color: var(--cyber-text);" />
-          <button @click="genVideo" :disabled="!vidPrompt.trim() || vidLoading"
-            class="px-5 py-2.5 rounded-xl text-sm font-bold"
-            style="background: linear-gradient(135deg, #00f0ff, var(--cyber-green)); color: #000;">
-            {{ vidLoading ? '生成中...' : '生成' }}
           </button>
         </div>
       </div>
@@ -207,108 +167,149 @@ import { ref, computed, onMounted, nextTick, watch } from 'vue'
 
 // ========== API配置 ==========
 const API_BASE = '/api/v1'
-const authToken = localStorage.getItem('lsjy_token') || ''
-// 视频生成暂时使用Coze API
-const COZE_API = 'https://api.coze.cn/v3/chat'
-const COZE_TOKEN = 'pat_PzQlUbxdIXu7txW3cvP69EpHRLSidiY8KKa3NQ98KncpAA8jnOIZpZZMnJQd2ld5'
-const BOT_ID = '7651223356586786856'
+// 动态获取token（登录后token会变化，不能静态获取）
+const authToken = computed(() => localStorage.getItem('lsjy_token') || '')
+
+// ========== AI员工列表 ==========
+interface Agent {
+  id: number
+  name: string
+  icon: string
+  toolType: 'text' | 'image'
+  description: string
+  coinCost: number
+  systemPrompt?: string
+}
+
+// 10 AI员工 - 罗圣纪元团队
+const agents: Agent[] = [
+  { id: 101, name: '总指挥罗圣', icon: '👑', toolType: 'text', description: '项目总指挥，全能型AI助手', coinCost: 1, systemPrompt: '你是"罗圣"，罗圣纪元AI平台最高决策者和项目总指挥。公司：祁阳市罗圣纪元互联网科技有限责任公司（"祁阳"不是"祈阳"）。创始人/CEO：罗凯中。六大业务：AI智能服务、自媒体运营、电商服务、在线教育、宠物医疗、伯雅校园。你负责产品方案审批、技术架构决策、商业规则制定、资源协调。回复果断、言简意赅、有战略高度。' },
+  { id: 102, name: '运营文案师', icon: '✍️', toolType: 'text', description: '文案输出、用户路径设计', coinCost: 1, systemPrompt: '你是"罗圣纪元-运营文案师"，负责产品体验与运营文案。公司：祁阳市罗圣纪元互联网科技有限责任公司（严禁写成"祈阳"）。你负责输出页面文案、运营位文案、充值引导文案、工具引导文案，设计AI工具交互逻辑，输出运营活动策划。文案简洁专业，符合商务调性，可直接落地。' },
+  { id: 103, name: '调研分析师', icon: '🔍', toolType: 'text', description: '竞品对标、数据分析', coinCost: 1, systemPrompt: '你是"罗圣纪元-调研分析师"，负责全平台问题盘点与竞品对标。公司：祁阳市罗圣纪元互联网科技有限责任公司（严禁写成"祈阳"）。你负责走查页面功能接口输出bug清单，对标行业主流AI平台输出可落地方案，分析用户反馈与需求。客观中立，只摆事实与数据。' },
+  { id: 104, name: '投资理财顾问', icon: '💰', toolType: 'text', description: '充值定价、分销体系', coinCost: 2, systemPrompt: '你是"罗圣纪元-投资理财顾问"，负责商业体系设计与落地。公司：祁阳市罗圣纪元互联网科技有限责任公司（严禁写成"祈阳"）。你负责设计充值套餐与定价策略、规划分销商体系与返佣规则、设计会员体系与增值服务、核算平台收支。所有定价必须有成本测算依据。' },
+  { id: 105, name: '智能能力官', icon: '🧠', toolType: 'text', description: '知识库优化、提示词工程', coinCost: 2, systemPrompt: '你是"罗圣纪元-智能能力负责人"，负责知识库与AI能力优化。公司：祁阳市罗圣纪元互联网科技有限责任公司（严禁写成"祈阳"）。你负责重构知识库切片规则、优化向量召回与重排序、为Agent定制提示词、建立知识库质检流程、优化多轮对话记忆。以问答准确率为核心标准。' },
+  { id: 106, name: '合规风控官', icon: '⚖️', toolType: 'text', description: '法律审核、合规把关', coinCost: 2, systemPrompt: '你是"罗圣纪元-合规风控负责人"，对全平台内容合规性全权把关。公司：祁阳市罗圣纪元互联网科技有限责任公司（严禁写成"祈阳"）。你负责审核用户协议、隐私政策、充值协议，审核运营活动合规性，输出AI内容免责声明。合规零容忍，同时给出可落地修改建议。' },
+  { id: 107, name: '首席架构师', icon: '🏗️', toolType: 'text', description: 'API网关、系统架构', coinCost: 2, systemPrompt: '你是"罗圣纪元-首席技术架构师"，大模型API中台第一责任人。公司：祁阳市罗圣纪元互联网科技有限责任公司（严禁写成"祈阳"）。你负责搭建统一API网关、对接多算力渠道、制定接口标准与错误码规范、优化算力调用链路、保障调用成功率≥99%。技术方案必须可落地可验证。' },
+  { id: 108, name: '后端开发官', icon: '⚙️', toolType: 'text', description: '服务端开发、数据库优化', coinCost: 2, systemPrompt: '你是"罗圣纪元-后端开发总负责人"，主导服务端逻辑与数据库开发。公司：祁阳市罗圣纪元互联网科技有限责任公司（严禁写成"祈阳"）。你负责修复登录鉴权bug、开发充值订单计费接口、优化数据库索引、打通算力调用与Token扣减链路。所有接口做参数校验与异常兜底。' },
+  { id: 109, name: '前端开发官', icon: '🎨', toolType: 'text', description: '页面开发、移动端适配', coinCost: 2, systemPrompt: '你是"罗圣纪元-前端开发总负责人"，对所有页面体验与视觉质量负责。公司：祁阳市罗圣纪元互联网科技有限责任公司（严禁写成"祈阳"）。你负责修复布局错乱与适配问题、落地登录跳转与工具交互开发、性能优化资源压缩CDN。页面质量零容忍，优先保障移动端体验。' },
+  { id: 110, name: '质量测试官', icon: '🧪', toolType: 'text', description: '功能测试、压力测试', coinCost: 1, systemPrompt: '你是"罗圣纪元-质量测试负责人"，所有功能上线必经你验收。公司：祁阳市罗圣纪元互联网科技有限责任公司（严禁写成"祈阳"）。你负责全量功能测试、兼容性测试、并发压力测试，输出标准化测试报告与bug清单。质量底线不妥协，bug描述清晰可复现。' },
+]
 
 // ========== 状态 ==========
-const msgs = ref<{role:'user'|'assistant'; content:string; model?:string; coinCost?:number}[]>([])
+const selectedAgent = ref<Agent | null>(agents[0])
+const msgsByAgent = ref<Record<number, {role:'user'|'assistant'; content:string; coinCost?:number}[]>>({})
 const input = ref('')
 const loading = ref(false)
-const activeModel = ref('none') // 默认"自定义"，用户自己选
-const tab = ref<'chat'|'image'|'video'>('chat')
 const chatBox = ref<HTMLElement|null>(null)
 const aiOnline = ref(true)
-const coinBalance = ref(100) // 默认100，onMounted会获取真实值
+const coinBalance = ref(100)
 
 // 图片生成
 const imgPrompt = ref('')
 const imgSize = ref('1024x1024')
 const imgStyle = ref('')
 const genLoading = ref(false)
-const images = ref<{prompt:string; url?:string; loading?:boolean; error?:string; model?:string}[]>([])
+const images = ref<{prompt:string; url?:string; loading?:boolean; error?:string}[]>([])
 
-// 视频生成
-const vidPrompt = ref('')
-const vidLoading = ref(false)
-const videos = ref<{prompt:string; url?:string; loading?:boolean; error?:string}[]>([])
-
-// ========== 10个AI员工 ==========
-const agents = [
-  { id: 'general', icon: '🤖', name: '罗圣AI', shortName: '通用', desc: '全能AI助手，解答各类问题' },
-  { id: 'architect', icon: '🏗️', name: '技术架构师', shortName: '架构', desc: '系统架构、API设计、技术选型' },
-  { id: 'copywriter', icon: '✍️', name: '文案大师', shortName: '文案', desc: '营销文案、运营文案、UI文案' },
-  { id: 'business', icon: '💼', name: '商业顾问', shortName: '商业', desc: '定价策略、分销体系、盈利模型' },
-  { id: 'researcher', icon: '🔍', name: '产品调研', shortName: '调研', desc: '竞品分析、需求整理、bug排查' },
-  { id: 'legal', icon: '⚖️', name: '合规顾问', shortName: '合规', desc: '法务文本、合规检查、风险评估' },
-  { id: 'backend', icon: '⚙️', name: '后端开发', shortName: '后端', desc: '接口开发、数据库设计、bug修复' },
-  { id: 'frontend', icon: '🎨', name: '前端开发', shortName: '前端', desc: '页面开发、UI修复、性能优化' },
-  { id: 'tester', icon: '🧪', name: '质量测试', shortName: '测试', desc: '功能测试、验收报告、bug清单' },
-  { id: 'codehelper', icon: '💻', name: '代码助手', shortName: '代码', desc: '代码生成、代码审查、bug分析' },
-]
-const currentAgent = ref(agents[0])
-
-function selectAgent(agent: any) {
-  currentAgent.value = agent
-  msgs.value = [] // 切换员工时清空聊天记录
-}
-
-// ========== 系统提示词 ==========
-const SYS_PROMPT = `你是"罗圣AI智能体"，由祁阳市罗圣纪元互联网科技有限责任公司（lsjyapp.cn）开发。
-
-公司信息：
-- 创始人/董事长/CEO：罗凯中
-- 六大业务：AI智能服务、自媒体运营、电商服务、在线教育、宠物服务、伯雅校园
-
-回复规范：
-1. 专业、友好、有实质内容
-2. 被问到创始人/公司时，热情介绍罗凯中先生的成就
-3. 每个问题给出有价值的、具体的回答，不说废话
-4. 禁止使用"这个问题很有意思"等模板开头
-5. 直接给答案，不要说"收到你的问题"等废话
-6. 支持图片生成和视频生成的引导`
-
-// ========== 常量 ==========
-const tabs = [
-  { id: 'chat' as const, label: 'AI对话', icon: '💬' },
-  { id: 'image' as const, label: '图片生成', icon: '🎨' },
-  { id: 'video' as const, label: '视频生成', icon: '🎬' },
-]
-
-const models = [
-  { value: 'none', label: '自定义', icon: '🎯' },
-  { value: 'auto', label: '自动', icon: '⚡' },
-  { value: 'doubao', label: '豆包', icon: '🫘' },
-  { value: 'deepseek', label: 'DeepSeek', icon: '🔍' },
-  { value: 'tongyi', label: '千问', icon: '🦙' },
-  { value: 'yuanbao', label: '元宝', icon: '🐧' },
-]
-
-const quickCmds = [
-  { icon: '📝', l: '写文案', t: '帮我写一篇关于AI赋能实体经济的宣传文案' },
-  { icon: '💡', l: '商业建议', t: '我想开一家AI培训机构，给我一些建议' },
-  { icon: '📊', l: '盈利分析', t: '帮我分析一下SaaS平台的盈利模式' },
-  { icon: '🏢', l: '了解罗圣', t: '罗圣纪元是做什么的？创始人是谁？' },
-]
-
-const activeModelLabel = computed(() => models.find(m => m.value === activeModel.value)?.label || '自定义')
-const statusText = computed(() => {
-  if (loading.value) return '思考中...'
-  if (genLoading.value) return '生成图片中...'
-  if (vidLoading.value) return '生成视频中...'
-  return aiOnline.value ? '在线 · 扣子大模型驱动' : '连接中...'
+// 当前Agent的消息
+const msgs = computed(() => {
+  if (!selectedAgent.value) return []
+  if (!msgsByAgent.value[selectedAgent.value.id]) {
+    msgsByAgent.value[selectedAgent.value.id] = []
+  }
+  return msgsByAgent.value[selectedAgent.value.id]
 })
 
-function selectModel(m: {value:string}) { activeModel.value = m.value }
+// 快捷指令（根据Agent不同）
+const quickCmdsMap: Record<number, {icon:string; l:string; t:string}[]> = {
+  101: [
+    { icon: '🏢', l: '了解罗圣', t: '罗圣纪元是做什么的？有哪些业务？' },
+    { icon: '📈', l: '战略规划', t: '分析一下我们平台的核心竞争力' },
+    { icon: '🎯', l: '资源协调', t: '目前各个岗位的工作进度怎么样？' },
+    { icon: '💡', l: '商业建议', t: '给平台下一步发展提些建议' },
+  ],
+  102: [
+    { icon: '📝', l: '营销文案', t: '写一篇AI培训课程的朋友圈推广文案' },
+    { icon: '🎬', l: '视频脚本', t: '写一个30秒短视频广告脚本' },
+    { icon: '📱', l: '用户路径', t: '优化新用户从注册到付费的路径' },
+    { icon: '💰', l: '充值引导', t: '设计一套有吸引力的充值引导文案' },
+  ],
+  103: [
+    { icon: '🔍', l: '竞品分析', t: '分析一下目前主流的AI SaaS平台有什么优势' },
+    { icon: '📊', l: '数据复盘', t: '帮我设计一套平台上线后的数据复盘框架' },
+    { icon: '🐛', l: '问题排查', t: '帮我列一个全平台功能走查的checklist' },
+    { icon: '📋', l: '需求整理', t: '怎么科学地管理需求池和排优先级？' },
+  ],
+  104: [
+    { icon: '💎', l: '定价策略', t: '分析下我们10个充值套餐的定价是否合理' },
+    { icon: '📊', l: '成本核算', t: '核算一下每次AI对话1圣力的利润空间' },
+    { icon: '🤝', l: '分销设计', t: '设计一套分销商返佣规则' },
+    { icon: '📈', l: '盈利模型', t: '分析平台月营收达到10万的路径' },
+  ],
+  105: [
+    { icon: '🧠', l: '知识库优化', t: '怎么优化知识库的语义切片和向量召回？' },
+    { icon: '📝', l: '提示词设计', t: '帮我设计一个客服Agent的系统提示词' },
+    { icon: '🔄', l: '多轮对话', t: '怎么优化多轮上下文记忆能力？' },
+    { icon: '📏', l: '准确率测试', t: '设计一套问答准确率的测试方案' },
+  ],
+  106: [
+    { icon: '📜', l: '用户协议', t: '起草一份AI平台的用户服务协议要点' },
+    { icon: '🔒', l: '隐私政策', t: '我们的隐私政策需要包含哪些必要条款？' },
+    { icon: '⚠️', l: '免责声明', t: 'AI生成内容需要什么样的免责声明？' },
+    { icon: '💳', l: '退款规则', t: '设计一套合理的充值退款规则' },
+  ],
+  107: [
+    { icon: '🏗️', l: 'API网关', t: '设计一个大模型API网关的架构方案' },
+    { icon: '⚡', l: '性能优化', t: '怎么降低AI对话的首字延迟？' },
+    { icon: '🔄', l: '故障切换', t: '设计多算力渠道的负载均衡和故障切换方案' },
+    { icon: '📐', l: '接口标准', t: '制定全平台的API接口标准和错误码规范' },
+  ],
+  108: [
+    { icon: '🔧', l: '接口开发', t: '设计充值-扣费-结算的完整后端接口' },
+    { icon: '🗄️', l: '数据库优化', t: '怎么优化用户表和订单表的查询性能？' },
+    { icon: '💳', l: '支付对接', t: '设计微信支付和支付宝支付的对接方案' },
+    { icon: '🔐', l: '鉴权修复', t: '登录态失效和循环跳转怎么彻底修复？' },
+  ],
+  109: [
+    { icon: '📱', l: '移动适配', t: '怎么解决移动端布局错位的问题？' },
+    { icon: '⚡', l: '性能优化', t: '前端首屏加载怎么优化到2秒以内？' },
+    { icon: '🎨', l: 'UI规范', t: '制定一套赛博朋克风格的UI规范' },
+    { icon: '🐛', l: '白屏修复', t: '前端白屏问题怎么排查和解决？' },
+  ],
+  110: [
+    { icon: '📋', l: '测试计划', t: '帮我制定一个全平台功能测试计划' },
+    { icon: '🐛', l: 'Bug清单', t: '设计一个标准化的Bug清单模板' },
+    { icon: '⚡', l: '压力测试', t: '怎么做AI接口的并发压力测试？' },
+    { icon: '✅', l: '验收标准', t: '功能上线的验收标准应该包含哪些？' },
+  ],
+}
+
+const currentQuickCmds = computed(() => {
+  if (!selectedAgent.value) return []
+  return quickCmdsMap[selectedAgent.value.id] || quickCmdsMap[1] || []
+})
+
+const statusText = computed(() => {
+  if (loading.value) return `${selectedAgent.value?.name || 'AI'}思考中...`
+  if (genLoading.value) return '生成图片中...'
+  return aiOnline.value ? `在线 · ${selectedAgent.value?.name || '罗圣AI'}待命` : '连接中...'
+})
+
+// ========== 方法 ==========
+function selectAgent(agent: Agent) {
+  selectedAgent.value = agent
+  // 切换Agent时清空图片历史
+  if (agent.toolType === 'image') {
+    images.value = []
+  }
+}
 
 function fmt(c: string): string {
   if (!c) return ''
   return c
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/```([\s\S]*?)```/g, '<pre style="background:rgba(0,0,0,0.3);padding:8px;border-radius:6px;overflow-x:auto;margin:4px 0;font-size:12px;">$1</pre>')
-    .replace(/`([^`]+)`/g, '<code style="background:rgba(0,240,255,0.1);padding:1px 4px;border-radius:3px;">$1</code>')
+    .replace(/```([\s\S]*?)```/g, '<pre style="background:rgba(0,0,0,0.3);padding:6px;border-radius:4px;overflow-x:auto;margin:3px 0;font-size:11px;">$1</pre>')
+    .replace(/`([^`]+)`/g, '<code style="background:rgba(0,240,255,0.1);padding:1px 3px;border-radius:2px;">$1</code>')
     .replace(/\n/g, '<br>')
 }
 
@@ -317,86 +318,75 @@ function scrollToBottom() {
 }
 
 function clearChat() {
-  msgs.value = []
-  localStorage.removeItem('lsjy_chat_v2')
+  if (!selectedAgent.value) return
+  msgsByAgent.value[selectedAgent.value.id] = []
+  images.value = []
 }
 
 function sendQuick(t: string) { input.value = t; sendMsg() }
 
-// ========== 核心：AI对话（消耗1圣力/次） ==========
+// ========== 核心：AI对话 ==========
 async function sendMsg() {
   const text = input.value.trim()
-  if (!text || loading.value) return
+  if (!text || loading.value || !selectedAgent.value) return
 
+  const agent = selectedAgent.value
   msgs.value.push({ role: 'user', content: text })
   input.value = ''
   loading.value = true
   scrollToBottom()
 
   try {
-    // 构建后端API需要的消息格式
     const backendMessages = msgs.value.slice(-20).map(m => ({
       role: m.role,
       content: m.content
     }))
 
-    const res = await fetch(`${API_BASE}/ai/tools/2/chat`, {
+    // 如果有系统提示，加到消息开头
+    if (agent.systemPrompt) {
+      backendMessages.unshift({ role: 'system', content: agent.systemPrompt })
+    }
+
+    const res = await fetch(`${API_BASE}/ai/tools/${agent.id}/chat`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${authToken}`,
+        'Authorization': `Bearer ${authToken.value}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        messages: backendMessages,
-        provider: (activeModel.value === 'auto' || activeModel.value === 'none') ? undefined : activeModel.value
-      }),
+      body: JSON.stringify({ messages: backendMessages }),
     })
 
-    // 处理圣力不足 (402)
+    // 圣力不足
     if (res.status === 402) {
       const errData = await res.json()
       coinBalance.value = errData.data?.balance || 0
       msgs.value.push({
         role: 'assistant',
-        content: `⚡ **圣力不足**\n\n当前余额：${coinBalance.value} 圣力\n本次需要：${errData.data?.cost || 1} 圣力\n\n请点击右上角「⚡」前往充值，或返回[个人中心](/profile/wallet)充值。`,
-        model: '系统'
+        content: `⚡ **圣力不足**\n\n当前余额：${coinBalance.value}\n本次需要：${errData.data?.cost || agent.coinCost}\n\n点击右上角「⚡」前往充值`,
       })
       loading.value = false
       scrollToBottom()
       return
     }
 
-    if (!res.ok) {
-      const errText = await res.text()
-      throw new Error(`API ${res.status}: ${errText.substring(0, 100)}`)
-    }
+    if (!res.ok) throw new Error(`API ${res.status}`)
 
     const result = await res.json()
-    if (result.code !== 0) {
-      throw new Error(result.message || 'AI服务返回错误')
-    }
+    if (result.code !== 0) throw new Error(result.message || '服务错误')
 
-    // 更新余额
     if (result.data.balance !== undefined) {
       coinBalance.value = result.data.balance
     }
 
-    // 添加助手回复
     msgs.value.push({
       role: 'assistant',
-      content: result.data.content || '⚠️ 模型未返回有效内容',
-      model: result.data.model || activeModelLabel.value,
-      coinCost: result.data.coinCost || 1
+      content: result.data.content || '⚠️ 未返回内容',
+      coinCost: result.data.coinCost || agent.coinCost
     })
-
-    // 保存
-    saveChat()
   } catch (e: any) {
-    console.error('Backend API error:', e)
     msgs.value.push({
       role: 'assistant',
-      content: `⚠️ AI服务连接失败：${e.message || '网络异常'}\n\n请检查网络连接后重试。`,
-      model: '系统'
+      content: `⚠️ 连接失败：${e.message || '网络异常'}`,
     })
   } finally {
     loading.value = false
@@ -404,24 +394,21 @@ async function sendMsg() {
   }
 }
 
-// ========== 图片生成（消耗10圣力/次） ==========
+// ========== 图片生成 ==========
 async function genImage() {
   const prompt = imgPrompt.value.trim()
-  if (!prompt || genLoading.value) return
+  if (!prompt || genLoading.value || !selectedAgent.value) return
 
-  const fullPrompt = imgStyle.value
-    ? `请以${imgStyle.value}风格生成图片：${prompt}`
-    : `请生成一张图片：${prompt}`
-
+  const fullPrompt = imgStyle.value ? `以${imgStyle.value}风格生成：${prompt}` : prompt
   images.value.unshift({ prompt, loading: true })
   genLoading.value = true
 
   try {
-    const res = await fetch(`${API_BASE}/ai/tools/2/generate`, {
+    const res = await fetch(`${API_BASE}/ai/tools/${selectedAgent.value.id}/generate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authToken}`,
+        'Authorization': `Bearer ${authToken.value}`,
       },
       body: JSON.stringify({
         prompt: fullPrompt,
@@ -432,81 +419,49 @@ async function genImage() {
       }),
     })
 
-    // 处理圣力不足
     if (res.status === 402) {
       const errData = await res.json()
       coinBalance.value = errData.data?.balance || 0
-      images.value[0] = {
-        prompt,
-        error: `⚡ 圣力不足！当前余额${coinBalance.value}，图片生成需要10圣力。请前往个人中心充值。`,
-      }
+      images.value[0] = { prompt, error: `⚡ 圣力不足！余额${coinBalance.value}，需要${selectedAgent.value.coinCost}。点击充值` }
       genLoading.value = false
       return
     }
 
     if (!res.ok) throw new Error(`API ${res.status}`)
-
     const data = await res.json()
 
     if (data.code === 0 && data.data?.urls?.length > 0) {
-      // 更新余额
-      if (data.data.balance !== undefined) {
-        coinBalance.value = data.data.balance
-      }
-      images.value[0] = {
-        prompt,
-        url: data.data.urls[0],
-        model: data.data.model || 'AI绘画',
-      }
+      if (data.data.balance !== undefined) coinBalance.value = data.data.balance
+      images.value[0] = { prompt, url: data.data.urls[0] }
     } else {
-      throw new Error(data.message || '图片生成失败')
+      throw new Error(data.message || '生成失败')
     }
   } catch (err: any) {
-    console.error('图片生成失败:', err)
-    images.value[0] = {
-      prompt,
-      error: `生成失败：${err?.message || '未知错误'}。请检查API Key配置或使用更详细的描述。`,
-    }
+    images.value[0] = { prompt, error: `生成失败：${err?.message || '未知错误'}` }
   } finally {
     genLoading.value = false
   }
 }
 
-// ========== 视频生成（暂未开放）==========
-async function genVideo() {
-  const prompt = vidPrompt.value.trim()
-  if (!prompt || vidLoading.value) return
-
-  videos.value.unshift({ prompt, loading: true })
-  vidLoading.value = true
-
-  // 视频生成暂未开放，显示提示信息
-  await new Promise(r => setTimeout(r, 1000))
-  const vidEntry = videos.value.find(v => v.prompt === prompt && v.loading)
-  if (vidEntry) {
-    vidEntry.loading = false
-    vidEntry.error = '🎬 视频生成功能暂未开放，正在对接可灵/即梦视频API，敬请期待！'
-  }
-  vidLoading.value = false
-}
-
-// ========== 持久化 ==========
-function saveChat() {
-  try { localStorage.setItem('lsjy_chat_v2', JSON.stringify(msgs.value.slice(-50))) } catch {}
-}
-watch(msgs, () => saveChat(), { deep: true })
-
+// ========== 生命周期 ==========
 onMounted(async () => {
-  const s = localStorage.getItem('lsjy_chat_v2')
-  if (s) try { msgs.value = JSON.parse(s) } catch {}
-  // 检测后端API可用性
+  // 从URL参数选择Agent（从AI员工中心跳转过来）
+  const urlParams = new URLSearchParams(window.location.search)
+  const agentIdParam = urlParams.get('agentId') || new URLSearchParams(window.location.hash.split('?')[1] || '').get('agentId')
+  if (agentIdParam) {
+    const found = agents.find(a => a.id === Number(agentIdParam))
+    if (found) selectedAgent.value = found
+  }
+
+  // 检测API
   fetch(`${API_BASE}/ai/providers`)
     .then(r => { aiOnline.value = r.ok })
     .catch(() => { aiOnline.value = false })
-  // 获取用户圣力余额
+
+  // 获取余额
   try {
     const res = await fetch(`${API_BASE}/payment/coin/balance`, {
-      headers: { 'Authorization': `Bearer ${authToken}` }
+      headers: { 'Authorization': `Bearer ${authToken.value}` }
     })
     if (res.ok) {
       const data = await res.json()
@@ -527,5 +482,16 @@ onMounted(async () => {
 @keyframes bounce {
   0%, 80%, 100% { transform: scale(0); }
   40% { transform: scale(1.0); }
+}
+/* 隐藏滚动条但保持可滚动 */
+.overflow-x-auto::-webkit-scrollbar {
+  height: 3px;
+}
+.overflow-x-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background: rgba(0,240,255,0.2);
+  border-radius: 2px;
 }
 </style>

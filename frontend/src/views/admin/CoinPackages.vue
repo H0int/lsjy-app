@@ -39,11 +39,18 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 const packages = ref([
-  { id: 1, coins: 100, price: 9.9, originalPrice: 10, bonus: '无赠品', sold: 1256, status: 'active', highlight: false },
-  { id: 2, coins: 500, price: 39.9, originalPrice: 50, bonus: '送50圣力', sold: 3421, status: 'active', highlight: true },
-  { id: 3, coins: 1000, price: 69.9, originalPrice: 100, bonus: '送150圣力', sold: 2187, status: 'active', highlight: false },
-  { id: 4, coins: 5000, price: 299, originalPrice: 500, bonus: '送1000圣力', sold: 876, status: 'active', highlight: false },
-  { id: 5, coins: 10000, price: 499, originalPrice: 1000, bonus: '送2500圣力', sold: 432, status: 'inactive', highlight: false },
+  { id: 1, coins: 50, price: 4.9, originalPrice: 5, bonus: '送5圣力', sold: 523, status: 'active', highlight: false },
+  { id: 2, coins: 100, price: 9.9, originalPrice: 10, bonus: '送10圣力', sold: 1256, status: 'active', highlight: false },
+  { id: 3, coins: 200, price: 14.9, originalPrice: 20, bonus: '送20圣力', sold: 892, status: 'active', highlight: false },
+  { id: 4, coins: 300, price: 24.9, originalPrice: 30, bonus: '送30圣力', sold: 1567, status: 'active', highlight: false },
+  { id: 5, coins: 500, price: 39.9, originalPrice: 50, bonus: '送100圣力', sold: 3421, status: 'active', highlight: true },
+  { id: 6, coins: 1000, price: 69.9, originalPrice: 100, bonus: '送200圣力', sold: 2187, status: 'active', highlight: false },
+  { id: 7, coins: 2000, price: 129.9, originalPrice: 200, bonus: '送500圣力', sold: 1345, status: 'active', highlight: false },
+  { id: 8, coins: 3500, price: 199.9, originalPrice: 350, bonus: '送1000圣力', sold: 987, status: 'active', highlight: false },
+  { id: 9, coins: 5000, price: 299.9, originalPrice: 500, bonus: '送1500圣力', sold: 876, status: 'active', highlight: false },
+  { id: 10, coins: 10000, price: 549.9, originalPrice: 1000, bonus: '送3500圣力', sold: 432, status: 'active', highlight: false },
+  { id: 11, coins: 25000, price: 1299.9, originalPrice: 2500, bonus: '送10000圣力', sold: 198, status: 'active', highlight: false },
+  { id: 12, coins: 50000, price: 2499.9, originalPrice: 5000, bonus: '送25000圣力', sold: 56, status: 'active', highlight: false },
 ])
 </script>
 

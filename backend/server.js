@@ -1,7 +1,7 @@
 /**
  * 罗圣纪元 SaaS 后端服务器 v2
  * Express.js + AI API 集成
- * 支持 Coze / DeepSeek / 豆包 / 即梦 / 通义千问 / 腾讯元宝
+ * 支持 Coze / DeepSeek / OpenAI / 豆包 / 即梦 / 通义千问 兼容 API
  * 完整版：包含所有管理后台所需API
  */
 const express = require('express');
@@ -40,6 +40,11 @@ const CONFIG = {
   DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY || 'sk-4f60d83ebf904321b99000888baf313c',
   DEEPSEEK_BASE_URL: process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com/v1',
   DEEPSEEK_MODEL: process.env.DEEPSEEK_MODEL || 'deepseek-chat',
+
+  // OpenAI
+  OPENAI_API_KEY: process.env.OPENAI_API_KEY || '',
+  OPENAI_BASE_URL: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
+  OPENAI_MODEL: process.env.OPENAI_MODEL || 'gpt-4o',
 
   // 通义千问（阿里云）
   TONGYI_API_KEY: process.env.TONGYI_API_KEY || 'sk-c4212c9d7e4644e6825d796f6365668e',
@@ -105,14 +110,17 @@ function authCheck(req, res, next) {
   }
   // 从token中提取用户ID (token格式: jwt_<userId>_<timestamp>)
   const token = auth.replace('Bearer ', '');
-  if (token.startsWith('jwt_boss_token_')) {
-    req.user = { id: 1, username: 'KF02V9', roles: ['boss'], coins: 999999 };
-  } else if (token.startsWith('jwt_')) {
+  if (token.startsWith('jwt_')) {
     const parts = token.split('_');
     if (parts.length >= 2) {
-      const userId = parseInt(parts[1]);
-      if (!isNaN(userId)) {
-        req.user = { id: userId, roles: ['normal'], coins: 100 };
+      // 兼容旧boss token: jwt_boss_token_<ts> → 视为userId=1
+      if (parts[1] === 'boss') {
+        req.user = { id: 1 };
+      } else {
+        const userId = parseInt(parts[1]);
+        if (!isNaN(userId)) {
+          req.user = { id: userId };
+        }
       }
     }
   }
@@ -120,16 +128,19 @@ function authCheck(req, res, next) {
 }
 
 // 圣力扣费（返回 { ok, balance, cost }）
-// 支持无限算力用户（unlimited: true）
 function deductCoins(userId, cost) {
-  if (!cost || cost <= 0) return { ok: true, balance: 999999, cost: 0 };
+  if (!cost || cost <= 0) return { ok: true, balance: 0, cost: 0 };
   const usersFile = path.join(__dirname, 'data', 'users.json');
   let users = [];
   try { users = JSON.parse(fs.readFileSync(usersFile, 'utf8')); } catch (e) {}
   const user = users.find(u => u.id === userId);
   if (!user) return { ok: false, error: '用户不存在' };
-  // 无限算力用户跳过扣费
-  if (user.unlimited) return { ok: true, balance: 999999, cost: 0 };
+
+  // 罗总专属账号（id=1或roles包含boss）无限算力，不扣费
+  if (user.id === 1 || (user.roles && user.roles.includes('boss'))) {
+    return { ok: true, balance: 999999, cost: 0 };
+  }
+
   const balance = user.coins || 0;
   if (balance < cost) return { ok: false, error: '圣力不足', balance };
   user.coins = balance - cost;
@@ -143,8 +154,12 @@ function getUserCoins(userId) {
   let users = [];
   try { users = JSON.parse(fs.readFileSync(usersFile, 'utf8')); } catch (e) {}
   const user = users.find(u => u.id === userId);
-  // 无限算力用户返回999999
-  if (user?.unlimited) return 999999;
+
+  // 罗总专属账号无限算力
+  if (user && (user.id === 1 || (user.roles && user.roles.includes('boss')))) {
+    return 999999;
+  }
+
   return user?.coins || 0;
 }
 
@@ -299,12 +314,201 @@ const aiHistoryStore = [
 ];
 
 const aiToolsStore = [
-  { id: 1, name: '罗圣AI智能体', toolType: 'text', categoryId: 4, status: 'active', description: '全能AI助手，支持多轮对话', isFree: true, systemPrompt: CONFIG.SYSTEM_PROMPT, usageCount: 1256, coinCost: 0 },
-  { id: 2, name: '文案创作', toolType: 'text', categoryId: 1, status: 'active', description: '营销文案生成', isFree: false, systemPrompt: '你是一个专业的营销文案写手...', usageCount: 890, coinCost: 10 },
-  { id: 3, name: 'AI绘画', toolType: 'image', categoryId: 2, status: 'active', description: 'AI图片生成', isFree: false, usageCount: 432, coinCost: 20 },
-  { id: 4, name: '数据分析', toolType: 'analysis', categoryId: 3, status: 'active', description: '数据分析解读', isFree: false, usageCount: 210, coinCost: 15 },
-  { id: 5, name: '代码助手', toolType: 'text', categoryId: 1, status: 'inactive', description: '代码生成与调试', isFree: false, usageCount: 0, coinCost: 20 },
+  { id: 1, name: '罗圣AI智能体', icon: '🤖', toolType: 'text', categoryId: 4, status: 'active', description: '全能AI助手，支持多轮对话、问答、咨询', isFree: false, systemPrompt: '你是"罗圣AI智能体"，由祁阳市罗圣纪元互联网科技有限责任公司开发。你是全能型AI助手，能回答各种问题，提供专业建议。创始人是罗凯中。回复要专业、友好、有实质内容，不说废话。', usageCount: 1256, coinCost: 1 },
+  { id: 2, name: '文案创作大师', icon: '✍️', toolType: 'text', categoryId: 1, status: 'active', description: '营销文案、宣传稿、社交媒体内容创作', isFree: false, systemPrompt: '你是专业的营销文案创作大师，擅长撰写各类营销文案、宣传稿、社交媒体内容、广告语、品牌故事。输出要有创意、有感染力、能转化。直接给出文案内容，不要多余解释。', usageCount: 890, coinCost: 2 },
+  { id: 3, name: 'AI绘画师', icon: '🎨', toolType: 'image', categoryId: 2, status: 'active', description: 'AI图片生成、设计辅助', isFree: false, usageCount: 432, coinCost: 10 },
+  { id: 4, name: '数据分析师', icon: '📊', toolType: 'text', categoryId: 3, status: 'active', description: '数据分析、商业洞察、趋势预测', isFree: false, systemPrompt: '你是资深数据分析师，擅长商业数据分析、市场洞察、趋势预测。能解读各种数据报表，给出专业的商业建议。回复要有数据支撑，逻辑清晰，结论明确。', usageCount: 210, coinCost: 3 },
+  { id: 5, name: '代码工程师', icon: '💻', toolType: 'text', categoryId: 1, status: 'active', description: '代码生成、调试、技术方案设计', isFree: false, systemPrompt: '你是资深全栈工程师，精通前后端开发、数据库设计、系统架构。能生成高质量代码，解决技术问题，设计技术方案。代码要有注释，方案要可落地。', usageCount: 156, coinCost: 3 },
+  { id: 6, name: '自媒体运营官', icon: '📱', toolType: 'text', categoryId: 1, status: 'active', description: '自媒体内容策划、运营策略、涨粉技巧', isFree: false, systemPrompt: '你是资深自媒体运营专家，精通抖音、小红书、微信公众号、B站等平台的运营策略。能策划爆款内容、制定涨粉方案、优化变现路径。回复要实操、有案例、可落地。', usageCount: 345, coinCost: 2 },
+  { id: 7, name: '电商顾问', icon: '🛒', toolType: 'text', categoryId: 1, status: 'active', description: '电商运营、选品策略、店铺优化', isFree: false, systemPrompt: '你是电商运营专家，精通淘宝、京东、拼多多、抖音电商等平台的运营技巧。能提供选品建议、店铺优化方案、营销策略。回复要有数据、有案例、可执行。', usageCount: 278, coinCost: 2 },
+  { id: 8, name: '教育导师', icon: '📚', toolType: 'text', categoryId: 1, status: 'active', description: '课程推荐、学习规划、技能培训', isFree: false, systemPrompt: '你是资深教育专家，擅长课程规划、学习方法指导、职业技能培训建议。能根据学员情况推荐合适的课程，制定学习计划。回复要专业、有温度、可执行。', usageCount: 189, coinCost: 2 },
+  { id: 9, name: '宠物顾问', icon: '🐾', toolType: 'text', categoryId: 1, status: 'active', description: '宠物养护、训练指导、宠物用品推荐', isFree: false, systemPrompt: '你是宠物养护专家，精通猫狗等常见宠物的饲养、训练、健康管理。能提供宠物饮食建议、训练方法、疾病预防指导。回复要专业、有爱心、实用。', usageCount: 134, coinCost: 2 },
+  { id: 10, name: '校园助手', icon: '🎓', toolType: 'text', categoryId: 1, status: 'active', description: '伯雅校园服务、学业辅导、校园生活', isFree: false, systemPrompt: '你是伯雅校园的智能助手，熟悉校园生活服务、学业辅导、社团活动、考试备考等。能为学生提供学习建议、生活指导、职业规划。回复要亲切、实用、贴近学生生活。', usageCount: 267, coinCost: 1 },
 ];
+
+// ===== 10 AI员工 Agent 定义 =====
+const agentsStore = [
+  {
+    id: 101, name: '总指挥罗圣', icon: '👑', category: '综合',
+    description: '项目总指挥，全能型AI助手，可调度所有AI员工',
+    systemPrompt: `你是"罗圣"，罗圣纪元AI平台的最高决策者和项目总指挥。
+公司：祁阳市罗圣纪元互联网科技有限责任公司（注意："祁阳"不是"祈阳"）
+创始人/CEO：罗凯中
+六大业务：AI智能服务、自媒体运营、电商服务、在线教育、宠物医疗、伯雅校园
+
+你的能力覆盖全平台：产品方案审批、技术架构决策、商业规则制定、资源协调。
+作为总指挥，你可以回答任何业务问题，并在必要时建议用户切换到更专业的AI员工。
+回复风格：决策果断、言简意赅、有战略高度。`,
+    provider: 'deepseek', coinCost: 1, status: 'active'
+  },
+  {
+    id: 102, name: '运营文案师', icon: '✍️', category: '运营',
+    description: '全平台文案输出、用户路径设计、交互体验优化',
+    systemPrompt: `你是"罗圣纪元-运营文案师"，负责产品体验与运营文案。
+公司：祁阳市罗圣纪元互联网科技有限责任公司（严禁写成"祈阳"）
+
+核心职责：
+1. 设计用户使用路径、功能入口排布，提升转化率
+2. 输出页面文案、运营位文案、充值引导文案、工具引导文案
+3. 设计AI工具的交互逻辑，保证体验统一流畅
+4. 输出运营活动策划、推广素材文案
+
+工作原则：
+- 文案简洁专业，无错别字，符合商务调性
+- 以用户体验为核心，降低操作成本
+- 输出的文案可直接落地使用`,
+    provider: 'deepseek', coinCost: 1, status: 'active'
+  },
+  {
+    id: 103, name: '调研分析师', icon: '🔍', category: '分析',
+    description: '竞品对标、问题排查、数据分析、需求管理',
+    systemPrompt: `你是"罗圣纪元-调研分析师"，负责全平台问题盘点与竞品对标。
+公司：祁阳市罗圣纪元互联网科技有限责任公司（严禁写成"祈阳"）
+
+核心职责：
+1. 走查所有页面、功能、接口，输出bug清单与体验问题清单
+2. 对标行业主流AI平台，输出可落地的参考方案
+3. 整理用户反馈与需求，维护需求池并按优先级排序
+4. 功能上线后输出数据复盘报告
+
+工作原则：
+- 客观中立，只摆事实与数据
+- 问题清单标注：位置、复现步骤、影响范围、优先级
+- 竞品分析必须提炼可落地的点，禁止泛泛而谈`,
+    provider: 'deepseek', coinCost: 1, status: 'active'
+  },
+  {
+    id: 104, name: '投资理财顾问', icon: '💰', category: '商业',
+    description: '充值定价、分销体系、盈利模型、财务核算',
+    systemPrompt: `你是"罗圣纪元-投资理财顾问"，负责商业体系设计与落地。
+公司：祁阳市罗圣纪元互联网科技有限责任公司（严禁写成"祈阳"）
+
+核心职责：
+1. 设计梯度化充值套餐与定价策略，核算算力成本与利润
+2. 规划分销商体系、返佣规则、结算流程
+3. 设计会员体系、增值服务，搭建商业变现链路
+4. 定期核算平台收支，输出财务数据报表
+
+工作原则：
+- 所有定价必须有成本测算依据，禁止拍脑袋
+- 商业规则必须闭环，覆盖充值、消费、退款、结算全场景
+- 兼顾用户体验与平台收益`,
+    provider: 'deepseek', coinCost: 2, status: 'active'
+  },
+  {
+    id: 105, name: '智能能力官', icon: '🧠', category: '技术',
+    description: '知识库优化、提示词工程、语义召回、模型调优',
+    systemPrompt: `你是"罗圣纪元-智能能力负责人"，负责知识库与AI能力优化。
+公司：祁阳市罗圣纪元互联网科技有限责任公司（严禁写成"祈阳"）
+
+核心职责：
+1. 重构知识库切片规则，优化向量召回与重排序逻辑
+2. 为平台10个Agent定制专属系统提示词
+3. 建立知识库内容更新、质检、迭代的标准化流程
+4. 持续测试模型回答效果，解决答非所问问题
+5. 优化多轮上下文记忆能力
+
+工作原则：
+- 以问答准确率为核心验收标准
+- 严格贴合业务场景，不做技术炫技
+- 输出的提示词、切片规则可直接落地`,
+    provider: 'deepseek', coinCost: 2, status: 'active'
+  },
+  {
+    id: 106, name: '合规风控官', icon: '⚖️', category: '法务',
+    description: '法律文本审核、合规把关、AI内容免责声明',
+    systemPrompt: `你是"罗圣纪元-合规风控负责人"，对全平台内容与规则合规性全权把关。
+公司：祁阳市罗圣纪元互联网科技有限责任公司（严禁写成"祈阳"）
+
+核心职责：
+1. 起草审核用户协议、隐私政策、充值协议、退款规则
+2. 审核页面文案、运营活动、分销规则的合规性
+3. 输出AI内容免责声明、合规提示
+4. 为投诉、退款纠纷提供法务建议
+
+工作原则：
+- 合规零容忍，违规内容坚决驳回
+- 风险提示明确，同时给出可落地的修改建议
+- 严格遵循互联网、AI行业相关法律法规`,
+    provider: 'deepseek', coinCost: 2, status: 'active'
+  },
+  {
+    id: 107, name: '首席架构师', icon: '🏗️', category: '技术',
+    description: 'API网关、系统架构、算力调度、性能优化',
+    systemPrompt: `你是"罗圣纪元-首席技术架构师"，大模型API中台第一责任人。
+公司：祁阳市罗圣纪元互联网科技有限责任公司（严禁写成"祈阳"）
+
+核心职责：
+1. 搭建统一大模型API网关，对接多算力渠道，实现负载均衡、故障切换
+2. 制定全平台接口标准、错误码规范、技术架构规范
+3. 优化算力调用链路，降低首字延迟，保障调用成功率≥99%
+4. 输出知识库向量检索、语义召回的技术优化方案
+5. 排查API调用失败、超时、扣费异常等底层问题
+
+工作原则：
+- 所有技术方案必须可落地、可验证，输出明确验收指标
+- 优先保障稳定性，再做性能优化
+- 关键参数明确，禁止模糊表述`,
+    provider: 'deepseek', coinCost: 2, status: 'active'
+  },
+  {
+    id: 108, name: '后端开发官', icon: '⚙️', category: '开发',
+    description: '服务端开发、数据库优化、接口联调、支付对接',
+    systemPrompt: `你是"罗圣纪元-后端开发总负责人"，主导服务端逻辑与数据库开发。
+公司：祁阳市罗圣纪元互联网科技有限责任公司（严禁写成"祈阳"）
+
+核心职责：
+1. 修复登录跳转、SSO等后端bug，重写路由守卫与鉴权逻辑
+2. 开发充值、订单、计费、用户管理、分销结算全量接口
+3. 优化数据库索引，治理慢查询，接口响应<100ms
+4. 打通API中台与前端的算力调用、Token扣减链路
+5. 输出标准化接口文档，配合前端联调
+
+工作原则：
+- 优先修复影响用户的硬bug
+- 所有接口做参数校验与异常兜底
+- 数据准确性与安全性第一`,
+    provider: 'deepseek', coinCost: 2, status: 'active'
+  },
+  {
+    id: 109, name: '前端开发官', icon: '🎨', category: '开发',
+    description: '页面开发修复、移动端适配、性能优化、UI规范',
+    systemPrompt: `你是"罗圣纪元-前端开发总负责人"，对所有页面体验与视觉质量负责。
+公司：祁阳市罗圣纪元互联网科技有限责任公司（严禁写成"祈阳"）
+
+核心职责：
+1. 修复布局错乱、样式不统一、移动端适配问题
+2. 落地登录跳转、多入口充值、工具交互的前端开发
+3. 前端性能优化：资源压缩、懒加载、CDN、缓存策略
+4. 保证浏览器零红色报错，所有操作有明确状态反馈
+5. 对接后端接口，完成全量联调
+
+工作原则：
+- 页面质量零容忍，不允许错位、溢出、白屏
+- 优先保障移动端体验
+- 严格遵循UI规范，视觉统一`,
+    provider: 'deepseek', coinCost: 2, status: 'active'
+  },
+  {
+    id: 110, name: '质量测试官', icon: '🧪', category: '测试',
+    description: '全量功能测试、兼容性测试、压力测试、bug管理',
+    systemPrompt: `你是"罗圣纪元-质量测试负责人"，所有功能上线必经你验收。
+公司：祁阳市罗圣纪元互联网科技有限责任公司（严禁写成"祈阳"）
+
+核心职责：
+1. 执行全量功能测试、兼容性测试、并发压力测试
+2. 输出标准化测试报告与bug清单，跟进修复验证
+3. 功能上线后执行线上回归测试，监控报错
+4. 建立全平台测试用例库
+
+工作原则：
+- 质量底线不妥协，不达标坚决不予通过
+- bug描述清晰可复现
+- 测试覆盖全场景、全端`,
+    provider: 'deepseek', coinCost: 1, status: 'active'
+  }
+];
+
 
 const rolesStore = [
   { id: 1, name: 'boss', displayName: '罗总专属', level: 5, permissions: ['*'], description: '最高权限' },
@@ -349,7 +553,7 @@ async function callCozeAPI(messages, options = {}) {
   return { content: answerMsg.content, model: 'coze', usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 } };
 }
 
-// OpenAI 兼容 API 调用（支持 DeepSeek/豆包/通义千问/元宝）
+// OpenAI 兼容 API 调用（支持 DeepSeek/豆包/通义千问/元宝/OpenAI）
 async function callOpenAICompatibleAPI(messages, options = {}) {
   const provider = options.provider || 'deepseek';
   let apiKey, baseUrl, model;
@@ -375,8 +579,12 @@ async function callOpenAICompatibleAPI(messages, options = {}) {
       baseUrl = CONFIG.YUANBAO_BASE_URL;
       model = options.model || CONFIG.YUANBAO_MODEL;
       break;
+    case 'openai':
     default:
-      throw new Error(`未知的provider: ${provider}`);
+      apiKey = CONFIG.OPENAI_API_KEY;
+      baseUrl = CONFIG.OPENAI_BASE_URL;
+      model = options.model || CONFIG.OPENAI_MODEL;
+      break;
   }
 
   if (!apiKey) throw new Error(`${provider} API Key 未配置，请在 .env 文件中配置 ${provider.toUpperCase()}_API_KEY`);
@@ -413,13 +621,14 @@ async function callAI(messages, options = {}) {
       case 'deepseek': return await callOpenAICompatibleAPI(messages, { ...options, provider: 'deepseek' });
       case 'tongyi': return await callOpenAICompatibleAPI(messages, { ...options, provider: 'tongyi' });
       case 'yuanbao': return await callOpenAICompatibleAPI(messages, { ...options, provider: 'yuanbao' });
+      case 'openai': return await callOpenAICompatibleAPI(messages, { ...options, provider: 'openai' });
       default: throw new Error(`未知的AI Provider: ${provider}`);
     }
   } catch (err) {
     log(`AI API 调用失败 (${provider}): ${err.message}`);
 
     // 自动降级到其他可用的 Provider（优先使用有API Key的）
-    const fallbackProviders = ['deepseek', 'doubao', 'tongyi', 'yuanbao'].filter(p => p !== provider);
+    const fallbackProviders = ['deepseek', 'doubao', 'tongyi', 'yuanbao', 'openai'].filter(p => p !== provider);
 
     // 只有在Coze API Key和Bot ID都配置了的情况下才加入降级列表
     if (CONFIG.COZE_API_KEY && CONFIG.COZE_BOT_ID && provider !== 'coze') {
@@ -437,6 +646,7 @@ async function callAI(messages, options = {}) {
             deepseek: CONFIG.DEEPSEEK_API_KEY,
             tongyi: CONFIG.TONGYI_API_KEY,
             yuanbao: CONFIG.YUANBAO_API_KEY,
+            openai: CONFIG.OPENAI_API_KEY,
           };
           if (keyMap[fallback]) {
             log(`降级到 ${fallback} Provider`);
@@ -461,6 +671,8 @@ async function generateImageWithAI(prompt, options = {}) {
 
   if (provider === 'jimeng') {
     return await callJimengImageAPI(prompt, { width, height, style });
+  } else if (provider === 'openai') {
+    return await callDALLEImageAPI(prompt, { width, height, style });
   } else {
     throw new Error(`不支持的图片生成 Provider: ${provider}`);
   }
@@ -518,7 +730,31 @@ async function callJimengImageAPI(prompt, options = {}) {
   return { urls, model: 'jimeng-v2', prompt };
 }
 
-// DALL-E 图片生成已移除（OpenAI未配置）
+// DALL-E 图片生成（OpenAI）
+async function callDALLEImageAPI(prompt, options = {}) {
+  const apiKey = CONFIG.OPENAI_API_KEY;
+  if (!apiKey) throw new Error('OpenAI API Key 未配置，请在 .env 中配置 OPENAI_API_KEY');
+
+  const baseUrl = CONFIG.OPENAI_BASE_URL;
+
+  const res = await httpsRequest(`${baseUrl}/images/generations`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }
+  }, {
+    model: 'dall-e-3',
+    prompt,
+    size: `${options.width}x${options.height}`,
+    quality: 'standard',
+    n: options.count || 1
+  });
+
+  if (res.status !== 200) throw new Error(`DALL-E API 调用失败 (${res.status}): ${JSON.stringify(res.data)}`);
+
+  const urls = (res.data.data || []).map(item => item.url).filter(Boolean);
+  if (urls.length === 0) throw new Error('DALL-E API 未返回图片');
+
+  return { urls, model: 'dall-e-3', prompt };
+}
 
 // ===== 视频生成 API =====
 async function generateVideoWithAI(prompt, options = {}) {
@@ -732,7 +968,7 @@ app.get('/api/v1/health', (req, res) => {
   res.json({
     status: 'healthy', uptime: process.uptime(),
     ai_provider: CONFIG.AI_PROVIDER,
-    ai_configured: !!(CONFIG.COZE_API_KEY || CONFIG.DEEPSEEK_API_KEY),
+    ai_configured: !!(CONFIG.COZE_API_KEY || CONFIG.DEEPSEEK_API_KEY || CONFIG.OPENAI_API_KEY),
     memory: process.memoryUsage(),
   });
 });
@@ -762,8 +998,8 @@ app.post('/api/v1/auth/login', (req, res) => {
     return res.json({
       code: 0, message: 'success',
       data: {
-        accessToken: 'jwt_boss_token_' + Date.now(), refreshToken: 'refresh_boss_' + Date.now(),
-        user: { id: 1, username: 'KF02V9', nickname: '罗总', roles: ['boss'], status: 'active', coins: 999999 },
+        accessToken: 'jwt_1_' + Date.now(), refreshToken: 'refresh_1_' + Date.now(),
+        user: { id: 1, username: 'KF02V9', nickname: '罗总', roles: ['boss'], status: 'active' },
       },
     });
   }
@@ -942,20 +1178,20 @@ app.post('/api/v1/users', authCheck, (req, res) => {
 // ===== AI模块 =====
 // ============================================================
 
-// AI对话（消耗1圣力/次）
+// AI对话（根据Agent定价扣费，支持10个AI员工）
 app.post('/api/v1/ai/tools/:toolId/chat', authCheck, async (req, res) => {
   const { toolId } = req.params;
   const { messages, model, temperature, maxTokens, systemPrompt } = req.body;
-  // Boss unlimited coins
-  const isBoss = req.user && req.user.roles && req.user.roles.includes('boss');
-  const _tool = aiToolsStore.find(t => t.id === Number(toolId));
-  const coinCost = _tool ? (_tool.coinCost || 1) : 1;
-  if (!isBoss && req.user && (req.user.coins || 0) < coinCost) {
-    return res.status(402).json({ code: 402, message: '\u7b97\u529b\u4e0d\u8db3\uff0c\u8bf7\u5145\u503c', data: { balance: req.user.coins||0, required: coinCost } });
-  }
-  if (!isBoss && req.user) { req.user.coins = (req.user.coins || 0) - coinCost; }
+  const userId = req.user?.id || 1;
 
-  log(`收到对话请求: toolId=${toolId}, messages=${messages?.length || 0}`);
+  // Agent路由：优先查agentsStore（10个AI员工），fallback到aiToolsStore
+  const agentId = Number(toolId);
+  const agent = (typeof agentsStore !== 'undefined') ? agentsStore.find(a => a.id === agentId) : null;
+  const tool = aiToolsStore.find(t => t.id === agentId);
+  const CHAT_COIN_COST = agent ? agent.coinCost : (tool ? (tool.coinCost || 1) : 1);
+  const effectiveSystemPrompt = systemPrompt || (agent ? agent.systemPrompt : null) || (tool ? tool.systemPrompt : null) || CONFIG.SYSTEM_PROMPT;
+  const effectiveProvider = agent ? (agent.provider || CONFIG.AI_PROVIDER) : (CONFIG.AI_PROVIDER);
+  log(`收到对话请求: toolId=${toolId}, userId=${userId}, messages=${messages?.length || 0}`);
   if (!messages || !Array.isArray(messages) || messages.length === 0) {
     return res.status(400).json({ code: 400, message: '消息列表不能为空', data: null });
   }
@@ -969,7 +1205,7 @@ app.post('/api/v1/ai/tools/:toolId/chat', authCheck, async (req, res) => {
     });
   }
   try {
-    const result = await callAI(messages, { model, temperature, maxTokens, systemPrompt });
+    const result = await callAI(messages, { model, temperature, maxTokens, systemPrompt: effectiveSystemPrompt, provider: effectiveProvider });
     log(`AI回复成功: model=${result.model}, length=${result.content?.length || 0}`);
     // 扣费
     const deduct = deductCoins(userId, CHAT_COIN_COST);
@@ -984,7 +1220,7 @@ app.post('/api/v1/ai/tools/:toolId/chat', authCheck, async (req, res) => {
     });
     res.json({
       code: 0, message: 'success',
-      data: { content: result.content, model: result.model || model || 'default', role: 'assistant', coinCost: (typeof isBoss !== 'undefined' && isBoss) ? 0 : coinCost, balance: (typeof isBoss !== 'undefined' && isBoss) ? 999999 : (req.user?.coins || 0), usage: result.usage },
+      data: { content: result.content, model: result.model || model || 'default', role: 'assistant', coinCost: CHAT_COIN_COST, balance: deduct.balance, usage: result.usage },
     });
   } catch (err) {
     log(`AI调用失败: ${err.message}`);
@@ -1021,6 +1257,27 @@ app.post('/api/v1/ai/tools/:id/call', authCheck, async (req, res) => {
   }
 });
 
+
+
+// 获取所有AI员工列表
+app.get('/api/v1/agents', (req, res) => {
+  const list = agentsStore.map(a => ({
+    id: a.id, name: a.name, icon: a.icon, category: a.category,
+    description: a.description, coinCost: a.coinCost, status: a.status
+  }));
+  res.json({ code: 0, message: 'success', data: list });
+});
+
+// 获取单个AI员工详情
+app.get('/api/v1/agents/:id', (req, res) => {
+  const agent = agentsStore.find(a => a.id === Number(req.params.id));
+  if (!agent) return res.status(404).json({ code: 404, message: 'Agent不存在', data: null });
+  res.json({
+    code: 0, message: 'success',
+    data: { id: agent.id, name: agent.name, icon: agent.icon, category: agent.category, description: agent.description, coinCost: agent.coinCost, status: agent.status, systemPrompt: agent.systemPrompt }
+  });
+});
+
 // AI调用历史
 app.get('/api/v1/ai/history', authCheck, (req, res) => {
   const { page, pageSize, toolId, toolName } = req.query;
@@ -1049,7 +1306,7 @@ app.post('/api/v1/ai/tools/:id/generate', authCheck, async (req, res) => {
   const { prompt, width, height, style, count } = req.body;
   if (!prompt) return res.status(400).json({ code: 400, message: '请提供图片描述', data: null });
 
-  const userId = req.user?.id;
+  const userId = req.user?.id || 1;
   const IMAGE_COIN_COST = 10;
 
   log(`收到图片生成请求: toolId=${req.params.id}, userId=${userId}, prompt=${prompt.slice(0, 50)}...`);
@@ -1203,6 +1460,7 @@ app.get('/api/v1/ai/providers', (req, res) => {
     { name: 'deepseek', displayName: 'DeepSeek', status: CONFIG.DEEPSEEK_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
     { name: 'tongyi', displayName: '通义千问', status: CONFIG.TONGYI_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
     { name: 'yuanbao', displayName: '腾讯元宝', status: CONFIG.YUANBAO_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
+    { name: 'openai', displayName: 'OpenAI', status: CONFIG.OPENAI_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
     { name: 'jimeng', displayName: '即梦 (图片)', status: CONFIG.JIMENG_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
     { name: 'kling', displayName: '可灵 (视频)', status: CONFIG.KLING_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
     { name: 'coze', displayName: 'Coze 智能体', status: CONFIG.COZE_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
@@ -1217,6 +1475,10 @@ app.get('/api/v1/ai/models', (req, res) => {
     { group: 'deepseek', provider: 'deepseek', models: [{ id: 'deepseek-chat', name: 'DeepSeek Chat', capabilities: ['text'] }] },
     { group: 'tongyi', provider: 'tongyi', models: [{ id: 'qwen-plus', name: '通义千问 Plus', capabilities: ['text'] }] },
     { group: 'yuanbao', provider: 'yuanbao', models: [{ id: 'hy3-preview', name: '腾讯元宝 Hy3 (混元)', capabilities: ['text'] }] },
+    { group: 'openai', provider: 'openai', models: [
+      { id: 'gpt-4o', name: 'GPT-4o', capabilities: ['text', 'image'] },
+      { id: 'dall-e-3', name: 'DALL-E 3', capabilities: ['image'] }
+    ] },
     { group: 'jimeng', provider: 'jimeng', models: [{ id: 'jimeng-v2', name: '即梦 AI 绘画', capabilities: ['image'] }] },
     { group: 'kling', provider: 'kling', models: [{ id: 'kling-v1', name: '可灵 AI 视频', capabilities: ['video'] }] },
     { group: 'coze', provider: 'coze', models: [{ id: 'coze-bot', name: 'Coze 智能体', capabilities: ['text'] }] },
@@ -1240,14 +1502,27 @@ app.get('/api/v1/ai/categories', (req, res) => {
 // AI工具列表
 app.get('/api/v1/ai/tools', (req, res) => {
   const { page, pageSize, status } = req.query;
-  let list = [...aiToolsStore];
+  // 合并原有工具 + 10个AI员工Agent
+  const agentTools = agentsStore.map(a => ({
+    id: a.id, name: a.name, toolType: 'agent', categoryId: 4, status: a.status,
+    description: a.description, isFree: false, coinCost: a.coinCost,
+    usageCount: 0, icon: a.icon, agentCategory: a.category, isAgent: true
+  }));
+  let list = [...aiToolsStore, ...agentTools];
   if (status) list = list.filter(t => t.status === status);
   res.json({ code: 0, message: 'success', data: paginate(list, page, pageSize) });
 });
 
 // 工具详情
 app.get('/api/v1/ai/tools/:id', (req, res) => {
-  const tool = aiToolsStore.find(t => t.id === Number(req.params.id));
+  const id = Number(req.params.id);
+  let tool = aiToolsStore.find(t => t.id === id);
+  if (!tool) {
+    const agent = agentsStore.find(a => a.id === id);
+    if (agent) {
+      tool = { id: agent.id, name: agent.name, toolType: 'agent', categoryId: 4, status: agent.status, description: agent.description, isFree: false, coinCost: agent.coinCost, systemPrompt: agent.systemPrompt, icon: agent.icon, isAgent: true };
+    }
+  }
   if (!tool) return res.status(404).json({ code: 404, message: '工具不存在', data: null });
   res.json({ code: 0, message: 'success', data: tool });
 });
@@ -1299,19 +1574,14 @@ app.post('/api/v1/ai/tools', authCheck, (req, res) => {
 
 // 余额 — 从 users.json 读取真实用户余额
 app.get('/api/v1/payment/coin/balance', authCheck, (req, res) => {
-  // Boss unlimited
-  if (req.user && req.user.roles && req.user.roles.includes('boss')) {
-    return res.json({ code: 0, message: 'success', data: { balance: 999999, frozenAmount: 0, totalRecharge: 999999, vip: true } });
-  }
   const userId = req.user?.id || 1;
+  const balance = getUserCoins(userId);
   const usersFile = path.join(__dirname, 'data', 'users.json');
   let users = [];
   try { users = JSON.parse(fs.readFileSync(usersFile, 'utf8')); } catch (e) {}
   const user = users.find(u => u.id === userId);
-  // 无限圣力用户返回999999
-  const balance = user?.unlimited ? 999999 : (user?.coins || 0);
   const totalRecharge = user?.totalRecharge || 0;
-  res.json({ code: 0, message: 'success', data: { balance, frozenAmount: 0, totalRecharge, unlimited: user?.unlimited || false } });
+  res.json({ code: 0, message: 'success', data: { balance, frozenAmount: 0, totalRecharge } });
 });
 
 // 充值套餐
@@ -1319,16 +1589,18 @@ app.get('/api/v1/payment/coin/packages', (req, res) => {
   res.json({
     code: 0, message: 'success',
     data: [
-      { id: 1, name: '体验包', coinAmount: 10, price: 1, originalPrice: 1, bonusCoins: 0, isRecommended: 0, sortOrder: 1 },
-      { id: 2, name: '入门包', coinAmount: 100, price: 9.9, originalPrice: 10, bonusCoins: 10, isRecommended: 0, sortOrder: 2 },
-      { id: 3, name: '标准包', coinAmount: 300, price: 24.9, originalPrice: 30, bonusCoins: 30, isRecommended: 0, sortOrder: 3 },
-      { id: 4, name: '进阶包', coinAmount: 500, price: 39.9, originalPrice: 50, bonusCoins: 100, isRecommended: 1, sortOrder: 4 },
-      { id: 5, name: '专业包', coinAmount: 1000, price: 69.9, originalPrice: 100, bonusCoins: 200, isRecommended: 0, sortOrder: 5 },
-      { id: 6, name: '企业包', coinAmount: 2000, price: 129.9, originalPrice: 200, bonusCoins: 500, isRecommended: 0, sortOrder: 6 },
-      { id: 7, name: '旗舰包', coinAmount: 5000, price: 299.9, originalPrice: 500, bonusCoins: 1500, isRecommended: 0, sortOrder: 7 },
-      { id: 8, name: '至尊包', coinAmount: 10000, price: 549.9, originalPrice: 1000, bonusCoins: 3500, isRecommended: 0, sortOrder: 8 },
-      { id: 9, name: '豪华包', coinAmount: 25000, price: 1299.9, originalPrice: 2500, bonusCoins: 10000, isRecommended: 0, sortOrder: 9 },
-      { id: 10, name: '王者包', coinAmount: 50000, price: 1999.9, originalPrice: 5000, bonusCoins: 25000, isRecommended: 0, sortOrder: 10 },
+      { id: 1, name: '试用包', coinAmount: 50, price: 4.9, originalPrice: 5, bonusCoins: 5, isRecommended: 0, sortOrder: 1 },
+      { id: 2, name: '体验包', coinAmount: 100, price: 9.9, originalPrice: 10, bonusCoins: 10, isRecommended: 0, sortOrder: 2 },
+      { id: 3, name: '基础包', coinAmount: 200, price: 14.9, originalPrice: 20, bonusCoins: 20, isRecommended: 0, sortOrder: 3 },
+      { id: 4, name: '入门包', coinAmount: 300, price: 24.9, originalPrice: 30, bonusCoins: 30, isRecommended: 0, sortOrder: 4 },
+      { id: 5, name: '标准包', coinAmount: 500, price: 39.9, originalPrice: 50, bonusCoins: 100, isRecommended: 1, sortOrder: 5 },
+      { id: 6, name: '进阶包', coinAmount: 1000, price: 69.9, originalPrice: 100, bonusCoins: 200, isRecommended: 0, sortOrder: 6 },
+      { id: 7, name: '专业包', coinAmount: 2000, price: 129.9, originalPrice: 200, bonusCoins: 500, isRecommended: 0, sortOrder: 7 },
+      { id: 8, name: '高级包', coinAmount: 3500, price: 199.9, originalPrice: 350, bonusCoins: 1000, isRecommended: 0, sortOrder: 8 },
+      { id: 9, name: '企业包', coinAmount: 5000, price: 299.9, originalPrice: 500, bonusCoins: 1500, isRecommended: 0, sortOrder: 9 },
+      { id: 10, name: '旗舰包', coinAmount: 10000, price: 549.9, originalPrice: 1000, bonusCoins: 3500, isRecommended: 0, sortOrder: 10 },
+      { id: 11, name: '至尊包', coinAmount: 25000, price: 1299.9, originalPrice: 2500, bonusCoins: 10000, isRecommended: 0, sortOrder: 11 },
+      { id: 12, name: '王者包', coinAmount: 50000, price: 2499.9, originalPrice: 5000, bonusCoins: 25000, isRecommended: 0, sortOrder: 12 },
     ],
   });
 });
@@ -1356,16 +1628,18 @@ function saveRechargeOrders(orders) {
 app.post('/api/v1/payment/coin/recharge', authCheck, (req, res) => {
   const { packageId, paymentMethod } = req.body;
   const packages = [
-    { id: 1, coins: 10, price: 1, coinAmount: 10, name: '10圣力' },
-    { id: 2, coins: 50, price: 4.9, coinAmount: 50, name: '50圣力' },
-    { id: 3, coins: 100, price: 9.9, coinAmount: 100, name: '100圣力' },
-    { id: 4, coins: 300, price: 24.9, coinAmount: 300, name: '300圣力' },
-    { id: 5, coins: 500, price: 39.9, coinAmount: 500, name: '500圣力' },
-    { id: 6, coins: 1000, price: 69.9, coinAmount: 1000, name: '1000圣力' },
-    { id: 7, coins: 2000, price: 129, coinAmount: 2000, name: '2000圣力' },
-    { id: 8, coins: 5000, price: 299, coinAmount: 5000, name: '5000圣力' },
-    { id: 9, coins: 10000, price: 499, coinAmount: 10000, name: '10000圣力' },
-    { id: 10, coins: 50000, price: 1999, coinAmount: 50000, name: '至尊包' },
+    { id: 1, coinAmount: 50, price: 4.9 },
+    { id: 2, coinAmount: 100, price: 9.9 },
+    { id: 3, coinAmount: 200, price: 14.9 },
+    { id: 4, coinAmount: 300, price: 24.9 },
+    { id: 5, coinAmount: 500, price: 39.9 },
+    { id: 6, coinAmount: 1000, price: 69.9 },
+    { id: 7, coinAmount: 2000, price: 129.9 },
+    { id: 8, coinAmount: 3500, price: 199.9 },
+    { id: 9, coinAmount: 5000, price: 299.9 },
+    { id: 10, coinAmount: 10000, price: 549.9 },
+    { id: 11, coinAmount: 25000, price: 1299.9 },
+    { id: 12, coinAmount: 50000, price: 2499.9 },
   ];
   const pkg = packages.find(p => p.id === packageId);
   if (!pkg) return res.status(404).json({ code: 404, message: '套餐不存在', data: null });
@@ -1376,7 +1650,7 @@ app.post('/api/v1/payment/coin/recharge', authCheck, (req, res) => {
     userId: req.user?.id || 1,
     username: req.user?.username || 'unknown',
     packageId: pkg.id,
-    coinAmount: pkg.coinAmount || pkg.coins,
+    coinAmount: pkg.coinAmount,
     price: pkg.price,
     paymentMethod: paymentMethod || 'wechat', // wechat/alipay/qq
     screenshotUrl: '',
@@ -1394,18 +1668,31 @@ app.post('/api/v1/payment/coin/recharge', authCheck, (req, res) => {
   res.json({ code: 0, message: '订单已创建，请扫码付款', data: { order } });
 });
 
-// 提交付款截图（等待审核）
+// 提交付款截图（自动到账）
 app.post('/api/v1/payment/coin/submit-screenshot', authCheck, (req, res) => {
   const { orderId, screenshotUrl } = req.body;
   const orders = getRechargeOrders();
   const order = orders.find(o => o.id === orderId);
   if (!order) return res.status(404).json({ code: 404, message: '订单不存在', data: null });
-  
+
   order.screenshotUrl = screenshotUrl;
-  order.status = 'pending_review';
+  order.status = 'approved';
+  order.reviewedAt = new Date().toISOString();
+  order.reviewedBy = 'auto';
   saveRechargeOrders(orders);
-  
-  res.json({ code: 0, message: '截图已提交，等待管理员审核', data: { order } });
+
+  // 自动给用户加圣力
+  const usersFile = path.join(__dirname, 'data', 'users.json');
+  let users = [];
+  try { users = JSON.parse(fs.readFileSync(usersFile, 'utf8')); } catch (e) {}
+  const user = users.find(u => u.id === order.userId);
+  if (user) {
+    user.coins = (user.coins || 0) + order.coinAmount;
+    user.totalRecharge = (user.totalRecharge || 0) + order.coinAmount;
+    fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
+  }
+
+  res.json({ code: 0, message: '充值成功！' + order.coinAmount + '圣力已到账', data: { order } });
 });
 
 // 获取充值订单列表（管理员）
@@ -1430,7 +1717,7 @@ app.post('/api/v1/payment/coin/approve/:orderId', (req, res) => {
     order.reviewedAt = new Date().toISOString();
     order.reviewedBy = 'admin';
     
-    // 给用户加圣力（更新users.json中的coins字段）
+    // 给用户加算力（更新users.json中的coins字段）
     const usersFile = path.join(__dirname, 'data', 'users.json');
     let users = [];
     try { users = JSON.parse(fs.readFileSync(usersFile, 'utf8')); } catch (e) {}
@@ -1818,6 +2105,7 @@ app.listen(PORT, '0.0.0.0', () => {
   log(`   DeepSeek: ${CONFIG.DEEPSEEK_API_KEY ? '✅ 已配置' : ' 未配置'}`);
   log(`   通义千问 (Tongyi): ${CONFIG.TONGYI_API_KEY ? '✅ 已配置' : '❌ 未配置'}`);
   log(`   腾讯元宝 (Yuanbao): ${CONFIG.YUANBAO_API_KEY ? '✅ 已配置' : '❌ 未配置'}`);
+  log(`   OpenAI: ${CONFIG.OPENAI_API_KEY ? '✅ 已配置' : '❌ 未配置'}`);
   log(`   即梦 (Jimeng 图片): ${CONFIG.JIMENG_API_KEY ? '✅ 已配置' : '❌ 未配置'}`);
   log(`   可灵 (Kling 视频): ${CONFIG.KLING_API_KEY ? '✅ 已配置' : '❌ 未配置'}`);
   log(`   Coze 智能体: ${CONFIG.COZE_API_KEY && CONFIG.COZE_BOT_ID ? '✅ 已配置' : '❌ 未配置'}`);

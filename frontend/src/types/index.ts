@@ -39,7 +39,7 @@ export interface User {
   lastLoginAt: string | null
 }
 
-// ===== 圣力账户 =====
+// ===== 圣力中心 =====
 export interface CoinAccount {
   id: number
   userId: number

@@ -126,7 +126,7 @@ const hotPages = ref([
   { page: '/dashboard - 控制台', views: 1456, uniqueVisitors: 1102, avgTime: '2m 38s' },
   { page: '/tools - AI工具中心', views: 987, uniqueVisitors: 634, avgTime: '3m 05s' },
   { page: '/profile - 个人中心', views: 654, uniqueVisitors: 521, avgTime: '1m 42s' },
-  { page: '/profile/wallet - 圣力账户', views: 432, uniqueVisitors: 387, avgTime: '2m 15s' },
+  { page: '/profile/wallet - 圣力中心', views: 432, uniqueVisitors: 387, avgTime: '2m 15s' },
 ])
 
 let timer: any = null
