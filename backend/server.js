@@ -52,7 +52,7 @@ const CONFIG = {
   TONGYI_MODEL: process.env.TONGYI_MODEL || 'qwen-plus',
 
   // 腾讯元宝
-  YUANBAO_API_KEY: process.env.YUANBAO_API_KEY || '' // 需要腾讯混元API Key(sk-开头)，待用户补充,
+  YUANBAO_API_KEY: process.env.YUANBAO_API_KEY || '',
   YUANBAO_BASE_URL: process.env.YUANBAO_BASE_URL || 'https://tokenhub.tencentmaas.com/v1',
   YUANBAO_MODEL: process.env.YUANBAO_MODEL || 'hy3-preview',
 
@@ -314,7 +314,7 @@ async function callCozeAPI(messages, options = {}) {
   if (chatRes.status !== 200 || !chatRes.data?.data?.id) throw new Error(`发起对话失败: ${JSON.stringify(chatRes.data)}`);
   const chatId = chatRes.data.data.id;
   let status = 'created';
-  for (let i = 0; i < 30; i++) {
+  for (let i = 0; i < 90; i++) {
     await new Promise(r => setTimeout(r, 1000));
     const pollRes = await httpsRequest(`https://api.coze.cn/v3/chat/retrieve?conversation_id=${conversationId}&chat_id=${chatId}`, { method: 'POST', headers }, {});
     status = pollRes.data?.data?.status || 'unknown';
