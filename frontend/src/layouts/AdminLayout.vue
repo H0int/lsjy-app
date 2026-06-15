@@ -171,7 +171,7 @@ const menuGroups = [
   {
     label: '财务中心',
     items: [
-      { path: '/admin/coin-packages', label: '圣点套餐', icon: '💰' },
+      { path: '/admin/coin-packages', label: '圣力套餐', icon: '💰' },
       { path: '/admin/payments', label: '支付记录', icon: '💳' },
       { path: '/admin/recharge', label: '充值管理', icon: '💎' },
       { path: '/admin/orders', label: '订单管理', icon: '📦' },

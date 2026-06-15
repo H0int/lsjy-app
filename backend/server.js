@@ -119,7 +119,7 @@ function authCheck(req, res, next) {
   next();
 }
 
-// 圣点扣费（返回 { ok, balance, cost }）
+// 圣力扣费（返回 { ok, balance, cost }）
 // 支持无限算力用户（unlimited: true）
 function deductCoins(userId, cost) {
   if (!cost || cost <= 0) return { ok: true, balance: 999999, cost: 0 };
@@ -131,13 +131,13 @@ function deductCoins(userId, cost) {
   // 无限算力用户跳过扣费
   if (user.unlimited) return { ok: true, balance: 999999, cost: 0 };
   const balance = user.coins || 0;
-  if (balance < cost) return { ok: false, error: '圣点不足', balance };
+  if (balance < cost) return { ok: false, error: '圣力不足', balance };
   user.coins = balance - cost;
   fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
   return { ok: true, balance: user.coins, cost };
 }
 
-// 获取用户圣点余额
+// 获取用户圣力余额
 function getUserCoins(userId) {
   const usersFile = path.join(__dirname, 'data', 'users.json');
   let users = [];
@@ -942,7 +942,7 @@ app.post('/api/v1/users', authCheck, (req, res) => {
 // ===== AI模块 =====
 // ============================================================
 
-// AI对话
+// AI对话（消耗1圣力/次）
 app.post('/api/v1/ai/tools/:toolId/chat', authCheck, async (req, res) => {
   const { toolId } = req.params;
   const { messages, model, temperature, maxTokens, systemPrompt } = req.body;
@@ -959,12 +959,12 @@ app.post('/api/v1/ai/tools/:toolId/chat', authCheck, async (req, res) => {
   if (!messages || !Array.isArray(messages) || messages.length === 0) {
     return res.status(400).json({ code: 400, message: '消息列表不能为空', data: null });
   }
-  // 检查圣点余额
+  // 检查圣力余额
   const balance = getUserCoins(userId);
   if (balance < CHAT_COIN_COST) {
     return res.status(402).json({
       code: 402,
-      message: `圣点不足，当前余额${balance}，本次需要${CHAT_COIN_COST}圣点。请前往个人中心充值。`,
+      message: `圣力不足，当前余额${balance}，本次需要${CHAT_COIN_COST}圣力。请前往个人中心充值。`,
       data: { balance, cost: CHAT_COIN_COST },
     });
   }
@@ -1040,7 +1040,7 @@ app.get('/api/v1/ai/quota/:toolId', authCheck, (req, res) => {
   });
 });
 
-// 图片生成（消耗10圣点/次）
+// 图片生成（消耗10圣力/次）
 // AI 图片生成（真实 AI 绘画）
 app.post('/api/v1/ai/tools/:id/generate', authCheck, async (req, res) => {
   const tool = aiToolsStore.find(t => t.id === Number(req.params.id));
@@ -1054,12 +1054,12 @@ app.post('/api/v1/ai/tools/:id/generate', authCheck, async (req, res) => {
 
   log(`收到图片生成请求: toolId=${req.params.id}, userId=${userId}, prompt=${prompt.slice(0, 50)}...`);
 
-  // 检查圣点余额
+  // 检查圣力余额
   const balance = getUserCoins(userId);
   if (balance < IMAGE_COIN_COST) {
     return res.status(402).json({
       code: 402,
-      message: `圣点不足，当前余额${balance}，图片生成需要${IMAGE_COIN_COST}圣点。请前往个人中心充值。`,
+      message: `圣力不足，当前余额${balance}，图片生成需要${IMAGE_COIN_COST}圣力。请前往个人中心充值。`,
       data: { balance, cost: IMAGE_COIN_COST },
     });
   }
@@ -1102,7 +1102,7 @@ app.post('/api/v1/ai/tools/:id/generate', authCheck, async (req, res) => {
   }
 });
 
-// AI 视频生成（消耗20圣点/次）
+// AI 视频生成（消耗20圣力/次）
 app.post('/api/v1/ai/tools/:id/video', authCheck, async (req, res) => {
   const tool = aiToolsStore.find(t => t.id === Number(req.params.id));
   if (!tool) return res.status(404).json({ code: 404, message: '工具不存在', data: null });
@@ -1115,12 +1115,12 @@ app.post('/api/v1/ai/tools/:id/video', authCheck, async (req, res) => {
 
   log(`收到视频生成请求: toolId=${req.params.id}, userId=${userId}, prompt=${prompt.slice(0, 50)}...`);
 
-  // 检查圣点余额
+  // 检查圣力余额
   const balance = getUserCoins(userId);
   if (balance < VIDEO_COIN_COST) {
     return res.status(402).json({
       code: 402,
-      message: `圣点不足，当前余额${balance}，视频生成需要${VIDEO_COIN_COST}圣点。请前往个人中心充值。`,
+      message: `圣力不足，当前余额${balance}，视频生成需要${VIDEO_COIN_COST}圣力。请前往个人中心充值。`,
       data: { balance, cost: VIDEO_COIN_COST },
     });
   }
@@ -1318,14 +1318,16 @@ app.get('/api/v1/payment/coin/packages', (req, res) => {
   res.json({
     code: 0, message: 'success',
     data: [
-      { id: 1, name: '体验包', coinAmount: 100, price: 9.9, originalPrice: 10, bonusCoins: 10, isRecommended: 0, sortOrder: 1 },
-      { id: 2, name: '入门包', coinAmount: 300, price: 24.9, originalPrice: 30, bonusCoins: 30, isRecommended: 0, sortOrder: 2 },
-      { id: 3, name: '标准包', coinAmount: 500, price: 39.9, originalPrice: 50, bonusCoins: 100, isRecommended: 1, sortOrder: 3 },
-      { id: 4, name: '进阶包', coinAmount: 1000, price: 69.9, originalPrice: 100, bonusCoins: 200, isRecommended: 0, sortOrder: 4 },
-      { id: 5, name: '专业包', coinAmount: 2000, price: 129.9, originalPrice: 200, bonusCoins: 500, isRecommended: 0, sortOrder: 5 },
-      { id: 6, name: '企业包', coinAmount: 5000, price: 299.9, originalPrice: 500, bonusCoins: 1500, isRecommended: 0, sortOrder: 6 },
-      { id: 7, name: '旗舰包', coinAmount: 10000, price: 549.9, originalPrice: 1000, bonusCoins: 3500, isRecommended: 0, sortOrder: 7 },
-      { id: 8, name: '至尊包', coinAmount: 25000, price: 1299.9, originalPrice: 2500, bonusCoins: 10000, isRecommended: 0, sortOrder: 8 },
+      { id: 1, name: '体验包', coinAmount: 10, price: 1, originalPrice: 1, bonusCoins: 0, isRecommended: 0, sortOrder: 1 },
+      { id: 2, name: '入门包', coinAmount: 100, price: 9.9, originalPrice: 10, bonusCoins: 10, isRecommended: 0, sortOrder: 2 },
+      { id: 3, name: '标准包', coinAmount: 300, price: 24.9, originalPrice: 30, bonusCoins: 30, isRecommended: 0, sortOrder: 3 },
+      { id: 4, name: '进阶包', coinAmount: 500, price: 39.9, originalPrice: 50, bonusCoins: 100, isRecommended: 1, sortOrder: 4 },
+      { id: 5, name: '专业包', coinAmount: 1000, price: 69.9, originalPrice: 100, bonusCoins: 200, isRecommended: 0, sortOrder: 5 },
+      { id: 6, name: '企业包', coinAmount: 2000, price: 129.9, originalPrice: 200, bonusCoins: 500, isRecommended: 0, sortOrder: 6 },
+      { id: 7, name: '旗舰包', coinAmount: 5000, price: 299.9, originalPrice: 500, bonusCoins: 1500, isRecommended: 0, sortOrder: 7 },
+      { id: 8, name: '至尊包', coinAmount: 10000, price: 549.9, originalPrice: 1000, bonusCoins: 3500, isRecommended: 0, sortOrder: 8 },
+      { id: 9, name: '豪华包', coinAmount: 25000, price: 1299.9, originalPrice: 2500, bonusCoins: 10000, isRecommended: 0, sortOrder: 9 },
+      { id: 10, name: '王者包', coinAmount: 50000, price: 1999.9, originalPrice: 5000, bonusCoins: 25000, isRecommended: 0, sortOrder: 10 },
     ],
   });
 });
@@ -1353,15 +1355,15 @@ function saveRechargeOrders(orders) {
 app.post('/api/v1/payment/coin/recharge', authCheck, (req, res) => {
   const { packageId, paymentMethod } = req.body;
   const packages = [
-    { id: 1, coins: 10, price: 1, coinAmount: 10, name: '10圣点' },
-    { id: 2, coins: 50, price: 4.9, coinAmount: 50, name: '50圣点' },
-    { id: 3, coins: 100, price: 9.9, coinAmount: 100, name: '100圣点' },
-    { id: 4, coins: 300, price: 24.9, coinAmount: 300, name: '300圣点' },
-    { id: 5, coins: 500, price: 39.9, coinAmount: 500, name: '500圣点' },
-    { id: 6, coins: 1000, price: 69.9, coinAmount: 1000, name: '1000圣点' },
-    { id: 7, coins: 2000, price: 129, coinAmount: 2000, name: '2000圣点' },
-    { id: 8, coins: 5000, price: 299, coinAmount: 5000, name: '5000圣点' },
-    { id: 9, coins: 10000, price: 499, coinAmount: 10000, name: '10000圣点' },
+    { id: 1, coins: 10, price: 1, coinAmount: 10, name: '10圣力' },
+    { id: 2, coins: 50, price: 4.9, coinAmount: 50, name: '50圣力' },
+    { id: 3, coins: 100, price: 9.9, coinAmount: 100, name: '100圣力' },
+    { id: 4, coins: 300, price: 24.9, coinAmount: 300, name: '300圣力' },
+    { id: 5, coins: 500, price: 39.9, coinAmount: 500, name: '500圣力' },
+    { id: 6, coins: 1000, price: 69.9, coinAmount: 1000, name: '1000圣力' },
+    { id: 7, coins: 2000, price: 129, coinAmount: 2000, name: '2000圣力' },
+    { id: 8, coins: 5000, price: 299, coinAmount: 5000, name: '5000圣力' },
+    { id: 9, coins: 10000, price: 499, coinAmount: 10000, name: '10000圣力' },
     { id: 10, coins: 50000, price: 1999, coinAmount: 50000, name: '至尊包' },
   ];
   const pkg = packages.find(p => p.id === packageId);
@@ -1438,7 +1440,7 @@ app.post('/api/v1/payment/coin/approve/:orderId', (req, res) => {
     }
     
     saveRechargeOrders(orders);
-    res.json({ code: 0, message: '已审批，用户获得' + order.coinAmount + '圣点', data: { order } });
+    res.json({ code: 0, message: '已审批，用户获得' + order.coinAmount + '圣力', data: { order } });
   } else {
     order.status = 'rejected';
     order.remark = remark || '审批拒绝';

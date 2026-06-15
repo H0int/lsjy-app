@@ -20,7 +20,7 @@
 
           <div class="mt-6 pt-4 space-y-3" style="border-top: 1px solid var(--cyber-border);">
             <div class="flex justify-between text-sm">
-              <span style="color: var(--cyber-text-dim);">⚡ 圣点余额</span>
+              <span style="color: var(--cyber-text-dim);">⚡ 圣力余额</span>
               <span class="font-bold glow-cyan" style="color: var(--cyber-cyan);">{{ authStore.coinBalance.toFixed(2) }}</span>
             </div>
             <div class="flex justify-between text-sm">
@@ -39,7 +39,7 @@
               style="background: rgba(0,240,255,0.08); color: var(--cyber-cyan); border: 1px solid rgba(0,240,255,0.2);"
               @mouseover="($event.currentTarget as HTMLElement).style.background='rgba(0,240,255,0.15)'"
               @mouseleave="($event.currentTarget as HTMLElement).style.background='rgba(0,240,255,0.08)'">
-              💰 圣点账户
+              💰 圣力账户
             </router-link>
             <button
               class="block w-full py-2.5 rounded-lg text-sm font-medium transition-all"

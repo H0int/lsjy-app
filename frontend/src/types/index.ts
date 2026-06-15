@@ -39,7 +39,7 @@ export interface User {
   lastLoginAt: string | null
 }
 
-// ===== 圣点账户 =====
+// ===== 圣力账户 =====
 export interface CoinAccount {
   id: number
   userId: number
@@ -117,7 +117,7 @@ export interface Tool {
   createdAt: string
 }
 
-// ===== 圣点交易记录 =====
+// ===== 圣力交易记录 =====
 export interface CoinTransaction {
   id: number
   userId: number

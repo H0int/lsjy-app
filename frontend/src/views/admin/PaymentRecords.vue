@@ -45,7 +45,7 @@
               <th class="text-left p-3" style="color: #6a6a8a;">订单号</th>
 <th class="text-left p-3" style="color: #6a6a8a;">用户</th>
               <th class="text-left p-3" style="color: #6a6a8a;">金额</th>
-              <th class="text-left p-3" style="color: #6a6a8a;">圣点</th>
+              <th class="text-left p-3" style="color: #6a6a8a;">圣力</th>
               <th class="text-left p-3" style="color: #6a6a8a;">渠道</th>
               <th class="text-left p-3" style="color: #6a6a8a;">状态</th>
               <th class="text-left p-3" style="color: #6a6a8a;">时间</th>

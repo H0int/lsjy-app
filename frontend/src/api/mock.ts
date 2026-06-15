@@ -46,25 +46,25 @@ export const mockTools: Tool[] = [
 ]
 
 export const mockPackages: RechargePackage[] = [
-  { id: 1, name: '50圣点', coinAmount: 50, price: 29.9, originalPrice: null, bonusCoins: 0, isRecommended: 0, sortOrder: 1 },
-  { id: 2, name: '100圣点', coinAmount: 100, price: 49.9, originalPrice: 59.9, bonusCoins: 10, isRecommended: 0, sortOrder: 2 },
-  { id: 3, name: '500圣点', coinAmount: 500, price: 199, originalPrice: 299, bonusCoins: 80, isRecommended: 1, sortOrder: 3 },
-  { id: 4, name: '1000圣点', coinAmount: 1000, price: 349, originalPrice: 499, bonusCoins: 200, isRecommended: 0, sortOrder: 4 },
-  { id: 5, name: '5000圣点', coinAmount: 5000, price: 1499, originalPrice: 2499, bonusCoins: 1500, isRecommended: 0, sortOrder: 5 },
+  { id: 1, name: '50圣力', coinAmount: 50, price: 29.9, originalPrice: null, bonusCoins: 0, isRecommended: 0, sortOrder: 1 },
+  { id: 2, name: '100圣力', coinAmount: 100, price: 49.9, originalPrice: 59.9, bonusCoins: 10, isRecommended: 0, sortOrder: 2 },
+  { id: 3, name: '500圣力', coinAmount: 500, price: 199, originalPrice: 299, bonusCoins: 80, isRecommended: 1, sortOrder: 3 },
+  { id: 4, name: '1000圣力', coinAmount: 1000, price: 349, originalPrice: 499, bonusCoins: 200, isRecommended: 0, sortOrder: 4 },
+  { id: 5, name: '5000圣力', coinAmount: 5000, price: 1499, originalPrice: 2499, bonusCoins: 1500, isRecommended: 0, sortOrder: 5 },
 ]
 
 export const mockTransactions: CoinTransaction[] = [
-  { id: 1, userId: 1, transactionType: 'recharge', amount: 500, balanceBefore: 2080, balanceAfter: 2580, refType: 'recharge', refId: 1, remark: '套餐充值 - 500圣点', createdAt: '2026-06-09T09:00:00.000Z' },
+  { id: 1, userId: 1, transactionType: 'recharge', amount: 500, balanceBefore: 2080, balanceAfter: 2580, refType: 'recharge', refId: 1, remark: '套餐充值 - 500圣力', createdAt: '2026-06-09T09:00:00.000Z' },
   { id: 2, userId: 1, transactionType: 'consume', amount: -80, balanceBefore: 2580, balanceAfter: 2500, refType: 'ai_tool_call', refId: 3, remark: '调用AI工具: AI视频生成', createdAt: '2026-06-10T14:20:00.000Z' },
   { id: 3, userId: 1, transactionType: 'consume', amount: -10, balanceBefore: 2500, balanceAfter: 2490, refType: 'ai_tool_call', refId: 1, remark: '调用AI工具: AI文案创作', createdAt: '2026-06-10T10:00:00.000Z' },
   { id: 4, userId: 1, transactionType: 'consume', amount: -20, balanceBefore: 2490, balanceAfter: 2470, refType: 'ai_tool_call', refId: 2, remark: '调用AI工具: AI文生图', createdAt: '2026-06-09T16:30:00.000Z' },
-  { id: 5, userId: 1, transactionType: 'recharge', amount: 200, balanceBefore: 2270, balanceAfter: 2470, refType: 'recharge', refId: 2, remark: '套餐充值 - 200圣点', createdAt: '2026-06-08T11:00:00.000Z' },
+  { id: 5, userId: 1, transactionType: 'recharge', amount: 200, balanceBefore: 2270, balanceAfter: 2470, refType: 'recharge', refId: 2, remark: '套餐充值 - 200圣力', createdAt: '2026-06-08T11:00:00.000Z' },
 ]
 
 export const mockPaymentOrders: PaymentTransaction[] = [
-  { id: 1, transactionNo: 'PAY20260609001', userId: 1, bizType: 'recharge', payChannel: 'wechat', amount: 199.00, coinAmount: 580, direction: 'in', status: 'success', remark: '充值: 500圣点', createdAt: '2026-06-09T09:00:00.000Z', paidAt: '2026-06-09T09:01:00.000Z' },
-  { id: 2, transactionNo: 'PAY20260608002', userId: 1, bizType: 'recharge', payChannel: 'wechat', amount: 99.90, coinAmount: 210, direction: 'in', status: 'success', remark: '充值: 100圣点', createdAt: '2026-06-08T11:00:00.000Z', paidAt: '2026-06-08T11:01:00.000Z' },
-  { id: 3, transactionNo: 'PAY20260610003', userId: 2, bizType: 'recharge', payChannel: 'alipay', amount: 49.90, coinAmount: 100, direction: 'in', status: 'pending', remark: '充值: 100圣点', createdAt: '2026-06-10T10:00:00.000Z', paidAt: null },
+  { id: 1, transactionNo: 'PAY20260609001', userId: 1, bizType: 'recharge', payChannel: 'wechat', amount: 199.00, coinAmount: 580, direction: 'in', status: 'success', remark: '充值: 500圣力', createdAt: '2026-06-09T09:00:00.000Z', paidAt: '2026-06-09T09:01:00.000Z' },
+  { id: 2, transactionNo: 'PAY20260608002', userId: 1, bizType: 'recharge', payChannel: 'wechat', amount: 99.90, coinAmount: 210, direction: 'in', status: 'success', remark: '充值: 100圣力', createdAt: '2026-06-08T11:00:00.000Z', paidAt: '2026-06-08T11:01:00.000Z' },
+  { id: 3, transactionNo: 'PAY20260610003', userId: 2, bizType: 'recharge', payChannel: 'alipay', amount: 49.90, coinAmount: 100, direction: 'in', status: 'pending', remark: '充值: 100圣力', createdAt: '2026-06-10T10:00:00.000Z', paidAt: null },
 ]
 
 export const mockUsers: User[] = [
@@ -78,7 +78,7 @@ export const mockUsers: User[] = [
 // ===== Admin mock data =====
 export const mockAnnouncements: Announcement[] = [
   { id: 1, title: '平台v3.0版本升级通知', content: '尊敬的用户，平台将于本周六凌晨2:00-6:00进行系统升级维护。', type: 'system', targetScope: 'all', status: 'published', scheduledAt: null, publishedAt: '2025-07-15T08:00:00.000Z', createdBy: 1, createdAt: '2025-07-14T16:00:00.000Z', updatedAt: '2025-07-15T08:00:00.000Z' },
-  { id: 2, title: '暑期大促：圣点充值8折优惠', content: '暑期限时活动，7月20日至8月20日期间，所有充值套餐享受8折优惠！', type: 'activity', targetScope: 'all', status: 'published', scheduledAt: null, publishedAt: '2025-07-18T10:00:00.000Z', createdBy: 1, createdAt: '2025-07-17T14:00:00.000Z', updatedAt: '2025-07-18T10:00:00.000Z' },
+  { id: 2, title: '暑期大促：圣力充值8折优惠', content: '暑期限时活动，7月20日至8月20日期间，所有充值套餐享受8折优惠！', type: 'activity', targetScope: 'all', status: 'published', scheduledAt: null, publishedAt: '2025-07-18T10:00:00.000Z', createdBy: 1, createdAt: '2025-07-17T14:00:00.000Z', updatedAt: '2025-07-18T10:00:00.000Z' },
   { id: 3, title: '自媒体模块新增小红书数据分析', content: '自媒体模块已支持小红书平台数据接入。', type: 'update', targetScope: 'all', status: 'scheduled', scheduledAt: '2025-07-20T09:00:00.000Z', publishedAt: null, createdBy: 1, createdAt: '2025-07-18T11:00:00.000Z', updatedAt: '2025-07-18T11:00:00.000Z' },
   { id: 4, title: '电商模块商家入驻规则调整', content: '为提升平台商品质量，自8月1日起，新入驻商家需提供营业执照。', type: 'system', targetScope: 'merchant', status: 'draft', scheduledAt: null, publishedAt: null, createdBy: 1, createdAt: '2025-07-18T15:00:00.000Z', updatedAt: '2025-07-18T15:00:00.000Z' },
 ]
@@ -86,33 +86,33 @@ export const mockAnnouncements: Announcement[] = [
 export const mockCoupons: Coupon[] = [
   { id: 1, name: '新用户满50减10', type: 'full_reduce', discountValue: 10, minAmount: 50, maxReduce: null, totalQuantity: 5000, usedQuantity: 3280, validFrom: '2025-07-01', validTo: '2025-08-31', issueRule: 'new_user', status: 'active', createdAt: '2025-07-01T00:00:00.000Z' },
   { id: 2, name: '暑期8折优惠券', type: 'discount', discountValue: 8, minAmount: 100, maxReduce: 50, totalQuantity: 2000, usedQuantity: 856, validFrom: '2025-07-15', validTo: '2025-08-15', issueRule: 'activity', status: 'active', createdAt: '2025-07-15T10:00:00.000Z' },
-  { id: 3, name: '充值赠送100圣点', type: 'coin_gift', discountValue: 100, minAmount: 200, maxReduce: null, totalQuantity: 1000, usedQuantity: 423, validFrom: '2025-07-01', validTo: '2025-07-31', issueRule: 'consume_threshold', status: 'active', createdAt: '2025-07-01T00:00:00.000Z' },
+  { id: 3, name: '充值赠送100圣力', type: 'coin_gift', discountValue: 100, minAmount: 200, maxReduce: null, totalQuantity: 1000, usedQuantity: 423, validFrom: '2025-07-01', validTo: '2025-07-31', issueRule: 'consume_threshold', status: 'active', createdAt: '2025-07-01T00:00:00.000Z' },
   { id: 4, name: 'VIP专属9折券', type: 'discount', discountValue: 9, minAmount: 0, maxReduce: 30, totalQuantity: 500, usedQuantity: 120, validFrom: '2025-06-01', validTo: '2025-06-30', issueRule: 'manual', status: 'expired', createdAt: '2025-06-01T00:00:00.000Z' },
 ]
 
 export const mockCampaigns: Campaign[] = [
   { id: 1, name: '暑期充值大返利', type: 'flash_sale', description: '暑期限时充值返利活动', startTime: '2025-07-20 00:00', endTime: '2025-08-20 23:59', participantCount: 2340, totalReward: 56000, status: 'active', config: {}, createdAt: '2025-07-15T10:00:00.000Z' },
-  { id: 2, name: '每日签到领圣点', type: 'check_in', description: '连续签到7天可获得50圣点奖励', startTime: '2025-07-01 00:00', endTime: '2025-09-30 23:59', participantCount: 8920, totalReward: 123000, status: 'active', config: {}, createdAt: '2025-06-28T14:00:00.000Z' },
-  { id: 3, name: '邀请好友得奖励', type: 'invite_reward', description: '每邀请一位新用户注册并完成首充，双方各得20圣点', startTime: '2025-07-01 00:00', endTime: '2025-12-31 23:59', participantCount: 1560, totalReward: 31200, status: 'active', config: {}, createdAt: '2025-06-25T09:00:00.000Z' },
+  { id: 2, name: '每日签到领圣力', type: 'check_in', description: '连续签到7天可获得50圣力奖励', startTime: '2025-07-01 00:00', endTime: '2025-09-30 23:59', participantCount: 8920, totalReward: 123000, status: 'active', config: {}, createdAt: '2025-06-28T14:00:00.000Z' },
+  { id: 3, name: '邀请好友得奖励', type: 'invite_reward', description: '每邀请一位新用户注册并完成首充，双方各得20圣力', startTime: '2025-07-01 00:00', endTime: '2025-12-31 23:59', participantCount: 1560, totalReward: 31200, status: 'active', config: {}, createdAt: '2025-06-25T09:00:00.000Z' },
   { id: 4, name: '618大促', type: 'flash_sale', description: '618限时折扣，全场AI工具8折', startTime: '2025-06-18 00:00', endTime: '2025-06-20 23:59', participantCount: 15600, totalReward: 280000, status: 'ended', config: {}, createdAt: '2025-06-10T10:00:00.000Z' },
 ]
 
 export const mockTickets: Ticket[] = [
-  { id: 1, ticketNo: 'TK20250718001', userId: 101, userName: '张三', subject: '充值圣点未到账', content: '我在今天上午10点左右充值了200元购买500圣点，支付已成功但圣点没有到账。', category: 'payment', priority: 'high', status: 'open', assigneeId: null, assigneeName: null, replies: [], firstResponseAt: null, resolvedAt: null, createdAt: '2025-07-18T10:30:00.000Z', updatedAt: '2025-07-18T10:30:00.000Z' },
+  { id: 1, ticketNo: 'TK20250718001', userId: 101, userName: '张三', subject: '充值圣力未到账', content: '我在今天上午10点左右充值了200元购买500圣力，支付已成功但圣力没有到账。', category: 'payment', priority: 'high', status: 'open', assigneeId: null, assigneeName: null, replies: [], firstResponseAt: null, resolvedAt: null, createdAt: '2025-07-18T10:30:00.000Z', updatedAt: '2025-07-18T10:30:00.000Z' },
   { id: 2, ticketNo: 'TK20250718002', userId: 102, userName: '李四', subject: 'AI绘画工具无法使用', content: '使用AI绘画工具时一直显示"处理中"，等了30分钟也没有结果。', category: 'tool', priority: 'medium', status: 'processing', assigneeId: 1, assigneeName: '客服小王', replies: [{ id: 1, ticketId: 2, userId: 1, userName: '客服小王', isStaff: true, content: '您好，已收到您的反馈。', createdAt: '2025-07-18T11:00:00.000Z' }], firstResponseAt: '2025-07-18T11:00:00.000Z', resolvedAt: null, createdAt: '2025-07-18T09:45:00.000Z', updatedAt: '2025-07-18T11:00:00.000Z' },
   { id: 3, ticketNo: 'TK20250717003', userId: 103, userName: '王五', subject: '建议增加批量导出功能', content: '希望能增加批量导出AI生成图片的功能。', category: 'suggestion', priority: 'low', status: 'resolved', assigneeId: 2, assigneeName: '客服小李', replies: [{ id: 3, ticketId: 3, userId: 2, userName: '客服小李', isStaff: true, content: '感谢建议！已提交至产品团队。', createdAt: '2025-07-17T15:00:00.000Z' }], firstResponseAt: '2025-07-17T15:00:00.000Z', resolvedAt: '2025-07-17T15:30:00.000Z', createdAt: '2025-07-17T14:20:00.000Z', updatedAt: '2025-07-17T15:30:00.000Z' },
 ]
 
 export const mockFAQs: FAQItem[] = [
-  { id: 1, category: '支付充值', question: '圣点充值后多久到账？', answer: '正常情况下圣点充值即时到账。如超过10分钟未到账，请提交工单联系客服处理。', searchCount: 1256, sortOrder: 1, status: 'active', createdAt: '2025-06-01T10:00:00.000Z', updatedAt: '2025-06-01T10:00:00.000Z' },
-  { id: 2, category: 'AI工具', question: 'AI工具调用失败会扣圣点吗？', answer: '不会。如果AI工具调用失败，系统会自动退还消耗的圣点。', searchCount: 980, sortOrder: 2, status: 'active', createdAt: '2025-06-01T10:00:00.000Z', updatedAt: '2025-06-01T10:00:00.000Z' },
+  { id: 1, category: '支付充值', question: '圣力充值后多久到账？', answer: '正常情况下圣力充值即时到账。如超过10分钟未到账，请提交工单联系客服处理。', searchCount: 1256, sortOrder: 1, status: 'active', createdAt: '2025-06-01T10:00:00.000Z', updatedAt: '2025-06-01T10:00:00.000Z' },
+  { id: 2, category: 'AI工具', question: 'AI工具调用失败会扣圣力吗？', answer: '不会。如果AI工具调用失败，系统会自动退还消耗的圣力。', searchCount: 980, sortOrder: 2, status: 'active', createdAt: '2025-06-01T10:00:00.000Z', updatedAt: '2025-06-01T10:00:00.000Z' },
   { id: 3, category: '账号相关', question: '如何修改绑定手机号？', answer: '进入个人中心 -> 安全设置 -> 修改手机号。', searchCount: 756, sortOrder: 3, status: 'active', createdAt: '2025-06-01T10:00:00.000Z', updatedAt: '2025-06-01T10:00:00.000Z' },
 ]
 
 export const mockAutomationRules: AutomationRule[] = [
-  { id: 1, name: '新用户欢迎奖励', description: '新用户注册后自动发放20圣点', triggerEvent: 'user_register', triggerCondition: {}, actions: [{ type: 'send_coins', config: { amount: 20 } }], status: 'active', executionCount: 3420, lastExecutedAt: '2025-07-18T14:30:00.000Z', createdAt: '2025-06-01T10:00:00.000Z' },
-  { id: 2, name: '消费满100自动升级VIP1', description: '用户累计消费满100圣点自动升级', triggerEvent: 'consume_threshold', triggerCondition: { threshold: 100 }, actions: [{ type: 'change_role', config: { vipLevel: 1 } }], status: 'active', executionCount: 856, lastExecutedAt: '2025-07-18T12:15:00.000Z', createdAt: '2025-06-05T14:00:00.000Z' },
-  { id: 3, name: '首次充值双倍返还', description: '用户首次充值额外赠送等额圣点', triggerEvent: 'first_recharge', triggerCondition: {}, actions: [{ type: 'send_coins', config: { amount: 'equal' } }], status: 'active', executionCount: 1230, lastExecutedAt: '2025-07-18T10:00:00.000Z', createdAt: '2025-06-10T09:00:00.000Z' },
+  { id: 1, name: '新用户欢迎奖励', description: '新用户注册后自动发放20圣力', triggerEvent: 'user_register', triggerCondition: {}, actions: [{ type: 'send_coins', config: { amount: 20 } }], status: 'active', executionCount: 3420, lastExecutedAt: '2025-07-18T14:30:00.000Z', createdAt: '2025-06-01T10:00:00.000Z' },
+  { id: 2, name: '消费满100自动升级VIP1', description: '用户累计消费满100圣力自动升级', triggerEvent: 'consume_threshold', triggerCondition: { threshold: 100 }, actions: [{ type: 'change_role', config: { vipLevel: 1 } }], status: 'active', executionCount: 856, lastExecutedAt: '2025-07-18T12:15:00.000Z', createdAt: '2025-06-05T14:00:00.000Z' },
+  { id: 3, name: '首次充值双倍返还', description: '用户首次充值额外赠送等额圣力', triggerEvent: 'first_recharge', triggerCondition: {}, actions: [{ type: 'send_coins', config: { amount: 'equal' } }], status: 'active', executionCount: 1230, lastExecutedAt: '2025-07-18T10:00:00.000Z', createdAt: '2025-06-10T09:00:00.000Z' },
 ]
 
 export const mockModerations: ModerationItem[] = [
@@ -464,8 +464,8 @@ export const mockApi = {
     await delay(300)
     return { code: 0, message: 'success', data: paginate([
       { id: 1, module: 'user', action: '用户注册', userId: 101, detail: '新用户 zhangsan 注册', createdAt: '2025-07-18T14:30:00.000Z' },
-      { id: 2, module: 'payment', action: '充值成功', userId: 1, detail: '充值500圣点 ¥199', createdAt: '2025-07-18T10:00:00.000Z' },
-      { id: 3, module: 'tool', action: '工具调用', userId: 2, detail: 'AI文案创作 消耗10圣点', createdAt: '2025-07-18T09:30:00.000Z' },
+      { id: 2, module: 'payment', action: '充值成功', userId: 1, detail: '充值500圣力 ¥199', createdAt: '2025-07-18T10:00:00.000Z' },
+      { id: 3, module: 'tool', action: '工具调用', userId: 2, detail: 'AI文案创作 消耗10圣力', createdAt: '2025-07-18T09:30:00.000Z' },
     ]) }
   },
 

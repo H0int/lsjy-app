@@ -60,9 +60,9 @@ export const AIConfig = registerAs('ai', () => ({
     'multimodal': ['openai'],
   },
 
-  // 计费配置（圣点/token 换算）
+  // 计费配置（圣力/token 换算）
   pricing: {
-    // 每千token对应的圣点数
+    // 每千token对应的圣力数
     coinsPerKToken: {
       'doubao-pro-32k': { input: 0.8, output: 2.0 },
       'doubao-pro-128k': { input: 1.0, output: 2.5 },
@@ -78,7 +78,7 @@ export const AIConfig = registerAs('ai', () => ({
       'deepseek-reasoner': { input: 0.55, output: 2.19 },
       'hy3-preview': { input: 0.5, output: 1.5 },
     },
-    // 图像生成固定价格（圣点/张）
+    // 图像生成固定价格（圣力/张）
     imageFixedPrice: {
       'doubao-seedream-5-0-lite': 10,
       'doubao-seedream-5-0-lite-pro': 20,

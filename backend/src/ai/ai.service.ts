@@ -112,7 +112,7 @@ export class AIService {
 
     const durationMs = Date.now() - startTime;
 
-    // 6. 计算实际消耗圣点
+    // 6. 计算实际消耗圣力
     const actualCoinCost = this.calculateChatCoinCost(tool, chatResponse.usage);
 
     // 7. 扣费
@@ -304,11 +304,11 @@ export class AIService {
   private async checkBalance(userId: number, requiredAmount: number): Promise<void> {
     const account = await this.coinAccountRepo.findOne({ where: { userId } });
     if (!account) {
-      throw new BadRequestException('圣点账户不存在，请先充值');
+      throw new BadRequestException('圣力账户不存在，请先充值');
     }
     if (account.balance < requiredAmount) {
       throw new BadRequestException(
-        `圣点余额不足，需要 ${requiredAmount} 圣点，当前余额 ${account.balance} 圣点`,
+        `圣力余额不足，需要 ${requiredAmount} 圣力，当前余额 ${account.balance} 圣力`,
       );
     }
   }
@@ -319,7 +319,7 @@ export class AIService {
   private async deductCoins(userId: number, amount: number, toolName: string, toolId: number): Promise<void> {
     const account = await this.coinAccountRepo.findOne({ where: { userId } });
     if (!account || account.balance < amount) {
-      throw new BadRequestException('圣点余额不足');
+      throw new BadRequestException('圣力余额不足');
     }
 
     const balanceBefore = account.balance;
@@ -340,7 +340,7 @@ export class AIService {
   }
 
   /**
-   * 预估文本对话费用（圣点）
+   * 预估文本对话费用（圣力）
    */
   private estimateChatCost(tool: AiTool, messages: ChatMessage[]): number {
     if (tool.isFree) return 0;

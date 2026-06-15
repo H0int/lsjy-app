@@ -55,7 +55,7 @@
           class="bg-white dark:bg-dark-100 rounded-xl p-4 text-center hover:shadow-md transition-all hover:-translate-y-0.5 group">
           <div class="text-3xl mb-2 group-hover:scale-110 transition-transform">{{ tool.icon }}</div>
           <div class="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">{{ tool.name }}</div>
-          <div class="text-xs text-gray-400 mt-1">{{ tool.isFree ? '免费' : `${tool.coinCost}圣点` }}</div>
+          <div class="text-xs text-gray-400 mt-1">{{ tool.isFree ? '免费' : `${tool.coinCost}圣力` }}</div>
         </router-link>
       </div>
     </div>
@@ -75,7 +75,7 @@
               </div>
             </div>
             <span class="text-xs px-2 py-1 rounded-full" :class="item.isFree ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'">
-              {{ item.isFree ? '免费' : `-${item.coinCost}圣点` }}
+              {{ item.isFree ? '免费' : `-${item.coinCost}圣力` }}
             </span>
           </div>
         </div>
@@ -108,7 +108,7 @@ const authStore = useAuthStore()
 
 const hotTools = ref<Tool[]>([])
 const statCards = ref([
-  { icon: '⚡', label: '圣点余额', value: '0' },
+  { icon: '⚡', label: '圣力余额', value: '0' },
   { icon: '🛠️', label: '已用工具', value: '0' },
   { icon: '📄', label: '生成作品', value: '0' },
   { icon: '🎯', label: '会员等级', value: '普通' },
@@ -130,7 +130,7 @@ const recentUsage = ref([
 
 const notices = ref([
   { id: '1', tag: '新功能', title: 'Seedance 2.0 视频生成已上线，效果大幅提升', date: '2026-06-10' },
-  { id: '2', tag: '活动', title: '新用户注册送100圣点，限时活动', date: '2026-06-08' },
+  { id: '2', tag: '活动', title: '新用户注册送100圣力，限时活动', date: '2026-06-08' },
   { id: '3', tag: '更新', title: 'AI文案创作新增小红书风格模板', date: '2026-06-05' },
   { id: '4', tag: '公告', title: '平台服务条款更新，请查看', date: '2026-06-01' },
 ])

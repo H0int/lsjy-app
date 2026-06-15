@@ -89,7 +89,7 @@ export class AiToolsService {
           [userId]
         );
         if (!accountRaw.length || accountRaw[0].balance < tool.coinCost) {
-          throw new BadRequestException('圣点余额不足');
+          throw new BadRequestException('圣力余额不足');
         }
 
         const balanceBefore = Number(accountRaw[0].balance);

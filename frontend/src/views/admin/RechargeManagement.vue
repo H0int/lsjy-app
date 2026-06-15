@@ -42,7 +42,7 @@
               <th class="text-left p-3" style="color: #6a6a8a;">用户</th>
               <th class="text-left p-3" style="color: #6a6a8a;">支付方式</th>
               <th class="text-left p-3" style="color: #6a6a8a;">金额</th>
-              <th class="text-left p-3" style="color: #6a6a8a;">圣点</th>
+              <th class="text-left p-3" style="color: #6a6a8a;">圣力</th>
               <th class="text-left p-3" style="color: #6a6a8a;">状态</th>
               <th class="text-left p-3" style="color: #6a6a8a;">时间</th>
               <th class="text-left p-3" style="color: #6a6a8a;">操作</th>
@@ -177,7 +177,7 @@ async function fetchOrders() {
 
 async function handleApprove(order: RechargeOrder) {
   try {
-    await ElMessageBox.confirm(`确认通过用户 ${order.username} 的充值订单？\n金额: ¥${order.price}，圣点: ${order.coinAmount}`, '审批确认')
+    await ElMessageBox.confirm(`确认通过用户 ${order.username} 的充值订单？\n金额: ¥${order.price}，圣力: ${order.coinAmount}`, '审批确认')
     const res = await service.post(`/payment/coin/approve/${order.id}`, { action: 'approve', remark: '管理员审批通过' })
     if (res.data?.code === 0) {
       ElMessage.success(res.data.message)

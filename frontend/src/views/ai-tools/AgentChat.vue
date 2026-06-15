@@ -118,7 +118,7 @@
       <!-- 输入框 -->
       <div class="cyber-card p-3 flex-shrink-0">
         <div class="flex gap-2">
-          <input v-model="input" @keyup.enter="sendMsg" :placeholder="loading ? 'AI思考中...' : `输入消息，Enter发送（消耗1圣点/次）`"
+          <input v-model="input" @keyup.enter="sendMsg" :placeholder="loading ? 'AI思考中...' : `输入消息，Enter发送（消耗1圣力/次）`"
             :disabled="loading"
             class="flex-1 px-3 py-2.5 rounded-xl text-sm outline-none transition-all"
             style="background: rgba(0,240,255,0.03); border: 1px solid var(--cyber-border); color: var(--cyber-text);"
@@ -331,7 +331,7 @@ function clearChat() {
 
 function sendQuick(t: string) { input.value = t; sendMsg() }
 
-// ========== 核心：AI对话（消耗1圣点/次） ==========
+// ========== 核心：AI对话（消耗1圣力/次） ==========
 async function sendMsg() {
   const text = input.value.trim()
   if (!text || loading.value) return
@@ -360,13 +360,13 @@ async function sendMsg() {
       }),
     })
 
-    // 处理圣点不足 (402)
+    // 处理圣力不足 (402)
     if (res.status === 402) {
       const errData = await res.json()
       coinBalance.value = errData.data?.balance || 0
       msgs.value.push({
         role: 'assistant',
-        content: `⚡ **圣点不足**\n\n当前余额：${coinBalance.value} 圣点\n本次需要：${errData.data?.cost || 1} 圣点\n\n请点击右上角「⚡」前往充值，或返回[个人中心](/profile/wallet)充值。`,
+        content: `⚡ **圣力不足**\n\n当前余额：${coinBalance.value} 圣力\n本次需要：${errData.data?.cost || 1} 圣力\n\n请点击右上角「⚡」前往充值，或返回[个人中心](/profile/wallet)充值。`,
         model: '系统'
       })
       loading.value = false
@@ -412,7 +412,7 @@ async function sendMsg() {
   }
 }
 
-// ========== 图片生成（消耗10圣点/次） ==========
+// ========== 图片生成（消耗10圣力/次） ==========
 async function genImage() {
   const prompt = imgPrompt.value.trim()
   if (!prompt || genLoading.value) return
@@ -440,13 +440,13 @@ async function genImage() {
       }),
     })
 
-    // 处理圣点不足
+    // 处理圣力不足
     if (res.status === 402) {
       const errData = await res.json()
       coinBalance.value = errData.data?.balance || 0
       images.value[0] = {
         prompt,
-        error: `⚡ 圣点不足！当前余额${coinBalance.value}，图片生成需要10圣点。请前往个人中心充值。`,
+        error: `⚡ 圣力不足！当前余额${coinBalance.value}，图片生成需要10圣力。请前往个人中心充值。`,
       }
       genLoading.value = false
       return
@@ -511,7 +511,7 @@ onMounted(async () => {
   fetch(`${API_BASE}/ai/providers`)
     .then(r => { aiOnline.value = r.ok })
     .catch(() => { aiOnline.value = false })
-  // 获取用户圣点余额
+  // 获取用户圣力余额
   try {
     const res = await fetch(`${API_BASE}/payment/coin/balance`, {
       headers: { 'Authorization': `Bearer ${authToken}` }

@@ -8,7 +8,7 @@
     </button>
 
     <h1 class="text-2xl font-bold mb-6" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">
-      <span style="color: var(--cyber-amber);">▍</span>圣点账户
+      <span style="color: var(--cyber-amber);">▍</span>圣力账户
     </h1>
 
     <!-- 余额卡片 -->
@@ -17,7 +17,7 @@
       <div class="relative z-10">
         <p class="text-sm" style="color: var(--cyber-amber); opacity: 0.8;">当前余额</p>
         <p class="text-4xl font-bold mt-1 glow-cyan" style="color: var(--cyber-cyan); font-family: 'JetBrains Mono', monospace;">
-          {{ coinBalance }} <span class="text-lg font-normal" style="color: var(--cyber-text-dim);">圣点</span>
+          {{ coinBalance }} <span class="text-lg font-normal" style="color: var(--cyber-text-dim);">圣力</span>
         </p>
       </div>
       <div class="absolute right-6 top-1/2 -translate-y-1/2 text-6xl opacity-15" style="filter: drop-shadow(0 0 10px rgba(255,184,0,0.5));">⚡</div>
@@ -35,7 +35,7 @@
       <h3 class="font-bold mb-3" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">
         <span style="color: var(--cyber-green);">▍</span>充值套餐
       </h3>
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <div v-for="pkg in packages" :key="pkg.id"
           @click="selectedPkgId = pkg.id"
           class="cyber-card p-4 text-center cursor-pointer transition-all duration-300"
@@ -45,9 +45,9 @@
           <div v-if="pkg.isRecommended" class="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 text-white text-xs rounded-full"
             style="background: linear-gradient(135deg, var(--cyber-magenta), var(--cyber-purple));">推荐</div>
           <div class="text-2xl font-bold" style="color: var(--cyber-cyan); font-family: 'JetBrains Mono', monospace;">{{ pkg.coinAmount }}</div>
-          <div class="text-xs mt-1" style="color: var(--cyber-text-dim);">圣点</div>
+          <div class="text-xs mt-1" style="color: var(--cyber-text-dim);">圣力</div>
           <div class="text-sm font-bold mt-2" style="color: var(--cyber-amber);">¥{{ pkg.price }}</div>
-          <div v-if="pkg.bonusCoins" class="text-xs mt-1" style="color: var(--cyber-green);">送{{ pkg.bonusCoins }}圣点</div>
+          <div v-if="pkg.bonusCoins" class="text-xs mt-1" style="color: var(--cyber-green);">送{{ pkg.bonusCoins }}圣力</div>
         </div>
       </div>
       <div class="mt-4 text-center">
@@ -61,7 +61,7 @@
     <el-dialog v-model="showPayDialog" title="扫码支付" width="400px" :close-on-click-modal="false">
       <div class="text-center mb-4">
         <p class="text-lg font-bold mb-2" style="color: var(--cyber-text);">订单金额：<span style="color: var(--cyber-amber);">¥{{ currentOrder?.price }}</span></p>
-        <p class="text-sm" style="color: var(--cyber-text-dim);">获得 {{ currentOrder?.coinAmount }} 圣点</p>
+        <p class="text-sm" style="color: var(--cyber-text-dim);">获得 {{ currentOrder?.coinAmount }} 圣力</p>
       </div>
       
       <!-- 支付方式选择 -->
@@ -137,7 +137,7 @@
               {{ order.status === 'approved' ? '✅' : order.status === 'rejected' ? '❌' : '⏳' }}
             </div>
             <div>
-              <div class="text-sm font-medium" style="color: var(--cyber-text);">{{ order.coinAmount }} 圣点</div>
+              <div class="text-sm font-medium" style="color: var(--cyber-text);">{{ order.coinAmount }} 圣力</div>
               <div class="text-xs" style="color: var(--cyber-text-dim);">{{ formatDate(order.createdAt) }}</div>
             </div>
           </div>
@@ -184,7 +184,8 @@ const qrCodeUrl = computed(() => {
   const baseUrl = import.meta.env.BASE_URL || '/'
   if (payMethod.value === 'wechat') return baseUrl + 'qrcodes/wechat_pay.jpg'
   if (payMethod.value === 'alipay') return baseUrl + 'qrcodes/alipay.jpg'
-  return baseUrl + 'assets/pay/alipay_qr.png'
+  if (payMethod.value === 'qq') return baseUrl + 'qrcodes/qq_pay.jpg'
+  return baseUrl + 'qrcodes/wechat_pay.jpg'
 })
 
 const payMethodName = computed(() => {
