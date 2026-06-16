@@ -15,47 +15,47 @@
 
     <!-- 数据卡片 -->
     <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-      <div v-for="card in statCards" :key="card.label" class="bg-white dark:bg-dark-100 rounded-xl p-4 shadow-sm">
+      <div v-for="card in statCards" :key="card.label" class="cyber-card rounded-xl p-4">
         <div class="text-2xl mb-2">{{ card.icon }}</div>
-        <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ card.value }}</div>
-        <div class="text-sm text-gray-500 dark:text-gray-400">{{ card.label }}</div>
+        <div class="text-2xl font-bold" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">{{ card.value }}</div>
+        <div class="text-sm" style="color: var(--cyber-text-dim);">{{ card.label }}</div>
       </div>
     </div>
 
     <!-- 访客信息栏 -->
-    <div class="bg-white dark:bg-dark-100 rounded-xl p-4 mb-6 shadow-sm flex flex-wrap items-center justify-between gap-3">
+    <div class="cyber-card rounded-xl p-4 mb-6 flex flex-wrap items-center justify-between gap-3">
       <div class="flex items-center gap-3">
         <span class="text-2xl">👥</span>
         <div>
-          <div class="text-sm text-gray-500 dark:text-gray-400">平台访客总数</div>
-          <div class="text-xl font-bold text-gray-900 dark:text-white">{{ visitorStats.totalVisitors }} 人</div>
+          <div class="text-sm" style="color: var(--cyber-text-dim);">平台访客总数</div>
+          <div class="text-xl font-bold" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">{{ visitorStats.totalVisitors }} 人</div>
         </div>
       </div>
       <div class="flex items-center gap-3">
         <span class="text-2xl">📅</span>
         <div>
-          <div class="text-sm text-gray-500 dark:text-gray-400">今日访客</div>
-          <div class="text-xl font-bold text-gray-900 dark:text-white">{{ visitorStats.todayVisitors }} 人</div>
+          <div class="text-sm" style="color: var(--cyber-text-dim);">今日访客</div>
+          <div class="text-xl font-bold" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">{{ visitorStats.todayVisitors }} 人</div>
         </div>
       </div>
       <div class="flex items-center gap-3">
         <span class="text-2xl">🕐</span>
         <div>
-          <div class="text-sm text-gray-500 dark:text-gray-400">最近访问时间</div>
-          <div class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ visitorStats.lastVisitTime || '暂无记录' }}</div>
+          <div class="text-sm" style="color: var(--cyber-text-dim);">最近访问时间</div>
+          <div class="text-sm font-medium" style="color: var(--cyber-text);">{{ visitorStats.lastVisitTime || '暂无记录' }}</div>
         </div>
       </div>
     </div>
 
     <!-- 快捷入口 -->
     <div class="mb-6">
-      <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-3">🚀 热门工具</h2>
+      <h2 class="text-lg font-bold mb-3" style="color: var(--cyber-text);"> 热门工具</h2>
       <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
         <router-link v-for="tool in hotTools" :key="tool.id" :to="`/tools/${tool.id}`"
-          class="bg-white dark:bg-dark-100 rounded-xl p-4 text-center hover:shadow-md transition-all hover:-translate-y-0.5 group">
+          class="cyber-card rounded-xl p-4 text-center transition-all hover:-translate-y-0.5 group">
           <div class="text-3xl mb-2 group-hover:scale-110 transition-transform">{{ tool.icon }}</div>
-          <div class="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">{{ tool.name }}</div>
-          <div class="text-xs text-gray-400 mt-1">{{ tool.isFree ? '免费' : `${tool.coinCost}圣力` }}</div>
+          <div class="text-sm font-medium truncate" style="color: var(--cyber-text);">{{ tool.name }}</div>
+          <div class="text-xs mt-1" style="color: var(--cyber-text-dim);">{{ tool.isFree ? '免费' : `${tool.coinCost}圣力` }}</div>
         </router-link>
       </div>
     </div>
@@ -63,18 +63,18 @@
     <!-- 最近使用 + 平台公告 -->
     <div class="grid md:grid-cols-2 gap-6">
       <!-- 最近使用 -->
-      <div class="bg-white dark:bg-dark-100 rounded-xl p-5 shadow-sm">
-        <h3 class="font-bold text-gray-900 dark:text-white mb-4">📝 最近使用</h3>
+      <div class="cyber-card rounded-xl p-5">
+        <h3 class="font-bold var(--cyber-text) mb-4">📝 最近使用</h3>
         <div class="space-y-3">
-          <div v-for="item in recentUsage" :key="item.id" class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
+          <div v-for="item in recentUsage" :key="item.id" class="flex items-center justify-between py-2 border-b var(--cyber-border) last:border-0">
             <div class="flex items-center gap-3">
               <span class="text-xl">{{ item.icon }}</span>
               <div>
-                <div class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ item.name }}</div>
-                <div class="text-xs text-gray-400">{{ item.time }}</div>
+                <div class="text-sm font-medium var(--cyber-text)">{{ item.name }}</div>
+                <div class="text-xs var(--cyber-text-dim)">{{ item.time }}</div>
               </div>
             </div>
-            <span class="text-xs px-2 py-1 rounded-full" :class="item.isFree ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'">
+            <span class="text-xs px-2 py-1 rounded-full" :class="item.isFree ? 'rgba(34,197,94,0.1); color: #22c55e' : 'rgba(255,184,0,0.1); color: var(--cyber-amber)'">
               {{ item.isFree ? '免费' : `-${item.coinCost}圣力` }}
             </span>
           </div>
@@ -82,14 +82,14 @@
       </div>
 
       <!-- 平台公告 -->
-      <div class="bg-white dark:bg-dark-100 rounded-xl p-5 shadow-sm">
-        <h3 class="font-bold text-gray-900 dark:text-white mb-4">📢 平台公告</h3>
+      <div class="cyber-card rounded-xl p-5">
+        <h3 class="font-bold var(--cyber-text) mb-4">📢 平台公告</h3>
         <div class="space-y-3">
-          <div v-for="notice in notices" :key="notice.id" class="flex items-start gap-3 py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
-            <span class="text-sm px-2 py-0.5 rounded bg-primary/10 text-primary flex-shrink-0 mt-0.5">{{ notice.tag }}</span>
+          <div v-for="notice in notices" :key="notice.id" class="flex items-start gap-3 py-2 border-b var(--cyber-border) last:border-0">
+            <span class="text-sm px-2 py-0.5 rounded rgba(0,240,255,0.1); color: var(--cyber-cyan) flex-shrink-0 mt-0.5">{{ notice.tag }}</span>
             <div>
-              <div class="text-sm text-gray-700 dark:text-gray-300">{{ notice.title }}</div>
-              <div class="text-xs text-gray-400 mt-0.5">{{ notice.date }}</div>
+              <div class="text-sm var(--cyber-text)">{{ notice.title }}</div>
+              <div class="text-xs var(--cyber-text-dim) mt-0.5">{{ notice.date }}</div>
             </div>
           </div>
         </div>
