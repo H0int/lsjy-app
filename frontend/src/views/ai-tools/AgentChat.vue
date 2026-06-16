@@ -166,7 +166,7 @@
 import { ref, computed, onMounted, nextTick, watch } from 'vue'
 
 // ========== API配置 ==========
-const API_BASE = 'https://api.lsjyapp.cn/api/v1'
+const API_BASE = '/api/v1'
 // 动态获取token（登录后token会变化，不能静态获取）
 const authToken = computed(() => localStorage.getItem('lsjy_token') || '')
 

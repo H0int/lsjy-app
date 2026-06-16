@@ -5,7 +5,7 @@ import type { ApiResponse } from '@/types'
 import { getToken, removeToken } from '@/utils'
 
 const service: AxiosInstance = axios.create({
-  baseURL: 'https://api.lsjyapp.cn/api/v1',
+  baseURL: '/api/v1',
   timeout: 120000,
   headers: { 'Content-Type': 'application/json' }
 })
@@ -72,7 +72,7 @@ service.interceptors.response.use(
       try {
         // 尝试刷新Token
         const { data } = await axios.post(
-          `https://api.lsjyapp.cn/api/v1/auth/refresh`,
+          `/api/v1/auth/refresh`,
           { refreshToken }
         )
         const newAccessToken = data.data?.accessToken

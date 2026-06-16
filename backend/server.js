@@ -226,7 +226,7 @@ function httpsRequest(url, options, body) {
 
 // ===== 内存数据存储 =====
 const usersStore = [
-  { id: 1, username: 'KF02V9', nickname: '罗总', email: 'ceo@lsjyapp.cn', phone: '', roles: ['boss'], status: 'active', avatar: '', gender: 1, bio: '罗圣纪元创始人', createdAt: '2026-01-01T00:00:00Z' },
+  { id: 1, username: 'KF02V9', nickname: '罗总', email: 'ceo@lsjyapp.cn', phone: '', roles: ['boss'], status: 'active', avatar: '', gender: 1, bio: '罗圣纪元创始人', vipLevel: 99, userType: 'founder', createdAt: '2026-05-12T00:00:00Z' },
   { id: 2, username: 'user1', nickname: '测试用户', email: 'test@test.com', phone: '13800138000', roles: ['user'], status: 'active', avatar: '', gender: 0, bio: '普通用户', createdAt: '2026-06-01T00:00:00Z' },
   { id: 3, username: 'admin1', nickname: '管理员', email: 'admin@lsjyapp.cn', phone: '', roles: ['admin'], status: 'active', avatar: '', gender: 1, bio: '系统管理员', createdAt: '2026-03-01T00:00:00Z' },
 ];
@@ -955,7 +955,7 @@ app.post('/api/v1/auth/login', (req, res) => {
       code: 0, message: 'success',
       data: {
         accessToken: 'jwt_1_' + Date.now(), refreshToken: 'refresh_1_' + Date.now(),
-        user: { id: 1, username: 'KF02V9', nickname: '罗总', roles: ['boss'], status: 'active' },
+        user: { id: 1, username: 'KF02V9', nickname: '罗总', roles: ['boss'], status: 'active', vipLevel: 99, userType: 'founder', createdAt: '2026-05-12T00:00:00Z' },
       },
     });
   }

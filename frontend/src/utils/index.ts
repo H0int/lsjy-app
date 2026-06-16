@@ -104,6 +104,7 @@ export const toolTypeIconMap: Record<string, string> = {
  * 用户类型映射
  */
 export const userTypeMap: Record<string, string> = {
+  founder: '创始人版',
   personal: '个人版',
   merchant: '商户版',
   enterprise: '企业版'

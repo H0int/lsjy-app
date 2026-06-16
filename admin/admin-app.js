@@ -1753,35 +1753,43 @@ window.AdminAPI = {
 
   // 登录
   login: function(username, password) {
-    var users = Store.getUsers() || [];
-    var user = null;
-    for (var i = 0; i < users.length; i++) {
-      if (users[i].username === username && users[i].password === password) {
-        user = users[i]; break;
+    // 调用真实后端API登录
+    fetch(APP.apiBase + '/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: username, password: password })
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      if (data.code !== 0) {
+        toast(data.message || '登录失败', 'error');
+        return;
       }
-    }
-    if (!user) { toast('用户名或密码错误', 'error'); return; }
-    if (user.status === 'banned') { toast('账号已被封禁', 'error'); return; }
-    if (user.status === 'pending') { toast('账号待审批，请联系管理员', 'warning'); return; }
-    if (user.status === 'rejected') { toast('账号已被拒绝', 'error'); return; }
-    // 检查是否为管理员
-    var admins = Store.get('admins') || [];
-    var isAdmin = false;
-    var role = 'normal';
-    for (var j = 0; j < admins.length; j++) {
-      if (admins[j].username === username) {
-        isAdmin = true;
-        role = admins[j].role;
-        break;
+      var user = data.data.user;
+      if (!user) {
+        toast('用户信息获取失败', 'error');
+        return;
       }
-    }
-    if (username === 'KF02V9') { isAdmin = true; role = 'boss'; }
-    if (!isAdmin) { toast('无管理员权限', 'error'); return; }
-
-    Store.setSession({ username: username, role: role, loginTime: new Date().toISOString() });
-    addLog('login', '管理员 '+username+' 登录系统');
-    toast('登录成功', 'success');
-    setTimeout(function() { showMainApp(); }, 500);
+      // 检查是否为管理员
+      var roles = user.roles || [];
+      var isAdmin = roles.indexOf('boss') >= 0 || roles.indexOf('admin') >= 0;
+      if (!isAdmin) {
+        toast('无管理员权限', 'error');
+        return;
+      }
+      // 保存token到localStorage
+      localStorage.setItem('admin_token', data.data.accessToken);
+      localStorage.setItem('admin_user', JSON.stringify(user));
+      var role = roles.indexOf('boss') >= 0 ? 'boss' : 'admin';
+      Store.setSession({ username: username, role: role, loginTime: new Date().toISOString(), token: data.data.accessToken });
+      addLog('login', '管理员 '+username+' 登录系统');
+      toast('登录成功', 'success');
+      setTimeout(function() { showMainApp(); }, 500);
+    })
+    .catch(function(err) {
+      console.error('Login error:', err);
+      toast('网络错误，请重试', 'error');
+    });
   },
 
   logout: function() {

@@ -88,6 +88,13 @@
         </transition>
       </router-view>
     </main>
+
+    <!-- ICP备案信息 -->
+    <div class="cyber-footer-beian">
+      <a href="https://beian.miit.gov.cn/" target="_blank" rel="nofollow">湘ICP备2026022972号-1</a>
+      <span class="beian-sep">|</span>
+      <span>祁阳市罗圣纪元互联网科技有限责任公司</span>
+    </div>
   </div>
 </template>
 
@@ -110,7 +117,8 @@ function isActive(path: string) {
 }
 
 function goAdmin() {
-  window.location.href = (import.meta.env.BASE_URL || "/") + "admin/"
+  // 使用同源hash路由，共享localStorage的token（admin.lsjyapp.cn域名隔离导致token不共享）
+  window.location.hash = '/admin/dashboard'
 }
 
 function handleLogout() {
@@ -130,5 +138,29 @@ function handleLogout() {
 
 .animate-scan {
   animation: scan-move 4s ease-in-out infinite;
+}
+
+.cyber-footer-beian {
+  position: relative;
+  z-index: 40;
+  text-align: center;
+  padding: 12px 16px 8px;
+  font-size: 11px;
+  color: rgba(136, 136, 170, 0.4);
+  letter-spacing: 0.5px;
+  background: transparent;
+  margin-bottom: 60px;
+}
+.cyber-footer-beian a {
+  color: rgba(0, 240, 255, 0.35);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.cyber-footer-beian a:hover {
+  color: rgba(0, 240, 255, 0.6);
+}
+.beian-sep {
+  margin: 0 6px;
+  opacity: 0.3;
 }
 </style>

@@ -101,7 +101,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
-import { toolApi, visitorApi } from '@/api'
+import { toolApi, visitorApi, adminApi } from '@/api'
 import type { Tool } from '@/types'
 
 const authStore = useAuthStore()
@@ -121,19 +121,9 @@ const visitorStats = ref({
   lastVisitTime: '',
 })
 
-const recentUsage = ref([
-  { id: '1', icon: '🎬', name: 'AI视频生成', time: '30分钟前', coinCost: 80, isFree: false },
-  { id: '2', icon: '✍️', name: 'AI文案创作', time: '2小时前', coinCost: 10, isFree: false },
-  { id: '3', icon: '🎨', name: 'AI文生图', time: '昨天', coinCost: 20, isFree: false },
-  { id: '4', icon: '📥', name: '短视频解析', time: '昨天', coinCost: 0, isFree: true },
-])
+const recentUsage = ref<any[]>([])
 
-const notices = ref([
-  { id: '1', tag: '新功能', title: 'Seedance 2.0 视频生成已上线，效果大幅提升', date: '2026-06-10' },
-  { id: '2', tag: '活动', title: '新用户注册送100圣力，限时活动', date: '2026-06-08' },
-  { id: '3', tag: '更新', title: 'AI文案创作新增小红书风格模板', date: '2026-06-05' },
-  { id: '4', tag: '公告', title: '平台服务条款更新，请查看', date: '2026-06-01' },
-])
+const notices = ref<any[]>([])
 
 onMounted(async () => {
   // 获取热门工具
@@ -145,7 +135,7 @@ onMounted(async () => {
   // 更新统计卡片
   statCards.value[0].value = authStore.coinBalance.toLocaleString()
   if (authStore.user) {
-    statCards.value[3].value = authStore.user.vipLevel > 0 ? `VIP${authStore.user.vipLevel}` : '普通'
+    statCards.value[3].value = authStore.user.userType === 'founder' ? '至尊创始人' : (authStore.user.vipLevel > 0 ? `VIP${authStore.user.vipLevel}` : '普通')
   }
 
   // 访客签到 + 获取统计
@@ -161,6 +151,34 @@ onMounted(async () => {
       statCards.value[4].value = String(statsRes.data.totalVisitors || 0)
     }
   } catch { /* ignore */ }
+
+  // 获取真实公告数据
+  try {
+    const annRes = await adminApi.getAnnouncements()
+    if (annRes.data && Array.isArray(annRes.data)) {
+      notices.value = annRes.data.slice(0, 4).map((a: any) => ({
+        id: String(a.id),
+        tag: a.type || '公告',
+        title: a.title,
+        date: a.createdAt ? a.createdAt.split('T')[0] : ''
+      }))
+    }
+  } catch { /* ignore */ }
+
+  // 获取用户使用记录（从订单API）
+  try {
+    const orderRes = await adminApi.getOrders({ page: 1, pageSize: 4 })
+    if (orderRes.data && orderRes.data.items) {
+      recentUsage.value = orderRes.data.items.slice(0, 4).map((o: any) => ({
+        id: String(o.id),
+        icon: '🛠️',
+        name: o.toolName || o.description || '工具使用',
+        time: o.createdAt ? new Date(o.createdAt).toLocaleDateString('zh-CN') : '',
+        coinCost: Math.abs(o.amount || 0),
+        isFree: (o.amount || 0) === 0
+      }))
+    }
+  } catch { /* ignore */ }
 })
 </script>
 
@@ -171,17 +189,13 @@ onMounted(async () => {
   border: 1px solid rgba(0, 240, 255, 0.15);
   position: relative;
 }
-
 .cyber-welcome-banner::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
+  top: 0; left: 0; right: 0;
   height: 2px;
   background: linear-gradient(90deg, transparent, var(--cyber-cyan), var(--cyber-purple), transparent);
 }
-
 .welcome-bg-grid {
   position: absolute;
   inset: 0;
@@ -190,14 +204,33 @@ onMounted(async () => {
     linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
   background-size: 30px 30px;
 }
-
 .welcome-glow {
   position: absolute;
-  top: -50%;
-  right: -20%;
-  width: 300px;
-  height: 300px;
+  top: -50%; right: -20%;
+  width: 300px; height: 300px;
   background: radial-gradient(circle, rgba(0, 240, 255, 0.08) 0%, transparent 70%);
   border-radius: 50%;
+}
+
+/* Cyber card - dark cyberpunk theme */
+.cyber-card {
+  background: rgba(15, 15, 25, 0.85);
+  border: 1px solid rgba(0, 240, 255, 0.1);
+  backdrop-filter: blur(8px);
+  transition: all 0.3s;
+}
+.cyber-card:hover {
+  border-color: rgba(0, 240, 255, 0.25);
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.05);
+}
+.cyber-text-primary {
+  color: #00f0ff;
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.3);
+}
+.cyber-text {
+  color: #c0c0e0;
+}
+.cyber-text-dim {
+  color: #6a6a8a;
 }
 </style>

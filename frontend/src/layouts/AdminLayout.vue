@@ -352,8 +352,7 @@ function handleLogout() {
 /* ========== HEADER ========== */
 .cyber-header {
   height: 56px;
-  background: rgba(10, 10, 20, 0.9);
-  backdrop-filter: blur(12px);
+  background: #0a0a14;
   border-bottom: 1px solid #1a1a2e;
   display: flex;
   align-items: center;
@@ -412,8 +411,7 @@ function handleLogout() {
   position: fixed;
   bottom: 0; left: 0; right: 0;
   height: 56px;
-  background: rgba(10, 10, 20, 0.95);
-  backdrop-filter: blur(12px);
+  background: #0a0a14;
   border-top: 1px solid #1a1a2e;
   z-index: 35;
   justify-content: space-around;
