@@ -6,16 +6,17 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { IAIProvider, ProviderStatus, AIProviderError, AIErrorCode } from './ai-provider.interface';
 import { DoubaoProvider } from './doubao.provider';
+import { DeepSeekProvider } from './deepseek.provider';
 import { JimengProvider } from './jimeng.provider';
 import { OpenAIProvider } from './openai.provider';
 import { TongyiProvider } from './tongyi.provider';
 
 /** 任务类型 → Provider优先级映射 */
 const DEFAULT_ROUTING: Record<string, string[]> = {
-  'text-generation': ['doubao', 'openai', 'tongyi'],
+  'text-generation': ['deepseek', 'doubao', 'tongyi', 'openai'],
   'image-generation': ['jimeng', 'openai'],
-  'code-generation': ['openai', 'doubao', 'tongyi'],
-  'text-analysis': ['tongyi', 'doubao', 'openai'],
+  'code-generation': ['deepseek', 'openai', 'doubao', 'tongyi'],
+  'text-analysis': ['deepseek', 'tongyi', 'doubao', 'openai'],
   'multimodal': ['openai'],
 };
 
@@ -39,6 +40,12 @@ export class AIProviderManager implements OnModuleInit {
    */
   private async initializeProviders(): Promise<void> {
     const providerConfigs = [
+      {
+        instance: new DeepSeekProvider(),
+        apiKey: this.configService.get<string>('DEEPSEEK_API_KEY'),
+        baseUrl: this.configService.get<string>('DEEPSEEK_BASE_URL', 'https://api.deepseek.com/v1'),
+        defaultModel: this.configService.get<string>('DEEPSEEK_MODEL', 'deepseek-chat'),
+      },
       {
         instance: new DoubaoProvider(),
         apiKey: this.configService.get<string>('DOUBAO_API_KEY'),
