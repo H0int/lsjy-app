@@ -1,0 +1,31 @@
+name: Deploy to ECS
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - 'backend/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.ECS_HOST }}
+          username: ${{ secrets.ECS_USER }}
+          key: ${{ secrets.ECS_SSH_KEY }}
+          port: ${{ secrets.ECS_PORT || 22 }}
+          script: |
+            cd /opt/lsjy-app || cd /root/lsjy-app
+            git pull origin main
+            cd frontend
+            npm install --legacy-peer-deps
+            npm run build
+            rm -rf /usr/share/nginx/html/frontend/*
+            cp -r dist/* /usr/share/nginx/html/frontend/
+            nginx -s reload
+            echo "✅ Deployed at $(date)"

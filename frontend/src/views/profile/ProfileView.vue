@@ -8,9 +8,17 @@
       <!-- 左侧用户卡片 -->
       <div class="md:col-span-1">
         <div class="cyber-card p-6 text-center">
-          <div class="w-20 h-20 rounded-full flex items-center justify-center text-black text-3xl font-bold mx-auto mb-4"
-            style="background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-magenta)); box-shadow: 0 0 20px rgba(0,240,255,0.3);">
-            {{ (authStore.nickname || 'U')[0] }}
+          <div class="relative w-20 h-20 mx-auto mb-4 group cursor-pointer" @click="triggerAvatarUpload">
+            <div v-if="!avatarUrl" class="w-20 h-20 rounded-full flex items-center justify-center text-black text-3xl font-bold"
+              style="background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-magenta)); box-shadow: 0 0 20px rgba(0,240,255,0.3);">
+              {{ (authStore.nickname || 'U')[0] }}
+            </div>
+            <img v-else :src="avatarUrl" class="w-20 h-20 rounded-full object-cover" style="box-shadow: 0 0 20px rgba(0,240,255,0.3);" />
+            <div class="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+              style="backdrop-filter: blur(2px);">
+              <span class="text-xs text-white">更换头像</span>
+            </div>
+            <input ref="avatarInput" type="file" accept="image/*" class="hidden" @change="handleAvatarChange" />
           </div>
           <h2 class="text-lg font-bold" style="color: var(--cyber-text);">{{ authStore.user?.nickname }}</h2>
           <p class="text-sm mt-1" style="color: var(--cyber-text-dim);">@{{ authStore.user?.username }}</p>
@@ -109,6 +117,34 @@ import { ElMessage } from 'element-plus'
 
 const authStore = useAuthStore()
 const saving = ref(false)
+const avatarUrl = ref(authStore.user?.avatar || '')
+const avatarInput = ref<HTMLInputElement>()
+
+function triggerAvatarUpload() {
+  avatarInput.value?.click()
+}
+
+async function handleAvatarChange(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  if (file.size > 5 * 1024 * 1024) {
+    ElMessage.warning('图片大小不能超过5MB')
+    return
+  }
+  const reader = new FileReader()
+  reader.onload = async () => {
+    const dataUrl = reader.result as string
+    avatarUrl.value = dataUrl
+    try {
+      await userApi.updateProfile({ avatar: dataUrl })
+      if (authStore.user) authStore.user.avatar = dataUrl
+      ElMessage.success('头像已更新')
+    } catch {
+      ElMessage.error('头像上传失败')
+    }
+  }
+  reader.readAsDataURL(file)
+}
 
 const profileForm = reactive({
   nickname: authStore.user?.nickname || '',
