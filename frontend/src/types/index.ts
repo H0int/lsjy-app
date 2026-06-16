@@ -30,7 +30,7 @@ export interface User {
   phone: string | null
   gender: number
   bio: string | null
-  userType: 'personal' | 'merchant' | 'enterprise'
+  userType: 'personal' | 'merchant' | 'enterprise' | 'founder' | 'boss'
   vipLevel: number
   status: 'active' | 'frozen' | 'banned'
   roles: string[]
@@ -200,7 +200,9 @@ export const toolTypeMap: Record<string, string> = {
 export const userTypeMap: Record<string, string> = {
   personal: '个人版',
   merchant: '商户版',
-  enterprise: '企业版'
+  enterprise: '企业版',
+  founder: '至尊创始人',
+  boss: '创始人'
 }
 
 // ===== 交易类型映射 =====

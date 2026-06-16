@@ -344,7 +344,7 @@ async function sendMsg() {
 
     // 如果有系统提示，加到消息开头
     if (agent.systemPrompt) {
-      backendMessages.unshift({ role: 'system', content: agent.systemPrompt })
+      backendMessages.unshift({ role: 'user', content: '[System Instructions] ' + agent.systemPrompt } as any)
     }
 
     const res = await fetch(`${API_BASE}/ai/tools/${agent.id}/chat`, {

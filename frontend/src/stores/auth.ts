@@ -30,8 +30,8 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const res = await authApi.login(username, password)
       // 后端返回格式: { code, message, data: { accessToken, refreshToken, user } }
-      const apiData = res.data
-      const data = apiData.data || apiData
+      const apiData = (res as any).data ?? res.data
+      const data = apiData?.data || apiData
       const accessToken = data.token || data.accessToken
       const refreshToken = data.refreshToken
       const loginUser = data.userInfo || data.user
@@ -58,7 +58,7 @@ export const useAuthStore = defineStore('auth', () => {
   async function fetchUserProfile() {
     try {
       const res = await userApi.getProfile()
-      const userData = res.data.data || res.data
+      const userData = (res as any).data?.data || (res as any).data
       user.value = userData
       localStorage.setItem('lsjy_user', JSON.stringify(userData))
       // 从roles数组提取角色名
@@ -78,7 +78,7 @@ export const useAuthStore = defineStore('auth', () => {
   async function fetchBalance() {
     try {
       const res = await paymentApi.getBalance()
-      const balData = res.data.data || res.data
+      const balData = (res as any).data?.data || (res as any).data
       coinBalance.value = balData.balance
     } catch (e) {
       console.error('获取余额失败', e)
