@@ -41,10 +41,15 @@ export const useAuthStore = defineStore('auth', () => {
       // 保存用户信息到内存和localStorage
       user.value = loginUser
       localStorage.setItem('lsjy_user', JSON.stringify(loginUser))
-      userRoles.value = loginUser.roles || []
+      // 提取角色 - 支持多种格式
+      userRoles.value = extractRoles(loginUser.roles)
       ElMessage.success('登录成功')
       // 异步获取余额
       fetchBalance()
+      // 如果角色为空，异步获取角色（确保admin能进入后台）
+      if (userRoles.value.length === 0) {
+        fetchRolesFallback()
+      }
       return true
     } catch (e: any) {
       ElMessage.error(e?.response?.data?.message || '登录失败')
@@ -54,6 +59,30 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  // 从多种格式中提取角色名
+  function extractRoles(roles: any): string[] {
+    if (!roles || !Array.isArray(roles) || roles.length === 0) return []
+    if (typeof roles[0] === 'string') return roles
+    return roles.map((r: any) => r.roleName || r.name || r.role || '').filter(Boolean)
+  }
+
+  // 角色获取fallback - 通过多个接口尝试
+  async function fetchRolesFallback() {
+    try {
+      // 先尝试 /users/me/roles
+      const rolesRes = await userApi.getMyRoles()
+      const rolesData = rolesRes.data?.data || rolesRes.data
+      if (Array.isArray(rolesData) && rolesData.length > 0) {
+        userRoles.value = extractRoles(rolesData)
+        return
+      }
+    } catch { /* ignore */ }
+    try {
+      // 再尝试 /users/me 获取完整用户信息
+      await fetchUserProfile()
+    } catch { /* ignore */ }
+  }
+
   // 获取用户信息
   async function fetchUserProfile() {
     try {
@@ -61,13 +90,10 @@ export const useAuthStore = defineStore('auth', () => {
       const userData = (res as any).data?.data || (res as any).data
       user.value = userData
       localStorage.setItem('lsjy_user', JSON.stringify(userData))
-      // 从roles数组提取角色名
-      if (Array.isArray(userData.roles) && userData.roles.length > 0) {
-        if (typeof userData.roles[0] === 'string') {
-          userRoles.value = userData.roles
-        } else {
-          userRoles.value = userData.roles.map((r: any) => r.roleName || r.name)
-        }
+      // 提取角色
+      const roles = extractRoles(userData.roles)
+      if (roles.length > 0) {
+        userRoles.value = roles
       }
     } catch (e) {
       console.error('获取用户信息失败', e)
