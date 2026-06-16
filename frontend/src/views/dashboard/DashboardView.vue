@@ -4,11 +4,13 @@
     <div class="cyber-welcome-banner rounded-2xl p-6 mb-6 text-white relative overflow-hidden">
       <div class="welcome-bg-grid"></div>
       <div class="welcome-glow"></div>
+      <div class="welcome-glow-2"></div>
+      <div class="welcome-scanline"></div>
       <div class="relative z-10 flex items-center gap-4">
-        <img src="/company-logo.jpg" alt="罗圣纪元" class="w-14 h-14 rounded-xl object-cover" style="border: 2px solid rgba(0,240,255,0.4); box-shadow: 0 0 15px rgba(0,240,255,0.3);" />
+        <img src="/company-logo.jpg" alt="罗圣纪元" class="w-14 h-14 rounded-xl object-cover" style="border: 2px solid rgba(0,240,255,0.5); box-shadow: 0 0 20px rgba(0,240,255,0.4), 0 0 40px rgba(0,240,255,0.1);" />
         <div>
-          <h1 class="text-2xl font-bold mb-1" style="font-family: 'JetBrains Mono', monospace;">你好，{{ authStore.nickname }}</h1>
-          <p class="text-sm" style="color: rgba(0,240,255,0.7); font-family: 'JetBrains Mono', monospace;">欢迎回到罗圣纪元SaaS平台 · SYSTEM ONLINE</p>
+          <h1 class="text-2xl font-bold mb-1" style="font-family: 'JetBrains Mono', monospace; text-shadow: 0 0 10px rgba(0,240,255,0.3);">你好，{{ authStore.nickname }}</h1>
+          <p class="text-sm" style="color: rgba(0,240,255,0.8); font-family: 'JetBrains Mono', monospace; text-shadow: 0 0 8px rgba(0,240,255,0.2);">欢迎回到罗圣纪元SaaS平台 · SYSTEM ONLINE</p>
         </div>
       </div>
     </div>
@@ -167,9 +169,10 @@ onMounted(async () => {
 <style scoped>
 /* 赛博朋克欢迎横幅 */
 .cyber-welcome-banner {
-  background: linear-gradient(135deg, rgba(0, 240, 255, 0.1), rgba(124, 58, 237, 0.1));
-  border: 1px solid rgba(0, 240, 255, 0.15);
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.12) 0%, rgba(18, 18, 31, 0.9) 40%, rgba(124, 58, 237, 0.12) 100%);
+  border: 1px solid rgba(0, 240, 255, 0.2);
   position: relative;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.08), inset 0 0 30px rgba(0, 0, 0, 0.3);
 }
 
 .cyber-welcome-banner::before {
@@ -179,25 +182,63 @@ onMounted(async () => {
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(90deg, transparent, var(--cyber-cyan), var(--cyber-purple), transparent);
+  background: linear-gradient(90deg, transparent, var(--cyber-cyan), var(--cyber-purple), var(--cyber-magenta), transparent);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+}
+
+.cyber-welcome-banner::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.2), transparent);
 }
 
 .welcome-bg-grid {
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+    linear-gradient(rgba(0, 240, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, 0.04) 1px, transparent 1px);
   background-size: 30px 30px;
 }
 
 .welcome-glow {
   position: absolute;
   top: -50%;
-  right: -20%;
+  right: -10%;
   width: 300px;
   height: 300px;
-  background: radial-gradient(circle, rgba(0, 240, 255, 0.08) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(0, 240, 255, 0.12) 0%, transparent 70%);
   border-radius: 50%;
+}
+
+.welcome-glow-2 {
+  position: absolute;
+  bottom: -60%;
+  left: -10%;
+  width: 250px;
+  height: 250px;
+  background: radial-gradient(circle, rgba(124, 58, 237, 0.1) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.welcome-scanline {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.4), transparent);
+  animation: welcome-scan 4s ease-in-out infinite;
+}
+
+@keyframes welcome-scan {
+  0% { top: 0; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
 }
 </style>

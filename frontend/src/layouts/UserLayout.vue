@@ -81,12 +81,23 @@
     </nav>
 
     <!-- 主内容区 -->
-    <main class="pt-16 pb-20 md:pb-8">
+    <main class="pt-16 pb-28 md:pb-8" style="min-height: calc(100vh - 4rem); background: var(--cyber-bg);">
       <router-view v-slot="{ Component }">
         <transition name="fade" mode="out-in">
           <component :is="Component" />
         </transition>
       </router-view>
+      <!-- ICP备案/公安备案 - 放在内容最底部，不挡导航 -->
+      <div class="px-4 py-6 text-center" style="margin-top: 2rem;">
+        <div class="flex items-center justify-center gap-3 flex-wrap" style="font-size: 12px; color: rgba(136, 136, 170, 0.4);">
+          <a href="https://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener" style="color: rgba(136, 136, 170, 0.4); text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='rgba(0,240,255,0.6)'" onmouseout="this.style.color='rgba(136,136,170,0.4)'">湘ICP备2026022972号-1</a>
+          <span style="color: rgba(136, 136, 170, 0.2);">|</span>
+          <span>© 2026 罗圣纪元</span>
+        </div>
+        <div style="font-size: 11px; color: rgba(136, 136, 170, 0.25); margin-top: 4px;">
+          祁阳市罗圣纪元互联网科技有限责任公司
+        </div>
+      </div>
     </main>
   </div>
 </template>

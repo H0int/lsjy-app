@@ -2,6 +2,7 @@ import { defineComponent, h } from 'vue'
 import { createRouter, createWebHistory, createWebHashHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import { getToken } from '@/utils'
+import { ElMessage } from 'element-plus'
 
 // 404 页面组件
 const NotFoundView = defineComponent({
@@ -363,10 +364,23 @@ router.beforeEach(async (to, _from, next) => {
     if (!token) return next('/login')
     const { useAuthStore } = await import('@/stores/auth')
     const authStore = useAuthStore()
-    if (!authStore.user) {
+    // 始终尝试获取最新用户信息和角色
+    if (!authStore.user || authStore.userRoles.length === 0) {
       await authStore.fetchUserProfile()
     }
+    // 如果还是没有角色，尝试单独获取角色
+    if (authStore.userRoles.length === 0) {
+      try {
+        const { userApi } = await import('@/api')
+        const rolesRes = await userApi.getMyRoles()
+        const rolesData = rolesRes.data?.data || rolesRes.data
+        if (Array.isArray(rolesData) && rolesData.length > 0) {
+          authStore.userRoles = rolesData.map((r: any) => typeof r === 'string' ? r : (r.roleName || r.name || r.role || ''))
+        }
+      } catch { /* ignore */ }
+    }
     if (!authStore.isAdmin) {
+      ElMessage.error('无权访问管理后台')
       return next('/dashboard')
     }
     return next()
