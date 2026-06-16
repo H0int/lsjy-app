@@ -74,11 +74,25 @@
       <!-- 消息列表 -->
       <div v-else ref="chatBox" class="flex-1 overflow-y-auto mb-2 space-y-2 pr-1" style="scroll-behavior: smooth;">
         <div v-for="(msg, i) in msgs" :key="i" class="flex" :class="msg.role === 'user' ? 'justify-end' : 'justify-start'">
-          <div class="max-w-[85%] rounded-xl px-3 py-2 text-xs"
-            :style="msg.role === 'user'
-              ? 'background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple)); color: #000; border-radius: 12px 12px 4px 12px;'
-              : 'background: rgba(0,240,255,0.05); color: var(--cyber-text); border: 1px solid var(--cyber-border); border-radius: 12px 12px 12px 4px;'"
-            v-html="fmt(msg.content)">
+          <div class="max-w-[85%]">
+            <div class="rounded-xl px-3 py-2 text-xs"
+              :style="msg.role === 'user'
+                ? 'background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple)); color: #000; border-radius: 12px 12px 4px 12px;'
+                : 'background: rgba(0,240,255,0.05); color: var(--cyber-text); border: 1px solid var(--cyber-border); border-radius: 12px 12px 12px 4px;'"
+              v-html="fmt(msg.content)">
+            </div>
+            <!-- AI回复操作按钮 -->
+            <div v-if="msg.role === 'assistant' && !msg.content.startsWith('⚠️')" class="flex items-center gap-3 mt-1 ml-1">
+              <button @click="copyMsg(msg.content)" class="msg-action-btn" title="复制">
+                <span>📋</span><span>复制</span>
+              </button>
+              <button @click="shareMsg(msg.content)" class="msg-action-btn" title="转发">
+                <span>🔗</span><span>转发</span>
+              </button>
+              <button @click="regenerateMsg(i)" :disabled="loading" class="msg-action-btn" title="重新生成">
+                <span>🔄</span><span>重新生成</span>
+              </button>
+            </div>
           </div>
         </div>
         <div v-if="loading" class="flex justify-start">
@@ -92,6 +106,11 @@
             </div>
           </div>
         </div>
+      </div>
+      <!-- Toast提示 -->
+      <div v-if="toastMsg" class="fixed top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-lg text-xs font-bold animate-fade-in"
+        style="background: rgba(0,240,255,0.15); color: var(--cyber-cyan); border: 1px solid rgba(0,240,255,0.3); backdrop-filter: blur(8px);">
+        {{ toastMsg }}
       </div>
 
       <!-- 输入框 -->
@@ -203,6 +222,15 @@ const loading = ref(false)
 const chatBox = ref<HTMLElement|null>(null)
 const aiOnline = ref(true)
 const coinBalance = ref(100)
+
+// Toast提示
+const toastMsg = ref('')
+let toastTimer: ReturnType<typeof setTimeout> | null = null
+function showToast(msg: string) {
+  toastMsg.value = msg
+  if (toastTimer) clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => { toastMsg.value = '' }, 2000)
+}
 
 // 图片生成
 const imgPrompt = ref('')
@@ -394,6 +422,102 @@ async function sendMsg() {
   }
 }
 
+// ========== 消息操作：复制/转发/重新生成 ==========
+async function copyMsg(content: string) {
+  try {
+    await navigator.clipboard.writeText(content)
+    showToast('✅ 已复制到剪贴板')
+  } catch {
+    const ta = document.createElement('textarea')
+    ta.value = content
+    ta.style.position = 'fixed'
+    ta.style.opacity = '0'
+    document.body.appendChild(ta)
+    ta.select()
+    document.execCommand('copy')
+    document.body.removeChild(ta)
+    showToast('✅ 已复制到剪贴板')
+  }
+}
+
+async function shareMsg(content: string) {
+  const shareText = content.length > 500 ? content.substring(0, 500) + '...' : content
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: `罗圣AI - ${selectedAgent.value?.name || '智能体'}`, text: shareText })
+      return
+    } catch { /* 用户取消 */ }
+  }
+  // 降级：复制到剪贴板
+  await copyMsg(content)
+  showToast('✅ 已复制，可粘贴转发')
+}
+
+async function regenerateMsg(index: number) {
+  if (loading.value || !selectedAgent.value) return
+  const msg = msgs.value[index]
+  if (msg?.role !== 'assistant') return
+
+  // 找到上一条用户消息
+  let userContent = ''
+  for (let j = index - 1; j >= 0; j--) {
+    if (msgs.value[j].role === 'user') {
+      userContent = msgs.value[j].content
+      break
+    }
+  }
+  if (!userContent) return
+
+  const agent = selectedAgent.value
+
+  // 删除当前AI回复
+  msgs.value.splice(index, 1)
+  loading.value = true
+  scrollToBottom()
+
+  try {
+    const backendMessages = msgs.value.slice(-20).map(m => ({
+      role: m.role,
+      content: m.content
+    }))
+    if (agent.systemPrompt) {
+      backendMessages.unshift({ role: 'user', content: '[System Instructions] ' + agent.systemPrompt } as any)
+    }
+
+    const res = await fetch(`${API_BASE}/ai/tools/${agent.id}/chat`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${authToken.value}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ messages: backendMessages }),
+    })
+
+    if (!res.ok) throw new Error(`API ${res.status}`)
+    const result = await res.json()
+    if (result.code !== 0) throw new Error(result.message || '服务错误')
+
+    if (result.data.balance !== undefined) {
+      coinBalance.value = result.data.balance
+    }
+
+    msgs.value.push({
+      role: 'assistant',
+      content: result.data.content || '⚠️ 未返回内容',
+      coinCost: result.data.coinCost || agent.coinCost
+    })
+    showToast('🔄 已重新生成')
+  } catch (e: any) {
+    msgs.value.push({
+      role: 'assistant',
+      content: `⚠️ 重新生成失败：${e.message || '网络异常'}`,
+    })
+  } finally {
+    loading.value = false
+    scrollToBottom()
+  }
+}
+
 // ========== 图片生成 ==========
 async function genImage() {
   const prompt = imgPrompt.value.trim()
@@ -483,6 +607,40 @@ onMounted(async () => {
   0%, 80%, 100% { transform: scale(0); }
   40% { transform: scale(1.0); }
 }
+/* AI回复操作按钮 */
+.msg-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 10px;
+  color: var(--cyber-text-dim);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  opacity: 0.6;
+}
+.msg-action-btn:hover {
+  opacity: 1;
+  background: rgba(0,240,255,0.08);
+  color: var(--cyber-cyan);
+}
+.msg-action-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Toast动画 */
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translate(-50%, -8px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
 /* 隐藏滚动条但保持可滚动 */
 .overflow-x-auto::-webkit-scrollbar {
   height: 3px;
