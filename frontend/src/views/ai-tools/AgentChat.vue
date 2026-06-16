@@ -81,16 +81,28 @@
                 : 'background: rgba(0,240,255,0.05); color: var(--cyber-text); border: 1px solid var(--cyber-border); border-radius: 12px 12px 12px 4px;'"
               v-html="fmt(msg.content)">
             </div>
-            <!-- AI回复操作按钮 -->
-            <div v-if="msg.role === 'assistant' && !msg.content.startsWith('⚠️')" class="flex items-center gap-3 mt-1 ml-1">
+            <!-- AI回复操作按钮栏 -->
+            <div v-if="msg.role === 'assistant' && !msg.content.startsWith('⚠️')" class="flex items-center gap-2 mt-1.5 ml-1 flex-wrap">
               <button @click="copyMsg(msg.content)" class="msg-action-btn" title="复制">
                 <span>📋</span><span>复制</span>
               </button>
-              <button @click="shareMsg(msg.content)" class="msg-action-btn" title="转发">
-                <span>🔗</span><span>转发</span>
+              <button @click="shareMsg(msg.content)" class="msg-action-btn" title="分享">
+                <span>🔗</span><span>分享</span>
+              </button>
+              <button @click="quoteMsg(msg.content)" class="msg-action-btn" title="引用">
+                <span>💬</span><span>引用</span>
               </button>
               <button @click="regenerateMsg(i)" :disabled="loading" class="msg-action-btn" title="重新生成">
                 <span>🔄</span><span>重新生成</span>
+              </button>
+              <button @click="likeMsg(i)" class="msg-action-btn" :class="{ 'active-good': msg.liked === 'good', 'active-bad': msg.liked === 'bad' }" title="点赞">
+                <span>{{ msg.liked === 'good' ? '👍' : '👍' }}</span>
+              </button>
+              <button @click="dislikeMsg(i)" class="msg-action-btn" :class="{ 'active-bad': msg.liked === 'bad' }" title="点踩">
+                <span>👎</span>
+              </button>
+              <button @click="exportMsg(msg.content)" class="msg-action-btn" title="导出">
+                <span>📥</span><span>导出</span>
               </button>
             </div>
           </div>
@@ -216,7 +228,7 @@ const agents: Agent[] = [
 
 // ========== 状态 ==========
 const selectedAgent = ref<Agent | null>(agents[0])
-const msgsByAgent = ref<Record<number, {role:'user'|'assistant'; content:string; coinCost?:number}[]>>({})
+const msgsByAgent = ref<Record<number, {role:'user'|'assistant'; content:string; coinCost?:number; liked?:'good'|'bad'|null}[]>>({})
 const input = ref('')
 const loading = ref(false)
 const chatBox = ref<HTMLElement|null>(null)
@@ -518,6 +530,51 @@ async function regenerateMsg(index: number) {
   }
 }
 
+// ========== 消息操作：引用/点赞/导出 ==========
+function quoteMsg(content: string) {
+  // 引用消息内容到输入框
+  const quoteText = content.length > 100 ? content.substring(0, 100) + '...' : content
+  input.value = `> ${quoteText}\n\n`
+  // 聚焦输入框
+  nextTick(() => {
+    const inputEl = document.querySelector('input[placeholder*="提问"]') as HTMLInputElement
+    if (inputEl) inputEl.focus()
+  })
+  showToast('💬 已引用到输入框')
+}
+
+function likeMsg(index: number) {
+  const msg = msgs.value[index]
+  if (!msg) return
+  msg.liked = msg.liked === 'good' ? null : 'good'
+  showToast(msg.liked === 'good' ? '👍 感谢反馈' : '')
+}
+
+function dislikeMsg(index: number) {
+  const msg = msgs.value[index]
+  if (!msg) return
+  msg.liked = msg.liked === 'bad' ? null : 'bad'
+  showToast(msg.liked === 'bad' ? '👎 感谢反馈，我们会改进' : '')
+}
+
+async function exportMsg(content: string) {
+  try {
+    // 创建文本文件并下载
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `AI回复_${new Date().toISOString().slice(0,10)}.txt`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+    showToast('📥 已导出为文本文件')
+  } catch (e) {
+    showToast('⚠️ 导出失败')
+  }
+}
+
 // ========== 图片生成 ==========
 async function genImage() {
   const prompt = imgPrompt.value.trim()
@@ -630,6 +687,14 @@ onMounted(async () => {
 .msg-action-btn:disabled {
   opacity: 0.3;
   cursor: not-allowed;
+}
+.msg-action-btn.active-good {
+  color: var(--cyber-green);
+  opacity: 1;
+}
+.msg-action-btn.active-bad {
+  color: #ff6b6b;
+  opacity: 1;
 }
 
 /* Toast动画 */
