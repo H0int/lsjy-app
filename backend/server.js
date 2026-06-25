@@ -60,9 +60,13 @@ const CONFIG = {
   KLING_BASE_URL: process.env.KLING_BASE_URL || 'https://kling-api.kuaishou.com/v1',
   KLING_MODEL: process.env.KLING_MODEL || 'kling-v1',
 
+  // 通义万相视频生成（阿里云）
+  TONGYI_VIDEO_API_KEY: process.env.TONGYI_API_KEY || 'sk-c4212c9d7e4644e6825d796f6365668e',
+  TONGYI_VIDEO_BASE_URL: process.env.TONGYI_VIDEO_BASE_URL || 'https://dashscope.aliyuncs.com/api/v1',
+
   // 图片/视频生成配置
   IMAGE_GENERATION_PROVIDER: process.env.IMAGE_GENERATION_PROVIDER || 'jimeng',
-  VIDEO_GENERATION_PROVIDER: process.env.VIDEO_GENERATION_PROVIDER || 'kling',
+  VIDEO_GENERATION_PROVIDER: process.env.VIDEO_GENERATION_PROVIDER || 'tongyi',
 
   // JWT 配置
   JWT_SECRET: process.env.JWT_SECRET || 'lsjy-jwt-secret-2026-rosheng',
@@ -714,13 +718,66 @@ async function callJimengImageAPI(prompt, options = {}) {
 
 // ===== 视频生成 API =====
 async function generateVideoWithAI(prompt, options = {}) {
-  const provider = CONFIG.VIDEO_GENERATION_PROVIDER || 'kling';
+  const provider = CONFIG.VIDEO_GENERATION_PROVIDER || 'tongyi';
 
-  if (provider === 'kling') {
+  if (provider === 'tongyi') {
+    return await callTongyiVideoAPI(prompt, options);
+  } else if (provider === 'kling') {
     return await callKlingVideoAPI(prompt, options);
   } else {
     throw new Error(`不支持的视频生成 Provider: ${provider}`);
   }
+}
+
+
+// 通义万相视频生成（阿里云 - 国内）
+async function callTongyiVideoAPI(prompt, options = {}) {
+  const apiKey = CONFIG.TONGYI_VIDEO_API_KEY;
+  if (!apiKey) throw new Error('通义万相 API Key 未配置，请在 .env 中配置 TONGYI_API_KEY');
+
+  const baseUrl = CONFIG.TONGYI_VIDEO_BASE_URL;
+
+  const submitRes = await httpsRequest(baseUrl + '/services/aigc/video-generation/generation', {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + apiKey,
+      'Content-Type': 'application/json',
+      'X-DashScope-Async': 'enable'
+    }
+  }, {
+    model: 'video-generation-v1',
+    input: { prompt: prompt },
+    parameters: {
+      duration: options.duration || 4,
+      resolution: options.resolution || '720p'
+    }
+  });
+
+  if (submitRes.status !== 200) {
+    throw new Error('通义万相 API 提交失败 (' + submitRes.status + '): ' + JSON.stringify(submitRes.data));
+  }
+
+  const taskId = submitRes.data?.output?.task_id;
+  if (!taskId) throw new Error('通义万相 API 未返回任务 ID');
+
+  for (let i = 0; i < 60; i++) {
+    await new Promise(r => setTimeout(r, 5000));
+    const pollRes = await httpsRequest(baseUrl + '/tasks/' + taskId, {
+      method: 'GET',
+      headers: { 'Authorization': 'Bearer ' + apiKey }
+    });
+
+    const status = pollRes.data?.output?.task_status;
+    if (status === 'SUCCEEDED') {
+      const videoUrl = pollRes.data?.output?.video_url;
+      if (!videoUrl) throw new Error('通义万相 API 未返回视频 URL');
+      return { videoUrl, model: 'video-generation-v1', prompt, durationMs: (i + 1) * 5000 };
+    } else if (status === 'FAILED') {
+      throw new Error('通义万相视频生成失败：' + (pollRes.data?.output?.message || '未知错误'));
+    }
+  }
+
+  throw new Error('通义万相视频生成超时（等待 5 分钟）');
 }
 
 // 可灵视频生成（快手）
@@ -918,6 +975,31 @@ app.get('/api/v1/visitors/list', (req, res) => {
       pageSize: parseInt(pageSize)
     }
   });
+});
+
+
+// ===== 实时在线用户 =====
+const onlineUsers = new Map();
+const ONLINE_TIMEOUT = 60000;
+
+app.post('/api/v1/online/heartbeat', (req, res) => {
+  const sessionId = req.headers['x-session-id'] || req.ip || 'anonymous';
+  const userId = req.headers['x-user-id'] || '';
+  const path = req.body?.path || '/';
+  onlineUsers.set(sessionId, { userId, ip: req.ip || req.connection.remoteAddress, lastHeartbeat: Date.now(), path });
+  const now = Date.now();
+  for (const [key, val] of onlineUsers.entries()) {
+    if (now - val.lastHeartbeat > ONLINE_TIMEOUT) onlineUsers.delete(key);
+  }
+  res.json({ code: 0, message: 'success', data: { onlineCount: onlineUsers.size } });
+});
+
+app.get('/api/v1/online/count', (req, res) => {
+  const now = Date.now();
+  for (const [key, val] of onlineUsers.entries()) {
+    if (now - val.lastHeartbeat > ONLINE_TIMEOUT) onlineUsers.delete(key);
+  }
+  res.json({ code: 0, message: 'success', data: { onlineCount: onlineUsers.size } });
 });
 
 app.get('/api/v1/health', (req, res) => {
@@ -1417,6 +1499,7 @@ app.get('/api/v1/ai/providers', (req, res) => {
     { name: 'tongyi', displayName: '通义千问', status: CONFIG.TONGYI_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
     { name: 'yuanbao', displayName: '腾讯元宝', status: CONFIG.YUANBAO_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
     { name: 'jimeng', displayName: '即梦 (图片)', status: CONFIG.JIMENG_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
+    { name: 'tongyi-video', displayName: '通义万相 (视频)', status: CONFIG.TONGYI_VIDEO_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
     { name: 'kling', displayName: '可灵 (视频)', status: CONFIG.KLING_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
     { name: 'coze', displayName: 'Coze 智能体', status: CONFIG.COZE_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
   ];
@@ -2139,6 +2222,7 @@ app.listen(PORT, '0.0.0.0', () => {
   log(`   通义千问 (Tongyi): ${CONFIG.TONGYI_API_KEY ? '✅ 已配置' : '❌ 未配置'}`);
   log(`   腾讯元宝 (Yuanbao): ${CONFIG.YUANBAO_API_KEY ? '✅ 已配置' : '❌ 未配置'}`);
   log(`   即梦 (Jimeng 图片): ${CONFIG.JIMENG_API_KEY ? '✅ 已配置' : '❌ 未配置'}`);
+  log(`   通义万相 (视频): ${CONFIG.TONGYI_VIDEO_API_KEY ? '✅ 已配置' : '❌ 未配置'}`);
   log(`   可灵 (Kling 视频): ${CONFIG.KLING_API_KEY ? '✅ 已配置' : '❌ 未配置'}`);
   log(`   Coze 智能体: ${CONFIG.COZE_API_KEY && CONFIG.COZE_BOT_ID ? '✅ 已配置' : '❌ 未配置'}`);
   log(`\n📝 图片生成: ${CONFIG.IMAGE_GENERATION_PROVIDER} | 视频生成: ${CONFIG.VIDEO_GENERATION_PROVIDER}`);

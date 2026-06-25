@@ -15,7 +15,7 @@
 
     <!-- 数据卡片 -->
     <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-      <div v-for="card in statCards" :key="card.label" class="cyber-card rounded-xl p-4">
+      <div v-for="card in statCards" :key="card.label" class="cyber-card rounded-xl p-4" @click="card.route && router.push(card.route)" style="cursor:pointer;">
         <div class="text-2xl mb-2">{{ card.icon }}</div>
         <div class="text-2xl font-bold" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">{{ card.value }}</div>
         <div class="text-sm" style="color: var(--cyber-text-dim);">{{ card.label }}</div>
@@ -23,12 +23,12 @@
     </div>
 
     <!-- 访客信息栏 -->
-    <div class="cyber-card rounded-xl p-4 mb-6 flex flex-wrap items-center justify-between gap-3">
+    <div class="cyber-card rounded-xl p-4 mb-6 flex flex-wrap items-center justify-between gap-3" style="cursor:pointer;" @click="router.push('/admin/visitors')">
       <div class="flex items-center gap-3">
         <span class="text-2xl">👥</span>
         <div>
-          <div class="text-sm" style="color: var(--cyber-text-dim);">平台访客总数</div>
-          <div class="text-xl font-bold" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">{{ visitorStats.totalVisitors }} 人</div>
+          <div class="text-sm" style="color: var(--cyber-text-dim);">在线人数</div>
+          <div class="text-xl font-bold" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">{{ onlineCount }} 人</div>
         </div>
       </div>
       <div class="flex items-center gap-3">
@@ -99,12 +99,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { toolApi, visitorApi, adminApi } from '@/api'
 import type { Tool } from '@/types'
 
 const authStore = useAuthStore()
+const router = useRouter()
 
 const hotTools = ref<Tool[]>([])
 const statCards = ref([
@@ -122,6 +124,8 @@ const visitorStats = ref({
 })
 
 const recentUsage = ref<any[]>([])
+const onlineCount = ref(0)
+let heartbeatTimer: any = null
 
 const notices = ref<any[]>([])
 
@@ -165,6 +169,53 @@ onMounted(async () => {
     }
   } catch { /* ignore */ }
 
+
+  // 心跳上报 + 在线人数
+  async function sendHeartbeat() {
+    try {
+      const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1'
+      const token = authStore.token || ''
+      const sessionId = authStore.user?.id || navigator.userAgent.substring(0, 50)
+      await fetch(API_BASE + '/online/heartbeat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token,
+          'X-Session-Id': sessionId,
+          'X-User-Id': String(authStore.user?.id || '')
+        },
+        body: JSON.stringify({ path: window.location.pathname })
+      })
+      const countRes = await fetch(API_BASE + '/online/count', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      })
+      if (countRes.ok) {
+        const countData = await countRes.json()
+        onlineCount.value = countData.data?.onlineCount || 0
+      }
+    } catch { /* ignore */ }
+  }
+  sendHeartbeat()
+  heartbeatTimer = setInterval(sendHeartbeat, 10000)
+
+
+  // 心跳上报 + 在线人数
+  async function sendHeartbeat() {
+    try {
+      const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1'
+      const token = authStore.token || ''
+      const sessionId = authStore.user?.id || navigator.userAgent.substring(0, 50)
+      await fetch(API_BASE + '/online/heartbeat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'X-Session-Id': sessionId, 'X-User-Id': String(authStore.user?.id || '') },
+        body: JSON.stringify({ path: window.location.pathname })
+      })
+      const countRes = await fetch(API_BASE + '/online/count', { headers: { 'Authorization': 'Bearer ' + token } })
+      if (countRes.ok) { const cd = await countRes.json(); onlineCount.value = cd.data?.onlineCount || 0 }
+    } catch { /* ignore */ }
+  }
+  sendHeartbeat()
+
   // 获取用户使用记录（从订单API）
   try {
     const orderRes = await adminApi.getOrders({ page: 1, pageSize: 4 })
@@ -180,6 +231,12 @@ onMounted(async () => {
     }
   } catch { /* ignore */ }
 })
+
+onUnmounted(() => {
+  if (heartbeatTimer) clearInterval(heartbeatTimer)
+})
+
+onUnmounted(() => { if (heartbeatTimer) clearInterval(heartbeatTimer) })
 </script>
 
 <style scoped>
