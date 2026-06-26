@@ -54,13 +54,18 @@ sha: 25f247a7ccff74c7c6253602c718abd9fdbc1836
             <span class="text-xs text-[#4a4a6a] font-mono">{{ row.lastLoginAt ? formatDate(row.lastLoginAt) : '从未' }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="150" fixed="right">
+        <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
             <el-button size="small" link type="primary" @click="openEditDialog(row)">编辑</el-button>
             <el-button size="small" link :type="row.status === 'active' ? 'danger' : 'success'"
               @click="handleStatusChange(row)">
               {{ row.status === 'active' ? '冻结' : '解冻' }}
             </el-button>
+            <el-popconfirm title="确认删除该用户？此操作不可恢复！" @confirm="handleDelete(row)">
+              <template #reference>
+                <el-button size="small" link type="danger">删除</el-button>
+              </template>
+            </el-popconfirm>
           </template>
         </el-table-column>
       </el-table>
@@ -99,6 +104,11 @@ sha: 25f247a7ccff74c7c6253602c718abd9fdbc1836
             @click="handleStatusChange(row)">
             {{ row.status === 'active' ? '冻结' : '解冻' }}
           </el-button>
+          <el-popconfirm title="确认删除该用户？" @confirm="handleDelete(row)">
+            <template #reference>
+              <el-button size="small" type="danger">删除</el-button>
+            </template>
+          </el-popconfirm>
         </div>
       </div>
     </div>
@@ -237,6 +247,16 @@ async function handleStatusChange(user: User) {
     ElMessage.success('操作成功')
     fetchUsers()
   } catch { /* cancelled */ }
+}
+
+async function handleDelete(user: User) {
+  try {
+    await adminApi.deleteUser(user.id)
+    ElMessage.success(`用户 ${user.nickname} 已删除`)
+    fetchUsers()
+  } catch (e: any) {
+    ElMessage.error(e?.response?.data?.message || '删除失败')
+  }
 }
 
 function openAddDialog() {

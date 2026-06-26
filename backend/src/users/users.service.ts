@@ -69,4 +69,13 @@ export class UsersService {
     user.status = status;
     await this.userRepo.save(user);
   }
+
+  async deleteUser(userId: number): Promise<void> {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('用户不存在');
+    // 先删除关联的角色
+    await this.userRoleRepo.delete({ userId });
+    // 再删除用户
+    await this.userRepo.remove(user);
+  }
 }

@@ -148,6 +148,9 @@ export const adminApi = {
     if (data.id) return service.put(`/users/${data.id}`, data).then(r => r.data)
     return service.post('/users', data).then(r => r.data)
   },
+  deleteUser(id: number): Promise<ApiResponse<{ message: string }>> {
+    return service.delete(`/users/${id}`).then(r => r.data)
+  },
 
   /** 工具管理 */
   getAdminTools(params?: { page?: number; pageSize?: number }): Promise<ApiResponse<PageResult<Tool>>> {

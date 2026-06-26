@@ -1,4 +1,4 @@
-import { Controller, Get, Put, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Put, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { UpdateProfileDto } from './dto/user.dto';
@@ -75,5 +75,15 @@ export class UsersController {
   async updateStatus(@Param('id') id: number, @Body('status') status: string) {
     await this.usersService.updateUserStatus(id, status);
     return { data: { message: '状态更新成功' } };
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('super_admin', 'boss')
+  @Delete(':id')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '删除用户(超级管理员/罗总)' })
+  async deleteUser(@Param('id') id: number) {
+    await this.usersService.deleteUser(id);
+    return { data: { message: '用户已删除' } };
   }
 }
