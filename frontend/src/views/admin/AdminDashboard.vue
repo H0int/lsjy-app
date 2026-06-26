@@ -577,7 +577,7 @@ onMounted(async () => {
 .trend-chart { display: flex; gap: 8px; height: 200px; }
 .trend-y-axis { display: flex; flex-direction: column; justify-content: space-between; font-size: 10px; color: #4a4a6a; font-family: 'Courier New', monospace; min-width: 40px; text-align: right; }
 .trend-body { flex: 1; display: flex; flex-direction: column; }
-.trend-svg { width: 100%; flex: 1; }
+.trend-svg { width: 100%; height: 100%!important; flex: 1; }
 .trend-x-axis { display: flex; justify-content: space-between; font-size: 10px; color: #4a4a6a; font-family: 'Courier New', monospace; margin-top: 4px; }
 
 .module-bars { display: flex; flex-direction: column; gap: 10px; }
