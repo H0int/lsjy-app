@@ -53,7 +53,7 @@ JWT_SECRET=lsjy-jwt-secret-2026-rosheng
 JWT_EXPIRES_IN=7d
 
 # CORS
-CORS_ORIGIN=https://h0int.github.io
+CORS_ORIGIN=https://h0int.github.io,https://lsjyapp.cn
 
 # AI配置
 AI_PROVIDER=deepseek

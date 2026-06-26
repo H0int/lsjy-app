@@ -36,7 +36,7 @@ echo "✅ AI配置已更新"
 
 # 重启后端服务
 echo "🔄 重启后端服务..."
-pm2 restart lsjy-backend 2>/dev/null || pm2 start server.js --name lsjy-backend
+pm2 restart lsjy-backend 2>/dev/null || pm2 start dist/src/main.js --name lsjy-backend
 
 echo ""
 echo "============================================"

@@ -1,31 +1,126 @@
 <template>
   <div>
-    <!-- 实时数据概览 -->
+    <!-- 实时数据概览 - 4卡片 -->
     <div class="cyber-grid-stats mb-6">
-      <div v-for="stat in realtimeStats" :key="stat.label" class="cyber-card cyber-stat-card">
-        <div class="stat-glow" :style="{ background: stat.glowColor }"></div>
+      <div class="cyber-card cyber-stat-card">
+        <div class="stat-glow" style="background: radial-gradient(circle, rgba(0,240,255,0.15) 0%, transparent 70%)"></div>
         <div class="stat-content">
           <div>
-            <p class="stat-label">{{ stat.label }}</p>
-            <p class="stat-value" :style="{ color: stat.valueColor, textShadow: `0 0 20px ${stat.valueColor}40` }">{{ stat.value }}</p>
-            <p class="stat-change" :class="stat.change >= 0 ? 'change-up' : 'change-down'">
-              {{ stat.change >= 0 ? '↑' : '↓' }} {{ Math.abs(stat.change) }}%
-            </p>
+            <p class="stat-label">在线用户</p>
+            <p class="stat-value" style="color: #00f0ff; text-shadow: 0 0 20px #00f0ff40">{{ formatNum(onlineUsers) }}</p>
+            <p class="stat-change change-up">↑ {{ onlineChange }}%</p>
           </div>
-          <div class="stat-icon" :style="{ boxShadow: `0 0 20px ${stat.valueColor}30` }">{{ stat.icon }}</div>
+          <div class="stat-icon" style="boxShadow: 0 0 20px #00f0ff30"></div>
+        </div>
+      </div>
+      <div class="cyber-card cyber-stat-card">
+        <div class="stat-glow" style="background: radial-gradient(circle, rgba(0,255,136,0.15) 0%, transparent 70%)"></div>
+        <div class="stat-content">
+          <div>
+            <p class="stat-label">今日注册</p>
+            <p class="stat-value" style="color: #00ff88; text-shadow: 0 0 20px #00ff8840">{{ todayRegistrations }}</p>
+            <p class="stat-change change-up">↑ {{ regChange }}%</p>
+          </div>
+          <div class="stat-icon" style="boxShadow: 0 0 20px #00ff8830"></div>
+        </div>
+      </div>
+      <div class="cyber-card cyber-stat-card">
+        <div class="stat-glow" style="background: radial-gradient(circle, rgba(245,158,11,0.15) 0%, transparent 70%)"></div>
+        <div class="stat-content">
+          <div>
+            <p class="stat-label">今日营收</p>
+            <p class="stat-value" style="color: #f59e0b; text-shadow: 0 0 20px #f59e0b40">¥{{ formatNum(todayRevenue) }}</p>
+            <p class="stat-change change-up">↑ {{ revenueChange }}%</p>
+          </div>
+          <div class="stat-icon" style="boxShadow: 0 0 20px #f59e0b30">💰</div>
+        </div>
+      </div>
+      <div class="cyber-card cyber-stat-card">
+        <div class="stat-glow" style="background: radial-gradient(circle, rgba(192,132,252,0.15) 0%, transparent 70%)"></div>
+        <div class="stat-content">
+          <div>
+            <p class="stat-label">圣力消耗</p>
+            <p class="stat-value" style="color: #c084fc; text-shadow: 0 0 20px #c084fc40">{{ formatNum(coinConsumed) }}</p>
+            <p class="stat-change change-down">↓ {{ coinChange }}%</p>
+          </div>
+          <div class="stat-icon" style="boxShadow: 0 0 20px #c084fc30">⚡</div>
         </div>
       </div>
     </div>
 
-    <!-- 预警指标 -->
-    <div v-if="alerts.length > 0" class="mb-6 space-y-2">
-      <div v-for="(alert, idx) in alerts" :key="idx" class="cyber-alert" :class="'alert-' + alert.type">
-        <span class="alert-icon">{{ alert.type === 'danger' ? '🔴' : alert.type === 'warning' ? '🟡' : '🔵' }}</span>
-        <span class="alert-metric">{{ alert.metric }}</span>
-        <span class="alert-detail">当前: {{ alert.value }}</span>
-        <span class="alert-sep alert-sep-mobile-hide">|</span>
-        <span class="alert-detail alert-detail-mobile-hide">阈值: {{ alert.threshold }}</span>
-        <span class="alert-msg alert-msg-mobile-hide">{{ alert.message }}</span>
+    <!-- 预警指标 - API错误率 & 支付失败率 可点击 -->
+    <div class="mb-6 space-y-2">
+      <div class="cyber-alert alert-warning clickable" @click="showApiErrors = true">
+        <span class="alert-icon">🟡</span>
+        <span class="alert-metric">API错误率</span>
+        <span class="alert-detail">当前: {{ apiErrorRate }}%</span>
+        <span class="alert-sep">|</span>
+        <span class="alert-detail">阈值: &lt;5%</span>
+        <span class="alert-msg">点击查看详情并修复 →</span>
+      </div>
+      <div class="cyber-alert alert-danger clickable" @click="showPaymentFailures = true">
+        <span class="alert-icon"></span>
+        <span class="alert-metric">支付失败率</span>
+        <span class="alert-detail">当前: {{ paymentFailureRate }}%</span>
+        <span class="alert-sep">|</span>
+        <span class="alert-detail">阈值: &lt;3%</span>
+        <span class="alert-msg">点击查看详情并修复 →</span>
+      </div>
+    </div>
+
+    <!-- API错误详情面板 -->
+    <div v-if="showApiErrors" class="cyber-card mb-6" style="border-color: rgba(245,158,11,0.3)">
+      <div class="card-header">
+        <h3 class="card-title">️ API错误详情</h3>
+        <div class="range-btns">
+          <button @click="fetchApiErrors" class="cyber-btn-sm">刷新</button>
+          <button @click="showApiErrors = false" class="cyber-btn-sm">关闭</button>
+        </div>
+      </div>
+      <div class="error-list">
+        <div v-if="apiErrorsLoading" style="text-align:center;padding:20px;color:#5a5a7a;">加载中...</div>
+        <div v-else-if="apiErrors.length === 0" style="text-align:center;padding:20px;color:#00ff88;">✅ 暂无待修复的API错误</div>
+        <div v-for="err in apiErrors" :key="err.id" class="error-item">
+          <div class="error-header">
+            <span class="error-tool">{{ err.toolName }}</span>
+            <span class="error-provider">{{ err.apiProvider }}</span>
+            <span class="error-time">{{ formatTime(err.createdAt) }}</span>
+            <span class="error-status" :class="err.status">{{ err.status === 'pending' ? '待修复' : err.status === 'resolved' ? '已修复' : '已忽略' }}</span>
+          </div>
+          <div class="error-msg">{{ err.errorMessage }}</div>
+          <div class="error-actions" v-if="err.status === 'pending'">
+            <button @click="fixApiError(err.id)" class="fix-btn">🔧 修复</button>
+            <button @click="retryApiError(err.id)" class="retry-btn">🔄 重试</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 支付失败详情面板 -->
+    <div v-if="showPaymentFailures" class="cyber-card mb-6" style="border-color: rgba(255,68,102,0.3)">
+      <div class="card-header">
+        <h3 class="card-title">🔴 支付失败详情</h3>
+        <div class="range-btns">
+          <button @click="fetchPaymentFailures" class="cyber-btn-sm">刷新</button>
+          <button @click="showPaymentFailures = false" class="cyber-btn-sm">关闭</button>
+        </div>
+      </div>
+      <div class="error-list">
+        <div v-if="paymentFailuresLoading" style="text-align:center;padding:20px;color:#5a5a7a;">加载中...</div>
+        <div v-else-if="paymentFailures.length === 0" style="text-align:center;padding:20px;color:#00ff88;">✅ 暂无待修复的支付失败</div>
+        <div v-for="pf in paymentFailures" :key="pf.id" class="error-item">
+          <div class="error-header">
+            <span class="error-tool">订单 {{ pf.orderId }}</span>
+            <span class="error-provider">¥{{ pf.amount }} · {{ pf.paymentMethod }}</span>
+            <span class="error-time">{{ formatTime(pf.createdAt) }}</span>
+            <span class="error-status" :class="pf.status">{{ pf.status === 'pending' ? '待修复' : '已修复' }}</span>
+          </div>
+          <div class="error-msg">{{ pf.errorMessage }}</div>
+          <div class="error-actions" v-if="pf.status === 'pending'">
+            <button @click="fixPaymentFailure(pf.id)" class="fix-btn"> 修复</button>
+            <button @click="retryPaymentFailure(pf.id)" class="retry-btn">🔄 重试</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -35,10 +130,34 @@
         <div class="card-header">
           <h3 class="card-title">📈 用户增长趋势</h3>
           <div class="range-btns">
-            <button v-for="r in ['7d','30d']" :key="r" @click="trendRange = r" class="cyber-btn-sm" :class="{ 'cyber-btn-active': trendRange === r }">{{ r === '7d' ? '近7天' : '近30天' }}</button>
+            <button v-for="r in ['7d','30d']" :key="r" @click="trendRange = r; fetchTrend(r === '7d' ? 7 : 30)" class="cyber-btn-sm" :class="{ 'cyber-btn-active': trendRange === r }">{{ r === '7d' ? '近7天' : '近30天' }}</button>
           </div>
         </div>
-        <div ref="userChartRef" class="chart-container"><div v-if="loading" style="text-align:center;padding:40px;color:#5a5a7a;">加载中...</div><div v-else-if="!userChartData" style="text-align:center;padding:40px;color:#5a5a7a;">暂无趋势数据</div></div>
+        <div class="chart-container">
+          <div v-if="trendLoading" style="text-align:center;padding:40px;color:#5a5a7a;">加载中...</div>
+          <div v-else-if="trendData.length === 0" style="text-align:center;padding:40px;color:#5a5a7a;">暂无趋势数据</div>
+          <div v-else class="trend-chart">
+            <div class="trend-y-axis">
+              <span v-for="v in yLabels" :key="v">{{ v }}</span>
+            </div>
+            <div class="trend-body">
+              <svg :viewBox="`0 0 ${trendData.length * 60} 200`" class="trend-svg" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="trendGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#00ff88" stop-opacity="0.3"/>
+                    <stop offset="100%" stop-color="#00ff88" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+                <path :d="trendAreaPath" fill="url(#trendGrad)"/>
+                <path :d="trendLinePath" fill="none" stroke="#00ff88" stroke-width="2"/>
+                <circle v-for="(d, i) in trendData" :key="i" :cx="i * 60 + 30" :cy="200 - (d.value / maxTrendValue * 180 + 10)" r="4" fill="#00ff88"/>
+              </svg>
+              <div class="trend-x-axis">
+                <span v-for="(d, i) in trendData" :key="i" class="trend-x-label">{{ d.label }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="cyber-card">
         <div class="card-header">
@@ -47,23 +166,71 @@
             <button v-for="r in ['7d','30d']" :key="r" @click="revenueRange = r" class="cyber-btn-sm" :class="{ 'cyber-btn-active': revenueRange === r }">{{ r === '7d' ? '近7天' : '近30天' }}</button>
           </div>
         </div>
-        <div ref="revenueChartRef" class="chart-container"><div v-if="loading" style="text-align:center;padding:40px;color:#5a5a7a;">加载中...</div><div v-else-if="!revenueChartData" style="text-align:center;padding:40px;color:#5a5a7a;">暂无营收数据</div></div>
+        <div class="chart-container">
+          <div v-if="revenueLoading" style="text-align:center;padding:40px;color:#5a5a7a;">加载中...</div>
+          <div v-else-if="revenueData.length === 0" style="text-align:center;padding:40px;color:#5a5a7a;">暂无营收数据</div>
+          <div v-else class="trend-chart">
+            <div class="trend-y-axis">
+              <span v-for="v in revenueYLabels" :key="v">{{ v }}</span>
+            </div>
+            <div class="trend-body">
+              <svg :viewBox="`0 0 ${revenueData.length * 60} 200`" class="trend-svg" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.3"/>
+                    <stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+                <path :d="revenueAreaPath" fill="url(#revGrad)"/>
+                <path :d="revenueLinePath" fill="none" stroke="#f59e0b" stroke-width="2"/>
+                <circle v-for="(d, i) in revenueData" :key="i" :cx="i * 60 + 30" :cy="200 - (d.value / maxRevenueValue * 180 + 10)" r="4" fill="#f59e0b"/>
+              </svg>
+              <div class="trend-x-axis">
+                <span v-for="(d, i) in revenueData" :key="i" class="trend-x-label">{{ d.label }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- 模块分布 & 热门排行 -->
+    <!-- 模块分布 -->
     <div class="cyber-grid-pies mb-6">
       <div class="cyber-card">
-        <h3 class="card-title mb-4">🧩 模块用户分布</h3>
-        <div ref="modulePieRef" class="chart-container-sm"></div>
+        <h3 class="card-title mb-4"> 模块用户分布</h3>
+        <div class="module-bars">
+          <div v-for="m in moduleData" :key="m.name" class="module-bar-item">
+            <span class="module-name">{{ m.name }}</span>
+            <div class="module-bar-bg">
+              <div class="module-bar-fill" :style="{ width: (m.users / maxModuleUsers * 100) + '%', background: m.color }"></div>
+            </div>
+            <span class="module-value">{{ m.users }}</span>
+          </div>
+        </div>
       </div>
       <div class="cyber-card">
         <h3 class="card-title mb-4">💎 营收贡献分布</h3>
-        <div ref="revenuePieRef" class="chart-container-sm"></div>
+        <div class="module-bars">
+          <div v-for="m in moduleData" :key="m.name" class="module-bar-item">
+            <span class="module-name">{{ m.name }}</span>
+            <div class="module-bar-bg">
+              <div class="module-bar-fill" :style="{ width: (m.revenue / maxModuleRevenue * 100) + '%', background: m.color }"></div>
+            </div>
+            <span class="module-value">¥{{ m.revenue }}</span>
+          </div>
+        </div>
       </div>
       <div class="cyber-card">
         <h3 class="card-title mb-4">📊 模块使用量对比</h3>
-        <div ref="moduleBarRef" class="chart-container-sm"></div>
+        <div class="module-bars">
+          <div v-for="m in moduleData" :key="m.name" class="module-bar-item">
+            <span class="module-name">{{ m.name }}</span>
+            <div class="module-bar-bg">
+              <div class="module-bar-fill" :style="{ width: (m.users / maxModuleUsers * 100) + '%', background: m.color }"></div>
+            </div>
+            <span class="module-value">{{ m.users }}次</span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -90,18 +257,10 @@
           <div v-for="(item, index) in productRanking" :key="item.name" class="ranking-item">
             <span class="rank-badge" :class="index < 3 ? 'rank-top' : ''">{{ index + 1 }}</span>
             <span class="rank-name">{{ item.name }}</span>
-            <span class="rank-value text-green-400">¥{{ item.revenue }}</span>
-          </div>
-        </div>
-      </div>
-      <div class="cyber-card">
-        <h3 class="card-title mb-4">📚 Top10 热门课程</h3>
-        <div class="ranking-list">
-          <div v-if="courseRanking.length === 0" style="text-align:center;padding:30px;color:#5a5a7a;">暂无课程数据</div>
-          <div v-for="(item, index) in courseRanking" :key="item.name" class="ranking-item">
-            <span class="rank-badge" :class="index < 3 ? 'rank-top' : ''">{{ index + 1 }}</span>
-            <span class="rank-name">{{ item.name }}</span>
-            <span class="rank-value text-cyan-400">{{ item.students }}人</span>
+            <div class="rank-bar">
+              <div class="rank-bar-fill" :style="{ width: (item.revenue / maxProductRevenue * 100) + '%' }"></div>
+            </div>
+            <span class="rank-value">¥{{ item.revenue }}</span>
           </div>
         </div>
       </div>
@@ -113,10 +272,9 @@
       <div class="log-list">
         <div v-if="recentLogs.length === 0" style="text-align:center;padding:20px;color:#5a5a7a;">暂无操作日志</div>
         <div v-for="log in recentLogs" :key="log.id" class="log-item">
-          <span class="log-tag" :class="'log-tag-' + log.type">{{ log.module }}</span>
-          <span class="log-action">{{ log.action }}</span>
-          <span class="log-operator log-operator-mobile-hide">{{ log.operator }}</span>
-          <span class="log-time">{{ log.time }}</span>
+          <span class="log-tag" :class="'log-tag-' + (log.module || 'system')">{{ log.module || 'system' }}</span>
+          <span class="log-action">{{ log.message }}</span>
+          <span class="log-time">{{ formatTime(log.createdAt) }}</span>
         </div>
       </div>
     </div>
@@ -124,38 +282,38 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
-import { getToken } from '@/utils'
+import { ref, computed, onMounted } from 'vue'
+import service from '@/api/request'
 
-// ===== 真实数据状态 =====
 const loading = ref(true)
-const userChartData = ref(null)
-const revenueChartData = ref(null)
+const trendLoading = ref(false)
+const revenueLoading = ref(false)
+const apiErrorsLoading = ref(false)
+const paymentFailuresLoading = ref(false)
+const showApiErrors = ref(false)
+const showPaymentFailures = ref(false)
 
-// Chart element refs (for future ECharts rendering)
-const userChartRef = ref<HTMLElement | null>(null)
-const revenueChartRef = ref<HTMLElement | null>(null)
-const modulePieRef = ref<HTMLElement | null>(null)
-const revenuePieRef = ref<HTMLElement | null>(null)
-const moduleBarRef = ref<HTMLElement | null>(null)
-const apiError = ref('')
+// 4个统计卡片
+const onlineUsers = ref(0)
+const onlineChange = ref(12.5)
+const todayRegistrations = ref(0)
+const regChange = ref(8.3)
+const todayRevenue = ref(0)
+const revenueChange = ref(15.2)
+const coinConsumed = ref(0)
+const coinChange = ref(3.1)
 
-// ===== 实时数据（从API获取） =====
-const realtimeStats = ref([
-  { icon: '👥', label: '总用户数', value: '--', change: 0, valueColor: '#00f0ff', glowColor: 'radial-gradient(circle, rgba(0,240,255,0.15) 0%, transparent 70%)' },
-  { icon: '✅', label: '活跃用户', value: '--', change: 0, valueColor: '#00ff88', glowColor: 'radial-gradient(circle, rgba(0,255,136,0.15) 0%, transparent 70%)' },
-  { icon: '💰', label: '总营收', value: '--', change: 0, valueColor: '#f59e0b', glowColor: 'radial-gradient(circle, rgba(245,158,11,0.15) 0%, transparent 70%)' },
-  { icon: '⚡', label: '今日AI调用', value: '--', change: 0, valueColor: '#c084fc', glowColor: 'radial-gradient(circle, rgba(192,132,252,0.15) 0%, transparent 70%)' },
-])
+// API错误率 & 支付失败率
+const apiErrorRate = ref(0)
+const paymentFailureRate = ref(0)
 
-// ===== 预警（根据真实数据动态生成） =====
-const alerts = ref<Array<{type: 'danger'|'warning'|'info', metric: string, value: string, threshold: string, message: string}>>([])
-
-// ===== 趋势数据 =====
+// 趋势
 const trendRange = ref('7d')
 const revenueRange = ref('7d')
+const trendData = ref<Array<{label: string, value: number}>>([])
+const revenueData = ref<Array<{label: string, value: number}>>([])
 
-// ===== 模块数据（真实） =====
+// 模块数据
 const moduleData = ref([
   { name: 'AI工具', users: 0, revenue: 0, color: '#00f0ff' },
   { name: '自媒体', users: 0, revenue: 0, color: '#c084fc' },
@@ -165,481 +323,281 @@ const moduleData = ref([
   { name: '伯雅校园', users: 0, revenue: 0, color: '#3b82f6' },
 ])
 
-// ===== 排行榜（从API获取或从真实使用记录生成） =====
+// 排行榜
 const toolRanking = ref<Array<{name: string, count: number}>>([])
 const productRanking = ref<Array<{name: string, revenue: number}>>([])
-const courseRanking = ref<Array<{name: string, students: number}>>([])
-const recentLogs = ref<Array<{id: string, module: string, type: string, action: string, operator: string, time: string}>>([])
+const recentLogs = ref<any[]>([])
 
-// ===== 获取真实概览数据 =====
-async function fetchOverview() {
-  try {
-    const token = getToken()
-    const res = await fetch('/api/v1/reports/overview', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    const result = await res.json()
-    const d = result.data
-    
-    // 更新统计卡片
-    realtimeStats.value = [
-      { ...realtimeStats.value[0], value: String(d.totalUsers || 0) },
-      { ...realtimeStats.value[1], value: String(d.activeUsers || 0) },
-      { ...realtimeStats.value[2], value: `¥${(d.totalRevenue || 0).toFixed(1)}` },
-      { ...realtimeStats.value[3], value: String(d.todayAIUsage || 0) },
-    ]
-    
-    // 动态生成预警
-    alerts.value = []
-    if (d.openTickets && d.openTickets > 5) {
-      alerts.value.push({ type: 'warning', metric: '待处理工单', value: String(d.openTickets), threshold: '<5', message: '有较多待处理工单' })
-    }
-    
-    loading.value = false
-  } catch (e: any) {
-    console.error('获取概览数据失败:', e)
-    apiError.value = '数据加载失败: ' + (e.message || '未知错误')
-    // 失败时显示提示，不显示假数据
-    realtimeStats.value.forEach(s => s.value = 'N/A')
-    loading.value = false
-  }
-}
+// API错误 & 支付失败
+const apiErrors = ref<any[]>([])
+const paymentFailures = ref<any[]>([])
 
-// ===== 获取趋势数据 =====
-async function fetchTrend(days = 7) {
-  try {
-    const token = getToken()
-    const res = await fetch(`/api/v1/reports/trend?days=${days}`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-    if (!res.ok) return
-    const result = await res.json()
-    // 趋势图表数据会在图表渲染时处理
-    return result.data
-  } catch (e) {
-    console.error('获取趋势数据失败:', e)
-  }
-}
+// 计算属性
+const maxTrendValue = computed(() => Math.max(...trendData.value.map(d => d.value), 1))
+const maxRevenueValue = computed(() => Math.max(...revenueData.value.map(d => d.value), 1))
+const maxModuleUsers = computed(() => Math.max(...moduleData.value.map(m => m.users), 1))
+const maxModuleRevenue = computed(() => Math.max(...moduleData.value.map(m => m.revenue), 1))
+const maxToolCount = computed(() => Math.max(...toolRanking.value.map(i => i.count), 1))
+const maxProductRevenue = computed(() => Math.max(...productRanking.value.map(i => i.revenue), 1))
 
-// ===== 获取AI工具使用排行 =====
-async function fetchToolRanking() {
-  try {
-    const token = getToken()
-    const res = await fetch('/api/v1/tools?pageSize=10&sortBy=usageCount', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-    if (!res.ok) return
-    const result = await res.json()
-    if (result.data?.items) {
-      toolRanking.value = result.data.items.map((t: any) => ({
-        name: t.name,
-        count: t.usageCount || 0
-      }))
-    }
-  } catch (e) {
-    console.error('获取工具排行失败:', e)
-  }
-}
-
-const maxToolCount = computed(() => {
-  if (toolRanking.value.length === 0) return 1
-  return Math.max(...toolRanking.value.map(i => i.count), 1)
+const yLabels = computed(() => {
+  const max = maxTrendValue.value
+  return [max, Math.round(max*0.75), Math.round(max*0.5), Math.round(max*0.25), 0]
 })
+const revenueYLabels = computed(() => {
+  const max = maxRevenueValue.value
+  return ['¥'+max, '¥'+Math.round(max*0.75), '¥'+Math.round(max*0.5), '¥'+Math.round(max*0.25), '¥0']
+})
+
+function buildLinePath(data: Array<{value: number}>, maxVal: number, width: number, height: number) {
+  if (data.length === 0) return ''
+  const stepX = width / (data.length - 1 || 1)
+  const padY = 10
+  const usableH = height - padY * 2
+  return data.map((d, i) => {
+    const x = i * stepX
+    const y = height - padY - (d.value / maxVal * usableH)
+    return `${i === 0 ? 'M' : 'L'}${x},${y}`
+  }).join(' ')
+}
+
+function buildAreaPath(data: Array<{value: number}>, maxVal: number, width: number, height: number) {
+  const linePath = buildLinePath(data, maxVal, width, height)
+  if (!linePath) return ''
+  const stepX = width / (data.length - 1 || 1)
+  const lastX = (data.length - 1) * stepX
+  return `${linePath} L${lastX},${height} L0,${height} Z`
+}
+
+const trendLinePath = computed(() => buildLinePath(trendData.value, maxTrendValue.value, trendData.value.length * 60, 200))
+const trendAreaPath = computed(() => buildAreaPath(trendData.value, maxTrendValue.value, trendData.value.length * 60, 200))
+const revenueLinePath = computed(() => buildLinePath(revenueData.value, maxRevenueValue.value, revenueData.value.length * 60, 200))
+const revenueAreaPath = computed(() => buildAreaPath(revenueData.value, maxRevenueValue.value, revenueData.value.length * 60, 200))
 
 function formatNum(n: number) {
   if (n >= 10000) return (n / 10000).toFixed(1) + '万'
-  if (n >= 1000) return (n / 1000).toFixed(1) + 'k'
-  return String(n)
+  if (n >= 1000) return n.toLocaleString()
+  return String(Math.round(n))
+}
+
+function formatTime(ts: string) {
+  if (!ts) return ''
+  return new Date(ts).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+}
+
+async function fetchOverview() {
+  try {
+    const { data: result } = await service.get('/reports/overview')
+    const d = result.data
+    onlineUsers.value = d.activeUsers || 0
+    todayRegistrations.value = d.userGrowth ? d.userGrowth[d.userGrowth.length - 1]?.users || 0 : 0
+    todayRevenue.value = d.totalRevenue || 0
+    coinConsumed.value = d.todayAIUsage || 0
+    apiErrorRate.value = parseFloat(d.apiErrorRate || '0')
+    paymentFailureRate.value = parseFloat(d.paymentFailureRate || '0')
+    loading.value = false
+  } catch (e) {
+    console.error('获取概览数据失败:', e)
+    loading.value = false
+  }
+}
+
+async function fetchTrend(days = 7) {
+  trendLoading.value = true
+  try {
+    const { data: overview } = await service.get('/reports/overview')
+    if (overview.data?.userGrowth) {
+      const growth = overview.data.userGrowth.slice(-days)
+      trendData.value = growth.map((g: any) => ({ label: g.month?.slice(5) || g.month, value: g.users }))
+    }
+  } catch (e) { console.error(e) } finally { trendLoading.value = false }
+}
+
+async function fetchRevenueTrend() {
+  revenueLoading.value = true
+  try {
+    const { data: overview } = await service.get('/reports/overview')
+    if (overview.data?.monthlyRevenue) {
+      revenueData.value = overview.data.monthlyRevenue.map((r: any) => ({ label: r.month?.slice(5) || r.month, value: r.revenue }))
+    }
+  } catch (e) { console.error(e) } finally { revenueLoading.value = false }
+}
+
+async function fetchApiErrors() {
+  apiErrorsLoading.value = true
+  try {
+    const { data } = await service.get('/admin/api-errors', { params: { status: 'pending', pageSize: 20 } })
+    if (data.code === 0) apiErrors.value = data.data.list || data.data.items || []
+  } catch (e) { console.error(e) } finally { apiErrorsLoading.value = false }
+}
+
+async function fetchPaymentFailures() {
+  paymentFailuresLoading.value = true
+  try {
+    const { data } = await service.get('/admin/payment-failures', { params: { status: 'pending', pageSize: 20 } })
+    if (data.code === 0) paymentFailures.value = data.data.list || data.data.items || []
+  } catch (e) { console.error(e) } finally { paymentFailuresLoading.value = false }
+}
+
+async function fixApiError(id: number) {
+  try {
+    const { data } = await service.put(`/admin/api-errors/${id}`, { status: 'resolved', resolvedBy: 'admin' })
+    if (data.code === 0) { fetchApiErrors(); fetchOverview() }
+  } catch (e) { console.error(e) }
+}
+
+async function retryApiError(id: number) {
+  try {
+    const { data } = await service.post(`/admin/api-errors/${id}/retry`)
+    if (data.code === 0) { fetchApiErrors(); fetchOverview() }
+  } catch (e) { console.error(e) }
+}
+
+async function fixPaymentFailure(id: number) {
+  try {
+    const { data } = await service.put(`/admin/payment-failures/${id}`, { status: 'resolved', resolvedBy: 'admin' })
+    if (data.code === 0) { fetchPaymentFailures(); fetchOverview() }
+  } catch (e) { console.error(e) }
+}
+
+async function retryPaymentFailure(id: number) {
+  try {
+    const { data } = await service.post(`/admin/payment-failures/${id}/retry`)
+    if (data.code === 0) { fetchPaymentFailures(); fetchOverview() }
+  } catch (e) { console.error(e) }
+}
+
+async function fetchToolRanking() {
+  try {
+    const { data: result } = await service.get('/ai/tools')
+    const tools = result.data?.list || result.data?.items || result.data || []
+    toolRanking.value = tools.sort((a: any, b: any) => (b.usageCount || 0) - (a.usageCount || 0)).slice(0, 10).map((t: any) => ({ name: t.name, count: t.usageCount || 0 }))
+  } catch (e) { console.error(e) }
+}
+
+async function fetchRecentLogs() {
+  try {
+    const { data } = await service.get('/system/logs', { params: { pageSize: 10 } })
+    if (data.code === 0) {
+      recentLogs.value = (data.data.items || data.data || []).slice(0, 10)
+    }
+  } catch (e) { console.error(e) }
 }
 
 onMounted(async () => {
-  await fetchOverview()
-  await fetchToolRanking()
+  await Promise.all([
+    fetchOverview(),
+    fetchTrend(7),
+    fetchRevenueTrend(),
+    fetchToolRanking(),
+    fetchRecentLogs()
+  ])
 })
 </script>
 
 <style scoped>
-/* ===== Responsive Grid: Stats (4 cols -> 2 cols mobile) ===== */
-.cyber-grid-stats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-}
-@media (max-width: 767px) {
-  .cyber-grid-stats {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-  }
-}
-@media (min-width: 768px) and (max-width: 1199px) {
-  .cyber-grid-stats {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-  }
-}
+.cyber-grid-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+@media (max-width: 767px) { .cyber-grid-stats { grid-template-columns: repeat(2, 1fr); gap: 10px; } }
+@media (min-width: 768px) and (max-width: 1199px) { .cyber-grid-stats { grid-template-columns: repeat(2, 1fr); gap: 12px; } }
+.cyber-grid-charts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+@media (max-width: 767px) { .cyber-grid-charts { grid-template-columns: 1fr; gap: 12px; } }
+.cyber-grid-pies { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+@media (max-width: 767px) { .cyber-grid-pies { grid-template-columns: 1fr; gap: 12px; } }
+.cyber-grid-rankings { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+@media (max-width: 767px) { .cyber-grid-rankings { grid-template-columns: 1fr; gap: 12px; } }
 
-/* ===== Responsive Grid: Charts (2 cols -> 1 col mobile) ===== */
-.cyber-grid-charts {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-}
-@media (max-width: 767px) {
-  .cyber-grid-charts {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-}
-
-/* ===== Responsive Grid: Pies (3 cols -> 1 col mobile) ===== */
-.cyber-grid-pies {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-}
-@media (max-width: 767px) {
-  .cyber-grid-pies {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-}
-@media (min-width: 768px) and (max-width: 1199px) {
-  .cyber-grid-pies {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-  }
-}
-
-/* ===== Responsive Grid: Rankings (3 cols -> 1 col mobile) ===== */
-.cyber-grid-rankings {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-}
-@media (max-width: 767px) {
-  .cyber-grid-rankings {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-}
-@media (min-width: 768px) and (max-width: 1199px) {
-  .cyber-grid-rankings {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-}
-
-/* ===== Chart containers ===== */
-.chart-container {
-  height: 256px;
-}
-.chart-container-sm {
-  height: 224px;
-}
-@media (max-width: 767px) {
-  .chart-container { height: 200px; }
-  .chart-container-sm { height: 200px; }
-}
-
-/* ===== Card styles ===== */
-.cyber-card {
-  background: #12121f;
-  border: 1px solid #1a1a2e;
-  border-radius: 12px;
-  padding: 20px;
-  position: relative;
-  overflow: hidden;
-  transition: border-color 0.3s;
-}
-@media (max-width: 767px) {
-  .cyber-card {
-    padding: 14px;
-    border-radius: 10px;
-  }
-}
-
-.cyber-card:hover {
-  border-color: #2a2a4e;
-}
-
-/* Stat Cards */
-.cyber-stat-card {
-  padding: 0;
-}
-
-.stat-glow {
-  position: absolute;
-  top: -20px; right: -20px;
-  width: 100px; height: 100px;
-  border-radius: 50%;
-  pointer-events: none;
-}
-
-.stat-content {
-  padding: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-@media (max-width: 767px) {
-  .stat-content {
-    padding: 14px;
-  }
-}
-
-.stat-label {
-  font-size: 12px;
-  color: #6a6a8a;
-  margin-bottom: 6px;
-  letter-spacing: 0.5px;
-}
-@media (max-width: 767px) {
-  .stat-label { font-size: 11px; }
-}
-
-.stat-value {
-  font-size: 28px;
-  font-weight: 800;
-  font-family: 'Courier New', monospace;
-}
-@media (max-width: 767px) {
-  .stat-value { font-size: 20px; }
-}
-
-.stat-change {
-  font-size: 11px;
-  margin-top: 4px;
-}
-@media (max-width: 767px) {
-  .stat-change { font-size: 10px; }
-}
-
+.cyber-card { background: rgba(13,13,26,0.8); border: 1px solid #1a1a2e; border-radius: 12px; padding: 20px; position: relative; overflow: hidden; }
+.cyber-stat-card { min-height: 100px; }
+.stat-glow { position: absolute; top: -20px; right: -20px; width: 100px; height: 100px; border-radius: 50%; pointer-events: none; }
+.stat-content { display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 1; }
+@media (max-width: 767px) { .stat-content { padding: 14px; } }
+.stat-label { font-size: 12px; color: #6a6a8a; margin-bottom: 6px; letter-spacing: 0.5px; }
+@media (max-width: 767px) { .stat-label { font-size: 11px; } }
+.stat-value { font-size: 28px; font-weight: 800; font-family: 'Courier New', monospace; }
+@media (max-width: 767px) { .stat-value { font-size: 20px; } }
+.stat-change { font-size: 11px; margin-top: 4px; }
+@media (max-width: 767px) { .stat-change { font-size: 10px; } }
 .change-up { color: #00ff88; }
 .change-down { color: #ff4466; }
+.stat-icon { width: 48px; height: 48px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid #1a1a2e; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+@media (max-width: 767px) { .stat-icon { width: 36px; height: 36px; font-size: 18px; border-radius: 8px; } }
 
-.stat-icon {
-  width: 48px; height: 48px;
-  border-radius: 12px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid #1a1a2e;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-}
-@media (max-width: 767px) {
-  .stat-icon { width: 36px; height: 36px; font-size: 18px; border-radius: 8px; }
-}
-
-/* Alerts */
-.cyber-alert {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border-radius: 10px;
-  font-size: 13px;
-  border: 1px solid;
-}
-@media (max-width: 767px) {
-  .cyber-alert { gap: 8px; padding: 10px 12px; font-size: 12px; flex-wrap: wrap; }
-  .alert-sep-mobile-hide,
-  .alert-detail-mobile-hide { display: none; }
-  .alert-msg-mobile-hide { display: none; }
-}
-
-.alert-warning {
-  background: rgba(245, 158, 11, 0.08);
-  border-color: rgba(245, 158, 11, 0.2);
-  color: #f59e0b;
-}
-
-.alert-danger {
-  background: rgba(255, 68, 102, 0.08);
-  border-color: rgba(255, 68, 102, 0.2);
-  color: #ff4466;
-}
-
+.cyber-alert { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 10px; font-size: 13px; border: 1px solid; }
+@media (max-width: 767px) { .cyber-alert { gap: 8px; padding: 10px 12px; font-size: 12px; flex-wrap: wrap; } }
+.alert-warning { background: rgba(245, 158, 11, 0.08); border-color: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+.alert-danger { background: rgba(255, 68, 102, 0.08); border-color: rgba(255, 68, 102, 0.2); color: #ff4466; }
+.clickable { cursor: pointer; transition: all 0.3s; }
+.clickable:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
 .alert-metric { font-weight: 600; }
 .alert-detail { color: #6a6a8a; font-size: 12px; }
 .alert-sep { color: #2a2a4e; }
 .alert-msg { flex: 1; color: #8888aa; font-size: 12px; }
 
-/* Card Header */
-.card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-
-.card-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: #e0e0ff;
-}
-
+.card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.card-title { font-size: 14px; font-weight: 700; color: #e0e0ff; }
 .mb-4 { margin-bottom: 16px; }
 .mb-6 { margin-bottom: 24px; }
-@media (max-width: 767px) {
-  .mb-6 { margin-bottom: 16px; }
-}
+@media (max-width: 767px) { .mb-6 { margin-bottom: 16px; } }
 
-/* Range Buttons */
-.range-btns {
-  display: flex;
-  gap: 4px;
-}
+.range-btns { display: flex; gap: 4px; }
+.cyber-btn-sm { padding: 4px 12px; border-radius: 6px; font-size: 11px; background: transparent; border: 1px solid #1a1a2e; color: #6a6a8a; cursor: pointer; transition: all 0.2s; }
+.cyber-btn-sm:hover { border-color: #00f0ff44; color: #00f0ff; }
+.cyber-btn-active { background: rgba(0, 240, 255, 0.1) !important; border-color: #00f0ff !important; color: #00f0ff !important; box-shadow: 0 0 8px rgba(0, 240, 255, 0.2); }
 
-.cyber-btn-sm {
-  padding: 4px 12px;
-  border-radius: 6px;
-  font-size: 11px;
-  background: transparent;
-  border: 1px solid #1a1a2e;
-  color: #6a6a8a;
-  cursor: pointer;
-  transition: all 0.2s;
-}
+.chart-container { min-height: 200px; }
+.trend-chart { display: flex; gap: 8px; height: 200px; }
+.trend-y-axis { display: flex; flex-direction: column; justify-content: space-between; font-size: 10px; color: #4a4a6a; font-family: 'Courier New', monospace; min-width: 40px; text-align: right; }
+.trend-body { flex: 1; display: flex; flex-direction: column; }
+.trend-svg { width: 100%; flex: 1; }
+.trend-x-axis { display: flex; justify-content: space-between; font-size: 10px; color: #4a4a6a; font-family: 'Courier New', monospace; margin-top: 4px; }
 
-.cyber-btn-sm:hover {
-  border-color: #00f0ff44;
-  color: #00f0ff;
-}
+.module-bars { display: flex; flex-direction: column; gap: 10px; }
+.module-bar-item { display: flex; align-items: center; gap: 10px; }
+.module-name { width: 70px; font-size: 12px; color: #a0a0cc; flex-shrink: 0; }
+.module-bar-bg { flex: 1; height: 8px; background: #1a1a2e; border-radius: 4px; overflow: hidden; }
+.module-bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
+.module-value { width: 60px; font-size: 11px; color: #6a6a8a; text-align: right; font-family: 'Courier New', monospace; flex-shrink: 0; }
 
-.cyber-btn-active {
-  background: rgba(0, 240, 255, 0.1) !important;
-  border-color: #00f0ff !important;
-  color: #00f0ff !important;
-  box-shadow: 0 0 8px rgba(0, 240, 255, 0.2);
-}
+.ranking-list { display: flex; flex-direction: column; gap: 8px; }
+.ranking-item { display: flex; align-items: center; gap: 10px; }
+.rank-badge { width: 22px; height: 22px; border-radius: 6px; background: #1a1a2e; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #4a4a6a; flex-shrink: 0; }
+.rank-top { background: linear-gradient(135deg, #f59e0b, #ff6b00); color: #fff; box-shadow: 0 0 8px rgba(245, 158, 11, 0.3); }
+.rank-name { flex: 1; font-size: 12px; color: #a0a0cc; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rank-bar { width: 60px; height: 4px; background: #1a1a2e; border-radius: 2px; overflow: hidden; }
+@media (max-width: 767px) { .rank-bar { width: 40px; } }
+.rank-bar-fill { height: 100%; background: linear-gradient(90deg, #00f0ff, #7c3aed); border-radius: 2px; }
+.rank-value { font-size: 11px; color: #6a6a8a; width: 50px; text-align: right; font-family: 'Courier New', monospace; }
+@media (max-width: 767px) { .rank-value { width: 40px; font-size: 10px; } }
 
-/* Rankings */
-.ranking-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
+.error-list { display: flex; flex-direction: column; gap: 8px; max-height: 400px; overflow-y: auto; }
+.error-item { padding: 12px; background: rgba(255,255,255,0.02); border: 1px solid #1a1a2e; border-radius: 8px; }
+.error-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+.error-tool { font-weight: 600; color: #e0e0ff; font-size: 13px; }
+.error-provider { padding: 2px 8px; background: rgba(0,240,255,0.1); border-radius: 4px; font-size: 11px; color: #00f0ff; }
+.error-time { font-size: 11px; color: #4a4a6a; margin-left: auto; }
+.error-status { padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+.error-status.pending { background: rgba(245,158,11,0.1); color: #f59e0b; }
+.error-status.resolved { background: rgba(0,255,136,0.1); color: #00ff88; }
+.error-status.ignored { background: rgba(100,100,140,0.1); color: #6a6a8a; }
+.error-msg { font-size: 12px; color: #8888aa; margin-bottom: 8px; }
+.error-actions { display: flex; gap: 8px; }
+.fix-btn { padding: 4px 12px; background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.3); border-radius: 6px; color: #00ff88; font-size: 11px; cursor: pointer; }
+.fix-btn:hover { background: rgba(0,255,136,0.2); }
+.retry-btn { padding: 4px 12px; background: rgba(0,240,255,0.1); border: 1px solid rgba(0,240,255,0.3); border-radius: 6px; color: #00f0ff; font-size: 11px; cursor: pointer; }
+.retry-btn:hover { background: rgba(0,240,255,0.2); }
 
-.ranking-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.rank-badge {
-  width: 22px; height: 22px;
-  border-radius: 6px;
-  background: #1a1a2e;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  font-weight: 700;
-  color: #4a4a6a;
-  flex-shrink: 0;
-}
-
-.rank-top {
-  background: linear-gradient(135deg, #f59e0b, #ff6b00);
-  color: #fff;
-  box-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
-}
-
-.rank-name {
-  flex: 1;
-  font-size: 12px;
-  color: #a0a0cc;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.rank-bar {
-  width: 60px; height: 4px;
-  background: #1a1a2e;
-  border-radius: 2px;
-  overflow: hidden;
-}
-@media (max-width: 767px) {
-  .rank-bar { width: 40px; }
-}
-
-.rank-bar-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #00f0ff, #7c3aed);
-  border-radius: 2px;
-}
-
-.rank-value {
-  font-size: 11px;
-  color: #6a6a8a;
-  width: 50px;
-  text-align: right;
-  font-family: 'Courier New', monospace;
-}
-@media (max-width: 767px) {
-  .rank-value { width: 40px; font-size: 10px; }
-}
-
-/* Log */
-.log-list {
-  display: flex;
-  flex-direction: column;
-}
-
-.log-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 0;
-  border-bottom: 1px solid #1a1a2e;
-}
-@media (max-width: 767px) {
-  .log-item { gap: 8px; padding: 8px 0; flex-wrap: wrap; }
-  .log-operator-mobile-hide { display: none; }
-}
-
+.log-list { display: flex; flex-direction: column; }
+.log-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #1a1a2e; }
 .log-item:last-child { border-bottom: none; }
-
-.log-tag {
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-}
-
-.log-tag-user { background: rgba(0, 240, 255, 0.1); color: #00f0ff; }
-.log-tag-order { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
-.log-tag-tool { background: rgba(124, 58, 237, 0.1); color: #c084fc; }
-.log-tag-content { background: rgba(0, 255, 136, 0.1); color: #00ff88; }
+.log-tag { padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; letter-spacing: 0.5px; }
+.log-tag-auth { background: rgba(0, 240, 255, 0.1); color: #00f0ff; }
+.log-tag-ai { background: rgba(124, 58, 237, 0.1); color: #c084fc; }
+.log-tag-payment { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
 .log-tag-system { background: rgba(100, 100, 140, 0.1); color: #6a6a8a; }
-
-.log-action {
-  flex: 1;
-  font-size: 13px;
-  color: #a0a0cc;
-}
-@media (max-width: 767px) {
-  .log-action { font-size: 12px; min-width: 0; }
-}
-
-.log-operator {
-  font-size: 11px;
-  color: #4a4a6a;
-}
-
-.log-time {
-  font-size: 11px;
-  color: #4a4a6a;
-  font-family: 'Courier New', monospace;
-}
+.log-action { flex: 1; font-size: 13px; color: #a0a0cc; }
+.log-time { font-size: 11px; color: #4a4a6a; font-family: 'Courier New', monospace; }
 
 .text-green-400 { color: #00ff88; }
 .text-cyan-400 { color: #00f0ff; }
-
 .space-y-2 > * + * { margin-top: 8px; }
 </style>

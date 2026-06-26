@@ -4,8 +4,10 @@ import { ElMessage } from 'element-plus'
 import type { ApiResponse } from '@/types'
 import { getToken, removeToken } from '@/utils'
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1'
+
 const service: AxiosInstance = axios.create({
-  baseURL: '/api/v1',
+  baseURL: API_BASE,
   timeout: 120000,
   headers: { 'Content-Type': 'application/json' }
 })
@@ -72,7 +74,7 @@ service.interceptors.response.use(
       try {
         // 尝试刷新Token
         const { data } = await axios.post(
-          `/api/v1/auth/refresh`,
+          `${API_BASE}/auth/refresh`,
           { refreshToken }
         )
         const newAccessToken = data.data?.accessToken

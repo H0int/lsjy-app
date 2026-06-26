@@ -24,7 +24,7 @@ echo "📦 检查后端服务..."
 # 检查PM2是否运行
 if ! pm2 status > /dev/null 2>&1; then
     echo "启动PM2..."
-    pm2 start server.js --name lsjy-backend
+    pm2 start dist/src/main.js --name lsjy-backend
     sleep 2
 fi
 
@@ -32,7 +32,7 @@ fi
 if ! pm2 status | grep -q "lsjy-backend.*online"; then
     echo "重启后端服务..."
     pm2 delete lsjy-backend 2>/dev/null || true
-    pm2 start server.js --name lsjy-backend
+    pm2 start dist/src/main.js --name lsjy-backend
     sleep 3
 fi
 
@@ -162,7 +162,7 @@ echo "============================================"
 echo ""
 echo "📍 访问地址："
 echo "   前台: https://lsjyapp.cn"
-echo "   后台: https://admin.lsjyapp.cn/#/admin/login"
+echo "   后台: https://h0int.github.io/lsjy-app/#/admin/login"
 echo "   API:  https://api.lsjyapp.cn/api/v1/health"
 echo ""
 echo "🔑 管理员账号："
