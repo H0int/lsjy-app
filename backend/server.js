@@ -202,7 +202,12 @@ function clearLoginFails(account) {
   loginFailMap.delete(account);
 }
 
-function httpsRequest(url, options, body) {
+// 通用 HTTP 请求函数（带重试和指数退避）
+function httpsRequest(url, options, body, _retryCount) {
+  _retryCount = _retryCount || 0;
+  const maxRetries = (options && options.retries != null) ? options.retries : (CONFIG.AI_MAX_RETRIES || 3);
+  const reqTimeout = (options && options.timeout != null) ? options.timeout : (CONFIG.AI_TIMEOUT || 60000);
+
   return new Promise((resolve, reject) => {
     const urlObj = new URL(url);
     const reqOptions = {
@@ -211,7 +216,7 @@ function httpsRequest(url, options, body) {
       path: urlObj.pathname + urlObj.search,
       method: options.method || 'POST',
       headers: options.headers || {},
-      timeout: 30000,
+      timeout: reqTimeout,
     };
     const req = https.request(reqOptions, (res) => {
       let data = '';
@@ -221,8 +226,30 @@ function httpsRequest(url, options, body) {
         catch (e) { resolve({ status: res.statusCode, data, headers: res.headers }); }
       });
     });
-    req.on('error', reject);
-    req.on('timeout', () => { req.destroy(); reject(new Error('Request timeout')); });
+    req.on('error', (err) => {
+      if (_retryCount < maxRetries) {
+        const delay = Math.min(1000 * Math.pow(2, _retryCount), 8000);
+        log(`[httpsRequest] 网络错误 (${err.message})，${delay}ms 后第 ${_retryCount + 1}/${maxRetries} 次重试: ${url}`);
+        setTimeout(() => {
+          httpsRequest(url, options, body, _retryCount + 1).then(resolve, reject);
+        }, delay);
+      } else {
+        log(`[httpsRequest] 请求失败，已耗尽 ${maxRetries} 次重试: ${url} - ${err.message}`);
+        reject(err);
+      }
+    });
+    req.on('timeout', () => {
+      req.destroy();
+      if (_retryCount < maxRetries) {
+        const delay = Math.min(1000 * Math.pow(2, _retryCount), 8000);
+        log(`[httpsRequest] 请求超时 (${reqTimeout}ms)，${delay}ms 后第 ${_retryCount + 1}/${maxRetries} 次重试: ${url}`);
+        setTimeout(() => {
+          httpsRequest(url, options, body, _retryCount + 1).then(resolve, reject);
+        }, delay);
+      } else {
+        reject(new Error(`Request timeout after ${reqTimeout}ms (${maxRetries + 1} attempts total)`));
+      }
+    });
     if (body) req.write(typeof body === 'string' ? body : JSON.stringify(body));
     req.end();
   });
@@ -528,6 +555,47 @@ const paymentFailuresStore = [
   { id: 2, userId: 3, username: 'admin1', orderId: 'ORD-20260624-002', amount: 49.90, paymentMethod: 'alipay', errorCode: 'INSUFFICIENT_BALANCE', errorMessage: '余额不足', status: 'resolved', retryCount: 1, createdAt: '2026-06-24T09:10:00Z', resolvedAt: '2026-06-24T10:00:00Z', resolvedBy: 'admin' },
 ];
 
+// ===== 错误追踪函数 =====
+function trackApiError(toolId, toolName, provider, errorCode, errorMessage, retryCount) {
+  const record = {
+    id: apiErrorsStore.length + 1,
+    toolId: toolId || 0,
+    toolName: toolName || 'unknown',
+    apiProvider: provider || 'unknown',
+    errorCode: errorCode || 'UNKNOWN',
+    errorMessage: errorMessage || '',
+    status: 'pending',
+    retryCount: retryCount || 0,
+    createdAt: new Date().toISOString(),
+    resolvedAt: null,
+    resolvedBy: null,
+  };
+  apiErrorsStore.unshift(record);
+  log(`[错误追踪] API错误: ${provider} ${errorCode} - ${errorMessage}`);
+  return record;
+}
+
+function trackPaymentFailure(userId, username, orderId, amount, paymentMethod, errorCode, errorMessage) {
+  const record = {
+    id: paymentFailuresStore.length + 1,
+    userId: userId || 0,
+    username: username || 'unknown',
+    orderId: orderId || '',
+    amount: amount || 0,
+    paymentMethod: paymentMethod || 'unknown',
+    errorCode: errorCode || 'UNKNOWN',
+    errorMessage: errorMessage || '',
+    status: 'pending',
+    retryCount: 0,
+    createdAt: new Date().toISOString(),
+    resolvedAt: null,
+    resolvedBy: null,
+  };
+  paymentFailuresStore.unshift(record);
+  log(`[错误追踪] 支付失败: userId=${userId} orderId=${orderId} ${errorCode} - ${errorMessage}`);
+  return record;
+}
+
 // ===== AI Provider 实现 =====
 
 async function callCozeAPI(messages, options = {}) {
@@ -535,27 +603,47 @@ async function callCozeAPI(messages, options = {}) {
   const botId = CONFIG.COZE_BOT_ID;
   if (!apiKey || !botId) throw new Error('Coze API Key 或 Bot ID 未配置');
   const headers = { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' };
-  const convRes = await httpsRequest('https://api.coze.cn/v1/conversation/create', { method: 'POST', headers }, {});
-  if (convRes.status !== 200 || !convRes.data?.data?.id) throw new Error(`创建会话失败: ${JSON.stringify(convRes.data)}`);
-  const conversationId = convRes.data.data.id;
-  const chatRes = await httpsRequest(`https://api.coze.cn/v3/chat?conversation_id=${conversationId}`, { method: 'POST', headers }, {
-    bot_id: botId, user_id: 'lsjy_user', stream: false,
-    additional_messages: messages.map(m => ({ role: m.role, content: m.content, content_type: 'text' })),
-  });
-  if (chatRes.status !== 200 || !chatRes.data?.data?.id) throw new Error(`发起对话失败: ${JSON.stringify(chatRes.data)}`);
-  const chatId = chatRes.data.data.id;
-  let status = 'created';
-  for (let i = 0; i < 90; i++) {
-    await new Promise(r => setTimeout(r, 1000));
-    const pollRes = await httpsRequest(`https://api.coze.cn/v3/chat/retrieve?conversation_id=${conversationId}&chat_id=${chatId}`, { method: 'POST', headers }, {});
-    status = pollRes.data?.data?.status || 'unknown';
-    if (status === 'completed' || status === 'failed') break;
+
+  // 带重试的 Coze API 调用
+  const cozeMaxRetries = CONFIG.AI_MAX_RETRIES || 3;
+  let lastErr;
+  for (let attempt = 0; attempt <= cozeMaxRetries; attempt++) {
+    try {
+      if (attempt > 0) {
+        const delay = Math.min(1000 * Math.pow(2, attempt), 8000);
+        log(`[callCozeAPI] 第 ${attempt}/${cozeMaxRetries} 次重试，等待 ${delay}ms`);
+        await new Promise(r => setTimeout(r, delay));
+      }
+      const convRes = await httpsRequest('https://api.coze.cn/v1/conversation/create', { method: 'POST', headers, retries: 0 }, {});
+      if (convRes.status !== 200 || !convRes.data?.data?.id) throw new Error(`创建会话失败: ${JSON.stringify(convRes.data)}`);
+      const conversationId = convRes.data.data.id;
+      const chatRes = await httpsRequest(`https://api.coze.cn/v3/chat?conversation_id=${conversationId}`, { method: 'POST', headers, retries: 0 }, {
+        bot_id: botId, user_id: 'lsjy_user', stream: false,
+        additional_messages: messages.map(m => ({ role: m.role, content: m.content, content_type: 'text' })),
+      });
+      if (chatRes.status !== 200 || !chatRes.data?.data?.id) throw new Error(`发起对话失败: ${JSON.stringify(chatRes.data)}`);
+      const chatId = chatRes.data.data.id;
+      let status = 'created';
+      for (let i = 0; i < 90; i++) {
+        await new Promise(r => setTimeout(r, 1000));
+        const pollRes = await httpsRequest(`https://api.coze.cn/v3/chat/retrieve?conversation_id=${conversationId}&chat_id=${chatId}`, { method: 'POST', headers, retries: 0 }, {});
+        status = pollRes.data?.data?.status || 'unknown';
+        if (status === 'completed' || status === 'failed') break;
+      }
+      if (status !== 'completed') throw new Error(`对话未完成，当前状态: ${status}`);
+      const msgRes = await httpsRequest(`https://api.coze.cn/v3/chat/message/list?conversation_id=${conversationId}&chat_id=${chatId}`, { method: 'GET', headers, retries: 0 });
+      const answerMsg = (msgRes.data?.data || []).find(m => m.type === 'answer' && m.role === 'assistant');
+      if (!answerMsg) throw new Error('未获取到AI回复');
+      if (attempt > 0) log(`[callCozeAPI] 第 ${attempt} 次重试成功`);
+      return { content: answerMsg.content, model: 'coze', usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 } };
+    } catch (err) {
+      lastErr = err;
+      log(`[callCozeAPI] 第 ${attempt} 次尝试失败: ${err.message}`);
+      // 认证错误不重试
+      if (err.message.includes('401') || err.message.includes('403')) throw err;
+    }
   }
-  if (status !== 'completed') throw new Error(`对话未完成，当前状态: ${status}`);
-  const msgRes = await httpsRequest(`https://api.coze.cn/v3/chat/message/list?conversation_id=${conversationId}&chat_id=${chatId}`, { method: 'GET', headers });
-  const answerMsg = (msgRes.data?.data || []).find(m => m.type === 'answer' && m.role === 'assistant');
-  if (!answerMsg) throw new Error('未获取到AI回复');
-  return { content: answerMsg.content, model: 'coze', usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 } };
+  throw lastErr;
 }
 
 // OpenAI 兼容 API 调用（支持 DeepSeek/豆包/通义千问/元宝）
@@ -592,20 +680,45 @@ async function callOpenAICompatibleAPI(messages, options = {}) {
 
   const fullMessages = [{ role: 'system', content: options.systemPrompt || CONFIG.SYSTEM_PROMPT }, ...messages];
   console.log('[DEBUG] System prompt:', fullMessages[0]?.content?.substring(0, 200));
-  const res = await httpsRequest(`${baseUrl}/chat/completions`, {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }
-  }, {
-    model,
-    messages: fullMessages,
-    temperature: options.temperature || 0.7,
-    max_tokens: options.maxTokens || 2000
-  });
 
-  if (res.status !== 200) throw new Error(`${provider} API调用失败 (${res.status}): ${JSON.stringify(res.data)}`);
-  const choice = res.data.choices?.[0];
-  if (!choice?.message?.content) throw new Error(`${provider} API返回空回复`);
-  return { content: choice.message.content, model, usage: res.data.usage || {} };
+  // 带重试的 API 调用（httpsRequest 已处理网络重试，这里处理业务级失败）
+  const apiMaxRetries = CONFIG.AI_MAX_RETRIES || 3;
+  let lastError;
+  for (let attempt = 0; attempt <= apiMaxRetries; attempt++) {
+    try {
+      if (attempt > 0) {
+        const delay = Math.min(1000 * Math.pow(2, attempt - 1), 6000);
+        log(`[callOpenAICompatibleAPI] ${provider} 第 ${attempt}/${apiMaxRetries} 次重试，等待 ${delay}ms`);
+        await new Promise(r => setTimeout(r, delay));
+      }
+      const res = await httpsRequest(`${baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+        retries: 0  // 网络层重试已在 httpsRequest 中处理，这里不再重复
+      }, {
+        model,
+        messages: fullMessages,
+        temperature: options.temperature || 0.7,
+        max_tokens: options.maxTokens || 2000
+      });
+
+      if (res.status !== 200) {
+        throw new Error(`${provider} API调用失败 (${res.status}): ${typeof res.data === 'object' ? JSON.stringify(res.data) : res.data}`);
+      }
+      const choice = res.data.choices?.[0];
+      if (!choice?.message?.content) throw new Error(`${provider} API返回空回复`);
+      if (attempt > 0) log(`[callOpenAICompatibleAPI] ${provider} 第 ${attempt} 次重试成功`);
+      return { content: choice.message.content, model, usage: res.data.usage || {} };
+    } catch (err) {
+      lastError = err;
+      log(`[callOpenAICompatibleAPI] ${provider} 第 ${attempt} 次尝试失败: ${err.message}`);
+      // 401/403 等认证错误不重试，直接抛出
+      if (err.message.includes('(401)') || err.message.includes('(403)')) {
+        throw err;
+      }
+    }
+  }
+  throw lastError;
 }
 
 // AI 对话主函数 - 自动选择可用的 Provider
@@ -626,6 +739,15 @@ async function callAI(messages, options = {}) {
     }
   } catch (err) {
     log(`AI API 调用失败 (${provider}): ${err.message}`);
+
+    // 记录首次失败的 provider 错误
+    const errorCode = err.message.includes('timeout') ? 'TIMEOUT'
+      : err.message.includes('(401)') ? 'AUTH_ERROR'
+      : err.message.includes('(403)') ? 'FORBIDDEN'
+      : err.message.includes('(429)') ? 'RATE_LIMIT'
+      : err.message.includes('(5') ? 'SERVER_ERROR'
+      : 'API_ERROR';
+    trackApiError(options.toolId, options.toolName, provider, errorCode, err.message, CONFIG.AI_MAX_RETRIES || 3);
 
     // 自动降级到其他可用的 Provider（优先使用有API Key的）
     const fallbackProviders = ['deepseek', 'doubao', 'tongyi', 'yuanbao'].filter(p => p !== provider);
@@ -654,9 +776,12 @@ async function callAI(messages, options = {}) {
         }
       } catch (fallbackErr) {
         log(`${fallback} 降级也失败：${fallbackErr.message}`);
+        trackApiError(options.toolId, options.toolName, fallback, 'FALLBACK_ERROR', fallbackErr.message, 0);
       }
     }
 
+    // 所有 provider 都失败
+    log(`[callAI] 所有 Provider 均失败，共尝试 ${fallbackProviders.length + 1} 个`);
     throw err;
   }
 }
@@ -1256,7 +1381,7 @@ app.post('/api/v1/ai/tools/:toolId/chat', authCheck, async (req, res) => {
     });
   }
   try {
-    const result = await callAI(messages, { model, temperature, maxTokens, systemPrompt: effectiveSystemPrompt, provider: effectiveProvider });
+    const result = await callAI(messages, { model, temperature, maxTokens, systemPrompt: effectiveSystemPrompt, provider: effectiveProvider, toolId: Number(toolId), toolName: agent?.name || tool?.name || '未知工具' });
     log(`AI回复成功: model=${result.model}, length=${result.content?.length || 0}`);
     // 扣费
     const deduct = deductCoins(userId, CHAT_COIN_COST);
@@ -1275,6 +1400,14 @@ app.post('/api/v1/ai/tools/:toolId/chat', authCheck, async (req, res) => {
     });
   } catch (err) {
     log(`AI调用失败: ${err.message}`);
+    // 追踪API错误
+    const errorCode = err.message.includes('timeout') ? 'TIMEOUT'
+      : err.message.includes('(401)') ? 'AUTH_ERROR'
+      : err.message.includes('(403)') ? 'FORBIDDEN'
+      : err.message.includes('(429)') ? 'RATE_LIMIT'
+      : err.message.includes('(5') ? 'SERVER_ERROR'
+      : 'API_ERROR';
+    trackApiError(Number(toolId), agent?.name || tool?.name || '未知工具', effectiveProvider, errorCode, err.message, CONFIG.AI_MAX_RETRIES || 3);
     const lastUserMsg = messages.filter(m => m.role === 'user').pop();
     const localReply = getLocalResponse(lastUserMsg?.content || '');
     log('使用本地智能回复兜底');
@@ -1300,10 +1433,11 @@ app.post('/api/v1/ai/tools/:id/call', authCheck, async (req, res) => {
         data: { imageUrl: `https://placeholder.lsjyapp.cn/ai-generated/${Date.now()}.png`, model: 'jimeng', coinCost: tool.coinCost },
       });
     } else {
-      const result = await callAI([{ role: 'user', content: input || JSON.stringify(params || {}) }], { systemPrompt: tool.systemPrompt || CONFIG.SYSTEM_PROMPT });
+      const result = await callAI([{ role: 'user', content: input || JSON.stringify(params || {}) }], { systemPrompt: tool.systemPrompt || CONFIG.SYSTEM_PROMPT, toolId: tool.id, toolName: tool.name });
       res.json({ code: 0, message: 'success', data: { content: result.content, model: result.model, coinCost: tool.coinCost } });
     }
   } catch (err) {
+    trackApiError(tool.id, tool.name, 'unknown', 'CALL_ERROR', err.message, CONFIG.AI_MAX_RETRIES || 3);
     res.json({ code: 0, message: 'success', data: { content: `工具 ${tool.name} 处理完成`, model: 'local', coinCost: 0, fallback: true } });
   }
 });
@@ -1372,42 +1506,59 @@ app.post('/api/v1/ai/tools/:id/generate', authCheck, async (req, res) => {
     });
   }
 
-  try {
-    const result = await generateImageWithAI(prompt, {
-      width: width || 1024,
-      height: height || 1024,
-      style: style || 'auto',
-      count: count || 1
-    });
-
-    log(`图片生成成功: model=${result.model}, urls=${result.urls.length}`);
-
-    // 扣费
-    const deduct = deductCoins(userId, IMAGE_COIN_COST);
-
-    res.json({
-      code: 0,
-      message: 'success',
-      data: {
-        urls: result.urls,
-        model: result.model,
-        prompt: result.prompt,
+  // 带重试的图片生成（最多重试 CONFIG.AI_MAX_RETRIES 次）
+  const imgMaxRetries = CONFIG.AI_MAX_RETRIES || 3;
+  let imgResult = null;
+  let imgLastErr = null;
+  for (let attempt = 0; attempt <= imgMaxRetries; attempt++) {
+    try {
+      if (attempt > 0) {
+        const delay = Math.min(1000 * Math.pow(2, attempt), 8000);
+        log(`[图片生成] 第 ${attempt}/${imgMaxRetries} 次重试，等待 ${delay}ms`);
+        await new Promise(r => setTimeout(r, delay));
+      }
+      imgResult = await generateImageWithAI(prompt, {
         width: width || 1024,
         height: height || 1024,
-        coinCost: IMAGE_COIN_COST,
-        balance: deduct.balance,
-        durationMs: 3000,
-        createdAt: new Date().toISOString(),
-      },
-    });
-  } catch (err) {
-    log(`图片生成失败: ${err.message}`);
-    res.status(500).json({
-      code: 500,
-      message: `图片生成失败：${err.message}。请检查 .env 中的 API Key 配置。`,
-      data: null,
+        style: style || 'auto',
+        count: count || 1
+      });
+      log(`图片生成成功: model=${imgResult.model}, urls=${imgResult.urls.length}`);
+      break;
+    } catch (err) {
+      imgLastErr = err;
+      log(`[图片生成] 第 ${attempt} 次尝试失败: ${err.message}`);
+    }
+  }
+
+  if (!imgResult) {
+    log(`[图片生成] 全部 ${imgMaxRetries + 1} 次尝试均失败: ${imgLastErr?.message}`);
+    // 不扣费，返回友好错误（不返回500，避免前端误判为服务器崩溃）
+    return res.status(200).json({
+      code: 5001,
+      message: `图片生成暂时不可用，请稍后重试。（已尝试 ${imgMaxRetries + 1} 次）`,
+      data: { retryHint: true },
     });
   }
+
+  // 扣费（仅在成功时扣费）
+  const deduct = deductCoins(userId, IMAGE_COIN_COST);
+
+  res.json({
+    code: 0,
+    message: 'success',
+    data: {
+      urls: imgResult.urls,
+      model: imgResult.model,
+      prompt: imgResult.prompt,
+      width: width || 1024,
+      height: height || 1024,
+      coinCost: IMAGE_COIN_COST,
+      balance: deduct.balance,
+      durationMs: 3000,
+      createdAt: new Date().toISOString(),
+    },
+  });
 });
 
 // AI 视频生成（消耗20圣力/次）
@@ -1433,40 +1584,57 @@ app.post('/api/v1/ai/tools/:id/video', authCheck, async (req, res) => {
     });
   }
 
-  try {
-    const result = await generateVideoWithAI(prompt, {
-      duration: duration || 5,
-      resolution: resolution || '720p'
-    });
-
-    log(`视频生成成功: model=${result.model}, url=${result.videoUrl}`);
-
-    // 扣费
-    const deduct = deductCoins(userId, VIDEO_COIN_COST);
-
-    res.json({
-      code: 0,
-      message: 'success',
-      data: {
-        videoUrl: result.videoUrl,
-        model: result.model,
-        prompt: result.prompt,
+  // 带重试的视频生成（最多重试 CONFIG.AI_MAX_RETRIES 次）
+  const vidMaxRetries = CONFIG.AI_MAX_RETRIES || 3;
+  let vidResult = null;
+  let vidLastErr = null;
+  for (let attempt = 0; attempt <= vidMaxRetries; attempt++) {
+    try {
+      if (attempt > 0) {
+        const delay = Math.min(1000 * Math.pow(2, attempt), 8000);
+        log(`[视频生成] 第 ${attempt}/${vidMaxRetries} 次重试，等待 ${delay}ms`);
+        await new Promise(r => setTimeout(r, delay));
+      }
+      vidResult = await generateVideoWithAI(prompt, {
         duration: duration || 5,
-        resolution: resolution || '720p',
-        coinCost: VIDEO_COIN_COST,
-        balance: deduct.balance,
-        durationMs: result.durationMs || 10000,
-        createdAt: new Date().toISOString(),
-      },
-    });
-  } catch (err) {
-    log(`视频生成失败: ${err.message}`);
-    res.status(500).json({
-      code: 500,
-      message: `视频生成失败：${err.message}。请检查 .env 中的 API Key 配置。`,
-      data: null,
+        resolution: resolution || '720p'
+      });
+      log(`视频生成成功: model=${vidResult.model}, url=${vidResult.videoUrl}`);
+      break;
+    } catch (err) {
+      vidLastErr = err;
+      log(`[视频生成] 第 ${attempt} 次尝试失败: ${err.message}`);
+    }
+  }
+
+  if (!vidResult) {
+    log(`[视频生成] 全部 ${vidMaxRetries + 1} 次尝试均失败: ${vidLastErr?.message}`);
+    // 不扣费，返回友好错误（不返回500，避免前端误判为服务器崩溃）
+    return res.status(200).json({
+      code: 5002,
+      message: `视频生成暂时不可用，请稍后重试。（已尝试 ${vidMaxRetries + 1} 次）`,
+      data: { retryHint: true },
     });
   }
+
+  // 扣费（仅在成功时扣费）
+  const deduct = deductCoins(userId, VIDEO_COIN_COST);
+
+  res.json({
+    code: 0,
+    message: 'success',
+    data: {
+      videoUrl: vidResult.videoUrl,
+      model: vidResult.model,
+      prompt: vidResult.prompt,
+      duration: duration || 5,
+      resolution: resolution || '720p',
+      coinCost: VIDEO_COIN_COST,
+      balance: deduct.balance,
+      durationMs: vidResult.durationMs || 10000,
+      createdAt: new Date().toISOString(),
+    },
+  });
 });
 
 
@@ -1713,19 +1881,51 @@ app.post('/api/v1/payment/coin/recharge', authCheck, (req, res) => {
   res.json({ code: 0, message: '订单已创建，请扫码付款', data: { order } });
 });
 
-// 提交付款截图（待管理员审核，不自动到账）
+// 提交付款截图（待管理员审核，不自动到账）— 带完整校验
 app.post('/api/v1/payment/coin/submit-screenshot', authCheck, (req, res) => {
   const { orderId, screenshotUrl } = req.body;
+
+  // 参数校验
+  if (!orderId) {
+    return res.status(400).json({ code: 400, message: '缺少订单ID', data: null });
+  }
+  if (!screenshotUrl || typeof screenshotUrl !== 'string' || screenshotUrl.trim().length < 5) {
+    return res.status(400).json({ code: 400, message: '请上传付款截图', data: null });
+  }
+
   const orders = getRechargeOrders();
   const order = orders.find(o => o.id === orderId);
-  if (!order) return res.status(404).json({ code: 404, message: '订单不存在', data: null });
-  if (order.status === 'approved') return res.status(400).json({ code: 400, message: '订单已通过', data: null });
+  if (!order) {
+    log(`[支付] 提交截图失败：订单不存在 orderId=${orderId}`);
+    return res.status(404).json({ code: 404, message: '订单不存在', data: null });
+  }
+
+  // 用户身份校验：只能提交自己的订单
+  const currentUserId = req.user?.id;
+  if (currentUserId && order.userId !== currentUserId) {
+    log(`[支付] 提交截图失败：用户身份不匹配 userId=${currentUserId}, orderUserId=${order.userId}`);
+    return res.status(403).json({ code: 403, message: '无权操作此订单', data: null });
+  }
+
+  // 状态校验
+  if (order.status === 'approved') {
+    return res.status(400).json({ code: 400, message: '订单已审批通过，无需重复提交', data: null });
+  }
+  if (order.status === 'pending_review') {
+    return res.status(400).json({ code: 400, message: '截图已提交，请等待管理员审核', data: null });
+  }
+  if (order.status === 'rejected') {
+    // 允许重新提交被拒绝的订单
+    log(`[支付] 订单 ${order.orderNo} 被拒绝后重新提交截图`);
+  }
 
   order.screenshotUrl = screenshotUrl;
   order.status = 'pending_review';
   order.submittedAt = new Date().toISOString();
+  order.resubmitCount = (order.resubmitCount || 0) + 1;
   saveRechargeOrders(orders);
 
+  log(`[支付] 截图提交成功 orderNo=${order.orderNo}, userId=${order.userId}, amount=${order.price}元`);
   res.json({ code: 0, message: '付款截图已提交，等待管理员审核。审核通过后圣力将到账。', data: { order } });
 });
 
@@ -1735,40 +1935,99 @@ app.get('/api/v1/payment/coin/orders', (req, res) => {
   res.json({ code: 0, message: 'success', data: { items: orders, total: orders.length } });
 });
 
-// 审批充值订单（管理员 - 需要鉴权）
+// 审批充值订单（管理员 - 需要鉴权）— 带错误恢复和日志
 app.post('/api/v1/payment/coin/approve/:orderId', authCheck, (req, res) => {
   const orderId = parseInt(req.params.orderId);
   const { action, remark } = req.body; // action: approve/reject
-  
+
+  if (!action || !['approve', 'reject'].includes(action)) {
+    return res.status(400).json({ code: 400, message: 'action 必须为 approve 或 reject', data: null });
+  }
+
   const orders = getRechargeOrders();
   const order = orders.find(o => o.id === orderId);
-  if (!order) return res.status(404).json({ code: 404, message: '订单不存在', data: null });
+  if (!order) {
+    log(`[支付] 审批失败：订单不存在 orderId=${orderId}`);
+    return res.status(404).json({ code: 404, message: '订单不存在', data: null });
+  }
   if (order.status === 'approved') return res.status(400).json({ code: 400, message: '订单已审批', data: null });
-  
+
   if (action === 'approve') {
+    // 给用户加算力（更新users.json中的coins字段）— 带错误恢复
+    const usersFile = path.join(__dirname, 'data', 'users.json');
+    let users = [];
+    let usersReadOk = false;
+    try {
+      users = JSON.parse(fs.readFileSync(usersFile, 'utf8'));
+      usersReadOk = true;
+    } catch (e) {
+      log(`[支付] 警告：读取 users.json 失败，使用内存用户数据: ${e.message}`);
+    }
+
+    let coinsAdded = false;
+    let previousCoins = 0;
+    if (usersReadOk) {
+      const user = users.find(u => u.id === order.userId);
+      if (user) {
+        previousCoins = user.coins || 0;
+        user.coins = previousCoins + order.coinAmount;
+        try {
+          fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
+          coinsAdded = true;
+          log(`[支付] 用户 ${order.userId || order.username} 圣力 +${order.coinAmount} (${previousCoins} → ${user.coins})`);
+        } catch (writeErr) {
+          log(`[支付] 严重错误：写入 users.json 失败: ${writeErr.message}`);
+          // 追踪支付失败
+          trackPaymentFailure(order.userId, order.username, order.orderNo, order.price, order.paymentMethod, 'WRITE_ERROR', writeErr.message);
+          // 不更新订单状态，让管理员可以重试
+          return res.status(500).json({ code: 500, message: '圣力到账写入失败，请重试', data: null });
+        }
+      } else {
+        log(`[支付] 警告：用户 userId=${order.userId} 在 users.json 中未找到`);
+        // 仍然标记为 approved，但记录警告
+      }
+    } else {
+      // users.json 读取失败，使用内存 coinsStore 作为备用
+      const memUser = usersStore.find(u => u.id === order.userId);
+      if (memUser) {
+        previousCoins = memUser.coins || 0;
+        memUser.coins = previousCoins + order.coinAmount;
+        coinsAdded = true;
+        log(`[支付] (内存) 用户 ${memUser.username} 圣力 +${order.coinAmount} (${previousCoins} → ${memUser.coins})`);
+      }
+    }
+
     order.status = 'approved';
     order.remark = remark || '审批通过';
     order.reviewedAt = new Date().toISOString();
-    order.reviewedBy = 'admin';
-    
-    // 给用户加算力（更新users.json中的coins字段）
-    const usersFile = path.join(__dirname, 'data', 'users.json');
-    let users = [];
-    try { users = JSON.parse(fs.readFileSync(usersFile, 'utf8')); } catch (e) {}
-    const user = users.find(u => u.id === order.userId);
-    if (user) {
-      user.coins = (user.coins || 0) + order.coinAmount;
-      fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
-    }
-    
+    order.reviewedBy = req.user?.username || 'admin';
+    order.coinsAdded = coinsAdded;
+
+    // 记录交易流水
+    const txRecord = {
+      id: Date.now(),
+      userId: order.userId,
+      type: 'recharge',
+      amount: order.coinAmount,
+      balance: previousCoins + order.coinAmount,
+      description: `充值 ${order.price}元 → ${order.coinAmount}圣力`,
+      orderNo: order.orderNo,
+      createdAt: new Date().toISOString(),
+    };
+    coinTransactionsStore.unshift(txRecord);
+
     saveRechargeOrders(orders);
+    log(`[支付] 订单 ${order.orderNo} 审批通过，金额 ${order.price}元，圣力 ${order.coinAmount}`);
     res.json({ code: 0, message: '已审批，用户获得' + order.coinAmount + '圣力', data: { order } });
   } else {
     order.status = 'rejected';
     order.remark = remark || '审批拒绝';
     order.reviewedAt = new Date().toISOString();
-    order.reviewedBy = 'admin';
+    order.reviewedBy = req.user?.username || 'admin';
     saveRechargeOrders(orders);
+    // 追踪被拒绝的支付订单
+    trackPaymentFailure(order.userId, order.username, order.orderNo, order.price, order.paymentMethod, 'REJECTED', remark || '管理员拒绝');
+    log(`[支付] 订单 ${order.orderNo} 审批拒绝，原因: ${remark || '未说明'}`);
     res.json({ code: 0, message: '已拒绝', data: { order } });
   }
 });
