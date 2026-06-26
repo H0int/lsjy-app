@@ -130,7 +130,7 @@
         <div class="card-header">
           <h3 class="card-title">📈 用户增长趋势</h3>
           <div class="range-btns">
-            <button v-for="r in ['7d','30d']" :key="r" @click="trendRange = r; fetchTrend(r === '7d' ? 7 : 30)" class="cyber-btn-sm" :class="{ 'cyber-btn-active': trendRange === r }">{{ r === '7d' ? '近7天' : '近30天' }}</button>
+            <button v-for="r in ['7d','30d']" :key="r" @click="trendRange = r" class="cyber-btn-sm" :class="{ 'cyber-btn-active': trendRange === r }">{{ r === '7d' ? '近7天' : '近30天' }}</button>
           </div>
         </div>
         <div class="chart-container">
@@ -272,9 +272,9 @@
       <div class="log-list">
         <div v-if="recentLogs.length === 0" style="text-align:center;padding:20px;color:#5a5a7a;">暂无操作日志</div>
         <div v-for="log in recentLogs" :key="log.id" class="log-item">
-          <span class="log-tag" :class="'log-tag-' + (log.module || 'system')">{{ log.module || 'system' }}</span>
-          <span class="log-action">{{ log.message }}</span>
-          <span class="log-time">{{ formatTime(log.createdAt) }}</span>
+          <span class="log-tag" :class="'log-tag-' + getLogTagClass(log.module)">{{ log.module || '系统' }}</span>
+          <span class="log-action">{{ log.action || log.message }}</span>
+          <span class="log-time">{{ log.time || formatTime(log.createdAt) }}</span>
         </div>
       </div>
     </div>
@@ -385,49 +385,92 @@ function formatTime(ts: string) {
   return new Date(ts).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
 }
 
-async function fetchOverview() {
-  try {
-    const { data: result } = await service.get('/reports/overview')
-    const d = result.data
-    onlineUsers.value = d.activeUsers || 0
-    todayRegistrations.value = d.userGrowth ? d.userGrowth[d.userGrowth.length - 1]?.users || 0 : 0
-    todayRevenue.value = d.totalRevenue || 0
-    coinConsumed.value = d.todayAIUsage || 0
-    apiErrorRate.value = parseFloat(d.apiErrorRate || '0')
-    paymentFailureRate.value = parseFloat(d.paymentFailureRate || '0')
-    loading.value = false
-  } catch (e) {
-    console.error('获取概览数据失败:', e)
-    loading.value = false
-  }
-}
-
-async function fetchTrend(days = 7) {
+// 统一从 /admin/dashboard 获取所有数据
+async function fetchDashboard() {
   trendLoading.value = true
-  try {
-    const { data: overview } = await service.get('/reports/overview')
-    if (overview.data?.userGrowth) {
-      const growth = overview.data.userGrowth.slice(-days)
-      trendData.value = growth.map((g: any) => ({ label: g.month?.slice(5) || g.month, value: g.users }))
-    }
-  } catch (e) { console.error(e) } finally { trendLoading.value = false }
-}
-
-async function fetchRevenueTrend() {
   revenueLoading.value = true
   try {
-    const { data: overview } = await service.get('/reports/overview')
-    if (overview.data?.monthlyRevenue) {
-      revenueData.value = overview.data.monthlyRevenue.map((r: any) => ({ label: r.month?.slice(5) || r.month, value: r.revenue }))
+    const { data: result } = await service.get('/admin/dashboard')
+    const d = result.data
+
+    // 统计卡片
+    if (d.realtimeStats && d.realtimeStats.length) {
+      d.realtimeStats.forEach((s: any) => {
+        if (s.label === '在线用户') onlineUsers.value = s.value
+        if (s.label === '今日注册') todayRegistrations.value = s.value
+        if (s.label === '今日营收') todayRevenue.value = s.value
+        if (s.label === '圣力消耗') coinConsumed.value = s.value
+      })
+    } else {
+      onlineUsers.value = d.activeUsers || d.onlineUsers || 0
+      todayRegistrations.value = d.todayRegistrations || 0
+      todayRevenue.value = d.totalRevenue || d.todayRevenue || 0
+      coinConsumed.value = d.todayAIUsage || d.energyConsumption || 0
     }
-  } catch (e) { console.error(e) } finally { revenueLoading.value = false }
+
+    // 百分比变化
+    onlineChange.value = d.onlineUsersChange ?? onlineChange.value
+    regChange.value = d.todayRegistrationsChange ?? regChange.value
+    revenueChange.value = d.todayRevenueChange ?? revenueChange.value
+    coinChange.value = d.energyConsumptionChange ?? coinChange.value
+
+    // 错误率 & 支付失败率
+    apiErrorRate.value = parseFloat(d.apiErrorRate || '0')
+    paymentFailureRate.value = parseFloat(d.paymentFailureRate || '0')
+
+    // 趋势数据
+    if (d.trend) {
+      const dates = d.trend.dates || []
+      const newUsers = d.trend.newUsers || []
+      const revenue = d.trend.revenue || []
+      trendData.value = dates.map((date: string, i: number) => ({ label: date, value: newUsers[i] || 0 }))
+      revenueData.value = dates.map((date: string, i: number) => ({ label: date, value: revenue[i] || 0 }))
+    }
+
+    // 模块数据
+    if (d.modules && d.modules.length) {
+      const colorMap: Record<string, string> = {
+        'AI工具': '#00f0ff', '自媒体': '#c084fc', '电商': '#f59e0b',
+        '教育': '#00ff88', '宠物': '#ff00ff', '伯雅校园': '#3b82f6'
+      }
+      moduleData.value = d.modules.map((m: any) => ({
+        name: m.name,
+        users: m.users || 0,
+        revenue: m.revenue || 0,
+        color: colorMap[m.name] || '#00f0ff'
+      }))
+    }
+
+    // Top10 AI工具
+    if (d.topTools && d.topTools.length) {
+      toolRanking.value = d.topTools.map((t: any) => ({ name: t.name, count: t.count || t.usageCount || 0 }))
+    }
+
+    // Top10 热销商品
+    if (d.topProducts && d.topProducts.length) {
+      productRanking.value = d.topProducts.map((p: any) => ({ name: p.name, revenue: p.revenue || 0 }))
+    }
+
+    // 最近日志
+    if (d.recentLogs && d.recentLogs.length) {
+      recentLogs.value = d.recentLogs.slice(0, 10)
+    }
+
+    loading.value = false
+  } catch (e) {
+    console.error('获取Dashboard数据失败:', e)
+    loading.value = false
+  } finally {
+    trendLoading.value = false
+    revenueLoading.value = false
+  }
 }
 
 async function fetchApiErrors() {
   apiErrorsLoading.value = true
   try {
     const { data } = await service.get('/admin/api-errors', { params: { status: 'pending', pageSize: 20 } })
-    if (data.code === 0) apiErrors.value = data.data.list || data.data.items || []
+    if (data.code === 0) apiErrors.value = (data.data.list || data.data.items || data.data || []).slice(0, 20)
   } catch (e) { console.error(e) } finally { apiErrorsLoading.value = false }
 }
 
@@ -435,63 +478,48 @@ async function fetchPaymentFailures() {
   paymentFailuresLoading.value = true
   try {
     const { data } = await service.get('/admin/payment-failures', { params: { status: 'pending', pageSize: 20 } })
-    if (data.code === 0) paymentFailures.value = data.data.list || data.data.items || []
+    if (data.code === 0) paymentFailures.value = (data.data.list || data.data.items || data.data || []).slice(0, 20)
   } catch (e) { console.error(e) } finally { paymentFailuresLoading.value = false }
 }
 
 async function fixApiError(id: number) {
   try {
     const { data } = await service.put(`/admin/api-errors/${id}`, { status: 'resolved', resolvedBy: 'admin' })
-    if (data.code === 0) { fetchApiErrors(); fetchOverview() }
+    if (data.code === 0) { fetchApiErrors(); fetchDashboard() }
   } catch (e) { console.error(e) }
 }
 
 async function retryApiError(id: number) {
   try {
     const { data } = await service.post(`/admin/api-errors/${id}/retry`)
-    if (data.code === 0) { fetchApiErrors(); fetchOverview() }
+    if (data.code === 0) { fetchApiErrors(); fetchDashboard() }
   } catch (e) { console.error(e) }
 }
 
 async function fixPaymentFailure(id: number) {
   try {
     const { data } = await service.put(`/admin/payment-failures/${id}`, { status: 'resolved', resolvedBy: 'admin' })
-    if (data.code === 0) { fetchPaymentFailures(); fetchOverview() }
+    if (data.code === 0) { fetchPaymentFailures(); fetchDashboard() }
   } catch (e) { console.error(e) }
 }
 
 async function retryPaymentFailure(id: number) {
   try {
     const { data } = await service.post(`/admin/payment-failures/${id}/retry`)
-    if (data.code === 0) { fetchPaymentFailures(); fetchOverview() }
+    if (data.code === 0) { fetchPaymentFailures(); fetchDashboard() }
   } catch (e) { console.error(e) }
 }
 
-async function fetchToolRanking() {
-  try {
-    const { data: result } = await service.get('/ai/tools')
-    const tools = result.data?.list || result.data?.items || result.data || []
-    toolRanking.value = tools.sort((a: any, b: any) => (b.usageCount || 0) - (a.usageCount || 0)).slice(0, 10).map((t: any) => ({ name: t.name, count: t.usageCount || 0 }))
-  } catch (e) { console.error(e) }
-}
-
-async function fetchRecentLogs() {
-  try {
-    const { data } = await service.get('/system/logs', { params: { pageSize: 10 } })
-    if (data.code === 0) {
-      recentLogs.value = (data.data.items || data.data || []).slice(0, 10)
-    }
-  } catch (e) { console.error(e) }
+function getLogTagClass(module: string) {
+  if (!module) return 'system'
+  if (module.includes('充值') || module.includes('支付') || module.includes('订单')) return 'payment'
+  if (module.includes('AI') || module.includes('工具')) return 'ai'
+  if (module.includes('登录') || module.includes('注册') || module.includes('认证')) return 'auth'
+  return 'system'
 }
 
 onMounted(async () => {
-  await Promise.all([
-    fetchOverview(),
-    fetchTrend(7),
-    fetchRevenueTrend(),
-    fetchToolRanking(),
-    fetchRecentLogs()
-  ])
+  await fetchDashboard()
 })
 </script>
 
@@ -544,7 +572,8 @@ onMounted(async () => {
 .cyber-btn-sm:hover { border-color: #00f0ff44; color: #00f0ff; }
 .cyber-btn-active { background: rgba(0, 240, 255, 0.1) !important; border-color: #00f0ff !important; color: #00f0ff !important; box-shadow: 0 0 8px rgba(0, 240, 255, 0.2); }
 
-.chart-container { min-height: 200px; }
+.chart-container { min-height: 200px; height: 200px; }
+.chart-container-sm { min-height: 200px; height: 200px; }
 .trend-chart { display: flex; gap: 8px; height: 200px; }
 .trend-y-axis { display: flex; flex-direction: column; justify-content: space-between; font-size: 10px; color: #4a4a6a; font-family: 'Courier New', monospace; min-width: 40px; text-align: right; }
 .trend-body { flex: 1; display: flex; flex-direction: column; }
