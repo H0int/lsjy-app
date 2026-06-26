@@ -5,6 +5,7 @@ import { User } from '../database/entities/user.entity';
 import { Order } from '../database/entities/order.entity';
 import { CoinTransaction } from '../database/entities/coin-transaction.entity';
 import { AiCallRecord } from '../database/entities/ai-call-record.entity';
+import { AiTool } from '../database/entities/ai-tool.entity';
 import { PaymentTransaction } from '../database/entities/payment-transaction.entity';
 
 @Injectable()
@@ -14,6 +15,7 @@ export class ReportsService {
     @InjectRepository(Order) private readonly orderRepo: Repository<Order>,
     @InjectRepository(CoinTransaction) private readonly coinTxRepo: Repository<CoinTransaction>,
     @InjectRepository(AiCallRecord) private readonly aiCallRepo: Repository<AiCallRecord>,
+    @InjectRepository(AiTool) private readonly aiToolRepo: Repository<AiTool>,
     @InjectRepository(PaymentTransaction) private readonly paymentTxRepo: Repository<PaymentTransaction>,
   ) {}
 
@@ -188,18 +190,20 @@ export class ReportsService {
       .getRawOne();
     const yesterdayCoin = Number(yesterdayCoinRaw?.total) || 0;
 
-    // API错误率
-    const totalAiCalls = await this.aiCallRepo.count();
+    // API错误率 - 仅统计终态记录(completed+failed)，排除pending/processing/cancelled
+    const completedAiCalls = await this.aiCallRepo.count({ where: { status: 'completed' } });
     const failedAiCalls = await this.aiCallRepo.count({ where: { status: 'failed' } });
-    const apiErrorRate = totalAiCalls > 0
-      ? ((failedAiCalls / totalAiCalls) * 100).toFixed(2)
+    const terminalAiCalls = completedAiCalls + failedAiCalls;
+    const apiErrorRate = terminalAiCalls >= 5
+      ? ((failedAiCalls / terminalAiCalls) * 100).toFixed(2)
       : '0.00';
 
-    // 支付失败率
-    const totalPaymentTx = await this.paymentTxRepo.count();
+    // 支付失败率 - 仅统计终态记录(success+failed)，排除pending/refunded
+    const successPaymentTx = await this.paymentTxRepo.count({ where: { status: 'success' } });
     const failedPaymentTx = await this.paymentTxRepo.count({ where: { status: 'failed' } });
-    const paymentFailureRate = totalPaymentTx > 0
-      ? ((failedPaymentTx / totalPaymentTx) * 100).toFixed(2)
+    const terminalPaymentTx = successPaymentTx + failedPaymentTx;
+    const paymentFailureRate = terminalPaymentTx >= 5
+      ? ((failedPaymentTx / terminalPaymentTx) * 100).toFixed(2)
       : '0.00';
 
     // 变化率计算
@@ -266,21 +270,45 @@ export class ReportsService {
   }
 
   async getApiErrors(status?: string, pageSize = 20) {
-    const where: any = {};
-    if (status) where.status = status;
+    // 前端用 status='pending' 表示"待处理"，实际对应 ai_call_records 的 status='failed'
+    const dbStatus = status === 'pending' ? 'failed' : (status || 'failed');
 
-    const [list, total] = await this.aiCallRepo.findAndCount({
-      where: { ...where, status: status || 'failed' },
-      order: { created_at: 'DESC' },
-      take: pageSize,
-    });
+    const qb = this.aiCallRepo.createQueryBuilder('a')
+      .leftJoin('ai_tools', 't', 't.id = a.tool_id')
+      .select([
+        'a.id', 'a.request_id', 'a.status', 'a.error_message',
+        'a.model_used', 'a.created_at',
+        't.name AS toolName', 't.provider AS apiProvider',
+      ])
+      .where('a.status = :dbStatus', { dbStatus })
+      .orderBy('a.created_at', 'DESC')
+      .take(pageSize);
 
-    return { list, total, page: 1, pageSize };
+    const list = await qb.getRawMany();
+    const total = await this.aiCallRepo.count({ where: { status: dbStatus } });
+
+    // 映射: ai_call_records.status='failed' → 前端显示为 'pending'(待修复)
+    const mapped = list.map(r => ({
+      id: r.a_id,
+      requestId: r.a_request_id,
+      toolName: r.toolName || '未知工具',
+      apiProvider: r.apiProvider || '未知',
+      errorMessage: r.a_error_message || '未知错误',
+      modelUsed: r.a_model_used,
+      createdAt: r.a_created_at,
+      status: r.a_status === 'failed' ? 'pending' : 'resolved',
+    }));
+
+    return { list: mapped, total, page: 1, pageSize };
   }
 
   async updateApiError(id: number, body: any) {
-    await this.aiCallRepo.update(id, body);
-    return { id, ...body };
+    // 前端发送 status='resolved'，映射为 ai_call_records 的 'completed'
+    const updateData = { ...body };
+    if (updateData.status === 'resolved') updateData.status = 'completed';
+    if (updateData.status === 'ignored') updateData.status = 'cancelled';
+    await this.aiCallRepo.update(id, updateData);
+    return { id, ...updateData };
   }
 
   async retryApiError(id: number) {
@@ -291,21 +319,36 @@ export class ReportsService {
   }
 
   async getPaymentFailures(status?: string, pageSize = 20) {
-    const where: any = {};
-    if (status) where.status = status;
+    // 前端用 status='pending' 表示"待处理"，实际对应 payment_transactions 的 status='failed'
+    const dbStatus = status === 'pending' ? 'failed' : (status || 'failed');
 
     const [list, total] = await this.paymentTxRepo.findAndCount({
-      where: { ...where, status: status || 'failed' },
+      where: { status: dbStatus },
       order: { created_at: 'DESC' },
       take: pageSize,
     });
 
-    return { list, total, page: 1, pageSize };
+    // 映射字段: 前端期望 orderId/amount/paymentMethod/errorMessage/status
+    const mapped = list.map(r => ({
+      id: r.id,
+      transactionNo: r.transactionNo,
+      orderId: r.orderId,
+      amount: r.amount,
+      paymentMethod: r.payChannel,
+      errorMessage: r.remark || '支付失败',
+      createdAt: r.createdAt,
+      status: r.status === 'failed' ? 'pending' : 'resolved',
+    }));
+
+    return { list: mapped, total, page: 1, pageSize };
   }
 
   async updatePaymentFailure(id: number, body: any) {
-    await this.paymentTxRepo.update(id, body);
-    return { id, ...body };
+    // 前端发送 status='resolved'，映射为 payment_transactions 的 'success'
+    const updateData = { ...body };
+    if (updateData.status === 'resolved') updateData.status = 'success';
+    await this.paymentTxRepo.update(id, updateData);
+    return { id, ...updateData };
   }
 
   async retryPaymentFailure(id: number) {

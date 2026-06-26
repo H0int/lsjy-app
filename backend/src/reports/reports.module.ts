@@ -6,10 +6,11 @@ import { User } from '../database/entities/user.entity';
 import { Order } from '../database/entities/order.entity';
 import { CoinTransaction } from '../database/entities/coin-transaction.entity';
 import { AiCallRecord } from '../database/entities/ai-call-record.entity';
+import { AiTool } from '../database/entities/ai-tool.entity';
 import { PaymentTransaction } from '../database/entities/payment-transaction.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, Order, CoinTransaction, AiCallRecord, PaymentTransaction])],
+  imports: [TypeOrmModule.forFeature([User, Order, CoinTransaction, AiCallRecord, AiTool, PaymentTransaction])],
   controllers: [ReportsController],
   providers: [ReportsService],
   exports: [ReportsService],

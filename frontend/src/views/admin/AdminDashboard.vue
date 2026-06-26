@@ -50,21 +50,21 @@
 
     <!-- 预警指标 - API错误率 & 支付失败率 可点击 -->
     <div class="mb-6 space-y-2">
-      <div class="cyber-alert alert-warning clickable" @click="showApiErrors = true">
-        <span class="alert-icon">🟡</span>
+      <div :class="['cyber-alert', apiErrorRate < 5 ? 'alert-success' : apiErrorRate < 20 ? 'alert-warning' : 'alert-danger', 'clickable']" @click="showApiErrors = true">
+        <span class="alert-icon">{{ apiErrorRate < 5 ? '✅' : apiErrorRate < 20 ? '🟡' : '🔴' }}</span>
         <span class="alert-metric">API错误率</span>
         <span class="alert-detail">当前: {{ apiErrorRate }}%</span>
         <span class="alert-sep">|</span>
         <span class="alert-detail">阈值: &lt;5%</span>
-        <span class="alert-msg">点击查看详情并修复 →</span>
+        <span class="alert-msg">{{ apiErrorRate < 5 ? '运行正常' : '点击查看详情并修复 →' }}</span>
       </div>
-      <div class="cyber-alert alert-danger clickable" @click="showPaymentFailures = true">
-        <span class="alert-icon"></span>
+      <div :class="['cyber-alert', paymentFailureRate < 3 ? 'alert-success' : paymentFailureRate < 15 ? 'alert-warning' : 'alert-danger', 'clickable']" @click="showPaymentFailures = true">
+        <span class="alert-icon">{{ paymentFailureRate < 3 ? '✅' : paymentFailureRate < 15 ? '🟡' : '🔴' }}</span>
         <span class="alert-metric">支付失败率</span>
         <span class="alert-detail">当前: {{ paymentFailureRate }}%</span>
         <span class="alert-sep">|</span>
         <span class="alert-detail">阈值: &lt;3%</span>
-        <span class="alert-msg">点击查看详情并修复 →</span>
+        <span class="alert-msg">{{ paymentFailureRate < 3 ? '运行正常' : '点击查看详情并修复 →' }}</span>
       </div>
     </div>
 
@@ -554,6 +554,7 @@ onMounted(async () => {
 @media (max-width: 767px) { .cyber-alert { gap: 8px; padding: 10px 12px; font-size: 12px; flex-wrap: wrap; } }
 .alert-warning { background: rgba(245, 158, 11, 0.08); border-color: rgba(245, 158, 11, 0.2); color: #f59e0b; }
 .alert-danger { background: rgba(255, 68, 102, 0.08); border-color: rgba(255, 68, 102, 0.2); color: #ff4466; }
+.alert-success { background: rgba(0, 255, 136, 0.08); border-color: rgba(0, 255, 136, 0.2); color: #00ff88; }
 .clickable { cursor: pointer; transition: all 0.3s; }
 .clickable:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
 .alert-metric { font-weight: 600; }
