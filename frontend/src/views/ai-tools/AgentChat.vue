@@ -127,18 +127,32 @@
 
       <!-- 输入框 -->
       <div class="cyber-card p-2 flex-shrink-0">
+        <!-- 图片预览 -->
+        <div v-if="pendingImage" class="mb-1.5 flex items-center gap-2 p-1.5 rounded-lg" style="background: rgba(0,240,255,0.05); border: 1px solid var(--cyber-border);">
+          <img :src="pendingImage.url" class="w-10 h-10 rounded object-cover" style="border: 1px solid var(--cyber-border);" />
+          <span class="text-[10px] flex-1 truncate" style="color: var(--cyber-text-dim);">{{ pendingImage.name }}</span>
+          <button @click="pendingImage = null" class="text-[10px] px-1.5 py-0.5 rounded" style="color: #ff4444; background: rgba(255,68,68,0.1);">✕</button>
+        </div>
         <div class="flex gap-1.5">
+          <!-- 图片上传按钮 -->
+          <button @click="imgUploadRef?.click()" :disabled="loading"
+            class="px-2.5 py-2 rounded-lg text-sm flex-shrink-0"
+            style="background: rgba(0,240,255,0.05); border: 1px solid var(--cyber-border); color: var(--cyber-text-dim);"
+            title="上传图片">
+            ️
+          </button>
+          <input ref="imgUploadRef" type="file" accept="image/*" class="hidden" @change="handleImageUpload" />
           <input v-model="input" @keyup.enter="sendMsg"
-            :placeholder="loading ? '思考中...' : '向' + selectedAgent?.name + '提问（⚡' + selectedAgent?.coinCost + '/次）'"
+            :placeholder="loading ? '思考中...' : '向' + selectedAgent?.name + '提问（' + selectedAgent?.coinCost + '/次）'"
             :disabled="loading"
             class="flex-1 px-2.5 py-2 rounded-lg text-xs outline-none"
             style="background: rgba(0,240,255,0.03); border: 1px solid var(--cyber-border); color: var(--cyber-text);"
             @focus="($event.target as HTMLInputElement).style.borderColor='var(--cyber-cyan)'"
             @blur="($event.target as HTMLInputElement).style.borderColor='var(--cyber-border)'" />
-          <button @click="sendMsg" :disabled="!input.trim() || loading"
+          <button @click="sendMsg" :disabled="(!input.trim() && !pendingImage) || loading"
             class="px-4 py-2 rounded-lg text-xs font-bold"
             style="background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple)); color: #000;"
-            :style="(!input.trim() || loading) ? 'opacity: 0.5;' : 'box-shadow: 0 0 12px rgba(0,240,255,0.4);'">
+            :style="((!input.trim() && !pendingImage) || loading) ? 'opacity: 0.5;' : 'box-shadow: 0 0 12px rgba(0,240,255,0.4);'">
             发送
           </button>
         </div>
@@ -234,6 +248,10 @@ const loading = ref(false)
 const chatBox = ref<HTMLElement|null>(null)
 const aiOnline = ref(true)
 const coinBalance = ref(100)
+
+// 图片上传
+const pendingImage = ref<{url: string; name: string} | null>(null)
+const imgUploadRef = ref<HTMLInputElement | null>(null)
 
 // Toast提示
 const toastMsg = ref('')
@@ -347,9 +365,17 @@ function selectAgent(agent: Agent) {
 function fmt(c: string): string {
   if (!c) return ''
   return c
+    // Markdown图片 ![alt](url) → <img>
+    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width:100%;border-radius:8px;margin:4px 0;cursor:pointer;" onclick="window.open(this.src,\'_blank\')" />')
+    // Markdown链接 [text](url) → <a>
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color:var(--cyber-cyan);text-decoration:underline;">$1</a>')
+    // 加粗
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    // 代码块
     .replace(/```([\s\S]*?)```/g, '<pre style="background:rgba(0,0,0,0.3);padding:6px;border-radius:4px;overflow-x:auto;margin:3px 0;font-size:11px;">$1</pre>')
+    // 行内代码
     .replace(/`([^`]+)`/g, '<code style="background:rgba(0,240,255,0.1);padding:1px 3px;border-radius:2px;">$1</code>')
+    // 换行
     .replace(/\n/g, '<br>')
 }
 
@@ -365,22 +391,55 @@ function clearChat() {
 
 function sendQuick(t: string) { input.value = t; sendMsg() }
 
+// 图片上传处理
+async function handleImageUpload(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  // 限制5MB
+  if (file.size > 5 * 1024 * 1024) {
+    showToast('图片不能超过5MB')
+    return
+  }
+  // 先显示预览（base64）
+  const reader = new FileReader()
+  reader.onload = () => {
+    pendingImage.value = { url: reader.result as string, name: file.name }
+  }
+  reader.readAsDataURL(file)
+  // 重置input以便可以重复选择同一文件
+  ;(e.target as HTMLInputElement).value = ''
+}
+
 // ========== 核心：AI对话 ==========
 async function sendMsg() {
   const text = input.value.trim()
-  if (!text || loading.value || !selectedAgent.value) return
+  const img = pendingImage.value
+  if ((!text && !img) || loading.value || !selectedAgent.value) return
 
   const agent = selectedAgent.value
-  msgs.value.push({ role: 'user', content: text })
+  // 组合消息内容：图片（markdown格式）+ 文字
+  let userContent = ''
+  if (img) {
+    userContent += `![图片](${img.url})\n`
+  }
+  if (text) {
+    userContent += text
+  }
+  msgs.value.push({ role: 'user', content: userContent })
   input.value = ''
+  pendingImage.value = null
   loading.value = true
   scrollToBottom()
 
   try {
-    const backendMessages = msgs.value.slice(-20).map(m => ({
-      role: m.role,
-      content: m.content
-    }))
+    const backendMessages = msgs.value.slice(-20).map(m => {
+      // 发送给后端时，剥离base64图片数据（太大，AI API不支持），替换为文字说明
+      let content = m.content
+      if (m.role === 'user' && content.includes('data:image')) {
+        content = content.replace(/!\[图片\]\(data:image\/[^;]+;base64,[^)]+\)/g, '[用户发送了一张图片]')
+      }
+      return { role: m.role, content }
+    })
 
     // 如果有系统提示，加到消息开头
     if (agent.systemPrompt) {
@@ -488,10 +547,13 @@ async function regenerateMsg(index: number) {
   scrollToBottom()
 
   try {
-    const backendMessages = msgs.value.slice(-20).map(m => ({
-      role: m.role,
-      content: m.content
-    }))
+    const backendMessages = msgs.value.slice(-20).map(m => {
+      let content = m.content
+      if (m.role === 'user' && content.includes('data:image')) {
+        content = content.replace(/!\[图片\]\(data:image\/[^;]+;base64,[^)]+\)/g, '[用户发送了一张图片]')
+      }
+      return { role: m.role, content }
+    })
     if (agent.systemPrompt) {
       backendMessages.unshift({ role: 'user', content: '[System Instructions] ' + agent.systemPrompt } as any)
     }
