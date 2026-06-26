@@ -14,19 +14,13 @@ async function bootstrap() {
   // Security
   app.use(helmet());
 
-  // CORS
-  app.enableCors({
-    origin: [
-      'http://localhost:5173',
-      'http://localhost:3000',
-      'https://lsjyapp.cn',
-      'https://www.lsjyapp.cn',
-      'https://h0int.github.io',
-      // 'http://h0int.github.io', // Removed: insecure http protocol
-    ],
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  });
+  // CORS - 由Nginx统一处理，避免NestJS+Nginx双重CORS头导致浏览器拒绝
+  // 本地开发时取消注释以下配置
+  // app.enableCors({
+  //   origin: ['http://localhost:5173', 'http://localhost:3000'],
+  //   credentials: true,
+  //   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  // });
 
   // Global prefix
   const apiPrefix = configService.get<string>('API_PREFIX', 'api/v1');
