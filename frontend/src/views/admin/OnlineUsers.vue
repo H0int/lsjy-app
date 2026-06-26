@@ -73,29 +73,54 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import service from '@/api/request'
+import { ElMessage } from 'element-plus'
 
 const filter = ref('all')
+const loading = ref(false)
 
 const stats = ref({
-  onlineTotal: 156,
-  loggedIn: 89,
-  guests: 67,
-  peakToday: 342
+  onlineTotal: 0,
+  loggedIn: 0,
+  guests: 0,
+  peakToday: 0
 })
 
-const onlineUsers = ref([
-  { userId: 'U10086', username: '张三', status: '活跃', currentPage: '/agent', ip: '120.245.**.**', location: '北京', device: 'PC', onlineTime: '32m' },
-  { userId: 'U10042', username: '李四', status: '活跃', currentPage: '/tools', ip: '112.96.**.**', location: '广州', device: 'iPhone', onlineTime: '15m' },
-  { userId: '-', username: '游客', status: '浏览', currentPage: '/dashboard', ip: '183.6.**.**', location: '上海', device: 'PC', onlineTime: '3m' },
-  { userId: 'U10234', username: '王五', status: '活跃', currentPage: '/profile', ip: '222.73.**.**', location: '杭州', device: 'Android', onlineTime: '48m' },
-  { userId: '-', username: '游客', status: '浏览', currentPage: '/login', ip: '61.135.**.**', location: '成都', device: 'iPad', onlineTime: '1m' },
-  { userId: 'U10567', username: '赵六', status: '空闲', currentPage: '/dashboard', ip: '36.110.**.**', location: '武汉', device: 'PC', onlineTime: '1h 12m' },
-])
+const allUsers = ref<any[]>([])
+
+const onlineUsers = computed(() => {
+  if (filter.value === 'logged') return allUsers.value.filter((u: any) => u.userId !== '-')
+  if (filter.value === 'guest') return allUsers.value.filter((u: any) => u.userId === '-')
+  return allUsers.value
+})
+
+async function fetchData() {
+  loading.value = true
+  try {
+    const res = await service.get('/admin/online-users')
+    if (res.data.code === 0) {
+      const data = res.data.data
+      allUsers.value = data.users || []
+      stats.value = {
+        onlineTotal: data.stats?.active ?? 0,
+        loggedIn: data.stats?.loggedIn ?? 0,
+        guests: data.stats?.guests ?? 0,
+        peakToday: data.stats?.peakToday ?? 0
+      }
+    }
+  } catch (e) {
+    ElMessage.error('加载在线用户失败')
+  } finally {
+    loading.value = false
+  }
+}
 
 function viewUser(row: any) {
   console.log('查看用户', row)
 }
+
+onMounted(fetchData)
 </script>
 
 <style scoped>

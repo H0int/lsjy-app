@@ -6,33 +6,29 @@
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
       <div class="rounded-xl p-4" style="background: rgba(13,13,26,0.8); border: 1px solid #1a1a2e;">
         <div class="text-xs mb-1" style="color: #5a5a7a;">今日收入</div>
-        <div class="text-2xl font-bold" style="color: #00ff88;">¥2,580</div>
+        <div class="text-2xl font-bold" style="color: #00ff88;">¥{{ stats.todayIncome }}</div>
       </div>
       <div class="rounded-xl p-4" style="background: rgba(13,13,26,0.8); border: 1px solid #1a1a2e;">
         <div class="text-xs mb-1" style="color: #5a5a7a;">本月收入</div>
-        <div class="text-2xl font-bold" style="color: #00f0ff;">¥38,420</div>
+        <div class="text-2xl font-bold" style="color: #00f0ff;">¥{{ stats.monthIncome }}</div>
       </div>
       <div class="rounded-xl p-4" style="background: rgba(13,13,26,0.8); border: 1px solid #1a1a2e;">
         <div class="text-xs mb-1" style="color: #5a5a7a;">总交易笔数</div>
-        <div class="text-2xl font-bold" style="color: #7c3aed;">8,956</div>
+        <div class="text-2xl font-bold" style="color: #7c3aed;">{{ stats.totalOrders }}</div>
       </div>
       <div class="rounded-xl p-4" style="background: rgba(13,13,26,0.8); border: 1px solid #1a1a2e;">
         <div class="text-xs mb-1" style="color: #5a5a7a;">待处理退款</div>
-        <div class="text-2xl font-bold" style="color: #ffb800;">3</div>
+        <div class="text-2xl font-bold" style="color: #ffb800;">{{ stats.pendingRefunds }}</div>
       </div>
     </div>
 
     <!-- 筛选栏 -->
     <div class="flex flex-wrap gap-3 mb-4">
-      <input type="text" placeholder="搜索订单号/用户..." class="px-3 py-2 rounded-lg text-sm"
+      <input v-model="searchQuery" @keyup.enter="fetchRecords" type="text" placeholder="搜索订单号/用户..." class="px-3 py-2 rounded-lg text-sm"
         style="background: #12121f; border: 1px solid #1a1a2e; color: #e0e0ff; width: 200px;" />
-      <select class="px-3 py-2 rounded-lg text-sm"
+      <select v-model="statusFilter" @change="fetchRecords" class="px-3 py-2 rounded-lg text-sm"
         style="background: #12121f; border: 1px solid #1a1a2e; color: #e0e0ff;">
-        <option>全部类型</option><option>充值</option><option>消费</option><option>退款</option>
-      </select>
-      <select class="px-3 py-2 rounded-lg text-sm"
-        style="background: #12121f; border: 1px solid #1a1a2e; color: #e0e0ff;">
-        <option>全部渠道</option><option>微信支付</option><option>支付宝</option><option>QQ支付</option>
+        <option value="">全部状态</option><option value="success">成功</option><option value="pending">处理中</option><option value="failed">失败</option>
       </select>
     </div>
 
@@ -74,16 +70,63 @@
         </table>
       </div>
     </div>
+
+    <!-- 分页 -->
+    <div class="flex items-center justify-between mt-4" style="color: #5a5a7a; font-size: 13px;">
+      <span>共 {{ total }} 条记录，第 {{ page }} / {{ totalPages }} 页</span>
+      <div class="flex gap-2">
+        <button @click="prevPage" :disabled="page <= 1" class="px-3 py-1 rounded" style="background: rgba(0,240,255,0.08); color: #00f0ff;">上一页</button>
+        <button @click="nextPage" :disabled="page >= totalPages" class="px-3 py-1 rounded" style="background: rgba(0,240,255,0.08); color: #00f0ff;">下一页</button>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-const records = ref([
-  { id: 1, orderNo: 'PAY20260614001', user: 'user001', amount: 39.9, coins: 550, channel: '微信支付', status: 'success', time: '2026-06-14 14:30' },
-  { id: 2, orderNo: 'PAY20260614002', user: 'user007', amount: 69.9, coins: 1150, channel: '支付宝', status: 'success', time: '2026-06-14 13:15' },
-  { id: 3, orderNo: 'PAY20260614003', user: 'user003', amount: 9.9, coins: 100, channel: '微信支付', status: 'pending', time: '2026-06-14 12:48' },
-  { id: 4, orderNo: 'PAY20260613004', user: 'user010', amount: 199, coins: 3500, channel: '支付宝', status: 'success', time: '2026-06-13 18:20' },
-  { id: 5, orderNo: 'PAY20260613005', user: 'user004', amount: 39.9, coins: 550, channel: '微信支付', status: 'success', time: '2026-06-13 16:05' },
-])
+import { ref, onMounted, computed } from 'vue'
+import service from '@/api/request'
+import { ElMessage } from 'element-plus'
+
+const loading = ref(false)
+const records = ref<any[]>([])
+const total = ref(0)
+const page = ref(1)
+const pageSize = ref(20)
+const searchQuery = ref('')
+const statusFilter = ref('')
+const stats = ref({ todayIncome: 0, monthIncome: 0, totalOrders: 0, pendingRefunds: 0 })
+
+async function fetchRecords() {
+  loading.value = true
+  try {
+    const params: any = { page: page.value, pageSize: pageSize.value }
+    if (statusFilter.value) params.status = statusFilter.value
+    if (searchQuery.value) params.userId = searchQuery.value
+    const res = await service.get('/payment/orders', { params })
+    if (res.data.code === 0) {
+      records.value = res.data.data.list || []
+      total.value = res.data.data.total || 0
+    }
+  } catch (e) {
+    ElMessage.error('加载支付记录失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+async function fetchStats() {
+  try {
+    const res = await service.get('/admin/payment-failures', { params: { page: 1, pageSize: 1 } })
+    if (res.data.code === 0 && res.data.data.stats) {
+      stats.value = { ...stats.value, ...res.data.data.stats }
+    }
+  } catch (e) { /* ignore */ }
+}
+
+const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)))
+
+function nextPage() { if (page.value < totalPages.value) { page.value++; fetchRecords() } }
+function prevPage() { if (page.value > 1) { page.value--; fetchRecords() } }
+
+onMounted(() => { fetchRecords(); fetchStats() })
 </script>

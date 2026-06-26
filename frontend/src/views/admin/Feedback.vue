@@ -24,20 +24,97 @@
         </el-table-column>
         <el-table-column prop="createdAt" label="时间" width="160" />
         <el-table-column label="操作" width="100" fixed="right">
-          <template #default><el-button size="small" type="primary" link>处理</el-button></template>
+          <template #default="{ row }">
+            <el-button size="small" type="primary" link @click="handleProcess(row)" :disabled="row.status === '已处理'">处理</el-button>
+          </template>
         </el-table-column>
       </el-table>
     </div>
+
+    <!-- 处理反馈对话框 -->
+    <el-dialog v-model="processDialogVisible" title="处理反馈" width="500px">
+      <div v-if="currentFeedback" style="color:#a0a0cc;">
+        <p><strong>用户：</strong>{{ currentFeedback.username }}</p>
+        <p><strong>类型：</strong>{{ currentFeedback.type }}</p>
+        <p><strong>内容：</strong>{{ currentFeedback.content }}</p>
+        <el-form style="margin-top:12px;">
+          <el-form-item label="回复">
+            <el-input v-model="replyContent" type="textarea" :rows="3" placeholder="请输入回复内容..." />
+          </el-form-item>
+        </el-form>
+      </div>
+      <template #footer>
+        <el-button @click="processDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="submitProcess" :loading="submitting">确认处理</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 <script setup lang="ts">
-import { ref } from 'vue'
-const stats = ref({ totalFeedback: 234, pending: 12, resolved: 218, satisfaction: '4.6' })
-const feedbacks = ref([
-  { userId: 'U10086', username: '张三', type: '建议', content: '希望增加更多AI模型选择', rating: 5, status: '待处理', createdAt: '2026-06-15 10:30' },
-  { userId: 'U10042', username: '李四', type: '问题', content: '图片生成速度较慢', rating: 3, status: '已处理', createdAt: '2026-06-14 15:00' },
-  { userId: 'U10234', username: '王五', type: '表扬', content: 'AI对话很智能，体验很好', rating: 5, status: '已处理', createdAt: '2026-06-13 09:00' },
-])
+import { ref, onMounted } from 'vue'
+import service from '@/api/request'
+import { ElMessage } from 'element-plus'
+
+const loading = ref(false)
+const submitting = ref(false)
+const stats = ref({ totalFeedback: 0, pending: 0, resolved: 0, satisfaction: '0' })
+const feedbacks = ref<any[]>([])
+const processDialogVisible = ref(false)
+const currentFeedback = ref<any>(null)
+const replyContent = ref('')
+
+async function fetchFeedback() {
+  loading.value = true
+  try {
+    const res = await service.get('/admin/feedback')
+    if (res.data.code === 0) {
+      const data = res.data.data
+      feedbacks.value = data.feedbacks || data.list || data || []
+      if (data.stats) {
+        stats.value = {
+          totalFeedback: data.stats.total || 0,
+          pending: data.stats.pending || 0,
+          resolved: data.stats.resolved || 0,
+          satisfaction: data.stats.avgSatisfaction ? String(data.stats.avgSatisfaction) : '0'
+        }
+      }
+    }
+  } catch (e) {
+    ElMessage.error('加载反馈数据失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+function handleProcess(row: any) {
+  currentFeedback.value = row
+  replyContent.value = ''
+  processDialogVisible.value = true
+}
+
+async function submitProcess() {
+  if (!currentFeedback.value) return
+  submitting.value = true
+  try {
+    const res = await service.put(`/admin/feedback/${currentFeedback.value.id}`, {
+      status: '已处理',
+      reply: replyContent.value
+    })
+    if (res.data.code === 0) {
+      ElMessage.success('处理成功')
+      processDialogVisible.value = false
+      fetchFeedback()
+    } else {
+      ElMessage.error(res.data.message || '处理失败')
+    }
+  } catch (e) {
+    ElMessage.error('处理失败')
+  } finally {
+    submitting.value = false
+  }
+}
+
+onMounted(fetchFeedback)
 </script>
 <style scoped>
 .cyber-page { padding: 1.5rem; min-height: 100vh; background: #0a0a0f; color: #e0e0ff; }

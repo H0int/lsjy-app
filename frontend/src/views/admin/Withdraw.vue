@@ -26,8 +26,8 @@
         <el-table-column prop="createdAt" label="申请时间" width="160" />
         <el-table-column label="操作" width="150" fixed="right">
           <template #default="{ row }">
-            <el-button v-if="row.status === '待审核'" size="small" type="success" link>通过</el-button>
-            <el-button v-if="row.status === '待审核'" size="small" type="danger" link>拒绝</el-button>
+            <el-button v-if="row.status === '待审核'" size="small" type="success" link @click="approveWithdraw(row)">通过</el-button>
+            <el-button v-if="row.status === '待审核'" size="small" type="danger" link @click="rejectWithdraw(row)">拒绝</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -35,13 +35,58 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref } from 'vue'
-const stats = ref({ totalRequests: 89, pending: 12, totalPaid: '45,678', rejected: 3 })
-const withdrawals = ref([
-  { requestId: 'WD20260615001', username: '张三', amount: '500', fee: '5', actual: '495', account: '支付宝 138****1234', status: '待审核', createdAt: '2026-06-15 10:00' },
-  { requestId: 'WD20260614002', username: '李四', amount: '1000', fee: '10', actual: '990', account: '微信 wxid_xxx', status: '已完成', createdAt: '2026-06-14 15:30' },
-  { requestId: 'WD20260613003', username: '王五', amount: '200', fee: '2', actual: '198', account: '银行卡 6222****', status: '已拒绝', createdAt: '2026-06-13 09:00' },
-])
+import { ref, onMounted } from 'vue'
+import service from '@/api/request'
+import { ElMessage, ElMessageBox } from 'element-plus'
+
+const loading = ref(false)
+const stats = ref({ totalRequests: 0, pending: 0, totalPaid: '0', rejected: 0 })
+const withdrawals = ref<any[]>([])
+
+async function fetchWithdrawals() {
+  loading.value = true
+  try {
+    const res = await service.get('/admin/withdraws')
+    if (res.data.code === 0) {
+      withdrawals.value = res.data.data.withdraws || []
+      const s = res.data.data.stats || {}
+      stats.value = {
+        totalRequests: s.total || 0,
+        pending: s.pending || 0,
+        totalPaid: s.paid?.toLocaleString() || '0',
+        rejected: s.rejected || 0
+      }
+    }
+  } catch (e) {
+    ElMessage.error('加载提现记录失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+async function approveWithdraw(row: any) {
+  try {
+    await ElMessageBox.confirm(`确定通过「${row.username}」的提现申请 ¥${row.amount}？`, '审批确认', { type: 'success' })
+    await service.put(`/admin/withdraws/${row.id}/approve`)
+    ElMessage.success('已通过')
+    fetchWithdrawals()
+  } catch (e) {
+    if (e !== 'cancel') ElMessage.error('操作失败')
+  }
+}
+
+async function rejectWithdraw(row: any) {
+  try {
+    await ElMessageBox.confirm(`确定拒绝「${row.username}」的提现申请 ¥${row.amount}？`, '审批确认', { type: 'warning' })
+    await service.put(`/admin/withdraws/${row.id}/reject`)
+    ElMessage.success('已拒绝')
+    fetchWithdrawals()
+  } catch (e) {
+    if (e !== 'cancel') ElMessage.error('操作失败')
+  }
+}
+
+onMounted(fetchWithdrawals)
 </script>
 <style scoped>
 .cyber-page { padding: 1.5rem; min-height: 100vh; background: #0a0a0f; color: #e0e0ff; }

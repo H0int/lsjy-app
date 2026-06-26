@@ -2,7 +2,7 @@
   <div>
     <div class="flex items-center justify-between mb-6">
       <h2 class="text-xl font-bold" style="color: #e0e0ff;">💰 圣力套餐管理</h2>
-      <button class="px-4 py-2 rounded-lg text-sm font-bold"
+      <button @click="openCreate" class="px-4 py-2 rounded-lg text-sm font-bold"
         style="background: linear-gradient(135deg, #00f0ff, #7c3aed); color: #000;">
         + 新建套餐
       </button>
@@ -28,30 +28,112 @@
           </span>
         </div>
         <div class="flex gap-2 mt-3 pt-3" style="border-top: 1px solid #1a1a2e;">
-          <button class="flex-1 py-1.5 rounded text-xs" style="background: rgba(0,240,255,0.08); color: #00f0ff;">编辑</button>
-          <button class="flex-1 py-1.5 rounded text-xs" style="background: rgba(255,68,68,0.08); color: #ff4444;">下架</button>
+          <button @click="openEdit(pkg)" class="flex-1 py-1.5 rounded text-xs" style="background: rgba(0,240,255,0.08); color: #00f0ff;">编辑</button>
+          <button @click="toggleStatus(pkg)" class="flex-1 py-1.5 rounded text-xs" :style="pkg.status === 'active' ? 'background:rgba(255,184,0,0.08);color:#ffb800;' : 'background:rgba(0,255,136,0.08);color:#00ff88;'">
+            {{ pkg.status === 'active' ? '下架' : '上架' }}
+          </button>
+          <button @click="deletePackage(pkg)" class="flex-1 py-1.5 rounded text-xs" style="background: rgba(255,68,68,0.08); color: #ff4444;">删除</button>
         </div>
       </div>
     </div>
+
+    <el-dialog v-model="showForm" :title="editingId ? '编辑套餐' : '新建套餐'" width="480px" :close-on-click-modal="false">
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div><label style="color:#8888aa;font-size:12px;">套餐名称</label>
+          <input v-model="form.name" placeholder="如: 50圣力套餐" style="width:100%;padding:8px 12px;background:#12121f;border:1px solid #1a1a2e;color:#e0e0ff;border-radius:8px;margin-top:4px;" /></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div><label style="color:#8888aa;font-size:12px;">圣力数量</label>
+            <input v-model.number="form.coins" type="number" style="width:100%;padding:8px 12px;background:#12121f;border:1px solid #1a1a2e;color:#e0e0ff;border-radius:8px;margin-top:4px;" /></div>
+          <div><label style="color:#8888aa;font-size:12px;">价格(元)</label>
+            <input v-model.number="form.price" type="number" step="0.1" style="width:100%;padding:8px 12px;background:#12121f;border:1px solid #1a1a2e;color:#e0e0ff;border-radius:8px;margin-top:4px;" /></div>
+        </div>
+        <div><label style="color:#8888aa;font-size:12px;">赠送说明</label>
+          <input v-model="form.bonus" placeholder="如: 送10圣力" style="width:100%;padding:8px 12px;background:#12121f;border:1px solid #1a1a2e;color:#e0e0ff;border-radius:8px;margin-top:4px;" /></div>
+      </div>
+      <template #footer>
+        <button @click="showForm = false" style="padding:8px 20px;background:transparent;border:1px solid #1a1a2e;color:#8888aa;border-radius:8px;">取消</button>
+        <button @click="savePackage" style="padding:8px 20px;background:linear-gradient(135deg,#00f0ff,#7c3aed);color:#000;border:none;border-radius:8px;font-weight:bold;">保存</button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-const packages = ref([
-  { id: 1, coins: 50, price: 4.9, originalPrice: 5, bonus: '送5圣力', sold: 523, status: 'active', highlight: false },
-  { id: 2, coins: 100, price: 9.9, originalPrice: 10, bonus: '送10圣力', sold: 1256, status: 'active', highlight: false },
-  { id: 3, coins: 200, price: 14.9, originalPrice: 20, bonus: '送20圣力', sold: 892, status: 'active', highlight: false },
-  { id: 4, coins: 300, price: 24.9, originalPrice: 30, bonus: '送30圣力', sold: 1567, status: 'active', highlight: false },
-  { id: 5, coins: 500, price: 39.9, originalPrice: 50, bonus: '送100圣力', sold: 3421, status: 'active', highlight: true },
-  { id: 6, coins: 1000, price: 69.9, originalPrice: 100, bonus: '送200圣力', sold: 2187, status: 'active', highlight: false },
-  { id: 7, coins: 2000, price: 129.9, originalPrice: 200, bonus: '送500圣力', sold: 1345, status: 'active', highlight: false },
-  { id: 8, coins: 3500, price: 199.9, originalPrice: 350, bonus: '送1000圣力', sold: 987, status: 'active', highlight: false },
-  { id: 9, coins: 5000, price: 299.9, originalPrice: 500, bonus: '送1500圣力', sold: 876, status: 'active', highlight: false },
-  { id: 10, coins: 10000, price: 549.9, originalPrice: 1000, bonus: '送3500圣力', sold: 432, status: 'active', highlight: false },
-  { id: 11, coins: 25000, price: 1299.9, originalPrice: 2500, bonus: '送10000圣力', sold: 198, status: 'active', highlight: false },
-  { id: 12, coins: 50000, price: 2499.9, originalPrice: 5000, bonus: '送25000圣力', sold: 56, status: 'active', highlight: false },
-])
+import { ref, onMounted } from 'vue'
+import service from '@/api/request'
+import { ElMessage, ElMessageBox } from 'element-plus'
+
+const loading = ref(false)
+const packages = ref<any[]>([])
+const showForm = ref(false)
+const editingId = ref<number | null>(null)
+const form = ref({ name: '', coins: 0, price: 0, bonus: '', status: 'active' })
+
+async function fetchPackages() {
+  loading.value = true
+  try {
+    const res = await service.get('/admin/coin-packages')
+    if (res.data.code === 0) {
+      packages.value = res.data.data
+    }
+  } catch (e) {
+    ElMessage.error('加载套餐失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+function openCreate() {
+  editingId.value = null
+  form.value = { name: '', coins: 0, price: 0, bonus: '', status: 'active' }
+  showForm.value = true
+}
+
+function openEdit(pkg: any) {
+  editingId.value = pkg.id
+  form.value = { name: pkg.name, coins: pkg.coins, price: pkg.price, bonus: pkg.bonus, status: pkg.status }
+  showForm.value = true
+}
+
+async function savePackage() {
+  try {
+    if (editingId.value) {
+      await service.put(`/admin/coin-packages/${editingId.value}`, form.value)
+      ElMessage.success('更新成功')
+    } else {
+      await service.post('/admin/coin-packages', form.value)
+      ElMessage.success('创建成功')
+    }
+    showForm.value = false
+    fetchPackages()
+  } catch (e) {
+    ElMessage.error('保存失败')
+  }
+}
+
+async function deletePackage(pkg: any) {
+  try {
+    await ElMessageBox.confirm(`确定删除套餐「${pkg.name}」？`, '确认删除', { type: 'warning' })
+    await service.delete(`/admin/coin-packages/${pkg.id}`)
+    ElMessage.success('删除成功')
+    fetchPackages()
+  } catch (e) {
+    if (e !== 'cancel') ElMessage.error('删除失败')
+  }
+}
+
+async function toggleStatus(pkg: any) {
+  try {
+    const newStatus = pkg.status === 'active' ? 'inactive' : 'active'
+    await service.put(`/admin/coin-packages/${pkg.id}`, { ...pkg, status: newStatus })
+    ElMessage.success(newStatus === 'active' ? '已上架' : '已下架')
+    fetchPackages()
+  } catch (e) {
+    ElMessage.error('操作失败')
+  }
+}
+
+onMounted(fetchPackages)
 </script>
 
 <style scoped>

@@ -175,8 +175,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import service from '@/api/request'
 
 const search = ref('')
 const statusFilter = ref('')
@@ -184,45 +185,26 @@ const dialogVisible = ref(false)
 const chatLogVisible = ref(false)
 const isEditing = ref(false)
 const saving = ref(false)
+const loading = ref(false)
 const currentAgentName = ref('')
 const editingId = ref<number | null>(null)
 
-const todayCalls = ref(12847)
-const monthlyTokens = ref(3256000)
-const avgLatency = ref(342)
+const todayCalls = ref(0)
+const monthlyTokens = ref(0)
+const avgLatency = ref(0)
 
 const modelOptions = [
-  // 豆包
   'Doubao-Pro-32K', 'Doubao-Pro-4K', 'Doubao-Lite-32K',
-  // DeepSeek
   'DeepSeek-V3', 'DeepSeek-R1',
-  // 即梦
   '即梦 2.1', '即梦 2.0 Pro',
-  // 元宝
   '元宝 Pro', '元宝 Lite',
-  // 千问
   'Qwen-Max', 'Qwen-Plus', 'Qwen-Turbo',
-  // GPT
   'GPT-4o', 'GPT-4o Mini', 'GPT-4 Turbo',
 ]
 
-const agents = ref([
-  { id: 1, name: '罗圣AI', icon: '🧠', description: '罗圣纪元核心AI - 6大模型智能路由，全能力通用助手', model: 'DeepSeek-V3', temperature: 0.7, maxTokens: 8192, systemPrompt: '你是罗圣AI，罗圣纪元平台的智能助手。你可以调用豆包、DeepSeek、即梦、元宝、千问、GPT六大模型，根据用户需求智能选择最优模型。回答专业、高效、友好。', totalCalls: 128500, status: 'active' },
-  { id: 2, name: '代码助手', icon: '💻', description: '全栈编程辅助，支持多语言', model: 'DeepSeek-R1', temperature: 0.3, maxTokens: 8192, systemPrompt: 'You are an expert programmer...', totalCalls: 45230, status: 'active' },
-  { id: 3, name: '文案创作', icon: '✍️', description: '营销文案、广告语、社交媒体内容生成', model: 'GPT-4o', temperature: 0.8, maxTokens: 4096, systemPrompt: 'You are a creative copywriter...', totalCalls: 28100, status: 'active' },
-  { id: 4, name: 'AI文生图', icon: '🎨', description: '即梦AI绘画，文字描述生成高清图片', model: '即梦 2.1', temperature: 0.9, maxTokens: 4096, systemPrompt: 'You are an AI image generation assistant powered by Jimeng...', totalCalls: 22400, status: 'active' },
-  { id: 5, name: '数据分析', icon: '📊', description: '数据解读、报表分析、趋势预测', model: '元宝 Pro', temperature: 0.2, maxTokens: 16384, systemPrompt: 'You are a data analyst...', totalCalls: 15670, status: 'active' },
-  { id: 6, name: '客服机器人', icon: '🎧', description: '自动回答常见问题，引导用户', model: 'Qwen-Plus', temperature: 0.5, maxTokens: 2048, systemPrompt: '你是罗圣纪元平台的客服助手...', totalCalls: 89400, status: 'active' },
-  { id: 7, name: '豆包助手', icon: '🫘', description: '豆包大模型 - 中文理解与创作专家', model: 'Doubao-Pro-32K', temperature: 0.7, maxTokens: 32768, systemPrompt: '你是豆包大模型驱动的助手，擅长中文理解和创作...', totalCalls: 35800, status: 'active' },
-  { id: 8, name: '翻译专家', icon: '🌐', description: '多语言互译，保持语境和风格', model: 'GPT-4o Mini', temperature: 0.3, maxTokens: 4096, systemPrompt: 'You are a professional translator...', totalCalls: 19300, status: 'disabled' },
-  { id: 9, name: '学习导师', icon: '🎓', description: '个性化学习辅导，知识讲解', model: 'Qwen-Max', temperature: 0.6, maxTokens: 8192, systemPrompt: 'You are a patient tutor...', totalCalls: 8920, status: 'active' },
-])
+const agents = ref<any[]>([])
 
-const chatLogs = ref([
-  { id: 1, time: '2026-06-14 15:23:01', userName: '张三', question: '如何用Python实现快速排序？', answer: '快速排序可以使用分治法实现...', tokens: 1250, latency: 320, rating: 5 },
-  { id: 2, time: '2026-06-14 15:20:45', userName: '李四', question: '帮我写一段产品推广文案', answer: '好的，请问是什么产品？目标人群是？', tokens: 180, latency: 150, rating: 4 },
-  { id: 3, time: '2026-06-14 14:55:12', userName: '王五', question: '分析这份销售数据的趋势', answer: '根据数据，Q2销售额环比增长23%...', tokens: 3200, latency: 890, rating: 5 },
-])
+const chatLogs = ref<any[]>([])
 
 const form = ref({
   name: '', icon: '', description: '', systemPrompt: '',
@@ -235,6 +217,26 @@ const filteredAgents = computed(() => {
   if (statusFilter.value) list = list.filter(a => a.status === statusFilter.value)
   return list
 })
+
+async function fetchAgents() {
+  loading.value = true
+  try {
+    const res = await service.get('/admin/agents')
+    if (res.data.code === 0) {
+      agents.value = res.data.data.agents || []
+      const stats = res.data.data.stats || {}
+      todayCalls.value = stats.totalUsage || 0
+      monthlyTokens.value = stats.totalUsage || 0
+      avgLatency.value = 0
+    }
+  } catch (e) {
+    ElMessage.error('加载智能体列表失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(fetchAgents)
 
 function openDialog(agent?: any) {
   if (agent) {
@@ -249,36 +251,70 @@ function openDialog(agent?: any) {
   dialogVisible.value = true
 }
 
-function handleSave() {
+async function handleSave() {
   if (!form.value.name.trim()) return ElMessage.warning('请输入名称')
   saving.value = true
-  setTimeout(() => {
+  try {
     if (isEditing.value && editingId.value) {
-      const idx = agents.value.findIndex(a => a.id === editingId.value)
-      if (idx >= 0) Object.assign(agents.value[idx], { ...form.value })
-      ElMessage.success('智能体已更新')
+      const res = await service.put(`/admin/agents/${editingId.value}`, { ...form.value })
+      if (res.data.code === 0) {
+        const idx = agents.value.findIndex(a => a.id === editingId.value)
+        if (idx >= 0) Object.assign(agents.value[idx], { ...form.value })
+        ElMessage.success('智能体已更新')
+        dialogVisible.value = false
+      }
     } else {
-      agents.value.push({ id: Date.now(), ...form.value, totalCalls: 0 })
-      ElMessage.success('智能体创建成功')
+      const res = await service.post('/admin/agents', { ...form.value })
+      if (res.data.code === 0) {
+        agents.value.push({ id: Date.now(), ...form.value, totalCalls: 0 })
+        ElMessage.success('智能体创建成功')
+        dialogVisible.value = false
+        fetchAgents()
+      }
     }
+  } catch (e) {
+    ElMessage.error('保存失败')
+  } finally {
     saving.value = false
-    dialogVisible.value = false
-  }, 500)
+  }
 }
 
-function toggleAgent(agent: any) {
-  ElMessage.success(`智能体「${agent.name}」已${agent.status === 'active' ? '启用' : '禁用'}`)
+async function toggleAgent(agent: any) {
+  try {
+    const res = await service.put(`/admin/agents/${agent.id}`, { status: agent.status })
+    if (res.data.code === 0) {
+      ElMessage.success(`智能体「${agent.name}」已${agent.status === 'active' ? '启用' : '禁用'}`)
+    }
+  } catch (e) {
+    agent.status = agent.status === 'active' ? 'disabled' : 'active'
+    ElMessage.error('操作失败')
+  }
 }
 
-function viewChatLogs(agent: any) {
+async function viewChatLogs(agent: any) {
   currentAgentName.value = agent.name
   chatLogVisible.value = true
+  try {
+    const res = await service.get(`/admin/chat-logs`, { params: { search: '', toolName: agent.name, page: 1, pageSize: 50 } })
+    if (res.data.code === 0) {
+      chatLogs.value = res.data.data.logs || []
+    }
+  } catch (e) {
+    chatLogs.value = []
+  }
 }
 
 function deleteAgent(agent: any) {
-  ElMessageBox.confirm(`确认删除智能体「${agent.name}」？`).then(() => {
-    agents.value = agents.value.filter(a => a.id !== agent.id)
-    ElMessage.success('已删除')
+  ElMessageBox.confirm(`确认删除智能体「${agent.name}」？`).then(async () => {
+    try {
+      const res = await service.put(`/admin/agents/${agent.id}`, { status: 'disabled' })
+      if (res.data.code === 0) {
+        agents.value = agents.value.filter(a => a.id !== agent.id)
+        ElMessage.success('已删除')
+      }
+    } catch (e) {
+      ElMessage.error('删除失败')
+    }
   }).catch(() => {})
 }
 </script>

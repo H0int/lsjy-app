@@ -17,7 +17,7 @@
     </div>
     <div class="cyber-card">
       <div class="card-header"><h2>缓存分类</h2></div>
-      <el-table :data="cacheItems" style="width: 100%" class="cyber-table">
+      <el-table :data="cacheItems" style="width: 100%" class="cyber-table" v-loading="loading">
         <el-table-column prop="name" label="缓存名称" />
         <el-table-column prop="size" label="大小" width="120" />
         <el-table-column prop="keys" label="键数" width="100" />
@@ -31,17 +31,69 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref } from 'vue'
-const stats = ref({ cacheSize: '256MB', hitRate: '94.5%', keys: '12,456', avgTTL: '30min' })
-const cacheItems = ref([
-  { name: '用户会话缓存', size: '128MB', keys: 5678, hitRate: '96%', ttl: '30min' },
-  { name: 'AI对话缓存', size: '64MB', keys: 2345, hitRate: '92%', ttl: '15min' },
-  { name: 'API响应缓存', size: '32MB', keys: 1234, hitRate: '95%', ttl: '5min' },
-  { name: '配置缓存', size: '8MB', keys: 156, hitRate: '99%', ttl: '1h' },
-])
-function clearAll() { console.log('清空缓存') }
-function refreshStats() { console.log('刷新统计') }
-function exportCache() { console.log('导出缓存') }
+import { ref, onMounted } from 'vue'
+import service from '@/api/request'
+import { ElMessage, ElMessageBox } from 'element-plus'
+
+const loading = ref(false)
+const stats = ref<any>({})
+const cacheItems = ref<any[]>([])
+
+async function fetchStats() {
+  loading.value = true
+  try {
+    const res = await service.get('/cache/stats')
+    if (res.data.code === 0) {
+      const d = res.data.data
+      stats.value = {
+        cacheSize: d.memory ?? d.cacheSize ?? '-',
+        hitRate: d.hitRate ?? '-',
+        keys: d.keys ?? '-',
+        avgTTL: d.avgTTL ?? '-',
+      }
+      cacheItems.value = d.items || d.categories || []
+    }
+  } catch {
+    ElMessage.error('加载缓存统计失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+async function clearAll() {
+  try {
+    await ElMessageBox.confirm('确定要清空全部缓存吗？此操作不可恢复。', '确认清空', { type: 'warning' })
+    const res = await service.post('/cache/clear')
+    if (res.data.code === 0) {
+      ElMessage.success(res.data.message || '缓存已清空')
+      fetchStats()
+    } else {
+      ElMessage.error(res.data.message || '清空失败')
+    }
+  } catch (e: any) {
+    if (e !== 'cancel') ElMessage.error('清空缓存失败')
+  }
+}
+
+async function refreshStats() {
+  ElMessage.info('正在刷新...')
+  await fetchStats()
+  ElMessage.success('统计已刷新')
+}
+
+function exportCache() {
+  const data = JSON.stringify(cacheItems.value, null, 2)
+  const blob = new Blob([data], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `cache-stats-${Date.now()}.json`
+  a.click()
+  URL.revokeObjectURL(url)
+  ElMessage.success('缓存数据导出成功')
+}
+
+onMounted(fetchStats)
 </script>
 <style scoped>
 .cyber-page { padding: 1.5rem; min-height: 100vh; background: #0a0a0f; color: #e0e0ff; }

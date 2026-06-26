@@ -118,68 +118,84 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import service from '@/api/request'
+import { ElMessage } from 'element-plus'
 
-const locationStats = ref({
-  countries: 3,
-  cities: 186,
-  activeUsers: 1847,
-  accuracy: '98.5%'
-})
+const loading = ref(false)
+const locationStats = ref({ countries: 0, cities: 0, activeUsers: 0, accuracy: '0%' })
+const mapDots = ref<any[]>([])
+const provinceRank = ref<any[]>([])
+const cityRank = ref<any[]>([])
+const locationLogs = ref<any[]>([])
 
-const mapDots = ref(
-  Array.from({ length: 30 }, (_, i) => ({
-    id: i,
-    x: Math.random() * 80 + 10,
-    y: Math.random() * 70 + 15
-  }))
-)
-
-const provinceRank = ref([
-  { name: '广东省', count: 3842, percent: 100 },
-  { name: '北京市', count: 3156, percent: 82 },
-  { name: '上海市', count: 2847, percent: 74 },
-  { name: '浙江省', count: 2234, percent: 58 },
-  { name: '江苏省', count: 1987, percent: 52 },
-  { name: '四川省', count: 1654, percent: 43 },
-  { name: '湖北省', count: 1432, percent: 37 },
-  { name: '福建省', count: 1287, percent: 34 },
-  { name: '山东省', count: 1156, percent: 30 },
-  { name: '河南省', count: 987, percent: 26 },
-])
-
-const cityRank = ref([
-  { name: '深圳市', count: 1876, percent: 100 },
-  { name: '北京市', count: 1654, percent: 88 },
-  { name: '上海市', count: 1543, percent: 82 },
-  { name: '广州市', count: 1234, percent: 66 },
-  { name: '杭州市', count: 1087, percent: 58 },
-  { name: '成都市', count: 987, percent: 53 },
-  { name: '武汉市', count: 876, percent: 47 },
-  { name: '南京市', count: 765, percent: 41 },
-  { name: '重庆市', count: 654, percent: 35 },
-  { name: '西安市', count: 543, percent: 29 },
-])
-
-const locationLogs = ref([
-  { time: '2026-06-15 14:32:18', userId: 'U10086', ip: '120.245.**.**', province: '北京', city: '北京', isp: '联通', device: 'Chrome/Windows' },
-  { time: '2026-06-15 14:32:15', userId: 'U10042', ip: '112.96.**.**', province: '广东', city: '广州', isp: '电信', device: 'Safari/iPhone' },
-  { time: '2026-06-15 14:32:12', userId: 'U10234', ip: '183.6.**.**', province: '上海', city: '上海', isp: '移动', device: 'Edge/Windows' },
-  { time: '2026-06-15 14:32:08', userId: 'U10567', ip: '222.73.**.**', province: '浙江', city: '杭州', isp: '电信', device: 'Chrome/Android' },
-  { time: '2026-06-15 14:32:05', userId: 'U10891', ip: '61.135.**.**', province: '四川', city: '成都', isp: '联通', device: 'Safari/iPad' },
-])
+async function fetchLocations() {
+  loading.value = true
+  try {
+    const res = await service.get('/admin/locations')
+    if (res.data.code === 0) {
+      const data = res.data.data
+      // Stats
+      if (data.stats) {
+        locationStats.value = {
+          countries: data.stats.countries || 0,
+          cities: data.stats.cities || 0,
+          activeUsers: data.stats.activeUsers || 0,
+          accuracy: data.stats.accuracy ? String(data.stats.accuracy) : '0%'
+        }
+      }
+      // Province ranking
+      if (data.provinces && Array.isArray(data.provinces)) {
+        const maxProv = Math.max(...data.provinces.map((p: any) => p.count || 0), 1)
+        provinceRank.value = data.provinces.slice(0, 10).map((p: any) => ({
+          name: p.name || p.province,
+          count: p.count || 0,
+          percent: Math.round((p.count || 0) / maxProv * 100)
+        }))
+      }
+      // City ranking
+      if (data.cities && Array.isArray(data.cities)) {
+        const maxCity = Math.max(...data.cities.map((c: any) => c.count || 0), 1)
+        cityRank.value = data.cities.slice(0, 10).map((c: any) => ({
+          name: c.name || c.city,
+          count: c.count || 0,
+          percent: Math.round((c.count || 0) / maxCity * 100)
+        }))
+      }
+      // Location logs
+      if (data.logs && Array.isArray(data.logs)) {
+        locationLogs.value = data.logs
+      } else if (data.list && Array.isArray(data.list)) {
+        locationLogs.value = data.list
+      }
+      // Map dots - generate from location data
+      if (data.mapDots && Array.isArray(data.mapDots)) {
+        mapDots.value = data.mapDots
+      } else {
+        // Generate dots from city data positions
+        mapDots.value = (cityRank.value || []).slice(0, 20).map((_: any, i: number) => ({
+          id: i,
+          x: 15 + (i % 5) * 15 + Math.random() * 8,
+          y: 20 + Math.floor(i / 5) * 15 + Math.random() * 8
+        }))
+      }
+    }
+  } catch (e) {
+    ElMessage.error('加载定位数据失败')
+  } finally {
+    loading.value = false
+  }
+}
 
 function refreshMap() {
-  mapDots.value = Array.from({ length: 30 }, (_, i) => ({
-    id: i,
-    x: Math.random() * 80 + 10,
-    y: Math.random() * 70 + 15
-  }))
+  fetchLocations()
 }
 
 function toggleHeatmap() {
-  console.log('切换热力图')
+  ElMessage.info('热力图功能开发中')
 }
+
+onMounted(fetchLocations)
 </script>
 
 <style scoped>

@@ -46,8 +46,8 @@
         <el-table-column prop="createdAt" label="创建时间" width="160" />
         <el-table-column label="操作" width="150" fixed="right">
           <template #default="{ row }">
-            <el-button size="small" type="primary" link>编辑</el-button>
-            <el-button size="small" type="danger" link>删除</el-button>
+            <el-button size="small" type="primary" link @click="editTag(row)">编辑</el-button>
+            <el-button size="small" type="danger" link @click="deleteTag(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -56,20 +56,91 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import service from '@/api/request'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
-const stats = ref({ totalTags: 24, taggedUsers: 1847, avgTagsPerUser: '2.3' })
+const loading = ref(false)
 
-const tags = ref([
-  { name: 'VIP用户', color: '#FFD700', category: '等级', userCount: 156, description: 'VIP等级用户', createdAt: '2026-01-15 10:00' },
-  { name: '高活跃', color: '#00FF88', category: '行为', userCount: 342, description: '日活跃用户', createdAt: '2026-02-20 14:30' },
-  { name: '新用户', color: '#00F0FF', category: '状态', userCount: 89, description: '注册7天内', createdAt: '2026-03-01 09:00' },
-  { name: '付费用户', color: '#FF6B6B', category: '消费', userCount: 234, description: '有充值记录', createdAt: '2026-01-20 16:00' },
-  { name: 'AI爱好者', color: '#7C3AED', category: '兴趣', userCount: 567, description: '频繁使用AI功能', createdAt: '2026-02-10 11:00' },
-  { name: '沉默用户', color: '#888888', category: '状态', userCount: 423, description: '7天未登录', createdAt: '2026-03-05 08:00' },
-])
+const stats = ref({ totalTags: 0, taggedUsers: 0, avgTagsPerUser: '0' })
 
-function createTag() { console.log('新建标签') }
+const tags = ref<any[]>([])
+
+async function fetchTags() {
+  loading.value = true
+  try {
+    const res = await service.get('/admin/user-tags')
+    if (res.data.code === 0) {
+      const data = res.data.data
+      tags.value = data.tags || []
+      const s = data.stats || {}
+      const totalTags = s.totalTags ?? tags.value.length
+      const taggedUsers = s.taggedUsers ?? 0
+      const avg = totalTags > 0 && taggedUsers > 0
+        ? (taggedUsers / totalTags).toFixed(1)
+        : '0'
+      stats.value = { totalTags, taggedUsers, avgTagsPerUser: avg }
+    }
+  } catch (e) {
+    ElMessage.error('加载标签失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+function createTag() {
+  ElMessageBox.prompt('请输入标签名称', '新建标签', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+  }).then(async ({ value }) => {
+    try {
+      const res = await service.post('/admin/user-tags', { name: value, color: '#00F0FF', description: '' })
+      if (res.data.code === 0) {
+        ElMessage.success('标签创建成功')
+        fetchTags()
+      }
+    } catch (e) {
+      ElMessage.error('创建标签失败')
+    }
+  }).catch(() => {})
+}
+
+function editTag(row: any) {
+  ElMessageBox.prompt('请输入标签名称', '编辑标签', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    inputValue: row.name,
+  }).then(async ({ value }) => {
+    try {
+      const res = await service.put(`/admin/user-tags/${row.id}`, { name: value, color: row.color, description: row.description })
+      if (res.data.code === 0) {
+        ElMessage.success('标签更新成功')
+        fetchTags()
+      }
+    } catch (e) {
+      ElMessage.error('更新标签失败')
+    }
+  }).catch(() => {})
+}
+
+async function deleteTag(row: any) {
+  try {
+    await ElMessageBox.confirm(`确定要删除标签「${row.name}」吗？`, '删除确认', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+    const res = await service.delete(`/admin/user-tags/${row.id}`)
+    if (res.data.code === 0) {
+      ElMessage.success('标签已删除')
+      fetchTags()
+    }
+  } catch (e) {
+    if (e !== 'cancel') ElMessage.error('删除标签失败')
+  }
+}
+
+onMounted(fetchTags)
 </script>
 
 <style scoped>

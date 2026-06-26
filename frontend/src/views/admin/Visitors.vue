@@ -96,57 +96,89 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted } from 'vue'
+import service from '@/api/request'
+import { ElMessage, ElMessageBox } from 'element-plus'
+
+const loading = ref(false)
 
 const stats = ref({
-  todayVisitors: 1247,
-  onlineNow: 38,
-  pageViews: 5832,
-  avgDuration: '3m 24s'
+  todayVisitors: 0,
+  onlineNow: 0,
+  pageViews: 0,
+  avgDuration: '-'
 })
 
-const liveVisitors = ref([
-  { ip: '120.245.**.**', location: '北京市', currentPage: '/dashboard', device: 'PC', browser: 'Chrome', duration: '2m 15s' },
-  { ip: '112.96.**.**', location: '广东省广州市', currentPage: '/agent', device: 'iPhone', browser: 'Safari', duration: '5m 32s' },
-  { ip: '183.6.**.**', location: '上海市', currentPage: '/tools', device: 'PC', browser: 'Edge', duration: '1m 08s' },
-  { ip: '222.73.**.**', location: '浙江省杭州市', currentPage: '/profile', device: 'Android', browser: 'Chrome', duration: '8m 44s' },
-  { ip: '61.135.**.**', location: '四川省成都市', currentPage: '/dashboard', device: 'iPad', browser: 'Safari', duration: '3m 21s' },
-  { ip: '36.110.**.**', location: '湖北省武汉市', currentPage: '/agent', device: 'PC', browser: 'Firefox', duration: '0m 45s' },
-])
+const liveVisitors = ref<any[]>([])
 
 const trendData = ref(
   Array.from({ length: 24 }, (_, i) => ({
     hour: `${i}:00`,
-    height: Math.max(5, Math.floor(Math.random() * 80 + (i > 8 && i < 22 ? 30 : 0)))
+    height: 0
   }))
 )
 
-const hotPages = ref([
-  { page: '/agent - AI智能体', views: 1823, uniqueVisitors: 945, avgTime: '4m 12s' },
-  { page: '/dashboard - 控制台', views: 1456, uniqueVisitors: 1102, avgTime: '2m 38s' },
-  { page: '/tools - AI工具中心', views: 987, uniqueVisitors: 634, avgTime: '3m 05s' },
-  { page: '/profile - 个人中心', views: 654, uniqueVisitors: 521, avgTime: '1m 42s' },
-  { page: '/profile/wallet - 圣力中心', views: 432, uniqueVisitors: 387, avgTime: '2m 15s' },
-])
+const hotPages = ref<any[]>([])
 
-let timer: any = null
-
-function viewDetail(row: any) {
-  console.log('查看详情', row)
+async function fetchStats() {
+  try {
+    const res = await service.get('/visitors/stats')
+    if (res.data.code === 0) {
+      const data = res.data.data
+      stats.value = {
+        todayVisitors: data.today ?? 0,
+        onlineNow: data.total ?? 0,
+        pageViews: data.uniqueIps ?? 0,
+        avgDuration: data.lastVisit || '-'
+      }
+    }
+  } catch (e) {
+    ElMessage.error('加载访客统计失败')
+  }
 }
 
-function blockIP(row: any) {
-  console.log('拦截IP', row.ip)
+async function fetchList() {
+  loading.value = true
+  try {
+    const res = await service.get('/visitors/list', { params: { page: 1, pageSize: 20 } })
+    if (res.data.code === 0) {
+      const data = res.data.data
+      liveVisitors.value = data.list || []
+    }
+  } catch (e) {
+    ElMessage.error('加载访客列表失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+function viewDetail(row: any) {
+  ElMessageBox.alert(
+    `IP: ${row.ip}\n位置: ${row.location || '-'}\n页面: ${row.currentPage || '-'}\n设备: ${row.device || '-'}`,
+    '访客详情',
+    { confirmButtonText: '确定' }
+  )
+}
+
+async function blockIP(row: any) {
+  try {
+    await ElMessageBox.confirm(`确定要拦截IP「${row.ip}」吗？`, '拦截确认', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+    const res = await service.post('/admin/blacklist/ips', { ip: row.ip, reason: '访客管理拦截' })
+    if (res.data.code === 0) {
+      ElMessage.success('IP已拦截')
+    }
+  } catch (e) {
+    if (e !== 'cancel') ElMessage.error('拦截失败')
+  }
 }
 
 onMounted(() => {
-  timer = setInterval(() => {
-    stats.value.onlineNow = Math.floor(Math.random() * 20 + 30)
-  }, 5000)
-})
-
-onUnmounted(() => {
-  if (timer) clearInterval(timer)
+  fetchStats()
+  fetchList()
 })
 </script>
 

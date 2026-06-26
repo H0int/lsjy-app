@@ -2,13 +2,13 @@
   <div class="cyber-page">
     <div class="page-header"><h1>🚫 敏感词库</h1><p class="subtitle">内容过滤敏感词管理</p></div>
     <div class="stats-grid">
-      <div class="stat-card"><div class="stat-icon">📝</div><div class="stat-info"><div class="stat-value">{{ stats.totalWords }}</div><div class="stat-label">敏感词总数</div></div></div>
-      <div class="stat-card"><div class="stat-icon">🔍</div><div class="stat-info"><div class="stat-value">{{ stats.todayFiltered }}</div><div class="stat-label">今日过滤</div></div></div>
-      <div class="stat-card"><div class="stat-icon">📊</div><div class="stat-info"><div class="stat-value">{{ stats.categories }}</div><div class="stat-label">分类数</div></div></div>
+      <div class="stat-card"><div class="stat-icon">📝</div><div class="stat-info"><div class="stat-value">{{ stats.total ?? '-' }}</div><div class="stat-label">敏感词总数</div></div></div>
+      <div class="stat-card"><div class="stat-icon">🔍</div><div class="stat-info"><div class="stat-value">{{ stats.todayFiltered ?? '-' }}</div><div class="stat-label">今日过滤</div></div></div>
+      <div class="stat-card"><div class="stat-icon">📊</div><div class="stat-info"><div class="stat-value">{{ Object.keys(stats.categories || {}).length || '-' }}</div><div class="stat-label">分类数</div></div></div>
     </div>
     <div class="cyber-card">
-      <div class="card-header"><h2>敏感词列表</h2><div class="header-actions"><el-button type="primary" size="small">+ 添加词汇</el-button><el-button size="small">批量导入</el-button></div></div>
-      <el-table :data="words" style="width: 100%" class="cyber-table">
+      <div class="card-header"><h2>敏感词列表</h2><div class="header-actions"><el-button type="primary" size="small" @click="showAddDialog">+ 添加词汇</el-button></div></div>
+      <el-table :data="words" style="width: 100%" class="cyber-table" v-loading="loading">
         <el-table-column prop="word" label="敏感词" width="200" />
         <el-table-column prop="category" label="分类" width="120">
           <template #default="{ row }"><el-tag size="small" effect="dark">{{ row.category }}</el-tag></template>
@@ -19,21 +19,115 @@
         <el-table-column prop="filterCount" label="过滤次数" width="100" />
         <el-table-column prop="action" label="处理方式" width="120" />
         <el-table-column label="操作" width="150" fixed="right">
-          <template #default><el-button size="small" type="primary" link>编辑</el-button><el-button size="small" type="danger" link>删除</el-button></template>
+          <template #default="{ row }"><el-button size="small" type="primary" link @click="showEditDialog(row)">编辑</el-button><el-button size="small" type="danger" link @click="deleteWord(row)">删除</el-button></template>
         </el-table-column>
       </el-table>
     </div>
+
+    <!-- 添加敏感词对话框 -->
+    <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑敏感词' : '添加敏感词'" width="400px">
+      <el-form label-width="80px">
+        <el-form-item label="敏感词">
+          <el-input v-model="form.word" placeholder="输入敏感词" />
+        </el-form-item>
+        <el-form-item label="分类">
+          <el-select v-model="form.category" placeholder="选择分类" style="width:100%">
+            <el-option label="政治" value="政治" />
+            <el-option label="色情" value="色情" />
+            <el-option label="暴力" value="暴力" />
+            <el-option label="广告" value="广告" />
+            <el-option label="其他" value="其他" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="submitWord" :loading="submitting">确定</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 <script setup lang="ts">
-import { ref } from 'vue'
-const stats = ref({ totalWords: 1234, todayFiltered: 56, categories: 8 })
-const words = ref([
-  { word: '***', category: '政治', level: '高', filterCount: 123, action: '替换' },
-  { word: '***', category: '色情', level: '高', filterCount: 89, action: '屏蔽' },
-  { word: '***', category: '暴力', level: '中', filterCount: 45, action: '替换' },
-  { word: '***', category: '广告', level: '低', filterCount: 234, action: '替换' },
-])
+import { ref, onMounted } from 'vue'
+import service from '@/api/request'
+import { ElMessage, ElMessageBox } from 'element-plus'
+
+const loading = ref(false)
+const submitting = ref(false)
+const words = ref<any[]>([])
+const stats = ref<any>({})
+const dialogVisible = ref(false)
+const isEdit = ref(false)
+const editingId = ref<number | null>(null)
+const form = ref({ word: '', category: '其他' })
+
+async function fetchWords() {
+  loading.value = true
+  try {
+    const res = await service.get('/admin/sensitive-words')
+    if (res.data.code === 0) {
+      words.value = res.data.data.words || []
+      stats.value = res.data.data.stats || {}
+    }
+  } catch {
+    ElMessage.error('加载敏感词列表失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+function showAddDialog() {
+  isEdit.value = false
+  editingId.value = null
+  form.value = { word: '', category: '其他' }
+  dialogVisible.value = true
+}
+
+function showEditDialog(row: any) {
+  isEdit.value = true
+  editingId.value = row.id
+  form.value = { word: row.word, category: row.category }
+  dialogVisible.value = true
+}
+
+async function submitWord() {
+  if (!form.value.word.trim()) {
+    ElMessage.warning('请输入敏感词')
+    return
+  }
+  submitting.value = true
+  try {
+    const res = await service.post('/admin/sensitive-words', { word: form.value.word, category: form.value.category })
+    if (res.data.code === 0) {
+      ElMessage.success(isEdit.value ? '编辑成功' : '添加成功')
+      dialogVisible.value = false
+      fetchWords()
+    } else {
+      ElMessage.error(res.data.message || '操作失败')
+    }
+  } catch {
+    ElMessage.error('操作失败')
+  } finally {
+    submitting.value = false
+  }
+}
+
+async function deleteWord(row: any) {
+  try {
+    await ElMessageBox.confirm(`确定要删除敏感词 "${row.word}" 吗？`, '确认删除', { type: 'warning' })
+    const res = await service.delete(`/admin/sensitive-words/${row.id}`)
+    if (res.data.code === 0) {
+      ElMessage.success('删除成功')
+      fetchWords()
+    } else {
+      ElMessage.error(res.data.message || '删除失败')
+    }
+  } catch (e: any) {
+    if (e !== 'cancel') ElMessage.error('删除失败')
+  }
+}
+
+onMounted(fetchWords)
 </script>
 <style scoped>
 .cyber-page { padding: 1.5rem; min-height: 100vh; background: #0a0a0f; color: #e0e0ff; }

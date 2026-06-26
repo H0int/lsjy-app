@@ -10,14 +10,14 @@
     <div class="cyber-card">
       <div class="card-header"><h2>备份操作</h2></div>
       <div class="action-buttons">
-        <el-button type="primary" size="large" @click="createBackup">📦 立即备份</el-button>
+        <el-button type="primary" size="large" @click="createBackup" :loading="creating">📦 立即备份</el-button>
         <el-button size="large" @click="autoBackup">⏰ 自动备份设置</el-button>
         <el-button size="large" @click="uploadBackup">📤 上传备份文件</el-button>
       </div>
     </div>
     <div class="cyber-card">
       <div class="card-header"><h2>备份历史</h2></div>
-      <el-table :data="backups" style="width: 100%" class="cyber-table">
+      <el-table :data="backups" style="width: 100%" class="cyber-table" v-loading="loading">
         <el-table-column prop="name" label="备份名称" />
         <el-table-column prop="type" label="类型" width="100">
           <template #default="{ row }"><el-tag size="small" effect="dark">{{ row.type }}</el-tag></template>
@@ -28,24 +28,111 @@
         </el-table-column>
         <el-table-column prop="createdAt" label="备份时间" width="160" />
         <el-table-column label="操作" width="200" fixed="right">
-          <template #default><el-button size="small" type="primary" link>下载</el-button><el-button size="small" type="warning" link>恢复</el-button><el-button size="small" type="danger" link>删除</el-button></template>
+          <template #default="{ row }"><el-button size="small" type="primary" link @click="downloadBackup(row)">下载</el-button><el-button size="small" type="warning" link @click="restoreBackup(row)">恢复</el-button><el-button size="small" type="danger" link @click="deleteBackup(row)">删除</el-button></template>
         </el-table-column>
       </el-table>
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import { ref } from 'vue'
-const stats = ref({ totalBackups: 45, storageUsed: '2.3GB', lastBackup: '2小时前', successRate: '100%' })
-const backups = ref([
-  { name: 'backup_20260615_140000.sql', type: '自动', size: '128MB', status: '成功', createdAt: '2026-06-15 14:00' },
-  { name: 'backup_20260615_020000.sql', type: '自动', size: '126MB', status: '成功', createdAt: '2026-06-15 02:00' },
-  { name: 'backup_20260614_manual.sql', type: '手动', size: '125MB', status: '成功', createdAt: '2026-06-14 16:30' },
-  { name: 'backup_20260614_140000.sql', type: '自动', size: '124MB', status: '成功', createdAt: '2026-06-14 14:00' },
-])
-function createBackup() { console.log('创建备份') }
-function autoBackup() { console.log('自动备份设置') }
-function uploadBackup() { console.log('上传备份') }
+import { ref, onMounted, computed } from 'vue'
+import service from '@/api/request'
+import { ElMessage, ElMessageBox } from 'element-plus'
+
+const loading = ref(false)
+const creating = ref(false)
+const backups = ref<any[]>([])
+
+const stats = computed(() => {
+  const list = backups.value
+  const total = list.length
+  const totalSize = list.reduce((sum, b) => sum + (parseFloat(b.size) || 0), 0)
+  const last = list.length ? list[0].createdAt : '-'
+  return {
+    totalBackups: total,
+    storageUsed: totalSize > 1024 ? (totalSize / 1024).toFixed(1) + 'GB' : totalSize + 'MB',
+    lastBackup: last,
+    successRate: total ? '100%' : '-',
+  }
+})
+
+async function fetchBackups() {
+  loading.value = true
+  try {
+    const res = await service.get('/backup/list')
+    if (res.data.code === 0) {
+      backups.value = res.data.data || []
+    }
+  } catch {
+    ElMessage.error('加载备份列表失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+async function createBackup() {
+  creating.value = true
+  try {
+    const res = await service.post('/backup/create')
+    if (res.data.code === 0) {
+      ElMessage.success('备份创建成功')
+      fetchBackups()
+    } else {
+      ElMessage.error(res.data.message || '备份失败')
+    }
+  } catch {
+    ElMessage.error('创建备份失败')
+  } finally {
+    creating.value = false
+  }
+}
+
+function downloadBackup(row: any) {
+  if (row.downloadUrl) {
+    window.open(row.downloadUrl, '_blank')
+  } else {
+    ElMessage.info('下载链接暂不可用')
+  }
+}
+
+async function restoreBackup(row: any) {
+  try {
+    await ElMessageBox.confirm(`确定要从 "${row.name}" 恢复数据吗？此操作将覆盖当前数据。`, '确认恢复', { type: 'warning' })
+    const res = await service.post(`/backup/${row.id || row.name}/restore`)
+    if (res.data.code === 0) {
+      ElMessage.success('数据恢复成功')
+    } else {
+      ElMessage.error(res.data.message || '恢复失败')
+    }
+  } catch (e: any) {
+    if (e !== 'cancel') ElMessage.error('恢复失败')
+  }
+}
+
+async function deleteBackup(row: any) {
+  try {
+    await ElMessageBox.confirm(`确定要删除备份 "${row.name}" 吗？`, '确认删除', { type: 'warning' })
+    const res = await service.delete(`/backup/${row.id || row.name}`)
+    if (res.data.code === 0) {
+      ElMessage.success('删除成功')
+      fetchBackups()
+    } else {
+      ElMessage.error(res.data.message || '删除失败')
+    }
+  } catch (e: any) {
+    if (e !== 'cancel') ElMessage.error('删除失败')
+  }
+}
+
+function autoBackup() {
+  ElMessage.info('自动备份设置功能开发中')
+}
+
+function uploadBackup() {
+  ElMessage.info('上传备份文件功能开发中')
+}
+
+onMounted(fetchBackups)
 </script>
 <style scoped>
 .cyber-page { padding: 1.5rem; min-height: 100vh; background: #0a0a0f; color: #e0e0ff; }

@@ -28,20 +28,20 @@
         <el-table-column prop="bannedAt" label="封禁时间" width="160" />
         <el-table-column prop="expiresAt" label="到期时间" width="160" />
         <el-table-column label="操作" width="100" fixed="right">
-          <template #default><el-button size="small" type="success" link>解封</el-button></template>
+          <template #default="{ row }"><el-button size="small" type="success" link @click="unbanUser(row)">解封</el-button></template>
         </el-table-column>
       </el-table>
     </div>
 
     <div class="cyber-card">
-      <div class="card-header"><h2>IP拦截列表</h2><el-button type="danger" size="small">+ 添加IP</el-button></div>
+      <div class="card-header"><h2>IP拦截列表</h2><el-button type="danger" size="small" @click="addIPBlock">+ 添加IP</el-button></div>
       <el-table :data="blockedIPs" style="width: 100%" class="cyber-table">
         <el-table-column prop="ip" label="IP地址" width="150" />
         <el-table-column prop="reason" label="拦截原因" />
         <el-table-column prop="blockCount" label="拦截次数" width="100" />
         <el-table-column prop="blockedAt" label="拦截时间" width="160" />
         <el-table-column label="操作" width="100" fixed="right">
-          <template #default><el-button size="small" type="success" link>解除</el-button></template>
+          <template #default="{ row }"><el-button size="small" type="success" link @click="releaseIP(row)">解除</el-button></template>
         </el-table-column>
       </el-table>
     </div>
@@ -49,18 +49,107 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-const stats = ref({ bannedUsers: 23, blockedIPs: 156, todayBlocks: 47 })
-const bannedUsers = ref([
-  { userId: 'U10099', username: '恶意用户A', reason: '发布违规内容', banType: '永久', bannedAt: '2026-05-20 10:00', expiresAt: '-' },
-  { userId: 'U10123', username: 'spam_bot', reason: '恶意刷接口', banType: '永久', bannedAt: '2026-06-01 08:30', expiresAt: '-' },
-  { userId: 'U10234', username: '违规用户B', reason: '多次违规', banType: '7天', bannedAt: '2026-06-10 14:00', expiresAt: '2026-06-17 14:00' },
-])
-const blockedIPs = ref([
-  { ip: '45.33.**.**', reason: '恶意扫描', blockCount: 1234, blockedAt: '2026-06-01 00:00' },
-  { ip: '185.220.**.**', reason: 'DDoS攻击', blockCount: 5678, blockedAt: '2026-05-15 12:00' },
-])
-function addBan() { console.log('添加封禁') }
+import { ref, onMounted } from 'vue'
+import service from '@/api/request'
+import { ElMessage, ElMessageBox } from 'element-plus'
+
+const loading = ref(false)
+
+const stats = ref({ bannedUsers: 0, blockedIPs: 0, todayBlocks: 0 })
+const bannedUsers = ref<any[]>([])
+const blockedIPs = ref<any[]>([])
+
+async function fetchData() {
+  loading.value = true
+  try {
+    const res = await service.get('/admin/blacklist')
+    if (res.data.code === 0) {
+      const data = res.data.data
+      bannedUsers.value = data.bannedUsers || []
+      blockedIPs.value = data.blockedIps || []
+      const s = data.stats || {}
+      stats.value = {
+        bannedUsers: s.totalBanned ?? bannedUsers.value.length,
+        blockedIPs: s.totalBlocked ?? blockedIPs.value.length,
+        todayBlocks: s.todayBlocks ?? 0
+      }
+    }
+  } catch (e) {
+    ElMessage.error('加载黑名单数据失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+function addBan() {
+  ElMessageBox.prompt('请输入要封禁的用户ID', '添加封禁', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+  }).then(async ({ value }) => {
+    try {
+      const res = await service.post('/admin/blacklist/users', { userId: value, username: '', reason: '' })
+      if (res.data.code === 0) {
+        ElMessage.success('封禁成功')
+        fetchData()
+      }
+    } catch (e) {
+      ElMessage.error('封禁失败')
+    }
+  }).catch(() => {})
+}
+
+async function unbanUser(row: any) {
+  try {
+    await ElMessageBox.confirm(`确定要解封用户「${row.username}」吗？`, '解封确认', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+    const res = await service.delete(`/admin/blacklist/users/${row.id}`)
+    if (res.data.code === 0) {
+      ElMessage.success('已解封')
+      fetchData()
+    }
+  } catch (e) {
+    if (e !== 'cancel') ElMessage.error('解封失败')
+  }
+}
+
+function addIPBlock() {
+  ElMessageBox.prompt('请输入要拦截的IP地址', '添加IP拦截', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+  }).then(async ({ value }) => {
+    try {
+      const res = await service.post('/admin/blacklist/ips', { ip: value, reason: '' })
+      if (res.data.code === 0) {
+        ElMessage.success('IP拦截成功')
+        fetchData()
+      }
+    } catch (e) {
+      ElMessage.error('IP拦截失败')
+    }
+  }).catch(() => {})
+}
+
+async function releaseIP(row: any) {
+  try {
+    await ElMessageBox.confirm(`确定要解除IP「${row.ip}」的拦截吗？`, '解除确认', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+    const res = await service.delete(`/admin/blacklist/ips/${row.id}`)
+    if (res.data.code === 0) {
+      ElMessage.success('已解除拦截')
+      fetchData()
+    }
+  } catch (e) {
+    if (e !== 'cancel') ElMessage.error('解除拦截失败')
+  }
+}
+
+onMounted(fetchData)
 </script>
 
 <style scoped>

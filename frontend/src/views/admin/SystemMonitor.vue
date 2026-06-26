@@ -11,10 +11,11 @@
       <div class="cyber-card">
         <div class="card-header"><h2>📊 服务状态</h2></div>
         <div class="service-list">
-          <div v-for="service in services" :key="service.name" class="service-item">
-            <span class="service-status" :class="service.status"></span>
-            <span class="service-name">{{ service.name }}</span>
-            <span class="service-info">{{ service.info }}</span>
+          <div v-for="svc in services" :key="svc.name" class="service-item">
+            <span class="service-status" :class="svc.status"></span>
+            <span class="service-name">{{ svc.name }}</span>
+            <span class="service-info">{{ svc.info }}</span>
+            <el-button size="small" type="warning" link @click="restartService(svc.name)">重启</el-button>
           </div>
         </div>
       </div>
@@ -42,27 +43,89 @@
 </template>
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
-const monitor = ref({ cpu: 45, memory: 62, disk: 38, network: '12.5 MB/s' })
-const services = ref([
-  { name: 'Node.js Backend', status: 'online', info: '运行正常 - PM2' },
-  { name: 'Nginx', status: 'online', info: '运行正常 - Systemd' },
-  { name: 'DeepSeek API', status: 'online', info: '连接正常' },
-  { name: 'MySQL Database', status: 'online', info: '连接正常' },
-])
-const metrics = ref({ responseTime: '45ms', qps: '234', errorRate: '0.1%', uptime: '7d 12h' })
-const logs = ref([
-  { id: 1, time: '14:32:18', level: 'info', message: '用户 U10086 登录成功' },
-  { id: 2, time: '14:32:15', level: 'info', message: 'AI请求处理完成 - DeepSeek' },
-  { id: 3, time: '14:32:12', level: 'warn', message: 'API响应时间超过阈值: 520ms' },
-  { id: 4, time: '14:32:08', level: 'info', message: '订单 ORD20260615001 创建成功' },
-])
+import service from '@/api/request'
+import { ElMessage, ElMessageBox } from 'element-plus'
+
+const monitor = ref({ cpu: 0, memory: 0, disk: 0, network: '-', uptime: '', hostname: '', loadAvg: '' })
+const services = ref<any[]>([])
+const metrics = ref({ responseTime: '-', qps: '-', errorRate: '-', uptime: '-', totalRequests: 0 })
+const logs = ref<any[]>([])
+
 let timer: any = null
+
+async function fetchMonitor() {
+  try {
+    const res = await service.get('/system/monitor')
+    if (res.data.code === 0) {
+      const d = res.data.data
+      monitor.value = {
+        cpu: d.cpu ?? 0,
+        memory: d.memory ?? 0,
+        disk: d.disk ?? 0,
+        network: d.network ?? '-',
+        uptime: d.uptime ?? '',
+        hostname: d.hostname ?? '',
+        loadAvg: d.loadAvg ?? '',
+      }
+    }
+  } catch {
+    // silent refresh
+  }
+}
+
+async function fetchServices() {
+  try {
+    const res = await service.get('/system/services')
+    if (res.data.code === 0) {
+      services.value = res.data.data
+    }
+  } catch {
+    // silent
+  }
+}
+
+async function fetchMetrics() {
+  try {
+    const res = await service.get('/system/metrics')
+    if (res.data.code === 0) {
+      const d = res.data.data
+      metrics.value = {
+        responseTime: d.responseTime ?? '-',
+        qps: d.qps ?? '-',
+        errorRate: d.errorRate ?? '-',
+        uptime: d.uptime ?? '-',
+        totalRequests: d.totalRequests ?? 0,
+      }
+    }
+  } catch {
+    // silent
+  }
+}
+
+async function restartService(name: string) {
+  try {
+    await ElMessageBox.confirm(`确定要重启服务 "${name}" 吗？`, '确认重启', { type: 'warning' })
+    const res = await service.post(`/system/services/${encodeURIComponent(name)}/restart`)
+    if (res.data.code === 0) {
+      ElMessage.success(`服务 ${name} 重启成功`)
+      fetchServices()
+    } else {
+      ElMessage.error(res.data.message || '重启失败')
+    }
+  } catch (e: any) {
+    if (e !== 'cancel') ElMessage.error('重启失败')
+  }
+}
+
+async function fetchAll() {
+  await Promise.all([fetchMonitor(), fetchServices(), fetchMetrics()])
+}
+
 onMounted(() => {
-  timer = setInterval(() => {
-    monitor.value.cpu = Math.floor(Math.random() * 30 + 30)
-    monitor.value.memory = Math.floor(Math.random() * 20 + 55)
-  }, 3000)
+  fetchAll()
+  timer = setInterval(fetchAll, 10000)
 })
+
 onUnmounted(() => { if (timer) clearInterval(timer) })
 </script>
 <style scoped>

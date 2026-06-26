@@ -1,41 +1,147 @@
 <template>
   <div class="cyber-page">
-    <div class="page-header"><h1>🔌 API管理</h1><p class="subtitle">API接口管理与调用统计</p></div>
+    <div class="page-header"><h1>🔌 API管理</h1><p class="subtitle">API错误监控与管理</p></div>
     <div class="stats-grid">
-      <div class="stat-card"><div class="stat-icon">🔌</div><div class="stat-info"><div class="stat-value">{{ stats.totalAPIs }}</div><div class="stat-label">接口总数</div></div></div>
-      <div class="stat-card"><div class="stat-icon">📊</div><div class="stat-info"><div class="stat-value">{{ stats.todayCalls }}</div><div class="stat-label">今日调用</div></div></div>
-      <div class="stat-card"><div class="stat-icon">⚡</div><div class="stat-info"><div class="stat-value">{{ stats.avgLatency }}</div><div class="stat-label">平均延迟</div></div></div>
-      <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-info"><div class="stat-value">{{ stats.successRate }}</div><div class="stat-label">成功率</div></div></div>
+      <div class="stat-card"><div class="stat-icon">🔌</div><div class="stat-info"><div class="stat-value">{{ stats.total ?? '-' }}</div><div class="stat-label">错误总数</div></div></div>
+      <div class="stat-card"><div class="stat-icon">📊</div><div class="stat-info"><div class="stat-value">{{ stats.todayErrors ?? '-' }}</div><div class="stat-label">今日错误</div></div></div>
+      <div class="stat-card"><div class="stat-icon">⚡</div><div class="stat-info"><div class="stat-value">{{ stats.resolvedRate ?? '-' }}</div><div class="stat-label">解决率</div></div></div>
+      <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-info"><div class="stat-value">{{ stats.pending ?? '-' }}</div><div class="stat-label">待处理</div></div></div>
     </div>
     <div class="cyber-card">
-      <div class="card-header"><h2>API接口列表</h2></div>
-      <el-table :data="apis" style="width: 100%" class="cyber-table">
-        <el-table-column prop="method" label="方法" width="80">
-          <template #default="{ row }"><el-tag :type="row.method === 'GET' ? 'success' : row.method === 'POST' ? 'primary' : 'warning'" size="small" effect="dark">{{ row.method }}</el-tag></template>
+      <div class="card-header">
+        <h2>API错误列表</h2>
+        <div style="display:flex;gap:8px;">
+          <el-select v-model="statusFilter" placeholder="状态筛选" clearable size="small" style="width:120px" @change="fetchErrors">
+            <el-option label="pending" value="pending" />
+            <el-option label="resolved" value="resolved" />
+            <el-option label="ignored" value="ignored" />
+          </el-select>
+          <el-button size="small" type="primary" @click="batchResolve" :disabled="!selectedIds.length">批量解决</el-button>
+        </div>
+      </div>
+      <el-table :data="errors" style="width: 100%" class="cyber-table" @selection-change="onSelectionChange">
+        <el-table-column type="selection" width="40" />
+        <el-table-column prop="toolName" label="工具名称" width="140" />
+        <el-table-column prop="apiPath" label="路径" />
+        <el-table-column prop="errorMessage" label="错误信息" show-overflow-tooltip />
+        <el-table-column prop="status" label="状态" width="100">
+          <template #default="{ row }"><el-tag :type="row.status === 'resolved' ? 'success' : row.status === 'ignored' ? 'info' : 'danger'" size="small" effect="dark">{{ row.status }}</el-tag></template>
         </el-table-column>
-        <el-table-column prop="path" label="路径" />
-        <el-table-column prop="description" label="描述" />
-        <el-table-column prop="calls" label="调用次数" width="100" />
-        <el-table-column prop="latency" label="平均延迟" width="100" />
-        <el-table-column prop="status" label="状态" width="80">
-          <template #default="{ row }"><el-tag :type="row.status === '正常' ? 'success' : 'danger'" size="small" effect="dark">{{ row.status }}</el-tag></template>
-        </el-table-column>
-        <el-table-column label="操作" width="100" fixed="right">
-          <template #default><el-button size="small" type="primary" link>详情</el-button></template>
+        <el-table-column prop="createdAt" label="时间" width="160" />
+        <el-table-column label="操作" width="180" fixed="right">
+          <template #default="{ row }">
+            <el-button size="small" type="primary" link @click="retryError(row)">重试</el-button>
+            <el-button size="small" type="success" link @click="resolveError(row)">解决</el-button>
+            <el-button size="small" type="danger" link @click="deleteError(row)">删除</el-button>
+          </template>
         </el-table-column>
       </el-table>
+      <div style="display:flex;justify-content:flex-end;margin-top:12px;">
+        <el-pagination layout="total, prev, pager, next" :total="total" :page-size="pageSize" :current-page="currentPage" @current-change="onPageChange" />
+      </div>
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import { ref } from 'vue'
-const stats = ref({ totalAPIs: 45, todayCalls: '23,456', avgLatency: '45ms', successRate: '99.8%' })
-const apis = ref([
-  { method: 'POST', path: '/api/v1/auth/login', description: '用户登录', calls: 1234, latency: '32ms', status: '正常' },
-  { method: 'POST', path: '/api/v1/ai/chat', description: 'AI对话', calls: 5678, latency: '120ms', status: '正常' },
-  { method: 'GET', path: '/api/v1/users', description: '用户列表', calls: 890, latency: '28ms', status: '正常' },
-  { method: 'POST', path: '/api/v1/payment/recharge', description: '充值下单', calls: 234, latency: '45ms', status: '正常' },
-])
+import { ref, onMounted } from 'vue'
+import service from '@/api/request'
+import { ElMessage, ElMessageBox } from 'element-plus'
+
+const loading = ref(false)
+const errors = ref<any[]>([])
+const total = ref(0)
+const currentPage = ref(1)
+const pageSize = 20
+const statusFilter = ref('')
+const selectedIds = ref<number[]>([])
+const stats = ref<any>({})
+
+async function fetchErrors() {
+  loading.value = true
+  try {
+    const params: any = { page: currentPage.value, pageSize }
+    if (statusFilter.value) params.status = statusFilter.value
+    const res = await service.get('/admin/api-errors', { params })
+    if (res.data.code === 0) {
+      errors.value = res.data.data.errors || []
+      total.value = res.data.data.total || 0
+      stats.value = res.data.data.stats || {}
+    }
+  } catch {
+    ElMessage.error('加载API错误列表失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+function onSelectionChange(rows: any[]) {
+  selectedIds.value = rows.map(r => r.id)
+}
+
+function onPageChange(p: number) {
+  currentPage.value = p
+  fetchErrors()
+}
+
+async function retryError(row: any) {
+  try {
+    const res = await service.post(`/admin/api-errors/${row.id}/retry`)
+    if (res.data.code === 0) {
+      ElMessage.success('重试成功')
+      fetchErrors()
+    } else {
+      ElMessage.error(res.data.message || '重试失败')
+    }
+  } catch {
+    ElMessage.error('重试失败')
+  }
+}
+
+async function resolveError(row: any) {
+  try {
+    const res = await service.put(`/admin/api-errors/${row.id}`, { status: 'resolved', resolvedBy: 'admin' })
+    if (res.data.code === 0) {
+      ElMessage.success('已标记为解决')
+      fetchErrors()
+    } else {
+      ElMessage.error(res.data.message || '操作失败')
+    }
+  } catch {
+    ElMessage.error('操作失败')
+  }
+}
+
+async function deleteError(row: any) {
+  try {
+    await ElMessageBox.confirm('确定要删除该错误记录吗？', '确认删除', { type: 'warning' })
+    const res = await service.delete(`/admin/api-errors/${row.id}`)
+    if (res.data.code === 0) {
+      ElMessage.success('删除成功')
+      fetchErrors()
+    } else {
+      ElMessage.error(res.data.message || '删除失败')
+    }
+  } catch (e: any) {
+    if (e !== 'cancel') ElMessage.error('删除失败')
+  }
+}
+
+async function batchResolve() {
+  if (!selectedIds.value.length) return
+  try {
+    const res = await service.post('/admin/api-errors/batch-resolve', { ids: selectedIds.value })
+    if (res.data.code === 0) {
+      ElMessage.success('批量解决成功')
+      fetchErrors()
+    } else {
+      ElMessage.error(res.data.message || '操作失败')
+    }
+  } catch {
+    ElMessage.error('操作失败')
+  }
+}
+
+onMounted(fetchErrors)
 </script>
 <style scoped>
 .cyber-page { padding: 1.5rem; min-height: 100vh; background: #0a0a0f; color: #e0e0ff; }

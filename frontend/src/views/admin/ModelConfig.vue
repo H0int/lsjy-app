@@ -110,24 +110,73 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import service from '@/api/request'
 
 const dialogVisible = ref(false)
 const isEditing = ref(false)
 const saving = ref(false)
+const loading = ref(false)
 const editingId = ref<number|null>(null)
 
 const form = ref({ name: '', icon: '', endpoint: '', apiKey: '', modelsStr: '' })
 
-const providers = ref([
-  { id: 1, name: '豆包', icon: '🫘', endpoint: 'https://ark.cn-beijing.volces.com/api/v3', apiKey: '', apiKeyMasked: '未配置', models: ['Doubao-Pro-32K','Doubao-Pro-128K','Doubao-Lite-32K'], monthlyCost: 0, connected: false },
-  { id: 2, name: 'DeepSeek', icon: '🔍', endpoint: 'https://api.deepseek.com/v1', apiKey: '', apiKeyMasked: '未配置', models: ['DeepSeek-V3','DeepSeek-R1'], monthlyCost: 0, connected: false },
-  { id: 3, name: '即梦', icon: '🎨', endpoint: 'https://jimeng.jianying.com/v1', apiKey: '', apiKeyMasked: '未配置', models: ['即梦 2.1','即梦 2.0 Pro'], monthlyCost: 0, connected: false },
-  { id: 4, name: '腾讯元宝', icon: '💎', endpoint: 'https://api.yuanbao.tencent.com/v1', apiKey: '', apiKeyMasked: '未配置', models: ['元宝 Pro','元宝 Lite'], monthlyCost: 0, connected: false },
-  { id: 5, name: '通义千问', icon: '🦙', endpoint: 'https://dashscope.aliyuncs.com/api/v1', apiKey: '', apiKeyMasked: '未配置', models: ['Qwen-Max','Qwen-Plus','Qwen-Turbo'], monthlyCost: 0, connected: false },
-  { id: 6, name: 'OpenAI GPT', icon: '🤖', endpoint: 'https://api.openai.com/v1', apiKey: '', apiKeyMasked: '未配置', models: ['GPT-4o','GPT-4o Mini','GPT-4 Turbo'], monthlyCost: 0, connected: false },
-])
+const providers = ref<any[]>([])
+
+async function fetchProviders() {
+  loading.value = true
+  try {
+    const res = await service.get('/ai/providers')
+    if (res.data.code === 0) {
+      const list = res.data.data || []
+      providers.value = list.map((p: any, i: number) => ({
+        id: i + 1,
+        name: p.displayName || p.name,
+        icon: getIcon(p.name),
+        endpoint: '',
+        apiKey: '',
+        apiKeyMasked: p.configured ? '已配置' : '未配置',
+        models: [],
+        monthlyCost: 0,
+        connected: p.status === 'active' || p.configured === true
+      }))
+    }
+  } catch (e) {
+    ElMessage.error('加载Provider列表失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+async function fetchModels() {
+  try {
+    const res = await service.get('/ai/models')
+    if (res.data.code === 0) {
+      const modelGroups = res.data.data || []
+      modelGroups.forEach((group: any) => {
+        const p = providers.value.find((pr: any) => pr.name === group.provider || pr.name.toLowerCase() === group.provider.toLowerCase())
+        if (p) {
+          p.models = group.models || []
+        }
+      })
+    }
+  } catch (e) {
+    // silent
+  }
+}
+
+function getIcon(name: string): string {
+  const map: Record<string, string> = {
+    doubao: '🫘', deepseek: '🔍', jimeng: '🎨',
+    yuanbao: '💎', qwen: '🦙', openai: '🤖'
+  }
+  return map[name.toLowerCase()] || '🤖'
+}
+
+onMounted(() => {
+  fetchProviders().then(fetchModels)
+})
 
 function openDialog(p?: any) {
   if (p) {
@@ -140,29 +189,40 @@ function openDialog(p?: any) {
   dialogVisible.value = true
 }
 
-function handleSave() {
+async function handleSave() {
   if (!form.value.name.trim()) return ElMessage.warning('请输入名称')
   saving.value = true
-  setTimeout(() => {
+  try {
     const models = form.value.modelsStr.split(',').map(s => s.trim()).filter(Boolean)
     if (isEditing.value && editingId.value) {
       const idx = providers.value.findIndex(p => p.id === editingId.value)
       if (idx >= 0) Object.assign(providers.value[idx], { name: form.value.name, icon: form.value.icon, endpoint: form.value.endpoint, models })
       ElMessage.success('Provider已更新')
     } else {
-      providers.value.push({ id: Date.now(), name: form.value.name, icon: form.value.icon, endpoint: form.value.endpoint, apiKey: form.value.apiKey, apiKeyMasked: form.value.apiKey.substring(0,6)+'***', models, monthlyCost: 0, connected: false })
+      providers.value.push({ id: Date.now(), name: form.value.name, icon: form.value.icon, endpoint: form.value.endpoint, apiKey: form.value.apiKey, apiKeyMasked: form.value.apiKey ? form.value.apiKey.substring(0,6)+'***' : '未配置', models, monthlyCost: 0, connected: false })
       ElMessage.success('Provider添加成功')
     }
-    saving.value = false; dialogVisible.value = false
-  }, 500)
+    dialogVisible.value = false
+  } catch (e) {
+    ElMessage.error('保存失败')
+  } finally {
+    saving.value = false
+  }
 }
 
-function testConnection(p: any) {
+async function testConnection(p: any) {
   ElMessage.info(`正在测试 ${p.name} 连接...`)
-  setTimeout(() => {
-    p.connected = true
-    ElMessage.success(`${p.name} 连接正常`)
-  }, 1500)
+  try {
+    await fetchProviders()
+    const updated = providers.value.find((pr: any) => pr.name === p.name)
+    if (updated && updated.connected) {
+      ElMessage.success(`${p.name} 连接正常`)
+    } else {
+      ElMessage.warning(`${p.name} 连接状态未确认`)
+    }
+  } catch (e) {
+    ElMessage.error(`${p.name} 连接测试失败`)
+  }
 }
 
 function removeProvider(p: any) {

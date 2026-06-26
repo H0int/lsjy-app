@@ -22,18 +22,58 @@
           <template #default="{ row }"><el-tag :type="row.status === '已结算' ? 'success' : 'warning'" size="small" effect="dark">{{ row.status }}</el-tag></template>
         </el-table-column>
         <el-table-column prop="createdAt" label="时间" width="160" />
+        <el-table-column label="操作" width="100">
+          <template #default="{ row }">
+            <el-button v-if="row.status !== '已结算'" size="small" type="primary" link @click="settleCommission(row)">结算</el-button>
+            <span v-else style="color:#00ff88;font-size:12px;">已结算</span>
+          </template>
+        </el-table-column>
       </el-table>
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import { ref } from 'vue'
-const stats = ref({ totalCommission: '12,456', monthCommission: '3,789', pendingSettle: '1,234', settleCount: 156 })
-const commissions = ref([
-  { orderId: 'ORD20260615001', fromUser: '张三', toUser: '李四', amount: '¥299', rate: '10%', commission: '29.9', status: '已结算', createdAt: '2026-06-15 10:30' },
-  { orderId: 'ORD20260615002', fromUser: '王五', toUser: '李四', amount: '¥599', rate: '10%', commission: '59.9', status: '待结算', createdAt: '2026-06-15 11:00' },
-  { orderId: 'ORD20260614003', fromUser: '赵六', toUser: '张三', amount: '¥199', rate: '8%', commission: '15.9', status: '已结算', createdAt: '2026-06-14 15:20' },
-])
+import { ref, onMounted } from 'vue'
+import service from '@/api/request'
+import { ElMessage, ElMessageBox } from 'element-plus'
+
+const loading = ref(false)
+const stats = ref({ totalCommission: '0', monthCommission: '0', pendingSettle: '0', settleCount: 0 })
+const commissions = ref<any[]>([])
+
+async function fetchCommissions() {
+  loading.value = true
+  try {
+    const res = await service.get('/admin/commissions')
+    if (res.data.code === 0) {
+      commissions.value = res.data.data.commissions || []
+      const s = res.data.data.stats || {}
+      stats.value = {
+        totalCommission: s.total?.toLocaleString() || '0',
+        monthCommission: s.monthly?.toLocaleString() || '0',
+        pendingSettle: s.pendingSettle?.toLocaleString() || '0',
+        settleCount: s.settleCount || 0
+      }
+    }
+  } catch (e) {
+    ElMessage.error('加载佣金记录失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+async function settleCommission(row: any) {
+  try {
+    await ElMessageBox.confirm(`确定结算佣金「${row.orderId}」？`, '确认结算', { type: 'info' })
+    await service.put(`/admin/commissions/${row.id}/settle`)
+    ElMessage.success('结算成功')
+    fetchCommissions()
+  } catch (e) {
+    if (e !== 'cancel') ElMessage.error('结算失败')
+  }
+}
+
+onMounted(fetchCommissions)
 </script>
 <style scoped>
 .cyber-page { padding: 1.5rem; min-height: 100vh; background: #0a0a0f; color: #e0e0ff; }

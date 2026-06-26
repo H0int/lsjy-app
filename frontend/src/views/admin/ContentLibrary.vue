@@ -99,56 +99,145 @@
 
     <el-dialog v-model="dialogVisible" title="新建内容" width="600px" destroy-on-close>
       <el-form label-width="80px" class="cyber-form">
-        <el-form-item label="标题"><el-input placeholder="输入标题" /></el-form-item>
+        <el-form-item label="标题"><el-input v-model="form.title" placeholder="输入标题" /></el-form-item>
         <el-form-item label="类型">
-          <el-select placeholder="选择类型" class="w-full">
+          <el-select v-model="form.type" placeholder="选择类型" class="w-full">
             <el-option v-for="t in types" :key="t" :label="t" :value="t" />
           </el-select>
         </el-form-item>
-        <el-form-item label="内容"><el-input type="textarea" :rows="6" placeholder="输入内容或使用AI生成" /></el-form-item>
+        <el-form-item label="内容"><el-input v-model="form.content" type="textarea" :rows="6" placeholder="输入内容或使用AI生成" /></el-form-item>
+        <el-form-item label="标签"><el-input v-model="form.tags" placeholder="标签用逗号分隔" /></el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="dialogVisible = false">保存草稿</el-button>
+        <el-button type="primary" @click="createContent">保存草稿</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="viewDialogVisible" title="内容详情" width="600px" destroy-on-close>
+      <div v-if="currentContent" class="cyber-form" style="padding: 0 20px;">
+        <h3 style="color: #00f0ff; margin-bottom: 12px;">{{ currentContent.title }}</h3>
+        <p style="color: #8888aa; font-size: 13px; margin-bottom: 8px;">
+          <span class="cyber-tag tag-cyan">{{ currentContent.type }}</span>
+          <span class="cyber-badge" :class="'badge-' + currentContent.status" style="margin-left: 8px;">{{ statusLabel(currentContent.status) }}</span>
+          <span style="margin-left: 12px;">{{ currentContent.aiGenerated ? '🤖 AI' : '✍️ 人工' }} · {{ currentContent.views?.toLocaleString() }}浏览</span>
+        </p>
+        <div style="color: #e0e0ff; line-height: 1.8; white-space: pre-wrap;">{{ currentContent.content || currentContent.summary }}</div>
+      </div>
+      <template #footer>
+        <el-button @click="viewDialogVisible = false">关闭</el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ref, computed, onMounted, watch } from 'vue'
+import service from '@/api/request'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 const search = ref('')
 const typeFilter = ref('')
 const statusFilter = ref('')
 const dialogVisible = ref(false)
+const loading = ref(false)
 const types = ['文章', '教程', '公告', '知识库', '提示词模板']
 
-const contents = ref([
-  { id: 1, title: 'GPT-4o最新功能详解', summary: '深入解析GPT-4o的多模态能力提升', type: '文章', aiGenerated: true, views: 3420, status: 'published', createdAt: '2026-06-14' },
-  { id: 2, title: 'AI绘画入门教程', summary: '从零开始学习AI绘画技巧', type: '教程', aiGenerated: true, views: 2180, status: 'published', createdAt: '2026-06-13' },
-  { id: 3, title: '平台升级公告 v2.5', summary: '新增多模型切换功能', type: '公告', aiGenerated: false, views: 5600, status: 'published', createdAt: '2026-06-12' },
-  { id: 4, title: 'Prompt工程最佳实践', summary: '提升AI输出质量的系统方法', type: '知识库', aiGenerated: true, views: 1890, status: 'published', createdAt: '2026-06-11' },
-  { id: 5, title: '代码生成提示词合集', summary: '覆盖前后端的代码生成模板', type: '提示词模板', aiGenerated: true, views: 980, status: 'draft', createdAt: '2026-06-10' },
-  { id: 6, title: 'Claude vs GPT对比评测', summary: '主流大模型能力全面对比', type: '文章', aiGenerated: false, views: 4200, status: 'published', createdAt: '2026-06-09' },
-  { id: 7, title: 'API调用优化指南', summary: '降低延迟和成本的实战技巧', type: '教程', aiGenerated: true, views: 1560, status: 'archived', createdAt: '2026-06-08' },
-])
+const contents = ref<any[]>([])
+const total = ref(0)
+
+// 新建内容表单
+const form = ref({ title: '', content: '', type: '', status: 'draft', tags: '' })
+
+// 查看详情
+const viewDialogVisible = ref(false)
+const currentContent = ref<any>(null)
 
 function statusLabel(s: string) { return { published: '已发布', draft: '草稿', archived: '已下架' }[s] || s }
 
-const filteredContents = computed(() => {
-  let list = contents.value
-  if (search.value) list = list.filter(c => c.title.includes(search.value))
-  if (typeFilter.value) list = list.filter(c => c.type === typeFilter.value)
-  if (statusFilter.value) list = list.filter(c => c.status === statusFilter.value)
-  return list
+const filteredContents = computed(() => contents.value)
+
+async function fetchData() {
+  loading.value = true
+  try {
+    const res = await service.get('/admin/content-library', {
+      params: {
+        search: search.value,
+        type: typeFilter.value,
+        status: statusFilter.value,
+        page: 1,
+        pageSize: 20
+      }
+    })
+    if (res.data.code === 0) {
+      contents.value = res.data.data.items || []
+      total.value = res.data.data.total || 0
+    }
+  } catch (e) {
+    ElMessage.error('加载内容失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(fetchData)
+
+// 搜索/筛选变化时重新拉取
+watch([search, typeFilter, statusFilter], () => {
+  fetchData()
 })
 
-function viewContent(c: any) { ElMessage.info(`查看: ${c.title}`) }
-function togglePublish(c: any) {
-  c.status = c.status === 'published' ? 'archived' : 'published'
-  ElMessage.success(`已${c.status === 'published' ? '发布' : '下架'}`)
+async function viewContent(c: any) {
+  currentContent.value = c
+  viewDialogVisible.value = true
+}
+
+async function togglePublish(c: any) {
+  const newStatus = c.status === 'published' ? 'archived' : 'published'
+  const action = newStatus === 'published' ? '发布' : '下架'
+  try {
+    await ElMessageBox.confirm(`确定要${action}「${c.title}」吗？`, '确认操作', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    const res = await service.put(`/admin/content-library/${c.id}`, {
+      ...c,
+      status: newStatus
+    })
+    if (res.data.code === 0) {
+      c.status = newStatus
+      ElMessage.success(`已${action}`)
+    }
+  } catch (e: any) {
+    if (e !== 'cancel') {
+      ElMessage.error(`${action}失败`)
+    }
+  }
+}
+
+async function createContent() {
+  if (!form.value.title) {
+    ElMessage.warning('请输入标题')
+    return
+  }
+  try {
+    const res = await service.post('/admin/content-library', {
+      title: form.value.title,
+      content: form.value.content,
+      type: form.value.type,
+      status: form.value.status,
+      tags: form.value.tags ? form.value.tags.split(',').map((t: string) => t.trim()) : []
+    })
+    if (res.data.code === 0) {
+      ElMessage.success('创建成功')
+      dialogVisible.value = false
+      form.value = { title: '', content: '', type: '', status: 'draft', tags: '' }
+      fetchData()
+    }
+  } catch (e) {
+    ElMessage.error('创建失败')
+  }
 }
 </script>
 

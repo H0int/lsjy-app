@@ -3427,6 +3427,22 @@ app.put('/api/v1/admin/agents/:id', authCheck, (req, res) => {
   Object.assign(a, req.body);
   res.json({ code: 0, message: 'success', data: a });
 });
+app.post('/api/v1/admin/agents', authCheck, (req, res) => {
+  const { name, icon, category, description, model, systemPrompt, coinCost, status } = req.body;
+  if (!name) return res.json({ code: 400, message: '名称不能为空' });
+  const newId = Math.max(0, ...agentsStore.map(a => a.id)) + 1;
+  const newAgent = { id: newId, name, icon: icon || '🤖', category: category || '通用', description: description || '', model: model || 'deepseek', systemPrompt: systemPrompt || '', coinCost: coinCost || 0, status: status || 'active', usageCount: 0, createdAt: new Date().toISOString() };
+  agentsStore.push(newAgent);
+  try { const fs = require('fs'); const path = require('path'); fs.writeFileSync(path.join(__dirname, 'data/agents.json'), JSON.stringify(agentsStore, null, 2)); } catch(e) {}
+  res.json({ code: 0, message: '创建成功', data: newAgent });
+});
+app.delete('/api/v1/admin/agents/:id', authCheck, (req, res) => {
+  const idx = agentsStore.findIndex(a => a.id === Number(req.params.id));
+  if (idx === -1) return res.json({ code: 404, message: 'Agent不存在' });
+  const removed = agentsStore.splice(idx, 1);
+  try { const fs = require('fs'); const path = require('path'); fs.writeFileSync(path.join(__dirname, 'data/agents.json'), JSON.stringify(agentsStore, null, 2)); } catch(e) {}
+  res.json({ code: 0, message: '删除成功', data: removed[0] });
+});
 
 
 // ===== 通用 fallback（必须放在所有路由之后） =====

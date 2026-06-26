@@ -3,11 +3,13 @@
     <div class="cyber-toolbar">
       <div class="toolbar-left">
         <el-input v-model="search" placeholder="搜索操作内容..." class="cyber-input w-64" clearable />
-        <el-select v-model="actionFilter" placeholder="操作类型" class="cyber-input w-36" clearable>
+        <el-select v-model="moduleFilter" placeholder="操作类型" class="cyber-input w-36" clearable>
           <el-option v-for="a in actionTypes" :key="a" :label="a" :value="a" />
         </el-select>
-        <el-select v-model="adminFilter" placeholder="操作人" class="cyber-input w-32" clearable>
-          <el-option v-for="n in adminNames" :key="n" :label="n" :value="n" />
+        <el-select v-model="levelFilter" placeholder="风险等级" class="cyber-input w-32" clearable>
+          <el-option label="高" value="high" />
+          <el-option label="中" value="medium" />
+          <el-option label="低" value="low" />
         </el-select>
       </div>
       <el-button @click="exportLogs">📥 导出审计日志</el-button>
@@ -15,8 +17,8 @@
 
     <div class="cyber-grid-4 mb-6">
       <div class="cyber-stat-mini">
-        <p class="stat-lbl">今日操作数</p>
-        <p class="stat-num text-white">{{ logs.length }}</p>
+        <p class="stat-lbl">日志总数</p>
+        <p class="stat-num text-white">{{ total }}</p>
       </div>
       <div class="cyber-stat-mini">
         <p class="stat-lbl">高风险操作</p>
@@ -24,17 +26,17 @@
       </div>
       <div class="cyber-stat-mini">
         <p class="stat-lbl">活跃管理员</p>
-        <p class="stat-num text-cyan-400">{{ new Set(logs.map(l=>l.admin)).size }}</p>
+        <p class="stat-num text-cyan-400">{{ adminNames.length }}</p>
       </div>
       <div class="cyber-stat-mini">
-        <p class="stat-lbl">异常告警</p>
-        <p class="stat-num text-red-400">2</p>
+        <p class="stat-lbl">当前页</p>
+        <p class="stat-num text-red-400">{{ page }}/{{ Math.ceil(total / pageSize) || 1 }}</p>
       </div>
     </div>
 
     <!-- 桌面端 -->
     <div class="hidden md:block">
-      <el-table :data="filteredLogs" stripe class="cyber-table">
+      <el-table :data="filteredLogs" stripe class="cyber-table" v-loading="loading">
         <el-table-column label="时间" width="170">
           <template #default="{ row }">
             <span class="font-mono text-xs text-[#6a6a8a]">{{ row.time }}</span>
@@ -92,62 +94,90 @@
 
     <div class="mt-4 flex justify-end">
       <el-pagination layout="total, prev, pager, next" :total="total" :page-size="pageSize"
-        @current-change="(p: number) => page = p" />
+        :current-page="page"
+        @current-change="(p: number) => { page = p; fetchLogs() }" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import service from '@/api/request'
 import { ElMessage } from 'element-plus'
 
 const search = ref('')
-const actionFilter = ref('')
-const adminFilter = ref('')
+const moduleFilter = ref('')
+const levelFilter = ref('')
 const page = ref(1)
 const pageSize = 20
 
 const actionTypes = ['创建', '修改', '删除', '登录', '配置变更', '数据导出', '权限变更']
-const adminNames = ['超级管理员', '运营-admin01', '客服-admin02', '技术-admin03']
+const adminNames = ref<string[]>([])
 
-const logs = ref(Array.from({ length: 48 }, (_, i) => {
-  const actions = actionTypes
-  const details = [
-    '创建新用户 agent-007', '修改工具「代码助手」价格为20圣力', '删除过期优惠券 SUMMER2026',
-    '管理员登录系统', '更新GPT-4o API密钥', '导出用户数据报表', '修改admin02权限为运营',
-    '停用智能体「翻译专家」', '批量审核通过12条内容', '修改系统配置：注册赠送圣力→100',
-    '新增公告：平台升级通知', '清除用户张三的违规内容', '更新DeepSeek模型配置'
-  ]
-  const risks: string[] = ['low','low','low','low','low','medium','medium','high']
-  return {
-    id: i + 1,
-    time: `2026-06-${String(14 - Math.floor(i/8)).padStart(2,'0')} ${String(9+i%12).padStart(2,'0')}:${String(10+i%50).padStart(2,'0')}:${String(i*7%60).padStart(2,'0')}`,
-    admin: adminNames[i % 4],
-    action: actions[i % actions.length],
-    detail: details[i % details.length],
-    ip: `192.168.${1+i%5}.${100+i%155}`,
-    risk: risks[i % risks.length],
-    success: i % 7 !== 0,
+const logs = ref<any[]>([])
+const total = ref(0)
+const loading = ref(false)
+
+async function fetchLogs() {
+  loading.value = true
+  try {
+    const params: any = { page: page.value, pageSize }
+    if (moduleFilter.value) params.module = moduleFilter.value
+    if (levelFilter.value) params.level = levelFilter.value
+    const res = await service.get('/audit-logs', { params })
+    if (res.data.code === 0) {
+      const d = res.data.data
+      logs.value = d.logs || []
+      total.value = d.total || 0
+      // Extract unique admin names from logs for the filter dropdown
+      const names = new Set(logs.value.map((l: any) => l.admin).filter(Boolean))
+      if (names.size > 0) adminNames.value = Array.from(names) as string[]
+    }
+  } catch {
+    ElMessage.error('加载审计日志失败')
+  } finally {
+    loading.value = false
   }
-}))
-
-const total = ref(logs.value.length)
+}
 
 const filteredLogs = computed(() => {
   let list = logs.value
-  if (search.value) list = list.filter(l => l.detail.includes(search.value))
-  if (actionFilter.value) list = list.filter(l => l.action === actionFilter.value)
-  if (adminFilter.value) list = list.filter(l => l.admin === adminFilter.value)
+  if (search.value) list = list.filter(l => (l.detail || '').includes(search.value))
+  if (moduleFilter.value) list = list.filter(l => l.action === moduleFilter.value)
+  if (levelFilter.value) list = list.filter(l => l.risk === levelFilter.value)
   return list
 })
 
 function actionTagClass(action: string) {
-  const map: Record<string,string> = { '创建':'tag-green', '修改':'tag-cyan', '删除':'tag-red', '登录':'tag-purple', '配置变更':'tag-amber', '数据导出':'tag-cyan', '权限变更':'tag-red' }
+  const map: Record<string, string> = { '创建':'tag-green', '修改':'tag-cyan', '删除':'tag-red', '登录':'tag-purple', '配置变更':'tag-amber', '数据导出':'tag-cyan', '权限变更':'tag-red' }
   return map[action] || 'tag-cyan'
 }
 function riskClass(r: string) { return r === 'high' ? 'badge-high' : r === 'medium' ? 'badge-medium' : 'badge-low' }
 function riskLabel(r: string) { return { high: '高', medium: '中', low: '低' }[r] || r }
-function exportLogs() { ElMessage.success('审计日志导出成功') }
+
+function exportLogs() {
+  const headers = ['时间', '操作人', '操作类型', '操作内容', 'IP', '风险', '结果']
+  const rows = filteredLogs.value.map(l => [
+    l.time, l.admin, l.action, l.detail, l.ip, riskLabel(l.risk), l.success ? '成功' : '失败'
+  ])
+  const csv = '﻿' + [headers.join(','), ...rows.map(r => r.map(c => `"${c || ''}"`).join(','))].join('\n')
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `audit-log-${new Date().toISOString().slice(0, 10)}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
+  ElMessage.success('审计日志导出成功')
+}
+
+// Watch filter changes and reset page
+watch([moduleFilter, levelFilter], () => {
+  page.value = 1
+  fetchLogs()
+})
+
+onMounted(fetchLogs)
 </script>
 
 <style scoped>

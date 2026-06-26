@@ -85,40 +85,69 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
+import service from '@/api/request'
 
 const search = ref('')
 const agentFilter = ref('')
 const dateRange = ref(null)
 const page = ref(1)
 const pageSize = 20
+const loading = ref(false)
 
 const agentNames = ['代码助手', '文案创作', '数据分析', '客服机器人', '翻译专家', '学习导师']
 
-const allLogs = ref(Array.from({ length: 56 }, (_, i) => ({
-  id: i + 1,
-  time: `2026-06-${String(14 - Math.floor(i/10)).padStart(2,'0')} ${String(15 - i%10).padStart(2,'0')}:${String(30+i%30).padStart(2,'0')}:${String(10+i%50).padStart(2,'0')}`,
-  userName: ['张三','李四','王五','赵六','陈七','刘八'][i%6],
-  agentName: agentNames[i % 6],
-  question: ['如何排序数组？','写一段推广文案','分析数据趋势','怎么退款？','翻译成英文','解释量子力学'][i%6],
-  answer: ['可以使用Array.sort()方法...','好的，我来帮你撰写一段吸引人的...','根据数据分析，本季度营收环比增长...','已为您处理退款申请...','Here is the translation...','量子力学是研究微观粒子...'][i%6],
-  tokens: 120 + i * 87,
-  latency: 150 + i * 31,
-  rating: 3 + (i % 3),
-})))
+const allLogs = ref<any[]>([])
 
-const total = ref(allLogs.value.length)
+const total = ref(0)
 
-const filteredLogs = computed(() => {
-  let list = allLogs.value
-  if (search.value) list = list.filter(l => l.question.includes(search.value) || l.answer.includes(search.value))
-  if (agentFilter.value) list = list.filter(l => l.agentName === agentFilter.value)
-  return list
+const filteredLogs = computed(() => allLogs.value)
+
+async function fetchLogs() {
+  loading.value = true
+  try {
+    const res = await service.get('/admin/chat-logs', {
+      params: {
+        search: search.value,
+        toolName: agentFilter.value,
+        page: page.value,
+        pageSize
+      }
+    })
+    if (res.data.code === 0) {
+      allLogs.value = res.data.data.logs || []
+      total.value = res.data.data.total || 0
+    }
+  } catch (e) {
+    ElMessage.error('加载对话记录失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(fetchLogs)
+
+watch([search, agentFilter, page], () => {
+  fetchLogs()
 })
 
 function exportLogs() {
-  ElMessage.success('对话记录导出成功')
+  if (!allLogs.value.length) {
+    ElMessage.warning('暂无数据可导出')
+    return
+  }
+  const headers = ['时间', '用户', '智能体', '提问', '回复', 'Tokens', '延迟(ms)', '评分']
+  const rows = allLogs.value.map(l => [l.time, l.userName, l.agentName, l.question, l.answer, l.tokens, l.latency, l.rating])
+  const csv = '﻿' + [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `chat-logs-${new Date().toISOString().slice(0,10)}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
+  ElMessage.success('导出成功')
 }
 </script>
 
