@@ -74,9 +74,11 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import service from '@/api/request'
 import { ElMessage } from 'element-plus'
 
+const router = useRouter()
 const filter = ref('all')
 const loading = ref(false)
 
@@ -117,7 +119,7 @@ async function fetchData() {
 }
 
 function viewUser(row: any) {
-  console.log('查看用户', row)
+  router.push({ path: '/admin/users', query: { search: row.id || row.nickname } })
 }
 
 onMounted(fetchData)

@@ -96,6 +96,7 @@
 
 import { ref, computed, onMounted } from 'vue'
 import { adminApi } from '@/api'
+import service from '@/api/request'
 import type { ModerationItem } from '@/types'
 import { ElMessage } from 'element-plus'
 
@@ -140,7 +141,16 @@ async function handleReject(item: ModerationItem) {
   fetchData()
 }
 
-function handleFlag(item: ModerationItem) { item.status = 'flagged'; stats.value.todayReviewed++ }
+async function handleFlag(item: ModerationItem) {
+  try {
+    await service.post(`/moderation/${item.id}/flag`, { reason: '管理员标记' })
+    item.status = 'flagged'
+    stats.value.todayReviewed++
+    ElMessage.success('已标记')
+  } catch (e) {
+    ElMessage.error('标记失败')
+  }
+}
 
 async function handleBatchApprove() {
   for (const id of selectedIds.value) {

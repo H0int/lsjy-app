@@ -117,8 +117,24 @@ async function restartService(name: string) {
   }
 }
 
+async function fetchLogs() {
+  try {
+    const res = await service.get('/system/logs', { params: { page: 1, pageSize: 50 } })
+    if (res.data.code === 0) {
+      logs.value = (res.data.data?.list || res.data.data || []).map((l: any) => ({
+        time: l.createdAt || l.time || new Date().toISOString(),
+        level: l.level || 'INFO',
+        module: l.module || 'system',
+        message: l.message || '',
+      }))
+    }
+  } catch {
+    // silent
+  }
+}
+
 async function fetchAll() {
-  await Promise.all([fetchMonitor(), fetchServices(), fetchMetrics()])
+  await Promise.all([fetchMonitor(), fetchServices(), fetchMetrics(), fetchLogs()])
 }
 
 onMounted(() => {

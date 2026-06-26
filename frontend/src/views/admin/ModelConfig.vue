@@ -197,10 +197,10 @@ async function handleSave() {
     if (isEditing.value && editingId.value) {
       const idx = providers.value.findIndex(p => p.id === editingId.value)
       if (idx >= 0) Object.assign(providers.value[idx], { name: form.value.name, icon: form.value.icon, endpoint: form.value.endpoint, models })
-      ElMessage.success('Provider已更新')
+      ElMessage.success('Provider已更新（本地预览，需重启后端生效）')
     } else {
       providers.value.push({ id: Date.now(), name: form.value.name, icon: form.value.icon, endpoint: form.value.endpoint, apiKey: form.value.apiKey, apiKeyMasked: form.value.apiKey ? form.value.apiKey.substring(0,6)+'***' : '未配置', models, monthlyCost: 0, connected: false })
-      ElMessage.success('Provider添加成功')
+      ElMessage.success('Provider添加成功（本地预览，需重启后端生效）')
     }
     dialogVisible.value = false
   } catch (e) {
@@ -226,9 +226,9 @@ async function testConnection(p: any) {
 }
 
 function removeProvider(p: any) {
-  ElMessageBox.confirm(`确认删除Provider「${p.name}」？`).then(() => {
+  ElMessageBox.confirm(`确认删除Provider「${p.name}」？（仅本地预览，需重启后端生效）`).then(() => {
     providers.value = providers.value.filter(x => x.id !== p.id)
-    ElMessage.success('已删除')
+    ElMessage.success('已删除（本地预览）')
   }).catch(() => {})
 }
 </script>

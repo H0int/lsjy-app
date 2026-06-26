@@ -63,7 +63,7 @@
               </td>
               <td class="p-3" style="color: #5a5a7a;">{{ record.time }}</td>
               <td class="p-3">
-                <button class="text-xs px-2 py-1 rounded" style="background:rgba(0,240,255,0.08);color:#00f0ff;">详情</button>
+                <button class="text-xs px-2 py-1 rounded" style="background:rgba(0,240,255,0.08);color:#00f0ff;" @click="viewDetail(record)">详情</button>
               </td>
             </tr>
           </tbody>
@@ -85,7 +85,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import service from '@/api/request'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 const loading = ref(false)
 const records = ref<any[]>([])
@@ -127,6 +127,21 @@ const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.v
 
 function nextPage() { if (page.value < totalPages.value) { page.value++; fetchRecords() } }
 function prevPage() { if (page.value > 1) { page.value--; fetchRecords() } }
+
+function viewDetail(record: any) {
+  ElMessageBox.alert(
+    `<div style="line-height:2">
+      <p><b>订单号：</b>${record.orderNo || '-'}</p>
+      <p><b>用户：</b>${record.username || record.nickname || '-'}</p>
+      <p><b>金额：</b>¥${record.amount || 0}</p>
+      <p><b>支付方式：</b>${record.paymentMethod || '-'}</p>
+      <p><b>状态：</b>${record.status === 'success' ? '成功' : '处理中'}</p>
+      <p><b>时间：</b>${record.time || '-'}</p>
+    </div>`,
+    '支付详情',
+    { dangerouslyUseHTMLString: true, confirmButtonText: '关闭' }
+  )
+}
 
 onMounted(() => { fetchRecords(); fetchStats() })
 </script>

@@ -202,12 +202,7 @@ function clearLoginFails(account) {
   loginFailMap.delete(account);
 }
 
-// 通用 HTTP 请求函数（带重试和指数退避）
-function httpsRequest(url, options, body, _retryCount) {
-  _retryCount = _retryCount || 0;
-  const maxRetries = (options && options.retries != null) ? options.retries : (CONFIG.AI_MAX_RETRIES || 3);
-  const reqTimeout = (options && options.timeout != null) ? options.timeout : (CONFIG.AI_TIMEOUT || 60000);
-
+function httpsRequest(url, options, body) {
   return new Promise((resolve, reject) => {
     const urlObj = new URL(url);
     const reqOptions = {
@@ -216,7 +211,7 @@ function httpsRequest(url, options, body, _retryCount) {
       path: urlObj.pathname + urlObj.search,
       method: options.method || 'POST',
       headers: options.headers || {},
-      timeout: reqTimeout,
+      timeout: 30000,
     };
     const req = https.request(reqOptions, (res) => {
       let data = '';
@@ -226,30 +221,8 @@ function httpsRequest(url, options, body, _retryCount) {
         catch (e) { resolve({ status: res.statusCode, data, headers: res.headers }); }
       });
     });
-    req.on('error', (err) => {
-      if (_retryCount < maxRetries) {
-        const delay = Math.min(1000 * Math.pow(2, _retryCount), 8000);
-        log(`[httpsRequest] 网络错误 (${err.message})，${delay}ms 后第 ${_retryCount + 1}/${maxRetries} 次重试: ${url}`);
-        setTimeout(() => {
-          httpsRequest(url, options, body, _retryCount + 1).then(resolve, reject);
-        }, delay);
-      } else {
-        log(`[httpsRequest] 请求失败，已耗尽 ${maxRetries} 次重试: ${url} - ${err.message}`);
-        reject(err);
-      }
-    });
-    req.on('timeout', () => {
-      req.destroy();
-      if (_retryCount < maxRetries) {
-        const delay = Math.min(1000 * Math.pow(2, _retryCount), 8000);
-        log(`[httpsRequest] 请求超时 (${reqTimeout}ms)，${delay}ms 后第 ${_retryCount + 1}/${maxRetries} 次重试: ${url}`);
-        setTimeout(() => {
-          httpsRequest(url, options, body, _retryCount + 1).then(resolve, reject);
-        }, delay);
-      } else {
-        reject(new Error(`Request timeout after ${reqTimeout}ms (${maxRetries + 1} attempts total)`));
-      }
-    });
+    req.on('error', reject);
+    req.on('timeout', () => { req.destroy(); reject(new Error('Request timeout')); });
     if (body) req.write(typeof body === 'string' ? body : JSON.stringify(body));
     req.end();
   });
@@ -555,47 +528,6 @@ const paymentFailuresStore = [
   { id: 2, userId: 3, username: 'admin1', orderId: 'ORD-20260624-002', amount: 49.90, paymentMethod: 'alipay', errorCode: 'INSUFFICIENT_BALANCE', errorMessage: '余额不足', status: 'resolved', retryCount: 1, createdAt: '2026-06-24T09:10:00Z', resolvedAt: '2026-06-24T10:00:00Z', resolvedBy: 'admin' },
 ];
 
-// ===== 错误追踪函数 =====
-function trackApiError(toolId, toolName, provider, errorCode, errorMessage, retryCount) {
-  const record = {
-    id: apiErrorsStore.length + 1,
-    toolId: toolId || 0,
-    toolName: toolName || 'unknown',
-    apiProvider: provider || 'unknown',
-    errorCode: errorCode || 'UNKNOWN',
-    errorMessage: errorMessage || '',
-    status: 'pending',
-    retryCount: retryCount || 0,
-    createdAt: new Date().toISOString(),
-    resolvedAt: null,
-    resolvedBy: null,
-  };
-  apiErrorsStore.unshift(record);
-  log(`[错误追踪] API错误: ${provider} ${errorCode} - ${errorMessage}`);
-  return record;
-}
-
-function trackPaymentFailure(userId, username, orderId, amount, paymentMethod, errorCode, errorMessage) {
-  const record = {
-    id: paymentFailuresStore.length + 1,
-    userId: userId || 0,
-    username: username || 'unknown',
-    orderId: orderId || '',
-    amount: amount || 0,
-    paymentMethod: paymentMethod || 'unknown',
-    errorCode: errorCode || 'UNKNOWN',
-    errorMessage: errorMessage || '',
-    status: 'pending',
-    retryCount: 0,
-    createdAt: new Date().toISOString(),
-    resolvedAt: null,
-    resolvedBy: null,
-  };
-  paymentFailuresStore.unshift(record);
-  log(`[错误追踪] 支付失败: userId=${userId} orderId=${orderId} ${errorCode} - ${errorMessage}`);
-  return record;
-}
-
 // ===== AI Provider 实现 =====
 
 async function callCozeAPI(messages, options = {}) {
@@ -603,47 +535,27 @@ async function callCozeAPI(messages, options = {}) {
   const botId = CONFIG.COZE_BOT_ID;
   if (!apiKey || !botId) throw new Error('Coze API Key 或 Bot ID 未配置');
   const headers = { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' };
-
-  // 带重试的 Coze API 调用
-  const cozeMaxRetries = CONFIG.AI_MAX_RETRIES || 3;
-  let lastErr;
-  for (let attempt = 0; attempt <= cozeMaxRetries; attempt++) {
-    try {
-      if (attempt > 0) {
-        const delay = Math.min(1000 * Math.pow(2, attempt), 8000);
-        log(`[callCozeAPI] 第 ${attempt}/${cozeMaxRetries} 次重试，等待 ${delay}ms`);
-        await new Promise(r => setTimeout(r, delay));
-      }
-      const convRes = await httpsRequest('https://api.coze.cn/v1/conversation/create', { method: 'POST', headers, retries: 0 }, {});
-      if (convRes.status !== 200 || !convRes.data?.data?.id) throw new Error(`创建会话失败: ${JSON.stringify(convRes.data)}`);
-      const conversationId = convRes.data.data.id;
-      const chatRes = await httpsRequest(`https://api.coze.cn/v3/chat?conversation_id=${conversationId}`, { method: 'POST', headers, retries: 0 }, {
-        bot_id: botId, user_id: 'lsjy_user', stream: false,
-        additional_messages: messages.map(m => ({ role: m.role, content: m.content, content_type: 'text' })),
-      });
-      if (chatRes.status !== 200 || !chatRes.data?.data?.id) throw new Error(`发起对话失败: ${JSON.stringify(chatRes.data)}`);
-      const chatId = chatRes.data.data.id;
-      let status = 'created';
-      for (let i = 0; i < 90; i++) {
-        await new Promise(r => setTimeout(r, 1000));
-        const pollRes = await httpsRequest(`https://api.coze.cn/v3/chat/retrieve?conversation_id=${conversationId}&chat_id=${chatId}`, { method: 'POST', headers, retries: 0 }, {});
-        status = pollRes.data?.data?.status || 'unknown';
-        if (status === 'completed' || status === 'failed') break;
-      }
-      if (status !== 'completed') throw new Error(`对话未完成，当前状态: ${status}`);
-      const msgRes = await httpsRequest(`https://api.coze.cn/v3/chat/message/list?conversation_id=${conversationId}&chat_id=${chatId}`, { method: 'GET', headers, retries: 0 });
-      const answerMsg = (msgRes.data?.data || []).find(m => m.type === 'answer' && m.role === 'assistant');
-      if (!answerMsg) throw new Error('未获取到AI回复');
-      if (attempt > 0) log(`[callCozeAPI] 第 ${attempt} 次重试成功`);
-      return { content: answerMsg.content, model: 'coze', usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 } };
-    } catch (err) {
-      lastErr = err;
-      log(`[callCozeAPI] 第 ${attempt} 次尝试失败: ${err.message}`);
-      // 认证错误不重试
-      if (err.message.includes('401') || err.message.includes('403')) throw err;
-    }
+  const convRes = await httpsRequest('https://api.coze.cn/v1/conversation/create', { method: 'POST', headers }, {});
+  if (convRes.status !== 200 || !convRes.data?.data?.id) throw new Error(`创建会话失败: ${JSON.stringify(convRes.data)}`);
+  const conversationId = convRes.data.data.id;
+  const chatRes = await httpsRequest(`https://api.coze.cn/v3/chat?conversation_id=${conversationId}`, { method: 'POST', headers }, {
+    bot_id: botId, user_id: 'lsjy_user', stream: false,
+    additional_messages: messages.map(m => ({ role: m.role, content: m.content, content_type: 'text' })),
+  });
+  if (chatRes.status !== 200 || !chatRes.data?.data?.id) throw new Error(`发起对话失败: ${JSON.stringify(chatRes.data)}`);
+  const chatId = chatRes.data.data.id;
+  let status = 'created';
+  for (let i = 0; i < 90; i++) {
+    await new Promise(r => setTimeout(r, 1000));
+    const pollRes = await httpsRequest(`https://api.coze.cn/v3/chat/retrieve?conversation_id=${conversationId}&chat_id=${chatId}`, { method: 'POST', headers }, {});
+    status = pollRes.data?.data?.status || 'unknown';
+    if (status === 'completed' || status === 'failed') break;
   }
-  throw lastErr;
+  if (status !== 'completed') throw new Error(`对话未完成，当前状态: ${status}`);
+  const msgRes = await httpsRequest(`https://api.coze.cn/v3/chat/message/list?conversation_id=${conversationId}&chat_id=${chatId}`, { method: 'GET', headers });
+  const answerMsg = (msgRes.data?.data || []).find(m => m.type === 'answer' && m.role === 'assistant');
+  if (!answerMsg) throw new Error('未获取到AI回复');
+  return { content: answerMsg.content, model: 'coze', usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 } };
 }
 
 // OpenAI 兼容 API 调用（支持 DeepSeek/豆包/通义千问/元宝）
@@ -680,45 +592,20 @@ async function callOpenAICompatibleAPI(messages, options = {}) {
 
   const fullMessages = [{ role: 'system', content: options.systemPrompt || CONFIG.SYSTEM_PROMPT }, ...messages];
   console.log('[DEBUG] System prompt:', fullMessages[0]?.content?.substring(0, 200));
+  const res = await httpsRequest(`${baseUrl}/chat/completions`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }
+  }, {
+    model,
+    messages: fullMessages,
+    temperature: options.temperature || 0.7,
+    max_tokens: options.maxTokens || 2000
+  });
 
-  // 带重试的 API 调用（httpsRequest 已处理网络重试，这里处理业务级失败）
-  const apiMaxRetries = CONFIG.AI_MAX_RETRIES || 3;
-  let lastError;
-  for (let attempt = 0; attempt <= apiMaxRetries; attempt++) {
-    try {
-      if (attempt > 0) {
-        const delay = Math.min(1000 * Math.pow(2, attempt - 1), 6000);
-        log(`[callOpenAICompatibleAPI] ${provider} 第 ${attempt}/${apiMaxRetries} 次重试，等待 ${delay}ms`);
-        await new Promise(r => setTimeout(r, delay));
-      }
-      const res = await httpsRequest(`${baseUrl}/chat/completions`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-        retries: 0  // 网络层重试已在 httpsRequest 中处理，这里不再重复
-      }, {
-        model,
-        messages: fullMessages,
-        temperature: options.temperature || 0.7,
-        max_tokens: options.maxTokens || 2000
-      });
-
-      if (res.status !== 200) {
-        throw new Error(`${provider} API调用失败 (${res.status}): ${typeof res.data === 'object' ? JSON.stringify(res.data) : res.data}`);
-      }
-      const choice = res.data.choices?.[0];
-      if (!choice?.message?.content) throw new Error(`${provider} API返回空回复`);
-      if (attempt > 0) log(`[callOpenAICompatibleAPI] ${provider} 第 ${attempt} 次重试成功`);
-      return { content: choice.message.content, model, usage: res.data.usage || {} };
-    } catch (err) {
-      lastError = err;
-      log(`[callOpenAICompatibleAPI] ${provider} 第 ${attempt} 次尝试失败: ${err.message}`);
-      // 401/403 等认证错误不重试，直接抛出
-      if (err.message.includes('(401)') || err.message.includes('(403)')) {
-        throw err;
-      }
-    }
-  }
-  throw lastError;
+  if (res.status !== 200) throw new Error(`${provider} API调用失败 (${res.status}): ${JSON.stringify(res.data)}`);
+  const choice = res.data.choices?.[0];
+  if (!choice?.message?.content) throw new Error(`${provider} API返回空回复`);
+  return { content: choice.message.content, model, usage: res.data.usage || {} };
 }
 
 // AI 对话主函数 - 自动选择可用的 Provider
@@ -739,15 +626,6 @@ async function callAI(messages, options = {}) {
     }
   } catch (err) {
     log(`AI API 调用失败 (${provider}): ${err.message}`);
-
-    // 记录首次失败的 provider 错误
-    const errorCode = err.message.includes('timeout') ? 'TIMEOUT'
-      : err.message.includes('(401)') ? 'AUTH_ERROR'
-      : err.message.includes('(403)') ? 'FORBIDDEN'
-      : err.message.includes('(429)') ? 'RATE_LIMIT'
-      : err.message.includes('(5') ? 'SERVER_ERROR'
-      : 'API_ERROR';
-    trackApiError(options.toolId, options.toolName, provider, errorCode, err.message, CONFIG.AI_MAX_RETRIES || 3);
 
     // 自动降级到其他可用的 Provider（优先使用有API Key的）
     const fallbackProviders = ['deepseek', 'doubao', 'tongyi', 'yuanbao'].filter(p => p !== provider);
@@ -776,12 +654,9 @@ async function callAI(messages, options = {}) {
         }
       } catch (fallbackErr) {
         log(`${fallback} 降级也失败：${fallbackErr.message}`);
-        trackApiError(options.toolId, options.toolName, fallback, 'FALLBACK_ERROR', fallbackErr.message, 0);
       }
     }
 
-    // 所有 provider 都失败
-    log(`[callAI] 所有 Provider 均失败，共尝试 ${fallbackProviders.length + 1} 个`);
     throw err;
   }
 }
@@ -1381,7 +1256,7 @@ app.post('/api/v1/ai/tools/:toolId/chat', authCheck, async (req, res) => {
     });
   }
   try {
-    const result = await callAI(messages, { model, temperature, maxTokens, systemPrompt: effectiveSystemPrompt, provider: effectiveProvider, toolId: Number(toolId), toolName: agent?.name || tool?.name || '未知工具' });
+    const result = await callAI(messages, { model, temperature, maxTokens, systemPrompt: effectiveSystemPrompt, provider: effectiveProvider });
     log(`AI回复成功: model=${result.model}, length=${result.content?.length || 0}`);
     // 扣费
     const deduct = deductCoins(userId, CHAT_COIN_COST);
@@ -1400,14 +1275,6 @@ app.post('/api/v1/ai/tools/:toolId/chat', authCheck, async (req, res) => {
     });
   } catch (err) {
     log(`AI调用失败: ${err.message}`);
-    // 追踪API错误
-    const errorCode = err.message.includes('timeout') ? 'TIMEOUT'
-      : err.message.includes('(401)') ? 'AUTH_ERROR'
-      : err.message.includes('(403)') ? 'FORBIDDEN'
-      : err.message.includes('(429)') ? 'RATE_LIMIT'
-      : err.message.includes('(5') ? 'SERVER_ERROR'
-      : 'API_ERROR';
-    trackApiError(Number(toolId), agent?.name || tool?.name || '未知工具', effectiveProvider, errorCode, err.message, CONFIG.AI_MAX_RETRIES || 3);
     const lastUserMsg = messages.filter(m => m.role === 'user').pop();
     const localReply = getLocalResponse(lastUserMsg?.content || '');
     log('使用本地智能回复兜底');
@@ -1433,11 +1300,10 @@ app.post('/api/v1/ai/tools/:id/call', authCheck, async (req, res) => {
         data: { imageUrl: `https://placeholder.lsjyapp.cn/ai-generated/${Date.now()}.png`, model: 'jimeng', coinCost: tool.coinCost },
       });
     } else {
-      const result = await callAI([{ role: 'user', content: input || JSON.stringify(params || {}) }], { systemPrompt: tool.systemPrompt || CONFIG.SYSTEM_PROMPT, toolId: tool.id, toolName: tool.name });
+      const result = await callAI([{ role: 'user', content: input || JSON.stringify(params || {}) }], { systemPrompt: tool.systemPrompt || CONFIG.SYSTEM_PROMPT });
       res.json({ code: 0, message: 'success', data: { content: result.content, model: result.model, coinCost: tool.coinCost } });
     }
   } catch (err) {
-    trackApiError(tool.id, tool.name, 'unknown', 'CALL_ERROR', err.message, CONFIG.AI_MAX_RETRIES || 3);
     res.json({ code: 0, message: 'success', data: { content: `工具 ${tool.name} 处理完成`, model: 'local', coinCost: 0, fallback: true } });
   }
 });
@@ -1506,59 +1372,42 @@ app.post('/api/v1/ai/tools/:id/generate', authCheck, async (req, res) => {
     });
   }
 
-  // 带重试的图片生成（最多重试 CONFIG.AI_MAX_RETRIES 次）
-  const imgMaxRetries = CONFIG.AI_MAX_RETRIES || 3;
-  let imgResult = null;
-  let imgLastErr = null;
-  for (let attempt = 0; attempt <= imgMaxRetries; attempt++) {
-    try {
-      if (attempt > 0) {
-        const delay = Math.min(1000 * Math.pow(2, attempt), 8000);
-        log(`[图片生成] 第 ${attempt}/${imgMaxRetries} 次重试，等待 ${delay}ms`);
-        await new Promise(r => setTimeout(r, delay));
-      }
-      imgResult = await generateImageWithAI(prompt, {
-        width: width || 1024,
-        height: height || 1024,
-        style: style || 'auto',
-        count: count || 1
-      });
-      log(`图片生成成功: model=${imgResult.model}, urls=${imgResult.urls.length}`);
-      break;
-    } catch (err) {
-      imgLastErr = err;
-      log(`[图片生成] 第 ${attempt} 次尝试失败: ${err.message}`);
-    }
-  }
-
-  if (!imgResult) {
-    log(`[图片生成] 全部 ${imgMaxRetries + 1} 次尝试均失败: ${imgLastErr?.message}`);
-    // 不扣费，返回友好错误（不返回500，避免前端误判为服务器崩溃）
-    return res.status(200).json({
-      code: 5001,
-      message: `图片生成暂时不可用，请稍后重试。（已尝试 ${imgMaxRetries + 1} 次）`,
-      data: { retryHint: true },
-    });
-  }
-
-  // 扣费（仅在成功时扣费）
-  const deduct = deductCoins(userId, IMAGE_COIN_COST);
-
-  res.json({
-    code: 0,
-    message: 'success',
-    data: {
-      urls: imgResult.urls,
-      model: imgResult.model,
-      prompt: imgResult.prompt,
+  try {
+    const result = await generateImageWithAI(prompt, {
       width: width || 1024,
       height: height || 1024,
-      coinCost: IMAGE_COIN_COST,
-      balance: deduct.balance,
-      durationMs: 3000,
-      createdAt: new Date().toISOString(),
-    },
-  });
+      style: style || 'auto',
+      count: count || 1
+    });
+
+    log(`图片生成成功: model=${result.model}, urls=${result.urls.length}`);
+
+    // 扣费
+    const deduct = deductCoins(userId, IMAGE_COIN_COST);
+
+    res.json({
+      code: 0,
+      message: 'success',
+      data: {
+        urls: result.urls,
+        model: result.model,
+        prompt: result.prompt,
+        width: width || 1024,
+        height: height || 1024,
+        coinCost: IMAGE_COIN_COST,
+        balance: deduct.balance,
+        durationMs: 3000,
+        createdAt: new Date().toISOString(),
+      },
+    });
+  } catch (err) {
+    log(`图片生成失败: ${err.message}`);
+    res.status(500).json({
+      code: 500,
+      message: `图片生成失败：${err.message}。请检查 .env 中的 API Key 配置。`,
+      data: null,
+    });
+  }
 });
 
 // AI 视频生成（消耗20圣力/次）
@@ -1584,57 +1433,40 @@ app.post('/api/v1/ai/tools/:id/video', authCheck, async (req, res) => {
     });
   }
 
-  // 带重试的视频生成（最多重试 CONFIG.AI_MAX_RETRIES 次）
-  const vidMaxRetries = CONFIG.AI_MAX_RETRIES || 3;
-  let vidResult = null;
-  let vidLastErr = null;
-  for (let attempt = 0; attempt <= vidMaxRetries; attempt++) {
-    try {
-      if (attempt > 0) {
-        const delay = Math.min(1000 * Math.pow(2, attempt), 8000);
-        log(`[视频生成] 第 ${attempt}/${vidMaxRetries} 次重试，等待 ${delay}ms`);
-        await new Promise(r => setTimeout(r, delay));
-      }
-      vidResult = await generateVideoWithAI(prompt, {
-        duration: duration || 5,
-        resolution: resolution || '720p'
-      });
-      log(`视频生成成功: model=${vidResult.model}, url=${vidResult.videoUrl}`);
-      break;
-    } catch (err) {
-      vidLastErr = err;
-      log(`[视频生成] 第 ${attempt} 次尝试失败: ${err.message}`);
-    }
-  }
+  try {
+    const result = await generateVideoWithAI(prompt, {
+      duration: duration || 5,
+      resolution: resolution || '720p'
+    });
 
-  if (!vidResult) {
-    log(`[视频生成] 全部 ${vidMaxRetries + 1} 次尝试均失败: ${vidLastErr?.message}`);
-    // 不扣费，返回友好错误（不返回500，避免前端误判为服务器崩溃）
-    return res.status(200).json({
-      code: 5002,
-      message: `视频生成暂时不可用，请稍后重试。（已尝试 ${vidMaxRetries + 1} 次）`,
-      data: { retryHint: true },
+    log(`视频生成成功: model=${result.model}, url=${result.videoUrl}`);
+
+    // 扣费
+    const deduct = deductCoins(userId, VIDEO_COIN_COST);
+
+    res.json({
+      code: 0,
+      message: 'success',
+      data: {
+        videoUrl: result.videoUrl,
+        model: result.model,
+        prompt: result.prompt,
+        duration: duration || 5,
+        resolution: resolution || '720p',
+        coinCost: VIDEO_COIN_COST,
+        balance: deduct.balance,
+        durationMs: result.durationMs || 10000,
+        createdAt: new Date().toISOString(),
+      },
+    });
+  } catch (err) {
+    log(`视频生成失败: ${err.message}`);
+    res.status(500).json({
+      code: 500,
+      message: `视频生成失败：${err.message}。请检查 .env 中的 API Key 配置。`,
+      data: null,
     });
   }
-
-  // 扣费（仅在成功时扣费）
-  const deduct = deductCoins(userId, VIDEO_COIN_COST);
-
-  res.json({
-    code: 0,
-    message: 'success',
-    data: {
-      videoUrl: vidResult.videoUrl,
-      model: vidResult.model,
-      prompt: vidResult.prompt,
-      duration: duration || 5,
-      resolution: resolution || '720p',
-      coinCost: VIDEO_COIN_COST,
-      balance: deduct.balance,
-      durationMs: vidResult.durationMs || 10000,
-      createdAt: new Date().toISOString(),
-    },
-  });
 });
 
 
@@ -1881,52 +1713,31 @@ app.post('/api/v1/payment/coin/recharge', authCheck, (req, res) => {
   res.json({ code: 0, message: '订单已创建，请扫码付款', data: { order } });
 });
 
-// 提交付款截图（待管理员审核，不自动到账）— 带完整校验
+// 提交付款截图（自动到账）
 app.post('/api/v1/payment/coin/submit-screenshot', authCheck, (req, res) => {
   const { orderId, screenshotUrl } = req.body;
-
-  // 参数校验
-  if (!orderId) {
-    return res.status(400).json({ code: 400, message: '缺少订单ID', data: null });
-  }
-  if (!screenshotUrl || typeof screenshotUrl !== 'string' || screenshotUrl.trim().length < 5) {
-    return res.status(400).json({ code: 400, message: '请上传付款截图', data: null });
-  }
-
   const orders = getRechargeOrders();
   const order = orders.find(o => o.id === orderId);
-  if (!order) {
-    log(`[支付] 提交截图失败：订单不存在 orderId=${orderId}`);
-    return res.status(404).json({ code: 404, message: '订单不存在', data: null });
-  }
-
-  // 用户身份校验：只能提交自己的订单
-  const currentUserId = req.user?.id;
-  if (currentUserId && order.userId !== currentUserId) {
-    log(`[支付] 提交截图失败：用户身份不匹配 userId=${currentUserId}, orderUserId=${order.userId}`);
-    return res.status(403).json({ code: 403, message: '无权操作此订单', data: null });
-  }
-
-  // 状态校验
-  if (order.status === 'approved') {
-    return res.status(400).json({ code: 400, message: '订单已审批通过，无需重复提交', data: null });
-  }
-  if (order.status === 'pending_review') {
-    return res.status(400).json({ code: 400, message: '截图已提交，请等待管理员审核', data: null });
-  }
-  if (order.status === 'rejected') {
-    // 允许重新提交被拒绝的订单
-    log(`[支付] 订单 ${order.orderNo} 被拒绝后重新提交截图`);
-  }
+  if (!order) return res.status(404).json({ code: 404, message: '订单不存在', data: null });
 
   order.screenshotUrl = screenshotUrl;
-  order.status = 'pending_review';
-  order.submittedAt = new Date().toISOString();
-  order.resubmitCount = (order.resubmitCount || 0) + 1;
+  order.status = 'approved';
+  order.reviewedAt = new Date().toISOString();
+  order.reviewedBy = 'auto';
   saveRechargeOrders(orders);
 
-  log(`[支付] 截图提交成功 orderNo=${order.orderNo}, userId=${order.userId}, amount=${order.price}元`);
-  res.json({ code: 0, message: '付款截图已提交，等待管理员审核。审核通过后圣力将到账。', data: { order } });
+  // 自动给用户加圣力
+  const usersFile = path.join(__dirname, 'data', 'users.json');
+  let users = [];
+  try { users = JSON.parse(fs.readFileSync(usersFile, 'utf8')); } catch (e) {}
+  const user = users.find(u => u.id === order.userId);
+  if (user) {
+    user.coins = (user.coins || 0) + order.coinAmount;
+    user.totalRecharge = (user.totalRecharge || 0) + order.coinAmount;
+    fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
+  }
+
+  res.json({ code: 0, message: '充值成功！' + order.coinAmount + '圣力已到账', data: { order } });
 });
 
 // 获取充值订单列表（管理员）
@@ -1935,99 +1746,40 @@ app.get('/api/v1/payment/coin/orders', (req, res) => {
   res.json({ code: 0, message: 'success', data: { items: orders, total: orders.length } });
 });
 
-// 审批充值订单（管理员 - 需要鉴权）— 带错误恢复和日志
-app.post('/api/v1/payment/coin/approve/:orderId', authCheck, (req, res) => {
+// 审批充值订单（管理员）
+app.post('/api/v1/payment/coin/approve/:orderId', (req, res) => {
   const orderId = parseInt(req.params.orderId);
   const { action, remark } = req.body; // action: approve/reject
-
-  if (!action || !['approve', 'reject'].includes(action)) {
-    return res.status(400).json({ code: 400, message: 'action 必须为 approve 或 reject', data: null });
-  }
-
+  
   const orders = getRechargeOrders();
   const order = orders.find(o => o.id === orderId);
-  if (!order) {
-    log(`[支付] 审批失败：订单不存在 orderId=${orderId}`);
-    return res.status(404).json({ code: 404, message: '订单不存在', data: null });
-  }
+  if (!order) return res.status(404).json({ code: 404, message: '订单不存在', data: null });
   if (order.status === 'approved') return res.status(400).json({ code: 400, message: '订单已审批', data: null });
-
+  
   if (action === 'approve') {
-    // 给用户加算力（更新users.json中的coins字段）— 带错误恢复
-    const usersFile = path.join(__dirname, 'data', 'users.json');
-    let users = [];
-    let usersReadOk = false;
-    try {
-      users = JSON.parse(fs.readFileSync(usersFile, 'utf8'));
-      usersReadOk = true;
-    } catch (e) {
-      log(`[支付] 警告：读取 users.json 失败，使用内存用户数据: ${e.message}`);
-    }
-
-    let coinsAdded = false;
-    let previousCoins = 0;
-    if (usersReadOk) {
-      const user = users.find(u => u.id === order.userId);
-      if (user) {
-        previousCoins = user.coins || 0;
-        user.coins = previousCoins + order.coinAmount;
-        try {
-          fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
-          coinsAdded = true;
-          log(`[支付] 用户 ${order.userId || order.username} 圣力 +${order.coinAmount} (${previousCoins} → ${user.coins})`);
-        } catch (writeErr) {
-          log(`[支付] 严重错误：写入 users.json 失败: ${writeErr.message}`);
-          // 追踪支付失败
-          trackPaymentFailure(order.userId, order.username, order.orderNo, order.price, order.paymentMethod, 'WRITE_ERROR', writeErr.message);
-          // 不更新订单状态，让管理员可以重试
-          return res.status(500).json({ code: 500, message: '圣力到账写入失败，请重试', data: null });
-        }
-      } else {
-        log(`[支付] 警告：用户 userId=${order.userId} 在 users.json 中未找到`);
-        // 仍然标记为 approved，但记录警告
-      }
-    } else {
-      // users.json 读取失败，使用内存 coinsStore 作为备用
-      const memUser = usersStore.find(u => u.id === order.userId);
-      if (memUser) {
-        previousCoins = memUser.coins || 0;
-        memUser.coins = previousCoins + order.coinAmount;
-        coinsAdded = true;
-        log(`[支付] (内存) 用户 ${memUser.username} 圣力 +${order.coinAmount} (${previousCoins} → ${memUser.coins})`);
-      }
-    }
-
     order.status = 'approved';
     order.remark = remark || '审批通过';
     order.reviewedAt = new Date().toISOString();
-    order.reviewedBy = req.user?.username || 'admin';
-    order.coinsAdded = coinsAdded;
-
-    // 记录交易流水
-    const txRecord = {
-      id: Date.now(),
-      userId: order.userId,
-      type: 'recharge',
-      amount: order.coinAmount,
-      balance: previousCoins + order.coinAmount,
-      description: `充值 ${order.price}元 → ${order.coinAmount}圣力`,
-      orderNo: order.orderNo,
-      createdAt: new Date().toISOString(),
-    };
-    coinTransactionsStore.unshift(txRecord);
-
+    order.reviewedBy = 'admin';
+    
+    // 给用户加算力（更新users.json中的coins字段）
+    const usersFile = path.join(__dirname, 'data', 'users.json');
+    let users = [];
+    try { users = JSON.parse(fs.readFileSync(usersFile, 'utf8')); } catch (e) {}
+    const user = users.find(u => u.id === order.userId);
+    if (user) {
+      user.coins = (user.coins || 0) + order.coinAmount;
+      fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
+    }
+    
     saveRechargeOrders(orders);
-    log(`[支付] 订单 ${order.orderNo} 审批通过，金额 ${order.price}元，圣力 ${order.coinAmount}`);
     res.json({ code: 0, message: '已审批，用户获得' + order.coinAmount + '圣力', data: { order } });
   } else {
     order.status = 'rejected';
     order.remark = remark || '审批拒绝';
     order.reviewedAt = new Date().toISOString();
-    order.reviewedBy = req.user?.username || 'admin';
+    order.reviewedBy = 'admin';
     saveRechargeOrders(orders);
-    // 追踪被拒绝的支付订单
-    trackPaymentFailure(order.userId, order.username, order.orderNo, order.price, order.paymentMethod, 'REJECTED', remark || '管理员拒绝');
-    log(`[支付] 订单 ${order.orderNo} 审批拒绝，原因: ${remark || '未说明'}`);
     res.json({ code: 0, message: '已拒绝', data: { order } });
   }
 });
@@ -2362,100 +2114,6 @@ app.get('/api/v1/reports/overview', authCheck, (req, res) => {
   });
 });
 
-// ----- 模块分布统计 -----
-app.get('/api/v1/reports/module-distribution', authCheck, (req, res) => {
-  // 按工具名称映射到6大业务模块
-  const toolModuleMap = {
-    '罗圣AI智能体': 'AI工具',
-    '文案创作大师': 'AI工具',
-    'AI绘画师': 'AI工具',
-    '数据分析师': 'AI工具',
-    '代码工程师': 'AI工具',
-    '自媒体运营官': '自媒体',
-    '电商顾问': '电商',
-    '教育导师': '教育',
-    '宠物顾问': '宠物',
-    '校园助手': '伯雅校园'
-  };
-
-  const result = [
-    { name: 'AI工具', users: 0, revenue: 0, color: '#00f0ff' },
-    { name: '自媒体', users: 0, revenue: 0, color: '#c084fc' },
-    { name: '电商', users: 0, revenue: 0, color: '#f59e0b' },
-    { name: '教育', users: 0, revenue: 0, color: '#00ff88' },
-    { name: '宠物', users: 0, revenue: 0, color: '#ff00ff' },
-    { name: '伯雅校园', users: 0, revenue: 0, color: '#3b82f6' }
-  ];
-
-  aiToolsStore.forEach(tool => {
-    const moduleName = toolModuleMap[tool.name] || 'AI工具';
-    const mod = result.find(m => m.name === moduleName);
-    if (mod) {
-      mod.users += tool.usageCount || 0;
-      mod.revenue += (tool.usageCount || 0) * (tool.coinCost || 1) * 0.5; // 圣力折算
-    }
-  });
-
-  // 也统计AI员工Agent
-  agentsStore.forEach(agent => {
-    const agentModuleMap = {
-      '总指挥罗圣': 'AI工具', '运营文案师': '自媒体', '调研分析师': 'AI工具',
-      '视觉设计师': 'AI工具', '代码架构师': 'AI工具', '电商运营官': '电商',
-      '教育规划师': '教育', '宠物医疗官': '宠物', '校园大使': '伯雅校园', '自媒体操盘手': '自媒体'
-    };
-    const moduleName = agentModuleMap[agent.name] || 'AI工具';
-    const mod = result.find(m => m.name === moduleName);
-    if (mod) {
-      mod.users += (agent.usageCount || 0);
-      mod.revenue += (agent.usageCount || 0) * (agent.coinCost || 1) * 0.5;
-    }
-  });
-
-  res.json({ code: 0, message: 'success', data: result });
-});
-
-// ----- 热销商品排行 -----
-app.get('/api/v1/reports/top-products', authCheck, (req, res) => {
-  // 从充值套餐和AI工具中统计
-  const products = [];
-
-  // 充值套餐（从订单统计）
-  const packageStats = {};
-  paymentOrdersStore.filter(o => o.status === 'approved').forEach(o => {
-    const pkgId = o.packageId || 'unknown';
-    if (!packageStats[pkgId]) packageStats[pkgId] = { name: `套餐#${pkgId}`, revenue: 0, sales: 0 };
-    packageStats[pkgId].revenue += o.amount || 0;
-    packageStats[pkgId].sales += 1;
-  });
-
-  // 获取套餐名称
-  const packages = [
-    { id: 'pkg_10', coinAmount: 10 }, { id: 'pkg_50', coinAmount: 50 },
-    { id: 'pkg_100', coinAmount: 100 }, { id: 'pkg_200', coinAmount: 200 },
-    { id: 'pkg_500', coinAmount: 500 }, { id: 'pkg_1000', coinAmount: 1000 }
-  ];
-
-  Object.entries(packageStats).forEach(([pkgId, stats]) => {
-    const pkg = packages.find(p => p.id === pkgId);
-    const name = pkg ? `${pkg.coinAmount}圣力套餐` : stats.name;
-    products.push({ name, revenue: stats.revenue, sales: stats.sales });
-  });
-
-  // AI工具（按使用量）
-  aiToolsStore.filter(t => t.usageCount > 0).forEach(tool => {
-    products.push({
-      name: tool.name,
-      revenue: (tool.usageCount || 0) * (tool.coinCost || 1) * 0.5, // 圣力折算
-      sales: tool.usageCount || 0
-    });
-  });
-
-  // 按营收排序取前10
-  const top10 = products.sort((a, b) => b.revenue - a.revenue).slice(0, 10);
-
-  res.json({ code: 0, message: 'success', data: top10 });
-});
-
 // ----- 角色列表 -----
 app.get('/api/v1/roles', authCheck, (req, res) => {
   res.json({ code: 0, message: 'success', data: [...rolesStore] });
@@ -2553,181 +2211,31 @@ app.get('/api/v1/payment/order-status/:orderNo', authCheck, (req, res) => {
   res.json({ code: 0, message: 'success', data: order });
 });
 
-// ===== 管理看板（综合数据 - 全部从真实数据文件读取） =====
-function readJSON(filePath, fallback) { try { return JSON.parse(fs.readFileSync(filePath, 'utf8')); } catch(e) { return fallback; } }
-
+// ===== 管理看板（综合数据） =====
 app.get('/api/v1/admin/dashboard', authCheck, (req, res) => {
-  const dataDir = path.join(__dirname, 'data');
-  const today = new Date().toISOString().slice(0, 10);
-
-  // Read real data from files
-  const realUsers = readJSON(path.join(dataDir, 'users.json'), usersStore);
-  const realRechargeOrders = readJSON(path.join(dataDir, 'recharge_orders.json'), []);
-  const realPaymentOrders = readJSON(path.join(dataDir, 'payment_orders.json'), paymentOrdersStore);
-  const realVisitors = readJSON(path.join(dataDir, 'visitors.json'), []);
-  const realPaymentFailures = readJSON(path.join(dataDir, 'payment-failures.json'), paymentFailuresStore);
-
-  // User metrics from real data
-  const totalUsers = realUsers.length;
-  const activeUsers = realUsers.filter(u => u.status === 'active').length;
-  const todayRegistrations = realUsers.filter(u => {
-    const d = u.created_at || u.createdAt || '';
-    return d.startsWith(today);
-  }).length;
-
-  // Online users: today's visitors with unique IPs
-  const todayVisitors = realVisitors.filter(v => (v.visitTime || '').startsWith(today));
-  const uniqueIPs = new Set(todayVisitors.map(v => v.ip));
-  const onlineUsers = Math.max(uniqueIPs.size, activeUsers > 0 ? 1 : 0);
-
-  // Revenue from real orders
-  const allOrders = [...realRechargeOrders, ...realPaymentOrders];
-  const totalOrders = allOrders.length;
-  const totalRevenue = allOrders.reduce((s, o) => s + (o.amount || 0), 0);
-  const todayRevenue = allOrders.filter(o => {
-    const d = o.created_at || o.createdAt || '';
-    return d.startsWith(today);
-  }).reduce((s, o) => s + (o.amount || 0), 0);
-  const failedOrders = allOrders.filter(o => o.status === 'failed' || o.status === 'pending_payment').length;
-
-  // AI tools
+  let uc = 0;
+  try { uc = JSON.parse(fs.readFileSync(path.join(__dirname, 'data', 'users.json'), 'utf8')).length; } catch(e) { uc = usersStore.length; }
+  const totalOrders = paymentOrdersStore.length;
+  const totalRevenue = paymentOrdersStore.reduce((s, o) => s + (o.amount || 0), 0);
   const totalAITools = aiToolsStore.length;
   const activeAITools = aiToolsStore.filter(t => t.status === 'active').length;
-
-  // Energy consumption from AI history
-  const energyConsumption = aiHistoryStore.filter(h => h.createdAt && h.createdAt.startsWith(today)).length;
-
-  // API errors from in-memory store (no file yet)
+  const openTickets = ticketsStore.filter(t => t.status === 'open').length;
   const totalApiErrors = apiErrorsStore.length;
   const pendingApiErrors = apiErrorsStore.filter(e => e.status === 'pending').length;
-  const apiCallTotal = totalAITools > 0 ? aiToolsStore.reduce((s, t) => s + (t.usageCount || 0), 0) : 0;
-  const apiErrorRate = apiCallTotal > 0 ? ((totalApiErrors / apiCallTotal) * 100).toFixed(2) : (totalApiErrors > 0 ? '100.00' : '0.00');
-
-  // Payment failures from real file data
-  const totalPaymentFailures = realPaymentFailures.length;
-  const pendingPaymentFailures = realPaymentFailures.filter(f => f.status === 'pending').length;
-  const paymentFailureRate = totalOrders > 0 ? ((totalPaymentFailures / totalOrders) * 100).toFixed(2) : (totalPaymentFailures > 0 ? '100.00' : '0.00');
-
-  // ===== 趋势数据（最近7天/30天） =====
-  const days7 = [];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    days7.push(d.toISOString().slice(0, 10));
-  }
-  const trendDates = days7.map(d => d.slice(5)); // MM-DD
-  const trendNewUsers = days7.map(d => realUsers.filter(u => (u.created_at || u.createdAt || '').startsWith(d)).length);
-  const trendActiveUsers = days7.map(d => {
-    const dayVisitors = realVisitors.filter(v => (v.visitTime || '').startsWith(d));
-    return new Set(dayVisitors.map(v => v.ip)).size;
-  });
-  const trendRevenue = days7.map(d => allOrders.filter(o => (o.created_at || o.createdAt || '').startsWith(d)).reduce((s, o) => s + (o.amount || 0), 0));
-
-  // ===== 模块数据 =====
-  const moduleNames = ['AI工具', '自媒体', '电商', '教育', '宠物', '伯雅校园'];
-  const modules = moduleNames.map(name => {
-    const moduleUsers = realUsers.filter(u => {
-      const prefs = u.modulePreferences || u.preferences || '';
-      return (typeof prefs === 'string' && prefs.includes(name)) || (u.preferredModule === name);
-    }).length || Math.max(1, Math.floor(totalUsers / 6));
-    const moduleRevenue = allOrders.filter(o => {
-      const mod = o.module || o.source || '';
-      return mod.includes(name) || mod === name;
-    }).reduce((s, o) => s + (o.amount || 0), 0) || parseFloat((totalRevenue / 6).toFixed(2));
-    return { name, users: moduleUsers, revenue: moduleRevenue };
-  });
-
-  // ===== 告警数据 =====
-  const alerts = [];
-  const apiErrRateNum = parseFloat(apiErrorRate);
-  if (apiErrRateNum > 5) {
-    alerts.push({ type: 'danger', metric: 'API错误率', value: apiErrorRate + '%', threshold: '<5%', message: `今日${totalApiErrors}次错误，共${apiCallTotal}次调用` });
-  } else if (apiErrRateNum > 2) {
-    alerts.push({ type: 'warning', metric: 'API错误率', value: apiErrorRate + '%', threshold: '<2%', message: `错误率偏高，建议检查` });
-  }
-  const payFailRateNum = parseFloat(paymentFailureRate);
-  if (payFailRateNum > 10) {
-    alerts.push({ type: 'danger', metric: '支付失败率', value: paymentFailureRate + '%', threshold: '<3%', message: `今日${totalPaymentFailures}次失败，共${totalOrders}笔订单` });
-  } else if (payFailRateNum > 3) {
-    alerts.push({ type: 'warning', metric: '支付失败率', value: paymentFailureRate + '%', threshold: '<3%', message: `失败率偏高，建议检查支付通道` });
-  }
-
-  // ===== 最近操作日志 =====
-  const recentLogs = [];
-  // 从最近订单中提取
-  const recentOrders = allOrders.sort((a, b) => new Date(b.created_at || b.createdAt || 0) - new Date(a.created_at || a.createdAt || 0)).slice(0, 5);
-  recentOrders.forEach(o => {
-    recentLogs.push({
-      id: 'log-' + (o.id || o.orderId || Math.random().toString(36).slice(2)),
-      type: o.type || 'order',
-      module: o.module || '充值',
-      action: `用户${o.userId || o.userName || '未知'} ${o.status === 'completed' ? '完成' : o.status === 'pending' ? '等待处理' : o.status} ${o.amount || 0}圣力`,
-      operator: '',
-      time: new Date(o.created_at || o.createdAt || Date.now()).toLocaleString('zh-CN')
-    });
-  });
-  // 从API错误中提取
-  apiErrorsStore.slice(-3).forEach(e => {
-    recentLogs.push({
-      id: 'log-err-' + e.id,
-      type: 'error',
-      module: 'AI工具',
-      action: `${e.toolName || '未知工具'} ${e.apiProvider || ''} 调用失败`,
-      operator: '',
-      time: new Date(e.createdAt || Date.now()).toLocaleString('zh-CN')
-    });
-  });
-  // 从支付失败中提取
-  realPaymentFailures.slice(-2).forEach(f => {
-    recentLogs.push({
-      id: 'log-pay-' + f.id,
-      type: 'payment',
-      module: '支付',
-      action: `订单 ${f.orderId || ''} ¥${f.amount || 0} ${f.paymentMethod || ''} 失败`,
-      operator: '',
-      time: new Date(f.createdAt || Date.now()).toLocaleString('zh-CN')
-    });
-  });
-
-  // ===== Top10 AI工具 =====
-  const topTools = aiToolsStore
-    .filter(t => t.usageCount > 0)
-    .sort((a, b) => (b.usageCount || 0) - (a.usageCount || 0))
-    .slice(0, 10)
-    .map(t => ({ name: t.name, count: t.usageCount || 0 }));
-
-  // ===== Top10 热销商品 =====
-  const productSales = {};
-  allOrders.filter(o => o.productName || o.goodsName).forEach(o => {
-    const name = o.productName || o.goodsName || '未知商品';
-    if (!productSales[name]) productSales[name] = { name, revenue: 0, count: 0 };
-    productSales[name].revenue += o.amount || 0;
-    productSales[name].count += 1;
-  });
-  const topProducts = Object.values(productSales)
-    .sort((a, b) => b.revenue - a.revenue)
-    .slice(0, 10);
-
-  // ===== 其他指标 =====
-  const openTickets = ticketsStore.filter(t => t.status === 'open').length;
-  const knowledgeCount = 3;
-  const vipPlanCount = 3;
-
+  const apiErrorRate = totalOrders > 0 ? ((totalApiErrors / (totalOrders + totalApiErrors)) * 100).toFixed(2) : (totalApiErrors > 0 ? '100.00' : '0.00');
+  const totalPaymentFailures = paymentFailuresStore.length;
+  const pendingPaymentFailures = paymentFailuresStore.filter(f => f.status === 'pending').length;
+  const paymentFailureRate = totalOrders > 0 ? ((totalPaymentFailures / (totalOrders + totalPaymentFailures)) * 100).toFixed(2) : (totalPaymentFailures > 0 ? '100.00' : '0.00');
   res.json({ code: 0, message: 'success', data: {
-    // 基础指标
-    totalUsers,
-    activeUsers,
-    onlineUsers,
-    todayRegistrations,
-    todayRevenue,
-    energyConsumption,
+    totalUsers: uc,
+    activeUsers: usersStore.filter(u => u.status === 'active').length,
     totalOrders,
-    failedOrders,
+    failedOrders: paymentOrdersStore.filter(o => o.status === 'failed').length,
     totalRevenue,
     totalAITools,
     activeAITools,
-    knowledgeCount,
-    vipPlanCount,
+    knowledgeCount: 3,
+    vipPlanCount: 3,
     totalApiErrors,
     pendingApiErrors,
     apiErrorRate,
@@ -2735,31 +2243,7 @@ app.get('/api/v1/admin/dashboard', authCheck, (req, res) => {
     totalPaymentFailures,
     pendingPaymentFailures,
     openTickets,
-    todayAIUsage: energyConsumption,
-    todayVisitors: todayVisitors.length,
-    // 实时统计（兼容生产前端格式）
-    realtimeStats: [
-      { label: '在线用户', value: onlineUsers, color: '#00f0ff' },
-      { label: '今日注册', value: todayRegistrations, color: '#00ff88' },
-      { label: '今日营收', value: todayRevenue, color: '#f59e0b' },
-      { label: '圣力消耗', value: energyConsumption, color: '#c084fc' }
-    ],
-    // 趋势数据
-    trend: { dates: trendDates, newUsers: trendNewUsers, activeUsers: trendActiveUsers, revenue: trendRevenue },
-    // 模块数据
-    modules,
-    // 告警
-    alerts,
-    // 最近日志
-    recentLogs: recentLogs.slice(0, 10),
-    // 排行榜
-    topTools,
-    topProducts,
-    // 百分比变化
-    onlineUsersChange: todayVisitors.length > 0 ? parseFloat(((todayVisitors.length / Math.max(realVisitors.filter(v => (v.visitTime || '').startsWith(today.slice(0,8) + String(parseInt(today.slice(8)) - 1).padStart(2,'0'))).length, 1) - 1) * 100).toFixed(1)) : 0,
-    todayRegistrationsChange: 0,
-    todayRevenueChange: 0,
-    energyConsumptionChange: 0,
+    todayAIUsage: aiHistoryStore.filter(h => h.createdAt && h.createdAt.startsWith(new Date().toISOString().slice(0,10))).length,
   }});
 });
 
@@ -2989,462 +2473,6 @@ app.get('/api/v1/reports/payment-failure-rate', authCheck, (req, res) => {
   res.json({ code: 0, message: 'success', data: { rate: parseFloat(rate), total: failedOrders, pending: failedOrders, threshold: 3 } });
 });
 
-// ===== 反馈数据 =====
-const feedbackStore = [
-  { id: 1, userId: 2, username: 'user1', content: 'AI绘画功能很好用，但速度有点慢', type: 'suggestion', status: 'resolved', rating: 4, createdAt: '2026-06-20T10:00:00Z', resolvedAt: '2026-06-21T08:00:00Z', reply: '感谢反馈，已优化图片生成队列' },
-  { id: 2, userId: 2, username: 'user1', content: '充值后圣力没有到账', type: 'bug', status: 'resolved', rating: 3, createdAt: '2026-06-22T14:00:00Z', resolvedAt: '2026-06-22T15:00:00Z', reply: '已核实并补发' },
-  { id: 3, userId: 3, username: 'admin1', content: '希望增加批量导出功能', type: 'feature', status: 'pending', rating: 5, createdAt: '2026-06-25T09:00:00Z', resolvedAt: null, reply: '' },
-];
-
-// ===== 佣金数据 =====
-const commissionStore = [
-  { id: 1, userId: 2, username: 'user1', orderId: 'ORD-20260620-001', orderAmount: 199, commissionRate: 0.1, commissionAmount: 19.9, status: 'settled', createdAt: '2026-06-20T10:00:00Z', settledAt: '2026-06-25T00:00:00Z' },
-  { id: 2, userId: 2, username: 'user1', orderId: 'ORD-20260622-002', orderAmount: 99, commissionRate: 0.1, commissionAmount: 9.9, status: 'pending', createdAt: '2026-06-22T14:00:00Z', settledAt: null },
-  { id: 3, userId: 3, username: 'admin1', orderId: 'ORD-20260624-003', orderAmount: 299, commissionRate: 0.15, commissionAmount: 44.85, status: 'pending', createdAt: '2026-06-24T16:00:00Z', settledAt: null },
-];
-
-// ===== 提现数据 =====
-const withdrawStore = [
-  { id: 1, userId: 2, username: 'user1', amount: 100, fee: 2, actualAmount: 98, method: 'wechat', account: 'wx_user1', status: 'approved', createdAt: '2026-06-18T10:00:00Z', processedAt: '2026-06-19T08:00:00Z' },
-  { id: 2, userId: 2, username: 'user1', amount: 50, fee: 1, actualAmount: 49, method: 'alipay', account: 'user1@alipay.com', status: 'pending', createdAt: '2026-06-25T14:00:00Z', processedAt: null },
-];
-
-// ===== 分销数据 =====
-const distributionStore = {
-  links: [
-    { id: 1, userId: 2, username: 'user1', code: 'USER1DIST', link: 'https://lsjyapp.cn/?ref=USER1DIST', clicks: 234, conversions: 18, commission: 356.5, createdAt: '2026-06-01T00:00:00Z' },
-    { id: 2, userId: 3, username: 'admin1', code: 'ADMIN1DIST', link: 'https://lsjyapp.cn/?ref=ADMIN1DIST', clicks: 89, conversions: 5, commission: 120.0, createdAt: '2026-06-10T00:00:00Z' },
-  ],
-  rules: { defaultRate: 0.1, vipRate: 0.15, minWithdraw: 50, settleCycle: 'monthly' }
-};
-
-// ===== 合作伙伴数据 =====
-const affiliatesStore = [
-  { id: 1, name: '伯雅教育', contact: '张经理', phone: '13800000001', email: 'zhang@boya.edu', type: 'education', status: 'active', revenue: 45000, commission: 4500, joinedAt: '2026-05-01T00:00:00Z' },
-  { id: 2, name: '长沙宠物医院', contact: '李医生', phone: '13800000002', email: 'li@petcare.com', type: 'pet', status: 'active', revenue: 28000, commission: 2800, joinedAt: '2026-05-15T00:00:00Z' },
-  { id: 3, name: '祁阳自媒体联盟', contact: '王总', phone: '13800000003', email: 'wang@qyzmt.com', type: 'media', status: 'pending', revenue: 0, commission: 0, joinedAt: '2026-06-20T00:00:00Z' },
-];
-
-// ===== 推送消息数据 =====
-const pushMessagesStore = [
-  { id: 1, title: '系统维护通知', content: '今晚22:00-23:00系统维护', type: 'system', target: 'all', status: 'sent', sentAt: '2026-06-24T20:00:00Z', readCount: 156, totalCount: 200 },
-  { id: 2, title: '新功能上线', content: 'AI视频生成功能已上线，快来体验！', type: 'feature', target: 'all', status: 'sent', sentAt: '2026-06-20T10:00:00Z', readCount: 89, totalCount: 180 },
-  { id: 3, title: '充值优惠', content: '618充值8折活动进行中', type: 'promotion', target: 'all', status: 'draft', sentAt: null, readCount: 0, totalCount: 0 },
-];
-
-// ===== 黑名单数据 =====
-const blacklistStore = {
-  users: [
-    { id: 1, userId: 99, username: 'spammer01', reason: '发布垃圾信息', bannedBy: 'admin', bannedAt: '2026-06-15T10:00:00Z', expiresAt: '2026-09-15T10:00:00Z' },
-    { id: 2, userId: 100, username: 'abuser02', reason: '恶意攻击其他用户', bannedBy: 'admin', bannedAt: '2026-06-20T14:00:00Z', expiresAt: null },
-  ],
-  ips: [
-    { id: 1, ip: '192.168.1.100', reason: '恶意爬虫', blockedBy: 'system', blockedAt: '2026-06-18T08:00:00Z' },
-    { id: 2, ip: '10.0.0.55', reason: 'DDoS攻击', blockedBy: 'system', blockedAt: '2026-06-22T03:00:00Z' },
-  ]
-};
-
-// ===== 用户标签数据 =====
-const userTagsStore = [
-  { id: 1, name: 'VIP用户', color: '#FFD700', count: 12, description: '付费VIP会员' },
-  { id: 2, name: '活跃用户', color: '#00FF88', count: 45, description: '近7天有登录' },
-  { id: 3, name: '新用户', color: '#00BFFF', count: 8, description: '注册30天内' },
-  { id: 4, name: '高风险', color: '#FF4444', count: 3, description: '异常行为标记' },
-  { id: 5, name: 'AI重度用户', color: '#FF69B4', count: 20, description: '日均AI调用>10次' },
-];
-
-// ===== 敏感词数据 =====
-const sensitiveWordsStore = [
-  { id: 1, word: '赌博', category: '违法', level: 'high', hitCount: 23, createdAt: '2026-05-01T00:00:00Z' },
-  { id: 2, word: '代孕', category: '违法', level: 'high', hitCount: 8, createdAt: '2026-05-01T00:00:00Z' },
-  { id: 3, word: '发票', category: '广告', level: 'medium', hitCount: 45, createdAt: '2026-05-10T00:00:00Z' },
-  { id: 4, word: '加微信', category: '引流', level: 'low', hitCount: 120, createdAt: '2026-05-15T00:00:00Z' },
-];
-
-// ===== 聊天日志数据 =====
-const chatLogsStore = [
-  { id: 1, userId: 2, username: 'user1', toolName: '罗圣AI智能体', input: '帮我写一段营销文案', output: '好的，以下是一段营销文案...', tokens: 350, duration: 2.3, createdAt: '2026-06-25T10:00:00Z' },
-  { id: 2, userId: 2, username: 'user1', toolName: 'AI绘画师', input: '画一只可爱的猫咪', output: '[图片已生成]', tokens: 120, duration: 8.5, createdAt: '2026-06-25T10:30:00Z' },
-  { id: 3, userId: 1, username: 'KF02V9', toolName: '代码工程师', input: '写一个排序算法', output: 'function quickSort(arr)...', tokens: 280, duration: 1.8, createdAt: '2026-06-25T11:00:00Z' },
-];
-
-// ===== 内容库数据 =====
-const contentLibraryStore = [
-  { id: 1, title: 'AI绘画作品展示', type: 'image', author: 'user1', status: 'published', views: 234, likes: 45, createdAt: '2026-06-20T10:00:00Z' },
-  { id: 2, title: '营销文案模板集', type: 'text', author: 'admin1', status: 'published', views: 567, likes: 89, createdAt: '2026-06-18T14:00:00Z' },
-  { id: 3, title: '短视频脚本示例', type: 'video', author: 'user1', status: 'draft', views: 0, likes: 0, createdAt: '2026-06-25T09:00:00Z' },
-];
-
-// ===== 圣力套餐数据 =====
-const coinPackagesStore = [
-  { id: 1, name: '新手体验包', coins: 100, price: 9.9, bonus: 10, status: 'active', salesCount: 234 },
-  { id: 2, name: '标准充值包', coins: 500, price: 39.9, bonus: 50, status: 'active', salesCount: 567 },
-  { id: 3, name: '豪华充值包', coins: 1000, price: 69.9, bonus: 150, status: 'active', salesCount: 189 },
-  { id: 4, name: '企业定制包', coins: 5000, price: 299.9, bonus: 1000, status: 'active', salesCount: 45 },
-];
-
-// ===== 实时定位数据 =====
-const locationStore = [
-  { id: 1, userId: 1, username: 'KF02V9', lat: 26.6532, lng: 111.5341, city: '祁阳', address: '祁阳市中心', updatedAt: '2026-06-26T03:00:00Z' },
-  { id: 2, userId: 2, username: 'user1', lat: 28.2280, lng: 112.9388, city: '长沙', address: '长沙市岳麓区', updatedAt: '2026-06-26T03:05:00Z' },
-  { id: 3, userId: 3, username: 'admin1', lat: 23.1291, lng: 113.2644, city: '广州', address: '广州市天河区', updatedAt: '2026-06-26T02:50:00Z' },
-];
-
-// ===== 在线用户数据 =====
-const onlineUsersStore = [];
-
-// ===== 新增API路由 =====
-
-// 在线用户
-app.get('/api/v1/admin/online-users', authCheck, (req, res) => {
-  const now = Date.now();
-  const active = onlineUsersStore.filter(u => (now - u.lastHeartbeat) < 300000);
-  const loggedIn = active.filter(u => u.userId !== '-');
-  const guests = active.filter(u => u.userId === '-');
-  const peakToday = onlineUsersStore.length > 0 ? Math.max(...active.map(u => u.peakToday || 0), active.length) : 0;
-  res.json({ code: 0, message: 'success', data: {
-    stats: { onlineTotal: active.length, loggedIn: loggedIn.length, guests: guests.length, peakToday: Math.max(peakToday, active.length + 50) },
-    list: active.map(u => ({
-      userId: u.userId || '-', username: u.username || '游客',
-      status: (now - u.lastHeartbeat) < 60000 ? '活跃' : '空闲',
-      currentPage: u.currentPage || '/dashboard',
-      ip: u.ip || '-', location: u.city || '未知', device: u.device || 'PC',
-      onlineTime: u.onlineTime || '0m'
-    }))
-  }});
-});
-
-// 反馈管理
-app.get('/api/v1/admin/feedback', authCheck, (req, res) => {
-  const { status, type } = req.query;
-  let list = [...feedbackStore];
-  if (status) list = list.filter(f => f.status === status);
-  if (type) list = list.filter(f => f.type === type);
-  const total = feedbackStore.length;
-  const pending = feedbackStore.filter(f => f.status === 'pending').length;
-  const resolved = feedbackStore.filter(f => f.status === 'resolved').length;
-  const avgRating = (feedbackStore.reduce((s, f) => s + f.rating, 0) / Math.max(total, 1)).toFixed(1);
-  res.json({ code: 0, message: 'success', data: {
-    stats: { totalFeedback: total, pending, resolved, satisfaction: avgRating },
-    list: list.reverse()
-  }});
-});
-app.put('/api/v1/admin/feedback/:id', authCheck, (req, res) => {
-  const fb = feedbackStore.find(f => f.id === Number(req.params.id));
-  if (!fb) return res.json({ code: 404, message: '反馈不存在' });
-  Object.assign(fb, req.body, { resolvedAt: new Date().toISOString() });
-  res.json({ code: 0, message: 'success', data: fb });
-});
-
-// 佣金管理
-app.get('/api/v1/admin/commissions', authCheck, (req, res) => {
-  const list = [...commissionStore].reverse();
-  const totalCommission = commissionStore.reduce((s, c) => s + c.commissionAmount, 0);
-  const monthCommission = commissionStore.filter(c => c.createdAt.startsWith('2026-06')).reduce((s, c) => s + c.commissionAmount, 0);
-  const pendingSettle = commissionStore.filter(c => c.status === 'pending').reduce((s, c) => s + c.commissionAmount, 0);
-  const settleCount = commissionStore.filter(c => c.status === 'settled').length;
-  res.json({ code: 0, message: 'success', data: {
-    stats: { totalCommission: totalCommission.toFixed(2), monthCommission: monthCommission.toFixed(2), pendingSettle: pendingSettle.toFixed(2), settleCount },
-    list
-  }});
-});
-app.put('/api/v1/admin/commissions/:id/settle', authCheck, (req, res) => {
-  const c = commissionStore.find(c => c.id === Number(req.params.id));
-  if (!c) return res.json({ code: 404, message: '佣金记录不存在' });
-  c.status = 'settled'; c.settledAt = new Date().toISOString();
-  res.json({ code: 0, message: 'success', data: c });
-});
-
-// 提现管理
-app.get('/api/v1/admin/withdraws', authCheck, (req, res) => {
-  const list = [...withdrawStore].reverse();
-  const totalRequests = withdrawStore.length;
-  const pending = withdrawStore.filter(w => w.status === 'pending').length;
-  const totalPaid = withdrawStore.filter(w => w.status === 'approved').reduce((s, w) => s + w.actualAmount, 0);
-  const rejected = withdrawStore.filter(w => w.status === 'rejected').length;
-  res.json({ code: 0, message: 'success', data: {
-    stats: { totalRequests, pending, totalPaid: totalPaid.toFixed(2), rejected },
-    list
-  }});
-});
-app.put('/api/v1/admin/withdraws/:id/approve', authCheck, (req, res) => {
-  const w = withdrawStore.find(w => w.id === Number(req.params.id));
-  if (!w) return res.json({ code: 404, message: '提现记录不存在' });
-  w.status = 'approved'; w.processedAt = new Date().toISOString();
-  res.json({ code: 0, message: 'success', data: w });
-});
-app.put('/api/v1/admin/withdraws/:id/reject', authCheck, (req, res) => {
-  const w = withdrawStore.find(w => w.id === Number(req.params.id));
-  if (!w) return res.json({ code: 404, message: '提现记录不存在' });
-  w.status = 'rejected'; w.processedAt = new Date().toISOString();
-  res.json({ code: 0, message: 'success', data: w });
-});
-
-// 分销管理
-app.get('/api/v1/admin/distribution', authCheck, (req, res) => {
-  const links = distributionStore.links;
-  const totalCommission = links.reduce((s, l) => s + l.commission, 0);
-  const totalClicks = links.reduce((s, l) => s + l.clicks, 0);
-  const totalConversions = links.reduce((s, l) => s + l.conversions, 0);
-  res.json({ code: 0, message: 'success', data: {
-    stats: { distributors: links.length, totalLinks: links.length, totalCommission: totalCommission.toFixed(2), conversionRate: totalClicks > 0 ? ((totalConversions / totalClicks) * 100).toFixed(1) + '%' : '0%' },
-    list: links,
-    rules: distributionStore.rules
-  }});
-});
-app.put('/api/v1/admin/distribution/rules', authCheck, (req, res) => {
-  Object.assign(distributionStore.rules, req.body);
-  res.json({ code: 0, message: 'success', data: distributionStore.rules });
-});
-
-// 合作伙伴
-app.get('/api/v1/admin/affiliates', authCheck, (req, res) => {
-  const list = [...affiliatesStore];
-  const totalPartners = list.length;
-  const active = list.filter(a => a.status === 'active').length;
-  const totalRevenue = list.reduce((s, a) => s + a.revenue, 0);
-  res.json({ code: 0, message: 'success', data: {
-    stats: { totalPartners, active, totalRevenue: totalRevenue.toFixed(2) },
-    list
-  }});
-});
-app.post('/api/v1/admin/affiliates', authCheck, (req, res) => {
-  const item = { id: affiliatesStore.length + 1, ...req.body, revenue: 0, commission: 0, joinedAt: new Date().toISOString() };
-  affiliatesStore.push(item);
-  res.json({ code: 0, message: 'success', data: item });
-});
-app.put('/api/v1/admin/affiliates/:id', authCheck, (req, res) => {
-  const a = affiliatesStore.find(a => a.id === Number(req.params.id));
-  if (!a) return res.json({ code: 404, message: '合作伙伴不存在' });
-  Object.assign(a, req.body);
-  res.json({ code: 0, message: 'success', data: a });
-});
-
-// 推送消息
-app.get('/api/v1/admin/push-messages', authCheck, (req, res) => {
-  const list = [...pushMessagesStore].reverse();
-  const totalSent = pushMessagesStore.filter(m => m.status === 'sent').reduce((s, m) => s + m.totalCount, 0);
-  const pushToday = pushMessagesStore.filter(m => m.sentAt && m.sentAt.startsWith('2026-06-26')).length;
-  const totalRead = pushMessagesStore.reduce((s, m) => s + m.readCount, 0);
-  const totalAll = pushMessagesStore.reduce((s, m) => s + m.totalCount, 0);
-  const readRate = totalAll > 0 ? ((totalRead / totalAll) * 100).toFixed(0) + '%' : '0%';
-  res.json({ code: 0, message: 'success', data: {
-    stats: { totalSent, pushToday, readRate, subscribers: usersStore.length },
-    list
-  }});
-});
-app.post('/api/v1/admin/push-messages', authCheck, (req, res) => {
-  const item = { id: pushMessagesStore.length + 1, ...req.body, status: 'draft', sentAt: null, readCount: 0, totalCount: 0 };
-  pushMessagesStore.push(item);
-  res.json({ code: 0, message: 'success', data: item });
-});
-app.post('/api/v1/admin/push-messages/:id/send', authCheck, (req, res) => {
-  const m = pushMessagesStore.find(m => m.id === Number(req.params.id));
-  if (!m) return res.json({ code: 404, message: '消息不存在' });
-  m.status = 'sent'; m.sentAt = new Date().toISOString();
-  m.totalCount = usersStore.length; m.readCount = 0;
-  res.json({ code: 0, message: 'success', data: m });
-});
-
-// 黑名单管理
-app.get('/api/v1/admin/blacklist', authCheck, (req, res) => {
-  res.json({ code: 0, message: 'success', data: {
-    stats: { bannedUsers: blacklistStore.users.length, blockedIPs: blacklistStore.ips.length, todayBlocks: 2 },
-    users: blacklistStore.users,
-    ips: blacklistStore.ips
-  }});
-});
-app.post('/api/v1/admin/blacklist/users', authCheck, (req, res) => {
-  const item = { id: blacklistStore.users.length + 1, ...req.body, bannedBy: req.user?.username || 'admin', bannedAt: new Date().toISOString() };
-  blacklistStore.users.push(item);
-  res.json({ code: 0, message: 'success', data: item });
-});
-app.delete('/api/v1/admin/blacklist/users/:id', authCheck, (req, res) => {
-  const idx = blacklistStore.users.findIndex(u => u.id === Number(req.params.id));
-  if (idx >= 0) blacklistStore.users.splice(idx, 1);
-  res.json({ code: 0, message: 'success' });
-});
-app.post('/api/v1/admin/blacklist/ips', authCheck, (req, res) => {
-  const item = { id: blacklistStore.ips.length + 1, ...req.body, blockedBy: req.user?.username || 'system', blockedAt: new Date().toISOString() };
-  blacklistStore.ips.push(item);
-  res.json({ code: 0, message: 'success', data: item });
-});
-app.delete('/api/v1/admin/blacklist/ips/:id', authCheck, (req, res) => {
-  const idx = blacklistStore.ips.findIndex(ip => ip.id === Number(req.params.id));
-  if (idx >= 0) blacklistStore.ips.splice(idx, 1);
-  res.json({ code: 0, message: 'success' });
-});
-
-// 用户标签
-app.get('/api/v1/admin/user-tags', authCheck, (req, res) => {
-  const totalTags = userTagsStore.length;
-  const taggedUsers = userTagsStore.reduce((s, t) => s + t.count, 0);
-  const avgTags = totalTags > 0 ? (taggedUsers / totalTags).toFixed(1) : '0';
-  res.json({ code: 0, message: 'success', data: {
-    stats: { totalTags, taggedUsers, avgTagsPerUser: avgTags },
-    list: userTagsStore
-  }});
-});
-app.post('/api/v1/admin/user-tags', authCheck, (req, res) => {
-  const item = { id: userTagsStore.length + 1, ...req.body, count: 0 };
-  userTagsStore.push(item);
-  res.json({ code: 0, message: 'success', data: item });
-});
-app.put('/api/v1/admin/user-tags/:id', authCheck, (req, res) => {
-  const t = userTagsStore.find(t => t.id === Number(req.params.id));
-  if (!t) return res.json({ code: 404, message: '标签不存在' });
-  Object.assign(t, req.body);
-  res.json({ code: 0, message: 'success', data: t });
-});
-app.delete('/api/v1/admin/user-tags/:id', authCheck, (req, res) => {
-  const idx = userTagsStore.findIndex(t => t.id === Number(req.params.id));
-  if (idx >= 0) userTagsStore.splice(idx, 1);
-  res.json({ code: 0, message: 'success' });
-});
-
-// 敏感词管理
-app.get('/api/v1/admin/sensitive-words', authCheck, (req, res) => {
-  const list = [...sensitiveWordsStore];
-  const totalWords = list.length;
-  const todayFiltered = list.filter(w => w.hitCount > 0).length;
-  const cats = new Set(list.map(w => w.category)).size;
-  res.json({ code: 0, message: 'success', data: {
-    stats: { totalWords, todayFiltered, categories: cats },
-    list
-  }});
-});
-app.post('/api/v1/admin/sensitive-words', authCheck, (req, res) => {
-  const item = { id: sensitiveWordsStore.length + 1, ...req.body, hitCount: 0, createdAt: new Date().toISOString() };
-  sensitiveWordsStore.push(item);
-  res.json({ code: 0, message: 'success', data: item });
-});
-app.delete('/api/v1/admin/sensitive-words/:id', authCheck, (req, res) => {
-  const idx = sensitiveWordsStore.findIndex(w => w.id === Number(req.params.id));
-  if (idx >= 0) sensitiveWordsStore.splice(idx, 1);
-  res.json({ code: 0, message: 'success' });
-});
-
-// 权限管理
-app.get('/api/v1/admin/permissions', authCheck, (req, res) => {
-  const allPerms = ['user.manage', 'user.view', 'content.manage', 'content.view', 'system.manage', 'system.view', 'payment.manage', 'payment.view', 'ai.manage', 'ai.view', 'report.view', 'report.manage'];
-  res.json({ code: 0, message: 'success', data: {
-    stats: { totalRoles: rolesStore.length, permissions: allPerms.length, assignedUsers: usersStore.length },
-    roles: rolesStore,
-    allPermissions: allPerms
-  }});
-});
-app.put('/api/v1/admin/permissions/:roleId', authCheck, (req, res) => {
-  const role = rolesStore.find(r => r.id === Number(req.params.roleId));
-  if (!role) return res.json({ code: 404, message: '角色不存在' });
-  if (req.body.permissions) role.permissions = req.body.permissions;
-  if (req.body.displayName) role.displayName = req.body.displayName;
-  if (req.body.description) role.description = req.body.description;
-  res.json({ code: 0, message: 'success', data: role });
-});
-
-// 聊天日志
-app.get('/api/v1/admin/chat-logs', authCheck, (req, res) => {
-  const { search, toolName } = req.query;
-  let list = [...chatLogsStore].reverse();
-  if (search) list = list.filter(l => l.input.includes(search) || l.username.includes(search));
-  if (toolName) list = list.filter(l => l.toolName === toolName);
-  res.json({ code: 0, message: 'success', data: { list, total: chatLogsStore.length } });
-});
-
-// 内容库
-app.get('/api/v1/admin/content-library', authCheck, (req, res) => {
-  const { search, type, status } = req.query;
-  let list = [...contentLibraryStore];
-  if (search) list = list.filter(c => c.title.includes(search));
-  if (type) list = list.filter(c => c.type === type);
-  if (status) list = list.filter(c => c.status === status);
-  res.json({ code: 0, message: 'success', data: list.reverse() });
-});
-app.post('/api/v1/admin/content-library', authCheck, (req, res) => {
-  const item = { id: contentLibraryStore.length + 1, ...req.body, views: 0, likes: 0, createdAt: new Date().toISOString() };
-  contentLibraryStore.push(item);
-  res.json({ code: 0, message: 'success', data: item });
-});
-app.put('/api/v1/admin/content-library/:id', authCheck, (req, res) => {
-  const c = contentLibraryStore.find(c => c.id === Number(req.params.id));
-  if (!c) return res.json({ code: 404, message: '内容不存在' });
-  Object.assign(c, req.body);
-  res.json({ code: 0, message: 'success', data: c });
-});
-app.delete('/api/v1/admin/content-library/:id', authCheck, (req, res) => {
-  const idx = contentLibraryStore.findIndex(c => c.id === Number(req.params.id));
-  if (idx >= 0) contentLibraryStore.splice(idx, 1);
-  res.json({ code: 0, message: 'success' });
-});
-
-// 圣力套餐管理
-app.get('/api/v1/admin/coin-packages', authCheck, (req, res) => {
-  res.json({ code: 0, message: 'success', data: [...coinPackagesStore] });
-});
-app.post('/api/v1/admin/coin-packages', authCheck, (req, res) => {
-  const item = { id: coinPackagesStore.length + 1, ...req.body, salesCount: 0 };
-  coinPackagesStore.push(item);
-  res.json({ code: 0, message: 'success', data: item });
-});
-app.put('/api/v1/admin/coin-packages/:id', authCheck, (req, res) => {
-  const p = coinPackagesStore.find(p => p.id === Number(req.params.id));
-  if (!p) return res.json({ code: 404, message: '套餐不存在' });
-  Object.assign(p, req.body);
-  res.json({ code: 0, message: 'success', data: p });
-});
-app.delete('/api/v1/admin/coin-packages/:id', authCheck, (req, res) => {
-  const idx = coinPackagesStore.findIndex(p => p.id === Number(req.params.id));
-  if (idx >= 0) coinPackagesStore.splice(idx, 1);
-  res.json({ code: 0, message: 'success' });
-});
-
-// 实时定位
-app.get('/api/v1/admin/locations', authCheck, (req, res) => {
-  res.json({ code: 0, message: 'success', data: {
-    list: locationStore,
-    total: locationStore.length
-  }});
-});
-
-// AI Agent管理
-app.get('/api/v1/admin/agents', authCheck, (req, res) => {
-  const list = agentsStore.map(a => ({
-    id: a.id, name: a.name, icon: a.icon, category: a.category,
-    description: a.description, status: a.status || 'active',
-    usageCount: a.usageCount || 0, model: a.model || 'deepseek'
-  }));
-  const totalAgents = list.length;
-  const active = list.filter(a => a.status === 'active').length;
-  const totalUsage = list.reduce((s, a) => s + (a.usageCount || 0), 0);
-  res.json({ code: 0, message: 'success', data: {
-    stats: { totalAgents, active, totalUsage },
-    list
-  }});
-});
-app.put('/api/v1/admin/agents/:id', authCheck, (req, res) => {
-  const a = agentsStore.find(a => a.id === Number(req.params.id));
-  if (!a) return res.json({ code: 404, message: 'Agent不存在' });
-  Object.assign(a, req.body);
-  res.json({ code: 0, message: 'success', data: a });
-});
-app.post('/api/v1/admin/agents', authCheck, (req, res) => {
-  const { name, icon, category, description, model, systemPrompt, coinCost, status } = req.body;
-  if (!name) return res.json({ code: 400, message: '名称不能为空' });
-  const newId = Math.max(0, ...agentsStore.map(a => a.id)) + 1;
-  const newAgent = { id: newId, name, icon: icon || '🤖', category: category || '通用', description: description || '', model: model || 'deepseek', systemPrompt: systemPrompt || '', coinCost: coinCost || 0, status: status || 'active', usageCount: 0, createdAt: new Date().toISOString() };
-  agentsStore.push(newAgent);
-  try { const fs = require('fs'); const path = require('path'); fs.writeFileSync(path.join(__dirname, 'data/agents.json'), JSON.stringify(agentsStore, null, 2)); } catch(e) {}
-  res.json({ code: 0, message: '创建成功', data: newAgent });
-});
-app.delete('/api/v1/admin/agents/:id', authCheck, (req, res) => {
-  const idx = agentsStore.findIndex(a => a.id === Number(req.params.id));
-  if (idx === -1) return res.json({ code: 404, message: 'Agent不存在' });
-  const removed = agentsStore.splice(idx, 1);
-  try { const fs = require('fs'); const path = require('path'); fs.writeFileSync(path.join(__dirname, 'data/agents.json'), JSON.stringify(agentsStore, null, 2)); } catch(e) {}
-  res.json({ code: 0, message: '删除成功', data: removed[0] });
-});
-
-
 // ===== 通用 fallback（必须放在所有路由之后） =====
 // ============================================================
 app.use('/api/v1/*all', (req, res) => {
@@ -3470,12 +2498,4 @@ app.listen(PORT, '0.0.0.0', () => {
   log(`\n🌐 外部访问: http://0.0.0.0:${PORT}/api/v1`);
   log(`   API 端点总数: 77+`);
   log(`\n⚠️  如看到"❌ 未配置"，请在 backend/.env 文件中填入对应的 API Key`);
-});
-
-// ===== API文档路由 =====
-app.get('/api/v1/docs', (req, res) => {
-  res.sendFile('/tmp/lsjy-app/backend/swagger.html');
-});
-app.get('/docs', (req, res) => {
-  res.redirect('/api/v1/docs');
 });

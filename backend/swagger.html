@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>罗圣纪元 API 文档</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+    .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    h1 { color: #333; border-bottom: 3px solid #4CAF50; padding-bottom: 10px; }
+    h2 { color: #4CAF50; margin-top: 30px; }
+    .endpoint { background: #f9f9f9; border-left: 4px solid #4CAF50; padding: 15px; margin: 15px 0; border-radius: 4px; }
+    .method { display: inline-block; padding: 4px 12px; border-radius: 3px; font-weight: bold; font-size: 12px; margin-right: 10px; }
+    .get { background: #61affe; color: white; }
+    .post { background: #49cc90; color: white; }
+    .put { background: #fca130; color: white; }
+    .delete { background: #f93e3e; color: white; }
+    .path { font-family: monospace; font-size: 14px; color: #333; }
+    .desc { color: #666; margin-top: 8px; font-size: 14px; }
+    .auth { background: #fff3cd; padding: 2px 6px; border-radius: 3px; font-size: 11px; margin-left: 8px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🚀 罗圣纪元 SaaS 平台 API 文档</h1>
+    <p>Base URL: <code>http://localhost:3000/api/v1</code></p>
+    
+    <h2>🔐 认证授权</h2>
+    <div class="endpoint">
+      <span class="method post">POST</span>
+      <span class="path">/auth/login</span>
+      <div class="desc">用户登录 - 返回 accessToken 和 refreshToken</div>
+    </div>
+    <div class="endpoint">
+      <span class="method post">POST</span>
+      <span class="path">/auth/register</span>
+      <div class="desc">用户注册</div>
+    </div>
+    <div class="endpoint">
+      <span class="method post">POST</span>
+      <span class="path">/auth/refresh</span>
+      <div class="desc">刷新 Token</div>
+    </div>
+    <div class="endpoint">
+      <span class="method post">POST</span>
+      <span class="path">/auth/logout</span>
+      <span class="auth">需要认证</span>
+      <div class="desc">退出登录</div>
+    </div>
+
+    <h2>👤 用户管理</h2>
+    <div class="endpoint">
+      <span class="method get">GET</span>
+      <span class="path">/users/me</span>
+      <span class="auth">需要认证</span>
+      <div class="desc">获取当前用户信息</div>
+    </div>
+    <div class="endpoint">
+      <span class="method put">PUT</span>
+      <span class="path">/users/me</span>
+      <span class="auth">需要认证</span>
+      <div class="desc">更新个人信息</div>
+    </div>
+    <div class="endpoint">
+      <span class="method get">GET</span>
+      <span class="path">/users</span>
+      <span class="auth">管理员</span>
+      <div class="desc">获取用户列表（管理员）</div>
+    </div>
+
+    <h2>🤖 AI 工具</h2>
+    <div class="endpoint">
+      <span class="method get">GET</span>
+      <span class="path">/ai/categories</span>
+      <div class="desc">获取工具分类列表</div>
+    </div>
+    <div class="endpoint">
+      <span class="method get">GET</span>
+      <span class="path">/ai/tools</span>
+      <div class="desc">获取 AI 工具列表</div>
+    </div>
+    <div class="endpoint">
+      <span class="method get">GET</span>
+      <span class="path">/ai/tools/:id</span>
+      <div class="desc">获取工具详情</div>
+    </div>
+    <div class="endpoint">
+      <span class="method post">POST</span>
+      <span class="path">/ai/tools/:id/call</span>
+      <span class="auth">需要认证</span>
+      <div class="desc">调用 AI 工具</div>
+    </div>
+    <div class="endpoint">
+      <span class="method get">GET</span>
+      <span class="path">/ai/history</span>
+      <span class="auth">需要认证</span>
+      <div class="desc">获取调用历史</div>
+    </div>
+    <div class="endpoint">
+      <span class="method get">GET</span>
+      <span class="path">/ai/models</span>
+      <div class="desc">获取可用模型列表</div>
+    </div>
+    <div class="endpoint">
+      <span class="method get">GET</span>
+      <span class="path">/ai/providers</span>
+      <div class="desc">获取 AI Provider 状态</div>
+    </div>
+
+    <h2>💰 支付中心（圣点）</h2>
+    <div class="endpoint">
+      <span class="method get">GET</span>
+      <span class="path">/payment/coin/balance</span>
+      <span class="auth">需要认证</span>
+      <div class="desc">查询圣点余额</div>
+    </div>
+    <div class="endpoint">
+      <span class="method get">GET</span>
+      <span class="path">/payment/coin/packages</span>
+      <div class="desc">获取充值套餐列表</div>
+    </div>
+    <div class="endpoint">
+      <span class="method post">POST</span>
+      <span class="path">/payment/coin/recharge</span>
+      <span class="auth">需要认证</span>
+      <div class="desc">创建充值订单</div>
+    </div>
+    <div class="endpoint">
+      <span class="method get">GET</span>
+      <span class="path">/payment/coin/transactions</span>
+      <span class="auth">需要认证</span>
+      <div class="desc">查询圣点交易记录</div>
+    </div>
+    <div class="endpoint">
+      <span class="method get">GET</span>
+      <span class="path">/payment/orders</span>
+      <span class="auth">需要认证</span>
+      <div class="desc">查询支付订单</div>
+    </div>
+
+    <h2>🛠️ 管理后台</h2>
+    <div class="endpoint">
+      <span class="method get">GET</span>
+      <span class="path">/admin/dashboard/stats</span>
+      <span class="auth">管理员</span>
+      <div class="desc">获取仪表盘统计数据</div>
+    </div>
+    <div class="endpoint">
+      <span class="method get">GET</span>
+      <span class="path">/admin/announcements</span>
+      <span class="auth">管理员</span>
+      <div class="desc">获取公告列表</div>
+    </div>
+    <div class="endpoint">
+      <span class="method post">POST</span>
+      <span class="path">/admin/announcements</span>
+      <span class="auth">管理员</span>
+      <div class="desc">创建公告</div>
+    </div>
+    <div class="endpoint">
+      <span class="method get">GET</span>
+      <span class="path">/admin/coupons</span>
+      <span class="auth">管理员</span>
+      <div class="desc">获取优惠券列表</div>
+    </div>
+    <div class="endpoint">
+      <span class="method get">GET</span>
+      <span class="path">/admin/campaigns</span>
+      <span class="auth">管理员</span>
+      <div class="desc">获取活动列表</div>
+    </div>
+    <div class="endpoint">
+      <span class="method get">GET</span>
+      <span class="path">/admin/tickets</span>
+      <span class="auth">管理员</span>
+      <div class="desc">获取工单列表</div>
+    </div>
+    <div class="endpoint">
+      <span class="method get">GET</span>
+      <span class="path">/admin/faqs</span>
+      <span class="auth">管理员</span>
+      <div class="desc">获取 FAQ 列表</div>
+    </div>
+    <div class="endpoint">
+      <span class="method get">GET</span>
+      <span class="path">/admin/automation-rules</span>
+      <span class="auth">管理员</span>
+      <div class="desc">获取自动化规则列表</div>
+    </div>
+    <div class="endpoint">
+      <span class="method get">GET</span>
+      <span class="path">/admin/moderation</span>
+      <span class="auth">管理员</span>
+      <div class="desc">获取内容审核列表</div>
+    </div>
+
+    <h2>⚙️ 系统管理</h2>
+    <div class="endpoint">
+      <span class="method get">GET</span>
+      <span class="path">/system/configs/public</span>
+      <div class="desc">获取公开配置</div>
+    </div>
+    <div class="endpoint">
+      <span class="method get">GET</span>
+      <span class="path">/system/configs</span>
+      <span class="auth">超级管理员</span>
+      <div class="desc">获取所有配置</div>
+    </div>
+    <div class="endpoint">
+      <span class="method put">PUT</span>
+      <span class="path">/system/configs/:key</span>
+      <span class="auth">超级管理员</span>
+      <div class="desc">更新配置</div>
+    </div>
+    <div class="endpoint">
+      <span class="method get">GET</span>
+      <span class="path">/system/logs</span>
+      <span class="auth">管理员</span>
+      <div class="desc">获取操作日志</div>
+    </div>
+    <div class="endpoint">
+      <span class="method get">GET</span>
+      <span class="path">/notifications</span>
+      <span class="auth">需要认证</span>
+      <div class="desc">获取通知列表</div>
+    </div>
+
+    <h2>🔑 角色权限</h2>
+    <div class="endpoint">
+      <span class="method get">GET</span>
+      <span class="path">/roles</span>
+      <span class="auth">管理员</span>
+      <div class="desc">获取所有角色</div>
+    </div>
+    <div class="endpoint">
+      <span class="method get">GET</span>
+      <span class="path">/roles/permissions</span>
+      <span class="auth">管理员</span>
+      <div class="desc">获取所有权限</div>
+    </div>
+    <div class="endpoint">
+      <span class="method post">POST</span>
+      <span class="path">/roles</span>
+      <span class="auth">管理员</span>
+      <div class="desc">创建角色</div>
+    </div>
+    <div class="endpoint">
+      <span class="method post">POST</span>
+      <span class="path">/roles/assign</span>
+      <span class="auth">管理员</span>
+      <div class="desc">分配角色给用户</div>
+    </div>
+
+    <h2>🏥 健康检查</h2>
+    <div class="endpoint">
+      <span class="method get">GET</span>
+      <span class="path">/health</span>
+      <div class="desc">服务健康检查</div>
+    </div>
+  </div>
+</body>
+</html>

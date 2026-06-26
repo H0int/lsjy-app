@@ -284,6 +284,9 @@ export const adminApi = {
     if (useMock) return mockApi.deleteRule(id) as any
     return service.delete(`/automation/rules/${id}`).then(r => r.data)
   },
+  getRuleLogs(id: number, params?: { page?: number; pageSize?: number }): Promise<ApiResponse<any>> {
+    return service.get(`/automation/rules/${id}/logs`, { params }).then(r => r.data)
+  },
 
   /** 内容审核 */
   getContentModerations(): Promise<ApiResponse<ModerationItem[]>> {

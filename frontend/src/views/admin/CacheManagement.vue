@@ -24,7 +24,7 @@
         <el-table-column prop="hitRate" label="命中率" width="100" />
         <el-table-column prop="ttl" label="TTL" width="100" />
         <el-table-column label="操作" width="150" fixed="right">
-          <template #default><el-button size="small" type="warning" link>清空</el-button><el-button size="small" type="primary" link>刷新</el-button></template>
+          <template #default="{ row }"><el-button size="small" type="warning" link @click="clearCacheRow(row)">清空</el-button><el-button size="small" type="primary" link @click="refreshCacheRow(row)">刷新</el-button></template>
         </el-table-column>
       </el-table>
     </div>
@@ -91,6 +91,29 @@ function exportCache() {
   a.click()
   URL.revokeObjectURL(url)
   ElMessage.success('缓存数据导出成功')
+}
+
+async function clearCacheRow(row: any) {
+  try {
+    await ElMessageBox.confirm(`确认清空缓存「${row.name}」？`, '提示', { type: 'warning' })
+    await service.post('/cache/clear', { type: row.name || row.key })
+    ElMessage.success(`已清空 ${row.name}`)
+    fetchStats()
+  } catch (e: any) {
+    if (e !== 'cancel' && e?.toString() !== 'cancel') {
+      ElMessage.warning('清空缓存失败（后端暂不支持该缓存类型）')
+    }
+  }
+}
+
+async function refreshCacheRow(row: any) {
+  try {
+    await service.post('/cache/clear', { type: row.name || row.key })
+    ElMessage.success(`已刷新 ${row.name}`)
+    fetchStats()
+  } catch {
+    ElMessage.warning('刷新缓存失败（后端暂不支持该缓存类型）')
+  }
 }
 
 onMounted(fetchStats)

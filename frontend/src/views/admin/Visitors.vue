@@ -131,6 +131,14 @@ async function fetchStats() {
         pageViews: data.uniqueIps ?? 0,
         avgDuration: data.lastVisit || '-'
       }
+      // Update trend data if hourly breakdown is available
+      if (data.hourly && Array.isArray(data.hourly)) {
+        const maxVal = Math.max(...data.hourly.map((h: any) => h.count || 0), 1)
+        trendData.value = data.hourly.map((h: any, i: number) => ({
+          hour: `${i}:00`,
+          height: Math.round(((h.count || 0) / maxVal) * 100)
+        }))
+      }
     }
   } catch (e) {
     ElMessage.error('加载访客统计失败')
