@@ -127,21 +127,25 @@
 
       <!-- 输入框 -->
       <div class="cyber-card p-2 flex-shrink-0">
-        <!-- 图片预览 -->
-        <div v-if="pendingImage" class="mb-1.5 flex items-center gap-2 p-1.5 rounded-lg" style="background: rgba(0,240,255,0.05); border: 1px solid var(--cyber-border);">
-          <img :src="pendingImage.url" class="w-10 h-10 rounded object-cover" style="border: 1px solid var(--cyber-border);" />
-          <span class="text-[10px] flex-1 truncate" style="color: var(--cyber-text-dim);">{{ pendingImage.name }}</span>
-          <button @click="pendingImage = null" class="text-[10px] px-1.5 py-0.5 rounded" style="color: #ff4444; background: rgba(255,68,68,0.1);">✕</button>
+        <!-- 文件/图片预览 -->
+        <div v-if="pendingFile" class="mb-1.5 flex items-center gap-2 p-1.5 rounded-lg" style="background: rgba(0,240,255,0.05); border: 1px solid var(--cyber-border);">
+          <img v-if="pendingFile.isImage" :src="pendingFile.url" class="w-10 h-10 rounded object-cover" style="border: 1px solid var(--cyber-border);" />
+          <div v-else class="w-10 h-10 rounded flex items-center justify-center text-lg" style="background: rgba(0,240,255,0.08); border: 1px solid var(--cyber-border);">📄</div>
+          <div class="flex-1 min-w-0">
+            <div class="text-[10px] truncate" style="color: var(--cyber-text);">{{ pendingFile.name }}</div>
+            <div class="text-[9px]" style="color: var(--cyber-text-dim);">{{ pendingFile.isImage ? '图片' : '文件' }} · {{ pendingFile.sizeLabel }}{{ pendingFile.extractedText ? ' · 已提取内容' : '' }}</div>
+          </div>
+          <button @click="pendingFile = null" class="text-[10px] px-1.5 py-0.5 rounded" style="color: #ff4444; background: rgba(255,68,68,0.1);">✕</button>
         </div>
         <div class="flex gap-1.5">
-          <!-- 图片上传按钮 -->
-          <button @click="imgUploadRef?.click()" :disabled="loading"
+          <!-- 上传按钮：图片+文件 -->
+          <button @click="fileUploadRef?.click()" :disabled="loading"
             class="px-2.5 py-2 rounded-lg text-sm flex-shrink-0"
-            style="background: rgba(0,240,255,0.05); border: 1px solid var(--cyber-border); color: var(--cyber-text-dim);"
-            title="上传图片">
-            ️
+            style="background: rgba(0,240,255,0.05); border: 1px solid var(--cyber-border); color: var(--cyber-cyan); font-size:16px; line-height:1;"
+            title="上传图片或文件">
+            ＋
           </button>
-          <input ref="imgUploadRef" type="file" accept="image/*" class="hidden" @change="handleImageUpload" />
+          <input ref="fileUploadRef" type="file" accept="image/*,.txt,.md,.json,.csv,.js,.ts,.py,.html,.css,.xml,.log,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" class="hidden" @change="handleFileUpload" />
           <input v-model="input" @keyup.enter="sendMsg"
             :placeholder="loading ? '思考中...' : '向' + selectedAgent?.name + '提问（' + selectedAgent?.coinCost + '/次）'"
             :disabled="loading"
@@ -149,10 +153,10 @@
             style="background: rgba(0,240,255,0.03); border: 1px solid var(--cyber-border); color: var(--cyber-text);"
             @focus="($event.target as HTMLInputElement).style.borderColor='var(--cyber-cyan)'"
             @blur="($event.target as HTMLInputElement).style.borderColor='var(--cyber-border)'" />
-          <button @click="sendMsg" :disabled="(!input.trim() && !pendingImage) || loading"
+          <button @click="sendMsg" :disabled="(!input.trim() && !pendingFile) || loading"
             class="px-4 py-2 rounded-lg text-xs font-bold"
             style="background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple)); color: #000;"
-            :style="((!input.trim() && !pendingImage) || loading) ? 'opacity: 0.5;' : 'box-shadow: 0 0 12px rgba(0,240,255,0.4);'">
+            :style="((!input.trim() && !pendingFile) || loading) ? 'opacity: 0.5;' : 'box-shadow: 0 0 12px rgba(0,240,255,0.4);'">
             发送
           </button>
         </div>
@@ -250,8 +254,8 @@ const aiOnline = ref(true)
 const coinBalance = ref(100)
 
 // 图片上传
-const pendingImage = ref<{url: string; name: string} | null>(null)
-const imgUploadRef = ref<HTMLInputElement | null>(null)
+const pendingFile = ref<{url: string; name: string; isImage: boolean; sizeLabel: string; extractedText?: string} | null>(null)
+const fileUploadRef = ref<HTMLInputElement | null>(null)
 
 // Toast提示
 const toastMsg = ref('')
@@ -387,47 +391,78 @@ function clearChat() {
   if (!selectedAgent.value) return
   msgsByAgent.value[selectedAgent.value.id] = []
   images.value = []
+  pendingFile.value = null
 }
 
 function sendQuick(t: string) { input.value = t; sendMsg() }
 
-// 图片上传处理
-async function handleImageUpload(e: Event) {
+// 文件/图片上传处理
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return bytes + 'B'
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + 'KB'
+  return (bytes / 1024 / 1024).toFixed(1) + 'MB'
+}
+
+async function handleFileUpload(e: Event) {
   const file = (e.target as HTMLInputElement).files?.[0]
   if (!file) return
-  // 限制5MB
-  if (file.size > 5 * 1024 * 1024) {
-    showToast('图片不能超过5MB')
+  const isImage = file.type.startsWith('image/')
+  const maxSize = isImage ? 5 * 1024 * 1024 : 10 * 1024 * 1024
+  const sizeLabel = formatFileSize(file.size)
+  if (file.size > maxSize) {
+    showToast(isImage ? '图片不能超过5MB' : '文件不能超过10MB')
     return
   }
-  // 先显示预览（base64）
-  const reader = new FileReader()
-  reader.onload = () => {
-    pendingImage.value = { url: reader.result as string, name: file.name }
+  // 图片：base64预览
+  if (isImage) {
+    const reader = new FileReader()
+    reader.onload = () => {
+      pendingFile.value = { url: reader.result as string, name: file.name, isImage: true, sizeLabel }
+    }
+    reader.readAsDataURL(file)
+  } else {
+    // 文本类文件：提取内容
+    const textExts = ['txt','md','json','csv','js','ts','py','html','css','xml','log']
+    const ext = file.name.split('.').pop()?.toLowerCase() || ''
+    if (textExts.includes(ext)) {
+      const reader = new FileReader()
+      reader.onload = () => {
+        const text = reader.result as string
+        pendingFile.value = { url: '', name: file.name, isImage: false, sizeLabel, extractedText: text.substring(0, 8000) }
+      }
+      reader.readAsText(file)
+    } else {
+      // PDF/Office等：仅显示文件信息，由AI识别文件名
+      pendingFile.value = { url: '', name: file.name, isImage: false, sizeLabel }
+    }
   }
-  reader.readAsDataURL(file)
-  // 重置input以便可以重复选择同一文件
   ;(e.target as HTMLInputElement).value = ''
 }
 
 // ========== 核心：AI对话 ==========
 async function sendMsg() {
   const text = input.value.trim()
-  const img = pendingImage.value
-  if ((!text && !img) || loading.value || !selectedAgent.value) return
+  const file = pendingFile.value
+  if ((!text && !file) || loading.value || !selectedAgent.value) return
 
   const agent = selectedAgent.value
-  // 组合消息内容：图片（markdown格式）+ 文字
+  // 组合消息内容：文件/图片 + 文字
   let userContent = ''
-  if (img) {
-    userContent += `![图片](${img.url})\n`
+  if (file) {
+    if (file.isImage) {
+      userContent += `![图片](${file.url})\n`
+    } else if (file.extractedText) {
+      userContent += `📄 [文件: ${file.name}]\n\`\`\`\n${file.extractedText}\n\`\`\`\n\n`
+    } else {
+      userContent += `📄 [文件: ${file.name} (${file.sizeLabel})]\n`
+    }
   }
   if (text) {
     userContent += text
   }
   msgs.value.push({ role: 'user', content: userContent })
   input.value = ''
-  pendingImage.value = null
+  pendingFile.value = null
   loading.value = true
   scrollToBottom()
 
