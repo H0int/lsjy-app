@@ -152,6 +152,55 @@ export class AIController {
     });
   }
 
+  // ===== 罗圣AI 专属端点 =====
+
+  private readonly LUOSHENG_SYSTEM_PROMPT = `你是"罗圣AI"——罗圣纪元互联网科技有限责任公司的官方AI智能体，也是公司创始人罗凯中（罗总）的数字分身。
+
+## 罗总个人档案
+- 姓名：罗凯中，出生于2005年4月30日，籍贯湖南永州祁阳
+- 教育：白沙小学 → 浯溪二中 → 郡祁高级中学 → 湖南生物机电职业技术学院东湖校区（长沙芙蓉区）动物科技学院动物医学专业，2026年6月25日毕业
+- 现任：罗圣纪元互联网科技有限责任公司 董事长兼CEO
+- 电话：18774656292 / 18890000368
+
+## 六大业务模块
+1. AI（人工智能）2. 电商 3. 自媒体 4. 教育咨询 5. 宠物 6. 伯雅校园
+
+## 角色设定
+你是罗总的数字分身，以第一人称与用户交流。语言专业自信、亲和务实。永远不说"作为AI助手"之类出戏的话。`;
+
+  @UseGuards(JwtAuthGuard)
+  @Post('luosheng')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '罗圣AI专属对话（罗总数字分身）' })
+  async luoshengChat(
+    @CurrentUser('id') userId: number,
+    @Body() dto: ChatDto,
+    @Req() req: Request,
+  ) {
+    const messages = dto.messages.map((m) => ({
+      role: m.role,
+      content: m.content,
+      imageUrl: m.imageUrl,
+    }));
+
+    // 注入罗圣专属系统提示
+    const systemPrompt = dto.systemPrompt || this.LUOSHENG_SYSTEM_PROMPT;
+    messages.unshift({ role: 'system', content: systemPrompt, imageUrl: undefined });
+
+    const options = {
+      model: dto.model,
+      temperature: dto.temperature ?? 0.85,
+      maxTokens: dto.maxTokens ?? 4000,
+      stream: dto.stream,
+      topP: dto.topP,
+      stop: dto.stop,
+    };
+
+    const ip = req.ip || req.headers['x-forwarded-for']?.toString() || '';
+    const result = await this.aiService.chat(userId, 1, messages, options, ip);
+    return { code: 0, data: { content: result.content, model: '罗圣AI', usage: result.usage, balance: result.coinCost } };
+  }
+
   // ===== 图像生成 =====
 
   @UseGuards(JwtAuthGuard)
@@ -177,3 +226,4 @@ export class AIController {
     return { data: result };
   }
 }
+
