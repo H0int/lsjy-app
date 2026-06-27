@@ -195,7 +195,7 @@ const showComboMenu = ref(false)
 
 // 15个AI员工能力
 const aiCapabilities = [
-  {id: 1, icon: '🤖', name: '通用对话', desc: '全能AI助手', cost: 1},
+  {id: 1, icon: '🤖', name: '罗圣AI', desc: '罗总数字分身·全能AI助手', cost: 1},
   {id: 2, icon: '📝', name: '文案创作', desc: '营销文案生成', cost: 10},
   {id: 3, icon: '🎨', name: 'AI绘画', desc: 'AI图片生成', cost: 20},
   {id: 4, icon: '📊', name: '数据分析', desc: '数据解读分析', cost: 15},
@@ -251,14 +251,14 @@ async function fetchBalance() {
 const suggestions = [
   {icon:'💡', text:'帮我写一篇小红书爆款文案'},
   {icon:'📈', text:'分析今天A股行情走势'},
-  {icon:'🧠', text:'介绍一下罗圣纪元这家公司'},
+  {icon:'🧠', text:'罗圣纪元公司有哪些业务'},
   {icon:'✍️', text:'帮我写一份商业计划书'},
   {icon:'🎯', text:'制定一个营销推广方案'},
   {icon:'💼', text:'分析一个创业项目的可行性'},
   {icon:'📊', text:'帮我做一份竞品分析报告'},
   {icon:'🎨', text:'生成赛博朋克风格图片'},
   {icon:'📝', text:'帮我写一篇公众号文章'},
-  {icon:'🤖', text:'罗圣纪元有哪些AI功能'}
+  {icon:'🤖', text:'罗总，帮我写一份商业计划书'}
 ]
 
 const thinkingPhrases = ['正在连接量子计算节点','神经网络推理中','扫描知识库数据','生成最优回答策略','深度语义分析中','跨维度信息整合']
@@ -303,7 +303,8 @@ async function sendMessage() {
 
     const allMessages = messages.value.map(m => ({role: m.role, content: m.content}))
     
-    const res = await fetch(`https://api.lsjyapp.cn/api/v1/ai/tools/${selectedToolId.value}/chat`, {
+      const apiPath = selectedToolId.value === 1 ? '/api/v1/ai/luosheng' : `/api/v1/ai/tools/${selectedToolId.value}/chat`
+      const res = await fetch(`https://api.lsjyapp.cn${apiPath}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -650,3 +651,4 @@ watch(() => messages.value.length, () => {
   color:#1a1a3a; font-weight:bold; cursor:pointer; font-size:12px;
 }
 </style>
+
