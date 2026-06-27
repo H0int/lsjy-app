@@ -314,6 +314,7 @@ const systemSettingsStore = {
   maintenanceMode: false,
   supportEmail: 'support@lsjyapp.cn',
   version: '2.0.0',
+  klingApiKey: '',
 };
 
 const coinTransactionsStore = [
@@ -920,8 +921,9 @@ async function callTongyiVideoAPI(prompt, options = {}) {
 
 // 可灵视频生成（快手）
 async function callKlingVideoAPI(prompt, options = {}) {
-  const apiKey = CONFIG.KLING_API_KEY;
-  if (!apiKey) throw new Error('可灵 API Key 未配置，请在 .env 中配置 KLING_API_KEY');
+  // 优先从系统设置读取（管理后台配置），其次从环境变量读取
+  const apiKey = systemSettingsStore.klingApiKey || CONFIG.KLING_API_KEY;
+  if (!apiKey || apiKey === 'test-key-123') throw new Error('可灵 API Key 未配置，请在管理后台 → 系统设置中填写真实的可灵 API Key');
 
   const baseUrl = CONFIG.KLING_BASE_URL;
   const model = CONFIG.KLING_MODEL;
