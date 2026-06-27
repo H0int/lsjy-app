@@ -42,6 +42,11 @@ service.interceptors.request.use(
 // ===== 响应拦截器 =====
 service.interceptors.response.use(
   (response: AxiosResponse<ApiResponse>) => {
+    // 兼容后端双层data包装: {code, data:{data:...}} → {code, data:...}
+    const body = response.data as any
+    if (body && typeof body === 'object' && 'code' in body && body.data && typeof body.data === 'object' && 'data' in body.data) {
+      response.data = { ...body, data: body.data.data }
+    }
     return response
   },
   async (error) => {

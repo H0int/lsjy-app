@@ -133,7 +133,7 @@ onMounted(async () => {
   // 获取热门工具
   try {
     const res = await toolApi.getTools({ pageSize: 6 })
-    hotTools.value = res.data.items.sort((a, b) => b.usageCount - a.usageCount).slice(0, 6)
+    hotTools.value = (res.data as any).items.sort((a: any, b: any) => b.usageCount - a.usageCount).slice(0, 6)
   } catch { /* ignore */ }
 
   // 更新统计卡片
@@ -160,7 +160,7 @@ onMounted(async () => {
   try {
     const annRes = await adminApi.getAnnouncements()
     if (annRes.data && Array.isArray(annRes.data)) {
-      notices.value = annRes.data.slice(0, 4).map((a: any) => ({
+      notices.value = (annRes.data as any[]).slice(0, 4).map((a: any) => ({
         id: String(a.id),
         tag: a.type || '公告',
         title: a.title,
@@ -198,24 +198,6 @@ onMounted(async () => {
   sendHeartbeat()
   heartbeatTimer = setInterval(sendHeartbeat, 10000)
 
-
-  // 心跳上报 + 在线人数
-  async function sendHeartbeat() {
-    try {
-      const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1'
-      const token = authStore.token || ''
-      const sessionId = authStore.user?.id || navigator.userAgent.substring(0, 50)
-      await fetch(API_BASE + '/online/heartbeat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'X-Session-Id': sessionId, 'X-User-Id': String(authStore.user?.id || '') },
-        body: JSON.stringify({ path: window.location.pathname })
-      })
-      const countRes = await fetch(API_BASE + '/online/count', { headers: { 'Authorization': 'Bearer ' + token } })
-      if (countRes.ok) { const cd = await countRes.json(); onlineCount.value = cd.data?.onlineCount || 0 }
-    } catch { /* ignore */ }
-  }
-  sendHeartbeat()
-
   // 获取用户使用记录（从订单API）
   try {
     const orderRes = await adminApi.getOrders({ page: 1, pageSize: 4 })
@@ -235,8 +217,6 @@ onMounted(async () => {
 onUnmounted(() => {
   if (heartbeatTimer) clearInterval(heartbeatTimer)
 })
-
-onUnmounted(() => { if (heartbeatTimer) clearInterval(heartbeatTimer) })
 </script>
 
 <style scoped>

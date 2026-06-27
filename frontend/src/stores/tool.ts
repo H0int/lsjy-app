@@ -13,7 +13,7 @@ export const useToolStore = defineStore('tool', () => {
   async function fetchCategories() {
     try {
       const res = await toolApi.getCategories()
-      categories.value = res.data
+      categories.value = res.data as any
     } catch (e) {
       console.error('获取分类失败', e)
     }
@@ -23,8 +23,8 @@ export const useToolStore = defineStore('tool', () => {
     loading.value = true
     try {
       const res = await toolApi.getTools(params)
-      tools.value = res.data.items
-      total.value = res.data.total
+      tools.value = (res.data as any).items
+      total.value = (res.data as any).total
     } finally {
       loading.value = false
     }
