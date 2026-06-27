@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="max-w-4xl mx-auto px-4 py-3 flex flex-col" style="height: calc(100vh - 80px);">
     <!-- 头部 -->
     <div class="cyber-card p-2.5 mb-2 flex items-center gap-2 flex-shrink-0">
@@ -228,7 +228,7 @@ interface Agent {
 
 // 10 AI员工 - 罗圣纪元团队
 const agents: Agent[] = [
-  { id: 101, name: '总指挥罗圣', icon: '👑', toolType: 'text', description: '项目总指挥，全能型AI助手', coinCost: 1, systemPrompt: '你是"罗圣"，罗圣纪元AI平台最高决策者和项目总指挥。公司：祁阳市罗圣纪元互联网科技有限责任公司（"祁阳"不是"祈阳"）。创始人/CEO：罗凯中。六大业务：AI智能服务、自媒体运营、电商服务、在线教育、宠物医疗、伯雅校园。你负责产品方案审批、技术架构决策、商业规则制定、资源协调。回复果断、言简意赅、有战略高度。' },
+  { id: 101, name: '罗圣AI·罗总', icon: '👑', toolType: 'text', description: '罗总数字分身·全能AI助手', coinCost: 1, systemPrompt: '你是"罗圣"，罗圣纪元AI平台最高决策者和项目总指挥。公司：祁阳市罗圣纪元互联网科技有限责任公司（"祁阳"不是"祈阳"）。创始人/CEO：罗凯中。六大业务：AI智能服务、自媒体运营、电商服务、在线教育、宠物医疗、伯雅校园。你负责产品方案审批、技术架构决策、商业规则制定、资源协调。回复果断、言简意赅、有战略高度。' },
   { id: 102, name: '运营文案师', icon: '✍️', toolType: 'text', description: '文案输出、用户路径设计', coinCost: 1, systemPrompt: '你是"罗圣纪元-运营文案师"，负责产品体验与运营文案。公司：祁阳市罗圣纪元互联网科技有限责任公司（严禁写成"祈阳"）。你负责输出页面文案、运营位文案、充值引导文案、工具引导文案，设计AI工具交互逻辑，输出运营活动策划。文案简洁专业，符合商务调性，可直接落地。' },
   { id: 103, name: '调研分析师', icon: '🔍', toolType: 'text', description: '竞品对标、数据分析', coinCost: 1, systemPrompt: '你是"罗圣纪元-调研分析师"，负责全平台问题盘点与竞品对标。公司：祁阳市罗圣纪元互联网科技有限责任公司（严禁写成"祈阳"）。你负责走查页面功能接口输出bug清单，对标行业主流AI平台输出可落地方案，分析用户反馈与需求。客观中立，只摆事实与数据。' },
   { id: 104, name: '投资理财顾问', icon: '💰', toolType: 'text', description: '充值定价、分销体系', coinCost: 2, systemPrompt: '你是"罗圣纪元-投资理财顾问"，负责商业体系设计与落地。公司：祁阳市罗圣纪元互联网科技有限责任公司（严禁写成"祈阳"）。你负责设计充值套餐与定价策略、规划分销商体系与返佣规则、设计会员体系与增值服务、核算平台收支。所有定价必须有成本测算依据。' },
@@ -446,7 +446,7 @@ async function sendMsg() {
       backendMessages.unshift({ role: 'user', content: '[System Instructions] ' + agent.systemPrompt } as any)
     }
 
-    const res = await fetch(`${API_BASE}/ai/tools/${agent.id}/chat`, {
+    const res = await fetch(`${API_BASE}${agent.id===101?"/ai/luosheng":"/ai/tools/"+agent.id+"/chat"}`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${authToken.value}`,
@@ -558,7 +558,7 @@ async function regenerateMsg(index: number) {
       backendMessages.unshift({ role: 'user', content: '[System Instructions] ' + agent.systemPrompt } as any)
     }
 
-    const res = await fetch(`${API_BASE}/ai/tools/${agent.id}/chat`, {
+    const res = await fetch(`${API_BASE}${agent.id===101?"/ai/luosheng":"/ai/tools/"+agent.id+"/chat"}`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${authToken.value}`,
@@ -780,3 +780,4 @@ onMounted(async () => {
   border-radius: 2px;
 }
 </style>
+
