@@ -232,14 +232,93 @@ export class AIService {
    * 获取可用模型列表
    */
   async getAvailableModels(category?: string): Promise<any> {
-    const allModels = await this.providerManager.getAllModels();
+    let allModels = await this.providerManager.getAllModels();
+
+    // 兜底：当没有任何Provider注册时，返回默认模型列表
+    if (!allModels || allModels.length === 0) {
+      this.logger.warn('无已注册的AI Provider，返回默认模型列表');
+      allModels = [
+        {
+          provider: 'doubao',
+          providerName: '豆包(火山引擎)',
+          models: [
+            {
+              id: 'doubao-seed-2-0-pro-260215',
+              name: '豆包 Seed 2.0 Pro',
+              capabilities: ['text', 'code'],
+              maxContextLength: 32768,
+              supportStream: true,
+              inputPrice: 0,
+              outputPrice: 0,
+            },
+            {
+              id: 'doubao-lite-32k',
+              name: '豆包 Lite 32K',
+              capabilities: ['text'],
+              maxContextLength: 32768,
+              supportStream: true,
+              inputPrice: 0,
+              outputPrice: 0,
+            },
+          ],
+        },
+        {
+          provider: 'deepseek',
+          providerName: 'DeepSeek',
+          models: [
+            {
+              id: 'deepseek-chat',
+              name: 'DeepSeek Chat',
+              capabilities: ['text', 'code'],
+              maxContextLength: 65536,
+              supportStream: true,
+              inputPrice: 0,
+              outputPrice: 0,
+            },
+            {
+              id: 'deepseek-v3',
+              name: 'DeepSeek V3',
+              capabilities: ['text', 'code'],
+              maxContextLength: 65536,
+              supportStream: true,
+              inputPrice: 0,
+              outputPrice: 0,
+            },
+          ],
+        },
+        {
+          provider: 'tongyi',
+          providerName: '通义千问',
+          models: [
+            {
+              id: 'qwen-plus',
+              name: '通义千问 Plus',
+              capabilities: ['text', 'code'],
+              maxContextLength: 131072,
+              supportStream: true,
+              inputPrice: 0.8,
+              outputPrice: 2.0,
+            },
+            {
+              id: 'qwen-turbo',
+              name: '通义千问 Turbo',
+              capabilities: ['text', 'code'],
+              maxContextLength: 8192,
+              supportStream: true,
+              inputPrice: 0.3,
+              outputPrice: 0.6,
+            },
+          ],
+        },
+      ];
+    }
 
     if (category) {
       // 按类别过滤
-      return allModels.map((group) => ({
+      return allModels.map((group: any) => ({
         ...group,
-        models: group.models.filter((m) => m.capabilities.includes(category as any)),
-      })).filter((group) => group.models.length > 0);
+        models: group.models.filter((m: any) => m.capabilities.includes(category as any)),
+      })).filter((group: any) => group.models.length > 0);
     }
 
     return allModels;
