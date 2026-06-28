@@ -256,4 +256,95 @@ export class AIController {
     }
   }
 
+
+  // ===== 罗圣AI快捷对话（前端AgentChat调用） =====
+
+  @UseGuards(JwtAuthGuard)
+  @Post('luosheng')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '罗圣AI对话（AgentChat专用）' })
+  async luoshengChat(
+    @CurrentUser('id') userId: number,
+    @Body() body: { messages: Array<{role: string; content: string}>; model?: string; content?: string },
+    @Req() req: Request,
+  ) {
+    // 提取最后一条用户消息
+    const userMessages = body.messages || [];
+    const lastUserMsg = userMessages.filter(m => m.role === 'user').pop();
+    const userContent = lastUserMsg?.content || body.content || '';
+
+    if (!userContent.trim()) {
+      return { data: { content: '请输入你的问题', model: '系统' } };
+    }
+
+    // 构建对话消息
+    const chatMessages = userMessages.map(m => ({
+      role: m.role as 'system' | 'user' | 'assistant',
+      content: m.content,
+    }));
+
+    try {
+      // 尝试使用Coze Bot
+      const apiKey = process.env.COZE_API_KEY || '';
+      const botId = process.env.COZE_BOT_ID || '';
+
+      if (apiKey && botId) {
+        const chatRes = await fetch('https://api.coze.cn/v3/chat', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + apiKey,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            bot_id: botId,
+            user_id: 'lsjy_user_' + userId,
+            additional_messages: [{ role: 'user', content: userContent, content_type: 'text' }],
+            stream: false,
+            auto_save_history: true,
+          }),
+        });
+
+        if (chatRes.ok) {
+          const chatData = await chatRes.json();
+          const d = chatData.data || chatData;
+          if (d.id) {
+            // Poll for answer
+            for (let i = 0; i < 20; i++) {
+              await new Promise(r => setTimeout(r, 1500));
+              const listRes = await fetch(
+                'https://api.coze.cn/v3/chat/message/list?chat_id=' + d.id + '&conversation_id=' + (d.conversation_id || ''),
+                { headers: { 'Authorization': 'Bearer ' + apiKey } }
+              );
+              const listData = await listRes.json();
+              const msgs = listData.data || [];
+              const answerMsg = msgs.find((m: any) => m.type === 'answer' && m.content);
+              if (answerMsg) {
+                return { data: { content: answerMsg.content, model: '罗圣AI' } };
+              }
+              if (d.status === 'completed' || d.status === 'failed') break;
+            }
+          }
+        }
+      }
+
+      // Fallback: 使用已注册的AI Provider
+      try {
+        const provider = this.providerManager.routeRequest('text-generation');
+        const result = await provider.chat(chatMessages, {
+          model: body.model || undefined,
+        });
+        return {
+          data: {
+            content: result.content,
+            model: result.model || provider.name,
+          }
+        };
+      } catch (providerErr: any) {
+        return { data: { content: 'AI服务暂时不可用，请稍后再试', model: '系统' } };
+      }
+    } catch (e: any) {
+      return { data: { content: 'AI服务异常: ' + (e.message || '未知错误'), model: '系统' } };
+    }
+  }
+
 }

@@ -89,7 +89,7 @@
         <div class="clc-desc">当前圣力已用完，请充值后继续使用</div>
         <div class="clc-btns">
           <button class="clc-cancel" @click="showCoinLow = false">稍后再说</button>
-          <button class="clc-confirm" @click="$router.push('/wallet/recharge'); showCoinLow = false">立即充值</button>
+          <button class="clc-confirm" @click="$router.push('/profile/wallet'); showCoinLow = false">立即充值</button>
         </div>
       </div>
     </div>
@@ -238,7 +238,7 @@ function selectCapability(id: number) {
 // 实时获取余额
 async function fetchBalance() {
   try {
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('lsjy_token')
     if (!token) return
     const res = await fetch('https://api.lsjyapp.cn/api/v1/payment/coin/balance', {
       headers: {'Authorization': `Bearer ${token}`}
@@ -295,7 +295,7 @@ async function sendMessage() {
   scrollToBottom()
 
   try {
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('lsjy_token')
     if (!token) {
       messages.value.push({role: 'assistant', content: '请先登录后使用', model: '系统'})
       return

@@ -23,6 +23,7 @@ import { FaqsModule } from './faqs/faqs.module';
 import { AutomationModule } from './automation/automation.module';
 import { ModerationModule } from './moderation/moderation.module';
 import { ReportsModule } from './reports/reports.module';
+import { VisitorsModule } from './visitors/visitors.module';
 
 @Module({
   imports: [
@@ -76,6 +77,7 @@ import { ReportsModule } from './reports/reports.module';
     AutomationModule,
     ModerationModule,
     ReportsModule,
+    VisitorsModule,
   ],
   providers: [
     {

@@ -89,7 +89,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { userApi } from '@/api'
 import { formatDate, userTypeMap } from '@/utils'
@@ -99,13 +99,33 @@ const authStore = useAuthStore()
 const saving = ref(false)
 
 const profileForm = reactive({
-  nickname: authStore.user?.nickname || '',
-  username: authStore.user?.username || '',
-  phone: authStore.user?.phone || '',
-  email: authStore.user?.email || '',
-  bio: authStore.user?.bio || '',
-  gender: authStore.user?.gender || 0
+  nickname: '',
+  username: '',
+  phone: '',
+  email: '',
+  bio: '',
+  gender: 0
 })
+
+function syncFormFromUser() {
+  if (authStore.user) {
+    profileForm.nickname = authStore.user.nickname || ''
+    profileForm.username = authStore.user.username || ''
+    profileForm.phone = authStore.user.phone || ''
+    profileForm.email = authStore.user.email || ''
+    profileForm.bio = authStore.user.bio || ''
+    profileForm.gender = authStore.user.gender || 0
+  }
+}
+
+onMounted(() => {
+  syncFormFromUser()
+  if (!authStore.user) {
+    authStore.fetchUserProfile().then(() => syncFormFromUser())
+  }
+})
+
+watch(() => authStore.user, () => syncFormFromUser())
 
 const roleBadge = computed(() => {
   const roles = authStore.userRoles
