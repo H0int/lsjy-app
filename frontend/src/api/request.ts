@@ -45,7 +45,8 @@ service.interceptors.response.use(
     // 兼容后端双层data包装: {code, data:{data:...}} → {code, data:...}
     const body = response.data as any
     if (body && typeof body === 'object' && 'code' in body && body.data && typeof body.data === 'object' && 'data' in body.data) {
-      response.data = { ...body, data: body.data.data }
+      response.data = Object.assign({}, body, { data: body.data.data })
+      console.log('[API] Unwrapped response:', response.data.code, typeof response.data.data)
     }
     return response
   },
