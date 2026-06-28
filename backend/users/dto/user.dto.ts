@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsEmail, IsInt, Min, Max, Matches } from 'class-validator';
+import { IsString, IsOptional, IsEmail, IsInt, Min, Max, Matches, ValidateIf } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UpdateProfileDto {
@@ -30,13 +30,13 @@ export class UpdateProfileDto {
   birthday?: string;
 
   @ApiPropertyOptional({ description: '手机号' })
-  @IsOptional()
+  @ValidateIf((o) => o.phone !== '' && o.phone !== null && o.phone !== undefined)
   @IsString()
   @Matches(/^1[3-9]\d{9}$/, { message: '手机号格式不正确' })
   phone?: string;
 
   @ApiPropertyOptional({ description: '邮箱' })
-  @IsOptional()
-  @IsEmail()
+  @ValidateIf((o) => o.email !== '' && o.email !== null && o.email !== undefined)
+  @IsEmail({}, { message: '邮箱格式不正确' })
   email?: string;
 }

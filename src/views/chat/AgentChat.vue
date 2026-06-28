@@ -303,7 +303,7 @@ async function sendMessage() {
 
     const allMessages = messages.value.map(m => ({role: m.role, content: m.content}))
     
-      const apiPath = selectedToolId.value === 1 ? '/api/v1/ai/luosheng' : `/api/v1/ai/tools/${selectedToolId.value}/chat`
+      const apiPath = `/api/v1/ai/tools/${selectedToolId.value}/chat`
       const res = await fetch(`https://api.lsjyapp.cn${apiPath}`, {
       method: 'POST',
       headers: {
