@@ -11,13 +11,15 @@ import { JimengProvider } from './jimeng.provider';
 import { OpenAIProvider } from './openai.provider';
 import { TongyiProvider } from './tongyi.provider';
 import { YuanbaoProvider } from './yuanbao.provider';
+import { SiliconFlowProvider } from './siliconflow.provider';
+import { KimiProvider } from './kimi.provider';
 
 /** 任务类型 → Provider优先级映射 */
 const DEFAULT_ROUTING: Record<string, string[]> = {
-  'text-generation': ['doubao', 'deepseek', 'openai', 'tongyi', 'yuanbao'],
+  'text-generation': ['doubao', 'deepseek', 'siliconflow', 'kimi', 'openai', 'tongyi', 'yuanbao'],
   'image-generation': ['jimeng', 'openai'],
-  'code-generation': ['deepseek', 'openai', 'doubao', 'tongyi'],
-  'text-analysis': ['tongyi', 'doubao', 'deepseek', 'openai', 'yuanbao'],
+  'code-generation': ['deepseek', 'siliconflow', 'openai', 'doubao', 'tongyi'],
+  'text-analysis': ['tongyi', 'doubao', 'deepseek', 'siliconflow', 'kimi', 'openai', 'yuanbao'],
   'multimodal': ['openai'],
 };
 
@@ -76,6 +78,18 @@ export class AIProviderManager implements OnModuleInit {
         apiKey: this.configService.get<string>('YUANBAO_API_KEY'),
         baseUrl: this.configService.get<string>('YUANBAO_BASE_URL', 'https://api.yuanbao.tencent.com/v1'),
         defaultModel: this.configService.get<string>('YUANBAO_MODEL', 'yuanbao-pro'),
+      },
+      {
+        instance: new SiliconFlowProvider(),
+        apiKey: this.configService.get<string>('SILICONFLOW_API_KEY'),
+        baseUrl: this.configService.get<string>('SILICONFLOW_BASE_URL', 'https://api.siliconflow.cn/v1'),
+        defaultModel: this.configService.get<string>('SILICONFLOW_MODEL', 'deepseek-ai/DeepSeek-V3'),
+      },
+      {
+        instance: new KimiProvider(),
+        apiKey: this.configService.get<string>('KIMI_API_KEY'),
+        baseUrl: this.configService.get<string>('KIMI_BASE_URL', 'https://api.moonshot.cn/v1'),
+        defaultModel: this.configService.get<string>('KIMI_MODEL', 'moonshot-v1-8k'),
       },
     ];
 

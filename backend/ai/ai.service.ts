@@ -93,9 +93,17 @@ export class AIService {
 
     let chatResponse: ChatResponse;
     try {
+      // 修复：验证模型名称，如果是数字ID则使用provider默认模型
+      let modelName = options?.model || tool.modelId;
+      // 如果modelName看起来是数字ID（全数字且很长），则使用provider的默认模型
+      if (/^\d{15,}$/.test(modelName)) {
+        this.logger.warn(`Invalid model ID detected: ${modelName}, using provider default model instead`);
+        modelName = (provider as any).defaultModel || undefined;
+      }
+      
       chatResponse = await provider.chat(messages, {
         ...options,
-        model: options?.model || tool.modelId,
+        model: modelName,
       });
     } catch (err: any) {
       // 记录失败
