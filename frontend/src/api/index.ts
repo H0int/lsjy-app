@@ -1,37 +1,5 @@
-import rawService from './request'
-import type { ApiResponse } from '@/types'
+import service from './request'
 
-// 包装 service，自动解包双层 data
-const service = {
-  get: <T = any>(url: string, config?: any) => rawService.get<ApiResponse<T>>(url, config).then(r => {
-    const body = r.data as any
-    if (body && typeof body === 'object' && 'code' in body && body.data && typeof body.data === 'object' && 'data' in body.data) {
-      return { ...body, data: body.data.data } as ApiResponse<T>
-    }
-    return r.data as ApiResponse<T>
-  }),
-  post: <T = any>(url: string, data?: any, config?: any) => rawService.post<ApiResponse<T>>(url, data, config).then(r => {
-    const body = r.data as any
-    if (body && typeof body === 'object' && 'code' in body && body.data && typeof body.data === 'object' && 'data' in body.data) {
-      return { ...body, data: body.data.data } as ApiResponse<T>
-    }
-    return r.data as ApiResponse<T>
-  }),
-  put: <T = any>(url: string, data?: any, config?: any) => rawService.put<ApiResponse<T>>(url, data, config).then(r => {
-    const body = r.data as any
-    if (body && typeof body === 'object' && 'code' in body && body.data && typeof body.data === 'object' && 'data' in body.data) {
-      return { ...body, data: body.data.data } as ApiResponse<T>
-    }
-    return r.data as ApiResponse<T>
-  }),
-  delete: <T = any>(url: string, config?: any) => rawService.delete<ApiResponse<T>>(url, config).then(r => {
-    const body = r.data as any
-    if (body && typeof body === 'object' && 'code' in body && body.data && typeof body.data === 'object' && 'data' in body.data) {
-      return { ...body, data: body.data.data } as ApiResponse<T>
-    }
-    return r.data as ApiResponse<T>
-  }),
-}
 import { mockApi } from './mock'
 import type {
   ApiResponse, User, Tool, CoinTransaction, CoinAccount,
@@ -368,8 +336,6 @@ export const adminApi = {
     return service.get('/notifications/unread-count').then(r => r.data)
   }
 }
-
-
 // ===== 访客中心API =====
 export const visitorApi = {
   /** POST /visitors/checkin - 访客签到 */
