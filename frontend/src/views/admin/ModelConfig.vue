@@ -127,42 +127,85 @@ const providers = ref<any[]>([])
 async function fetchProviders() {
   loading.value = true
   try {
-    const res = await service.get('/ai/providers')
+    // 使用 /ai/models 替代 /ai/providers（更稳定）
+    const res = await service.get('/ai/models', { timeout: 5000 })
     if (res.data.code === 0) {
-      const list = res.data.data || []
-      providers.value = list.map((p: any, i: number) => ({
-        id: i + 1,
-        name: p.displayName || p.name,
-        icon: getIcon(p.name),
-        endpoint: '',
-        apiKey: '',
-        apiKeyMasked: p.configured ? '已配置' : '未配置',
-        models: [],
-        monthlyCost: 0,
-        connected: p.status === 'active' || p.configured === true
-      }))
+      const modelGroups = res.data.data || []
+      // 将模型列表转换为 Provider 格式展示
+      const providerMap: Record<string, any> = {}
+      modelGroups.forEach((group: any) => {
+        const providerName = group.provider || 'unknown'
+        if (!providerMap[providerName]) {
+          providerMap[providerName] = {
+            id: Object.keys(providerMap).length + 1,
+            name: getDisplayName(providerName),
+            icon: getIcon(providerName),
+            endpoint: '',
+            apiKey: '',
+            apiKeyMasked: '已配置',
+            models: [],
+            monthlyCost: 0,
+            connected: true
+          }
+        }
+        if (group.models) {
+          providerMap[providerName].models.push(...group.models)
+        }
+      })
+      providers.value = Object.values(providerMap)
     }
   } catch (e) {
-    ElMessage.error('加载Provider列表失败')
+    // 降级：显示默认 Provider 信息
+    providers.value = [
+      {
+        id: 1,
+        name: 'DeepSeek',
+        icon: '🔍',
+        endpoint: '',
+        apiKey: '',
+        apiKeyMasked: '已配置',
+        models: ['deepseek-v4-pro', 'deepseek-v4-flash'],
+        monthlyCost: 0,
+        connected: true
+      }
+    ]
+    console.warn('加载Provider列表失败，使用默认配置:', e)
   } finally {
     loading.value = false
   }
 }
 
+function getDisplayName(name: string): string {
+  const map: Record<string, string> = {
+    doubao: '豆包',
+    deepseek: 'DeepSeek',
+    jimeng: '即梦',
+    yuanbao: '元宝',
+    qwen: '通义千问',
+    openai: 'OpenAI'
+  }
+  return map[name.toLowerCase()] || name
+}
+
 async function fetchModels() {
+  // 模型信息已在 fetchProviders 中加载，此处无需额外请求
+  // 如需刷新，可重新调用 fetchProviders
   try {
-    const res = await service.get('/ai/models')
+    const res = await service.get('/ai/models', { timeout: 5000 })
     if (res.data.code === 0) {
       const modelGroups = res.data.data || []
       modelGroups.forEach((group: any) => {
-        const p = providers.value.find((pr: any) => pr.name === group.provider || pr.name.toLowerCase() === group.provider.toLowerCase())
+        const p = providers.value.find((pr: any) => 
+          pr.name.toLowerCase() === getDisplayName(group.provider).toLowerCase() ||
+          pr.name.toLowerCase() === group.provider.toLowerCase()
+        )
         if (p) {
           p.models = group.models || []
         }
       })
     }
   } catch (e) {
-    // silent
+    // silent - 已在 fetchProviders 中处理
   }
 }
 

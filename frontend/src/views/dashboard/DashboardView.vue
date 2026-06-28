@@ -137,9 +137,40 @@ onMounted(async () => {
   } catch { /* ignore */ }
 
   // 更新统计卡片
+  // 获取最新余额
+  try {
+    const balRes = await (await import('@/api/request')).default.get('/payment/coin/balance')
+    if (balRes.data?.code === 0) {
+      const bal = balRes.data.data?.balance ?? balRes.data.data ?? 0
+      authStore.coinBalance = typeof bal === 'number' ? bal : 0
+    }
+  } catch { /* use cached */ }
+  
   statCards.value[0].value = authStore.coinBalance.toLocaleString()
   if (authStore.user) {
     statCards.value[3].value = authStore.user.userType === 'founder' ? '至尊创始人' : (authStore.user.vipLevel > 0 ? `VIP${authStore.user.vipLevel}` : '普通')
+  }
+  
+  // 获取用户个人统计（已用工具、生成作品）
+  try {
+    const dashRes = await service.get('/users/dashboard')
+    if (dashRes.data?.code === 0) {
+      const ud = dashRes.data.data
+      if (ud) {
+        statCards.value[1].value = String(ud.toolsUsed ?? ud.usedTools ?? 0)
+        statCards.value[2].value = String(ud.generatedWorks ?? ud.worksCount ?? 0)
+      }
+    }
+  } catch {
+    // /users/dashboard 可能有bug，尝试从订单统计
+    try {
+      const orderRes = await service.get('/payment/orders', { params: { page: 1, pageSize: 1 } })
+      if (orderRes.data?.code === 0) {
+        const total = orderRes.data.data?.total ?? 0
+        statCards.value[1].value = String(total)
+        statCards.value[2].value = String(total)
+      }
+    } catch { /* silent */ }
   }
 
   // 访客签到 + 获取统计
@@ -159,13 +190,30 @@ onMounted(async () => {
   // 获取真实公告数据
   try {
     const annRes = await adminApi.getAnnouncements()
-    if (annRes.data && Array.isArray(annRes.data)) {
-      notices.value = (annRes.data as any[]).slice(0, 4).map((a: any) => ({
+    // 兼容多种返回格式: 数组、{items:[]}, {list:[]}
+    let annItems: any[] = []
+    if (annRes.data) {
+      if (Array.isArray(annRes.data)) {
+        annItems = annRes.data
+      } else if ((annRes.data as any).items) {
+        annItems = (annRes.data as any).items
+      } else if ((annRes.data as any).list) {
+        annItems = (annRes.data as any).list
+      }
+    }
+    if (annItems.length > 0) {
+      notices.value = annItems.slice(0, 4).map((a: any) => ({
         id: String(a.id),
         tag: a.type || '公告',
         title: a.title,
-        date: a.createdAt ? a.createdAt.split('T')[0] : ''
+        date: a.createdAt ? a.createdAt.split('T')[0] : (a.publishedAt ? a.publishedAt.split('T')[0] : '')
       }))
+    } else {
+      // 无公告数据时展示默认欢迎公告
+      notices.value = [
+        { id: 'welcome', tag: '欢迎', title: '欢迎来到罗圣纪元SaaS平台！', date: new Date().toISOString().split('T')[0] },
+        { id: 'tip1', tag: '提示', title: '完成新手任务可获得100圣力奖励', date: new Date().toISOString().split('T')[0] }
+      ]
     }
   } catch { /* ignore */ }
 

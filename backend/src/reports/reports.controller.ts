@@ -14,7 +14,7 @@ export class ReportsController {
 
   @Get('reports/overview')
   @ApiOperation({ summary: '概览数据' })
-  @Roles('super_admin', 'operator')
+  @Roles('super_admin', 'operator', 'boss')
   async getOverview() {
     const data = await this.service.getOverview();
     return { data };
@@ -23,7 +23,7 @@ export class ReportsController {
   @Get('reports/trend')
   @ApiOperation({ summary: '趋势数据' })
   @ApiQuery({ name: 'days', required: false })
-  @Roles('super_admin', 'operator')
+  @Roles('super_admin', 'operator', 'boss')
   async getTrend(@Query('days') days = 7) {
     const data = await this.service.getTrend(days);
     return { data };
@@ -32,7 +32,7 @@ export class ReportsController {
   @Get('reports/revenue')
   @ApiOperation({ summary: '收入报表' })
   @ApiQuery({ name: 'days', required: false })
-  @Roles('super_admin', 'operator')
+  @Roles('super_admin', 'operator', 'boss')
   async getRevenue(@Query('days') days = 30) {
     const data = await this.service.getRevenue(days);
     return { data };
@@ -40,7 +40,7 @@ export class ReportsController {
 
   @Get('admin/dashboard')
   @ApiOperation({ summary: '管理后台Dashboard总数据' })
-  @Roles('super_admin', 'operator', 'admin')
+  @Roles('super_admin', 'operator', 'admin', 'boss')
   async getAdminDashboard() {
     const data = await this.service.getAdminDashboard();
     return { code: 0, data };
@@ -50,7 +50,7 @@ export class ReportsController {
   @ApiOperation({ summary: 'API错误列表' })
   @ApiQuery({ name: 'status', required: false })
   @ApiQuery({ name: 'pageSize', required: false })
-  @Roles('super_admin', 'operator')
+  @Roles('super_admin', 'operator', 'boss')
   async getApiErrors(@Query('status') status?: string, @Query('pageSize') pageSize = 20) {
     const data = await this.service.getApiErrors(status, Number(pageSize));
     return { code: 0, data };
@@ -58,7 +58,7 @@ export class ReportsController {
 
   @Put('admin/api-errors/:id')
   @ApiOperation({ summary: '更新API错误状态' })
-  @Roles('super_admin', 'operator')
+  @Roles('super_admin', 'operator', 'boss')
   async updateApiError(@Param('id') id: number, @Body() body: any) {
     const data = await this.service.updateApiError(id, body);
     return { code: 0, data };
@@ -66,7 +66,7 @@ export class ReportsController {
 
   @Post('admin/api-errors/:id/retry')
   @ApiOperation({ summary: '重试API错误' })
-  @Roles('super_admin', 'operator')
+  @Roles('super_admin', 'operator', 'boss')
   async retryApiError(@Param('id') id: number) {
     const data = await this.service.retryApiError(id);
     return { code: 0, data };
@@ -76,7 +76,7 @@ export class ReportsController {
   @ApiOperation({ summary: '支付失败列表' })
   @ApiQuery({ name: 'status', required: false })
   @ApiQuery({ name: 'pageSize', required: false })
-  @Roles('super_admin', 'operator')
+  @Roles('super_admin', 'operator', 'boss')
   async getPaymentFailures(@Query('status') status?: string, @Query('pageSize') pageSize = 20) {
     const data = await this.service.getPaymentFailures(status, Number(pageSize));
     return { code: 0, data };
@@ -84,7 +84,7 @@ export class ReportsController {
 
   @Put('admin/payment-failures/:id')
   @ApiOperation({ summary: '更新支付失败状态' })
-  @Roles('super_admin', 'operator')
+  @Roles('super_admin', 'operator', 'boss')
   async updatePaymentFailure(@Param('id') id: number, @Body() body: any) {
     const data = await this.service.updatePaymentFailure(id, body);
     return { code: 0, data };
@@ -92,7 +92,7 @@ export class ReportsController {
 
   @Post('admin/payment-failures/:id/retry')
   @ApiOperation({ summary: '重试支付失败' })
-  @Roles('super_admin', 'operator')
+  @Roles('super_admin', 'operator', 'boss')
   async retryPaymentFailure(@Param('id') id: number) {
     const data = await this.service.retryPaymentFailure(id);
     return { code: 0, data };

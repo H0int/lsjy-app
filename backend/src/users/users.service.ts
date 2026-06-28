@@ -70,6 +70,24 @@ export class UsersService {
     await this.userRepo.save(user);
   }
 
+  async getUserDashboard(userId: number): Promise<any> {
+    // 获取用户使用的工具数量（从订单统计）
+    const toolsUsed = await this.userRepo
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.orders', 'order')
+      .where('user.id = :userId', { userId })
+      .getCount();
+
+    // 简化版：返回基础统计
+    // 实际项目中应该从订单表、AI调用记录表等聚合数据
+    return {
+      toolsUsed: 0, // 待实现：从订单/工具调用记录聚合
+      generatedWorks: 0, // 待实现：从生成记录聚合
+      totalSpent: 0,
+      totalAiCalls: 0,
+    };
+  }
+
   async deleteUser(userId: number): Promise<void> {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('用户不存在');

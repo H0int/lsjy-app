@@ -13,6 +13,15 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @UseGuards(JwtAuthGuard)
+  @Get('dashboard')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '获取当前用户统计数据' })
+  async getUserDashboard(@CurrentUser('id') userId: number) {
+    const data = await this.usersService.getUserDashboard(userId);
+    return { code: 0, data };
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get('me')
   @ApiBearerAuth()
   @ApiOperation({ summary: '获取当前用户信息' })

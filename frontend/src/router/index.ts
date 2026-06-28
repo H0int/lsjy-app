@@ -347,7 +347,9 @@ const router = createRouter({
 
 // 路由守卫
 router.beforeEach(async (to, _from, next) => {
+  // 设置页面标题
   document.title = `${(to.meta.title as string) || '罗圣纪元'} - 罗圣纪元SaaS平台`
+  
   const token = getToken()
 
   // 无需认证的页面（404等）
@@ -362,26 +364,32 @@ router.beforeEach(async (to, _from, next) => {
   // 管理后台：检查token + 管理员角色
   if (to.matched.some(r => r.meta.requiresAdmin)) {
     if (!token) return next('/login')
-    const { useAuthStore } = await import('@/stores/auth')
-    const authStore = useAuthStore()
-    // 始终尝试获取最新用户信息和角色
-    if (!authStore.user || authStore.userRoles.length === 0) {
-      await authStore.fetchUserProfile()
-    }
-    // 如果还是没有角色，尝试单独获取角色
-    if (authStore.userRoles.length === 0) {
-      try {
-        const { userApi } = await import('@/api')
-        const rolesRes = await userApi.getMyRoles()
-        const rolesData = rolesRes.data?.data || rolesRes.data
-        if (Array.isArray(rolesData) && rolesData.length > 0) {
-          authStore.userRoles = rolesData.map((r: any) => typeof r === 'string' ? r : (r.roleName || r.name || r.role || ''))
-        }
-      } catch { /* ignore */ }
-    }
-    if (!authStore.isAdmin) {
-      ElMessage.error('无权访问管理后台')
-      return next('/dashboard')
+    try {
+      const { useAuthStore } = await import('@/stores/auth')
+      const authStore = useAuthStore()
+      // 始终尝试获取最新用户信息和角色
+      if (!authStore.user || authStore.userRoles.length === 0) {
+        await authStore.fetchUserProfile()
+      }
+      // 如果还是没有角色，尝试单独获取角色
+      if (authStore.userRoles.length === 0) {
+        try {
+          const { userApi } = await import('@/api')
+          const rolesRes = await userApi.getMyRoles()
+          const rolesData = rolesRes.data?.data || rolesRes.data
+          if (Array.isArray(rolesData) && rolesData.length > 0) {
+            authStore.userRoles = rolesData.map((r: any) => typeof r === 'string' ? r : (r.roleName || r.name || r.role || ''))
+          }
+        } catch { /* ignore */ }
+      }
+      if (!authStore.isAdmin) {
+        ElMessage.error('无权访问管理后台')
+        return next('/dashboard')
+      }
+    } catch (e) {
+      console.error('Admin route check failed:', e)
+      ElMessage.error('权限检查失败，请重新登录')
+      return next('/login')
     }
     return next()
   }
@@ -389,6 +397,18 @@ router.beforeEach(async (to, _from, next) => {
   // 普通页面：未登录跳转登录
   if (!token) {
     return next('/login')
+  }
+
+  // 确保用户信息已加载
+  try {
+    const { useAuthStore } = await import('@/stores/auth')
+    const authStore = useAuthStore()
+    if (!authStore.user) {
+      await authStore.fetchUserProfile()
+    }
+  } catch (e) {
+    console.warn('Failed to fetch user profile:', e)
+    // 不阻塞页面加载，继续导航
   }
 
   next()

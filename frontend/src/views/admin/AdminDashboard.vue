@@ -439,16 +439,36 @@ async function fetchDashboard() {
         revenue: m.revenue || 0,
         color: colorMap[m.name] || '#00f0ff'
       }))
+    } else {
+      // 无模块数据时，显示默认模块
+      moduleData.value = [
+        { name: 'AI工具', users: 0, revenue: 0, color: '#00f0ff' },
+        { name: '自媒体', users: 0, revenue: 0, color: '#c084fc' },
+        { name: '电商', users: 0, revenue: 0, color: '#f59e0b' }
+      ]
     }
 
     // Top10 AI工具
     if (d.topTools && d.topTools.length) {
       toolRanking.value = d.topTools.map((t: any) => ({ name: t.name, count: t.count || t.usageCount || 0 }))
+    } else {
+      // 无工具数据时，显示默认
+      toolRanking.value = [
+        { name: 'AI自由对话', count: 0 },
+        { name: 'AI绘画', count: 0 },
+        { name: 'AI视频', count: 0 }
+      ]
     }
 
     // Top10 热销商品
     if (d.topProducts && d.topProducts.length) {
       productRanking.value = d.topProducts.map((p: any) => ({ name: p.name, revenue: p.revenue || 0 }))
+    } else {
+      // 无商品数据时，显示默认
+      productRanking.value = [
+        { name: '圣力充值包', revenue: 0 },
+        { name: 'VIP会员', revenue: 0 }
+      ]
     }
 
     // 最近日志

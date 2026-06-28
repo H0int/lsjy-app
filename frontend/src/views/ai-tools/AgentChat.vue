@@ -481,13 +481,18 @@ async function sendMsg() {
       backendMessages.unshift({ role: 'user', content: '[System Instructions] ' + agent.systemPrompt } as any)
     }
 
-    const res = await fetch(`${API_BASE}${agent.id===101?"/ai/luosheng":"/ai/tools/"+agent.id+"/chat"}`, {
+    // 使用 /ai/chat 端点，支持 deepseek-v4-pro 和 deepseek-v4-flash
+    const modelName = agent.modelName || 'deepseek-v4-pro'
+    const res = await fetch(`${API_BASE}/ai/chat`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${authToken.value}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ messages: backendMessages }),
+      body: JSON.stringify({ 
+        messages: backendMessages,
+        model: modelName
+      }),
     })
 
     // 圣力不足
@@ -593,13 +598,18 @@ async function regenerateMsg(index: number) {
       backendMessages.unshift({ role: 'user', content: '[System Instructions] ' + agent.systemPrompt } as any)
     }
 
-    const res = await fetch(`${API_BASE}${agent.id===101?"/ai/luosheng":"/ai/tools/"+agent.id+"/chat"}`, {
+    // 使用 /ai/chat 端点，支持 deepseek-v4-pro 和 deepseek-v4-flash
+    const modelName = agent.modelName || 'deepseek-v4-pro'
+    const res = await fetch(`${API_BASE}/ai/chat`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${authToken.value}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ messages: backendMessages }),
+      body: JSON.stringify({ 
+        messages: backendMessages,
+        model: modelName
+      }),
     })
 
     if (!res.ok) throw new Error(`API ${res.status}`)
@@ -731,10 +741,15 @@ onMounted(async () => {
     if (found) selectedAgent.value = found
   }
 
-  // 检测API
-  fetch(`${API_BASE}/ai/providers`)
+  // 检测API - 使用 /health 端点（更稳定）
+  fetch(`${API_BASE}/health`, { signal: AbortSignal.timeout(5000) })
     .then(r => { aiOnline.value = r.ok })
-    .catch(() => { aiOnline.value = false })
+    .catch(() => {
+      // 降级尝试 /ai/models
+      fetch(`${API_BASE}/ai/models`, { signal: AbortSignal.timeout(5000) })
+        .then(r => { aiOnline.value = r.ok })
+        .catch(() => { aiOnline.value = false })
+    })
 
   // 获取余额
   try {
