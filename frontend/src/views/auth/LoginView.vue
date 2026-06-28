@@ -66,6 +66,14 @@
             <label class="input-label"><span class="label-icon">&#10016;</span> 密钥</label>
             <el-input v-model="form.password" type="password" placeholder="输入安全密钥" size="large" show-password :disabled="isLocked" @keyup.enter="handleLogin" />
           </div>
+          <div class="remember-row">
+            <label class="remember-label" @click="rememberMe = !rememberMe">
+              <span class="remember-checkbox" :class="{ checked: rememberMe }">
+                <span v-if="rememberMe" class="check-mark">&#10003;</span>
+              </span>
+              <span class="remember-text">记住账号密码</span>
+            </label>
+          </div>
           <el-form-item>
             <button type="submit" class="cyber-btn cyber-btn-primary cyber-btn-large" :disabled="isLocked || loading" @click="handleLogin">
               <span class="btn-shine"></span>
@@ -109,11 +117,27 @@ const authStore = useAuthStore()
 
 const loading = ref(false)
 const formRef = ref<FormInstance>()
+const REMEMBER_KEY = 'lsjy_remember'
 
 const form = reactive({
   account: '',
   password: ''
 })
+
+const rememberMe = ref(false)
+
+// 加载记住的账号密码
+function loadRememberedCredentials() {
+  try {
+    const saved = localStorage.getItem(REMEMBER_KEY)
+    if (saved) {
+      const { account, password } = JSON.parse(saved)
+      form.account = account || ''
+      form.password = password || ''
+      rememberMe.value = true
+    }
+  } catch (e) {}
+}
 
 const rules = {
   account: [{ required: true, message: '请输入账号', trigger: 'blur' }],
@@ -211,14 +235,23 @@ async function handleLogin() {
     loading.value = true
     try {
       const success = await authStore.login(form.account, form.password)
-      if (success) { clearLockState(); router.push('/dashboard') }
+      if (success) {
+        clearLockState()
+        // 记住账号密码
+        if (rememberMe.value) {
+          localStorage.setItem(REMEMBER_KEY, JSON.stringify({ account: form.account, password: form.password }))
+        } else {
+          localStorage.removeItem(REMEMBER_KEY)
+        }
+        router.push('/dashboard')
+      }
       else { recordFail() }
     } catch (e: any) { recordFail() }
     finally { loading.value = false }
   })
 }
 
-onMounted(() => { loadLockState() })
+onMounted(() => { loadLockState(); loadRememberedCredentials() })
 onUnmounted(() => { if (countdownTimer) clearInterval(countdownTimer) })
 </script>
 
@@ -599,6 +632,47 @@ onUnmounted(() => { if (countdownTimer) clearInterval(countdownTimer) })
 :deep(.el-input__inner::placeholder) { color: rgba(136, 136, 170, 0.5) !important; }
 :deep(.el-input__prefix .el-icon) { color: var(--cyber-cyan) !important; }
 :deep(.el-form-item) { margin-bottom: 0 !important; }
+.remember-row {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 18px;
+  margin-top: -4px;
+}
+.remember-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+.remember-checkbox {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 1.5px solid rgba(0, 240, 255, 0.4);
+  background: rgba(0, 240, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  position: relative;
+}
+.remember-checkbox.checked {
+  background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple));
+  border-color: var(--cyber-cyan);
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.3);
+}
+.check-mark {
+  color: #000;
+  font-size: 12px;
+  font-weight: 700;
+}
+.remember-text {
+  font-size: 13px;
+  color: var(--cyber-text-dim);
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 1px;
+}
 @media (max-width: 480px) {
   .login-container { padding: 12px; }
   .login-panel { padding: 20px; }
