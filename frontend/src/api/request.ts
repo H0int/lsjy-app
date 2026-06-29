@@ -109,9 +109,16 @@ service.interceptors.response.use(
       }
     }
 
-    // 非401错误：统一提示
-    const msg = error.response?.data?.message || error.message || '网络异常'
-    ElMessage.error(msg)
+    // 非401错误：判断是否应静默（不弹红色提示）
+    const explicitSilent = originalRequest?.headers?.['X-Silent-Error'] === 'true'
+    const url = originalRequest?.url || ''
+    // 以下后台/非关键请求一律静默，绝不弹红色错误弹窗
+    const silentPaths = ['/visitors/', '/payment/coin/balance', '/ai/tools', '/ai/categories', '/payment/coin/packages']
+    const isSilentPath = silentPaths.some(p => url.includes(p))
+    if (!explicitSilent && !isSilentPath) {
+      const msg = error.response?.data?.message || error.message || '网络异常'
+      ElMessage.error(msg)
+    }
     return Promise.reject(error)
   }
 )

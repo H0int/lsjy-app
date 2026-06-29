@@ -336,20 +336,21 @@ export const adminApi = {
     return service.get('/notifications/unread-count').then(r => r.data)
   }
 }
-// ===== 访客中心API =====
+// ===== 访客中心API（静默请求，失败不弹提示）=====
+const silentHeaders = { 'X-Silent-Error': 'true' }
 export const visitorApi = {
   /** POST /visitors/checkin - 访客签到 */
   checkin(page?: string, referer?: string): Promise<ApiResponse<any>> {
-    return service.post('/visitors/checkin', { page: page || '/', referer: referer || '' }).then(r => r.data)
+    return service.post('/visitors/checkin', { page: page || '/', referer: referer || '' }, { headers: silentHeaders }).then(r => r.data)
   },
 
   /** GET /visitors/stats - 获取访客统计 */
   getStats(): Promise<ApiResponse<any>> {
-    return service.get('/visitors/stats').then(r => r.data)
+    return service.get('/visitors/stats', { headers: silentHeaders }).then(r => r.data)
   },
 
   /** GET /visitors/list - 获取访客列表(管理) */
   getList(params?: { page?: number; pageSize?: number }): Promise<ApiResponse<any>> {
-    return service.get('/visitors/list', { params }).then(r => r.data)
+    return service.get('/visitors/list', { params, headers: silentHeaders }).then(r => r.data)
   }
 }

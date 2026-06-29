@@ -286,16 +286,37 @@ const payMethodName = computed(() => {
   return 'QQ支付'
 })
 
+// 前端兜底套餐（后端返回空时使用）
+const fallbackPackages: RechargePackage[] = [
+  { id: 101, coinAmount: 100, price: 9.9, isRecommended: false, bonusCoins: 0 } as any,
+  { id: 102, coinAmount: 300, price: 24.9, isRecommended: false, bonusCoins: 20 } as any,
+  { id: 103, coinAmount: 500, price: 39.9, isRecommended: true, bonusCoins: 50 } as any,
+  { id: 104, coinAmount: 1000, price: 69.9, isRecommended: false, bonusCoins: 150 } as any,
+  { id: 105, coinAmount: 2000, price: 129, isRecommended: false, bonusCoins: 400 } as any,
+  { id: 106, coinAmount: 5000, price: 299, isRecommended: false, bonusCoins: 1200 } as any,
+]
+
 onMounted(async () => {
-  const balRes = await paymentApi.getBalance()
-  coinBalance.value = balRes.data.balance
+  // 获取余额（静默）
+  try {
+    const balRes = await paymentApi.getBalance()
+    coinBalance.value = balRes.data?.balance ?? 0
+  } catch { coinBalance.value = 0 }
 
-  const pkgRes = await paymentApi.getPackages()
-  packages.value = pkgRes.data
+  // 获取套餐（静默，失败用兜底数据）
+  try {
+    const pkgRes = await paymentApi.getPackages()
+    packages.value = pkgRes.data || []
+  } catch { packages.value = [] }
 
-  const recommended = pkgRes.data.find((p: any) => p.isRecommended)
+  // 后端套餐为空时使用前端兜底
+  if (!packages.value.length) {
+    packages.value = fallbackPackages
+  }
+
+  const recommended = packages.value.find((p: any) => p.isRecommended)
   if (recommended) selectedPkgId.value = recommended.id
-  else if (pkgRes.data.length) selectedPkgId.value = pkgRes.data[0].id
+  else if (packages.value.length) selectedPkgId.value = packages.value[0].id
 })
 
 async function handleRecharge() {

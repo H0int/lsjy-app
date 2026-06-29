@@ -102,7 +102,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { toolApi, visitorApi, adminApi } from '@/api'
+import { toolApi, visitorApi, adminApi, paymentApi } from '@/api'
 import type { Tool } from '@/types'
 
 const authStore = useAuthStore()
@@ -133,47 +133,42 @@ onMounted(async () => {
   // 获取热门工具
   try {
     const res = await toolApi.getTools({ pageSize: 6 })
-    hotTools.value = (res.data as any).items.sort((a: any, b: any) => b.usageCount - a.usageCount).slice(0, 6)
+    const items = (res.data as any)?.items || []
+    hotTools.value = items.sort((a: any, b: any) => (b.usageCount||0) - (a.usageCount||0)).slice(0, 6)
   } catch { /* ignore */ }
 
-  // 更新统计卡片
-  // 获取最新余额
-  try {
-    const balRes = await (await import('@/api/request')).default.get('/payment/coin/balance')
-    if (balRes.data?.code === 0) {
-      const bal = balRes.data.data?.balance ?? balRes.data.data ?? 0
-      authStore.coinBalance = typeof bal === 'number' ? bal : 0
-    }
-  } catch { /* use cached */ }
-  
-  statCards.value[0].value = authStore.coinBalance.toLocaleString()
-  if (authStore.user) {
-    statCards.value[3].value = authStore.user.userType === 'founder' ? '至尊创始人' : (authStore.user.vipLevel > 0 ? `VIP${authStore.user.vipLevel}` : '普通')
-  }
-  
-  // 获取用户个人统计（已用工具、生成作品）
-  try {
-    const dashRes = await service.get('/users/dashboard')
-    if (dashRes.data?.code === 0) {
-      const ud = dashRes.data.data
-      if (ud) {
-        statCards.value[1].value = String(ud.toolsUsed ?? ud.usedTools ?? 0)
-        statCards.value[2].value = String(ud.generatedWorks ?? ud.worksCount ?? 0)
-      }
-    }
-  } catch {
-    // /users/dashboard 可能有bug，尝试从订单统计
+  // 圣力余额：管理员显示"∞ 无限"
+  if (authStore.isAdmin) {
+    statCards.value[0].value = '∞ 无限'
+  } else {
     try {
-      const orderRes = await service.get('/payment/orders', { params: { page: 1, pageSize: 1 } })
-      if (orderRes.data?.code === 0) {
-        const total = orderRes.data.data?.total ?? 0
-        statCards.value[1].value = String(total)
-        statCards.value[2].value = String(total)
-      }
-    } catch { /* silent */ }
+      const bal = await paymentApi.getBalance()
+      const balance = bal.data?.balance ?? authStore.coinBalance ?? 0
+      authStore.coinBalance = typeof balance === 'number' ? balance : 0
+      statCards.value[0].value = balance.toLocaleString()
+    } catch {
+      statCards.value[0].value = authStore.coinBalance ? authStore.coinBalance.toLocaleString() : '0'
+    }
   }
 
-  // 访客签到 + 获取统计
+  // 会员等级：管理员显示"管理员"
+  if (authStore.user) {
+    if (authStore.isAdmin) {
+      statCards.value[3].value = '管理员'
+    } else if (authStore.user.userType === 'founder') {
+      statCards.value[3].value = '至尊创始人'
+    } else if (authStore.user.vipLevel && authStore.user.vipLevel > 0) {
+      statCards.value[3].value = `VIP${authStore.user.vipLevel}`
+    } else if (authStore.user.userType === 'enterprise') {
+      statCards.value[3].value = '企业版'
+    } else if (authStore.user.userType === 'merchant') {
+      statCards.value[3].value = '商户版'
+    } else {
+      statCards.value[3].value = '普通'
+    }
+  }
+
+  // 访客签到 + 获取统计（静默请求，失败不弹提示）
   try {
     await visitorApi.checkin('/dashboard', document.referrer)
     const statsRes = await visitorApi.getStats()
@@ -187,10 +182,9 @@ onMounted(async () => {
     }
   } catch { /* ignore */ }
 
-  // 获取真实公告数据
+  // 获取公告数据
   try {
     const annRes = await adminApi.getAnnouncements()
-    // 兼容多种返回格式: 数组、{items:[]}, {list:[]}
     let annItems: any[] = []
     if (annRes.data) {
       if (Array.isArray(annRes.data)) {
@@ -209,14 +203,12 @@ onMounted(async () => {
         date: a.createdAt ? a.createdAt.split('T')[0] : (a.publishedAt ? a.publishedAt.split('T')[0] : '')
       }))
     } else {
-      // 无公告数据时展示默认欢迎公告
       notices.value = [
         { id: 'welcome', tag: '欢迎', title: '欢迎来到罗圣纪元SaaS平台！', date: new Date().toISOString().split('T')[0] },
         { id: 'tip1', tag: '提示', title: '完成新手任务可获得100圣力奖励', date: new Date().toISOString().split('T')[0] }
       ]
     }
   } catch { /* ignore */ }
-
 
   // 心跳上报 + 在线人数
   async function sendHeartbeat() {
