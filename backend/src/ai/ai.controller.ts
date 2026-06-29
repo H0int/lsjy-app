@@ -177,7 +177,7 @@ export class AIController {
     return { data: result };
   }
 
-  // ===== 快捷聊天（公开接口，直接调Coze Bot） =====
+  // ===== 快捷聊天（公开接口，多Provider自动降级） =====
 
   @Public()
   @Post('chat')
@@ -186,12 +186,6 @@ export class AIController {
     // 支持前端发送的两种格式：
     // 1. { message: "...", modelName: "..." } （旧格式）
     // 2. { messages: [...], model: "..." } （新格式）
-    const apiKey = process.env.DEEPSEEK_API_KEY || '';
-    const baseUrl = process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com/v1';
-    
-    if (!apiKey) {
-      return { data: { reply: 'AI服务未配置，请联系管理员。' } };
-    }
     
     // 构建 messages 数组
     let messages: Array<{role: string; content: string}> = [];
@@ -206,32 +200,64 @@ export class AIController {
       return { data: { reply: '请输入你的问题。' } };
     }
 
-    try {
-      const res = await fetch(baseUrl + '/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': 'Bearer ' + apiKey,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'deepseek-chat',
-          messages,
-          max_tokens: 2000,
-          temperature: 0.7,
-        }),
-      });
-      
-      if (!res.ok) {
-        const errText = await res.text();
-        return { data: { reply: 'AI服务调用失败(' + res.status + ')，请稍后再试。' } };
+    // 多Provider自动降级链
+    const providers = [
+      {
+        name: 'DeepSeek',
+        apiKey: process.env.DEEPSEEK_API_KEY || '',
+        baseUrl: process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com/v1',
+        model: 'deepseek-chat',
+      },
+      {
+        name: 'SiliconFlow',
+        apiKey: process.env.SILICONFLOW_API_KEY || '',
+        baseUrl: process.env.SILICONFLOW_BASE_URL || 'https://api.siliconflow.cn/v1',
+        model: 'deepseek-ai/DeepSeek-V3',
+      },
+    ];
+
+    const errors: string[] = [];
+
+    for (const provider of providers) {
+      if (!provider.apiKey) {
+        errors.push(`${provider.name}: 未配置API Key`);
+        continue;
       }
-      
-      const data = await res.json();
-      const reply = data.choices?.[0]?.message?.content || '抱歉，AI未返回有效回复。';
-      return { data: { reply, coinCost: 0 } };
-    } catch (e: any) {
-      return { data: { reply: 'AI服务异常: ' + (e.message || '未知错误') + '，请稍后再试。' } };
+
+      try {
+        const res = await fetch(provider.baseUrl + '/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + provider.apiKey,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: provider.model,
+            messages,
+            max_tokens: 2000,
+            temperature: 0.7,
+          }),
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          const reply = data.choices?.[0]?.message?.content || '抱歉，AI未返回有效回复。';
+          return { data: { reply, coinCost: 0, provider: provider.name } };
+        }
+        
+        // 读取错误信息
+        const errText = await res.text().catch(() => '');
+        errors.push(`${provider.name}: HTTP ${res.status} - ${errText.substring(0, 100)}`);
+        
+        // 如果是余额不足(402)或限额(429)，继续尝试下一个provider
+        // 如果是其他错误（如参数错误），也继续尝试
+      } catch (e: any) {
+        errors.push(`${provider.name}: ${e.message || '网络异常'}`);
+      }
     }
+
+    // 所有provider都失败了
+    return { data: { reply: `所有AI服务暂时不可用，请稍后再试。[${errors.join('; ')}]` } };
   }
 
 
