@@ -354,3 +354,12 @@ export const visitorApi = {
     return service.get('/visitors/list', { params, headers: silentHeaders }).then(r => r.data)
   }
 }
+
+// ===== 公开API（无需管理员权限）=====
+export const publicApi = {
+  /** 获取已发布公告（公开接口） */
+  getActiveAnnouncements(): Promise<ApiResponse<Announcement[]>> {
+    if (useMock) return mockApi.getAnnouncements() as any
+    return service.get("/announcements/active").then(r => r.data)
+  }
+}

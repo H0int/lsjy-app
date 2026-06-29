@@ -13,3 +13,7 @@ data/api_providers.json
 **/api_providers.json
 **/.env
 **/.env.*
+
+free-imagegen/
+hyperframes/
+remotion/

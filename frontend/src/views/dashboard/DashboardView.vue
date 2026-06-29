@@ -102,7 +102,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { toolApi, visitorApi, adminApi, paymentApi } from '@/api'
+import { toolApi, visitorApi, adminApi, paymentApi, publicApi } from '@/api'
 import type { Tool } from '@/types'
 
 const authStore = useAuthStore()
@@ -184,7 +184,7 @@ onMounted(async () => {
 
   // 获取公告数据
   try {
-    const annRes = await adminApi.getAnnouncements()
+    const annRes = await publicApi.getActiveAnnouncements()
     let annItems: any[] = []
     if (annRes.data) {
       if (Array.isArray(annRes.data)) {
