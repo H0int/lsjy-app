@@ -101,6 +101,7 @@ const menuGroups=[
   ]},
   {label:'商业变现',icon:'💰',items:[
     {path:'/admin/orders',label:'订单管理',icon:'📦'},
+    {path:'/admin/payment-approval',label:'支付审核',icon:''},
     {path:'/admin/transactions',label:'交易记录',icon:'💳'},
     {path:'/admin/refunds',label:'退款处理',icon:'↩️'},
     {path:'/admin/payment',label:'支付渠道',icon:'💰'},
@@ -147,3 +148,4 @@ const allItems=menuGroups.flatMap(g=>g.items)
 const currentTitle=computed(()=>{const i=allItems.find(x=>route.path===x.path);return i?.label||'管理后台'})
 function handleLogout(){authStore.logout();router.push('/login')}
 </script>
+
