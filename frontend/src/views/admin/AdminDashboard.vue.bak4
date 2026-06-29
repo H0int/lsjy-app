@@ -1,0 +1,355 @@
+<template>
+  <div>
+    <!-- 实时数据概览 -->
+    <div class="cyber-grid-stats mb-6">
+      <div v-for="stat in realtimeStats" :key="stat.label" class="cyber-card cyber-stat-card stat-clickable" @click="onStatClick(stat.label)" :title="'点击查看' + stat.label + '详情'">
+        <div class="stat-glow" :style="{ background: stat.glowColor }"></div>
+        <div class="stat-content">
+          <div>
+            <p class="stat-label">{{ stat.label }}</p>
+            <p class="stat-value" :style="{ color: stat.color, textShadow: `0 0 20px ${stat.color}40` }">{{ stat.display }}</p>
+            <p class="stat-change" :class="stat.change >= 0 ? 'change-up' : 'change-down'">
+              {{ stat.change >= 0 ? '↑' : '↓' }} {{ Math.abs(stat.change) }}%
+            </p>
+          </div>
+          <div class="stat-icon" :style="{ boxShadow: `0 0 20px ${stat.color}30` }">{{ stat.icon }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 预警指标 - 可点击跳转 -->
+    <div v-if="alerts.length > 0" class="mb-6 space-y-2">
+      <div v-for="(alert, idx) in alerts" :key="idx" class="cyber-alert alert-clickable" :class="'alert-' + alert.type" @click="onAlertClick(alert.metric)">
+        <span class="alert-icon">{{ alert.type === 'danger' ? '🔴' : alert.type === 'warning' ? '🟡' : '🔵' }}</span>
+        <span class="alert-metric">{{ alert.metric }}</span>
+        <span class="alert-detail">当前: {{ alert.value }}</span>
+        <span class="alert-sep alert-sep-mobile-hide">|</span>
+        <span class="alert-detail alert-detail-mobile-hide">阈值: {{ alert.threshold }}</span>
+        <span class="alert-msg alert-msg-mobile-hide">{{ alert.message }}</span>
+        <span class="alert-arrow">→</span>
+      </div>
+    </div>
+
+    <!-- 趋势图表 -->
+    <div class="cyber-grid-charts mb-6">
+      <div class="cyber-card">
+        <div class="card-header">
+          <h3 class="card-title">📈 用户增长趋势</h3>
+          <div class="range-btns">
+            <button v-for="r in ['7d','30d']" :key="r" @click="trendRange = r; loadTrend()" class="cyber-btn-sm" :class="{ 'cyber-btn-active': trendRange === r }">{{ r === '7d' ? '近7天' : '近30天' }}</button>
+          </div>
+        </div>
+        <div ref="userChartRef" class="chart-container"></div>
+      </div>
+      <div class="cyber-card">
+        <div class="card-header">
+          <h3 class="card-title">💰 营收趋势</h3>
+          <div class="range-btns">
+            <button v-for="r in ['7d','30d']" :key="r" @click="revenueRange = r; loadTrend()" class="cyber-btn-sm" :class="{ 'cyber-btn-active': revenueRange === r }">{{ r === '7d' ? '近7天' : '近30天' }}</button>
+          </div>
+        </div>
+        <div ref="revenueChartRef" class="chart-container"></div>
+      </div>
+    </div>
+
+    <!-- 模块分布 & 热门排行 -->
+    <div class="cyber-grid-pies mb-6">
+      <div class="cyber-card">
+        <h3 class="card-title mb-4">🧩 模块用户分布</h3>
+        <div ref="modulePieRef" class="chart-container-sm"></div>
+      </div>
+      <div class="cyber-card">
+        <h3 class="card-title mb-4">💎 营收贡献分布</h3>
+        <div ref="revenuePieRef" class="chart-container-sm"></div>
+      </div>
+      <div class="cyber-card">
+        <h3 class="card-title mb-4">📊 模块使用量对比</h3>
+        <div ref="moduleBarRef" class="chart-container-sm"></div>
+      </div>
+    </div>
+
+    <!-- 最近操作日志 -->
+    <div class="cyber-card">
+      <h3 class="card-title mb-4">📋 最近操作日志</h3>
+      <div class="log-list">
+        <div v-for="log in recentLogs" :key="log.id" class="log-item">
+          <span class="log-tag" :class="'log-tag-' + log.type">{{ log.module }}</span>
+          <span class="log-action">{{ log.action }}</span>
+          <span class="log-operator log-operator-mobile-hide">{{ log.operator }}</span>
+          <span class="log-time">{{ log.time }}</span>
+        </div>
+        <div v-if="!recentLogs.length" class="loading">暂无日志</div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted, onBeforeUnmount, nextTick, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { adminApi } from '@/api'
+
+const router = useRouter()
+
+// ===== 真实数据 =====
+const dashboardData = ref<any>(null)
+const loading = ref(false)
+
+const realtimeStats = computed(() => {
+  const d = dashboardData.value
+  if (!d || !d.realtimeStats) return []
+  return d.realtimeStats.map((s: any) => ({
+    ...s,
+    display: s.label === '今日营收' ? `¥${(s.value || 0).toLocaleString()}` : (s.value || 0).toLocaleString(),
+    glowColor: `radial-gradient(circle, ${s.color}26 0%, transparent 70%)`,
+  }))
+})
+
+const alerts = computed(() => {
+  const d = dashboardData.value
+  if (!d || !d.alerts) return []
+  return d.alerts
+})
+
+const recentLogs = computed(() => {
+  const d = dashboardData.value
+  if (!d || !d.recentLogs) return []
+  return d.recentLogs
+})
+
+const moduleData = computed(() => {
+  const d = dashboardData.value
+  if (!d || !d.modules) return []
+  const colors = ['#00f0ff', '#c084fc', '#f59e0b', '#00ff88', '#ff00ff', '#3b82f6']
+  return d.modules.map((m: any, i: number) => ({ ...m, color: colors[i % colors.length] }))
+})
+
+// ===== 点击跳转 =====
+const statRoutes: Record<string, string> = {
+  '在线用户': '/admin/users',
+  '今日注册': '/admin/users',
+  '今日营收': '/admin/orders',
+  '圣力消耗': '/admin/recharge',
+}
+function onStatClick(label: string) {
+  const route = statRoutes[label]
+  if (route) router.push(route)
+}
+
+const alertRoutes: Record<string, string> = {
+  'API错误率': '/admin/api-errors',
+  '支付失败率': '/admin/payment-failures',
+}
+function onAlertClick(metric: string) {
+  const route = alertRoutes[metric]
+  if (route) router.push(route)
+}
+
+// ===== 加载数据 =====
+async function loadDashboard() {
+  loading.value = true
+  try {
+    const res = await adminApi.getDashboardStats()
+    if (res.data && res.data.data) {
+      dashboardData.value = res.data.data
+    }
+  } catch (e) {
+    console.error('Dashboard load failed:', e)
+  } finally {
+    loading.value = false
+  }
+}
+
+// ===== 趋势图 =====
+const trendRange = ref('7d')
+const revenueRange = ref('7d')
+const userChartRef = ref<HTMLElement | null>(null)
+const revenueChartRef = ref<HTMLElement | null>(null)
+const modulePieRef = ref<HTMLElement | null>(null)
+const revenuePieRef = ref<HTMLElement | null>(null)
+const moduleBarRef = ref<HTMLElement | null>(null)
+const charts: any[] = []
+
+const textColor = '#8888aa'
+const gridColor = '#1a1a2e'
+
+async function loadTrend() {
+  // Data comes from dashboardData
+  await initCharts()
+}
+
+async function initCharts() {
+  const d = dashboardData.value
+  if (!d) return
+
+  charts.forEach(c => c?.dispose())
+  charts.length = 0
+
+  // Ensure echarts
+  if (!(window as any).echarts) {
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = 'https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js'
+        script.onload = () => resolve()
+        script.onerror = () => reject()
+        document.head.appendChild(script)
+      })
+    } catch { /* fallback */ }
+  }
+
+  await nextTick()
+  const ec = (window as any).echarts
+  if (!ec) return
+
+  const trend = d.trend
+  if (!trend) return
+
+  // User growth chart
+  if (userChartRef.value) {
+    const chart = ec.init(userChartRef.value)
+    chart.setOption({
+      tooltip: { trigger: 'axis', backgroundColor: '#12121f', borderColor: '#1a1a2e', textStyle: { color: '#a0a0cc' } },
+      grid: { top: 20, right: 20, bottom: 30, left: 60 },
+      xAxis: { type: 'category', data: trend.dates, axisLabel: { color: textColor, fontSize: 11 }, axisLine: { lineStyle: { color: gridColor } } },
+      yAxis: { type: 'value', axisLabel: { color: textColor, fontSize: 11 }, splitLine: { lineStyle: { color: gridColor } } },
+      series: [
+        { name: '新注册', type: 'line', smooth: true, data: trend.newUsers, areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(0,240,255,0.3)' }, { offset: 1, color: 'rgba(0,240,255,0.02)' }] } }, lineStyle: { color: '#00f0ff', width: 2 }, itemStyle: { color: '#00f0ff' } },
+        { name: '活跃用户', type: 'line', smooth: true, data: trend.activeUsers, areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(0,255,136,0.2)' }, { offset: 1, color: 'rgba(0,255,136,0.02)' }] } }, lineStyle: { color: '#00ff88', width: 2 }, itemStyle: { color: '#00ff88' } },
+      ]
+    })
+    charts.push(chart)
+  }
+
+  // Revenue chart
+  if (revenueChartRef.value) {
+    const chart = ec.init(revenueChartRef.value)
+    chart.setOption({
+      tooltip: { trigger: 'axis', formatter: '{b}<br/>营收: ¥{c}', backgroundColor: '#12121f', borderColor: '#1a1a2e', textStyle: { color: '#a0a0cc' } },
+      grid: { top: 20, right: 20, bottom: 30, left: 60 },
+      xAxis: { type: 'category', data: trend.dates, axisLabel: { color: textColor, fontSize: 11 }, axisLine: { lineStyle: { color: gridColor } } },
+      yAxis: { type: 'value', axisLabel: { color: textColor, fontSize: 11, formatter: (v: number) => v >= 1000 ? (v / 1000) + 'k' : v }, splitLine: { lineStyle: { color: gridColor } } },
+      series: [{ name: '营收', type: 'bar', data: trend.revenue, itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: '#f59e0b' }, { offset: 1, color: '#f59e0b44' }] }, borderRadius: [4, 4, 0, 0] } }]
+    })
+    charts.push(chart)
+  }
+
+  // Module pie charts
+  const modules = moduleData.value
+  if (modules.length) {
+    if (modulePieRef.value) {
+      const chart = ec.init(modulePieRef.value)
+      chart.setOption({
+        tooltip: { trigger: 'item', formatter: '{b}: {c}人 ({d}%)', backgroundColor: '#12121f', borderColor: '#1a1a2e', textStyle: { color: '#a0a0cc' } },
+        series: [{ type: 'pie', radius: ['40%', '70%'], data: modules.map((m: any) => ({ name: m.name, value: m.users, itemStyle: { color: m.color } })), label: { color: '#8888aa', fontSize: 11 }, emphasis: { itemStyle: { shadowBlur: 20, shadowColor: 'rgba(0,240,255,0.3)' } } }]
+      })
+      charts.push(chart)
+    }
+    if (revenuePieRef.value) {
+      const chart = ec.init(revenuePieRef.value)
+      chart.setOption({
+        tooltip: { trigger: 'item', formatter: '{b}: ¥{c} ({d}%)', backgroundColor: '#12121f', borderColor: '#1a1a2e', textStyle: { color: '#a0a0cc' } },
+        series: [{ type: 'pie', radius: ['40%', '70%'], data: modules.map((m: any) => ({ name: m.name, value: m.revenue, itemStyle: { color: m.color } })), label: { color: '#8888aa', fontSize: 11 }, emphasis: { itemStyle: { shadowBlur: 20, shadowColor: 'rgba(0,240,255,0.3)' } } }]
+      })
+      charts.push(chart)
+    }
+    if (moduleBarRef.value) {
+      const chart = ec.init(moduleBarRef.value)
+      chart.setOption({
+        tooltip: { trigger: 'axis', backgroundColor: '#12121f', borderColor: '#1a1a2e', textStyle: { color: '#a0a0cc' } },
+        grid: { top: 10, right: 10, bottom: 30, left: 80 },
+        xAxis: { type: 'value', axisLabel: { color: textColor, fontSize: 11 }, splitLine: { lineStyle: { color: gridColor } } },
+        yAxis: { type: 'category', data: modules.map((m: any) => m.name).reverse(), axisLabel: { color: textColor, fontSize: 11 } },
+        series: [{ type: 'bar', data: modules.map((m: any) => m.users).reverse(), itemStyle: { color: (_: any, i: any) => modules[modules.length - 1 - i.dataIndex].color, borderRadius: [0, 4, 4, 0] }, barWidth: 16 }]
+      })
+      charts.push(chart)
+    }
+  }
+}
+
+function resizeCharts() { charts.forEach(c => c?.resize()) }
+
+onMounted(async () => {
+  await loadDashboard()
+  await nextTick()
+  await initCharts()
+  window.addEventListener('resize', resizeCharts)
+  // Auto refresh every 60s
+  setInterval(async () => {
+    await loadDashboard()
+    await initCharts()
+  }, 60000)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', resizeCharts)
+  charts.forEach(c => c?.dispose())
+})
+</script>
+
+<style scoped>
+.cyber-grid-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+@media (max-width: 767px) { .cyber-grid-stats { grid-template-columns: repeat(2, 1fr); gap: 10px; } }
+@media (min-width: 768px) and (max-width: 1199px) { .cyber-grid-stats { grid-template-columns: repeat(2, 1fr); gap: 12px; } }
+.cyber-grid-charts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+@media (max-width: 767px) { .cyber-grid-charts { grid-template-columns: 1fr; gap: 12px; } }
+.cyber-grid-pies { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+@media (max-width: 767px) { .cyber-grid-pies { grid-template-columns: 1fr; gap: 12px; } }
+.chart-container { height: 256px; }
+.chart-container-sm { height: 224px; }
+@media (max-width: 767px) { .chart-container, .chart-container-sm { height: 200px; } }
+.cyber-card { background: #12121f; border: 1px solid #1a1a2e; border-radius: 12px; padding: 20px; position: relative; overflow: hidden; transition: border-color 0.3s; }
+.cyber-card:hover { border-color: #2a2a4e; }
+.cyber-stat-card { padding: 0; cursor: pointer; }
+.cyber-stat-card:hover { border-color: #00f0ff66; transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,240,255,0.1); }
+.stat-glow { position: absolute; top: -20px; right: -20px; width: 100px; height: 100px; border-radius: 50%; pointer-events: none; }
+.stat-content { padding: 20px; display: flex; align-items: center; justify-content: space-between; }
+@media (max-width: 767px) { .stat-content { padding: 14px; } }
+.stat-label { font-size: 12px; color: #6a6a8a; margin-bottom: 6px; letter-spacing: 0.5px; }
+@media (max-width: 767px) { .stat-label { font-size: 11px; } }
+.stat-value { font-size: 28px; font-weight: 800; font-family: 'Courier New', monospace; }
+@media (max-width: 767px) { .stat-value { font-size: 20px; } }
+.stat-change { font-size: 11px; margin-top: 4px; }
+@media (max-width: 767px) { .stat-change { font-size: 10px; } }
+.change-up { color: #00ff88; }
+.change-down { color: #ff4466; }
+.stat-icon { width: 48px; height: 48px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid #1a1a2e; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+@media (max-width: 767px) { .stat-icon { width: 36px; height: 36px; font-size: 18px; border-radius: 8px; } }
+.cyber-alert { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 10px; font-size: 13px; border: 1px solid; cursor: pointer; transition: all 0.2s; }
+.cyber-alert:hover { transform: translateX(4px); filter: brightness(1.2); }
+.alert-clickable { position: relative; }
+.alert-arrow { margin-left: auto; font-size: 16px; font-weight: bold; }
+@media (max-width: 767px) { .cyber-alert { gap: 8px; padding: 10px 12px; font-size: 12px; flex-wrap: wrap; } .alert-sep-mobile-hide, .alert-detail-mobile-hide, .alert-msg-mobile-hide { display: none; } }
+.alert-warning { background: rgba(245, 158, 11, 0.08); border-color: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+.alert-danger { background: rgba(255, 68, 102, 0.08); border-color: rgba(255, 68, 102, 0.2); color: #ff4466; }
+.alert-info { background: rgba(0, 240, 255, 0.08); border-color: rgba(0, 240, 255, 0.2); color: #00f0ff; }
+.alert-metric { font-weight: 600; }
+.alert-detail { color: #6a6a8a; font-size: 12px; }
+.alert-sep { color: #2a2a4e; }
+.alert-msg { flex: 1; color: #8888aa; font-size: 12px; }
+.card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.card-title { font-size: 14px; font-weight: 700; color: #e0e0ff; }
+.mb-4 { margin-bottom: 16px; }
+.mb-6 { margin-bottom: 24px; }
+@media (max-width: 767px) { .mb-6 { margin-bottom: 16px; } }
+.range-btns { display: flex; gap: 4px; }
+.cyber-btn-sm { padding: 4px 12px; border-radius: 6px; font-size: 11px; background: transparent; border: 1px solid #1a1a2e; color: #6a6a8a; cursor: pointer; transition: all 0.2s; }
+.cyber-btn-sm:hover { border-color: #00f0ff44; color: #00f0ff; }
+.cyber-btn-active { background: rgba(0, 240, 255, 0.1) !important; border-color: #00f0ff !important; color: #00f0ff !important; box-shadow: 0 0 8px rgba(0, 240, 255, 0.2); }
+.log-list { display: flex; flex-direction: column; }
+.log-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #1a1a2e; }
+@media (max-width: 767px) { .log-item { gap: 8px; padding: 8px 0; flex-wrap: wrap; } .log-operator-mobile-hide { display: none; } }
+.log-item:last-child { border-bottom: none; }
+.log-tag { padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; letter-spacing: 0.5px; }
+.log-tag-user { background: rgba(0, 240, 255, 0.1); color: #00f0ff; }
+.log-tag-order { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+.log-tag-tool { background: rgba(124, 58, 237, 0.1); color: #c084fc; }
+.log-tag-content { background: rgba(0, 255, 136, 0.1); color: #00ff88; }
+.log-tag-system { background: rgba(100, 100, 140, 0.1); color: #6a6a8a; }
+.log-action { flex: 1; font-size: 13px; color: #a0a0cc; }
+@media (max-width: 767px) { .log-action { font-size: 12px; min-width: 0; } }
+.log-operator { font-size: 11px; color: #4a4a6a; }
+.log-time { font-size: 11px; color: #4a4a6a; font-family: 'Courier New', monospace; }
+.loading, .empty { text-align: center; padding: 2rem; color: #6a6a8a; }
+.space-y-2 > * + * { margin-top: 8px; }
+</style>

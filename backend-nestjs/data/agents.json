@@ -1,0 +1,35 @@
+[
+  {
+    "id": 1,
+    "name": "罗圣AI助手",
+    "description": "通用AI助手，支持多轮对话",
+    "model": "doubao",
+    "status": "active",
+    "temperature": 0.7,
+    "maxTokens": 2000,
+    "systemPrompt": "你是罗圣纪元AI助手",
+    "createdAt": "2026-06-27T01:12:23.132Z"
+  },
+  {
+    "id": 2,
+    "name": "代码专家",
+    "description": "编程和技术问题解答",
+    "model": "claude",
+    "status": "active",
+    "temperature": 0.3,
+    "maxTokens": 4000,
+    "systemPrompt": "你是一个编程专家",
+    "createdAt": "2026-06-27T01:12:23.132Z"
+  },
+  {
+    "id": 3,
+    "name": "文案写手",
+    "description": "营销文案和内容创作",
+    "model": "tongyi",
+    "status": "active",
+    "temperature": 0.8,
+    "maxTokens": 3000,
+    "systemPrompt": "你是一个创意文案写手",
+    "createdAt": "2026-06-27T01:12:23.132Z"
+  }
+]

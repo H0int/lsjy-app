@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1,
+    "name": "新手礼包",
+    "coins": 100,
+    "price": 9.9,
+    "originalPrice": 19.9,
+    "status": "active",
+    "sortOrder": 1
+  },
+  {
+    "id": 2,
+    "name": "月度套餐",
+    "coins": 500,
+    "price": 39.9,
+    "originalPrice": 59.9,
+    "status": "active",
+    "sortOrder": 2
+  },
+  {
+    "id": 3,
+    "name": "季度套餐",
+    "coins": 2000,
+    "price": 129,
+    "originalPrice": 199,
+    "status": "active",
+    "sortOrder": 3
+  },
+  {
+    "id": 4,
+    "name": "年度套餐",
+    "coins": 10000,
+    "price": 499,
+    "originalPrice": 999,
+    "status": "active",
+    "sortOrder": 4
+  }
+]

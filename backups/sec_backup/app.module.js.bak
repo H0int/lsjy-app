@@ -1,0 +1,91 @@
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.AppModule = void 0;
+const common_1 = require("@nestjs/common");
+const config_1 = require("@nestjs/config");
+const typeorm_1 = require("@nestjs/typeorm");
+const throttler_1 = require("@nestjs/throttler");
+const core_1 = require("@nestjs/core");
+const app_config_1 = require("./config/app.config");
+const database_config_1 = require("./config/database.config");
+const ai_config_1 = require("./config/ai.config");
+const auth_module_1 = require("./auth/auth.module");
+const users_module_1 = require("./users/users.module");
+const roles_module_1 = require("./roles/roles.module");
+const ai_tools_module_1 = require("./ai-tools/ai-tools.module");
+const ai_module_1 = require("./ai/ai.module");
+const payment_module_1 = require("./payment/payment.module");
+const system_module_1 = require("./system/system.module");
+const announcements_module_1 = require("./announcements/announcements.module");
+const coupons_module_1 = require("./coupons/coupons.module");
+const campaigns_module_1 = require("./campaigns/campaigns.module");
+const tickets_module_1 = require("./tickets/tickets.module");
+const faqs_module_1 = require("./faqs/faqs.module");
+const automation_module_1 = require("./automation/automation.module");
+const moderation_module_1 = require("./moderation/moderation.module");
+const reports_module_1 = require("./reports/reports.module");
+let AppModule = class AppModule {
+};
+exports.AppModule = AppModule;
+exports.AppModule = AppModule = __decorate([
+    (0, common_1.Module)({
+        imports: [
+            config_1.ConfigModule.forRoot({
+                isGlobal: true,
+                load: [app_config_1.AppConfig, database_config_1.DatabaseConfig, ai_config_1.AIConfig],
+                envFilePath: ['.env.local', '.env'],
+            }),
+            typeorm_1.TypeOrmModule.forRootAsync({
+                imports: [config_1.ConfigModule],
+                inject: [config_1.ConfigService],
+                useFactory: (configService) => ({
+                    type: 'mysql',
+                    host: configService.get('DB_HOST', 'localhost'),
+                    port: configService.get('DB_PORT', 3306),
+                    username: configService.get('DB_USERNAME', 'root'),
+                    password: configService.get('DB_PASSWORD', ''),
+                    database: configService.get('DB_DATABASE', 'lsjy_saas'),
+                    entities: [__dirname + '/**/*.entity{.ts,.js}'],
+                    synchronize: configService.get('NODE_ENV') !== 'production',
+                    charset: 'utf8mb4',
+                    logging: configService.get('NODE_ENV') === 'development',
+                    extra: {
+                        charset: 'utf8mb4_unicode_ci',
+                    },
+                }),
+            }),
+            throttler_1.ThrottlerModule.forRoot([{
+                    ttl: 60000,
+                    limit: 100,
+                }]),
+            auth_module_1.AuthModule,
+            users_module_1.UsersModule,
+            roles_module_1.RolesModule,
+            ai_tools_module_1.AiToolsModule,
+            ai_module_1.AIModule,
+            payment_module_1.PaymentModule,
+            system_module_1.SystemModule,
+            announcements_module_1.AnnouncementsModule,
+            coupons_module_1.CouponsModule,
+            campaigns_module_1.CampaignsModule,
+            tickets_module_1.TicketsModule,
+            faqs_module_1.FaqsModule,
+            automation_module_1.AutomationModule,
+            moderation_module_1.ModerationModule,
+            reports_module_1.ReportsModule,
+        ],
+        providers: [
+            {
+                provide: core_1.APP_GUARD,
+                useClass: throttler_1.ThrottlerGuard,
+            },
+        ],
+    })
+], AppModule);
+//# sourceMappingURL=app.module.js.map

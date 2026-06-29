@@ -1,0 +1,37 @@
+[
+  {
+    "id": 1,
+    "level": "info",
+    "module": "system",
+    "message": "系统启动成功",
+    "createdAt": "2026-06-27T03:20:28.547Z"
+  },
+  {
+    "id": 2,
+    "level": "info",
+    "module": "auth",
+    "message": "用户登录成功",
+    "createdAt": "2026-06-27T03:20:28.547Z"
+  },
+  {
+    "id": 3,
+    "level": "warn",
+    "module": "payment",
+    "message": "支付订单处理延迟",
+    "createdAt": "2026-06-27T03:20:28.547Z"
+  },
+  {
+    "id": 4,
+    "level": "error",
+    "module": "ai",
+    "message": "AI接口调用超时",
+    "createdAt": "2026-06-27T03:20:28.547Z"
+  },
+  {
+    "id": 5,
+    "level": "info",
+    "module": "system",
+    "message": "定时任务执行完成",
+    "createdAt": "2026-06-27T03:20:28.547Z"
+  }
+]

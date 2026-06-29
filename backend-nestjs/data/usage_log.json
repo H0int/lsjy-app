@@ -1,0 +1,415 @@
+[
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "你好",
+    "timestamp": "2026-06-27T14:18:01.376Z",
+    "status": "success"
+  },
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "你好",
+    "timestamp": "2026-06-27T14:36:06.124Z",
+    "status": "success"
+  },
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "你好",
+    "timestamp": "2026-06-27T14:59:39.903Z",
+    "status": "success"
+  },
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "你好，简短介绍一下自己",
+    "timestamp": "2026-06-27T15:19:01.914Z",
+    "status": "success"
+  },
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "1+1=?",
+    "timestamp": "2026-06-27T15:22:43.362Z",
+    "status": "success"
+  },
+  {
+    "userId": 1,
+    "agentId": 2,
+    "message": "你好，简单介绍一下你自己",
+    "timestamp": "2026-06-27T15:35:21.689Z",
+    "status": "failed"
+  },
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "你好，简单介绍一下你自己",
+    "timestamp": "2026-06-27T15:35:36.675Z",
+    "status": "failed"
+  },
+  {
+    "userId": 1,
+    "agentId": 2,
+    "message": "你好，简单介绍一下你自己",
+    "timestamp": "2026-06-27T15:37:05.521Z",
+    "status": "success"
+  },
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "你好",
+    "timestamp": "2026-06-27T15:39:35.448Z",
+    "status": "success"
+  },
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "你的创始人是谁",
+    "timestamp": "2026-06-27T15:40:03.219Z",
+    "status": "success"
+  },
+  {
+    "userId": 1,
+    "agentId": 2,
+    "message": "你好，简单说一句话",
+    "timestamp": "2026-06-27T16:14:21.059Z",
+    "status": "success"
+  },
+  {
+    "userId": 1,
+    "agentId": 15,
+    "message": "你好 介绍一下的功能",
+    "timestamp": "2026-06-27T16:14:36.071Z",
+    "status": "success"
+  },
+  {
+    "userId": 1,
+    "agentId": 6,
+    "message": "你们公司的法务是哪个",
+    "timestamp": "2026-06-27T16:15:08.810Z",
+    "status": "success"
+  },
+  {
+    "userId": 1,
+    "agentId": 14,
+    "message": "你好",
+    "timestamp": "2026-06-27T16:15:41.622Z",
+    "status": "success"
+  },
+  {
+    "userId": 1,
+    "agentId": 14,
+    "message": "你是什么大模型",
+    "timestamp": "2026-06-27T16:16:26.367Z",
+    "status": "success"
+  },
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "hi",
+    "timestamp": "2026-06-27T16:17:09.488Z",
+    "status": "success"
+  },
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "你的开发者是谁",
+    "timestamp": "2026-06-27T16:17:19.427Z",
+    "status": "success"
+  },
+  {
+    "userId": 1,
+    "agentId": 7,
+    "message": "你就是龙虾？",
+    "timestamp": "2026-06-27T16:23:02.308Z",
+    "status": "success"
+  },
+  {
+    "userId": 1,
+    "agentId": 7,
+    "message": "那你为什么标志着龙虾员工",
+    "timestamp": "2026-06-27T16:23:34.153Z",
+    "status": "success"
+  },
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "1+1=?",
+    "timestamp": "2026-06-27T17:07:05.761Z",
+    "status": "success",
+    "mode": "stream"
+  },
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "回复OK两个字母即可",
+    "timestamp": "2026-06-27T17:10:04.295Z",
+    "status": "success",
+    "mode": "stream"
+  },
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "你好",
+    "timestamp": "2026-06-27T17:41:19.657Z",
+    "status": "success",
+    "mode": "stream"
+  },
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "你好，简单回复一下就行",
+    "timestamp": "2026-06-28T00:45:59.500Z",
+    "status": "success",
+    "mode": "stream"
+  },
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "hi",
+    "timestamp": "2026-06-28T01:09:18.749Z",
+    "status": "success",
+    "mode": "stream"
+  },
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "你好，简短回复一句话",
+    "timestamp": "2026-06-28T01:13:50.810Z",
+    "status": "success",
+    "mode": "stream"
+  },
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "hi",
+    "timestamp": "2026-06-28T01:29:20.226Z",
+    "status": "success",
+    "mode": "stream"
+  },
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "你好",
+    "timestamp": "2026-06-28T02:21:11.542Z",
+    "status": "success",
+    "mode": "stream"
+  },
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "你的创始人是谁？介绍一下他",
+    "timestamp": "2026-06-28T04:48:38.840Z",
+    "status": "success",
+    "mode": "stream"
+  },
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "你会什么？",
+    "timestamp": "2026-06-28T05:26:41.243Z",
+    "status": "success",
+    "mode": "stream"
+  },
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "你生成一个边牧看看",
+    "timestamp": "2026-06-28T05:27:25.203Z",
+    "status": "success",
+    "mode": "stream"
+  },
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "可以",
+    "timestamp": "2026-06-28T05:27:49.374Z",
+    "status": "success",
+    "mode": "stream"
+  },
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "你会什么？",
+    "timestamp": "2026-06-28T05:27:54.784Z",
+    "status": "success",
+    "mode": "stream"
+  },
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "hi",
+    "timestamp": "2026-06-28T05:34:26.526Z",
+    "status": "success",
+    "mode": "stream"
+  },
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "hi",
+    "timestamp": "2026-06-28T05:37:09.934Z",
+    "status": "success",
+    "mode": "stream"
+  },
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "hi",
+    "timestamp": "2026-06-28T05:52:08.672Z",
+    "status": "success",
+    "mode": "stream"
+  },
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "hello",
+    "timestamp": "2026-06-28T05:52:21.300Z",
+    "status": "success",
+    "mode": "stream"
+  },
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "hello",
+    "timestamp": "2026-06-28T05:57:04.396Z",
+    "status": "success",
+    "mode": "stream"
+  },
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "hi",
+    "timestamp": "2026-06-28T06:03:44.957Z",
+    "status": "success",
+    "mode": "stream"
+  },
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "hello",
+    "timestamp": "2026-06-28T06:22:38.324Z",
+    "status": "success",
+    "mode": "stream"
+  },
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "hi",
+    "timestamp": "2026-06-28T06:43:10.351Z",
+    "status": "success",
+    "mode": "stream"
+  },
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "hello",
+    "timestamp": "2026-06-28T06:43:29.595Z",
+    "status": "success",
+    "mode": "stream"
+  },
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "你的创始人是谁？介绍一下他。",
+    "timestamp": "2026-06-28T09:56:44.584Z",
+    "status": "success",
+    "mode": "stream"
+  },
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "你好 你的创始人是谁？介绍一下他",
+    "timestamp": "2026-06-28T10:36:32.969Z",
+    "status": "success",
+    "mode": "stream"
+  },
+  {
+    "userId": 1,
+    "agentId": 13,
+    "message": "你好",
+    "timestamp": "2026-06-28T10:37:00.167Z",
+    "status": "success",
+    "mode": "stream"
+  },
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "hello",
+    "timestamp": "2026-06-28T11:20:23.730Z",
+    "status": "success",
+    "mode": "stream"
+  },
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "你好",
+    "timestamp": "2026-06-28T11:29:59.093Z",
+    "status": "success",
+    "mode": "stream"
+  },
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "你好",
+    "timestamp": "2026-06-28T11:31:20.262Z",
+    "status": "success",
+    "mode": "stream"
+  },
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "你好，请介绍一下你自己",
+    "timestamp": "2026-06-28T11:36:25.349Z",
+    "status": "success",
+    "mode": "stream"
+  },
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "hello",
+    "timestamp": "2026-06-28T11:43:21.859Z",
+    "status": "success",
+    "mode": "stream"
+  },
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "你好",
+    "timestamp": "2026-06-28T12:57:41.215Z",
+    "status": "success",
+    "mode": "stream"
+  },
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "你好",
+    "timestamp": "2026-06-28T16:33:13.920Z",
+    "status": "success",
+    "mode": "stream"
+  },
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "你好",
+    "timestamp": "2026-06-28T16:51:33.134Z",
+    "status": "success",
+    "mode": "stream"
+  },
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "kcc",
+    "timestamp": "2026-06-28T17:36:12.169Z",
+    "status": "success",
+    "mode": "stream"
+  },
+  {
+    "userId": 1,
+    "agentId": 1,
+    "message": "你好",
+    "timestamp": "2026-06-28T19:17:51.311Z",
+    "status": "success",
+    "mode": "stream"
+  }
+]

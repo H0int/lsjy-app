@@ -1,0 +1,453 @@
+<template>
+  <div class="tool-detail-page">
+    <!-- Header -->
+    <div class="detail-header">
+      <div class="header-left" @click="goBack">
+        <span class="back-icon">←</span>
+        <span class="tool-icon">{{ tool?.icon || '🔧' }}</span>
+        <div class="tool-info">
+          <h1>{{ tool?.name || '工具详情' }}</h1>
+          <p>{{ tool?.description }}</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <span class="cost-badge" v-if="currentCost">⚡{{ currentCost }}圣力/次</span>
+      </div>
+    </div>
+
+    <!-- Model Selector -->
+    <div class="model-selector">
+      <div class="selector-label">选择模型</div>
+      <div class="model-options">
+        <div v-for="m in modelList" :key="m.group"
+          class="model-btn" :class="{ active: selectedModel === m.group }"
+          @click="selectedModel = m.group">
+          <span class="model-name">{{ m.name }}</span>
+          <span class="model-mult" v-if="m.mult > 1">×{{ m.mult }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dynamic Form -->
+    <div class="form-section" v-if="formFields.length > 0">
+      <div class="section-title">📋 参数配置</div>
+      <div class="form-fields">
+        <div v-for="field in formFields" :key="field.id" class="form-field">
+          <label class="field-label">
+            {{ field.label }}
+            <span class="required" v-if="field.required">*</span>
+          </label>
+          <select v-if="field.type === 'select'" v-model="formData[field.id]" class="field-input field-select">
+            <option value="" disabled>请选择{{ field.label }}</option>
+            <option v-for="opt in field.options" :key="opt" :value="opt">{{ opt }}</option>
+          </select>
+          <div v-else-if="field.type === 'radio'" class="radio-group">
+            <label v-for="opt in field.options" :key="opt" class="radio-item"
+              :class="{ active: formData[field.id] === opt }" @click="formData[field.id] = opt">
+              {{ opt }}
+            </label>
+          </div>
+          <textarea v-else-if="field.type === 'textarea'" v-model="formData[field.id]"
+            class="field-input field-textarea" :placeholder="field.placeholder || '请输入...'" rows="3"></textarea>
+          <input v-else v-model="formData[field.id]" type="text"
+            class="field-input field-text" :placeholder="field.placeholder || '请输入...'">
+        </div>
+      </div>
+    </div>
+
+    <!-- Generate Button -->
+    <div class="generate-section">
+      <button class="generate-btn" :disabled="generating || !canGenerate" @click="handleGenerate">
+        <span v-if="generating" class="loading-icon">⏳</span>
+        <span v-else>✨</span>
+        {{ generating ? '生成中...' : '立即生成' }}
+        <span class="cost-hint" v-if="currentCost">（消耗{{ currentCost }}圣力）</span>
+      </button>
+    </div>
+
+    <!-- Results Section -->
+    <div class="results-section" v-if="results.length > 0">
+      <div class="section-title">📄 生成结果</div>
+      <div class="result-cards">
+        <div v-for="(result, idx) in results" :key="idx" class="result-card">
+          <div class="result-header">
+            <span class="result-model">{{ getModelLabel(result.model) }}</span>
+            <span class="result-time">{{ formatTime(result.createdAt) }}</span>
+          </div>
+          <div class="result-content">
+            <!-- 图片类型 -->
+            <div v-if="result.type === 'image' && result.imageUrls && result.imageUrls.length > 0" class="image-result">
+              <img v-for="(url, imgIdx) in result.imageUrls" :key="imgIdx" :src="url" class="generated-image" @click="previewImage(url)" />
+              <div class="image-actions">
+                <a v-for="(url, imgIdx) in result.imageUrls" :key="'dl-'+imgIdx" :href="url" target="_blank" class="download-link">下载图片{{ imgIdx + 1 }}</a>
+              </div>
+            </div>
+            <!-- 视频类型 -->
+            <div v-else-if="result.type === 'video' && result.videoUrl" class="video-result">
+              <video :src="result.videoUrl" controls class="generated-video"></video>
+              <div class="video-actions">
+                <a :href="result.videoUrl" target="_blank" class="download-link">下载视频</a>
+              </div>
+            </div>
+            <!-- 文本类型 -->
+            <div v-else v-html="renderContent(result.content)"></div>
+          </div>
+          <div class="result-actions">
+            <button class="action-btn" @click="copyResult(result)">📋 复制</button>
+            <button class="action-btn" @click="shareResult(result)">📤 分享</button>
+            <button class="action-btn" @click="regenerate">🔄 重新生成</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Follow-up Input -->
+    <div class="followup-section" v-if="results.length > 0">
+      <div class="followup-input-wrap">
+        <input v-model="followupText" type="text" class="followup-input"
+          placeholder="补充要求或追问..." @keyup.enter="handleFollowup">
+        <button class="followup-btn" @click="handleFollowup" :disabled="!followupText.trim() || generating">发送</button>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" v-if="!generating && results.length === 0 && !error">
+      <div class="empty-icon">🚀</div>
+      <p>填写参数后点击生成，AI将为你创作</p>
+    </div>
+
+    <!-- Error / Toast -->
+    <div class="error-toast" v-if="error" @click="error = ''">{{ error }}</div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { toolApi } from '@/api'
+
+const route = useRoute()
+const router = useRouter()
+
+const tool = ref<any>(null)
+const formFields = ref<any[]>([])
+const formData = ref<Record<string, any>>({})
+const selectedModel = ref('doubao')
+const generating = ref(false)
+const results = ref<any[]>([])
+const followupText = ref('')
+const error = ref('')
+
+const modelList = [
+  { group: 'doubao', name: '豆包', mult: 1 },
+  { group: 'yuanbao', name: '元宝', mult: 1.5 },
+  { group: 'deepseek', name: 'DeepSeek', mult: 2 },
+  { group: 'tongyi', name: '通义千问', mult: 2 }
+]
+
+const toolId = computed(() => Number(route.params.id))
+
+const currentCost = computed(() => {
+  if (!tool.value) return 0
+  const base = tool.value.coinCost || 1
+  const m = modelList.find(x => x.group === selectedModel.value)
+  return Math.max(1, Math.round(base * (m?.mult || 1)))
+})
+
+const canGenerate = computed(() => {
+  if (formFields.value.length === 0) return true
+  return formFields.value
+    .filter(f => f.required)
+    .every(f => formData.value[f.id] && String(formData.value[f.id]).trim())
+})
+
+function getModelLabel(group: string) {
+  return modelList.find(m => m.group === group)?.name || group || 'AI'
+}
+
+function formatTime(t: string) {
+  if (!t) return ''
+  return new Date(t).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+}
+
+function renderContent(content: string) {
+  if (!content) return ''
+  return content
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/\n/g, '<br>')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/`(.*?)`/g, '<code>$1</code>')
+}
+
+async function loadTool() {
+  try {
+    const res = await toolApi.getToolDetail(toolId.value)
+    tool.value = res.data
+    // Load form config
+    try {
+      const fcRes = await toolApi.getFormConfig(toolId.value)
+      const fc = fcRes.data
+      if (fc && fc.fields) {
+        formFields.value = fc.fields
+        formFields.value.forEach((f: any) => {
+          if (formData.value[f.id] === undefined) formData.value[f.id] = ''
+        })
+      }
+    } catch { /* use empty form */ }
+  } catch (e: any) {
+    error.value = '加载工具信息失败'
+  }
+}
+
+async function handleGenerate() {
+  if (!canGenerate.value) { error.value = '请填写所有必填项'; return }
+  generating.value = true; error.value = ''
+  try {
+    const res = await toolApi.generateForm(toolId.value, {
+      formData: formData.value,
+      model: selectedModel.value
+    })
+    const data = res.data
+    if (data) {
+      results.value.unshift({
+        content: data.content || '生成完成',
+        model: data.model || selectedModel.value,
+        createdAt: new Date().toISOString()
+      })
+    }
+  } catch (e: any) {
+    error.value = e?.response?.data?.message || e?.message || '生成失败，请重试'
+  } finally { generating.value = false }
+}
+
+async function handleFollowup() {
+  if (!followupText.value.trim() || generating.value) return
+  const text = followupText.value.trim()
+  followupText.value = ''
+  generating.value = true
+  try {
+    const res = await toolApi.generateForm(toolId.value, {
+      formData: { ...formData.value, followup: text },
+      model: selectedModel.value
+    })
+    const data = res.data
+    if (data) {
+      results.value.unshift({
+        content: data.content || '回复完成',
+        model: data.model || selectedModel.value,
+        createdAt: new Date().toISOString()
+      })
+    }
+  } catch (e: any) {
+    error.value = e?.response?.data?.message || '追问失败'
+  } finally { generating.value = false }
+}
+
+function regenerate() { handleGenerate() }
+
+async function copyResult(result: any) {
+  try {
+    await navigator.clipboard.writeText(result.content)
+    error.value = '✅ 已复制到剪贴板'
+    setTimeout(() => { if (error.value === '✅ 已复制到剪贴板') error.value = '' }, 2000)
+  } catch { error.value = '复制失败' }
+}
+
+async function shareResult(result: any) {
+  if (navigator.share) {
+    try { await navigator.share({ title: `${tool.value?.name} - 生成结果`, text: result.content }) }
+    catch { /* cancelled */ }
+  } else { copyResult(result) }
+}
+
+function goBack() { router.push('/ai-tools') }
+
+onMounted(loadTool)
+watch(toolId, loadTool)
+</script>
+
+<style scoped>
+.tool-detail-page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #0a0e1a 0%, #111827 100%);
+  color: #e0e6ed;
+  padding: 0 0 100px;
+}
+.detail-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px;
+  background: rgba(17,24,39,0.95);
+  border-bottom: 1px solid rgba(99,102,241,0.2);
+  position: sticky; top: 0; z-index: 100;
+  backdrop-filter: blur(12px);
+}
+.header-left { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+.back-icon { font-size: 20px; color: #818cf8; }
+.tool-icon { font-size: 28px; }
+.tool-info h1 { font-size: 16px; font-weight: 600; margin: 0; color: #f1f5f9; }
+.tool-info p { font-size: 12px; color: #94a3b8; margin: 2px 0 0; }
+.cost-badge {
+  background: linear-gradient(135deg,#6366f1,#8b5cf6);
+  padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;
+}
+.model-selector { padding: 16px 20px; border-bottom: 1px solid rgba(99,102,241,0.1); }
+.selector-label { font-size: 13px; color: #94a3b8; margin-bottom: 10px; }
+.model-options { display: flex; gap: 10px; flex-wrap: wrap; }
+.model-btn {
+  padding: 8px 16px; border-radius: 8px;
+  border: 1px solid rgba(99,102,241,0.3);
+  background: rgba(99,102,241,0.05);
+  cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; gap: 6px;
+}
+.model-btn.active {
+  border-color: #6366f1; background: rgba(99,102,241,0.2);
+  box-shadow: 0 0 12px rgba(99,102,241,0.3);
+}
+.model-name { font-size: 13px; color: #e0e6ed; }
+.model-mult {
+  font-size: 11px; color: #f59e0b;
+  background: rgba(245,158,11,0.15);
+  padding: 1px 6px; border-radius: 4px;
+}
+.form-section { padding: 20px; }
+.section-title { font-size: 15px; font-weight: 600; margin-bottom: 16px; color: #f1f5f9; }
+.form-fields { display: flex; flex-direction: column; gap: 16px; }
+.form-field { display: flex; flex-direction: column; gap: 6px; }
+.field-label { font-size: 13px; color: #cbd5e1; font-weight: 500; }
+.required { color: #ef4444; margin-left: 2px; }
+.field-input {
+  background: rgba(30,41,59,0.8); border: 1px solid rgba(99,102,241,0.2);
+  border-radius: 8px; padding: 10px 14px; color: #e0e6ed; font-size: 14px;
+  outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+}
+.field-input:focus { border-color: #6366f1; box-shadow: 0 0 8px rgba(99,102,241,0.2); }
+.field-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px;
+}
+.field-select option { background: #1e293b; color: #e0e6ed; }
+.field-textarea { resize: vertical; min-height: 80px; font-family: inherit; }
+.radio-group { display: flex; flex-wrap: wrap; gap: 8px; }
+.radio-item {
+  padding: 6px 14px; border-radius: 6px;
+  border: 1px solid rgba(99,102,241,0.2);
+  background: rgba(30,41,59,0.5);
+  font-size: 13px; cursor: pointer; transition: all 0.2s; color: #94a3b8;
+}
+.radio-item.active { border-color: #6366f1; background: rgba(99,102,241,0.15); color: #e0e6ed; }
+.generate-section { padding: 16px 20px; }
+.generate-btn {
+  width: 100%; padding: 14px; border-radius: 10px; border: none;
+  background: linear-gradient(135deg,#6366f1,#8b5cf6);
+  color: white; font-size: 16px; font-weight: 600; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: all 0.2s; box-shadow: 0 4px 20px rgba(99,102,241,0.3);
+}
+.generate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.generate-btn:not(:disabled):hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(99,102,241,0.4); }
+.cost-hint { font-size: 12px; opacity: 0.8; }
+.loading-icon { animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.results-section { padding: 20px; }
+.result-cards { display: flex; flex-direction: column; gap: 16px; }
+.result-card {
+  background: rgba(30,41,59,0.6); border: 1px solid rgba(99,102,241,0.15);
+  border-radius: 12px; padding: 16px; transition: border-color 0.2s;
+}
+.result-card:hover { border-color: rgba(99,102,241,0.4); }
+.result-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.result-model { font-size: 12px; color: #818cf8; background: rgba(99,102,241,0.1); padding: 2px 8px; border-radius: 4px; }
+.result-time { font-size: 11px; color: #64748b; }
+.result-content { font-size: 14px; line-height: 1.7; color: #e0e6ed; word-break: break-word; }
+.result-content :deep(code) { background: rgba(99,102,241,0.1); padding: 1px 4px; border-radius: 3px; font-size: 13px; }
+.result-content :deep(strong) { color: #f1f5f9; }
+.result-actions {
+  display: flex; gap: 8px; margin-top: 14px;
+  padding-top: 12px; border-top: 1px solid rgba(99,102,241,0.1);
+}
+.action-btn {
+  padding: 6px 12px; border-radius: 6px;
+  border: 1px solid rgba(99,102,241,0.2);
+  background: rgba(99,102,241,0.05);
+  color: #94a3b8; font-size: 12px; cursor: pointer; transition: all 0.2s;
+}
+.action-btn:hover { border-color: #6366f1; color: #e0e6ed; background: rgba(99,102,241,0.15); }
+.followup-section {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  padding: 12px 20px;
+  background: rgba(17,24,39,0.95);
+  border-top: 1px solid rgba(99,102,241,0.2);
+  backdrop-filter: blur(12px); z-index: 100;
+}
+.followup-input-wrap { display: flex; gap: 10px; }
+.followup-input {
+  flex: 1; background: rgba(30,41,59,0.8);
+  border: 1px solid rgba(99,102,241,0.2);
+  border-radius: 8px; padding: 10px 14px; color: #e0e6ed; font-size: 14px; outline: none;
+}
+.followup-input:focus { border-color: #6366f1; }
+.followup-btn {
+  padding: 10px 20px; border-radius: 8px; border: none;
+  background: linear-gradient(135deg,#6366f1,#8b5cf6);
+  color: white; font-size: 14px; font-weight: 500; cursor: pointer;
+}
+.followup-btn:disabled { opacity: 0.5; }
+.empty-state { text-align: center; padding: 60px 20px; color: #64748b; }
+.empty-icon { font-size: 48px; margin-bottom: 12px; }
+.error-toast {
+  position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+  background: rgba(239,68,68,0.9); color: white;
+  padding: 10px 20px; border-radius: 8px; font-size: 13px; z-index: 200; cursor: pointer;
+}
+
+/* 图片结果样式 */
+.image-result {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.generated-image {
+  width: 100%;
+  max-width: 512px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.generated-image:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+}
+.image-actions, .video-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.download-link {
+  color: #00ffff;
+  text-decoration: none;
+  padding: 6px 12px;
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 6px;
+  font-size: 12px;
+  transition: all 0.3s;
+}
+.download-link:hover {
+  background: rgba(0, 255, 255, 0.1);
+  border-color: #00ffff;
+}
+/* 视频结果样式 */
+.video-result {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.generated-video {
+  width: 100%;
+  max-width: 640px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 255, 255, 0.3);
+}
+</style>

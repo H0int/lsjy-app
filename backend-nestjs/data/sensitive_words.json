@@ -1,0 +1,23 @@
+[
+  {
+    "id": 1,
+    "word": "暴力",
+    "category": "违规内容",
+    "status": "active",
+    "createdAt": "2026-06-27T01:12:22.925Z"
+  },
+  {
+    "id": 2,
+    "word": "赌博",
+    "category": "违规内容",
+    "status": "active",
+    "createdAt": "2026-06-27T01:12:22.925Z"
+  },
+  {
+    "id": 3,
+    "word": "色情",
+    "category": "违规内容",
+    "status": "active",
+    "createdAt": "2026-06-27T01:12:22.925Z"
+  }
+]

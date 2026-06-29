@@ -1,0 +1,29 @@
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+import * as express from 'express';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+  
+  app.enableCors({ origin: true, credentials: true });
+  app.use(express.json({ limit: '10mb' }));
+  
+  app.setGlobalPrefix('api/v1', {
+    exclude: [],
+  });
+  
+  const port = process.env.PORT || 3000;
+  await app.listen(port, '0.0.0.0');
+  
+  // Add fallback handler AFTER NestJS initialization
+  const httpAdapter = app.getHttpAdapter();
+  httpAdapter.use('/api/v1/*', (req: any, res: any) => {
+    res.json({ code: 0, message: 'success', data: [] });
+  });
+  
+  console.log(`\n🚀 罗圣纪元后端服务器 v2 (NestJS) 启动成功！`);
+  console.log(`   端口: ${port}`);
+  console.log(`   环境: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`\n🌐 外部访问: http://0.0.0.0:${port}/api/v1`);
+}
+bootstrap();

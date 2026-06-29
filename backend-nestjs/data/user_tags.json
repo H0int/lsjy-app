@@ -1,0 +1,30 @@
+[
+  {
+    "id": 1,
+    "name": "VIP用户",
+    "color": "#FFD700",
+    "description": "付费VIP会员",
+    "userCount": 12
+  },
+  {
+    "id": 2,
+    "name": "新用户",
+    "color": "#00BFFF",
+    "description": "注册7天内",
+    "userCount": 35
+  },
+  {
+    "id": 3,
+    "name": "活跃用户",
+    "color": "#32CD32",
+    "description": "近7天有登录",
+    "userCount": 48
+  },
+  {
+    "id": 4,
+    "name": "高消费",
+    "color": "#FF6347",
+    "description": "累计消费>1000",
+    "userCount": 8
+  }
+]
