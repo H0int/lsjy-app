@@ -126,10 +126,10 @@
               <div>
                 <label class="block text-xs mb-1" style="color: var(--cyber-text-dim);">尺寸</label>
                 <el-select v-model="imageSize" size="small" class="w-full">
-                  <el-option label="1:1 正方形" value="1024x1024" />
-                  <el-option label="16:9 横版" value="1792x1024" />
-                  <el-option label="9:16 竖版" value="1024x1792" />
-                  <el-option label="512x512 小图" value="512x512" />
+                  <el-option label="1:1 正方形" value="1:1" />
+                  <el-option label="16:9 横版" value="16:9" />
+                  <el-option label="9:16 竖版" value="9:16" />
+                  <el-option label="512x512 小图" value="4:3" />
                 </el-select>
               </div>
               <div>
@@ -142,7 +142,7 @@
                   <el-option label="水彩" value="watercolor" />
                   <el-option label="像素" value="pixel-art" />
                   <el-option label="赛博朋克" value="cyberpunk" />
-                  <el-option label="3D渲染" value="3d-render" />
+                  <el-option label="3D渲染" value="3d" />
                 </el-select>
               </div>
               <div>
@@ -462,7 +462,7 @@ async function handleGenerateImage() {
       },
     )
 
-    generatedImages.value = res.data.urls || []
+    generatedImages.value = res.data.images?.map((img: any) => img.url) || []
     lastCoinCost.value = res.data.coinCost || 0
     lastDurationMs.value = res.data.durationMs || 0
     lastModel.value = res.data.model || tool.value.modelId
