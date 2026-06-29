@@ -24,6 +24,7 @@ import { AutomationModule } from './automation/automation.module';
 import { ModerationModule } from './moderation/moderation.module';
 import { ReportsModule } from './reports/reports.module';
 import { VisitorsModule } from './visitors/visitors.module';
+import { AgentDispatchModule } from './modules/agent-dispatch/agent-dispatch.module';
 
 @Module({
   imports: [
@@ -78,6 +79,7 @@ import { VisitorsModule } from './visitors/visitors.module';
     ModerationModule,
     ReportsModule,
     VisitorsModule,
+    AgentDispatchModule,
   ],
   providers: [
     {

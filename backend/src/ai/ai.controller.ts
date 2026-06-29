@@ -182,75 +182,53 @@ export class AIController {
   @Public()
   @Post('chat')
   @ApiOperation({ summary: '快捷AI对话（无需登录）' })
-  async quickChat(@Body() body: { message: string }) {
-    const configService = this['configService'] || (this as any).aiService?.['configService'];
-    const apiKey = process.env.COZE_API_KEY || '';
-    const botId = process.env.COZE_BOT_ID || '';
+  async quickChat(@Body() body: { message?: string; messages?: Array<{role: string; content: string}>; model?: string; modelName?: string }) {
+    // 支持前端发送的两种格式：
+    // 1. { message: "...", modelName: "..." } （旧格式）
+    // 2. { messages: [...], model: "..." } （新格式）
+    const apiKey = process.env.DEEPSEEK_API_KEY || '';
+    const baseUrl = process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com/v1';
     
-    if (!apiKey || !botId) {
+    if (!apiKey) {
       return { data: { reply: 'AI服务未配置，请联系管理员。' } };
     }
     
-    if (!body?.message?.trim()) {
+    // 构建 messages 数组
+    let messages: Array<{role: string; content: string}> = [];
+    if (Array.isArray(body?.messages) && body.messages.length > 0) {
+      messages = body.messages.map(m => ({
+        role: m.role || 'user',
+        content: m.content || ''
+      }));
+    } else if (body?.message?.trim()) {
+      messages = [{ role: 'user', content: body.message }];
+    } else {
       return { data: { reply: '请输入你的问题。' } };
     }
 
     try {
-      // Step 1: Start chat
-      const chatRes = await fetch('https://api.coze.cn/v3/chat', {
+      const res = await fetch(baseUrl + '/chat/completions', {
         method: 'POST',
         headers: {
           'Authorization': 'Bearer ' + apiKey,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          bot_id: botId,
-          user_id: 'web_user_' + Date.now(),
-          additional_messages: [{ role: 'user', content: body.message, content_type: 'text' }],
-          stream: false,
-          auto_save_history: true,
+          model: 'deepseek-chat',
+          messages,
+          max_tokens: 2000,
+          temperature: 0.7,
         }),
       });
       
-      if (!chatRes.ok) {
-        const errText = await chatRes.text();
-        return { data: { reply: 'AI服务调用失败(' + chatRes.status + ')，请稍后再试。' } };
+      if (!res.ok) {
+        const errText = await res.text();
+        return { data: { reply: 'AI服务调用失败(' + res.status + ')，请稍后再试。' } };
       }
       
-      const chatData = await chatRes.json();
-      const d = chatData.data || chatData;
-      if (!d.id) {
-        return { data: { reply: 'AI服务返回异常，请稍后再试。' } };
-      }
-      
-      // Step 2: Poll for answer
-      for (let i = 0; i < 30; i++) {
-        await new Promise(r => setTimeout(r, 1500));
-        
-        const listRes = await fetch(
-          'https://api.coze.cn/v3/chat/message/list?chat_id=' + d.id + '&conversation_id=' + (d.conversation_id || ''),
-          {
-            headers: { 'Authorization': 'Bearer ' + apiKey },
-          }
-        );
-        
-        const listData = await listRes.json();
-        const msgs = listData.data || [];
-        
-        // Check if completed
-        const statusMsg = msgs.find((m: any) => m.type === 'verbose' || m.type === 'answer');
-        const answerMsg = msgs.find((m: any) => m.type === 'answer' && m.content);
-        
-        if (answerMsg) {
-          return { data: { reply: answerMsg.content } };
-        }
-        
-        // Check status field
-        const chatStatus = d.status;
-        if (chatStatus === 'completed' || chatStatus === 'failed') break;
-      }
-      
-      return { data: { reply: '抱歉，AI响应超时，请稍后再试。' } };
+      const data = await res.json();
+      const reply = data.choices?.[0]?.message?.content || '抱歉，AI未返回有效回复。';
+      return { data: { reply, coinCost: 0 } };
     } catch (e: any) {
       return { data: { reply: 'AI服务异常: ' + (e.message || '未知错误') + '，请稍后再试。' } };
     }

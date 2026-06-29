@@ -20,6 +20,23 @@ export class ReportsController {
     return { data };
   }
 
+  @Get('reports/daily')
+  @ApiOperation({ summary: '每日报告' })
+  async getDaily() {
+    const fs = require('fs');
+    const path = require('path');
+    try {
+      const vFile = path.join(__dirname, '..', '..', 'data', 'visitors.json');
+      let visitors: any[] = [];
+      if (fs.existsSync(vFile)) visitors = JSON.parse(fs.readFileSync(vFile, 'utf8'));
+      const today = new Date().toISOString().split('T')[0];
+      const tv = visitors.filter((v: any) => v.createdAt && v.createdAt.startsWith(today)).length;
+      return { code: 0, data: { date: today, visitors: tv || 0, newUsers: 0, orders: 0, revenue: 0, aiCalls: 0 } };
+    } catch(e) {
+      return { code: 0, data: { date: new Date().toISOString().split('T')[0], visitors: 0 } };
+    }
+  }
+
   @Get('reports/trend')
   @ApiOperation({ summary: '趋势数据' })
   @ApiQuery({ name: 'days', required: false })
