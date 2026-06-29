@@ -1,40 +1,14 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
-  <link rel="icon" type="image/jpeg" href="/company-logo.jpg" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8">
   <title>罗圣纪元</title>
   <script>
-    // Dynamic title based on route
-    (function() {
-      const path = window.location.hash || window.location.pathname;
-      if (path.includes('/admin')) {
-        document.title = '罗圣纪元 - 公司后台管理系统';
-      } else {
-        document.title = '罗圣纪元 - 官方网站';
-      }
-      // Watch for route changes
-      window.addEventListener('hashchange', function() {
-        const newPath = window.location.hash || window.location.pathname;
-        document.title = newPath.includes('/admin') 
-          ? '罗圣纪元 - 公司后台管理系统' 
-          : '罗圣纪元 - 官方网站';
-      });
-    })();
+    sessionStorage.redirect = location.href;
   </script>
-  <script type="module" crossorigin src="/assets/js/index-D9bpfFIE.js"></script>
-  <link rel="modulepreload" crossorigin href="/assets/js/vendor-vue-CP8wsbAG.js">
-  <link rel="modulepreload" crossorigin href="/assets/js/vendor-element-plus-D1ck5paq.js">
-  <link rel="modulepreload" crossorigin href="/assets/js/vendor-axios-DNeoPP0G.js">
-  <link rel="stylesheet" crossorigin href="/assets/css/index-Cn0RWUVT.css">
+  <meta http-equiv="refresh" content="0;URL='/lsjy-app/'">
 </head>
 <body>
-  <div id="app"></div>
+  <p>正在跳转...</p>
 </body>
 </html>
-
-<!-- rebuild trigger -->
