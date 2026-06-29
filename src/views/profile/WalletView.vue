@@ -6,7 +6,7 @@
 
     <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">⚡ 圣力中心</h1>
 
-    <!-- 余额卡片 - 赛博朋克风格 -->
+    <!-- 余额卡片 -->
     <div class="sl-balance-card mb-8">
       <div class="sl-balance-inner">
         <div class="sl-balance-info">
@@ -15,6 +15,28 @@
         </div>
         <div class="sl-balance-icon">⚡</div>
         <div class="sl-scan-lines"></div>
+      </div>
+    </div>
+
+    <!-- 订单记录 -->
+    <div class="mb-8" v-if="userOrders.length > 0">
+      <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+        <span class="sl-title-bar"></span>
+        我的订单
+      </h3>
+      <div class="space-y-3">
+        <div v-for="order in userOrders" :key="order.id" class="sl-order-card" :class="`sl-order-${order.status}`">
+          <div class="sl-order-header">
+            <span class="sl-order-id">订单 #{{ order.id?.slice(-6) }}</span>
+            <span class="sl-order-status">{{ orderStatusText(order.status) }}</span>
+          </div>
+          <div class="sl-order-body">
+            <span>{{ order.coinAmount }} 圣力</span>
+            <span class="sl-order-amount">¥{{ order.amount }}</span>
+            <span class="sl-order-method">{{ order.payMethod || '微信' }}</span>
+          </div>
+          <div class="sl-order-time">{{ formatDate(order.createdAt) }}</div>
+        </div>
       </div>
     </div>
 
@@ -75,18 +97,33 @@
             <p class="sl-qr-hint">请使用{{ payMethodLabels[payMethod] }}扫码支付 <strong>¥{{ selectedPkg?.price }}</strong></p>
           </div>
 
+          <!-- 截图上传 -->
+          <div class="sl-upload-section">
+            <label class="sl-upload-label"> 上传支付截图（必须）</label>
+            <div class="sl-upload-area" @click="triggerFileUpload" :class="{ 'sl-upload-has-file': screenshotFile }">
+              <div v-if="screenshotPreview" class="sl-upload-preview">
+                <img :src="screenshotPreview" class="sl-upload-img" />
+              </div>
+              <div v-else class="sl-upload-placeholder">
+                <span class="sl-upload-icon"></span>
+                <span class="sl-upload-text">点击上传支付截图</span>
+              </div>
+              <input ref="fileInput" type="file" accept="image/*" class="sl-upload-input" @change="handleFileChange" />
+            </div>
+          </div>
+
           <!-- 提交订单 -->
           <div class="sl-order-section" v-if="!orderSubmitted">
             <div class="sl-order-input-group">
               <input v-model="orderNote" placeholder="备注：填写你的用户名或手机号（便于核对）" class="sl-order-input" />
             </div>
-            <button class="sl-submit-btn" @click="submitOrder" :disabled="submitting">
-              {{ submitting ? '提交中...' : '✅ 我已付款，提交订单' }}
+            <button class="sl-submit-btn" @click="submitOrder" :disabled="submitting || !screenshotFile">
+              {{ submitting ? '提交中...' : (!screenshotFile ? '⬆️ 请先上传支付截图' : '✅ 我已付款，提交订单') }}
             </button>
           </div>
 
           <div class="sl-order-notice">
-            <p>💡 付款后请点击"提交订单"，管理员确认后圣力将自动充入您的账户</p>
+            <p>💡 付款后请上传支付截图，管理员确认后将自动充入您的账户</p>
             <p>⏱️ 通常在 5-30 分钟内完成充值</p>
           </div>
         </div>
@@ -98,7 +135,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { paymentApi } from '@/api'
-import type { RechargePackage } from '@/types'
+import type { RechargePackage, PaymentTransaction } from '@/types'
 import { ElMessage } from 'element-plus'
 
 const coinBalance = ref(0)
@@ -109,11 +146,16 @@ const payMethod = ref<'wechat' | 'alipay' | 'qq'>('wechat')
 const orderNote = ref('')
 const submitting = ref(false)
 const orderSubmitted = ref(false)
+const screenshotFile = ref<File | null>(null)
+const screenshotPreview = ref<string>('')
+const fileInput = ref<HTMLInputElement | null>(null)
+const userOrders = ref<PaymentTransaction[]>([])
 
+// 真实支付二维码（托管在 GitHub Pages）
 const qrUrls: Record<string, string> = {
-  wechat: 'https://www.coze.cn/s/EPRDMT3JEf8/',
-  alipay: 'https://www.coze.cn/s/De-GJpah1vQ/',
-  qq: 'https://www.coze.cn/s/F0LKTUbubHQ/',
+  wechat: 'https://lsjyapp.cn/wechat-qr.png',
+  alipay: 'https://lsjyapp.cn/alipay-qr.jpg',
+  qq: 'https://lsjyapp.cn/qq-qr.png',
 }
 
 const payMethodLabels: Record<string, string> = {
@@ -122,18 +164,81 @@ const payMethodLabels: Record<string, string> = {
   qq: 'QQ',
 }
 
+function orderStatusText(status?: string) {
+  const map: Record<string, string> = {
+    pending: '⏳ 待审核',
+    approved: '✅ 已通过',
+    rejected: '❌ 已拒绝',
+    paid: '💰 已付款',
+  }
+  return map[status || ''] || '未知'
+}
+
+function formatDate(dateStr?: string) {
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
+  return d.toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+}
+
+function triggerFileUpload() {
+  fileInput.value?.click()
+}
+
+function handleFileChange(e: Event) {
+  const target = e.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (file) {
+    screenshotFile.value = file
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      screenshotPreview.value = ev.target?.result as string
+    }
+    reader.readAsDataURL(file)
+  }
+}
+
+async function uploadScreenshot(): Promise<string> {
+  if (!screenshotFile.value) return ''
+  const formData = new FormData()
+  formData.append('file', screenshotFile.value)
+  
+  try {
+    // 使用 file-upload 服务
+    const res = await fetch('https://api.lsjyapp.cn/upload', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
+      },
+      body: formData,
+    })
+    const data = await res.json()
+    return data.url || data.data?.url || ''
+  } catch (err) {
+    console.error('Upload failed:', err)
+    return ''
+  }
+}
+
 onMounted(async () => {
+  // 加载余额
   try {
     const balRes = await paymentApi.getBalance()
     coinBalance.value = balRes.data?.balance || 0
   } catch { coinBalance.value = 0 }
 
+  // 加载套餐
   try {
     const pkgRes = await paymentApi.getPackages()
     packages.value = pkgRes.data || []
     const recommended = pkgRes.data?.find((p: RechargePackage) => p.isRecommended)
     if (recommended) selectedPkg.value = recommended
     else if (pkgRes.data?.length) selectedPkg.value = pkgRes.data[0]
+  } catch { /* ignore */ }
+
+  // 加载用户订单
+  try {
+    const ordersRes = await paymentApi.getOrders({ page: 1, pageSize: 5 })
+    userOrders.value = ordersRes.data?.list || ordersRes.data?.items || []
   } catch { /* ignore */ }
 })
 
@@ -142,17 +247,43 @@ function selectPackage(pkg: RechargePackage) {
   showPayModal.value = true
   orderSubmitted.value = false
   orderNote.value = ''
+  screenshotFile.value = null
+  screenshotPreview.value = ''
 }
 
 async function submitOrder() {
   if (!selectedPkg.value) return
+  if (!screenshotFile.value) {
+    ElMessage.warning('请先上传支付截图')
+    return
+  }
+  
   submitting.value = true
   try {
-    await paymentApi.recharge(selectedPkg.value.id)
+    // 先上传截图
+    const screenshotUrl = await uploadScreenshot()
+    
+    // 提交订单（带截图和支付方式）
+    await paymentApi.recharge(selectedPkg.value.id, {
+      payMethod: payMethod.value,
+      note: orderNote.value,
+      screenshotUrl: screenshotUrl,
+    } as any)
+    
     ElMessage.success('订单已提交，等待管理员确认后自动充值')
     orderSubmitted.value = true
-  } catch {
-    ElMessage.info('订单已记录，请等待管理员确认')
+    
+    // 刷新订单列表
+    try {
+      const ordersRes = await paymentApi.getOrders({ page: 1, pageSize: 5 })
+      userOrders.value = ordersRes.data?.list || ordersRes.data?.items || []
+    } catch { /* ignore */ }
+  } catch (err: any) {
+    if (err.response?.status === 400) {
+      ElMessage.warning(err.response.data?.message || '订单信息有误')
+    } else {
+      ElMessage.info('订单已记录，请等待管理员确认')
+    }
     orderSubmitted.value = true
   } finally {
     submitting.value = false
@@ -213,6 +344,37 @@ async function submitOrder() {
   background: linear-gradient(180deg, #00f0ff, #ff00e5);
   border-radius: 2px;
 }
+
+/* === 订单卡片 === */
+.sl-order-card {
+  background: linear-gradient(135deg, #0d0d2b, #1a0a3a);
+  border: 1px solid rgba(0,240,255,0.15);
+  border-radius: 12px;
+  padding: 16px;
+}
+.sl-order-pending { border-color: rgba(255,165,0,0.4); }
+.sl-order-approved { border-color: rgba(0,255,0,0.3); }
+.sl-order-rejected { border-color: rgba(255,0,0,0.3); }
+.sl-order-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.sl-order-id { color: #888; font-size: 13px; }
+.sl-order-status { font-size: 13px; font-weight: bold; }
+.sl-order-pending .sl-order-status { color: #ffa500; }
+.sl-order-approved .sl-order-status { color: #4ade80; }
+.sl-order-rejected .sl-order-status { color: #ff4444; }
+.sl-order-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #fff;
+  font-size: 14px;
+}
+.sl-order-amount { color: #ff00e5; font-weight: bold; }
+.sl-order-method { color: #00f0ff; font-size: 12px; }
+.sl-order-time { color: #666; font-size: 12px; margin-top: 6px; }
 
 /* === 套餐卡片 === */
 .sl-pkg-card {
@@ -332,6 +494,44 @@ async function submitOrder() {
 }
 .sl-qr-success { color: #4ade80; font-size: 18px; font-weight: bold; }
 .sl-qr-hint { color: #888; font-size: 13px; margin-top: 12px; }
+
+/* === 截图上传 === */
+.sl-upload-section { margin-bottom: 20px; }
+.sl-upload-label {
+  display: block;
+  color: #00f0ff;
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+.sl-upload-area {
+  border: 2px dashed rgba(0,240,255,0.3);
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+.sl-upload-area:hover {
+  border-color: rgba(0,240,255,0.6);
+  background: rgba(0,240,255,0.05);
+}
+.sl-upload-has-file {
+  border-color: #4ade80;
+  background: rgba(74,222,128,0.05);
+}
+.sl-upload-preview { display: flex; justify-content: center; }
+.sl-upload-img { max-width: 100%; max-height: 200px; border-radius: 8px; }
+.sl-upload-placeholder { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.sl-upload-icon { font-size: 32px; }
+.sl-upload-text { color: #888; font-size: 14px; }
+.sl-upload-input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
 
 /* === 订单提交 === */
 .sl-order-section { margin-top: 16px; }
