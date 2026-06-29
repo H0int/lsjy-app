@@ -110,9 +110,9 @@ export const paymentApi = {
   },
 
   /** POST /payment/coin/recharge - 创建充值订单 */
-  recharge(packageId: number): Promise<ApiResponse<{ paymentTransaction: PaymentTransaction; coinAmount: number }>> {
+  recharge(packageId: number, extra?: { payMethod?: string; note?: string; screenshotUrl?: string }): Promise<ApiResponse<{ paymentTransaction: PaymentTransaction; coinAmount: number }>> {
     if (useMock) return mockApi.recharge(packageId) as any
-    return service.post('/payment/coin/recharge', { packageId }).then(r => r.data)
+    return service.post('/payment/coin/recharge', { packageId, ...extra }).then(r => r.data)
   },
 
   /** GET /payment/coin/transactions - 查询圣点交易记录 */
@@ -122,7 +122,7 @@ export const paymentApi = {
   },
 
   /** GET /payment/orders - 查询支付订单 */
-  getOrders(params?: { page?: number; pageSize?: number }): Promise<ApiResponse<PageResult<PaymentTransaction>>> {
+  getOrders(params?: { page?: number; pageSize?: number; status?: string }): Promise<ApiResponse<PageResult<PaymentTransaction>>> {
     if (useMock) return mockApi.getPaymentOrders() as any
     return service.get('/payment/orders', { params }).then(r => r.data)
   }
@@ -153,9 +153,19 @@ export const adminApi = {
   },
 
   /** GET /payment/orders - 获取支付订单(管理复用) */
-  getOrders(params?: { page?: number; pageSize?: number }): Promise<ApiResponse<PageResult<PaymentTransaction>>> {
+  getOrders(params?: { page?: number; pageSize?: number; status?: string }): Promise<ApiResponse<PageResult<PaymentTransaction>>> {
     if (useMock) return mockApi.getPaymentOrders() as any
     return service.get('/payment/orders', { params }).then(r => r.data)
+  },
+
+  /** PUT /payment/orders/:id/approve - 审核通过订单 */
+  approveOrder(id: number): Promise<ApiResponse<{ message: string }>> {
+    return service.put(`/payment/orders/${id}/approve`).then(r => r.data)
+  },
+
+  /** PUT /payment/orders/:id/reject - 拒绝订单 */
+  rejectOrder(id: number, reason?: string): Promise<ApiResponse<{ message: string }>> {
+    return service.put(`/payment/orders/${id}/reject`, { reason }).then(r => r.data)
   },
 
   /** GET /system/logs - 获取操作日志 */
