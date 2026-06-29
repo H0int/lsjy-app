@@ -215,7 +215,7 @@ async function handleGenerate() {
     const fullPrompt = `${prompt.value}${stylePrompts[style.value] || ''}`.trim()
     
     // 调用后端 AI 图片生成 API
-    const response = await aiApi.generateImage(fullPrompt, {
+    const response = await aiApi.generateImage(Number(route.params.id), prompt.value, {
       size: size.value,
       style: style.value,
       count: count.value
