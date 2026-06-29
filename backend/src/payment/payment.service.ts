@@ -146,3 +146,42 @@ export class PaymentService {
     return { items, total, page, pageSize };
   }
 }
+
+  // Admin methods
+  async getAllPaymentOrders(page: number, pageSize: number, status?: string) {
+    const qb = this.paymentTxRepo.createQueryBuilder("t");
+    if (status) qb.andWhere("t.status = :status", { status });
+    qb.orderBy("t.createdAt", "DESC").skip((page - 1) * pageSize).take(pageSize);
+    const [list, total] = await qb.getManyAndCount();
+    return { list, total, page, pageSize };
+  }
+
+  async approveOrder(orderId: number, adminUser: string) {
+    const order = await this.paymentTxRepo.findOne({ where: { id: orderId } });
+    if (!order) throw new Error("订单不存在");
+    if (order.status !== "pending") throw new Error("订单状态不允许审核");
+    order.status = "success" as any;
+    order.reviewedAt = new Date();
+    order.reviewedBy = adminUser;
+    await this.paymentTxRepo.save(order);
+    if (order.coinAmount > 0) {
+      const account = await this.coinAccountRepo.findOne({ where: { userId: order.userId } });
+      if (account) {
+        account.balance = (parseFloat(String(account.balance)) || 0) + parseFloat(String(order.coinAmount));
+        await this.coinAccountRepo.save(account);
+      }
+    }
+    return { success: true, message: "已通过" };
+  }
+
+  async rejectOrder(orderId: number, adminUser: string, reason?: string) {
+    const order = await this.paymentTxRepo.findOne({ where: { id: orderId } });
+    if (!order) throw new Error("订单不存在");
+    if (order.status !== "pending") throw new Error("订单状态不允许审核");
+    order.status = "failed" as any;
+    order.rejectReason = reason || "";
+    order.reviewedAt = new Date();
+    order.reviewedBy = adminUser;
+    await this.paymentTxRepo.save(order);
+    return { success: true, message: "已拒绝" };
+  }
