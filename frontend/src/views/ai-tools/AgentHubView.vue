@@ -117,7 +117,7 @@ function enterAgent(agent: any) {
 onMounted(async () => {
   try {
     const token = localStorage.getItem('lsjy_token') || ''
-    const res = await fetch('/api/v1/payment/coin/balance', {
+    const res = await fetch('https://api.lsjyapp.cn/api/v1/payment/coin/balance', {
       headers: { 'Authorization': `Bearer ${token}` }
     })
     if (res.ok) {

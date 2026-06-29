@@ -213,7 +213,7 @@ onMounted(async () => {
   // 心跳上报 + 在线人数
   async function sendHeartbeat() {
     try {
-      const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1'
+      const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://api.lsjyapp.cn/api/v1'
       const token = authStore.token || ''
       const sessionId = authStore.user?.id || navigator.userAgent.substring(0, 50)
       await fetch(API_BASE + '/online/heartbeat', {

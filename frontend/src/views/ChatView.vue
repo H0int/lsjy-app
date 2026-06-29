@@ -248,7 +248,7 @@ async function sendMessage() {
   
   try {
     abortController = new AbortController()
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || '/api/v1'
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://api.lsjyapp.cn/api/v1'
     const token = getToken()
     const apiModel = modelMapping[currentModel.value] || 'deepseek-chat'
     
