@@ -65,6 +65,7 @@ const routes: RouteRecordRaw[] = [
       { path: 'chat-history', name: 'ChatHistory', component: () => import('@/views/admin/ai/ChatHistory.vue'), meta: { title: '对话记录' } },
       // 商业变现
       { path: 'orders', name: 'AdminOrders', component: () => import('@/views/admin/OrderManagement.vue'), meta: { title: '订单管理' } },
+      { path: 'payment-approval', name: 'PaymentApproval', component: () => import('@/views/admin/PaymentApproval.vue'), meta: { title: '支付审核' } },
       { path: 'transactions', name: 'TransactionRecords', component: () => import('@/views/admin/commerce/TransactionRecords.vue'), meta: { title: '交易记录' } },
       { path: 'refunds', name: 'RefundManage', component: () => import('@/views/admin/commerce/RefundManage.vue'), meta: { title: '退款处理' } },
       { path: 'payment', name: 'PaymentChannels', component: () => import('@/views/admin/commerce/PaymentChannels.vue'), meta: { title: '支付渠道' } },
@@ -123,3 +124,4 @@ router.beforeEach((to, _from, next) => {
 })
 
 export default router
+
