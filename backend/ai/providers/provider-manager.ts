@@ -1,6 +1,9 @@
 /**
  * AI Provider 管理器
  * 负责注册、发现、路由、负载均衡
+ * 支持 15 个 AI 服务商：硅基流动、DeepSeek、Kimi、豆包(火山方舟)、火山引擎、
+ * 智谱、阿里云百练、魔搭社区、讯飞星火、腾讯云混元、百度文心、龙虾AI、
+ * 即梦、OpenAI、通义、元宝
  */
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -13,14 +16,34 @@ import { TongyiProvider } from './tongyi.provider';
 import { YuanbaoProvider } from './yuanbao.provider';
 import { SiliconFlowProvider } from './siliconflow.provider';
 import { KimiProvider } from './kimi.provider';
+import { ZhipuProvider } from './zhipu.provider';
+import { BailianProvider } from './bailian.provider';
+import { ModelScopeProvider } from './modelscope.provider';
+import { SparkProvider } from './spark.provider';
+import { HunyuanProvider } from './hunyuan.provider';
+import { WenxinProvider } from './wenxin.provider';
+import { LongxiaProvider } from './longxia.provider';
+import { VolcengineProvider } from './volcengine.provider';
 
 /** 任务类型 → Provider优先级映射 */
 const DEFAULT_ROUTING: Record<string, string[]> = {
-  'text-generation': ['doubao', 'deepseek', 'siliconflow', 'kimi', 'openai', 'tongyi', 'yuanbao'],
+  'text-generation': [
+    'doubao', 'volcengine', 'deepseek', 'siliconflow', 'kimi', 'zhipu', 'bailian',
+    'modelscope', 'spark', 'hunyuan', 'wenxin', 'longxia',
+    'openai', 'tongyi', 'yuanbao'
+  ],
   'image-generation': ['jimeng', 'openai'],
-  'code-generation': ['deepseek', 'siliconflow', 'openai', 'doubao', 'tongyi'],
-  'text-analysis': ['tongyi', 'doubao', 'deepseek', 'siliconflow', 'kimi', 'openai', 'yuanbao'],
-  'multimodal': ['openai'],
+  'code-generation': [
+    'deepseek', 'siliconflow', 'kimi', 'zhipu', 'bailian',
+    'modelscope', 'volcengine', 'doubao', 'longxia',
+    'openai', 'tongyi'
+  ],
+  'text-analysis': [
+    'tongyi', 'doubao', 'deepseek', 'siliconflow', 'kimi', 'zhipu',
+    'bailian', 'modelscope', 'spark', 'hunyuan', 'wenxin', 'longxia',
+    'openai', 'yuanbao'
+  ],
+  'multimodal': ['openai', 'bailian', 'zhipu', 'volcengine'],
 };
 
 @Injectable()
@@ -43,6 +66,7 @@ export class AIProviderManager implements OnModuleInit {
    */
   private async initializeProviders(): Promise<void> {
     const providerConfigs = [
+      // ===== 已有 Provider =====
       {
         instance: new DoubaoProvider(),
         apiKey: this.configService.get<string>('DOUBAO_API_KEY'),
@@ -90,6 +114,58 @@ export class AIProviderManager implements OnModuleInit {
         apiKey: this.configService.get<string>('KIMI_API_KEY'),
         baseUrl: this.configService.get<string>('KIMI_BASE_URL', 'https://api.moonshot.cn/v1'),
         defaultModel: this.configService.get<string>('KIMI_MODEL', 'moonshot-v1-8k'),
+      },
+
+      // ===== 新增 Provider =====
+      {
+        instance: new ZhipuProvider(),
+        apiKey: this.configService.get<string>('ZHIPU_API_KEY'),
+        baseUrl: this.configService.get<string>('ZHIPU_BASE_URL', 'https://open.bigmodel.cn/api/paas/v4'),
+        defaultModel: this.configService.get<string>('ZHIPU_MODEL', 'GLM-4-Flash'),
+      },
+      {
+        instance: new BailianProvider(),
+        apiKey: this.configService.get<string>('BAILIAN_API_KEY'),
+        baseUrl: this.configService.get<string>('BAILIAN_BASE_URL', 'https://dashscope.aliyuncs.com/compatible-mode/v1'),
+        defaultModel: this.configService.get<string>('BAILIAN_MODEL', 'qwen-plus'),
+      },
+      {
+        instance: new ModelScopeProvider(),
+        apiKey: this.configService.get<string>('MODELSCOPE_API_KEY'),
+        baseUrl: this.configService.get<string>('MODELSCOPE_BASE_URL', 'https://api-inference.modelscope.cn/v1'),
+        defaultModel: this.configService.get<string>('MODELSCOPE_MODEL', 'Qwen/Qwen3-235B-A22B-Instruct'),
+      },
+      {
+        instance: new SparkProvider(),
+        apiKey: this.configService.get<string>('SPARK_API_KEY'),
+        baseUrl: this.configService.get<string>('SPARK_BASE_URL', 'https://spark-api-open.xf-yun.com/v1'),
+        defaultModel: this.configService.get<string>('SPARK_MODEL', 'generalv3.5'),
+      },
+      {
+        instance: new HunyuanProvider(),
+        // 腾讯混元使用 TC3-HMAC-SHA256 签名认证，apiKey 格式: "SecretId=xxx,SecretKey=yyy"
+        // 如果后续获取到 sk- 格式的 API Key，替换此处即可自动切换为 Bearer token 模式
+        apiKey: this.configService.get<string>('HUNYUAN_API_KEY'),
+        baseUrl: this.configService.get<string>('HUNYUAN_BASE_URL', 'https://hunyuan.tencentcloudapi.com'),
+        defaultModel: this.configService.get<string>('HUNYUAN_MODEL', 'hunyuan-lite'),
+      },
+      {
+        instance: new WenxinProvider(),
+        apiKey: this.configService.get<string>('WENXIN_API_KEY'),
+        baseUrl: this.configService.get<string>('WENXIN_BASE_URL', 'https://qianfan.baidubce.com/v2'),
+        defaultModel: this.configService.get<string>('WENXIN_MODEL', 'ernie-speed-128k'),
+      },
+      {
+        instance: new LongxiaProvider(),
+        apiKey: this.configService.get<string>('LONGXIA_API_KEY'),
+        baseUrl: this.configService.get<string>('LONGXIA_BASE_URL', 'https://api.longcat.chat/openai'),
+        defaultModel: this.configService.get<string>('LONGXIA_MODEL', 'LongCat-Flash-Chat'),
+      },
+      {
+        instance: new VolcengineProvider(),
+        apiKey: this.configService.get<string>('VOLCENGINE_API_KEY'),
+        baseUrl: this.configService.get<string>('VOLCENGINE_BASE_URL', 'https://ark.cn-beijing.volces.com/api/v3'),
+        defaultModel: this.configService.get<string>('VOLCENGINE_MODEL', 'doubao-seed-2-1-pro-260628'),
       },
     ];
 

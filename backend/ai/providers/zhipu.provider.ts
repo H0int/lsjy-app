@@ -1,7 +1,7 @@
 /**
- * 豆包（字节跳动火山引擎）Provider
- * API文档：https://www.volcengine.com/docs/82379
- * 兼容OpenAI接口格式
+ * 智谱清言 Zhipu Provider
+ * 官网：https://open.bigmodel.cn
+ * OpenAI 兼容 API，支持 GLM 系列模型
  */
 import { Injectable } from '@nestjs/common';
 import { BaseAIProvider } from './base-provider';
@@ -9,50 +9,38 @@ import {
   ChatMessage,
   ChatOptions,
   ChatResponse,
-  ImageOptions,
-  ImageResponse,
   ModelInfo,
   AIProviderError,
   AIErrorCode,
 } from './ai-provider.interface';
 
 @Injectable()
-export class DoubaoProvider extends BaseAIProvider {
-  readonly name = 'doubao';
-  readonly displayName = '豆包（字节跳动）';
+export class ZhipuProvider extends BaseAIProvider {
+  readonly name = 'zhipu';
+  readonly displayName = '智谱清言';
   readonly capabilities: ('text' | 'image')[] = ['text'];
 
   /**
-   * 豆包使用火山引擎API，兼容OpenAI格式
-   * POST https://ark.cn-beijing.volces.com/api/v3/chat/completions
+   * 文本对话
    */
   async chat(messages: ChatMessage[], options?: ChatOptions): Promise<ChatResponse> {
     this.ensureInitialized();
     const startTime = Date.now();
     const model = options?.model || this.defaultModel;
 
+    const formattedMessages = messages.map((m) => ({
+      role: m.role,
+      content: m.content,
+    }));
+
     const requestBody: Record<string, any> = {
       model,
-      messages: messages.map((m) => ({
-        role: m.role,
-        content: m.content,
-      })),
+      messages: formattedMessages,
       temperature: options?.temperature ?? 0.7,
-      max_tokens: options?.maxTokens ?? 2048,
+      max_tokens: options?.maxTokens ?? 4096,
       top_p: options?.topP ?? 0.9,
     };
 
-    if (options?.stop) {
-      requestBody.stop = options.stop;
-    }
-    if (options?.frequencyPenalty !== undefined) {
-      requestBody.frequency_penalty = options.frequencyPenalty;
-    }
-    if (options?.presencePenalty !== undefined) {
-      requestBody.presence_penalty = options.presencePenalty;
-    }
-
-    // 流式处理
     if (options?.stream && options?.onStream) {
       requestBody.stream = true;
       return this.handleStreamChat(requestBody, model, options, startTime);
@@ -106,17 +94,15 @@ export class DoubaoProvider extends BaseAIProvider {
     options: ChatOptions,
     startTime: number,
   ): Promise<ChatResponse> {
-    const url = `${this.baseUrl}/chat/completions`;
-    const bodyStr = JSON.stringify(requestBody);
-
-    // 使用SSE流式获取
     return new Promise((resolve, reject) => {
+      const url = `${this.baseUrl}/chat/completions`;
       const urlObj = new URL(url);
+      const bodyStr = JSON.stringify(requestBody);
       const https = require('https');
 
       const reqOptions = {
         hostname: urlObj.hostname,
-        port: urlObj.port || 443,
+        port: 443,
         path: urlObj.pathname,
         method: 'POST',
         headers: {
@@ -136,11 +122,10 @@ export class DoubaoProvider extends BaseAIProvider {
           res.on('data', (chunk: Buffer) => (errorBody += chunk.toString()));
           res.on('end', () => {
             try {
-              const errData = JSON.parse(errorBody);
-              reject(this.parseError(res.statusCode, errData));
+              reject(this.parseError(res.statusCode, JSON.parse(errorBody)));
             } catch {
               reject(new AIProviderError(
-                `Stream request failed: ${res.statusCode}`,
+                `Stream error: ${res.statusCode}`,
                 this.name,
                 AIErrorCode.UNKNOWN,
                 res.statusCode,
@@ -180,7 +165,7 @@ export class DoubaoProvider extends BaseAIProvider {
                 };
               }
             } catch {
-              // 忽略解析错误的行
+              // skip
             }
           }
         });
@@ -224,40 +209,40 @@ export class DoubaoProvider extends BaseAIProvider {
   async getModels(): Promise<ModelInfo[]> {
     return [
       {
-        id: 'doubao-pro-32k',
-        name: '豆包 Pro 32K',
+        id: 'GLM-4-Flash',
+        name: 'GLM-4-Flash (免费)',
         capabilities: ['text', 'code'],
-        maxContextLength: 32768,
+        maxContextLength: 128000,
         supportStream: true,
-        inputPrice: 0.8,
-        outputPrice: 2.0,
+        inputPrice: 0,
+        outputPrice: 0,
       },
       {
-        id: 'doubao-pro-128k',
-        name: '豆包 Pro 128K',
+        id: 'GLM-4',
+        name: 'GLM-4',
+        capabilities: ['text', 'code', 'multimodal'],
+        maxContextLength: 128000,
+        supportStream: true,
+        inputPrice: 1,
+        outputPrice: 1,
+      },
+      {
+        id: 'GLM-4V',
+        name: 'GLM-4V (视觉)',
+        capabilities: ['text', 'image', 'multimodal'],
+        maxContextLength: 8192,
+        supportStream: true,
+        inputPrice: 1,
+        outputPrice: 1,
+      },
+      {
+        id: 'GLM-3-Turbo',
+        name: 'GLM-3-Turbo',
         capabilities: ['text', 'code'],
-        maxContextLength: 131072,
+        maxContextLength: 128000,
         supportStream: true,
-        inputPrice: 1.0,
-        outputPrice: 2.5,
-      },
-      {
-        id: 'doubao-lite-32k',
-        name: '豆包 Lite 32K',
-        capabilities: ['text'],
-        maxContextLength: 32768,
-        supportStream: true,
-        inputPrice: 0.3,
-        outputPrice: 0.6,
-      },
-      {
-        id: 'doubao-lite-128k',
-        name: '豆包 Lite 128K',
-        capabilities: ['text'],
-        maxContextLength: 131072,
-        supportStream: true,
-        inputPrice: 0.5,
-        outputPrice: 1.0,
+        inputPrice: 0.1,
+        outputPrice: 0.1,
       },
     ];
   }
