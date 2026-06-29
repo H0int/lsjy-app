@@ -110,11 +110,11 @@ const router = useRouter()
 
 const hotTools = ref<Tool[]>([])
 const statCards = ref([
-  { icon: '⚡', label: '圣力余额', value: '0' },
-  { icon: '🛠️', label: '已用工具', value: '0' },
-  { icon: '📄', label: '生成作品', value: '0' },
-  { icon: '🎯', label: '会员等级', value: '普通' },
-  { icon: '👥', label: '平台访客', value: '0' },
+  { icon: '⚡', label: '圣力余额', value: '0', route: '/profile/wallet' },
+  { icon: '🛠️', label: '已用工具', value: '0', route: '/tools' },
+  { icon: '📄', label: '生成作品', value: '0', route: '/profile' },
+  { icon: '🎯', label: '会员等级', value: '普通', route: '/profile' },
+  { icon: '👥', label: '平台访客', value: '0', route: '/admin/visitors' },
 ])
 
 const visitorStats = ref({
@@ -154,7 +154,7 @@ onMounted(async () => {
   // 会员等级：管理员显示"管理员"
   if (authStore.user) {
     if (authStore.isAdmin) {
-      statCards.value[3].value = '管理员'
+      statCards.value[3].value = '罗总专属'
     } else if (authStore.user.userType === 'founder') {
       statCards.value[3].value = '至尊创始人'
     } else if (authStore.user.vipLevel && authStore.user.vipLevel > 0) {
