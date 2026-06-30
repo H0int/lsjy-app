@@ -313,7 +313,7 @@ export class AIService {
   }
 
   /**
-   * 通过第三方API生成视频（降级方案）
+   * 通过火山引擎 Seedance API 生成视频
    */
   private async generateVideoViaThirdParty(
     prompt: string,
@@ -321,60 +321,84 @@ export class AIService {
   ): Promise<VideoResponse> {
     const startTime = Date.now();
     
-    // 尝试使用可灵API（如果配置了）
-    const klingKey = this.configService.get<string>('KLING_API_KEY');
-    if (klingKey) {
-      try {
-        const submitRes = await fetch('https://api.klingai.com/v1/videos/text2video', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${klingKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            prompt,
-            duration: options?.duration || 5,
-            resolution: options?.resolution || '720p',
-          }),
-        });
-
-        if (submitRes.ok) {
-          const submitData = await submitRes.json();
-          const taskId = submitData.data?.task_id;
-          
-          if (taskId) {
-            for (let i = 0; i < 60; i++) {
-              await new Promise(r => setTimeout(r, 3000));
-              const checkRes = await fetch(`https://api.klingai.com/v1/videos/text2video/${taskId}`, {
-                headers: { 'Authorization': `Bearer ${klingKey}` },
-              });
-              const checkData = await checkRes.json();
-              if (checkData.data?.task_status === 'succeed') {
-                return {
-                  videoUrl: checkData.data.task_result?.videos?.[0]?.url || '',
-                  thumbnailUrl: checkData.data.task_result?.videos?.[0]?.cover_url,
-                  model: 'kling-v1',
-                  provider: 'kling',
-                  durationMs: Date.now() - startTime,
-                };
-              }
-              if (checkData.data?.task_status === 'failed') break;
-            }
-          }
-        }
-      } catch {
-        // 可灵API失败
-      }
+    const arkKey = this.configService.get<string>('ARK_API_KEY');
+    const arkBaseUrl = this.configService.get<string>('ARK_BASE_URL') || 'https://ark.cn-beijing.volces.com/api/v3';
+    
+    if (!arkKey) {
+      throw new Error('火山引擎 ARK_API_KEY 未配置，无法生成视频');
     }
 
-    // 所有方案都失败了
-    return {
-      videoUrl: '',
-      thumbnailUrl: '',
-      model: 'none',
-      provider: 'none',
-      durationMs: Date.now() - startTime,
+    // Step 1: 创建视频生成任务
+    const requestBody: Record<string, any> = {
+      model: this.configService.get<string>('ARK_MODEL_VIDEO') || 'doubao-seedance-2-0-fast-260128',
+      content: [
+        {
+          type: 'text',
+          text: prompt,
+        },
+      ],
+      duration: options?.duration || 5,
+      resolution: options?.resolution || '720p',
+      ratio: '16:9',
     };
+
+    const createRes = await fetch(`${arkBaseUrl}/contents/generations/tasks`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${arkKey}`,
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!createRes.ok) {
+      const errText = await createRes.text();
+      throw new Error(`火山引擎视频任务创建失败(${createRes.status}): ${errText.substring(0, 200)}`);
+    }
+
+    const createData = await createRes.json();
+    const taskId = createData.id;
+
+    if (!taskId) {
+      throw new Error('火山引擎视频任务创建失败：未返回任务ID');
+    }
+
+    // Step 2: 轮询任务状态（最多等待5分钟）
+    const maxPolls = 60;
+    for (let i = 0; i < maxPolls; i++) {
+      await new Promise(r => setTimeout(r, 5000));
+
+      const checkRes = await fetch(`${arkBaseUrl}/contents/generations/tasks/${taskId}`, {
+        headers: {
+          'Authorization': `Bearer ${arkKey}`,
+        },
+      });
+
+      if (!checkRes.ok) continue;
+
+      const checkData = await checkRes.json();
+      const status = checkData.status;
+
+      if (status === 'succeeded') {
+        const videoUrl = checkData.content?.video_url || '';
+        return {
+          videoUrl,
+          thumbnailUrl: '',
+          model: checkData.model || requestBody.model,
+          provider: 'volcengine-seedance',
+          durationMs: Date.now() - startTime,
+        };
+      }
+
+      if (status === 'failed') {
+        const errMsg = checkData.error?.message || '未知错误';
+        throw new Error(`火山引擎视频生成失败: ${errMsg}`);
+      }
+
+      // queued 或 running，继续等待
+    }
+
+    throw new Error('视频生成超时（超过5分钟），请稍后重试');
   }
 
   /**
