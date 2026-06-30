@@ -27,23 +27,11 @@ import { VolcengineProvider } from './volcengine.provider';
 
 /** 任务类型 → Provider优先级映射 */
 const DEFAULT_ROUTING: Record<string, string[]> = {
-  'text-generation': [
-    'doubao', 'volcengine', 'deepseek', 'siliconflow', 'kimi', 'zhipu', 'bailian',
-    'modelscope', 'spark', 'hunyuan', 'wenxin', 'longxia',
-    'openai', 'tongyi', 'yuanbao'
-  ],
-  'image-generation': ['jimeng', 'openai'],
-  'code-generation': [
-    'deepseek', 'siliconflow', 'kimi', 'zhipu', 'bailian',
-    'modelscope', 'volcengine', 'doubao', 'longxia',
-    'openai', 'tongyi'
-  ],
-  'text-analysis': [
-    'tongyi', 'doubao', 'deepseek', 'siliconflow', 'kimi', 'zhipu',
-    'bailian', 'modelscope', 'spark', 'hunyuan', 'wenxin', 'longxia',
-    'openai', 'yuanbao'
-  ],
-  'multimodal': ['openai', 'bailian', 'zhipu', 'volcengine'],
+  'text-generation': ['siliconflow', 'doubao', 'zhipu', 'bailian', 'coze'],
+  'image-generation': ['jimeng'],
+  'code-generation': ['siliconflow', 'doubao', 'zhipu', 'bailian'],
+  'text-analysis': ['siliconflow', 'doubao', 'zhipu', 'bailian'],
+  'multimodal': ['zhipu'],
 };
 
 @Injectable()
