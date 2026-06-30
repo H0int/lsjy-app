@@ -230,25 +230,24 @@ function clearLockState() {
 async function handleLogin() {
   if (!formRef.value) return
   if (isLocked.value) { ElMessage.warning('账号已锁定，请等待10分钟后重试'); return }
-  await formRef.value.validate(async (valid) => {
-    if (!valid) return
-    loading.value = true
-    try {
-      const success = await authStore.login(form.account, form.password)
-      if (success) {
-        clearLockState()
-        // 记住账号密码
-        if (rememberMe.value) {
-          localStorage.setItem(REMEMBER_KEY, JSON.stringify({ account: form.account, password: form.password }))
-        } else {
-          localStorage.removeItem(REMEMBER_KEY)
-        }
-        router.push('/dashboard')
+  const valid = await formRef.value.validate()
+  if (!valid) return
+  loading.value = true
+  try {
+    const success = await authStore.login(form.account, form.password)
+    if (success) {
+      clearLockState()
+      // 记住账号密码
+      if (rememberMe.value) {
+        localStorage.setItem(REMEMBER_KEY, JSON.stringify({ account: form.account, password: form.password }))
+      } else {
+        localStorage.removeItem(REMEMBER_KEY)
       }
-      else { recordFail() }
-    } catch (e: any) { recordFail() }
-    finally { loading.value = false }
-  })
+      router.push('/dashboard')
+    }
+    else { recordFail() }
+  } catch (e: any) { recordFail() }
+  finally { loading.value = false }
 }
 
 onMounted(() => { loadLockState(); loadRememberedCredentials() })
@@ -680,3 +679,4 @@ onUnmounted(() => { if (countdownTimer) clearInterval(countdownTimer) })
   .logo-ring { width: 80px; height: 80px; }
 }
 </style>
+
