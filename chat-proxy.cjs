@@ -52,7 +52,7 @@ http.createServer(async (req, res) => {
   req.on('end', async () => {
     try {
       const reqBody = JSON.parse(body);
-      const model = reqBody.model || 'deepseek-v3';
+      const model = reqBody.model || 'qwen3.6-flash';
       const messages = reqBody.messages || [];
       
       // Forward to ai-proxy

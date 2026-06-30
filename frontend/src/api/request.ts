@@ -8,7 +8,7 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://api.lsjyapp.cn/ap
 
 const service: AxiosInstance = axios.create({
   baseURL: API_BASE,
-  timeout: 120000,
+  timeout: 300000,
   headers: { 'Content-Type': 'application/json' }
 })
 
