@@ -61,6 +61,8 @@ jobs:
           
           # 复制构建产物到 docs/
           cp -r frontend/dist/* docs/
+          # 重建 CNAME（防止被 rm -rf docs/* 删除）
+          echo "lsjyapp.cn" > docs/CNAME
           touch docs/.nojekyll
           
           # 提交到 main 分支
