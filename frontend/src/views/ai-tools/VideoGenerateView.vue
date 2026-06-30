@@ -24,7 +24,7 @@
             <p class="text-gray-500 dark:text-gray-400 mb-3">用代码创作专业视频，支持HTML/React渲染</p>
             <div class="flex items-center gap-4 text-sm">
               <span class="text-gray-400">{{ useCount.toLocaleString() }}次使用</span>
-              <span class="font-bold text-amber-500">20 圣力/次</span>
+              <span class="font-bold text-amber-500">{{ coinCost }} 圣力/次</span>
             </div>
           </div>
         </div>
@@ -90,7 +90,7 @@
           class="w-full py-3 px-6 rounded-xl font-bold text-white transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
           :class="prompt.trim() ? 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 shadow-lg hover:shadow-xl' : 'bg-gray-300 dark:bg-gray-600'"
         >
-          🎬 生成视频 (20 圣力)
+          🎬 生成视频 ({{ coinCost }} 圣力)
         </button>
 
         <!-- Result -->
@@ -128,7 +128,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { getToken } from '@/utils'
 
@@ -139,8 +140,28 @@ const engine = ref('kling')
 const style = ref('default')
 const loading = ref(false)
 const videoUrl = ref('')
+const coinCost = ref(20)
 const useCount = ref(0)
+const route = useRoute()
+const toolId = ref<number>(Number(route.params.id) || 11)
 const history = ref<any[]>([])
+
+// Load tool info on mount
+onMounted(async () => {
+  // Try to load tool details from API
+  const token = getToken()
+  if (token && toolId.value) {
+    try {
+      const res = await fetch(`/api/v1/ai/tools/${toolId.value}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      const data = await res.json()
+      if (data.data) {
+        useCount.value = data.data.usageCount || 0
+      }
+    } catch {}
+  }
+})
 
 const generateVideo = async () => {
   if (!prompt.value.trim()) {
@@ -158,7 +179,7 @@ const generateVideo = async () => {
   videoUrl.value = ''
 
   try {
-    const res = await fetch('https://api.lsjyapp.cn/api/v1/ai/tools/11/video', {
+    const res = await fetch(`/api/v1/ai/tools/${toolId.value}/video`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

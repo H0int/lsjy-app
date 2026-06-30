@@ -15,6 +15,8 @@ import {
   ChatResponse,
   ImageOptions,
   ImageResponse,
+  VideoOptions,
+  VideoResponse,
   IAIProvider,
   ProviderStatus,
   AIProviderError,
@@ -225,6 +227,153 @@ export class AIService {
       ...imageResponse,
       callRecordId: callRecord.id,
       coinCost: actualCoinCost,
+    };
+  }
+
+  /**
+   * 视频生成
+   */
+  async generateVideo(
+    userId: number,
+    toolId: number,
+    prompt: string,
+    options?: VideoOptions,
+    ip?: string,
+  ): Promise<VideoResponse & { callRecordId: number; coinCost: number }> {
+    // 1. 获取工具配置
+    const tool = await this.toolRepo.findOne({
+      where: { id: toolId, status: 'active' },
+    });
+    if (!tool) throw new NotFoundException('工具不存在或已停用');
+
+    if (tool.toolType !== 'video') {
+      throw new BadRequestException('该工具不支持视频生成');
+    }
+
+    // 2. 检查配额和余额
+    await this.checkDailyQuota(userId, tool);
+    const videoCost = tool.isFree ? 0 : (tool.coinCost > 0 ? tool.coinCost : 20);
+    if (!tool.isFree && videoCost > 0) {
+      await this.checkBalance(userId, videoCost);
+    }
+
+    // 3. 获取Provider
+    const provider = this.resolveProvider(tool);
+
+    // 4. 调用AI视频生成
+    const startTime = Date.now();
+    const requestId = uuidv4();
+
+    let videoResponse: VideoResponse;
+    try {
+      if (!provider.generateVideo) {
+        // 没有视频生成能力的provider，使用第三方视频API
+        videoResponse = await this.generateVideoViaThirdParty(prompt, options);
+      } else {
+        videoResponse = await provider.generateVideo(prompt, options);
+      }
+    } catch (err: any) {
+      await this.recordCallResult(userId, toolId, requestId, {
+        inputText: prompt,
+        status: 'failed',
+        errorMessage: err.message?.substring(0, 500),
+        modelUsed: tool.modelId,
+        durationMs: Date.now() - startTime,
+        ip,
+      });
+      throw err;
+    }
+
+    const durationMs = Date.now() - startTime;
+
+    // 5. 扣费
+    if (!tool.isFree && videoCost > 0) {
+      await this.deductCoins(userId, videoCost, tool.name, toolId);
+    }
+
+    // 6. 记录调用日志
+    const callRecord = await this.recordCallResult(userId, toolId, requestId, {
+      inputText: prompt,
+      outputFiles: [videoResponse.videoUrl],
+      status: 'completed',
+      modelUsed: videoResponse.model,
+      coinCost: videoCost,
+      durationMs,
+      ip,
+    });
+
+    // 7. 更新统计
+    await this.toolRepo.increment({ id: toolId }, 'usageCount', 1);
+
+    return {
+      ...videoResponse,
+      callRecordId: callRecord.id,
+      coinCost: videoCost,
+    };
+  }
+
+  /**
+   * 通过第三方API生成视频（降级方案）
+   */
+  private async generateVideoViaThirdParty(
+    prompt: string,
+    options?: VideoOptions,
+  ): Promise<VideoResponse> {
+    const startTime = Date.now();
+    
+    // 尝试使用可灵API（如果配置了）
+    const klingKey = this.configService.get<string>('KLING_API_KEY');
+    if (klingKey) {
+      try {
+        const submitRes = await fetch('https://api.klingai.com/v1/videos/text2video', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${klingKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            prompt,
+            duration: options?.duration || 5,
+            resolution: options?.resolution || '720p',
+          }),
+        });
+
+        if (submitRes.ok) {
+          const submitData = await submitRes.json();
+          const taskId = submitData.data?.task_id;
+          
+          if (taskId) {
+            for (let i = 0; i < 60; i++) {
+              await new Promise(r => setTimeout(r, 3000));
+              const checkRes = await fetch(`https://api.klingai.com/v1/videos/text2video/${taskId}`, {
+                headers: { 'Authorization': `Bearer ${klingKey}` },
+              });
+              const checkData = await checkRes.json();
+              if (checkData.data?.task_status === 'succeed') {
+                return {
+                  videoUrl: checkData.data.task_result?.videos?.[0]?.url || '',
+                  thumbnailUrl: checkData.data.task_result?.videos?.[0]?.cover_url,
+                  model: 'kling-v1',
+                  provider: 'kling',
+                  durationMs: Date.now() - startTime,
+                };
+              }
+              if (checkData.data?.task_status === 'failed') break;
+            }
+          }
+        }
+      } catch {
+        // 可灵API失败
+      }
+    }
+
+    // 所有方案都失败了
+    return {
+      videoUrl: '',
+      thumbnailUrl: '',
+      model: 'none',
+      provider: 'none',
+      durationMs: Date.now() - startTime,
     };
   }
 

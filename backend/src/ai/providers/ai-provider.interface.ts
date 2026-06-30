@@ -84,6 +84,35 @@ export interface ImageResponse {
   usage?: TokenUsage;
 }
 
+
+// ===== 视频生成 =====
+
+export interface VideoOptions {
+  /** 视频时长（秒） */
+  duration?: number;
+  /** 分辨率 如 '720p', '1080p' */
+  resolution?: string;
+  /** 视频风格 */
+  style?: string;
+  /** 渲染引擎 */
+  engine?: string;
+  /** 参考图片URL */
+  refImage?: string;
+}
+
+export interface VideoResponse {
+  /** 生成的视频URL */
+  videoUrl: string;
+  /** 视频封面图URL */
+  thumbnailUrl?: string;
+  /** 实际使用的模型 */
+  model: string;
+  /** 来源provider */
+  provider: string;
+  /** 请求耗时 */
+  durationMs: number;
+}
+
 // ===== 余额与模型信息 =====
 
 export interface BalanceInfo {
@@ -130,7 +159,7 @@ export interface IAIProvider {
   /** 显示名称 */
   readonly displayName: string;
   /** 支持的类型 */
-  readonly capabilities: ('text' | 'image')[];
+  readonly capabilities: ('text' | 'image' | 'video')[];
 
   /**
    * 文本对话
@@ -145,6 +174,13 @@ export interface IAIProvider {
    * @param options 图像选项
    */
   generateImage?(prompt: string, options?: ImageOptions): Promise<ImageResponse>;
+
+  /**
+   * 视频生成（可选能力）
+   * @param prompt 提示词
+   * @param options 视频选项
+   */
+  generateVideo?(prompt: string, options?: VideoOptions): Promise<VideoResponse>;
 
   /**
    * 检查余额（可选）

@@ -17,6 +17,7 @@ import { AIService } from './ai.service';
 import { AIProviderManager } from './providers/provider-manager';
 import { ChatDto } from './dto/chat.dto';
 import { GenerateImageDto } from './dto/generate-image.dto';
+import { GenerateVideoDto } from './dto/generate-video.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Public } from '../common/decorators/public.decorator';
@@ -174,6 +175,32 @@ export class AIController {
 
     const ip = req.ip || req.headers['x-forwarded-for']?.toString() || '';
     const result = await this.aiService.generateImage(userId, toolId, dto.prompt, options, ip);
+    return { data: result };
+  }
+
+
+  // ===== 视频生成 =====
+
+  @UseGuards(JwtAuthGuard)
+  @Post('tools/:toolId/video')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'AI视频生成' })
+  async generateVideo(
+    @CurrentUser('id') userId: number,
+    @Param('toolId') toolId: number,
+    @Body() dto: GenerateVideoDto,
+    @Req() req: Request,
+  ) {
+    const options: import('./providers/ai-provider.interface').VideoOptions = {
+      duration: dto.duration,
+      resolution: dto.resolution,
+      style: dto.style,
+      engine: dto.engine,
+      refImage: dto.refImage,
+    };
+
+    const ip = req.ip || req.headers['x-forwarded-for']?.toString() || '';
+    const result = await this.aiService.generateVideo(userId, toolId, dto.prompt, options, ip);
     return { data: result };
   }
 
