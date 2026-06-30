@@ -213,6 +213,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick, watch } from 'vue'
+import { useAuthStore } from '@/stores/auth'
+import { storeToRefs } from 'pinia'
 
 // ========== API配置 ==========
 const API_BASE = 'https://api.lsjyapp.cn/api/v1'
@@ -251,7 +253,8 @@ const input = ref('')
 const loading = ref(false)
 const chatBox = ref<HTMLElement|null>(null)
 const aiOnline = ref(true)
-const coinBalance = ref(100)
+const authStore = useAuthStore()
+const { coinBalance } = storeToRefs(authStore)
 
 // 图片上传
 const pendingFile = ref<{url: string; name: string; isImage: boolean; sizeLabel: string; extractedText?: string} | null>(null)
@@ -751,19 +754,9 @@ onMounted(async () => {
         .catch(() => { aiOnline.value = false })
     })
 
-  // 获取余额
-  try {
-    const res = await fetch(`${API_BASE}/payment/coin/balance`, {
-      headers: { 'Authorization': `Bearer ${authToken.value}` }
-    })
-    if (res.ok) {
-      const data = await res.json()
-      if (data.code === 0 && data.data?.balance !== undefined) {
-        coinBalance.value = data.data.balance
-      }
-    }
-  } catch (e) {
-    console.error('获取余额失败:', e)
+  // 获取余额（从 auth store 获取，已登录则自动拉取）
+  if (authStore.isLoggedIn) {
+    await authStore.fetchBalance()
   }
 })
 </script>
