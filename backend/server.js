@@ -1870,6 +1870,88 @@ app.post('/api/v1/ai/chat', async (req, res) => {
   }
 });
 
+// 前端 AI 智能体专用聊天接口：避开线上 /api/v1/ai/* 独立代理鉴权
+app.post('/api/v1/agent/chat', authCheck, async (req, res) => {
+  const { messages, message, model, agentId = 1, systemPrompt } = req.body || {};
+  const userId = req.user?.id || 1;
+  const chatMessages = Array.isArray(messages) && messages.length > 0
+    ? messages.map(m => ({ role: m.role || 'user', content: String(m.content || '') })).filter(m => m.content)
+    : [{ role: 'user', content: String(message || '') }];
+
+  if (!chatMessages.length || !chatMessages.some(m => m.role === 'user' && m.content.trim())) {
+    return res.status(400).json({ code: 400, message: '请输入消息', data: null });
+  }
+
+  const agent = (typeof agentsStore !== 'undefined') ? agentsStore.find(a => Number(a.id) === Number(agentId)) : null;
+  const tool = aiToolsStore.find(t => Number(t.id) === Number(agentId)) || aiToolsStore[0];
+  const cost = userId === 1 ? 0 : Number(agent?.coinCost ?? tool?.coinCost ?? 1);
+  const balance = getUserCoins(userId);
+  if (cost > 0 && balance < cost) {
+    return res.status(402).json({
+      code: 402,
+      message: `圣力不足，当前余额${balance}，本次需要${cost}圣力。请前往个人中心充值。`,
+      data: { balance, cost },
+    });
+  }
+
+  const effectiveSystemPrompt = systemPrompt || agent?.systemPrompt || tool?.systemPrompt || CONFIG.SYSTEM_PROMPT;
+  try {
+    const result = await Promise.race([
+      callAI(chatMessages, {
+        model,
+        systemPrompt: effectiveSystemPrompt,
+        provider: agent?.provider || CONFIG.AI_PROVIDER,
+        toolId: Number(agentId),
+        toolName: agent?.name || tool?.name || '罗圣AI智能体',
+      }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('AI响应超时')), 15000)),
+    ]);
+    const deduct = deductCoins(userId, cost);
+    const lastMsg = chatMessages.filter(m => m.role === 'user').pop();
+    aiHistoryStore.unshift({
+      id: nextId(),
+      userId,
+      toolId: Number(agentId),
+      toolName: agent?.name || tool?.name || '罗圣AI智能体',
+      input: lastMsg?.content || '',
+      output: result.content,
+      model: result.model || model || 'default',
+      tokens: result.usage?.totalTokens || 0,
+      createdAt: new Date().toISOString(),
+    });
+    return res.json({
+      code: 0,
+      message: 'success',
+      data: {
+        content: result.content,
+        reply: result.content,
+        model: result.model || model || 'default',
+        role: 'assistant',
+        coinCost: cost,
+        balance: deduct.balance,
+        usage: result.usage || {},
+      },
+    });
+  } catch (err) {
+    log(`Agent聊天失败，使用本地兜底: ${err.message}`);
+    const lastMsg = chatMessages.filter(m => m.role === 'user').pop();
+    const content = getLocalResponse(lastMsg?.content || '');
+    const deduct = deductCoins(userId, cost);
+    return res.json({
+      code: 0,
+      message: 'success',
+      data: {
+        content,
+        reply: content,
+        model: 'local-fallback',
+        role: 'assistant',
+        coinCost: cost,
+        balance: deduct.balance,
+      },
+    });
+  }
+});
+
 // AI Provider 状态
 app.get('/api/v1/ai/providers', (req, res) => {
   const providers = [

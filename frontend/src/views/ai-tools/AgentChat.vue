@@ -484,9 +484,9 @@ async function sendMsg() {
       backendMessages.unshift({ role: 'user', content: '[System Instructions] ' + agent.systemPrompt } as any)
     }
 
-    // 使用 /ai/chat 端点，支持 deepseek-v4-pro 和 deepseek-v4-flash
+    // 使用主后端 /agent/chat，避开线上 /ai/* 独立代理鉴权
     const modelName = agent.modelName || 'deepseek-v4-pro'
-    const res = await fetch(`${API_BASE}/ai/chat`, {
+    const res = await fetch(`${API_BASE}/agent/chat`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${authToken.value}`,
@@ -494,7 +494,9 @@ async function sendMsg() {
       },
       body: JSON.stringify({ 
         messages: backendMessages,
-        model: modelName
+        model: modelName,
+        agentId: agent.id,
+        systemPrompt: agent.systemPrompt
       }),
     })
 
@@ -522,7 +524,7 @@ async function sendMsg() {
 
     msgs.value.push({
       role: 'assistant',
-      content: result.data.content || '⚠️ 未返回内容',
+      content: result.data.content || result.data.reply || '⚠️ 未返回内容',
       coinCost: result.data.coinCost || agent.coinCost
     })
   } catch (e: any) {
@@ -601,9 +603,9 @@ async function regenerateMsg(index: number) {
       backendMessages.unshift({ role: 'user', content: '[System Instructions] ' + agent.systemPrompt } as any)
     }
 
-    // 使用 /ai/chat 端点，支持 deepseek-v4-pro 和 deepseek-v4-flash
+    // 使用主后端 /agent/chat，避开线上 /ai/* 独立代理鉴权
     const modelName = agent.modelName || 'deepseek-v4-pro'
-    const res = await fetch(`${API_BASE}/ai/chat`, {
+    const res = await fetch(`${API_BASE}/agent/chat`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${authToken.value}`,
@@ -611,7 +613,9 @@ async function regenerateMsg(index: number) {
       },
       body: JSON.stringify({ 
         messages: backendMessages,
-        model: modelName
+        model: modelName,
+        agentId: agent.id,
+        systemPrompt: agent.systemPrompt
       }),
     })
 
@@ -625,7 +629,7 @@ async function regenerateMsg(index: number) {
 
     msgs.value.push({
       role: 'assistant',
-      content: result.data.content || '⚠️ 未返回内容',
+      content: result.data.content || result.data.reply || '⚠️ 未返回内容',
       coinCost: result.data.coinCost || agent.coinCost
     })
     showToast('🔄 已重新生成')
