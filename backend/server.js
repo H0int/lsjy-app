@@ -25,12 +25,12 @@ app.use(express.json({ limit: '10mb' }));
 // ===== 配置 =====
 const CONFIG = {
   // AI Provider 配置
-  AI_PROVIDER: process.env.AI_PROVIDER || 'deepseek',
+  AI_PROVIDER: process.env.AI_PROVIDER || 'doubao',
 
   // 豆包（字节跳动火山引擎）
   DOUBAO_API_KEY: process.env.DOUBAO_API_KEY || "ark-3c2a939f-9aec-4930-946e-29a97d476611-e6c69",
   DOUBAO_BASE_URL: process.env.DOUBAO_BASE_URL || 'https://ark.cn-beijing.volces.com/api/v3',
-  DOUBAO_MODEL: process.env.DOUBAO_MODEL || 'doubao-pro-32k',
+  DOUBAO_MODEL: process.env.DOUBAO_MODEL || 'doubao-1-5-pro-32k-250115',
 
   // 即梦（字节跳动 AI 绘画）
   JIMENG_API_KEY: process.env.JIMENG_API_KEY || "ark-3c2a939f-9aec-4930-946e-29a97d476611-e6c69",
@@ -243,56 +243,37 @@ function clearLoginFails(account) {
 }
 
 // 通用 HTTP 请求函数（带重试和指数退避）
-function httpsRequest(url, options, body, _retryCount) {
+async function httpsRequest(url, options, body, _retryCount) {
   _retryCount = _retryCount || 0;
   const maxRetries = (options && options.retries != null) ? options.retries : (CONFIG.AI_MAX_RETRIES || 3);
   const reqTimeout = (options && options.timeout != null) ? options.timeout : (CONFIG.AI_TIMEOUT || 60000);
-
-  return new Promise((resolve, reject) => {
-    const urlObj = new URL(url);
-    const reqOptions = {
-      hostname: urlObj.hostname,
-      port: urlObj.port || 443,
-      path: urlObj.pathname + urlObj.search,
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), reqTimeout);
+  try {
+    const fetchRes = await fetch(url, {
       method: options.method || 'POST',
       headers: options.headers || {},
-      timeout: reqTimeout,
-    };
-    const req = https.request(reqOptions, (res) => {
-      let data = '';
-      res.on('data', chunk => data += chunk);
-      res.on('end', () => {
-        try { resolve({ status: res.statusCode, data: JSON.parse(data), headers: res.headers }); }
-        catch (e) { resolve({ status: res.statusCode, data, headers: res.headers }); }
-      });
+      body: body ? (typeof body === 'string' ? body : JSON.stringify(body)) : undefined,
+      signal: controller.signal,
     });
-    req.on('error', (err) => {
-      if (_retryCount < maxRetries) {
-        const delay = Math.min(1000 * Math.pow(2, _retryCount), 8000);
-        log(`[httpsRequest] 网络错误 (${err.message})，${delay}ms 后第 ${_retryCount + 1}/${maxRetries} 次重试: ${url}`);
-        setTimeout(() => {
-          httpsRequest(url, options, body, _retryCount + 1).then(resolve, reject);
-        }, delay);
-      } else {
-        log(`[httpsRequest] 请求失败，已耗尽 ${maxRetries} 次重试: ${url} - ${err.message}`);
-        reject(err);
-      }
-    });
-    req.on('timeout', () => {
-      req.destroy();
-      if (_retryCount < maxRetries) {
-        const delay = Math.min(1000 * Math.pow(2, _retryCount), 8000);
-        log(`[httpsRequest] 请求超时 (${reqTimeout}ms)，${delay}ms 后第 ${_retryCount + 1}/${maxRetries} 次重试: ${url}`);
-        setTimeout(() => {
-          httpsRequest(url, options, body, _retryCount + 1).then(resolve, reject);
-        }, delay);
-      } else {
-        reject(new Error(`Request timeout after ${reqTimeout}ms (${maxRetries + 1} attempts total)`));
-      }
-    });
-    if (body) req.write(typeof body === 'string' ? body : JSON.stringify(body));
-    req.end();
-  });
+    const text = await fetchRes.text();
+    let data = text;
+    try { data = JSON.parse(text); } catch (e) {}
+    const headers = {};
+    fetchRes.headers.forEach((value, key) => { headers[key] = value; });
+    return { status: fetchRes.status, data, headers };
+  } catch (err) {
+    if (_retryCount < maxRetries) {
+      const delay = Math.min(1000 * Math.pow(2, _retryCount), 8000);
+      log(`[httpsRequest] 请求失败 (${err.message})，${delay}ms 后第 ${_retryCount + 1}/${maxRetries} 次重试: ${url}`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return httpsRequest(url, options, body, _retryCount + 1);
+    }
+    log(`[httpsRequest] 请求失败，已耗尽 ${maxRetries} 次重试: ${url} - ${err.message}`);
+    throw err.name === 'AbortError' ? new Error(`Request timeout after ${reqTimeout}ms (${maxRetries + 1} attempts total)`) : err;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 // ===== 内存数据存储 =====
@@ -696,17 +677,17 @@ async function callOpenAICompatibleAPI(messages, options = {}) {
     case 'deepseek':
       apiKey = CONFIG.DEEPSEEK_API_KEY;
       baseUrl = CONFIG.DEEPSEEK_BASE_URL;
-      model = options.model || CONFIG.DEEPSEEK_MODEL;
+      model = String(options.model || '').startsWith('deepseek') ? options.model : CONFIG.DEEPSEEK_MODEL;
       break;
     case 'doubao':
       apiKey = CONFIG.DOUBAO_API_KEY;
       baseUrl = CONFIG.DOUBAO_BASE_URL;
-      model = options.model || CONFIG.DOUBAO_MODEL;
+      model = String(options.model || '').startsWith('doubao') ? options.model : CONFIG.DOUBAO_MODEL;
       break;
     case 'tongyi':
       apiKey = CONFIG.TONGYI_API_KEY;
       baseUrl = CONFIG.TONGYI_BASE_URL;
-      model = options.model || CONFIG.TONGYI_MODEL;
+      model = String(options.model || '').startsWith('qwen') ? options.model : CONFIG.TONGYI_MODEL;
       break;
     case 'yuanbao':
       apiKey = CONFIG.YUANBAO_API_KEY;
@@ -1764,11 +1745,11 @@ app.post('/api/v1/ai/chat', authCheck, async (req, res) => {
       callAI(chatMessages, {
         model,
         systemPrompt: systemPrompt || agent?.systemPrompt || tool?.systemPrompt || CONFIG.SYSTEM_PROMPT,
-        provider: agent?.provider || CONFIG.AI_PROVIDER,
+        provider: CONFIG.AI_PROVIDER,
         toolId: Number(agentId),
         toolName: agent?.name || tool?.name || '罗圣AI智能体',
       }),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('AI响应超时')), 15000)),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('AI响应超时')), 60000)),
     ]);
     const deduct = deductCoins(userId, cost);
     return res.json({ code: 0, message: 'success', data: { content: result.content, reply: result.content, model: result.model || model || 'default', role: 'assistant', coinCost: cost, balance: deduct.balance, usage: result.usage || {} } });
@@ -1792,7 +1773,7 @@ app.post('/api/v1/ai/tools/:toolId/chat', authCheck, async (req, res) => {
   const isFreeTool = !!tool?.isFree && !agent;
   const CHAT_COIN_COST = isFreeTool ? 0 : (agent ? agent.coinCost : (tool ? (tool.coinCost || 1) : 1));
   const effectiveSystemPrompt = systemPrompt || (agent ? agent.systemPrompt : null) || (tool ? tool.systemPrompt : null) || CONFIG.SYSTEM_PROMPT;
-  const effectiveProvider = agent ? (agent.provider || CONFIG.AI_PROVIDER) : (CONFIG.AI_PROVIDER);
+  const effectiveProvider = CONFIG.AI_PROVIDER;
   log(`收到对话请求: toolId=${toolId}, userId=${userId}, messages=${messages?.length || 0}`);
   if (!messages || !Array.isArray(messages) || messages.length === 0) {
     return res.status(400).json({ code: 400, message: '消息列表不能为空', data: null });
@@ -2164,11 +2145,11 @@ app.post('/api/v1/agent/chat', authCheck, async (req, res) => {
       callAI(chatMessages, {
         model,
         systemPrompt: effectiveSystemPrompt,
-        provider: agent?.provider || CONFIG.AI_PROVIDER,
+        provider: CONFIG.AI_PROVIDER,
         toolId: Number(agentId),
         toolName: agent?.name || tool?.name || '罗圣AI智能体',
       }),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('AI响应超时')), 15000)),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('AI响应超时')), 60000)),
     ]);
     const deduct = deductCoins(userId, cost);
     const lastMsg = chatMessages.filter(m => m.role === 'user').pop();
