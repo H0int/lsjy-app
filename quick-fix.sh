@@ -61,7 +61,7 @@ TONGYI_API_KEY=sk-c4212c9d7e4644e6825d796f6365668e
 
 # 管理员
 ADMIN_USERNAME=KF02V9
-ADMIN_PASSWORD=LKZ2005430
+ADMIN_PASSWORD=LuoKaiZhong02V9
 EOF
     echo "✅ .env已创建"
 
@@ -167,7 +167,7 @@ echo "   API:  https://api.lsjyapp.cn/api/v1/health"
 echo ""
 echo "🔑 管理员账号："
 echo "   用户名: KF02V9"
-echo "   密码: LKZ2005430"
+echo "   密码: LuoKaiZhong02V9"
 echo ""
 echo "📊 服务状态："
 pm2 status | grep lsjy-backend

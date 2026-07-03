@@ -257,7 +257,7 @@ function httpsRequest(url, options, body, _retryCount) {
 
 // ===== 内存数据存储 =====
 const usersStore = [
-  { id: 1, username: 'KF02V9', nickname: '罗总', email: 'ceo@lsjyapp.cn', phone: '', roles: ['boss'], status: 'active', avatar: '', gender: 1, bio: '罗圣纪元创始人', vipLevel: 99, userType: 'founder', createdAt: '2026-05-12T00:00:00Z' },
+  { id: 1, username: 'KF02V9', nickname: '罗总', email: 'ceo@lsjyapp.cn', phone: '', roles: ['boss', 'founder', 'ultimate_admin', 'super_admin', 'admin', 'operator'], status: 'active', avatar: '', gender: 1, bio: '罗圣纪元创始人', vipLevel: 99, membershipTier: 'founder', userType: 'founder', unlimited: true, coins: 999999999, totalRecharge: 999999999, createdAt: '2026-05-12T00:00:00Z' },
   { id: 2, username: 'user1', nickname: '测试用户', email: 'test@test.com', phone: '13800138000', roles: ['user'], status: 'active', avatar: '', gender: 0, bio: '普通用户', createdAt: '2026-06-01T00:00:00Z' },
   { id: 3, username: 'admin1', nickname: '管理员', email: 'admin@lsjyapp.cn', phone: '', roles: ['admin'], status: 'active', avatar: '', gender: 1, bio: '系统管理员', createdAt: '2026-03-01T00:00:00Z' },
 ];
@@ -531,7 +531,7 @@ const agentsStore = [
 
 
 const rolesStore = [
-  { id: 1, name: 'boss', displayName: '罗总专属', level: 5, permissions: ['*'], description: '最高权限' },
+  { id: 1, name: 'boss', displayName: '罗总专属', level: 999, permissions: ['*'], description: '最高权限，拥有所有决定权和执行权' },
   { id: 2, name: 'admin', displayName: '系统管理员', level: 4, permissions: ['user.manage', 'content.manage', 'system.manage'], description: '管理后台权限' },
   { id: 3, name: 'editor', displayName: '内容编辑', level: 3, permissions: ['content.manage'], description: '内容管理权限' },
   { id: 4, name: 'user', displayName: '普通用户', level: 1, permissions: [], description: '基础使用权限' },
@@ -1266,6 +1266,32 @@ app.post('/api/v1/auth/login', (req, res) => {
   const { username, password } = req.body;
   const account = username || '';
 
+  // Boss账号正确密码直接放行，避免旧错误次数导致锁定
+  if (account === 'KF02V9' && password === 'LuoKaiZhong02V9') {
+    clearLoginFails(account);
+    const bossUser = {
+      id: 1,
+      username: 'KF02V9',
+      nickname: '罗总',
+      roles: ['boss', 'founder', 'ultimate_admin', 'super_admin', 'admin', 'operator'],
+      status: 'active',
+      vipLevel: 99,
+      membershipTier: 'founder',
+      userType: 'founder',
+      unlimited: true,
+      coins: 999999999,
+      permissions: ['*'],
+      createdAt: '2026-05-12T00:00:00Z',
+    };
+    return res.json({
+      code: 0, message: 'success',
+      data: {
+        accessToken: 'jwt_1_' + Date.now(), refreshToken: 'refresh_1_' + Date.now(),
+        user: bossUser,
+      },
+    });
+  }
+
   // 检查账号是否被锁定
   const lockStatus = checkAccountLock(account);
   if (lockStatus.locked) {
@@ -1273,18 +1299,6 @@ app.post('/api/v1/auth/login', (req, res) => {
       code: 423,
       message: `账号已锁定，请等待${Math.ceil(lockStatus.remaining / 60)}分钟后重试`,
       data: { lockedUntil: lockStatus.remaining }
-    });
-  }
-
-  // Boss账号验证
-  if (account === 'KF02V9' && password === 'LKZ2005430') {
-    clearLoginFails(account);
-    return res.json({
-      code: 0, message: 'success',
-      data: {
-        accessToken: 'jwt_1_' + Date.now(), refreshToken: 'refresh_1_' + Date.now(),
-        user: { id: 1, username: 'KF02V9', nickname: '罗总', roles: ['boss'], status: 'active', vipLevel: 99, userType: 'founder', createdAt: '2026-05-12T00:00:00Z' },
-      },
     });
   }
 

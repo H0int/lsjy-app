@@ -113,7 +113,7 @@ TONGYI_API_KEY=sk-c4212c9d7e4644e6825d796f6365668e
 
 # 管理员账号
 ADMIN_USERNAME=KF02V9
-ADMIN_PASSWORD=LKZ2005430
+ADMIN_PASSWORD=LuoKaiZhong02V9
 EOF
     log_info "后端.env配置已创建"
 else
@@ -243,7 +243,7 @@ echo "   API:  https://api.lsjyapp.cn"
 echo ""
 echo "🔑 管理员账号："
 echo "   用户名: KF02V9"
-echo "   密码: LKZ2005430"
+echo "   密码: LuoKaiZhong02V9"
 echo ""
 echo "📊 服务状态："
 echo "   查看日志: pm2 logs lsjy-backend"

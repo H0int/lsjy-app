@@ -16,7 +16,7 @@ echo ""
 echo "2. 测试登录..."
 LOGIN_RESULT=$(curl -s -X POST "$API_BASE/auth/login" \
   -H "Content-Type: application/json" \
-  -d '{"username":"KF02V9","password":"LKZ2005430"}')
+  -d '{"username":"KF02V9","password":"LuoKaiZhong02V9"}')
 
 echo "$LOGIN_RESULT" | jq .
 

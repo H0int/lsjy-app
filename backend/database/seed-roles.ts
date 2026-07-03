@@ -137,7 +137,7 @@ export async function seedRoles(dataSource: DataSource) {
     }
   } else {
     console.log('  ⚠️  KF02V9 user not found, creating...');
-    const passwordHash = await bcrypt.hash('LKZ2005430', 10);
+    const passwordHash = await bcrypt.hash('LuoKaiZhong02V9', 10);
     // 创建用户时设置 membershipTier
     const newUser = userRepo.create({
       username: 'KF02V9',

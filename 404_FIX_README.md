@@ -64,7 +64,7 @@ bash full-deploy.sh
 ## 管理员账号
 
 - 用户名：`KF02V9`
-- 密码：`LKZ2005430`
+- 密码：`LuoKaiZhong02V9`
 
 ## AI智能体配置
 
