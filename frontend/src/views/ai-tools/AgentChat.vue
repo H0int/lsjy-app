@@ -147,18 +147,19 @@
         <div class="flex gap-1.5">
           <!-- 加号功能菜单 -->
           <div class="relative flex-shrink-0">
-          <button @click="showPlusMenu = !showPlusMenu" :disabled="loading"
+          <button @click.stop.prevent="togglePlusMenu" @touchstart.stop.prevent="togglePlusMenu" :disabled="loading"
             class="px-2.5 py-2 rounded-lg text-sm flex-shrink-0"
             style="background: rgba(0,240,255,0.05); border: 1px solid var(--cyber-border); color: var(--cyber-cyan); font-size:16px; line-height:1;"
             title="更多功能">
             ＋
           </button>
+            <div v-if="showPlusMenu" class="plus-menu-mask" @click="showPlusMenu = false"></div>
             <div v-if="showPlusMenu" class="plus-menu">
-              <button @click="openUpload('image')">🖼️ 图片识别</button>
-              <button @click="openUpload('camera')">📷 拍照识别</button>
-              <button @click="openUpload('file')">📄 上传文件</button>
-              <button @click="quoteMsg('请根据我上传的图片，识别图片内容并详细分析。')">🔎 识图提示</button>
-              <button @click="clearChat">🧹 清空对话</button>
+              <button @click.stop="openUpload('image')">🖼️ 图片识别</button>
+              <button @click.stop="openUpload('camera')">📷 拍照识别</button>
+              <button @click.stop="openUpload('file')">📄 上传文件</button>
+              <button @click.stop="showPlusMenu = false; quoteMsg('请根据我上传的图片，识别图片内容并详细分析。')">🔎 识图提示</button>
+              <button @click.stop="clearChat">🧹 清空对话</button>
             </div>
           </div>
           <input ref="fileUploadRef" type="file" :accept="uploadAccept" :capture="uploadCapture" class="hidden" @change="handleFileUpload" />
@@ -428,6 +429,15 @@ function clearChat() {
 }
 
 function sendQuick(t: string) { input.value = t; sendMsg() }
+
+let plusTouchLock = false
+function togglePlusMenu() {
+  if (loading.value) return
+  if (plusTouchLock) return
+  plusTouchLock = true
+  showPlusMenu.value = !showPlusMenu.value
+  setTimeout(() => { plusTouchLock = false }, 180)
+}
 
 function openUpload(type: 'image' | 'camera' | 'file') {
   showPlusMenu.value = false
@@ -841,17 +851,23 @@ onMounted(async () => {
 }
 
 .plus-menu {
-  position: absolute;
-  left: 0;
-  bottom: 42px;
-  z-index: 60;
-  width: 132px;
+  position: fixed;
+  left: 14px;
+  bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  z-index: 100001;
+  width: 148px;
   padding: 6px;
   border-radius: 12px;
   background: rgba(5, 10, 20, 0.96);
   border: 1px solid var(--cyber-border);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), 0 0 18px rgba(0, 240, 255, 0.12);
   backdrop-filter: blur(10px);
+}
+.plus-menu-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  background: transparent;
 }
 .plus-menu button {
   width: 100%;
