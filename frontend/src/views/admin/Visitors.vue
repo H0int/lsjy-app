@@ -3,6 +3,11 @@
     <div class="page-header">
       <h1>👁️ 访客中心</h1>
       <p class="subtitle">实时监控网站访客动态</p>
+      <div class="page-actions">
+        <el-button type="primary" @click="router.push('/admin/realtime-location')">📍 实时定位</el-button>
+        <el-button @click="refreshNow">🔄 立即刷新</el-button>
+        <el-tag type="success" effect="dark">秒级时间：{{ liveClock }}</el-tag>
+      </div>
     </div>
 
     <!-- 实时统计卡片 -->
@@ -96,11 +101,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import service from '@/api/request'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
+const router = useRouter()
 const loading = ref(false)
+const liveClock = ref('')
+let clockTimer: any = null
 
 const stats = ref({
   todayVisitors: 0,
@@ -163,7 +172,14 @@ async function fetchList() {
     const res = await service.get('/visitors/list', { params: { page: 1, pageSize: 20 } })
     if (res.data.code === 0) {
       const data = res.data.data
-      liveVisitors.value = data.list || data.items || []
+      liveVisitors.value = (data.list || data.items || []).map((item: any) => ({
+        ...item,
+        location: item.location || [item.province, item.city].filter(Boolean).join(' ') || 'IP定位中',
+        currentPage: item.currentPage || item.path || '/',
+        device: item.device || parseDevice(item.userAgent),
+        browser: item.browser || '-',
+        duration: item.elapsedSeconds !== undefined ? `${item.elapsedSeconds}秒` : (item.duration || '-')
+      }))
     }
   } catch (e: any) {
     // /visitors/list 可能在旧版后端不存在(404)，静默处理
@@ -173,6 +189,23 @@ async function fetchList() {
   } finally {
     loading.value = false
   }
+}
+
+function refreshNow() {
+  fetchStats()
+  fetchList()
+}
+
+function tickClock() {
+  const d = new Date()
+  liveClock.value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`
+}
+
+function parseDevice(ua = '') {
+  if (/MicroMessenger/i.test(ua)) return '微信'
+  if (/Mobile|Android|iPhone|iPad/i.test(ua)) return '移动端'
+  if (/Windows|Macintosh|Linux/i.test(ua)) return '桌面端'
+  return '未知'
 }
 
 function viewDetail(row: any) {
@@ -200,8 +233,18 @@ async function blockIP(row: any) {
 }
 
 onMounted(() => {
+  tickClock()
   fetchStats()
   fetchList()
+  clockTimer = setInterval(() => {
+    tickClock()
+    fetchStats()
+    fetchList()
+  }, 1000)
+})
+
+onUnmounted(() => {
+  if (clockTimer) clearInterval(clockTimer)
 })
 </script>
 
@@ -215,6 +258,14 @@ onMounted(() => {
 
 .page-header {
   margin-bottom: 1.5rem;
+}
+
+.page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  align-items: center;
 }
 
 .page-header h1 {

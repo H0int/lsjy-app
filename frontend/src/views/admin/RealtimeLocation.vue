@@ -3,6 +3,11 @@
     <div class="page-header">
       <h1>📍 实时定位</h1>
       <p class="subtitle">用户地理位置实时追踪与分析</p>
+      <div class="live-strip">
+        <el-tag type="success" effect="dark"><span class="pulse-dot"></span> 每秒刷新</el-tag>
+        <span>服务器时间：<b>{{ serverTime }}</b></span>
+        <span>刷新间隔：{{ refreshIntervalMs / 1000 }} 秒</span>
+      </div>
     </div>
 
     <!-- 定位统计 -->
@@ -105,29 +110,37 @@
         </el-tag>
       </div>
       <el-table :data="locationLogs" style="width: 100%" class="cyber-table">
-        <el-table-column prop="time" label="时间" width="160" />
+        <el-table-column prop="time" label="最后心跳" width="170" />
+        <el-table-column prop="elapsedSeconds" label="距今" width="90">
+          <template #default="{ row }">{{ row.elapsedSeconds }}秒</template>
+        </el-table-column>
         <el-table-column prop="userId" label="用户ID" width="120" />
         <el-table-column prop="ip" label="IP地址" width="140" />
         <el-table-column prop="province" label="省份" width="100" />
         <el-table-column prop="city" label="城市" width="100" />
         <el-table-column prop="isp" label="运营商" width="120" />
-        <el-table-column prop="device" label="设备" />
+        <el-table-column prop="currentPage" label="当前页面" min-width="180" />
+        <el-table-column prop="accuracy" label="精度" width="150" />
+        <el-table-column prop="device" label="设备" width="120" />
       </el-table>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import service from '@/api/request'
 import { ElMessage } from 'element-plus'
 
 const loading = ref(false)
 const locationStats = ref({ countries: 0, cities: 0, activeUsers: 0, accuracy: '0%' })
+const serverTime = ref('-')
+const refreshIntervalMs = ref(1000)
 const mapDots = ref<any[]>([])
 const provinceRank = ref<any[]>([])
 const cityRank = ref<any[]>([])
 const locationLogs = ref<any[]>([])
+let refreshTimer: any = null
 
 async function fetchLocations() {
   loading.value = true
@@ -135,6 +148,8 @@ async function fetchLocations() {
     const res = await service.get('/admin/locations')
     if (res.data.code === 0) {
       const data = res.data.data
+      serverTime.value = data.serverTime || formatNow()
+      refreshIntervalMs.value = data.refreshIntervalMs || 1000
       // Stats
       if (data.stats) {
         locationStats.value = {
@@ -164,9 +179,9 @@ async function fetchLocations() {
       }
       // Location logs
       if (data.logs && Array.isArray(data.logs)) {
-        locationLogs.value = data.logs
+        locationLogs.value = data.logs.map(normalizeLog)
       } else if (data.list && Array.isArray(data.list)) {
-        locationLogs.value = data.list
+        locationLogs.value = data.list.map(normalizeLog)
       }
       // Map dots - generate from location data
       if (data.mapDots && Array.isArray(data.mapDots)) {
@@ -187,6 +202,26 @@ async function fetchLocations() {
   }
 }
 
+function normalizeLog(item: any) {
+  return {
+    ...item,
+    time: item.time || item.lastHeartbeatFormatted || item.visitTimeFormatted || formatNow(),
+    elapsedSeconds: Number(item.elapsedSeconds || 0),
+    userId: item.userId || '访客',
+    province: item.province || 'IP定位',
+    city: item.city || '待解析',
+    isp: item.isp || '公网网络',
+    currentPage: item.currentPage || item.path || '/',
+    accuracy: item.accuracy || '秒级心跳 / IP定位',
+    device: item.device || '未知设备'
+  }
+}
+
+function formatNow() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`
+}
+
 function refreshMap() {
   fetchLocations()
 }
@@ -195,7 +230,14 @@ function toggleHeatmap() {
   ElMessage.info('热力图功能开发中')
 }
 
-onMounted(fetchLocations)
+onMounted(() => {
+  fetchLocations()
+  refreshTimer = setInterval(fetchLocations, 1000)
+})
+
+onUnmounted(() => {
+  if (refreshTimer) clearInterval(refreshTimer)
+})
 </script>
 
 <style scoped>
@@ -209,6 +251,19 @@ onMounted(fetchLocations)
 .page-header { margin-bottom: 1.5rem; }
 .page-header h1 { font-size: 1.5rem; font-weight: bold; color: #00f0ff; margin: 0 0 0.25rem 0; }
 .subtitle { color: #8888aa; font-size: 0.875rem; margin: 0; }
+.live-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 0.75rem;
+  color: #8888aa;
+  font-size: 0.875rem;
+}
+.live-strip b {
+  color: #00f0ff;
+  font-family: 'JetBrains Mono', monospace;
+}
 
 .stats-grid {
   display: grid;

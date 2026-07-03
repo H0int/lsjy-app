@@ -1039,21 +1039,66 @@ try {
 
 // 保存访客数据
 function saveVisitors() {
+  fs.mkdirSync(path.dirname(VISITORS_FILE), { recursive: true });
   fs.writeFileSync(VISITORS_FILE, JSON.stringify(visitorsStore, null, 2));
+}
+
+function formatDateTime(dateInput = new Date()) {
+  const d = dateInput instanceof Date ? dateInput : new Date(dateInput);
+  if (Number.isNaN(d.getTime())) return '';
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
+}
+
+function getClientIp(req) {
+  return String(req.headers['x-forwarded-for'] || req.ip || req.connection?.remoteAddress || 'unknown').split(',')[0].trim();
+}
+
+function parseDevice(userAgent = '') {
+  const ua = String(userAgent);
+  const device = /MicroMessenger/i.test(ua) ? '微信内置浏览器'
+    : /Mobile|Android|iPhone|iPad/i.test(ua) ? '移动设备'
+    : /Windows|Macintosh|Linux/i.test(ua) ? '桌面设备'
+    : '未知设备';
+  const browser = /MicroMessenger/i.test(ua) ? '微信'
+    : /Edg/i.test(ua) ? 'Edge'
+    : /Chrome/i.test(ua) ? 'Chrome'
+    : /Safari/i.test(ua) ? 'Safari'
+    : /Firefox/i.test(ua) ? 'Firefox'
+    : '未知浏览器';
+  return { device, browser };
+}
+
+function locateByIp(ip = '') {
+  const raw = String(ip).replace(/^::ffff:/, '');
+  if (!raw || raw === 'unknown' || raw === '::1' || raw === '127.0.0.1') {
+    return { country: '中国', province: '本机', city: '本机', isp: '本机', location: '本机访问', accuracy: '秒级心跳 / IP定位' };
+  }
+  if (/^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.)/.test(raw)) {
+    return { country: '中国', province: '内网', city: '内网', isp: '局域网', location: '内网访问', accuracy: '秒级心跳 / 内网IP' };
+  }
+  return { country: '中国', province: 'IP定位', city: '待解析', isp: '公网网络', location: `公网IP ${raw}`, accuracy: '秒级心跳 / IP定位' };
 }
 
 // 记录访客访问
 app.post('/api/v1/visitors/record', (req, res) => {
   const { ip, userAgent, path: visitPath, referer } = req.body;
   const now = new Date();
+  const resolvedIp = ip || getClientIp(req);
+  const deviceInfo = parseDevice(userAgent || req.headers['user-agent']);
+  const locationInfo = locateByIp(resolvedIp);
   const visitor = {
     id: visitorsStore.length + 1,
-    ip: ip || req.ip || req.connection.remoteAddress,
+    ip: resolvedIp,
     userAgent: userAgent || req.headers['user-agent'],
     path: visitPath || req.path,
+    currentPage: visitPath || req.path,
     referer: referer || req.headers.referer,
     visitTime: now.toISOString(),
-    visitTimeFormatted: `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`
+    visitTimeFormatted: formatDateTime(now),
+    lastHeartbeatTime: now.toISOString(),
+    lastHeartbeatFormatted: formatDateTime(now),
+    ...deviceInfo,
+    ...locationInfo,
   };
   visitorsStore.push(visitor);
   saveVisitors();
@@ -1103,23 +1148,37 @@ app.get('/api/v1/visitors/stats', (req, res) => {
 // POST /visitors/checkin — 前端 visitorApi.checkin() 调用
 app.post('/api/v1/visitors/checkin', (req, res) => {
   const { page, referer } = req.body;
-  const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || req.connection.remoteAddress;
+  const ip = getClientIp(req);
   const now = new Date();
 
   // 30秒内同一IP不重复计数
   const recent = visitorsStore.find(v => v.ip === ip && (now - new Date(v.visitTime)) < 30000);
   if (recent) {
+    recent.lastHeartbeatTime = now.toISOString();
+    recent.lastHeartbeatFormatted = formatDateTime(now);
+    recent.currentPage = page || recent.currentPage || recent.path || '/';
+    recent.path = page || recent.path || '/';
+    recent.elapsedSeconds = Math.max(0, Math.floor((now - new Date(recent.visitTime)) / 1000));
+    saveVisitors();
     return res.json({ code: 0, message: 'already recorded', data: recent });
   }
 
+  const deviceInfo = parseDevice(req.headers['user-agent'] || '');
+  const locationInfo = locateByIp(ip);
   const visitor = {
     id: visitorsStore.length + 1,
     ip,
     userAgent: req.headers['user-agent'] || '',
     path: page || '/',
+    currentPage: page || '/',
     referer: referer || req.headers.referer || '',
     visitTime: now.toISOString(),
-    visitTimeFormatted: `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`
+    visitTimeFormatted: formatDateTime(now),
+    lastHeartbeatTime: now.toISOString(),
+    lastHeartbeatFormatted: formatDateTime(now),
+    elapsedSeconds: 0,
+    ...deviceInfo,
+    ...locationInfo,
   };
   visitorsStore.push(visitor);
   saveVisitors();
@@ -1252,7 +1311,21 @@ app.post('/api/v1/online/heartbeat', (req, res) => {
   const sessionId = req.headers['x-session-id'] || req.ip || 'anonymous';
   const userId = req.headers['x-user-id'] || '';
   const path = req.body?.path || '/';
-  onlineUsers.set(sessionId, { userId, ip: req.ip || req.connection.remoteAddress, lastHeartbeat: Date.now(), path });
+  const ip = getClientIp(req);
+  const nowDate = new Date();
+  onlineUsers.set(sessionId, {
+    sessionId,
+    userId,
+    ip,
+    userAgent: req.headers['user-agent'] || '',
+    lastHeartbeat: Date.now(),
+    lastHeartbeatTime: nowDate.toISOString(),
+    lastHeartbeatFormatted: formatDateTime(nowDate),
+    path,
+    currentPage: path,
+    ...parseDevice(req.headers['user-agent'] || ''),
+    ...locateByIp(ip),
+  });
   const now = Date.now();
   for (const [key, val] of onlineUsers.entries()) {
     if (now - val.lastHeartbeat > ONLINE_TIMEOUT) onlineUsers.delete(key);
@@ -1266,6 +1339,92 @@ app.get('/api/v1/online/count', (req, res) => {
     if (now - val.lastHeartbeat > ONLINE_TIMEOUT) onlineUsers.delete(key);
   }
   res.json({ code: 0, message: 'success', data: { onlineCount: onlineUsers.size } });
+});
+
+app.get('/api/v1/admin/locations', authCheck, (req, res) => {
+  const now = Date.now();
+  for (const [key, val] of onlineUsers.entries()) {
+    if (now - val.lastHeartbeat > ONLINE_TIMEOUT) onlineUsers.delete(key);
+  }
+  const onlineLogs = Array.from(onlineUsers.values()).map((item, index) => ({
+    id: item.sessionId || `online-${index}`,
+    time: item.lastHeartbeatFormatted || formatDateTime(item.lastHeartbeat),
+    serverTime: formatDateTime(new Date()),
+    userId: item.userId || '访客',
+    ip: item.ip,
+    country: item.country,
+    province: item.province,
+    city: item.city,
+    isp: item.isp,
+    location: item.location,
+    accuracy: item.accuracy,
+    device: item.device,
+    browser: item.browser,
+    currentPage: item.currentPage || item.path || '/',
+    elapsedSeconds: Math.max(0, Math.floor((now - item.lastHeartbeat) / 1000)),
+    online: true,
+  }));
+
+  const recentVisitorLogs = visitorsStore.slice(-50).reverse().map((v, index) => {
+    const last = new Date(v.lastHeartbeatTime || v.visitTime || Date.now()).getTime();
+    const loc = locateByIp(v.ip);
+    const dev = parseDevice(v.userAgent || '');
+    return {
+      id: v.id || `visitor-${index}`,
+      time: v.lastHeartbeatFormatted || v.visitTimeFormatted || formatDateTime(v.visitTime),
+      serverTime: formatDateTime(new Date()),
+      userId: v.userId || '访客',
+      ip: v.ip,
+      country: v.country || loc.country,
+      province: v.province || loc.province,
+      city: v.city || loc.city,
+      isp: v.isp || loc.isp,
+      location: v.location || loc.location,
+      accuracy: v.accuracy || loc.accuracy,
+      device: v.device || dev.device,
+      browser: v.browser || dev.browser,
+      currentPage: v.currentPage || v.path || '/',
+      elapsedSeconds: Math.max(0, Math.floor((now - last) / 1000)),
+      online: now - last <= ONLINE_TIMEOUT,
+    };
+  });
+
+  const merged = [...onlineLogs, ...recentVisitorLogs]
+    .filter((item, idx, arr) => arr.findIndex(x => `${x.ip}-${x.currentPage}` === `${item.ip}-${item.currentPage}`) === idx)
+    .slice(0, 50);
+  const provinces = {};
+  const cities = {};
+  merged.forEach(item => {
+    const p = item.province || '未知';
+    const c = item.city || '未知';
+    provinces[p] = (provinces[p] || 0) + 1;
+    cities[c] = (cities[c] || 0) + 1;
+  });
+  const toRank = obj => Object.entries(obj).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
+
+  res.json({
+    code: 0,
+    message: 'success',
+    data: {
+      serverTime: formatDateTime(new Date()),
+      refreshIntervalMs: 1000,
+      stats: {
+        countries: new Set(merged.map(i => i.country || '未知')).size,
+        cities: Object.keys(cities).length,
+        activeUsers: onlineLogs.length,
+        accuracy: '秒级',
+      },
+      provinces: toRank(provinces),
+      cities: toRank(cities),
+      logs: merged,
+      list: merged,
+      mapDots: merged.slice(0, 20).map((item, i) => ({
+        id: item.id,
+        x: 18 + (i % 5) * 15 + ((i * 7) % 8),
+        y: 20 + Math.floor(i / 5) * 15 + ((i * 5) % 8),
+      })),
+    },
+  });
 });
 
 app.get('/api/v1/health', (req, res) => {

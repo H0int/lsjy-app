@@ -14,7 +14,7 @@
     </div>
 
     <!-- 数据卡片 -->
-    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+    <div class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
       <div v-for="card in visibleStatCards" :key="card.label" class="cyber-card rounded-xl p-4" @click="card.route && router.push(card.route)" style="cursor:pointer;">
         <div class="text-2xl mb-2">{{ card.icon }}</div>
         <div class="text-2xl font-bold" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">{{ card.value }}</div>
@@ -115,10 +115,11 @@ const statCards = ref([
   { icon: '📄', label: '生成作品', value: '0', route: '/profile' },
   { icon: '🎯', label: '会员等级', value: '普通', route: '/profile' },
   { icon: '👥', label: '平台访客', value: '0', route: '/admin/visitors' },
+  { icon: '📍', label: '实时定位', value: '秒级', route: '/admin/realtime-location' },
 ])
 
 const visibleStatCards = computed(() => {
-  return authStore.isAdmin ? statCards.value : statCards.value.filter(card => card.label !== '平台访客')
+  return authStore.isAdmin ? statCards.value : statCards.value.filter(card => !['平台访客', '实时定位'].includes(card.label))
 })
 
 const visitorStats = ref({
