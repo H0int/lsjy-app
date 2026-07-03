@@ -25,18 +25,14 @@ jobs:
 
       - name: Deploy to ECS
         run: |
+          tar -czf /tmp/lsjy-backend-hotfix.tar.gz backend/server.js
+          scp -o StrictHostKeyChecking=no -o ConnectTimeout=20 /tmp/lsjy-backend-hotfix.tar.gz root@47.97.166.219:/tmp/lsjy-backend-hotfix.tar.gz
           ssh -o StrictHostKeyChecking=no -o ConnectTimeout=20 root@47.97.166.219 <<'EOF'
             set -e
             cd /opt/lsjy-app
-            git fetch origin main
-            git reset --hard origin/main
+            tar -xzf /tmp/lsjy-backend-hotfix.tar.gz -C /opt/lsjy-app
 
             cd backend
-            npm install --legacy-peer-deps
-            if [ -f package.json ] && grep -q '"build"' package.json; then
-              npm run build || true
-            fi
-
             pm2 delete lsjy-backend || true
             pm2 start server.js --name lsjy-backend --node-args="--max-old-space-size=512" --update-env
             pm2 save
