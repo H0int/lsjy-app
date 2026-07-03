@@ -72,9 +72,16 @@
       </div>
 
       <!-- 消息列表 -->
-      <div v-else ref="chatBox" class="flex-1 overflow-y-auto mb-2 space-y-2 pr-1" style="scroll-behavior: smooth;">
+      <div v-else ref="chatBox" class="flex-1 overflow-y-auto mb-2 space-y-2 pr-1" style="scroll-behavior: smooth;" @scroll="hideMsgActions">
         <div v-for="(msg, i) in msgs" :key="i" class="flex" :class="msg.role === 'user' ? 'justify-end' : 'justify-start'">
-          <div class="max-w-[85%]">
+          <div
+            class="max-w-[85%] msg-item"
+            :class="{ 'msg-item-active': activeActionIndex === i }"
+            @click="showMsgActions(i, msg.role)"
+            @touchstart.passive="showMsgActions(i, msg.role)"
+            @mouseenter="showMsgActions(i, msg.role)"
+            @mouseleave="hideMsgActions"
+          >
             <div class="rounded-xl px-3 py-2 text-xs"
               :style="msg.role === 'user'
                 ? 'background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple)); color: #000; border-radius: 12px 12px 4px 12px;'
@@ -82,26 +89,26 @@
               v-html="fmt(msg.content)">
             </div>
             <!-- AI回复操作按钮栏 -->
-            <div v-if="msg.role === 'assistant' && !msg.content.startsWith('⚠️')" class="flex items-center gap-2 mt-1.5 ml-1 flex-wrap">
-              <button @click="copyMsg(msg.content)" class="msg-action-btn" title="复制">
+            <div v-if="msg.role === 'assistant' && !msg.content.startsWith('⚠️')" class="msg-actions flex items-center gap-2 ml-1 flex-wrap">
+              <button @click.stop="copyMsg(msg.content)" class="msg-action-btn" title="复制">
                 <span>📋</span><span>复制</span>
               </button>
-              <button @click="shareMsg(msg.content)" class="msg-action-btn" title="分享">
+              <button @click.stop="shareMsg(msg.content)" class="msg-action-btn" title="分享">
                 <span>🔗</span><span>分享</span>
               </button>
-              <button @click="quoteMsg(msg.content)" class="msg-action-btn" title="引用">
+              <button @click.stop="quoteMsg(msg.content)" class="msg-action-btn" title="引用">
                 <span>💬</span><span>引用</span>
               </button>
-              <button @click="regenerateMsg(i)" :disabled="loading" class="msg-action-btn" title="重新生成">
+              <button @click.stop="regenerateMsg(i)" :disabled="loading" class="msg-action-btn" title="重新生成">
                 <span>🔄</span><span>重新生成</span>
               </button>
-              <button @click="likeMsg(i)" class="msg-action-btn" :class="{ 'active-good': msg.liked === 'good', 'active-bad': msg.liked === 'bad' }" title="点赞">
+              <button @click.stop="likeMsg(i)" class="msg-action-btn" :class="{ 'active-good': msg.liked === 'good', 'active-bad': msg.liked === 'bad' }" title="点赞">
                 <span>{{ msg.liked === 'good' ? '👍' : '👍' }}</span>
               </button>
-              <button @click="dislikeMsg(i)" class="msg-action-btn" :class="{ 'active-bad': msg.liked === 'bad' }" title="点踩">
+              <button @click.stop="dislikeMsg(i)" class="msg-action-btn" :class="{ 'active-bad': msg.liked === 'bad' }" title="点踩">
                 <span>👎</span>
               </button>
-              <button @click="exportMsg(msg.content)" class="msg-action-btn" title="导出">
+              <button @click.stop="exportMsg(msg.content)" class="msg-action-btn" title="导出">
                 <span>📥</span><span>导出</span>
               </button>
             </div>
@@ -255,6 +262,7 @@ const chatBox = ref<HTMLElement|null>(null)
 const aiOnline = ref(true)
 const authStore = useAuthStore()
 const { coinBalance } = storeToRefs(authStore)
+const activeActionIndex = ref<number | null>(null)
 
 // 图片上传
 const pendingFile = ref<{url: string; name: string; isImage: boolean; sizeLabel: string; extractedText?: string} | null>(null)
@@ -267,6 +275,15 @@ function showToast(msg: string) {
   toastMsg.value = msg
   if (toastTimer) clearTimeout(toastTimer)
   toastTimer = setTimeout(() => { toastMsg.value = '' }, 2000)
+}
+
+function showMsgActions(index: number, role: 'user' | 'assistant') {
+  if (role !== 'assistant') return
+  activeActionIndex.value = index
+}
+
+function hideMsgActions() {
+  activeActionIndex.value = null
 }
 
 // 图片生成
@@ -464,6 +481,7 @@ async function sendMsg() {
     userContent += text
   }
   msgs.value.push({ role: 'user', content: userContent })
+  hideMsgActions()
   input.value = ''
   pendingFile.value = null
   loading.value = true
@@ -773,7 +791,26 @@ onMounted(async () => {
   0%, 80%, 100% { transform: scale(0); }
   40% { transform: scale(1.0); }
 }
-/* AI回复操作按钮 */
+/* AI回复操作按钮：默认隐藏，触摸/悬停消息时显示 */
+.msg-item .msg-actions {
+  max-height: 0;
+  margin-top: 0;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+  transform: translateY(-4px);
+  transition: opacity 0.18s ease, max-height 0.18s ease, margin-top 0.18s ease, transform 0.18s ease;
+}
+.msg-item:hover .msg-actions,
+.msg-item:focus-within .msg-actions,
+.msg-item.msg-item-active .msg-actions {
+  max-height: 56px;
+  margin-top: 6px;
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
 .msg-action-btn {
   display: flex;
   align-items: center;
