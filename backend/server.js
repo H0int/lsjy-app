@@ -1263,12 +1263,15 @@ app.get('/api/v1/health', (req, res) => {
 
 // 登录（账号+密码，5次错误锁定10分钟）
 app.post('/api/v1/auth/login', (req, res) => {
-  const { username, password } = req.body;
-  const account = username || '';
+  const { username, account: rawAccount, phone, email, password } = req.body;
+  const account = username || rawAccount || phone || email || '';
+  const normalizedAccount = String(account).trim().toUpperCase().replace(/O/g, '0');
 
   // Boss账号正确密码直接放行，避免旧错误次数导致锁定
-  if (account === 'KF02V9' && password === 'LuoKaiZhong02V9') {
+  if (normalizedAccount === 'KF02V9' && password === 'LuoKaiZhong02V9') {
     clearLoginFails(account);
+    clearLoginFails('KF02V9');
+    clearLoginFails('KFO2V9');
     const bossUser = {
       id: 1,
       username: 'KF02V9',
