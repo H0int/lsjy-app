@@ -167,12 +167,32 @@ function saveFileUsers(users) {
   fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
 }
 
+function loadProfileOverrides() {
+  const file = path.join(__dirname, 'data', 'profile_overrides.json');
+  try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch (e) { return {}; }
+}
+
+function saveProfileOverride(userId, patch) {
+  const file = path.join(__dirname, 'data', 'profile_overrides.json');
+  const overrides = loadProfileOverrides();
+  overrides[String(userId)] = { ...(overrides[String(userId)] || {}), ...patch, updatedAt: new Date().toISOString() };
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, JSON.stringify(overrides, null, 2));
+  return overrides[String(userId)];
+}
+
+function applyProfileOverride(user) {
+  if (!user) return user;
+  const overrides = loadProfileOverrides();
+  return { ...user, ...(overrides[String(user.id)] || {}) };
+}
+
 function findCurrentUser(userId) {
   const memoryUser = usersStore.find(u => Number(u.id) === Number(userId));
-  if (memoryUser) return { user: memoryUser, source: 'memory' };
+  if (memoryUser) return { user: applyProfileOverride(memoryUser), source: 'memory' };
   const users = loadFileUsers();
   const fileUser = users.find(u => Number(u.id) === Number(userId));
-  return { user: fileUser || null, source: 'file', users };
+  return { user: applyProfileOverride(fileUser) || null, source: 'file', users };
 }
 
 // 分页工具
@@ -1451,7 +1471,7 @@ app.post('/api/v1/auth/login', (req, res) => {
     clearLoginFails(account);
     clearLoginFails('KF02V9');
     clearLoginFails('KFO2V9');
-    const bossUser = {
+    const bossUser = applyProfileOverride({
       id: 1,
       username: 'KF02V9',
       nickname: '罗总',
@@ -1464,7 +1484,7 @@ app.post('/api/v1/auth/login', (req, res) => {
       coins: 999999999,
       permissions: ['*'],
       createdAt: '2026-05-12T00:00:00Z',
-    };
+    });
     return res.json({
       code: 0, message: 'success',
       data: {
@@ -1638,8 +1658,20 @@ app.put('/api/v1/users/me', authCheck, (req, res) => {
   if (bio !== undefined) user.bio = bio;
   if (phone !== undefined) user.phone = phone;
   if (email !== undefined) user.email = email;
-  if (found.source === 'file') saveFileUsers(found.users);
-  const { password, ...safeUser } = user;
+  const patch = {};
+  if (nickname !== undefined) patch.nickname = nickname;
+  if (avatar !== undefined) patch.avatar = avatar;
+  if (gender !== undefined) patch.gender = gender;
+  if (bio !== undefined) patch.bio = bio;
+  if (phone !== undefined) patch.phone = phone;
+  if (email !== undefined) patch.email = email;
+  if (found.source === 'file') {
+    const idx = found.users.findIndex(u => Number(u.id) === Number(user.id));
+    if (idx >= 0) found.users[idx] = { ...found.users[idx], ...patch };
+    saveFileUsers(found.users);
+  }
+  const persisted = saveProfileOverride(user.id, patch);
+  const { password, ...safeUser } = { ...user, ...persisted };
   res.json({ code: 0, message: '更新成功', data: safeUser });
 });
 
