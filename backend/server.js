@@ -31,6 +31,7 @@ const CONFIG = {
   DOUBAO_API_KEY: process.env.DOUBAO_API_KEY || "ark-3c2a939f-9aec-4930-946e-29a97d476611-e6c69",
   DOUBAO_BASE_URL: process.env.DOUBAO_BASE_URL || 'https://ark.cn-beijing.volces.com/api/v3',
   DOUBAO_MODEL: process.env.DOUBAO_MODEL || 'doubao-1-5-pro-32k-250115',
+  DOUBAO_VISION_MODEL: process.env.DOUBAO_VISION_MODEL || 'doubao-1-5-vision-pro-32k-250115',
 
   // 即梦（字节跳动 AI 绘画）
   JIMENG_API_KEY: process.env.JIMENG_API_KEY || "ark-3c2a939f-9aec-4930-946e-29a97d476611-e6c69",
@@ -102,6 +103,32 @@ const CONFIG = {
 // ===== 工具函数 =====
 function log(msg) {
   console.log(`[${new Date().toISOString()}] ${msg}`);
+}
+
+function contentHasImage(content) {
+  return Array.isArray(content) && content.some(part => part?.type === 'image_url' && part?.image_url?.url);
+}
+
+function messagesHaveImage(messages = []) {
+  return messages.some(m => contentHasImage(m.content));
+}
+
+function extractTextContent(content) {
+  if (Array.isArray(content)) {
+    return content.map(part => part?.type === 'text' ? part.text : part?.type === 'image_url' ? '[图片]' : '').filter(Boolean).join('\n');
+  }
+  return String(content || '');
+}
+
+function normalizeIncomingMessages(messages, fallbackMessage = '') {
+  const list = Array.isArray(messages) && messages.length > 0 ? messages : [{ role: 'user', content: fallbackMessage }];
+  return list.map(m => {
+    const role = ['system', 'assistant', 'user'].includes(m?.role) ? m.role : 'user';
+    const content = Array.isArray(m?.content)
+      ? m.content.filter(part => part && (part.type === 'text' || part.type === 'image_url'))
+      : String(m?.content || '');
+    return { role, content };
+  }).filter(m => extractTextContent(m.content).trim() || contentHasImage(m.content));
 }
 
 // 简单auth验证
@@ -674,6 +701,7 @@ async function callCozeAPI(messages, options = {}) {
 async function callOpenAICompatibleAPI(messages, options = {}) {
   const provider = options.provider || 'deepseek';
   let apiKey, baseUrl, model;
+  const hasImage = messagesHaveImage(messages);
 
   switch (provider) {
     case 'deepseek':
@@ -684,7 +712,7 @@ async function callOpenAICompatibleAPI(messages, options = {}) {
     case 'doubao':
       apiKey = CONFIG.DOUBAO_API_KEY;
       baseUrl = CONFIG.DOUBAO_BASE_URL;
-      model = String(options.model || '').startsWith('doubao') ? options.model : CONFIG.DOUBAO_MODEL;
+      model = hasImage ? CONFIG.DOUBAO_VISION_MODEL : (String(options.model || '').startsWith('doubao') ? options.model : CONFIG.DOUBAO_MODEL);
       break;
     case 'tongyi':
       apiKey = CONFIG.TONGYI_API_KEY;
@@ -1725,12 +1753,10 @@ app.post('/api/v1/users', authCheck, (req, res) => {
 app.post('/api/v1/ai/chat', authCheck, async (req, res) => {
   const { messages, message, model, agentId = 1, systemPrompt } = req.body || {};
   const userId = req.user?.id || 1;
-  const chatMessages = Array.isArray(messages) && messages.length > 0
-    ? messages.map(m => ({ role: m.role || 'user', content: String(m.content || '') })).filter(m => m.content)
-    : [{ role: 'user', content: String(message || '') }];
+  const chatMessages = normalizeIncomingMessages(messages, message);
 
   const lastMsg = chatMessages.filter(m => m.role === 'user').pop();
-  if (!lastMsg?.content?.trim()) {
+  if (!lastMsg || (!extractTextContent(lastMsg.content).trim() && !contentHasImage(lastMsg.content))) {
     return res.status(400).json({ code: 400, message: '请输入消息', data: null });
   }
 
@@ -1756,7 +1782,7 @@ app.post('/api/v1/ai/chat', authCheck, async (req, res) => {
     const deduct = deductCoins(userId, cost);
     return res.json({ code: 0, message: 'success', data: { content: result.content, reply: result.content, model: result.model || model || 'default', role: 'assistant', coinCost: cost, balance: deduct.balance, usage: result.usage || {} } });
   } catch (err) {
-    const content = getLocalResponse(lastMsg.content);
+    const content = getLocalResponse(extractTextContent(lastMsg.content));
     const deduct = deductCoins(userId, cost);
     return res.json({ code: 0, message: 'success', data: { content, reply: content, model: 'local-fallback', role: 'assistant', coinCost: cost, balance: deduct.balance } });
   }
@@ -2121,11 +2147,9 @@ app.post('/api/v1/ai/chat', async (req, res) => {
 app.post('/api/v1/agent/chat', authCheck, async (req, res) => {
   const { messages, message, model, agentId = 1, systemPrompt } = req.body || {};
   const userId = req.user?.id || 1;
-  const chatMessages = Array.isArray(messages) && messages.length > 0
-    ? messages.map(m => ({ role: m.role || 'user', content: String(m.content || '') })).filter(m => m.content)
-    : [{ role: 'user', content: String(message || '') }];
+  const chatMessages = normalizeIncomingMessages(messages, message);
 
-  if (!chatMessages.length || !chatMessages.some(m => m.role === 'user' && m.content.trim())) {
+  if (!chatMessages.length || !chatMessages.some(m => m.role === 'user' && (extractTextContent(m.content).trim() || contentHasImage(m.content)))) {
     return res.status(400).json({ code: 400, message: '请输入消息', data: null });
   }
 
@@ -2160,7 +2184,7 @@ app.post('/api/v1/agent/chat', authCheck, async (req, res) => {
       userId,
       toolId: Number(agentId),
       toolName: agent?.name || tool?.name || '罗圣AI智能体',
-      input: lastMsg?.content || '',
+      input: extractTextContent(lastMsg?.content || ''),
       output: result.content,
       model: result.model || model || 'default',
       tokens: result.usage?.totalTokens || 0,
@@ -2182,7 +2206,7 @@ app.post('/api/v1/agent/chat', authCheck, async (req, res) => {
   } catch (err) {
     log(`Agent聊天失败，使用本地兜底: ${err.message}`);
     const lastMsg = chatMessages.filter(m => m.role === 'user').pop();
-    const content = getLocalResponse(lastMsg?.content || '');
+    const content = getLocalResponse(extractTextContent(lastMsg?.content || ''));
     const deduct = deductCoins(userId, cost);
     return res.json({
       code: 0,

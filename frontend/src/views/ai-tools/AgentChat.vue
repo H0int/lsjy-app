@@ -145,14 +145,23 @@
           <button @click="pendingFile = null" class="text-[10px] px-1.5 py-0.5 rounded" style="color: #ff4444; background: rgba(255,68,68,0.1);">✕</button>
         </div>
         <div class="flex gap-1.5">
-          <!-- 上传按钮：图片+文件 -->
-          <button @click="fileUploadRef?.click()" :disabled="loading"
+          <!-- 加号功能菜单 -->
+          <div class="relative flex-shrink-0">
+          <button @click="showPlusMenu = !showPlusMenu" :disabled="loading"
             class="px-2.5 py-2 rounded-lg text-sm flex-shrink-0"
             style="background: rgba(0,240,255,0.05); border: 1px solid var(--cyber-border); color: var(--cyber-cyan); font-size:16px; line-height:1;"
-            title="上传图片或文件">
+            title="更多功能">
             ＋
           </button>
-          <input ref="fileUploadRef" type="file" accept="image/*,.txt,.md,.json,.csv,.js,.ts,.py,.html,.css,.xml,.log,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" class="hidden" @change="handleFileUpload" />
+            <div v-if="showPlusMenu" class="plus-menu">
+              <button @click="openUpload('image')">🖼️ 图片识别</button>
+              <button @click="openUpload('camera')">📷 拍照识别</button>
+              <button @click="openUpload('file')">📄 上传文件</button>
+              <button @click="quoteMsg('请根据我上传的图片，识别图片内容并详细分析。')">🔎 识图提示</button>
+              <button @click="clearChat">🧹 清空对话</button>
+            </div>
+          </div>
+          <input ref="fileUploadRef" type="file" :accept="uploadAccept" :capture="uploadCapture" class="hidden" @change="handleFileUpload" />
           <input v-model="input" @keyup.enter="sendMsg"
             :placeholder="loading ? '思考中...' : '向' + selectedAgent?.name + '提问（' + selectedAgent?.coinCost + '/次）'"
             :disabled="loading"
@@ -267,6 +276,9 @@ const activeActionIndex = ref<number | null>(null)
 // 图片上传
 const pendingFile = ref<{url: string; name: string; isImage: boolean; sizeLabel: string; extractedText?: string} | null>(null)
 const fileUploadRef = ref<HTMLInputElement | null>(null)
+const showPlusMenu = ref(false)
+const uploadAccept = ref('image/*,.txt,.md,.json,.csv,.js,.ts,.py,.html,.css,.xml,.log,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx')
+const uploadCapture = ref<string | undefined>(undefined)
 
 // Toast提示
 const toastMsg = ref('')
@@ -412,9 +424,25 @@ function clearChat() {
   msgsByAgent.value[selectedAgent.value.id] = []
   images.value = []
   pendingFile.value = null
+  showPlusMenu.value = false
 }
 
 function sendQuick(t: string) { input.value = t; sendMsg() }
+
+function openUpload(type: 'image' | 'camera' | 'file') {
+  showPlusMenu.value = false
+  if (type === 'image') {
+    uploadAccept.value = 'image/*'
+    uploadCapture.value = undefined
+  } else if (type === 'camera') {
+    uploadAccept.value = 'image/*'
+    uploadCapture.value = 'environment'
+  } else {
+    uploadAccept.value = '.txt,.md,.json,.csv,.js,.ts,.py,.html,.css,.xml,.log,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx'
+    uploadCapture.value = undefined
+  }
+  nextTick(() => fileUploadRef.value?.click())
+}
 
 // 文件/图片上传处理
 function formatFileSize(bytes: number): string {
@@ -427,19 +455,22 @@ async function handleFileUpload(e: Event) {
   const file = (e.target as HTMLInputElement).files?.[0]
   if (!file) return
   const isImage = file.type.startsWith('image/')
-  const maxSize = isImage ? 5 * 1024 * 1024 : 10 * 1024 * 1024
+  const maxSize = isImage ? 12 * 1024 * 1024 : 10 * 1024 * 1024
   const sizeLabel = formatFileSize(file.size)
   if (file.size > maxSize) {
-    showToast(isImage ? '图片不能超过5MB' : '文件不能超过10MB')
+    showToast(isImage ? '图片不能超过12MB' : '文件不能超过10MB')
     return
   }
-  // 图片：base64预览
+  // 图片：压缩后用于预览和视觉识别
   if (isImage) {
-    const reader = new FileReader()
-    reader.onload = () => {
-      pendingFile.value = { url: reader.result as string, name: file.name, isImage: true, sizeLabel }
+    try {
+      const dataUrl = await compressImageForVision(file)
+      pendingFile.value = { url: dataUrl, name: file.name, isImage: true, sizeLabel }
+      if (!input.value.trim()) input.value = '请识别这张图片，并说明图片里的关键信息。'
+      showToast('✅ 图片已准备识别')
+    } catch {
+      showToast('图片处理失败，请换一张')
     }
-    reader.readAsDataURL(file)
   } else {
     // 文本类文件：提取内容
     const textExts = ['txt','md','json','csv','js','ts','py','html','css','xml','log']
@@ -457,6 +488,30 @@ async function handleFileUpload(e: Event) {
     }
   }
   ;(e.target as HTMLInputElement).value = ''
+}
+
+function compressImageForVision(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onerror = () => reject(new Error('图片读取失败'))
+    reader.onload = () => {
+      const img = new Image()
+      img.onerror = () => reject(new Error('图片解析失败'))
+      img.onload = () => {
+        const maxSide = 1280
+        const scale = Math.min(1, maxSide / Math.max(img.width, img.height))
+        const canvas = document.createElement('canvas')
+        canvas.width = Math.max(16, Math.round(img.width * scale))
+        canvas.height = Math.max(16, Math.round(img.height * scale))
+        const ctx = canvas.getContext('2d')
+        if (!ctx) return reject(new Error('图片压缩失败'))
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+        resolve(canvas.toDataURL('image/jpeg', 0.82))
+      }
+      img.src = String(reader.result)
+    }
+    reader.readAsDataURL(file)
+  })
 }
 
 // ========== 核心：AI对话 ==========
@@ -488,19 +543,9 @@ async function sendMsg() {
   scrollToBottom()
 
   try {
-    const backendMessages = msgs.value.slice(-20).map(m => {
-      // 发送给后端时，剥离base64图片数据（太大，AI API不支持），替换为文字说明
-      let content = m.content
-      if (m.role === 'user' && content.includes('data:image')) {
-        content = content.replace(/!\[图片\]\(data:image\/[^;]+;base64,[^)]+\)/g, '[用户发送了一张图片]')
-      }
-      return { role: m.role, content }
-    })
+    const backendMessages = msgs.value.slice(-20).map(m => ({ role: m.role, content: toBackendContent(m.content) }))
 
-    // 如果有系统提示，加到消息开头
-    if (agent.systemPrompt) {
-      backendMessages.unshift({ role: 'user', content: '[System Instructions] ' + agent.systemPrompt } as any)
-    }
+    // 系统提示通过 systemPrompt 字段传给后端，不混入用户消息
 
     // 使用主后端 /agent/chat，避开线上 /ai/* 独立代理鉴权
     const modelName = agent.modelName || 'deepseek-v4-pro'
@@ -554,6 +599,18 @@ async function sendMsg() {
     loading.value = false
     scrollToBottom()
   }
+}
+
+function toBackendContent(content: string): string | Array<any> {
+  if (!content.includes('data:image')) return content
+  const imageMatches = Array.from(content.matchAll(/!\[图片\]\((data:image\/[^;]+;base64,[^)]+)\)/g))
+  if (!imageMatches.length) return content
+  const text = content.replace(/!\[图片\]\(data:image\/[^;]+;base64,[^)]+\)\n?/g, '').trim() || '请识别并分析这张图片。'
+  const parts: any[] = [{ type: 'text', text }]
+  imageMatches.slice(0, 3).forEach(match => {
+    parts.push({ type: 'image_url', image_url: { url: match[1] } })
+  })
+  return parts
 }
 
 // ========== 消息操作：复制/转发/重新生成 ==========
@@ -610,16 +667,7 @@ async function regenerateMsg(index: number) {
   scrollToBottom()
 
   try {
-    const backendMessages = msgs.value.slice(-20).map(m => {
-      let content = m.content
-      if (m.role === 'user' && content.includes('data:image')) {
-        content = content.replace(/!\[图片\]\(data:image\/[^;]+;base64,[^)]+\)/g, '[用户发送了一张图片]')
-      }
-      return { role: m.role, content }
-    })
-    if (agent.systemPrompt) {
-      backendMessages.unshift({ role: 'user', content: '[System Instructions] ' + agent.systemPrompt } as any)
-    }
+    const backendMessages = msgs.value.slice(-20).map(m => ({ role: m.role, content: toBackendContent(m.content) }))
 
     // 使用主后端 /agent/chat，避开线上 /ai/* 独立代理鉴权
     const modelName = agent.modelName || 'deepseek-v4-pro'
@@ -791,6 +839,37 @@ onMounted(async () => {
   0%, 80%, 100% { transform: scale(0); }
   40% { transform: scale(1.0); }
 }
+
+.plus-menu {
+  position: absolute;
+  left: 0;
+  bottom: 42px;
+  z-index: 60;
+  width: 132px;
+  padding: 6px;
+  border-radius: 12px;
+  background: rgba(5, 10, 20, 0.96);
+  border: 1px solid var(--cyber-border);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), 0 0 18px rgba(0, 240, 255, 0.12);
+  backdrop-filter: blur(10px);
+}
+.plus-menu button {
+  width: 100%;
+  display: block;
+  padding: 7px 8px;
+  border-radius: 8px;
+  text-align: left;
+  font-size: 11px;
+  color: var(--cyber-text);
+  background: transparent;
+  border: 0;
+}
+.plus-menu button:active,
+.plus-menu button:hover {
+  color: var(--cyber-cyan);
+  background: rgba(0,240,255,0.08);
+}
+
 /* AI回复操作按钮：默认隐藏，触摸/悬停消息时显示 */
 .msg-item .msg-actions {
   max-height: 0;
