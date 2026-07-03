@@ -18,7 +18,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ===== 中间件 =====
-app.use(cors({ origin: true, credentials: true }));
+// CORS 由线上 Nginx 统一添加。这里不要重复添加，否则浏览器会因
+// Access-Control-Allow-Origin 出现两份而把请求判定为 Network Error。
 app.use(express.json({ limit: '10mb' }));
 
 // ===== 配置 =====

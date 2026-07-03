@@ -236,7 +236,14 @@ async function handleLogin() {
       }
       router.push('/dashboard')
     }
-    else { recordFail() }
+    else {
+      const err = authStore.lastLoginError || ''
+      if (err === 'Network Error' || err.includes('网络')) {
+        ElMessage.warning('这是网络连接异常，不是密码错误')
+      } else {
+        recordFail()
+      }
+    }
   } catch (e: any) { recordFail() }
   finally { loading.value = false }
 }

@@ -19,6 +19,7 @@ export const useAuthStore = defineStore('auth', () => {
   const userRoles = ref<string[]>([])
   const coinBalance = ref(0)
   const loading = ref(false)
+  const lastLoginError = ref('')
 
   const isLoggedIn = computed(() => !!token.value)
   const isAdmin = computed(() => userRoles.value.some(r => ['boss', 'founder', 'ultimate_admin', 'super_admin', 'admin', 'operator'].includes(r)))
@@ -45,6 +46,7 @@ export const useAuthStore = defineStore('auth', () => {
   // 登录（用户名 + 密码）
   async function login(username: string, password: string) {
     loading.value = true
+    lastLoginError.value = ''
     try {
       const res = await authApi.login(username, password)
       // 后端返回格式: { code, message, data: { accessToken, refreshToken, user } }
@@ -58,7 +60,8 @@ export const useAuthStore = defineStore('auth', () => {
       }
       return true
     } catch (e: any) {
-      ElMessage.error(e?.response?.data?.message || '登录失败')
+      lastLoginError.value = e?.response?.data?.message || e?.message || '登录失败'
+      ElMessage.error(lastLoginError.value === 'Network Error' ? '网络连接异常，请刷新页面后重试' : lastLoginError.value)
       return false
     } finally {
       loading.value = false
@@ -136,7 +139,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   return {
-    token, user, userRoles, coinBalance, loading,
+    token, user, userRoles, coinBalance, loading, lastLoginError,
     isLoggedIn, isAdmin, nickname,
     login, setSession, fetchUserProfile, fetchBalance, logout
   }
