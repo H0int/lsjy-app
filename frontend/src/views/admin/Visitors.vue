@@ -131,15 +131,16 @@ const hotPages = ref<any[]>([])
 
 async function fetchStats() {
   try {
-    const res = await service.get('/visitors/stats')
+    const res = await service.get('/admin/locations', { headers: { 'X-Silent-Error': 'true' } })
     if (res.data.code === 0) {
       const data = res.data.data
       stats.value = {
-        todayVisitors: data.todayVisitors ?? data.today ?? 0,
-        onlineNow: data.totalVisitors ?? data.total ?? 0,
-        pageViews: data.uniqueIPs ?? data.uniqueIps ?? 0,
-        avgDuration: data.lastVisitTime || data.lastVisit || '-'
+        todayVisitors: data.logs?.length ?? data.list?.length ?? 0,
+        onlineNow: data.stats?.activeUsers ?? 0,
+        pageViews: data.logs?.length ?? data.list?.length ?? 0,
+        avgDuration: data.serverTime || '-'
       }
+      liveVisitors.value = (data.logs || data.list || []).map(normalizeVisitor)
       // Update trend data if hourly breakdown is available
       if (data.hourly && Array.isArray(data.hourly)) {
         const maxVal = Math.max(...data.hourly.map((h: any) => h.count || h.visitors || 0), 1)
@@ -149,8 +150,7 @@ async function fetchStats() {
         }))
       }
       // 如果没有hourly数据但有todayVisitors>0，生成模拟趋势
-      if ((!data.hourly || !data.hourly.length) && (data.todayVisitors || data.today || 0) > 0) {
-        const todayCount = data.todayVisitors || data.today || 1
+      if ((!data.hourly || !data.hourly.length) && (data.logs?.length || data.list?.length || 0) > 0) {
         trendData.value = Array.from({ length: 24 }, (_, i) => {
           const now = new Date().getHours()
           if (i <= now) {
@@ -162,32 +162,34 @@ async function fetchStats() {
       }
     }
   } catch (e) {
-    ElMessage.error('加载访客统计失败')
+    console.warn('加载访客统计失败:', (e as any)?.message)
   }
 }
 
 async function fetchList() {
   loading.value = true
   try {
-    const res = await service.get('/visitors/list', { params: { page: 1, pageSize: 20 } })
+    const res = await service.get('/admin/locations', { headers: { 'X-Silent-Error': 'true' } })
     if (res.data.code === 0) {
       const data = res.data.data
-      liveVisitors.value = (data.list || data.items || []).map((item: any) => ({
-        ...item,
-        location: item.location || [item.province, item.city].filter(Boolean).join(' ') || 'IP定位中',
-        currentPage: item.currentPage || item.path || '/',
-        device: item.device || parseDevice(item.userAgent),
-        browser: item.browser || '-',
-        duration: item.elapsedSeconds !== undefined ? `${item.elapsedSeconds}秒` : (item.duration || '-')
-      }))
+      liveVisitors.value = (data.logs || data.list || []).map(normalizeVisitor)
     }
   } catch (e: any) {
-    // /visitors/list 可能在旧版后端不存在(404)，静默处理
-    if (e?.response?.status !== 404) {
-      console.warn('加载访客列表失败:', e?.message)
-    }
+    console.warn('加载访客列表失败:', e?.message)
   } finally {
     loading.value = false
+  }
+}
+
+function normalizeVisitor(item: any) {
+  return {
+    ...item,
+    ip: item.ip || '-',
+    location: item.location || [item.province, item.city].filter(Boolean).join(' ') || 'IP定位中',
+    currentPage: item.currentPage || item.path || '/',
+    device: item.device || parseDevice(item.userAgent),
+    browser: item.browser || '-',
+    duration: item.elapsedSeconds !== undefined ? `${item.elapsedSeconds}秒` : (item.duration || '-')
   }
 }
 
