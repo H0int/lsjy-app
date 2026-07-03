@@ -44,9 +44,9 @@
         <div v-if="isLocked" class="cyber-alert danger">
           <div class="alert-icon">&#9888;</div>
           <div class="alert-text">
-            <div class="alert-title">系统锁定</div>
-            <div class="alert-desc">密码连续错误5次，账号已锁定</div>
-            <div class="lock-timer">{{ lockCountdown }}</div>
+            <div class="alert-title">已解除锁定</div>
+            <div class="alert-desc">旧版页面留下了本地锁定记录，刷新后会自动清除</div>
+            <div class="lock-timer">UNLOCK</div>
           </div>
         </div>
 
@@ -60,11 +60,11 @@
         <el-form ref="formRef" :model="form" :rules="rules" @submit.prevent="handleLogin" class="cyber-form">
           <div class="input-group">
             <label class="input-label"><span class="label-icon">&#10016;</span> 账号</label>
-            <el-input v-model="form.account" placeholder="输入身份标识" size="large" :disabled="isLocked" />
+            <el-input v-model="form.account" placeholder="输入身份标识" size="large" />
           </div>
           <div class="input-group">
             <label class="input-label"><span class="label-icon">&#10016;</span> 密钥</label>
-            <el-input v-model="form.password" type="password" placeholder="输入安全密钥" size="large" show-password :disabled="isLocked" @keyup.enter="handleLogin" />
+            <el-input v-model="form.password" type="password" placeholder="输入安全密钥" size="large" show-password @keyup.enter="handleLogin" />
           </div>
           <div class="remember-row">
             <label class="remember-label" @click="rememberMe = !rememberMe">
@@ -75,9 +75,9 @@
             </label>
           </div>
           <el-form-item>
-            <button type="submit" class="cyber-btn cyber-btn-primary cyber-btn-large" :disabled="isLocked || loading">
+            <button type="submit" class="cyber-btn cyber-btn-primary cyber-btn-large" :disabled="loading">
               <span class="btn-shine"></span>
-              <span class="btn-text">{{ loading ? '验证中...' : (isLocked ? '已锁定' : '进入系统') }}</span>
+              <span class="btn-text">{{ loading ? '验证中...' : '进入系统' }}</span>
             </button>
           </el-form-item>
         </el-form>
@@ -176,18 +176,9 @@ let countdownTimer: ReturnType<typeof setInterval> | null = null
 
 function loadLockState() {
   try {
-    const lockUntil = localStorage.getItem(LOCK_KEY)
-    const fails = localStorage.getItem(FAIL_KEY)
-    failCount.value = fails ? parseInt(fails) : 0
-    if (lockUntil) {
-      const until = parseInt(lockUntil)
-      if (Date.now() < until) {
-        isLocked.value = true
-        startCountdown(until)
-      } else {
-        clearLockState()
-      }
-    }
+    // 旧版前端会把账号锁在本机，导致后端已修复后用户仍无法点击登录。
+    // 新版不再使用本地锁死，打开登录页时直接清理旧锁。
+    clearLockState()
   } catch (e) {}
 }
 
@@ -208,11 +199,10 @@ function recordFail() {
   failCount.value++
   localStorage.setItem(FAIL_KEY, String(failCount.value))
   if (failCount.value >= MAX_FAILS) {
-    const lockUntil = Date.now() + LOCK_DURATION
-    localStorage.setItem(LOCK_KEY, String(lockUntil))
-    isLocked.value = true
-    startCountdown(lockUntil)
-    ElMessage.error(`连续错误${MAX_FAILS}次，账号已锁定10分钟`)
+    // 不再锁死前端，避免正确账号也无法再次尝试。
+    failCount.value = MAX_FAILS
+    localStorage.setItem(FAIL_KEY, String(MAX_FAILS))
+    ElMessage.error(`密码连续错误${MAX_FAILS}次，请核对账号密码后再试`)
   } else {
     ElMessage.error(`密码错误，还剩 ${MAX_FAILS - failCount.value} 次机会`)
   }
@@ -230,7 +220,7 @@ function clearLockState() {
 async function handleLogin() {
   if (!formRef.value) return
   if (loading.value) return
-  if (isLocked.value) { ElMessage.warning('账号已锁定，请等待10分钟后重试'); return }
+  if (isLocked.value) clearLockState()
   const valid = await formRef.value.validate()
   if (!valid) return
   loading.value = true
