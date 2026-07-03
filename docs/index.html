@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <link rel="icon" type="image/jpeg" href="/company-logo.jpg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>罗圣纪元</title>
+  <script>
+    // Dynamic title based on route
+    (function() {
+      const path = window.location.hash || window.location.pathname;
+      if (path.includes('/admin')) {
+        document.title = '罗圣纪元 - 公司后台管理系统';
+      } else {
+        document.title = '罗圣纪元 - 官方网站';
+      }
+      // Watch for route changes
+      window.addEventListener('hashchange', function() {
+        const newPath = window.location.hash || window.location.pathname;
+        document.title = newPath.includes('/admin') 
+          ? '罗圣纪元 - 公司后台管理系统' 
+          : '罗圣纪元 - 官方网站';
+      });
+    })();
+  </script>
+  <script type="module" crossorigin src="/assets/js/index-CzqBQ0eG.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/js/vendor-vue-tU7tsWgl.js">
+  <link rel="modulepreload" crossorigin href="/assets/js/vendor-element-plus-BAVVzeRG.js">
+  <link rel="modulepreload" crossorigin href="/assets/js/vendor-axios-DNeoPP0G.js">
+  <link rel="stylesheet" crossorigin href="/assets/css/index-BS9Bccxc.css">
+</head>
+<body>
+  <div id="app"></div>
+</body>
+</html>
+
+<!-- rebuild trigger -->
