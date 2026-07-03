@@ -141,23 +141,49 @@ function triggerAvatarUpload() {
 async function handleAvatarChange(e: Event) {
   const file = (e.target as HTMLInputElement).files?.[0]
   if (!file) return
-  if (file.size > 5 * 1024 * 1024) {
-    ElMessage.warning('图片大小不能超过5MB')
+  if (!file.type.startsWith('image/')) {
+    ElMessage.warning('请选择图片文件')
     return
   }
-  const reader = new FileReader()
-  reader.onload = async () => {
-    const dataUrl = reader.result as string
+  try {
+    const dataUrl = await compressAvatar(file)
     avatarUrl.value = dataUrl
-    try {
-      await userApi.updateProfile({ avatar: dataUrl })
-      if (authStore.user) authStore.user.avatar = dataUrl
-      ElMessage.success('头像已更新')
-    } catch {
-      ElMessage.error('头像上传失败')
+    const res = await userApi.updateProfile({ avatar: dataUrl })
+    const updatedUser = (res as any).data?.data || (res as any).data
+    if (authStore.user) {
+      Object.assign(authStore.user, updatedUser || {}, { avatar: dataUrl })
+      localStorage.setItem('lsjy_user', JSON.stringify(authStore.user))
     }
+    ElMessage.success('头像已更新')
+  } catch (e: any) {
+    ElMessage.error(e?.response?.data?.message || e?.message || '头像上传失败')
+  } finally {
+    ;(e.target as HTMLInputElement).value = ''
   }
-  reader.readAsDataURL(file)
+}
+
+function compressAvatar(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onerror = () => reject(new Error('图片读取失败'))
+    reader.onload = () => {
+      const img = new Image()
+      img.onerror = () => reject(new Error('图片解析失败'))
+      img.onload = () => {
+        const max = 512
+        const scale = Math.min(1, max / Math.max(img.width, img.height))
+        const canvas = document.createElement('canvas')
+        canvas.width = Math.max(1, Math.round(img.width * scale))
+        canvas.height = Math.max(1, Math.round(img.height * scale))
+        const ctx = canvas.getContext('2d')
+        if (!ctx) return reject(new Error('头像压缩失败'))
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+        resolve(canvas.toDataURL('image/jpeg', 0.82))
+      }
+      img.src = String(reader.result)
+    }
+    reader.readAsDataURL(file)
+  })
 }
 
 const profileForm = reactive({
@@ -205,14 +231,20 @@ function showCustomerServicePhone() {
 async function saveProfile() {
   saving.value = true
   try {
-    await userApi.updateProfile({
+    const res = await userApi.updateProfile({
       nickname: profileForm.nickname,
       bio: profileForm.bio,
       gender: profileForm.gender,
       phone: profileForm.phone,
       email: profileForm.email,
     })
-    await authStore.fetchUserProfile()
+    const updatedUser = (res as any).data?.data || (res as any).data
+    if (authStore.user && updatedUser) {
+      Object.assign(authStore.user, updatedUser)
+      localStorage.setItem('lsjy_user', JSON.stringify(authStore.user))
+    } else {
+      await authStore.fetchUserProfile()
+    }
     ElMessage.success('保存成功')
   } catch (e: any) {
     ElMessage.error(e?.message || '保存失败，请重试')

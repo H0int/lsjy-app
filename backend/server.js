@@ -156,6 +156,25 @@ function getUserCoins(userId) {
   return user?.coins || 0;
 }
 
+function loadFileUsers() {
+  const usersFile = path.join(__dirname, 'data', 'users.json');
+  try { return JSON.parse(fs.readFileSync(usersFile, 'utf8')); } catch (e) { return []; }
+}
+
+function saveFileUsers(users) {
+  const usersFile = path.join(__dirname, 'data', 'users.json');
+  fs.mkdirSync(path.dirname(usersFile), { recursive: true });
+  fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
+}
+
+function findCurrentUser(userId) {
+  const memoryUser = usersStore.find(u => Number(u.id) === Number(userId));
+  if (memoryUser) return { user: memoryUser, source: 'memory' };
+  const users = loadFileUsers();
+  const fileUser = users.find(u => Number(u.id) === Number(userId));
+  return { user: fileUser || null, source: 'file', users };
+}
+
 // 分页工具
 function paginate(arr, page, pageSize) {
   page = parseInt(page) || 1;
@@ -1432,24 +1451,37 @@ app.post('/api/v1/auth/change-password', authCheck, (req, res) => {
 // ============================================================
 
 // 个人信息
-app.get('/api/v1/users/me', (req, res) => {
-  res.json({ code: 0, message: 'success', data: usersStore[0] });
+app.get('/api/v1/users/me', authCheck, (req, res) => {
+  const { user } = findCurrentUser(req.user?.id || 1);
+  if (!user) return res.status(404).json({ code: 404, message: '用户不存在', data: null });
+  const { password, ...safeUser } = user;
+  res.json({ code: 0, message: 'success', data: safeUser });
 });
 
-app.get('/api/v1/users/me/roles', (req, res) => {
-  res.json({ code: 0, message: 'success', data: rolesStore.filter(r => r.name === 'boss') });
+app.get('/api/v1/users/me/roles', authCheck, (req, res) => {
+  const { user } = findCurrentUser(req.user?.id || 1);
+  const names = Array.isArray(user?.roles) ? user.roles : ['user'];
+  res.json({ code: 0, message: 'success', data: rolesStore.filter(r => names.includes(r.name)) });
 });
 
 // 更新个人资料
 app.put('/api/v1/users/me', authCheck, (req, res) => {
-  const { nickname, avatar, gender, bio, phone } = req.body;
-  const user = usersStore[0];
+  const { nickname, avatar, gender, bio, phone, email } = req.body;
+  const found = findCurrentUser(req.user?.id || 1);
+  const user = found.user;
+  if (!user) return res.status(404).json({ code: 404, message: '用户不存在', data: null });
+  if (avatar !== undefined && typeof avatar === 'string' && avatar.length > 8 * 1024 * 1024) {
+    return res.status(413).json({ code: 413, message: '头像图片过大，请选择更小的图片', data: null });
+  }
   if (nickname !== undefined) user.nickname = nickname;
   if (avatar !== undefined) user.avatar = avatar;
   if (gender !== undefined) user.gender = gender;
   if (bio !== undefined) user.bio = bio;
   if (phone !== undefined) user.phone = phone;
-  res.json({ code: 0, message: '更新成功', data: user });
+  if (email !== undefined) user.email = email;
+  if (found.source === 'file') saveFileUsers(found.users);
+  const { password, ...safeUser } = user;
+  res.json({ code: 0, message: '更新成功', data: safeUser });
 });
 
 // 用户列表（管理）
@@ -1514,6 +1546,47 @@ app.post('/api/v1/users', authCheck, (req, res) => {
 // ============================================================
 // ===== AI模块 =====
 // ============================================================
+
+// 兼容旧前端：旧版智能体页面调用 /ai/chat，这里前置接住，避免被旧AI代理/鉴权打成401
+app.post('/api/v1/ai/chat', authCheck, async (req, res) => {
+  const { messages, message, model, agentId = 1, systemPrompt } = req.body || {};
+  const userId = req.user?.id || 1;
+  const chatMessages = Array.isArray(messages) && messages.length > 0
+    ? messages.map(m => ({ role: m.role || 'user', content: String(m.content || '') })).filter(m => m.content)
+    : [{ role: 'user', content: String(message || '') }];
+
+  const lastMsg = chatMessages.filter(m => m.role === 'user').pop();
+  if (!lastMsg?.content?.trim()) {
+    return res.status(400).json({ code: 400, message: '请输入消息', data: null });
+  }
+
+  const agent = (typeof agentsStore !== 'undefined') ? agentsStore.find(a => Number(a.id) === Number(agentId)) : null;
+  const tool = aiToolsStore.find(t => Number(t.id) === Number(agentId)) || aiToolsStore[0];
+  const cost = userId === 1 ? 0 : Number(agent?.coinCost ?? tool?.coinCost ?? 1);
+  const balance = getUserCoins(userId);
+  if (cost > 0 && balance < cost) {
+    return res.status(402).json({ code: 402, message: `圣力不足，当前余额${balance}，本次需要${cost}圣力。请前往个人中心充值。`, data: { balance, cost } });
+  }
+
+  try {
+    const result = await Promise.race([
+      callAI(chatMessages, {
+        model,
+        systemPrompt: systemPrompt || agent?.systemPrompt || tool?.systemPrompt || CONFIG.SYSTEM_PROMPT,
+        provider: agent?.provider || CONFIG.AI_PROVIDER,
+        toolId: Number(agentId),
+        toolName: agent?.name || tool?.name || '罗圣AI智能体',
+      }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('AI响应超时')), 15000)),
+    ]);
+    const deduct = deductCoins(userId, cost);
+    return res.json({ code: 0, message: 'success', data: { content: result.content, reply: result.content, model: result.model || model || 'default', role: 'assistant', coinCost: cost, balance: deduct.balance, usage: result.usage || {} } });
+  } catch (err) {
+    const content = getLocalResponse(lastMsg.content);
+    const deduct = deductCoins(userId, cost);
+    return res.json({ code: 0, message: 'success', data: { content, reply: content, model: 'local-fallback', role: 'assistant', coinCost: cost, balance: deduct.balance } });
+  }
+});
 
 // AI对话（免费工具不扣圣力，付费工具按配置扣费）
 app.post('/api/v1/ai/tools/:toolId/chat', authCheck, async (req, res) => {
