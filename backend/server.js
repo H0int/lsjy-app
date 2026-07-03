@@ -1343,23 +1343,58 @@ app.post('/api/v1/auth/login', (req, res) => {
 
 // 注册
 app.post('/api/v1/auth/register', (req, res) => {
-  const { username, password, nickname, email, phone } = req.body;
+  const { password, nickname, email, phone } = req.body;
+  const username = String(req.body?.username || req.body?.account || '').trim();
+  if (!username || !password) {
+    return res.status(400).json({ code: 400, message: '请输入账号和密码', data: null });
+  }
+  if (!/^[a-zA-Z0-9_]{4,20}$/.test(username)) {
+    return res.status(400).json({ code: 400, message: '账号需为4-20位字母、数字或下划线', data: null });
+  }
+  if (String(password).length < 6) {
+    return res.status(400).json({ code: 400, message: '密码至少6位', data: null });
+  }
   const usersFile = path.join(__dirname, 'data', 'users.json');
   let users = [];
-  try { users = JSON.parse(fs.readFileSync(usersFile, 'utf8')); } catch (e) {}
-  if (users.find(u => u.username === username)) {
+  try { users = JSON.parse(fs.readFileSync(usersFile, 'utf8')); } catch (e) { users = []; }
+  const allUsers = [...usersStore, ...users];
+  if (allUsers.find(u => String(u.username).toLowerCase() === username.toLowerCase())) {
     return res.status(409).json({ code: 409, message: '用户名已存在', data: null });
   }
   const newUser = {
-    id: users.length + 1, username, password, nickname: nickname || username,
-    email, phone, status: 'active', roles: ['normal'], coins: 100, totalRecharge: 0,
+    id: Math.max(0, ...allUsers.map(u => Number(u.id) || 0)) + 1,
+    username,
+    password,
+    nickname: String(nickname || username).trim(),
+    email,
+    phone,
+    status: 'active',
+    roles: ['user'],
+    coins: 100,
+    totalRecharge: 0,
     createdAt: new Date().toISOString(),
   };
   users.push(newUser);
+  fs.mkdirSync(path.dirname(usersFile), { recursive: true });
   fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
   const accessToken = 'jwt_' + newUser.id + '_' + Date.now();
   const refreshToken = 'refresh_' + newUser.id + '_' + Date.now();
-  res.json({ code: 0, message: '注册成功', data: { accessToken, refreshToken, user: { id: newUser.id, username: newUser.username, nickname: newUser.nickname, roles: ['normal'], status: 'active' } } });
+  res.json({
+    code: 0,
+    message: '注册成功',
+    data: {
+      accessToken,
+      refreshToken,
+      user: {
+        id: newUser.id,
+        username: newUser.username,
+        nickname: newUser.nickname,
+        roles: ['user'],
+        status: 'active',
+        coins: 100,
+      },
+    },
+  });
 });
 
 // 刷新token

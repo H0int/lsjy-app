@@ -117,7 +117,7 @@ service.interceptors.response.use(
     const explicitSilent = originalRequest?.headers?.['X-Silent-Error'] === 'true'
     const url = originalRequest?.url || ''
     // 以下后台/非关键请求一律静默，绝不弹红色错误弹窗
-    const silentPaths = ["/visitors/", "/payment/coin/balance", "/ai/tools", "/ai/categories", "/payment/coin/packages", "/announcements", "/payment/orders", "/notifications/"]
+    const silentPaths = ["/auth/register", "/visitors/", "/payment/coin/balance", "/ai/tools", "/ai/categories", "/payment/coin/packages", "/announcements", "/payment/orders", "/notifications/"]
     const isSilentPath = silentPaths.some(p => url.includes(p))
     if (!explicitSilent && !isSilentPath) {
       const msg = error.response?.data?.message || error.message || '网络异常'

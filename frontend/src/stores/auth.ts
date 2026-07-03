@@ -24,6 +24,24 @@ export const useAuthStore = defineStore('auth', () => {
   const isAdmin = computed(() => userRoles.value.some(r => ['boss', 'founder', 'ultimate_admin', 'super_admin', 'admin', 'operator'].includes(r)))
   const nickname = computed(() => user.value?.nickname || (user.value?.username || '用户'))
 
+  function setSession(data: any) {
+    const accessToken = data?.token || data?.accessToken
+    const refreshToken = data?.refreshToken
+    const loginUser = data?.userInfo || data?.user
+    if (!accessToken || !loginUser) return false
+
+    token.value = accessToken
+    setToken(accessToken)
+    if (refreshToken) {
+      localStorage.setItem('lsjy_refresh_token', refreshToken)
+    }
+    user.value = loginUser
+    localStorage.setItem('lsjy_user', JSON.stringify(loginUser))
+    userRoles.value = extractRoles(loginUser.roles)
+    fetchBalance()
+    return true
+  }
+
   // 登录（用户名 + 密码）
   async function login(username: string, password: string) {
     loading.value = true
@@ -32,20 +50,8 @@ export const useAuthStore = defineStore('auth', () => {
       // 后端返回格式: { code, message, data: { accessToken, refreshToken, user } }
       const apiData = (res as any).data ?? res.data
       const data = apiData?.data || apiData
-      const accessToken = data.token || data.accessToken
-      const refreshToken = data.refreshToken
-      const loginUser = data.userInfo || data.user
-      token.value = accessToken
-      setToken(accessToken)
-      localStorage.setItem('lsjy_refresh_token', refreshToken)
-      // 保存用户信息到内存和localStorage
-      user.value = loginUser
-      localStorage.setItem('lsjy_user', JSON.stringify(loginUser))
-      // 提取角色 - 支持多种格式
-      userRoles.value = extractRoles(loginUser.roles)
+      setSession(data)
       ElMessage.success('登录成功')
-      // 异步获取余额
-      fetchBalance()
       // 如果角色为空，异步获取角色（确保admin能进入后台）
       if (userRoles.value.length === 0) {
         fetchRolesFallback()
@@ -132,6 +138,6 @@ export const useAuthStore = defineStore('auth', () => {
   return {
     token, user, userRoles, coinBalance, loading,
     isLoggedIn, isAdmin, nickname,
-    login, fetchUserProfile, fetchBalance, logout
+    login, setSession, fetchUserProfile, fetchBalance, logout
   }
 })

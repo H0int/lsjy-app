@@ -163,21 +163,20 @@ async function handleRegister() {
     try {
       const { authApi } = await import('@/api')
       const res = await authApi.register({
-        username: form.account,
+        username: form.account.trim(),
         password: form.password,
-        nickname: form.nickname
+        nickname: form.nickname.trim()
       })
       if (res.code === 0) {
         ElMessage.success('注册成功！')
-        // 自动登录
-        const success = await authStore.login(form.account, form.password)
-        if (success) router.push('/dashboard')
-        else router.push('/login')
+        const data = (res as any).data?.data || (res as any).data
+        const success = authStore.setSession(data)
+        router.push(success ? '/dashboard' : '/login')
       } else {
         ElMessage.error(res.message || '注册失败')
       }
     } catch (e: any) {
-      const msg = e?.response?.data?.message || e?.message || '注册失败，请稍后重试'
+      const msg = e?.response?.data?.message || (e?.message === 'Network Error' ? '网络连接异常，请刷新页面后重试' : e?.message) || '注册失败，请稍后重试'
       ElMessage.error(msg)
     } finally {
       loading.value = false
