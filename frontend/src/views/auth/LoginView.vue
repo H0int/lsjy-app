@@ -234,7 +234,15 @@ async function handleLogin() {
       } else {
         localStorage.removeItem(REMEMBER_KEY)
       }
-      router.push('/dashboard')
+      const target = authStore.isAdmin ? '/admin/dashboard' : '/dashboard'
+      await router.replace(target)
+      // 微信内置浏览器偶发只更新标题不切换组件，强制刷新到目标 hash。
+      setTimeout(() => {
+        if (window.location.hash !== `#${target}`) {
+          window.location.hash = `#${target}`
+        }
+        window.location.reload()
+      }, 80)
     }
     else {
       const err = authStore.lastLoginError || ''

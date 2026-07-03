@@ -378,7 +378,15 @@ router.beforeEach(async (to, _from, next) => {
 
   // 访客页面（登录/注册），已登录则跳转控制台
   if (to.meta.guest) {
-    if (token) return next('/dashboard')
+    if (token) {
+      try {
+        const savedUser = JSON.parse(localStorage.getItem('lsjy_user') || '{}')
+        const roles = Array.isArray(savedUser.roles) ? savedUser.roles : []
+        const adminRoles = ['boss', 'founder', 'ultimate_admin', 'super_admin', 'admin', 'operator']
+        if (roles.some((r: string) => adminRoles.includes(r))) return next('/admin/dashboard')
+      } catch { /* ignore */ }
+      return next('/dashboard')
+    }
     return next()
   }
 
