@@ -235,14 +235,8 @@ async function handleLogin() {
         localStorage.removeItem(REMEMBER_KEY)
       }
       const target = authStore.isAdmin ? '/admin/dashboard' : '/dashboard'
-      await router.replace(target)
-      // 微信内置浏览器偶发只更新标题不切换组件，强制刷新到目标 hash。
-      setTimeout(() => {
-        if (window.location.hash !== `#${target}`) {
-          window.location.hash = `#${target}`
-        }
-        window.location.reload()
-      }, 80)
+      // 登录成功后直接整页跳转，避免微信内置浏览器出现“标题已变但组件不切换”的半跳转状态。
+      window.location.replace(`/#${target}?v=${Date.now()}`)
     }
     else {
       const err = authStore.lastLoginError || ''
