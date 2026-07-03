@@ -70,6 +70,15 @@ export const toolApi = {
   getHistory(params?: { page?: number; pageSize?: number }): Promise<ApiResponse<PageResult<AiCallRecord>>> {
     return service.get('/ai/history', { params }).then(r => r.data)
   },
+  getWorks(params?: { page?: number; pageSize?: number }): Promise<ApiResponse<PageResult<AiCallRecord>>> {
+    return service.get('/ai/works', { params }).then(r => r.data)
+  },
+  getFavorites(params?: { page?: number; pageSize?: number }): Promise<ApiResponse<PageResult<AiCallRecord>>> {
+    return service.get('/ai/favorites', { params }).then(r => r.data)
+  },
+  toggleFavorite(recordId: number): Promise<ApiResponse<{ message: string }>> {
+    return service.post(`/ai/history/${recordId}/favorite`).then(r => r.data)
+  },
   getQuota(toolId: number): Promise<ApiResponse<{ used: number; limit: number; date: string }>> {
     return service.get(`/ai/quota/${toolId}`).then(r => r.data)
   },
@@ -136,6 +145,9 @@ export const adminApi = {
   getUsers(params?: { page?: number; pageSize?: number; status?: string }): Promise<ApiResponse<PageResult<User>>> {
     if (useMock) return mockApi.getUsers(params) as any
     return service.get('/users', { params }).then(r => r.data)
+  },
+  bossAdjustCoins(data: { userId: number; amount: number; remark?: string }): Promise<ApiResponse<any>> {
+    return service.post('/payment/admin/coins/adjust', data).then(r => r.data)
   },
   getUserById(id: number): Promise<ApiResponse<User>> {
     return service.get(`/users/${id}`).then(r => r.data)
@@ -344,6 +356,11 @@ export const visitorApi = {
     return service.post('/visitors/checkin', { page: page || '/', referer: referer || '' }, { headers: silentHeaders }).then(r => r.data)
   },
 
+  /** POST /visitors/click - 记录前端点击 */
+  trackClick(data: { page?: string; targetText?: string; targetTag?: string; targetPath?: string }): Promise<ApiResponse<any>> {
+    return service.post('/visitors/click', data, { headers: silentHeaders }).then(r => r.data)
+  },
+
   /** GET /visitors/stats - 获取访客统计 */
   getStats(): Promise<ApiResponse<any>> {
     return service.get('/visitors/stats', { headers: silentHeaders }).then(r => r.data)
@@ -352,6 +369,11 @@ export const visitorApi = {
   /** GET /visitors/list - 获取访客列表(管理) */
   getList(params?: { page?: number; pageSize?: number }): Promise<ApiResponse<any>> {
     return service.get('/visitors/list', { params, headers: silentHeaders }).then(r => r.data)
+  },
+
+  /** GET /visitors/clicks - 获取点击记录(管理) */
+  getClicks(params?: { page?: number; pageSize?: number }): Promise<ApiResponse<any>> {
+    return service.get('/visitors/clicks', { params, headers: silentHeaders }).then(r => r.data)
   }
 }
 

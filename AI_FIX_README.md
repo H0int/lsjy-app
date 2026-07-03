@@ -46,9 +46,9 @@ cat >> .env << 'EOF'
 
 # ===== AI配置（修复AI对话问题）=====
 AI_PROVIDER=deepseek
-DOUBAO_API_KEY=ark-3c2a939f-9aec-4930-946e-29a97d476611-e6c69
-DEEPSEEK_API_KEY=sk-4f60d83ebf904321b99000888baf313c
-TONGYI_API_KEY=sk-c4212c9d7e4644e6825d796f6365668e
+DOUBAO_API_KEY=your_doubao_api_key
+DEEPSEEK_API_KEY=your_deepseek_api_key
+TONGYI_API_KEY=your_tongyi_api_key
 EOF
 
 # 重启服务
@@ -88,9 +88,9 @@ curl -X POST http://8.154.16.5:3000/api/v1/ai/tools/2/chat \
 
 ## AI Provider优先级
 
-1. **DeepSeek**（主Provider）- 已配置API Key
-2. **豆包 Doubao**（备用）- 已配置API Key
-3. **通义千问 Tongyi**（备用）- 已配置API Key
+1. **DeepSeek**（主Provider）- 需要在服务器`.env`配置API Key
+2. **豆包 Doubao**（备用）- 需要在服务器`.env`配置API Key
+3. **通义千问 Tongyi**（备用）- 需要在服务器`.env`配置API Key
 4. **腾讯元宝 Yuanbao**（备用）- 需要配置API Key
 5. **OpenAI**（备用）- 需要配置API Key
 6. **Coze**（最后）- 需要正确配置Bot系统提示词
@@ -98,7 +98,7 @@ curl -X POST http://8.154.16.5:3000/api/v1/ai/tools/2/chat \
 ## 注意事项
 
 1. **不要使用Coze作为主Provider**，除非在Coze平台正确配置了Bot的系统提示词
-2. **API Keys已硬编码**在server.js中作为备用，但建议通过.env配置
+2. **API Keys只能放在服务器`.env`环境变量中**，不要写入代码、提交记录、脚本或补丁文件
 3. **系统提示词**已包含正确的公司信息（创始人：罗凯中）
 4. **降级机制**会在主Provider失败时自动切换到备用Provider
 

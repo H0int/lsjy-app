@@ -23,7 +23,7 @@ export class TongyiProvider extends BaseAIProvider {
 
   /**
    * 文本对话
-   * DashScope兼容OpenAI格式：POST /compatible-mode/v1/chat/completions
+   * DashScope兼容OpenAI格式：POST /chat/completions
    */
   async chat(messages: ChatMessage[], options?: ChatOptions): Promise<ChatResponse> {
     this.ensureInitialized();
@@ -55,7 +55,7 @@ export class TongyiProvider extends BaseAIProvider {
     const response = await this.requestWithRetry(() =>
       this.httpRequest({
         method: 'POST',
-        url: `${this.baseUrl}/compatible-mode/v1/chat/completions`,
+        url: `${this.baseUrl}/chat/completions`,
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${this.apiKey}`,
@@ -112,7 +112,7 @@ export class TongyiProvider extends BaseAIProvider {
     startTime: number,
   ): Promise<ChatResponse> {
     return new Promise((resolve, reject) => {
-      const url = `${this.baseUrl}/compatible-mode/v1/chat/completions`;
+      const url = `${this.baseUrl}/chat/completions`;
       const urlObj = new URL(url);
       const bodyStr = JSON.stringify(requestBody);
       const https = require('https');

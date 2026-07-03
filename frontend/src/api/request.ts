@@ -6,6 +6,10 @@ import { getToken, removeToken } from '@/utils'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://api.lsjyapp.cn/api/v1'
 
+function redirectToLogin() {
+  window.location.hash = '#/login'
+}
+
 const service: AxiosInstance = axios.create({
   baseURL: API_BASE,
   timeout: 300000,
@@ -73,7 +77,7 @@ service.interceptors.response.use(
         // 无refreshToken，直接登出
         removeToken()
         localStorage.removeItem('lsjy_refresh_token')
-        window.location.href = '/login'
+        redirectToLogin()
         return Promise.reject(error)
       }
 
@@ -102,7 +106,7 @@ service.interceptors.response.use(
         removeToken()
         localStorage.removeItem('lsjy_refresh_token')
         ElMessage.error('登录已过期，请重新登录')
-        window.location.href = '/login'
+        redirectToLogin()
         return Promise.reject(refreshError)
       } finally {
         isRefreshing = false

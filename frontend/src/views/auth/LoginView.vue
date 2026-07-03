@@ -75,7 +75,7 @@
             </label>
           </div>
           <el-form-item>
-            <button type="submit" class="cyber-btn cyber-btn-primary cyber-btn-large" :disabled="isLocked || loading" @click="handleLogin">
+            <button type="submit" class="cyber-btn cyber-btn-primary cyber-btn-large" :disabled="isLocked || loading">
               <span class="btn-shine"></span>
               <span class="btn-text">{{ loading ? '验证中...' : (isLocked ? '已锁定' : '进入系统') }}</span>
             </button>
@@ -229,6 +229,7 @@ function clearLockState() {
 
 async function handleLogin() {
   if (!formRef.value) return
+  if (loading.value) return
   if (isLocked.value) { ElMessage.warning('账号已锁定，请等待10分钟后重试'); return }
   const valid = await formRef.value.validate()
   if (!valid) return
@@ -679,4 +680,3 @@ onUnmounted(() => { if (countdownTimer) clearInterval(countdownTimer) })
   .logo-ring { width: 80px; height: 80px; }
 }
 </style>
-

@@ -18,8 +18,8 @@ import {
 
 @Injectable()
 export class OpenAIProvider extends BaseAIProvider {
-  readonly name = 'openai';
-  readonly displayName = 'OpenAI GPT';
+  readonly name: string = 'openai';
+  readonly displayName: string = 'OpenAI GPT';
   readonly capabilities: ('text' | 'image')[] = ['text', 'image'];
 
   /**

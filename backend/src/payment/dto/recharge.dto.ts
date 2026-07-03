@@ -5,5 +5,5 @@ export class RechargeDto {
   @ApiProperty({ description: '充值套餐ID' })
   @IsInt()
   @Min(1)
-  packageId: number;
+  packageId!: number;
 }

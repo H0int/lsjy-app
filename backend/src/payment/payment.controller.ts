@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Body, Query, Param, UseGuards } from "@nestjs/common";
+import { Controller, Get, Post, Put, Body, Query, Param, UseGuards, ForbiddenException } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from "@nestjs/swagger";
 import { PaymentService } from "./payment.service";
 import { JwtAuthGuard } from "../common/guards/jwt-auth.guard";
@@ -83,12 +83,60 @@ export class PaymentController {
     return { data: { items } };
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Post("admin/coins/adjust")
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "Boss后台给用户充值圣点" })
+  async adminAdjustCoins(
+    @CurrentUser() user: any,
+    @Body() body: { userId: number; amount: number; remark?: string },
+  ) {
+    const roles: string[] = user?.roles || [];
+    const canAdjust = roles.includes('boss') || roles.includes('founder') || roles.includes('ultimate_admin') || roles.includes('super_admin') || roles.includes('admin') || user?.membershipTier === 'founder';
+    if (!canAdjust) {
+      throw new ForbiddenException('只有Boss或高级管理员可以手动充值圣点');
+    }
+    const account = await this.paymentService.adminAdjustCoins(
+      Number(user.sub || user.id),
+      Number(body.userId),
+      Number(body.amount),
+      body.remark,
+    );
+    return { data: { account, message: '充值成功' } };
+  }
+
   @Get("admin/orders")
   @ApiOperation({ summary: "管理员查看所有订单" })
   async getAllOrders(@Query() query: { page?: number; pageSize?: number; status?: string }) {
     const page = parseInt(String(query.page)) || 1;
     const pageSize = parseInt(String(query.pageSize)) || 20;
     return this.paymentService.getAllPaymentOrders(page, pageSize, query.status);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get("coin/orders")
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "兼容后台充值管理订单列表" })
+  async getCoinOrders(@Query() query: { page?: number; pageSize?: number; status?: string }) {
+    const page = parseInt(String(query.page)) || 1;
+    const pageSize = parseInt(String(query.pageSize)) || 20;
+    const result = await this.paymentService.getAllPaymentOrders(page, pageSize, query.status);
+    return { data: { items: result.list || [], total: result.total || 0, page, pageSize } };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post("coin/approve/:orderId")
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "兼容后台充值审批" })
+  async approveCoinOrder(
+    @Param("orderId") orderId: string,
+    @Body() body: { action?: 'approve' | 'reject'; remark?: string },
+    @CurrentUser("username") username: string,
+  ) {
+    if (body.action === 'reject') {
+      return this.paymentService.rejectOrder(parseInt(orderId), username || 'admin', body.remark);
+    }
+    return this.paymentService.approveOrder(parseInt(orderId), username || 'admin');
   }
 
   @Put("admin/orders/:id/approve")

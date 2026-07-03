@@ -30,6 +30,43 @@ export class PaymentService {
     return account;
   }
 
+  async adminAdjustCoins(operatorId: number, targetUserId: number, amount: number, remark?: string): Promise<CoinAccount> {
+    if (!targetUserId || targetUserId <= 0) {
+      throw new BadRequestException('请选择要充值的用户');
+    }
+    if (!Number.isFinite(amount) || amount <= 0) {
+      throw new BadRequestException('充值圣点必须大于0');
+    }
+
+    let savedAccount!: CoinAccount;
+    await this.dataSource.transaction(async (manager) => {
+      let account = await manager.findOne(CoinAccount, { where: { userId: targetUserId } });
+      if (!account) {
+        account = manager.create(CoinAccount, { userId: targetUserId, balance: 0 });
+        account = await manager.save(CoinAccount, account);
+      }
+
+      const balanceBefore = Number(account.balance || 0);
+      account.balance = balanceBefore + amount;
+      account.totalRecharge = Number(account.totalRecharge || 0) + amount;
+      savedAccount = await manager.save(CoinAccount, account);
+
+      await manager.save(CoinTransaction, {
+        userId: targetUserId,
+        transactionType: 'admin_adjust',
+        amount,
+        balanceBefore,
+        balanceAfter: balanceBefore + amount,
+        refType: 'boss_recharge',
+        refId: operatorId,
+        operatorId,
+        remark: remark || `Boss后台手动充值 ${amount} 圣点`,
+      });
+    });
+
+    return savedAccount;
+  }
+
   async getPackages(): Promise<CoinRechargePackage[]> {
     return this.packageRepo.find({
       where: { status: 'active' },
@@ -145,7 +182,6 @@ export class PaymentService {
     });
     return { items, total, page, pageSize };
   }
-}
 
   // Admin methods
   async getAllPaymentOrders(page: number, pageSize: number, status?: string) {
@@ -185,3 +221,24 @@ export class PaymentService {
     await this.paymentTxRepo.save(order);
     return { success: true, message: "已拒绝" };
   }
+
+  async submitScreenshot(userId: number, orderId: number, screenshotUrl: string) {
+    const order = await this.paymentTxRepo.findOne({ where: { id: orderId, userId } });
+    if (!order) throw new NotFoundException('订单不存在');
+    if (order.status !== 'pending') throw new BadRequestException('订单状态不允许上传凭证');
+
+    order.callbackData = {
+      ...(order.callbackData || {}),
+      screenshotUrl,
+      submittedAt: new Date().toISOString(),
+    };
+    await this.paymentTxRepo.save(order);
+
+    return { success: true, message: '支付凭证已提交，等待审核' };
+  }
+
+  async getUserOrders(userId: number, page = 1, pageSize = 20) {
+    const result = await this.getPaymentOrders(userId, page, pageSize);
+    return result.items;
+  }
+}

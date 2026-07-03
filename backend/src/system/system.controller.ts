@@ -31,6 +31,29 @@ export class SystemController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('super_admin', 'operator')
+  @Get('settings')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '获取系统设置(兼容前端)' })
+  async getSettings() {
+    const settings = await this.systemService.getSettings();
+    return { data: settings };
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('super_admin')
+  @Put('settings')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '保存系统设置(兼容前端)' })
+  async updateSettings(
+    @Body() settings: Record<string, any>,
+    @CurrentUser('id') userId: number,
+  ) {
+    const result = await this.systemService.updateSettings(settings, userId);
+    return { data: result };
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('super_admin')
   @Put('configs/:key')
   @ApiBearerAuth()

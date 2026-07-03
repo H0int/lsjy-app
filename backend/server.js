@@ -342,8 +342,8 @@ const aiToolsStore = [
   { id: 6, name: '自媒体运营官', icon: '📱', toolType: 'text', categoryId: 1, status: 'active', description: '自媒体内容策划、运营策略、涨粉技巧', isFree: false, systemPrompt: '你是资深自媒体运营专家，精通抖音、小红书、微信公众号、B站等平台的运营策略。能策划爆款内容、制定涨粉方案、优化变现路径。回复要实操、有案例、可落地。', usageCount: 345, coinCost: 2 },
   { id: 7, name: '电商顾问', icon: '🛒', toolType: 'text', categoryId: 1, status: 'active', description: '电商运营、选品策略、店铺优化', isFree: false, systemPrompt: '你是电商运营专家，精通淘宝、京东、拼多多、抖音电商等平台的运营技巧。能提供选品建议、店铺优化方案、营销策略。回复要有数据、有案例、可执行。', usageCount: 278, coinCost: 2 },
   { id: 8, name: '教育导师', icon: '📚', toolType: 'text', categoryId: 1, status: 'active', description: '课程推荐、学习规划、技能培训', isFree: false, systemPrompt: '你是资深教育专家，擅长课程规划、学习方法指导、职业技能培训建议。能根据学员情况推荐合适的课程，制定学习计划。回复要专业、有温度、可执行。', usageCount: 189, coinCost: 2 },
-  { id: 9, name: '宠物顾问', icon: '🐾', toolType: 'text', categoryId: 1, status: 'active', description: '宠物养护、训练指导、宠物用品推荐', isFree: false, systemPrompt: '你是宠物养护专家，精通猫狗等常见宠物的饲养、训练、健康管理。能提供宠物饮食建议、训练方法、疾病预防指导。回复要专业、有爱心、实用。', usageCount: 134, coinCost: 2 },
-  { id: 10, name: '校园助手', icon: '🎓', toolType: 'text', categoryId: 1, status: 'active', description: '伯雅校园服务、学业辅导、校园生活', isFree: false, systemPrompt: '你是伯雅校园的智能助手，熟悉校园生活服务、学业辅导、社团活动、考试备考等。能为学生提供学习建议、生活指导、职业规划。回复要亲切、实用、贴近学生生活。', usageCount: 267, coinCost: 1 },
+  { id: 9, name: '宠物顾问', icon: '🐾', toolType: 'text', categoryId: 5, category: { id: 5, name: '宠物', slug: 'pet', module: 'pet' }, status: 'active', description: '宠物养护、训练指导、宠物用品推荐', isFree: false, systemPrompt: '你是宠物养护专家，精通猫狗等常见宠物的饲养、训练、健康管理。能提供宠物饮食建议、训练方法、疾病预防指导。回复要专业、有爱心、实用。', usageCount: 134, coinCost: 2 },
+  { id: 10, name: '校园助手', icon: '🎓', toolType: 'text', categoryId: 6, category: { id: 6, name: '伯雅校园', slug: 'campus', module: 'campus' }, status: 'active', description: '伯雅校园服务、学业辅导、校园生活', isFree: false, systemPrompt: '你是伯雅校园的智能助手，熟悉校园生活服务、学业辅导、社团活动、考试备考等。能为学生提供学习建议、生活指导、职业规划。回复要亲切、实用、贴近学生生活。', usageCount: 267, coinCost: 1 },
 ];
 
 // ===== 10 AI员工 Agent 定义 =====
@@ -1002,6 +1002,13 @@ app.get('/api/v1', (req, res) => {
 
 // ===== 访客中心 =====
 const visitorsStore = [];
+const clickStore = [];
+const knowledgeStore = [];
+const adminRolesStore = [
+  { id: 1, name: 'boss', displayName: 'Boss账号', description: '老板最高权限', permissions: ['dashboard:view', 'users:manage', 'finance:manage', 'system:manage'], userCount: 1, status: '启用' },
+  { id: 2, name: 'admin', displayName: '管理员', description: '后台管理权限', permissions: ['dashboard:view', 'users:manage'], userCount: 0, status: '启用' },
+];
+const adminPermissionList = ['dashboard:view', 'users:manage', 'finance:manage', 'tools:manage', 'content:manage', 'system:manage'];
 const VISITORS_FILE = path.join(__dirname, 'data', 'visitors.json');
 
 // 加载访客数据
@@ -1099,6 +1106,23 @@ app.post('/api/v1/visitors/checkin', (req, res) => {
   res.json({ code: 0, message: 'success', data: visitor });
 });
 
+app.post('/api/v1/visitors/click', (req, res) => {
+  const ip = req.headers['x-forwarded-for'] || req.ip || 'unknown';
+  const record = {
+    id: clickStore.length + 1,
+    ip,
+    page: String(req.body?.page || '/').slice(0, 300),
+    targetText: String(req.body?.targetText || '').slice(0, 120),
+    targetTag: String(req.body?.targetTag || '').slice(0, 40),
+    targetPath: String(req.body?.targetPath || '').slice(0, 300),
+    userAgent: req.headers['user-agent'] || '',
+    createdAt: new Date().toISOString(),
+  };
+  clickStore.push(record);
+  if (clickStore.length > 10000) clickStore.splice(0, clickStore.length - 10000);
+  res.json({ code: 0, message: 'success', data: { message: '记录成功' } });
+});
+
 // GET /visitors/list — 前端 visitorApi.getList() 和管理后台调用
 app.get('/api/v1/visitors/list', (req, res) => {
   const { page = 1, pageSize = 20 } = req.query;
@@ -1115,6 +1139,88 @@ app.get('/api/v1/visitors/list', (req, res) => {
       pageSize: parseInt(pageSize)
     }
   });
+});
+
+app.get('/api/v1/visitors/clicks', authCheck, (req, res) => {
+  const { page, pageSize } = req.query;
+  res.json({ code: 0, message: 'success', data: paginate(clickStore.slice().reverse(), page, pageSize) });
+});
+
+app.get('/api/v1/knowledge', authCheck, (req, res) => {
+  const keyword = String(req.query.keyword || '').toLowerCase();
+  const type = String(req.query.type || '');
+  let list = [...knowledgeStore];
+  if (keyword) list = list.filter(item => `${item.title || ''} ${item.content || ''}`.toLowerCase().includes(keyword));
+  if (type) list = list.filter(item => item.type === type);
+  res.json({ code: 0, message: 'success', data: list });
+});
+
+app.post('/api/v1/knowledge', authCheck, (req, res) => {
+  const content = String(req.body?.content || '');
+  const item = {
+    id: nextId(),
+    title: req.body?.title || '未命名文档',
+    content,
+    type: req.body?.type || '其他',
+    tags: Array.isArray(req.body?.tags) ? req.body.tags : [],
+    chunks: Math.max(1, Math.ceil(content.length / 500)),
+    status: 'indexed',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  knowledgeStore.unshift(item);
+  res.json({ code: 0, message: '上传成功', data: item });
+});
+
+app.delete('/api/v1/knowledge/:id', authCheck, (req, res) => {
+  const idx = knowledgeStore.findIndex(item => String(item.id) === String(req.params.id));
+  if (idx >= 0) knowledgeStore.splice(idx, 1);
+  res.json({ code: 0, message: '删除成功', data: null });
+});
+
+app.get('/api/v1/admin/permissions', authCheck, (req, res) => {
+  res.json({
+    code: 0,
+    message: 'success',
+    data: {
+      roles: adminRolesStore.map(role => ({ ...role, permissionCount: role.permissions?.length || 0 })),
+      permissions: adminPermissionList,
+      stats: {
+        totalRoles: adminRolesStore.length,
+        totalPermissions: adminPermissionList.length,
+        assignedUsers: adminRolesStore.reduce((sum, role) => sum + Number(role.userCount || 0), 0),
+      },
+    },
+  });
+});
+
+app.post('/api/v1/admin/permissions', authCheck, (req, res) => {
+  const item = {
+    id: nextId(),
+    name: req.body?.name || req.body?.displayName || `role_${Date.now()}`,
+    displayName: req.body?.displayName || req.body?.name || '新角色',
+    description: req.body?.description || '',
+    permissions: req.body?.permissions || [],
+    userCount: 0,
+    status: '启用',
+  };
+  adminRolesStore.unshift(item);
+  res.json({ code: 0, message: '创建成功', data: item });
+});
+
+app.put('/api/v1/admin/permissions/:id', authCheck, (req, res) => {
+  const role = adminRolesStore.find(item => String(item.id) === String(req.params.id));
+  if (!role) return res.status(404).json({ code: 404, message: '角色不存在', data: null });
+  role.displayName = req.body?.displayName ?? role.displayName;
+  role.description = req.body?.description ?? role.description;
+  role.permissions = req.body?.permissions ?? role.permissions;
+  res.json({ code: 0, message: '保存成功', data: role });
+});
+
+app.delete('/api/v1/admin/permissions/:id', authCheck, (req, res) => {
+  const idx = adminRolesStore.findIndex(item => String(item.id) === String(req.params.id));
+  if (idx >= 0) adminRolesStore.splice(idx, 1);
+  res.json({ code: 0, message: '删除成功', data: null });
 });
 
 
@@ -1356,7 +1462,7 @@ app.post('/api/v1/users', authCheck, (req, res) => {
 // ===== AI模块 =====
 // ============================================================
 
-// AI对话（消耗1圣力/次）
+// AI对话（免费工具不扣圣力，付费工具按配置扣费）
 app.post('/api/v1/ai/tools/:toolId/chat', authCheck, async (req, res) => {
   const { toolId } = req.params;
   const { messages, model, temperature, maxTokens, systemPrompt } = req.body;
@@ -1366,7 +1472,8 @@ app.post('/api/v1/ai/tools/:toolId/chat', authCheck, async (req, res) => {
   const agentId = Number(toolId);
   const agent = (typeof agentsStore !== 'undefined') ? agentsStore.find(a => a.id === agentId) : null;
   const tool = aiToolsStore.find(t => t.id === agentId);
-  const CHAT_COIN_COST = agent ? agent.coinCost : (tool ? (tool.coinCost || 1) : 1);
+  const isFreeTool = !!tool?.isFree && !agent;
+  const CHAT_COIN_COST = isFreeTool ? 0 : (agent ? agent.coinCost : (tool ? (tool.coinCost || 1) : 1));
   const effectiveSystemPrompt = systemPrompt || (agent ? agent.systemPrompt : null) || (tool ? tool.systemPrompt : null) || CONFIG.SYSTEM_PROMPT;
   const effectiveProvider = agent ? (agent.provider || CONFIG.AI_PROVIDER) : (CONFIG.AI_PROVIDER);
   log(`收到对话请求: toolId=${toolId}, userId=${userId}, messages=${messages?.length || 0}`);
@@ -1375,7 +1482,7 @@ app.post('/api/v1/ai/tools/:toolId/chat', authCheck, async (req, res) => {
   }
   // 检查圣力余额
   const balance = getUserCoins(userId);
-  if (balance < CHAT_COIN_COST) {
+  if (CHAT_COIN_COST > 0 && balance < CHAT_COIN_COST) {
     return res.status(402).json({
       code: 402,
       message: `圣力不足，当前余额${balance}，本次需要${CHAT_COIN_COST}圣力。请前往个人中心充值。`,
@@ -1413,7 +1520,7 @@ app.post('/api/v1/ai/tools/:toolId/chat', authCheck, async (req, res) => {
     const lastUserMsg = messages.filter(m => m.role === 'user').pop();
     const localReply = getLocalResponse(lastUserMsg?.content || '');
     log('使用本地智能回复兜底');
-    // 本地兜底也扣费
+    // 本地兜底按工具配置扣费；免费工具不扣费
     const deduct = deductCoins(userId, CHAT_COIN_COST);
     res.json({
       code: 0, message: 'success',
@@ -1472,6 +1579,42 @@ app.get('/api/v1/ai/history', authCheck, (req, res) => {
   if (toolId) list = list.filter(h => h.toolId === Number(toolId));
   if (toolName) list = list.filter(h => h.toolName.includes(toolName));
   res.json({ code: 0, message: 'success', data: paginate(list, page, pageSize) });
+});
+
+function normalizeAiRecord(record) {
+  const tool = aiToolsStore.find(t => t.id === Number(record.toolId));
+  return {
+    id: record.id,
+    userId: record.userId || 1,
+    toolId: record.toolId,
+    tool: tool || { id: record.toolId, name: record.toolName || 'AI工具', icon: '🤖' },
+    requestId: record.requestId || `mock-${record.id}`,
+    inputText: record.inputText || record.input || '',
+    outputText: record.outputText || record.output || '',
+    coinCost: record.coinCost || tool?.coinCost || 0,
+    status: record.status || 'completed',
+    isFavorite: record.isFavorite ? 1 : 0,
+    createdAt: record.createdAt || new Date().toISOString(),
+  };
+}
+
+app.get('/api/v1/ai/works', authCheck, (req, res) => {
+  const { page, pageSize } = req.query;
+  const list = aiHistoryStore.map(normalizeAiRecord);
+  res.json({ code: 0, message: 'success', data: paginate(list, page, pageSize) });
+});
+
+app.get('/api/v1/ai/favorites', authCheck, (req, res) => {
+  const { page, pageSize } = req.query;
+  const list = aiHistoryStore.filter(h => h.isFavorite).map(normalizeAiRecord);
+  res.json({ code: 0, message: 'success', data: paginate(list, page, pageSize) });
+});
+
+app.post('/api/v1/ai/history/:id/favorite', authCheck, (req, res) => {
+  const record = aiHistoryStore.find(h => h.id === Number(req.params.id));
+  if (!record) return res.status(404).json({ code: 404, message: '记录不存在', data: null });
+  record.isFavorite = record.isFavorite ? 0 : 1;
+  res.json({ code: 0, message: 'success', data: { message: '操作成功' } });
 });
 
 // 工具配额
@@ -1801,6 +1944,57 @@ app.get('/api/v1/payment/coin/balance', authCheck, (req, res) => {
   const balance = user?.unlimited ? 999999 : (user?.coins || 0);
   const totalRecharge = user?.totalRecharge || 0;
   res.json({ code: 0, message: 'success', data: { balance, frozenAmount: 0, totalRecharge, unlimited: user?.unlimited || false } });
+});
+
+app.post('/api/v1/payment/admin/coins/adjust', authCheck, (req, res) => {
+  const targetUserId = Number(req.body?.userId);
+  const amount = Number(req.body?.amount);
+  const remark = req.body?.remark || `Boss后台手动充值 ${amount} 圣点`;
+  if (!targetUserId || targetUserId <= 0) {
+    return res.status(400).json({ code: 400, message: '请选择要充值的用户', data: null });
+  }
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return res.status(400).json({ code: 400, message: '充值圣点必须大于0', data: null });
+  }
+
+  const usersFile = path.join(__dirname, 'data', 'users.json');
+  let users = [];
+  try { users = JSON.parse(fs.readFileSync(usersFile, 'utf8')); } catch (e) { users = [...usersStore]; }
+  let user = users.find(u => Number(u.id) === targetUserId);
+  if (!user) user = usersStore.find(u => Number(u.id) === targetUserId);
+  if (!user) {
+    return res.status(404).json({ code: 404, message: '用户不存在', data: null });
+  }
+
+  const before = Number(user.coins || 0);
+  user.coins = before + amount;
+  user.totalRecharge = Number(user.totalRecharge || 0) + amount;
+
+  try {
+    fs.mkdirSync(path.dirname(usersFile), { recursive: true });
+    fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
+  } catch (e) {
+    // 内存模式忽略写盘失败
+  }
+
+  coinTransactionsStore.unshift({
+    id: nextId(),
+    userId: targetUserId,
+    type: 'admin_adjust',
+    amount,
+    balance: user.coins,
+    description: remark,
+    createdAt: new Date().toISOString(),
+  });
+
+  res.json({
+    code: 0,
+    message: '充值成功',
+    data: {
+      account: { userId: targetUserId, balance: user.coins, totalRecharge: user.totalRecharge },
+      message: '充值成功',
+    },
+  });
 });
 
 // 充值套餐

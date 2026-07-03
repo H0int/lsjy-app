@@ -70,6 +70,32 @@ export class AiToolsController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get('works')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '获取我的作品' })
+  async getWorks(
+    @CurrentUser('id') userId: number,
+    @Query('page') page = 1,
+    @Query('pageSize') pageSize = 20,
+  ) {
+    const result = await this.aiToolsService.getWorks(userId, page, pageSize);
+    return { data: result };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('favorites')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '获取收藏工具/作品' })
+  async getFavorites(
+    @CurrentUser('id') userId: number,
+    @Query('page') page = 1,
+    @Query('pageSize') pageSize = 20,
+  ) {
+    const result = await this.aiToolsService.getFavorites(userId, page, pageSize);
+    return { data: result };
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get('history/:id')
   @ApiBearerAuth()
   @ApiOperation({ summary: '获取调用详情' })

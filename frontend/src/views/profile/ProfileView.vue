@@ -49,11 +49,11 @@
               @mouseleave="($event.currentTarget as HTMLElement).style.background='rgba(0,240,255,0.08)'">
               💰 圣力中心
             </router-link>
-            <button
+            <router-link to="/profile/security"
               class="block w-full py-2.5 rounded-lg text-sm font-medium transition-all"
               style="background: rgba(136,136,170,0.08); color: var(--cyber-text-dim); border: 1px solid var(--cyber-border);">
               🔒 安全设置
-            </button>
+            </router-link>
           </div>
         </div>
       </div>
@@ -97,11 +97,23 @@
 
         <!-- 快捷功能 -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
-          <div v-for="item in quickActions" :key="item.label"
-            class="cyber-card p-4 text-center cursor-pointer transition-all duration-300 hover:-translate-y-1">
+          <router-link v-for="item in navigationActions" :key="item.label"
+            :to="item.to"
+            class="cyber-card p-4 text-center cursor-pointer transition-all duration-300 hover:-translate-y-1 focus:outline-none block"
+            :aria-label="item.label"
+            role="button">
             <div class="text-2xl mb-2" style="filter: drop-shadow(0 0 4px rgba(0,240,255,0.3));">{{ item.icon }}</div>
             <div class="text-sm font-medium" style="color: var(--cyber-text);">{{ item.label }}</div>
-          </div>
+          </router-link>
+          <a
+            :href="`tel:${CUSTOMER_SERVICE_PHONE}`"
+            class="cyber-card p-4 text-center cursor-pointer transition-all duration-300 hover:-translate-y-1 focus:outline-none block"
+            aria-label="联系客服"
+            role="button"
+            @click="showCustomerServicePhone">
+            <div class="text-2xl mb-2" style="filter: drop-shadow(0 0 4px rgba(0,240,255,0.3));">🎧</div>
+            <div class="text-sm font-medium" style="color: var(--cyber-text);">联系客服</div>
+          </a>
         </div>
       </div>
     </div>
@@ -114,6 +126,8 @@ import { useAuthStore } from '@/stores/auth'
 import { userApi } from '@/api'
 import { formatDate, userTypeMap } from '@/utils'
 import { ElMessage } from 'element-plus'
+
+const CUSTOMER_SERVICE_PHONE = '18774656292'
 
 const authStore = useAuthStore()
 const saving = ref(false)
@@ -178,12 +192,15 @@ const userTypeLabel = computed(() => {
   return userTypeMap[authStore.user?.userType || 'personal'] || '个人版'
 })
 
-const quickActions = [
-  { icon: '📋', label: '我的订单' },
-  { icon: '🎨', label: '我的作品' },
-  { icon: '⭐', label: '收藏工具' },
-  { icon: '🎧', label: '联系客服' },
+const navigationActions = [
+  { icon: '📋', label: '我的订单', to: { path: '/profile/wallet', query: { section: 'orders' } } },
+  { icon: '🎨', label: '我的作品', to: '/profile/works' },
+  { icon: '⭐', label: '收藏工具', to: '/profile/favorites' },
 ]
+
+function showCustomerServicePhone() {
+  ElMessage.info(`客服电话：${CUSTOMER_SERVICE_PHONE}`)
+}
 
 async function saveProfile() {
   saving.value = true

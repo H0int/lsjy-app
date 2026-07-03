@@ -37,7 +37,7 @@
     </div>
 
     <!-- 上传对话框 -->
-    <el-dialog v-model="uploadDialogVisible" title="上传知识文档" width="560px" destroy-on-close>
+    <el-dialog v-model="uploadDialogVisible" title="上传知识文档" width="92vw" class="mobile-safe-dialog" destroy-on-close append-to-body>
       <el-form :model="uploadForm" label-width="80px" class="cyber-form">
         <el-form-item label="标题">
           <el-input v-model="uploadForm.title" placeholder="文档标题" />
@@ -65,7 +65,7 @@
     </el-dialog>
 
     <!-- 预览对话框 -->
-    <el-dialog v-model="previewDialogVisible" :title="'预览 - ' + previewDoc_title" width="700px" destroy-on-close>
+    <el-dialog v-model="previewDialogVisible" :title="'预览 - ' + previewDoc_title" width="92vw" class="mobile-safe-dialog" destroy-on-close append-to-body>
       <div class="preview-content">{{ previewContent }}</div>
     </el-dialog>
   </div>
@@ -190,4 +190,12 @@ async function deleteDoc(row: any) {
 .cyber-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-right: 4px; }
 .tag-cyan { background: rgba(0,240,255,0.1); color: #00f0ff; border: 1px solid rgba(0,240,255,0.2); }
 .preview-content { white-space: pre-wrap; color: #a0a0cc; font-size: 14px; line-height: 1.6; max-height: 500px; overflow-y: auto; }
+:deep(.mobile-safe-dialog) { max-width: 700px; margin: 8vh auto 0 !important; }
+:deep(.mobile-safe-dialog .el-dialog__body) { max-height: 68vh; overflow-y: auto; }
+@media (max-width: 640px) {
+  .cyber-page { padding: 1rem; }
+  .card-header { align-items: stretch; flex-direction: column; gap: 10px; }
+  .card-header .flex { flex-direction: column; }
+  .w-48 { width: 100%; }
+}
 </style>

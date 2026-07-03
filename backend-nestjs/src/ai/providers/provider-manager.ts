@@ -76,7 +76,7 @@ export class AIProviderManager implements OnModuleInit {
       {
         instance: new TongyiProvider(),
         apiKey: this.configService.get<string>('TONGYI_API_KEY'),
-        baseUrl: this.configService.get<string>('TONGYI_BASE_URL', 'https://dashscope.aliyuncs.com/api/v1'),
+        baseUrl: this.configService.get<string>('TONGYI_BASE_URL', 'https://dashscope.aliyuncs.com/compatible-mode/v1'),
         defaultModel: this.configService.get<string>('TONGYI_MODEL', 'qwen-plus'),
       },
       {

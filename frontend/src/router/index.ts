@@ -1,5 +1,5 @@
 import { defineComponent, h } from 'vue'
-import { createRouter, createWebHistory, createWebHashHistory } from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import { getToken } from '@/utils'
 import { ElMessage } from 'element-plus'
@@ -15,15 +15,12 @@ const NotFoundView = defineComponent({
       h('h1', { style: 'font-size:2rem;font-weight:bold;color:var(--cyber-cyan,#00f0ff);margin-bottom:0.5rem;font-family:JetBrains Mono,monospace;' }, '404'),
       h('p', { style: 'color:var(--cyber-text-dim,#8888aa);margin-bottom:2rem;' }, '页面走丢了，正在穿越赛博空间...'),
       h('a', {
-        href: '/dashboard',
+        href: '#/dashboard',
         style: 'padding:0.75rem 2rem;border-radius:0.5rem;background:rgba(0,240,255,0.1);color:var(--cyber-cyan,#00f0ff);border:1px solid rgba(0,240,255,0.3);text-decoration:none;font-weight:500;transition:all 0.3s;'
       }, '← 返回控制台')
     ])
   }
 })
-
-// 判断是否为 GitHub Pages 环境
-const isGitHubPages = import.meta.env.PROD && (import.meta.env.BASE_URL.includes('/lsjy-app/') || window.location.hostname.includes('github.io'))
 
 const routes: RouteRecordRaw[] = [
   {
@@ -84,6 +81,24 @@ const routes: RouteRecordRaw[] = [
         name: 'Wallet',
         component: () => import('@/views/profile/WalletView.vue'),
         meta: { title: '圣力中心', icon: '💰' }
+      },
+      {
+        path: 'profile/works',
+        name: 'MyWorks',
+        component: () => import('@/views/profile/MyWorks.vue'),
+        meta: { title: '我的作品', icon: '🎨' }
+      },
+      {
+        path: 'profile/favorites',
+        name: 'MyFavorites',
+        component: () => import('@/views/profile/MyFavorites.vue'),
+        meta: { title: '收藏工具', icon: '⭐' }
+      },
+      {
+        path: 'profile/security',
+        name: 'SecuritySettings',
+        component: () => import('@/views/profile/SecuritySettings.vue'),
+        meta: { title: '安全设置', icon: '🔒' }
       }
     ]
   },
@@ -188,6 +203,12 @@ const routes: RouteRecordRaw[] = [
         name: 'AdminRecharge',
         component: () => import('@/views/admin/RechargeManagement.vue'),
         meta: { title: '充值管理' }
+      },
+      {
+        path: 'boss-recharge',
+        name: 'AdminBossRecharge',
+        component: () => import('@/views/admin/BossRecharge.vue'),
+        meta: { title: 'Boss充圣点' }
       },
       {
         path: 'ai-agent',
@@ -415,4 +436,3 @@ router.beforeEach(async (to, _from, next) => {
 })
 
 export default router
-

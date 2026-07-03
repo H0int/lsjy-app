@@ -36,6 +36,7 @@ export class AiToolsService {
 
   async getTools(categoryId?: number, toolType?: string, page = 1, pageSize = 20): Promise<{ items: AiTool[]; total: number; page: number; pageSize: number }> {
     const qb = this.toolRepo.createQueryBuilder('tool')
+      .leftJoinAndSelect('tool.category', 'category')
       .where('tool.status = :status', { status: 'active' });
 
     if (categoryId) {
@@ -79,10 +80,6 @@ export class AiToolsService {
     return await this.dataSource.transaction(async (manager) => {
       // Check coin balance for paid tools (inside transaction)
       if (!tool.isFree && tool.coinCost > 0) {
-        const account = await manager.findOne(CoinAccount, { 
-          where: { userId },
-          lock: { mode: 'optimistic', version: undefined },
-        });
         // Use raw query for balance check with row lock
         const accountRaw = await manager.query(
           'SELECT * FROM coin_accounts WHERE user_id = ? FOR UPDATE',
@@ -149,6 +146,29 @@ export class AiToolsService {
   async getCallHistory(userId: number, page = 1, pageSize = 20): Promise<{ items: AiCallRecord[]; total: number; page: number; pageSize: number }> {
     const [items, total] = await this.callRecordRepo.findAndCount({
       where: { userId },
+      relations: ['tool'],
+      order: { createdAt: 'DESC' },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    });
+    return { items, total, page, pageSize };
+  }
+
+  async getWorks(userId: number, page = 1, pageSize = 20): Promise<{ items: AiCallRecord[]; total: number; page: number; pageSize: number }> {
+    const [items, total] = await this.callRecordRepo.findAndCount({
+      where: { userId },
+      relations: ['tool'],
+      order: { createdAt: 'DESC' },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    });
+    return { items, total, page, pageSize };
+  }
+
+  async getFavorites(userId: number, page = 1, pageSize = 20): Promise<{ items: AiCallRecord[]; total: number; page: number; pageSize: number }> {
+    const [items, total] = await this.callRecordRepo.findAndCount({
+      where: { userId, isFavorite: 1 },
+      relations: ['tool'],
       order: { createdAt: 'DESC' },
       skip: (page - 1) * pageSize,
       take: pageSize,

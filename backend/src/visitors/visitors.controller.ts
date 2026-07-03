@@ -22,6 +22,19 @@ export class VisitorsController {
   }
 
   @Public()
+  @Post('click')
+  @ApiOperation({ summary: '记录前端点击' })
+  async trackClick(
+    @Body() body: { page?: string; targetText?: string; targetTag?: string; targetPath?: string },
+    @Req() req: Request,
+  ) {
+    const ip = (req.headers['x-forwarded-for'] as string) || req.ip || '';
+    const userAgent = req.headers['user-agent'] || '';
+    await this.visitorsService.trackClick(ip, body, userAgent);
+    return { data: { message: '记录成功' } };
+  }
+
+  @Public()
   @Get('stats')
   @ApiOperation({ summary: '获取访客统计' })
   async getStats() {
@@ -40,6 +53,20 @@ export class VisitorsController {
     @Query('pageSize') pageSize = 20,
   ) {
     const result = await this.visitorsService.getList(page, pageSize);
+    return { data: result };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('clicks')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '获取点击记录(管理)' })
+  @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'pageSize', required: false })
+  async getClicks(
+    @Query('page') page = 1,
+    @Query('pageSize') pageSize = 20,
+  ) {
+    const result = await this.visitorsService.getClicks(page, pageSize);
     return { data: result };
   }
 }

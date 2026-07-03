@@ -15,7 +15,7 @@
         </div>
         <div class="flex items-center gap-2">
           <el-dropdown @command="switchModel">
-            <button class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-sm font-medium hover:bg-primary/20 transition-colors">
+            <button type="button" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-sm font-medium hover:bg-primary/20 transition-colors">
               <span>🧠</span>
               <span>{{ currentModel }}</span>
             </button>

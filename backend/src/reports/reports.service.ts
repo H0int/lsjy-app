@@ -324,7 +324,7 @@ export class ReportsService {
 
     const [list, total] = await this.paymentTxRepo.findAndCount({
       where: { status: dbStatus },
-      order: { created_at: 'DESC' },
+      order: { createdAt: 'DESC' },
       take: pageSize,
     });
 

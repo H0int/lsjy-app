@@ -25,6 +25,7 @@ import { ModerationModule } from './moderation/moderation.module';
 import { ReportsModule } from './reports/reports.module';
 import { VisitorsModule } from './visitors/visitors.module';
 import { AgentDispatchModule } from './modules/agent-dispatch/agent-dispatch.module';
+import { AdminExtrasController } from './admin-extras.controller';
 
 @Module({
   imports: [
@@ -81,6 +82,7 @@ import { AgentDispatchModule } from './modules/agent-dispatch/agent-dispatch.mod
     VisitorsModule,
     AgentDispatchModule,
   ],
+  controllers: [AdminExtrasController],
   providers: [
     {
       provide: APP_GUARD,

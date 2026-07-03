@@ -1,5 +1,6 @@
-import { Controller, Post, Body, Req, UseGuards, HttpCode, HttpStatus, Get } from '@nestjs/common';
+import { Controller, Post, Put, Body, Req, UseGuards, HttpCode, HttpStatus, Get } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { Request } from 'express';
 import { AuthService } from './auth.service';
 import { RegisterDto, LoginDto, RefreshTokenDto, ChangePasswordDto } from './dto/auth.dto';
@@ -14,6 +15,7 @@ export class AuthController {
 
   @Public()
   @Post('register')
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   @ApiOperation({ summary: '用户注册' })
   async register(@Body() dto: RegisterDto, @Req() req: Request) {
     const ip = (req.headers['x-forwarded-for'] as string) || req.ip || '';
@@ -23,6 +25,7 @@ export class AuthController {
 
   @Public()
   @Post('login')
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '用户登录' })
   async login(@Body() dto: LoginDto, @Req() req: Request) {
@@ -52,6 +55,7 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Post('change-password')
+  @Put('change-password')
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth()
   @ApiOperation({ summary: '修改密码' })

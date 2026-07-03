@@ -80,7 +80,7 @@ export class AIController {
 
     // 注入系统提示
     if (dto.systemPrompt) {
-      messages.unshift({ role: 'system', content: dto.systemPrompt });
+      messages.unshift({ role: 'system', content: dto.systemPrompt, imageUrl: undefined });
     }
 
     const ip = req.ip || req.headers['x-forwarded-for']?.toString() || '';
@@ -108,7 +108,7 @@ export class AIController {
     }));
 
     if (dto.systemPrompt) {
-      messages.unshift({ role: 'system', content: dto.systemPrompt });
+      messages.unshift({ role: 'system', content: dto.systemPrompt, imageUrl: undefined });
     }
 
     const ip = req.ip || req.headers['x-forwarded-for']?.toString() || '';

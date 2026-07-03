@@ -13,7 +13,7 @@
           </p>
         </div>
         <div class="ml-auto flex items-center gap-2">
-          <button @click="$router.push('/profile/wallet')" 
+          <button type="button" @click="$router.push('/profile/wallet')" 
             class="px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 cursor-pointer"
             style="background: rgba(255,184,0,0.08); color: var(--cyber-amber); border: 1px solid rgba(255,184,0,0.2);">
             <span>⚡</span>
@@ -26,7 +26,7 @@
 
     <!-- 分类Tab -->
     <div class="flex gap-2 mb-4 overflow-x-auto pb-1" style="scrollbar-width: none;">
-      <button v-for="cat in categories" :key="cat" @click="activeCategory = cat"
+      <button v-for="cat in categories" :key="cat" type="button" @click="activeCategory = cat"
         class="px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer"
         :style="activeCategory === cat
           ? 'background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple)); color: #000; box-shadow: 0 0 12px rgba(0,240,255,0.3);'

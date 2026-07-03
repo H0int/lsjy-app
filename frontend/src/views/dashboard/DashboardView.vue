@@ -15,7 +15,7 @@
 
     <!-- 数据卡片 -->
     <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-      <div v-for="card in statCards" :key="card.label" class="cyber-card rounded-xl p-4" @click="card.route && router.push(card.route)" style="cursor:pointer;">
+      <div v-for="card in visibleStatCards" :key="card.label" class="cyber-card rounded-xl p-4" @click="card.route && router.push(card.route)" style="cursor:pointer;">
         <div class="text-2xl mb-2">{{ card.icon }}</div>
         <div class="text-2xl font-bold" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">{{ card.value }}</div>
         <div class="text-sm" style="color: var(--cyber-text-dim);">{{ card.label }}</div>
@@ -23,7 +23,7 @@
     </div>
 
     <!-- 访客信息栏 -->
-    <div class="cyber-card rounded-xl p-4 mb-6 flex flex-wrap items-center justify-between gap-3" style="cursor:pointer;" @click="router.push('/admin/visitors')">
+    <div v-if="authStore.isAdmin" class="cyber-card rounded-xl p-4 mb-6 flex flex-wrap items-center justify-between gap-3" style="cursor:pointer;" @click="router.push('/admin/visitors')">
       <div class="flex items-center gap-3">
         <span class="text-2xl">👥</span>
         <div>
@@ -99,7 +99,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { toolApi, visitorApi, adminApi, paymentApi, publicApi } from '@/api'
@@ -116,6 +116,10 @@ const statCards = ref([
   { icon: '🎯', label: '会员等级', value: '普通', route: '/profile' },
   { icon: '👥', label: '平台访客', value: '0', route: '/admin/visitors' },
 ])
+
+const visibleStatCards = computed(() => {
+  return authStore.isAdmin ? statCards.value : statCards.value.filter(card => card.label !== '平台访客')
+})
 
 const visitorStats = ref({
   totalVisitors: 0,

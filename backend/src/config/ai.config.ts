@@ -30,7 +30,7 @@ export const AIConfig = registerAs('ai', () => ({
     defaultModel: process.env.OPENAI_MODEL || 'gpt-4o',
   },
 
-  // 通义千问（龙虾AI）
+  // 通义千问
   tongyi: {
     apiKey: process.env.TONGYI_API_KEY || '',
     baseUrl: process.env.TONGYI_BASE_URL || 'https://dashscope.aliyuncs.com/compatible-mode/v1',
@@ -44,6 +44,55 @@ export const AIConfig = registerAs('ai', () => ({
     defaultModel: process.env.DEEPSEEK_MODEL || 'deepseek-chat',
   },
 
+  // 硅基流动（OpenAI兼容）
+  siliconflow: {
+    apiKey: process.env.SILICONFLOW_API_KEY || '',
+    baseUrl: process.env.SILICONFLOW_BASE_URL || 'https://api.siliconflow.cn/v1',
+    defaultModel: process.env.SILICONFLOW_MODEL || 'deepseek-ai/DeepSeek-V3',
+  },
+
+  // Kimi / Moonshot（OpenAI兼容）
+  kimi: {
+    apiKey: process.env.KIMI_API_KEY || '',
+    baseUrl: process.env.KIMI_BASE_URL || 'https://api.moonshot.cn/v1',
+    defaultModel: process.env.KIMI_MODEL || 'moonshot-v1-8k',
+  },
+
+  // 智谱 GLM（OpenAI兼容）
+  zhipu: {
+    apiKey: process.env.ZHIPU_API_KEY || '',
+    baseUrl: process.env.ZHIPU_BASE_URL || 'https://open.bigmodel.cn/api/paas/v4',
+    defaultModel: process.env.ZHIPU_MODEL || 'glm-4-flash',
+  },
+
+  // 阿里云百炼（OpenAI兼容）
+  bailian: {
+    apiKey: process.env.BAILIAN_API_KEY || '',
+    baseUrl: process.env.BAILIAN_BASE_URL || 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    defaultModel: process.env.BAILIAN_MODEL || 'qwen-plus',
+  },
+
+  // 火山方舟（OpenAI兼容）
+  volcengine: {
+    apiKey: process.env.VOLCENGINE_API_KEY || '',
+    baseUrl: process.env.VOLCENGINE_BASE_URL || 'https://ark.cn-beijing.volces.com/api/v3',
+    defaultModel: process.env.VOLCENGINE_MODEL || 'doubao-1-5-lite-32k-250115',
+  },
+
+  // 魔搭社区（OpenAI兼容）
+  modelscope: {
+    apiKey: process.env.MODELSCOPE_API_KEY || '',
+    baseUrl: process.env.MODELSCOPE_BASE_URL || 'https://api-inference.modelscope.cn/v1',
+    defaultModel: process.env.MODELSCOPE_MODEL || 'Qwen/Qwen2.5-72B-Instruct',
+  },
+
+  // 龙虾AI（OpenAI兼容，按实际服务商地址填写）
+  longxia: {
+    apiKey: process.env.LONGXIA_API_KEY || '',
+    baseUrl: process.env.LONGXIA_BASE_URL || '',
+    defaultModel: process.env.LONGXIA_MODEL || 'gpt-4o-mini',
+  },
+
   // 腾讯元宝
   yuanbao: {
     apiKey: process.env.YUANBAO_API_KEY || '',
@@ -53,10 +102,10 @@ export const AIConfig = registerAs('ai', () => ({
 
   // 智能路由配置
   routing: {
-    'text-generation': ['doubao', 'deepseek', 'openai', 'tongyi', 'yuanbao'],
+    'text-generation': ['deepseek', 'siliconflow', 'kimi', 'zhipu', 'bailian', 'volcengine', 'longxia', 'modelscope', 'doubao', 'tongyi', 'openai', 'yuanbao'],
     'image-generation': ['jimeng', 'openai'],
-    'code-generation': ['deepseek', 'openai', 'doubao', 'tongyi'],
-    'text-analysis': ['tongyi', 'doubao', 'deepseek', 'openai', 'yuanbao'],
+    'code-generation': ['deepseek', 'siliconflow', 'kimi', 'zhipu', 'bailian', 'volcengine', 'longxia', 'modelscope', 'openai', 'doubao', 'tongyi'],
+    'text-analysis': ['deepseek', 'siliconflow', 'kimi', 'zhipu', 'bailian', 'volcengine', 'longxia', 'modelscope', 'tongyi', 'doubao', 'openai', 'yuanbao'],
     'multimodal': ['openai'],
   },
 

@@ -79,7 +79,13 @@ export class AIService {
     }
 
     // 4. 获取Provider
-    const provider = this.resolveProvider(tool, options);
+    let provider: IAIProvider | null = null;
+    try {
+      provider = this.resolveProvider(tool, options);
+    } catch (err: any) {
+      if (!tool.isFree) throw err;
+      this.logger.warn(`免费工具 ${tool.name} Provider不可用，启用降级回复: ${err.message}`);
+    }
 
     // 5. 调用AI
     const startTime = Date.now();
@@ -95,11 +101,29 @@ export class AIService {
 
     let chatResponse: ChatResponse;
     try {
+      if (!provider) {
+        throw new Error('AI Provider 暂不可用');
+      }
       chatResponse = await provider.chat(messages, {
         ...options,
         model: options?.model || tool.modelId,
       });
     } catch (err: any) {
+      if (tool.isFree) {
+        this.logger.warn(`免费工具 ${tool.name} AI调用失败，返回降级回复: ${err.message}`);
+        const fallbackContent = this.buildFreeToolFallback(tool, messages);
+        chatResponse = {
+          content: fallbackContent,
+          model: tool.modelId || 'fallback-free-tool',
+          provider: 'fallback',
+          usage: {
+            promptTokens: 0,
+            completionTokens: 0,
+            totalTokens: 0,
+          },
+          durationMs: Date.now() - startTime,
+        };
+      } else {
       // 记录失败
       await this.recordCallResult(userId, toolId, requestId, {
         inputText: messages.map((m) => `${m.role}: ${m.content}`).join('\n'),
@@ -110,6 +134,7 @@ export class AIService {
         ip,
       });
       throw err;
+      }
     }
 
     const durationMs = Date.now() - startTime;
@@ -137,6 +162,7 @@ export class AIService {
 
     // 9. 更新工具使用次数
     await this.toolRepo.increment({ id: toolId }, 'usageCount', 1);
+    await this.incrementDailyQuota(userId, tool);
 
     // 10. 更新Provider统计
     await this.updateProviderStats(tool.provider, chatResponse.usage.totalTokens, actualCoinCost);
@@ -548,6 +574,33 @@ export class AIService {
       });
       await this.quotaRepo.save(newQuota);
     }
+  }
+
+  private async incrementDailyQuota(userId: number, tool: AiTool): Promise<void> {
+    if (!tool.isFree || !tool.freeDailyLimit) return;
+
+    const today = new Date().toISOString().split('T')[0];
+    let quota = await this.quotaRepo.findOne({
+      where: { userId, toolId: tool.id, usageDate: today },
+    });
+    if (!quota) {
+      quota = this.quotaRepo.create({ userId, toolId: tool.id, usageDate: today, callCount: 0, coinSpent: 0 });
+    }
+    quota.callCount += 1;
+    await this.quotaRepo.save(quota);
+  }
+
+  private buildFreeToolFallback(tool: AiTool, messages: ChatMessage[]): string {
+    const lastUserMessage = [...messages].reverse().find((m) => m.role === 'user')?.content || '';
+    return [
+      `已收到你在「${tool.name}」里的需求。`,
+      '',
+      '当前免费通道临时繁忙，我先给你一个可直接使用的基础版本，稍后再试可以获得更完整的 AI 结果：',
+      '',
+      lastUserMessage ? `需求：${lastUserMessage}` : '',
+      '',
+      '建议：请把目标人群、使用场景、语气风格、字数要求补充完整，生成效果会更稳定。若你刚刚是在生成标题，可以先使用“痛点 + 结果 + 数字/场景”的结构，例如：3个方法让你的内容更容易被看见。',
+    ].filter(Boolean).join('\n');
   }
 
   /**

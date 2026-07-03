@@ -31,6 +31,16 @@
       </button>
     </div>
 
+    <div class="cyber-card p-4 mb-6">
+      <div class="flex items-start gap-3">
+        <div class="text-2xl">{{ activePillar?.icon }}</div>
+        <div>
+          <h2 class="font-bold mb-1" style="color: var(--cyber-text);">{{ activePillar?.label }}工具</h2>
+          <p class="text-sm" style="color: var(--cyber-text-dim);">{{ activePillar?.description }}</p>
+        </div>
+      </div>
+    </div>
+
     <!-- 加载状态 -->
     <div v-if="toolStore.loading" class="flex justify-center py-20">
       <div class="pulse-glow w-8 h-8 rounded-full" style="background: var(--cyber-cyan);"></div>
@@ -101,14 +111,18 @@ const viewMode = ref<'grid' | 'list'>('grid')
 
 // 六大板块定义
 const sixPillars = [
-  { id: 'all', label: '全部', icon: '📦', color: '#00f0ff' },
-  { id: 'ai', label: 'AI', icon: '🤖', color: '#00f0ff' },
-  { id: 'ecommerce', label: '电商', icon: '🛒', color: '#ff6b35' },
-  { id: 'education', label: '教育', icon: '📚', color: '#4ecdc4' },
-  { id: 'media', label: '自媒体', icon: '📱', color: '#ffe66d' },
-  { id: 'pet', label: '宠物', icon: '🐾', color: '#ff85a2' },
-  { id: 'campus', label: '伯雅校园', icon: '🏫', color: '#a78bfa' },
+  { id: 'all', label: '全部', icon: '📦', color: '#00f0ff', description: '展示平台全部 AI 工具，适合快速浏览和搜索。' },
+  { id: 'ai', label: 'AI', icon: '🤖', color: '#00f0ff', description: '通用 AI 对话、写作、分析和效率工具。' },
+  { id: 'ecommerce', label: '电商', icon: '🛒', color: '#ff6b35', description: '商品文案、店铺运营、直播带货、供应链等电商场景工具。' },
+  { id: 'education', label: '教育', icon: '📚', color: '#4ecdc4', description: '课程、教学、学习规划、考试辅导等教育类工具。' },
+  { id: 'media', label: '自媒体', icon: '📱', color: '#ffe66d', description: '短视频、小红书、公众号、热点选题和内容运营工具。' },
+  { id: 'pet', label: '宠物', icon: '🐾', color: '#ff85a2', description: '宠物喂养、训练、健康护理、用品推荐等宠物服务工具。' },
+  { id: 'campus', label: '伯雅校园', icon: '🏫', color: '#a78bfa', description: '伯雅校园服务、学业辅导、校园生活、就业规划等校园工具。' },
 ]
+
+const activePillar = computed(() => {
+  return sixPillars.find(item => item.id === currentPillar.value) || sixPillars[0]
+})
 
 // 后端分类ID到六大板块的映射
 const categoryToPillar: Record<number, string> = {
@@ -120,21 +134,46 @@ const categoryToPillar: Record<number, string> = {
   29: 'campus', 30: 'campus', 31: 'campus', 32: 'campus', 33: 'campus',
 }
 
+function categoryPillar(tool: Tool): string | null {
+  const category = tool.category
+  const text = [
+    category?.module,
+    category?.slug,
+    category?.name,
+    category?.description,
+  ].filter(Boolean).join(' ').toLowerCase()
+
+  if (/pet|宠物|猫|狗|动物/.test(text)) return 'pet'
+  if (/campus|校园|伯雅|博雅|就业|教务/.test(text)) return 'campus'
+  if (/shop|ecommerce|电商|商品|店铺/.test(text)) return 'ecommerce'
+  if (/edu|education|教育|教学|课程/.test(text)) return 'education'
+  if (/media|自媒体|内容|运营/.test(text)) return 'media'
+  if (/ai|人工智能|智能/.test(text)) return 'ai'
+
+  return null
+}
+
 function guessPillar(tool: Tool): string {
-  const text = ((tool.name || '') + ' ' + (tool.description || '')).toLowerCase()
+  const text = ((tool.name || '') + ' ' + (tool.description || '') + ' ' + (tool.slug || '')).toLowerCase()
   if (/电商|商品|店铺|营销|直播|供应链|购物|订单/.test(text)) return 'ecommerce'
   if (/教育|教学|学习|考试|课程|辅导|学术|学生/.test(text)) return 'education'
   if (/自媒体|内容|粉丝|运营|爆款|文案|小红书|抖音|公众号|热点/.test(text)) return 'media'
   if (/宠物|喂养|训练|品种|猫|狗|动物/.test(text)) return 'pet'
-  if (/校园|伯雅|就业|教务|安全/.test(text)) return 'campus'
+  if (/校园|伯雅|博雅|就业|教务|安全/.test(text)) return 'campus'
   return 'ai'
 }
 
 function getPillarForTool(tool: Tool): string {
-  if (tool.categoryId && categoryToPillar[tool.categoryId]) {
-    return categoryToPillar[tool.categoryId]
-  }
-  return guessPillar(tool)
+  const byCategory = categoryPillar(tool)
+  const byContent = guessPillar(tool)
+
+  // 宠物/伯雅校园经常因后端分类ID调整导致对调，优先按名称、slug、分类module识别，避免点开错板块。
+  if (byCategory === 'pet' || byCategory === 'campus') return byCategory
+  if (byContent === 'pet' || byContent === 'campus') return byContent
+  if (byCategory) return byCategory
+  if (byContent !== 'ai') return byContent
+  if (tool.categoryId && categoryToPillar[tool.categoryId]) return categoryToPillar[tool.categoryId]
+  return byContent
 }
 
 function getPillarLabel(tool: Tool): string {

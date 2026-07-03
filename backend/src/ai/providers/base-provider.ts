@@ -37,6 +37,7 @@ export abstract class BaseAIProvider implements IAIProvider {
   abstract readonly name: string;
   abstract readonly displayName: string;
   abstract readonly capabilities: ('text' | 'image')[];
+  abstract chat(messages: ChatMessage[], options?: ChatOptions): Promise<ChatResponse>;
 
   protected logger: Logger;
   protected apiKey = '';

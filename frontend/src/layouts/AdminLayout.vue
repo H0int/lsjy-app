@@ -72,6 +72,9 @@
           </div>
         </div>
         <div class="header-right">
+          <router-link to="/admin/boss-recharge" class="boss-quick-link" @click="mobileMenuOpen = false">
+            👑 充点
+          </router-link>
           <div class="admin-avatar">
             <div class="avatar-ring">
               <span class="avatar-text">管</span>
@@ -110,6 +113,9 @@
       <button class="tab-item tab-menu-btn" @click="mobileMenuOpen = true">
         <span class="tab-icon">☰</span><span class="tab-label">菜单</span>
       </button>
+      <router-link to="/admin/boss-recharge" class="tab-item" :class="{ 'tab-active': isActive('/admin/boss-recharge') }">
+        <span class="tab-icon">👑</span><span class="tab-label">充点</span>
+      </router-link>
       <router-link to="/admin/users" class="tab-item" :class="{ 'tab-active': isActive('/admin/users') }">
         <span class="tab-icon">👥</span><span class="tab-label">用户</span>
       </router-link>
@@ -172,6 +178,7 @@ const menuGroups = [
     label: '财务中心',
     items: [
       { path: '/admin/coin-packages', label: '圣力套餐', icon: '💰' },
+      { path: '/admin/boss-recharge', label: 'Boss充圣点', icon: '👑' },
       { path: '/admin/payments', label: '支付记录', icon: '💳' },
       { path: '/admin/recharge', label: '充值管理', icon: '💎' },
       { path: '/admin/orders', label: '订单管理', icon: '📦' },
@@ -376,7 +383,18 @@ function handleLogout() {
 .stat-label { color: #5a5a7a; letter-spacing: 1px; font-weight: 600; }
 .stat-value { color: #a0a0cc; font-family: 'Courier New', monospace; }
 
-.header-right { display: flex; align-items: center; }
+.header-right { display: flex; align-items: center; gap: 10px; }
+.boss-quick-link {
+  padding: 7px 11px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(255, 184, 0, 0.18), rgba(124, 58, 237, 0.18));
+  border: 1px solid rgba(255, 184, 0, 0.35);
+  color: #ffd166;
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+}
 .admin-avatar { display: flex; align-items: center; gap: 8px; }
 .avatar-ring { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #7c3aed; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 10px rgba(124, 58, 237, 0.3); }
 .avatar-text { font-size: 12px; font-weight: 700; color: #c084fc; }
@@ -416,7 +434,7 @@ function handleLogout() {
   z-index: 35;
   justify-content: space-around;
   align-items: center;
-  padding: 0 8px;
+  padding: 0 4px;
 }
 
 .tab-item {
@@ -424,7 +442,7 @@ function handleLogout() {
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  padding: 6px 12px;
+  padding: 6px 6px;
   border-radius: 8px;
   text-decoration: none;
   color: #5a5a7a;

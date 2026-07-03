@@ -59,7 +59,7 @@
           </div>
 
           <el-form-item>
-            <button type="submit" class="cyber-btn cyber-btn-magenta cyber-btn-large" :loading="loading" @click="handleRegister">
+            <button type="submit" class="cyber-btn cyber-btn-magenta cyber-btn-large" :disabled="loading">
               <span class="btn-shine"></span>
               <span class="btn-text">{{ loading ? '注册中...' : '立即注册' }}</span>
             </button>
@@ -156,6 +156,7 @@ function particleStyle(i: number) {
 
 async function handleRegister() {
   if (!formRef.value) return
+  if (loading.value) return
   await formRef.value.validate(async (valid) => {
     if (!valid) return
     loading.value = true

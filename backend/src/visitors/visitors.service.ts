@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 
-interface VisitorRecord {
+export interface VisitorRecord {
   id: number;
   ip: string;
   page: string;
@@ -9,11 +9,24 @@ interface VisitorRecord {
   createdAt: Date;
 }
 
+export interface ClickRecord {
+  id: number;
+  ip: string;
+  page: string;
+  targetText: string;
+  targetTag: string;
+  targetPath: string;
+  userAgent: string;
+  createdAt: Date;
+}
+
 @Injectable()
 export class VisitorsService {
   private readonly logger = new Logger(VisitorsService.name);
   private visitors: VisitorRecord[] = [];
+  private clicks: ClickRecord[] = [];
   private nextId = 1;
+  private nextClickId = 1;
 
   async checkin(ip: string, page: string, referer: string, userAgent: string) {
     const record: VisitorRecord = {
@@ -60,6 +73,36 @@ export class VisitorsService {
     return {
       items,
       total: this.visitors.length,
+      page,
+      pageSize,
+    };
+  }
+
+  async trackClick(ip: string, payload: { page?: string; targetText?: string; targetTag?: string; targetPath?: string }, userAgent: string) {
+    const record: ClickRecord = {
+      id: this.nextClickId++,
+      ip,
+      page: String(payload.page || '/').slice(0, 300),
+      targetText: String(payload.targetText || '').slice(0, 120),
+      targetTag: String(payload.targetTag || '').slice(0, 40),
+      targetPath: String(payload.targetPath || '').slice(0, 300),
+      userAgent,
+      createdAt: new Date(),
+    };
+    this.clicks.push(record);
+    if (this.clicks.length > 10000) {
+      this.clicks = this.clicks.slice(-10000);
+    }
+    this.logger.log(`Click track: ${ip} -> ${record.page} -> ${record.targetText || record.targetTag}`);
+    return { message: '记录成功' };
+  }
+
+  async getClicks(page = 1, pageSize = 20) {
+    const start = (page - 1) * pageSize;
+    const items = this.clicks.slice(-start - pageSize, -start || undefined).reverse();
+    return {
+      items,
+      total: this.clicks.length,
       page,
       pageSize,
     };

@@ -27,7 +27,6 @@ export default defineConfig({
       output: {
         manualChunks: {
           'vendor-vue': ['vue', 'vue-router', 'pinia'],
-          'vendor-element-plus': ['element-plus', '@element-plus/icons-vue'],
           'vendor-axios': ['axios']
         },
         chunkFileNames: 'assets/js/[name]-[hash].js',

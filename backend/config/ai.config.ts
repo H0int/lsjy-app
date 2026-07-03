@@ -30,10 +30,10 @@ export const AIConfig = registerAs('ai', () => ({
     defaultModel: process.env.OPENAI_MODEL || 'gpt-4o',
   },
 
-  // 通义千问（龙虾AI）
+  // 通义千问
   tongyi: {
     apiKey: process.env.TONGYI_API_KEY || '',
-    baseUrl: process.env.TONGYI_BASE_URL || 'https://dashscope.aliyuncs.com/api/v1',
+    baseUrl: process.env.TONGYI_BASE_URL || 'https://dashscope.aliyuncs.com/compatible-mode/v1',
     defaultModel: process.env.TONGYI_MODEL || 'qwen-plus',
   },
 

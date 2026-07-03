@@ -21,7 +21,7 @@ export const useAuthStore = defineStore('auth', () => {
   const loading = ref(false)
 
   const isLoggedIn = computed(() => !!token.value)
-  const isAdmin = computed(() => userRoles.value.some(r => ['super_admin', 'boss', 'operator'].includes(r)))
+  const isAdmin = computed(() => userRoles.value.some(r => ['boss', 'founder', 'ultimate_admin', 'super_admin', 'admin', 'operator'].includes(r)))
   const nickname = computed(() => user.value?.nickname || (user.value?.username || '用户'))
 
   // 登录（用户名 + 密码）
@@ -135,4 +135,3 @@ export const useAuthStore = defineStore('auth', () => {
     login, fetchUserProfile, fetchBalance, logout
   }
 })
-

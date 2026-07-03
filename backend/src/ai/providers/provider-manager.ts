@@ -10,13 +10,14 @@ import { DeepSeekProvider } from './deepseek.provider';
 import { JimengProvider } from './jimeng.provider';
 import { OpenAIProvider } from './openai.provider';
 import { TongyiProvider } from './tongyi.provider';
+import { OpenAICompatibleProvider } from './openai-compatible.provider';
 
 /** 任务类型 → Provider优先级映射 */
 const DEFAULT_ROUTING: Record<string, string[]> = {
-  'text-generation': ['deepseek', 'doubao', 'tongyi', 'openai'],
+  'text-generation': ['deepseek', 'siliconflow', 'kimi', 'zhipu', 'bailian', 'volcengine', 'longxia', 'modelscope', 'doubao', 'tongyi', 'openai'],
   'image-generation': ['jimeng', 'openai'],
-  'code-generation': ['deepseek', 'openai', 'doubao', 'tongyi'],
-  'text-analysis': ['deepseek', 'tongyi', 'doubao', 'openai'],
+  'code-generation': ['deepseek', 'siliconflow', 'kimi', 'zhipu', 'bailian', 'volcengine', 'longxia', 'modelscope', 'openai', 'doubao', 'tongyi'],
+  'text-analysis': ['deepseek', 'siliconflow', 'kimi', 'zhipu', 'bailian', 'volcengine', 'longxia', 'modelscope', 'tongyi', 'doubao', 'openai'],
   'multimodal': ['openai'],
 };
 
@@ -67,8 +68,102 @@ export class AIProviderManager implements OnModuleInit {
       {
         instance: new TongyiProvider(),
         apiKey: this.configService.get<string>('TONGYI_API_KEY'),
-        baseUrl: this.configService.get<string>('TONGYI_BASE_URL', 'https://dashscope.aliyuncs.com/api/v1'),
+        baseUrl: this.configService.get<string>('TONGYI_BASE_URL', 'https://dashscope.aliyuncs.com/compatible-mode/v1'),
         defaultModel: this.configService.get<string>('TONGYI_MODEL', 'qwen-plus'),
+      },
+      {
+        instance: new OpenAICompatibleProvider({
+          name: 'siliconflow',
+          displayName: '硅基流动',
+          models: [
+            { id: 'deepseek-ai/DeepSeek-V3', name: 'DeepSeek V3', capabilities: ['text', 'code'], supportStream: true },
+            { id: 'deepseek-ai/DeepSeek-R1', name: 'DeepSeek R1', capabilities: ['text', 'code'], supportStream: true },
+            { id: 'Qwen/Qwen2.5-72B-Instruct', name: 'Qwen2.5 72B', capabilities: ['text'], supportStream: true },
+          ],
+        }),
+        apiKey: this.configService.get<string>('SILICONFLOW_API_KEY'),
+        baseUrl: this.configService.get<string>('SILICONFLOW_BASE_URL', 'https://api.siliconflow.cn/v1'),
+        defaultModel: this.configService.get<string>('SILICONFLOW_MODEL', 'deepseek-ai/DeepSeek-V3'),
+      },
+      {
+        instance: new OpenAICompatibleProvider({
+          name: 'kimi',
+          displayName: 'Kimi',
+          models: [
+            { id: 'moonshot-v1-8k', name: 'Moonshot v1 8K', capabilities: ['text'], maxContextLength: 8192, supportStream: true },
+            { id: 'moonshot-v1-32k', name: 'Moonshot v1 32K', capabilities: ['text'], maxContextLength: 32768, supportStream: true },
+            { id: 'moonshot-v1-128k', name: 'Moonshot v1 128K', capabilities: ['text'], maxContextLength: 131072, supportStream: true },
+          ],
+        }),
+        apiKey: this.configService.get<string>('KIMI_API_KEY'),
+        baseUrl: this.configService.get<string>('KIMI_BASE_URL', 'https://api.moonshot.cn/v1'),
+        defaultModel: this.configService.get<string>('KIMI_MODEL', 'moonshot-v1-8k'),
+      },
+      {
+        instance: new OpenAICompatibleProvider({
+          name: 'zhipu',
+          displayName: '智谱GLM',
+          models: [
+            { id: 'glm-4-flash', name: 'GLM-4-Flash', capabilities: ['text'], supportStream: true },
+            { id: 'glm-4-plus', name: 'GLM-4-Plus', capabilities: ['text'], supportStream: true },
+          ],
+        }),
+        apiKey: this.configService.get<string>('ZHIPU_API_KEY'),
+        baseUrl: this.configService.get<string>('ZHIPU_BASE_URL', 'https://open.bigmodel.cn/api/paas/v4'),
+        defaultModel: this.configService.get<string>('ZHIPU_MODEL', 'glm-4-flash'),
+      },
+      {
+        instance: new OpenAICompatibleProvider({
+          name: 'bailian',
+          displayName: '阿里云百炼',
+          models: [
+            { id: 'qwen-turbo', name: 'Qwen Turbo', capabilities: ['text'], supportStream: true },
+            { id: 'qwen-plus', name: 'Qwen Plus', capabilities: ['text'], supportStream: true },
+            { id: 'qwen-max', name: 'Qwen Max', capabilities: ['text'], supportStream: true },
+          ],
+        }),
+        apiKey: this.configService.get<string>('BAILIAN_API_KEY'),
+        baseUrl: this.configService.get<string>('BAILIAN_BASE_URL', 'https://dashscope.aliyuncs.com/compatible-mode/v1'),
+        defaultModel: this.configService.get<string>('BAILIAN_MODEL', 'qwen-plus'),
+      },
+      {
+        instance: new OpenAICompatibleProvider({
+          name: 'volcengine',
+          displayName: '火山方舟',
+          models: [
+            { id: 'doubao-1-5-pro-32k-250115', name: 'Doubao 1.5 Pro 32K', capabilities: ['text'], supportStream: true },
+            { id: 'doubao-1-5-lite-32k-250115', name: 'Doubao 1.5 Lite 32K', capabilities: ['text'], supportStream: true },
+          ],
+        }),
+        apiKey: this.configService.get<string>('VOLCENGINE_API_KEY'),
+        baseUrl: this.configService.get<string>('VOLCENGINE_BASE_URL', 'https://ark.cn-beijing.volces.com/api/v3'),
+        defaultModel: this.configService.get<string>('VOLCENGINE_MODEL', 'doubao-1-5-lite-32k-250115'),
+      },
+      {
+        instance: new OpenAICompatibleProvider({
+          name: 'modelscope',
+          displayName: '魔搭社区',
+          models: [
+            { id: 'Qwen/Qwen2.5-72B-Instruct', name: 'Qwen2.5 72B', capabilities: ['text'], supportStream: true },
+            { id: 'deepseek-ai/DeepSeek-V3', name: 'DeepSeek V3', capabilities: ['text', 'code'], supportStream: true },
+          ],
+        }),
+        apiKey: this.configService.get<string>('MODELSCOPE_API_KEY'),
+        baseUrl: this.configService.get<string>('MODELSCOPE_BASE_URL', 'https://api-inference.modelscope.cn/v1'),
+        defaultModel: this.configService.get<string>('MODELSCOPE_MODEL', 'Qwen/Qwen2.5-72B-Instruct'),
+      },
+      {
+        instance: new OpenAICompatibleProvider({
+          name: 'longxia',
+          displayName: '龙虾AI',
+          models: [
+            { id: 'gpt-4o-mini', name: 'GPT-4o mini', capabilities: ['text'], supportStream: true },
+            { id: 'gpt-4o', name: 'GPT-4o', capabilities: ['text', 'multimodal'], supportStream: true },
+          ],
+        }),
+        apiKey: this.configService.get<string>('LONGXIA_API_KEY'),
+        baseUrl: this.configService.get<string>('LONGXIA_BASE_URL', ''),
+        defaultModel: this.configService.get<string>('LONGXIA_MODEL', 'gpt-4o-mini'),
       },
     ];
 
@@ -76,6 +171,10 @@ export class AIProviderManager implements OnModuleInit {
       try {
         if (!cfg.apiKey) {
           this.logger.warn(`Provider ${cfg.instance.displayName} skipped: API key not configured`);
+          continue;
+        }
+        if (!cfg.baseUrl) {
+          this.logger.warn(`Provider ${cfg.instance.displayName} skipped: baseUrl not configured`);
           continue;
         }
         await cfg.instance.init({

@@ -31,10 +31,10 @@ export class ApiKey {
   active: boolean;
 
   @Column({ name: 'last_used_at', type: 'datetime', nullable: true })
-  lastUsedAt: Date;
+  lastUsedAt: Date | null;
 
   @Column({ name: 'expires_at', type: 'datetime', nullable: true })
-  expiresAt: Date;
+  expiresAt: Date | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

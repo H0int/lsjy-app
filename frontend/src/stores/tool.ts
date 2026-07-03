@@ -22,9 +22,10 @@ export const useToolStore = defineStore('tool', () => {
   async function fetchTools(params?: { categoryId?: number; toolType?: string; page?: number; pageSize?: number }) {
     loading.value = true
     try {
-      const res = await toolApi.getTools(params)
-      tools.value = (res.data as any).items
-      total.value = (res.data as any).total
+      const res = await toolApi.getTools({ page: 1, pageSize: 200, ...params })
+      const data = res.data as any
+      tools.value = Array.isArray(data) ? data : (data.items || [])
+      total.value = Array.isArray(data) ? data.length : (data.total || tools.value.length)
     } finally {
       loading.value = false
     }

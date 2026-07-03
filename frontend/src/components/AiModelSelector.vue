@@ -2,7 +2,7 @@
   <div class="ai-model-selector">
     <el-popover placement="bottom" :width="380" trigger="click">
       <template #reference>
-        <button class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-dark-200
+        <button type="button" class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-dark-200
           hover:bg-gray-200 dark:hover:bg-dark-300 transition-colors text-sm">
           <span class="text-lg">{{ currentProviderIcon }}</span>
           <span class="font-medium">{{ currentModelName }}</span>
@@ -16,6 +16,7 @@
         <!-- Provider Tabs -->
         <div class="flex gap-2 mb-3 flex-wrap">
           <button v-for="group in modelGroups" :key="group.provider"
+            type="button"
             @click="selectedProvider = group.provider"
             class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
             :class="selectedProvider === group.provider
@@ -30,6 +31,7 @@
           <template v-for="group in modelGroups" :key="group.provider">
             <template v-if="selectedProvider === group.provider">
               <button v-for="model in group.models" :key="model.id"
+                type="button"
                 @click="selectModel(group.provider, model)"
                 class="w-full flex items-center justify-between p-3 rounded-lg transition-colors text-left"
                 :class="selectedModelId === model.id

@@ -198,7 +198,7 @@
     </el-dialog>
 
     <!-- ========== 我的订单 ========== -->
-    <div class="cyber-card p-6" v-if="showMyOrders">
+    <div ref="ordersSection" class="cyber-card p-6" v-if="showMyOrders">
       <h3 class="font-bold mb-4" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">
         <span style="color: var(--cyber-green);"></span>我的充值订单
       </h3>
@@ -236,16 +236,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, computed, watch, nextTick } from 'vue'
+import { useRoute } from 'vue-router'
 import { paymentApi } from '@/api'
 import { formatDate } from '@/utils'
 import type { RechargePackage } from '@/types'
 import { ElMessage } from 'element-plus'
 import service from '@/api/request'
 
+const route = useRoute()
 const coinBalance = ref(0)
 const showRecharge = ref(false)
 const showMyOrders = ref(false)
+const ordersSection = ref<HTMLElement | null>(null)
 const selectedPkgId = ref<number | null>(null)
 const recharging = ref(false)
 const packages = ref<RechargePackage[]>([])
@@ -317,6 +320,10 @@ onMounted(async () => {
   const recommended = packages.value.find((p: any) => p.isRecommended)
   if (recommended) selectedPkgId.value = recommended.id
   else if (packages.value.length) selectedPkgId.value = packages.value[0].id
+
+  if (route.query.section === 'orders') {
+    await openOrdersSection()
+  }
 })
 
 async function handleRecharge() {
@@ -401,7 +408,18 @@ async function loadMyOrders() {
   } catch { /* ignore */ }
 }
 
+async function openOrdersSection() {
+  showMyOrders.value = true
+  await loadMyOrders()
+  await nextTick()
+  ordersSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
 watch(showMyOrders, (val) => {
   if (val && myOrders.value.length === 0) loadMyOrders()
+})
+
+watch(() => route.query.section, (section) => {
+  if (section === 'orders') openOrdersSection()
 })
 </script>

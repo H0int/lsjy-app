@@ -45,4 +45,13 @@ export class PaymentTransaction extends BaseEntity {
 
   @Column({ name: 'paid_at', type: 'datetime', nullable: true })
   paidAt!: Date | null;
+
+  @Column({ name: 'reviewed_at', type: 'datetime', nullable: true })
+  reviewedAt!: Date | null;
+
+  @Column({ name: 'reviewed_by', type: 'varchar', length: 100, nullable: true })
+  reviewedBy!: string | null;
+
+  @Column({ name: 'reject_reason', type: 'varchar', length: 300, nullable: true })
+  rejectReason!: string | null;
 }

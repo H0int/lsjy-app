@@ -13,7 +13,7 @@ export { ToolCategory } from './tool-category.entity';
 export { AiTool } from './ai-tool.entity';
 export { AiCallRecord } from './ai-call-record.entity';
 export { AiUserDailyQuota } from './ai-user-daily-quota.entity';
-export { AiProvider } from '../ai/entities/ai-provider.entity';
+export { AiProvider } from '../../ai/entities/ai-provider.entity';
 
 // Payment (Sacred Points)
 export { CoinAccount } from './coin-account.entity';

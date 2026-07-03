@@ -1,4 +1,4 @@
-import { Entity, Column, Index } from 'typeorm';
+import { Entity, Column, Index, VersionColumn } from 'typeorm';
 import { BaseEntity } from './base.entity';
 
 @Entity('coin_accounts')
@@ -25,7 +25,7 @@ export class CoinAccount extends BaseEntity {
   @Column({ name: 'total_withdrawn', type: 'bigint', unsigned: true, default: 0 })
   totalWithdrawn!: number;
 
-  @Column({ type: 'int', unsigned: true, default: 0, version: true })
+  @VersionColumn({ type: 'int', unsigned: true, default: 0 })
   version!: number;
 
   @Column({ type: 'enum', enum: ['active', 'frozen', 'closed'], default: 'active' })
