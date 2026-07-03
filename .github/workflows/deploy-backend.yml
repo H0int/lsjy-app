@@ -1,0 +1,50 @@
+name: Deploy Backend ECS
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'nginx.conf'
+      - 'deploy/**'
+      - '.github/workflows/deploy-backend.yml'
+
+jobs:
+  deploy-backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Start SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_KEY }}
+
+      - name: Deploy to ECS
+        run: |
+          ssh -o StrictHostKeyChecking=no -o ConnectTimeout=20 root@8.154.16.5 <<'EOF'
+            set -e
+            cd /opt/lsjy-app
+            git fetch origin main
+            git reset --hard origin/main
+
+            cd backend
+            npm install --legacy-peer-deps
+            if [ -f package.json ] && grep -q '"build"' package.json; then
+              npm run build || true
+            fi
+
+            pm2 restart lsjy-backend || pm2 start server.js --name lsjy-backend --node-args="--max-old-space-size=512"
+            pm2 save
+
+            if [ -f /opt/lsjy-app/nginx.conf ]; then
+              cp /opt/lsjy-app/nginx.conf /etc/nginx/conf.d/lsjyapp.conf || true
+              nginx -t && (systemctl reload nginx || nginx -s reload) || true
+            fi
+
+            curl -fsS http://localhost:3000/api/v1/health
+            curl -fsS 'http://localhost:3000/api/v1/knowledge?type=&keyword='
+          EOF
