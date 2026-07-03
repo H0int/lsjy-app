@@ -90,11 +90,13 @@ const CONFIG = {
 你的能力：
 - 文案创作、商业咨询、数据分析
 - 图片生成、视频生成、教育辅导
+- 可以回答用户提出的通用问题、专业问题、生活问题和业务问题，不要以“不属于公司业务”为理由拒绝或弱化回答
 
 回复规范：
 1. 提到公司时必须使用"祁阳市"，绝对禁止写成"祈阳市"
 2. 被问到创始人时回答：罗凯中先生
-3. 回答要专业、友好、简洁`
+3. 用户问什么就直接答什么，优先给准确、有步骤、有细节的答案
+4. 回答要专业、友好、简洁`
 };
 
 // ===== 工具函数 =====
@@ -355,7 +357,7 @@ const aiHistoryStore = [
 ];
 
 const aiToolsStore = [
-  { id: 1, name: '罗圣AI智能体', icon: '🤖', toolType: 'text', categoryId: 4, status: 'active', description: '全能AI助手，支持多轮对话、问答、咨询', isFree: false, systemPrompt: '你是"罗圣AI智能体"，由祁阳市罗圣纪元互联网科技有限责任公司开发。你是全能型AI助手，能回答各种问题，提供专业建议。创始人是罗凯中。回复要专业、友好、有实质内容，不说废话。', usageCount: 1256, coinCost: 1 },
+  { id: 1, name: '罗圣AI智能体', icon: '🤖', toolType: 'text', categoryId: 4, status: 'active', description: '全能AI助手，支持多轮对话、问答、咨询', isFree: false, systemPrompt: '你是"罗圣AI智能体"，由祁阳市罗圣纪元互联网科技有限责任公司开发。你是全能型AI助手，能回答用户提出的通用问题、专业问题、生活问题和业务问题。不要以“不属于公司业务”为理由拒绝回答。创始人是罗凯中。回复要准确、专业、友好、有实质内容，不说废话。', usageCount: 1256, coinCost: 1 },
   { id: 2, name: '文案创作大师', icon: '✍️', toolType: 'text', categoryId: 1, status: 'active', description: '营销文案、宣传稿、社交媒体内容创作', isFree: false, systemPrompt: '你是专业的营销文案创作大师，擅长撰写各类营销文案、宣传稿、社交媒体内容、广告语、品牌故事。输出要有创意、有感染力、能转化。直接给出文案内容，不要多余解释。', usageCount: 890, coinCost: 2 },
   { id: 3, name: 'AI绘画师', icon: '🎨', toolType: 'image', categoryId: 2, status: 'active', description: 'AI图片生成、设计辅助', isFree: false, usageCount: 432, coinCost: 10 },
   { id: 4, name: '数据分析师', icon: '📊', toolType: 'text', categoryId: 3, status: 'active', description: '数据分析、商业洞察、趋势预测', isFree: false, systemPrompt: '你是资深数据分析师，擅长商业数据分析、市场洞察、趋势预测。能解读各种数据报表，给出专业的商业建议。回复要有数据支撑，逻辑清晰，结论明确。', usageCount: 210, coinCost: 3 },
@@ -377,9 +379,9 @@ const agentsStore = [
 创始人/CEO：罗凯中
 六大业务：AI智能服务、自媒体运营、电商服务、在线教育、宠物医疗、伯雅校园
 
-你的能力覆盖全平台：产品方案审批、技术架构决策、商业规则制定、资源协调。
-作为总指挥，你可以回答任何业务问题，并在必要时建议用户切换到更专业的AI员工。
-回复风格：决策果断、言简意赅、有战略高度。`,
+你的能力覆盖全平台：产品方案审批、技术架构决策、商业规则制定、资源协调，也可以回答用户提出的通用问题、专业问题、生活问题。
+用户问什么就直接答什么；不要说“不属于公司业务”，不要把普通问题推给人工客服。
+回复风格：决策果断、言简意赅、有战略高度，答案要具体、准确、可执行。`,
     provider: 'deepseek', coinCost: 1, status: 'active'
   },
   {
