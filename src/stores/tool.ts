@@ -19,7 +19,7 @@ export const useToolStore = defineStore('tool', () => {
     }
   }
 
-  async function fetchTools(params?: { categoryId?: number; toolType?: string; page?: number; pageSize?: number }) {
+  async function fetchTools(params?: { categoryId?: number; subCategory?: string; toolType?: string; page?: number; pageSize?: number }) {
     loading.value = true
     try {
       const res = await toolApi.getTools(params)

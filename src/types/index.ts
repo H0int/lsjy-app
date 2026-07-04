@@ -96,6 +96,7 @@ export interface Tool {
   id: number
   categoryId: number
   category?: ToolCategory
+  subCategory?: string
   name: string
   slug: string
   description: string | null
@@ -112,6 +113,7 @@ export interface Tool {
   sortOrder: number
   status: 'active' | 'maintenance' | 'disabled'
   createdAt: string
+  tags?: string[]
 }
 
 // ===== 圣点交易记录 =====

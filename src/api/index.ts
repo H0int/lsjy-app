@@ -50,7 +50,7 @@ export const toolApi = {
     if (useMock) return mockApi.getCategories() as any
     return service.get('/ai/categories').then(r => r.data)
   },
-  getTools(params?: { categoryId?: number; toolType?: string; page?: number; pageSize?: number }): Promise<ApiResponse<PageResult<Tool>>> {
+  getTools(params?: { categoryId?: number; subCategory?: string; toolType?: string; page?: number; pageSize?: number }): Promise<ApiResponse<PageResult<Tool>>> {
     if (useMock) return mockApi.getTools(params) as any
     return service.get('/ai/tools', { params }).then(r => r.data)
   },
