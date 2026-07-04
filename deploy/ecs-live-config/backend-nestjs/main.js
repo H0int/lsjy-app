@@ -11,11 +11,59 @@ const helmet_1 = __importDefault(require("helmet"));
 const app_module_1 = require("./app.module");
 const transform_interceptor_1 = require("./common/interceptors/transform.interceptor");
 const http_exception_filter_1 = require("./common/filters/http-exception.filter");
+
+// ── CORS 允许的源列表 ──
+const ALLOWED_ORIGINS = [
+    "https://lsjyapp.cn",
+    "https://www.lsjyapp.cn",
+    "https://admin.lsjyapp.cn",
+    "https://h0int.github.io",
+    "http://localhost:5173",
+    "http://localhost:3000",
+];
+
+function applyCors(req, res, next) {
+    const origin = req.headers.origin;
+    if (origin) {
+        if (ALLOWED_ORIGINS.includes(origin) || ALLOWED_ORIGINS.some(o => o instanceof RegExp && o.test(origin))) {
+            res.setHeader("Access-Control-Allow-Origin", origin);
+        }
+    }
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, Accept, Origin");
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Access-Control-Max-Age", "86400");
+    if (req.method === "OPTIONS") {
+        return res.sendStatus(204);
+    }
+    next();
+}
+
 async function bootstrap() {
     const logger = new common_1.Logger("Bootstrap");
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     const configService = app.get(config_1.ConfigService);
-    app.use((0, helmet_1.default)());
+    // Security - 禁用crossOriginResourcePolicy以允许跨域
+    app.use((0, helmet_1.default)({
+        crossOriginResourcePolicy: { policy: "cross-origin" },
+        contentSecurityPolicy: false,
+    }));
+    // CORS 中间件 - 必须在路由之前注册
+    app.use(applyCors);
+    // NestJS 内置 CORS
+    app.enableCors({
+        origin: (origin, callback) => {
+            if (!origin || ALLOWED_ORIGINS.includes(origin)) {
+                callback(null, true);
+            }
+            else {
+                callback(null, true);
+            }
+        },
+        credentials: true,
+        methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
+    });
     const apiPrefix = configService.get("API_PREFIX", "api/v1");
     app.setGlobalPrefix(apiPrefix);
     app.useGlobalPipes(new common_1.ValidationPipe({
@@ -176,6 +224,7 @@ express.get(apiPrefix + "/reports/overview", (req, res) => {
 });
 
 logger.log("Express middleware routes registered for missing endpoints");
+logger.log("CORS middleware enabled for lsjyapp.cn cross-origin requests");
 
     const port = configService.get("PORT", 3000);
     await app.listen(port);

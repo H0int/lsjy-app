@@ -11,24 +11,40 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
 
-  // Security
-  app.use(helmet());
+  // Security - 禁用crossOriginResourcePolicy以允许跨域请求
+  app.use(helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    contentSecurityPolicy: false,
+  }));
 
-  // CORS - 支持手机端和管理后台访问
+  // CORS - 支持前端跨域访问
   app.enableCors({
     origin: [
-      'http://localhost:5173',
-      'http://localhost:3000',
       'https://lsjyapp.cn',
       'https://www.lsjyapp.cn',
+      'https://admin.lsjyapp.cn',
       'https://h0int.github.io',
-      'http://h0int.github.io',
-      // 允许所有移动端浏览器（生产环境可配置白名单）
-      /.*/,
+      'http://localhost:5173',
+      'http://localhost:3000',
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+    exposedHeaders: ['Content-Length', 'Content-Range'],
+    maxAge: 86400,
+  });
+
+  // 显式处理OPTIONS预检请求，确保CORS头正确返回
+  app.use((req, res, next) => {
+    if (req.method === 'OPTIONS') {
+      res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+      res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+      res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+      res.header('Access-Control-Allow-Credentials', 'true');
+      res.header('Access-Control-Max-Age', '86400');
+      return res.sendStatus(204);
+    }
+    next();
   });
 
   // Global prefix
