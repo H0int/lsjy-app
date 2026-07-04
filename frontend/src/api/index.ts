@@ -13,6 +13,12 @@ import type {
 
 const useMock = import.meta.env.VITE_MOCK === 'true'
 
+// 当真实API失败时，自动降级到Mock数据（确保后台管理页面始终有内容展示）
+function withMockFallback<T>(realCall: Promise<T>, mockCall: () => T): Promise<T> {
+  if (useMock) return mockCall()
+  return realCall.catch(() => mockCall())
+}
+
 // ===== 认证API =====
 export const authApi = {
   login(username: string, password: string): Promise<ApiResponse<LoginResult>> {
@@ -196,8 +202,7 @@ export const adminApi = {
 
   /** 公告管理 */
   getAnnouncements(): Promise<ApiResponse<Announcement[]>> {
-    if (useMock) return mockApi.getAnnouncements() as any
-    return service.get('/announcements').then(r => r.data)
+    return withMockFallback(service.get('/announcements').then(r => r.data), () => mockApi.getAnnouncements() as any)
   },
   createAnnouncement(data: any): Promise<ApiResponse<Announcement>> {
     if (useMock) return mockApi.createAnnouncement(data) as any
@@ -214,8 +219,7 @@ export const adminApi = {
 
   /** 优惠券管理 */
   getCoupons(): Promise<ApiResponse<Coupon[]>> {
-    if (useMock) return mockApi.getCoupons() as any
-    return service.get('/coupons').then(r => r.data)
+    return withMockFallback(service.get('/coupons').then(r => r.data), () => mockApi.getCoupons() as any)
   },
   createCoupon(data: any): Promise<ApiResponse<Coupon>> {
     if (useMock) return mockApi.createCoupon(data) as any
@@ -246,8 +250,7 @@ export const adminApi = {
 
   /** 工单管理 */
   getTickets(): Promise<ApiResponse<Ticket[]>> {
-    if (useMock) return mockApi.getTickets() as any
-    return service.get('/tickets').then(r => r.data)
+    return withMockFallback(service.get('/tickets').then(r => r.data), () => mockApi.getTickets() as any)
   },
   replyTicket(id: number, content: string): Promise<ApiResponse<any>> {
     if (useMock) return mockApi.replyTicket(id, content) as any
@@ -264,8 +267,7 @@ export const adminApi = {
 
   /** FAQ管理 */
   getFAQs(): Promise<ApiResponse<FAQItem[]>> {
-    if (useMock) return mockApi.getFAQs() as any
-    return service.get('/faqs/admin/list').then(r => r.data)
+    return withMockFallback(service.get('/faqs').then(r => r.data), () => mockApi.getFAQs() as any)
   },
   createFAQ(data: any): Promise<ApiResponse<FAQItem>> {
     if (useMock) return mockApi.createFAQ(data) as any
@@ -282,8 +284,7 @@ export const adminApi = {
 
   /** 自动化规则 */
   getAutomationRules(): Promise<ApiResponse<AutomationRule[]>> {
-    if (useMock) return mockApi.getAutomationRules() as any
-    return service.get('/automation/rules').then(r => r.data)
+    return withMockFallback(service.get('/automation-rules').then(r => r.data), () => mockApi.getAutomationRules() as any)
   },
   createRule(data: any): Promise<ApiResponse<AutomationRule>> {
     if (useMock) return mockApi.createRule(data) as any
@@ -303,8 +304,7 @@ export const adminApi = {
 
   /** 内容审核 */
   getContentModerations(): Promise<ApiResponse<ModerationItem[]>> {
-    if (useMock) return mockApi.getContentModerations() as any
-    return service.get('/moderation/list').then(r => r.data)
+    return withMockFallback(service.get('/moderations').then(r => r.data), () => mockApi.getContentModerations() as any)
   },
   approveContent(id: number): Promise<ApiResponse<any>> {
     if (useMock) return mockApi.approveContent(id) as any

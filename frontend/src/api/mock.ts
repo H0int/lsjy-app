@@ -122,6 +122,13 @@ export const mockModerations: ModerationItem[] = [
   { id: 4, contentType: 'product', contentTitle: '手工陶瓷茶杯套装', authorName: '匠心店铺', authorId: 104, summary: '纯手工制作的陶瓷茶杯...', status: 'pending', reason: null, reviewerId: null, reviewerName: null, createdAt: '2025-07-18T09:15:00.000Z', reviewedAt: null },
 ]
 
+export const mockFeedbacks = [
+  { id: 1, userId: 101, userName: '张三', content: '平台AI工具非常好用，特别是文案创作功能！', category: 'praise', status: 'pending', adminReply: null, createdAt: '2025-07-18T15:30:00.000Z' },
+  { id: 2, userId: 102, userName: '李四', content: '希望增加批量导出功能', category: 'suggestion', status: 'resolved', adminReply: '感谢建议，已提交产品团队评估。', createdAt: '2025-07-17T10:20:00.000Z' },
+  { id: 3, userId: 103, userName: '王五', content: 'AI绘画生成速度有点慢', category: 'complaint', status: 'pending', adminReply: null, createdAt: '2025-07-18T09:45:00.000Z' },
+  { id: 4, userId: 104, userName: '赵六', content: '充值后圣力没有到账', category: 'bug', status: 'resolved', adminReply: '已核实并补发圣力，请查收。', createdAt: '2025-07-16T14:10:00.000Z' },
+]
+
 export const mockReportData: ReportData[] = [
   { period: '07-18', newUsers: 234, activeUsers: 5620, revenue: 18900, coinConsumed: 45600, orders: 189, toolCalls: 12340 },
   { period: '07-17', newUsers: 198, activeUsers: 5430, revenue: 16500, coinConsumed: 41200, orders: 165, toolCalls: 11200 },
