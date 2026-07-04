@@ -20,7 +20,7 @@ const PORT = process.env.PORT || 3000;
 // ===== 中间件 =====
 // CORS 由线上 Nginx 统一添加。这里不要重复添加，否则浏览器会因
 // Access-Control-Allow-Origin 出现两份而把请求判定为 Network Error。
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '50mb' }));
 
 // ===== 配置 =====
 const CONFIG = {
@@ -120,13 +120,25 @@ function extractTextContent(content) {
   return String(content || '');
 }
 
+function parseContentWithDataImages(rawContent = '') {
+  const text = String(rawContent || '');
+  const imageMatches = Array.from(text.matchAll(/!\[[^\]]*\]\((data:image\/[^;]+;base64,[^)]+)\)/g));
+  if (!imageMatches.length) return text;
+  const cleanText = text.replace(/!\[[^\]]*\]\(data:image\/[^;]+;base64,[^)]+\)\n?/g, '').trim() || '请识别并分析这张图片。';
+  const parts = [{ type: 'text', text: cleanText }];
+  imageMatches.slice(0, 3).forEach(match => {
+    parts.push({ type: 'image_url', image_url: { url: match[1] } });
+  });
+  return parts;
+}
+
 function normalizeIncomingMessages(messages, fallbackMessage = '') {
   const list = Array.isArray(messages) && messages.length > 0 ? messages : [{ role: 'user', content: fallbackMessage }];
   return list.map(m => {
     const role = ['system', 'assistant', 'user'].includes(m?.role) ? m.role : 'user';
     const content = Array.isArray(m?.content)
       ? m.content.filter(part => part && (part.type === 'text' || part.type === 'image_url'))
-      : String(m?.content || '');
+      : parseContentWithDataImages(m?.content || '');
     return { role, content };
   }).filter(m => extractTextContent(m.content).trim() || contentHasImage(m.content));
 }

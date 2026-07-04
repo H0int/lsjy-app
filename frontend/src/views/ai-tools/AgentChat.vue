@@ -554,6 +554,15 @@ async function sendMsg() {
 
   try {
     const backendMessages = msgs.value.slice(-20).map(m => ({ role: m.role, content: toBackendContent(m.content) }))
+    if (file?.isImage) {
+      const lastUserIndex = backendMessages.map(m => m.role).lastIndexOf('user')
+      if (lastUserIndex >= 0) {
+        backendMessages[lastUserIndex].content = [
+          { type: 'text', text: text || '请识别这张图片，并说明图片里的关键信息。' },
+          { type: 'image_url', image_url: { url: file.url } }
+        ] as any
+      }
+    }
 
     // 系统提示通过 systemPrompt 字段传给后端，不混入用户消息
 
