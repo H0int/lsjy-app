@@ -64,17 +64,17 @@
     <div class="grid md:grid-cols-2 gap-6">
       <!-- 最近使用 -->
       <div class="cyber-card rounded-xl p-5">
-        <h3 class="font-bold var(--cyber-text) mb-4">📝 最近使用</h3>
+        <h3 class="font-bold mb-4" style="color: var(--cyber-text);">📝 最近使用</h3>
         <div class="space-y-3">
-          <div v-for="item in recentUsage" :key="item.id" class="flex items-center justify-between py-2 border-b var(--cyber-border) last:border-0">
+          <div v-for="item in recentUsage" :key="item.id" class="flex items-center justify-between py-2 last:border-0" style="border-bottom: 1px solid var(--cyber-border);">
             <div class="flex items-center gap-3">
               <span class="text-xl">{{ item.icon }}</span>
               <div>
-                <div class="text-sm font-medium var(--cyber-text)">{{ item.name }}</div>
-                <div class="text-xs var(--cyber-text-dim)">{{ item.time }}</div>
+                <div class="text-sm font-medium" style="color: var(--cyber-text);">{{ item.name }}</div>
+                <div class="text-xs" style="color: var(--cyber-text-dim);">{{ item.time }}</div>
               </div>
             </div>
-            <span class="text-xs px-2 py-1 rounded-full" :class="item.isFree ? 'rgba(34,197,94,0.1); color: #22c55e' : 'rgba(255,184,0,0.1); color: var(--cyber-amber)'">
+            <span class="text-xs px-2 py-1 rounded-full" :style="item.isFree ? 'background: rgba(34,197,94,0.1); color: #22c55e' : 'background: rgba(255,184,0,0.1); color: var(--cyber-amber)'">
               {{ item.isFree ? '免费' : `-${item.coinCost}圣力` }}
             </span>
           </div>
@@ -83,13 +83,13 @@
 
       <!-- 平台公告 -->
       <div class="cyber-card rounded-xl p-5">
-        <h3 class="font-bold var(--cyber-text) mb-4">📢 平台公告</h3>
+        <h3 class="font-bold mb-4" style="color: var(--cyber-text);">📢 平台公告</h3>
         <div class="space-y-3">
-          <div v-for="notice in notices" :key="notice.id" class="flex items-start gap-3 py-2 border-b var(--cyber-border) last:border-0">
-            <span class="text-sm px-2 py-0.5 rounded rgba(0,240,255,0.1); color: var(--cyber-cyan) flex-shrink-0 mt-0.5">{{ notice.tag }}</span>
+          <div v-for="notice in notices" :key="notice.id" class="flex items-start gap-3 py-2 last:border-0" style="border-bottom: 1px solid var(--cyber-border);">
+            <span class="text-sm px-2 py-0.5 rounded flex-shrink-0 mt-0.5" style="background: rgba(0,240,255,0.1); color: var(--cyber-cyan);">{{ notice.tag }}</span>
             <div>
-              <div class="text-sm var(--cyber-text)">{{ notice.title }}</div>
-              <div class="text-xs var(--cyber-text-dim) mt-0.5">{{ notice.date }}</div>
+              <div class="text-sm" style="color: var(--cyber-text);">{{ notice.title }}</div>
+              <div class="text-xs mt-0.5" style="color: var(--cyber-text-dim);">{{ notice.date }}</div>
             </div>
           </div>
         </div>
@@ -102,7 +102,7 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { toolApi, visitorApi, adminApi, paymentApi, publicApi } from '@/api'
+import { toolApi, visitorApi, adminApi, paymentApi, publicApi, onlineApi } from '@/api'
 import type { Tool } from '@/types'
 
 const authStore = useAuthStore()
@@ -215,48 +215,35 @@ onMounted(async () => {
     }
   } catch { /* ignore */ }
 
-  // 心跳上报 + 在线人数
+  // 心跳上报 + 在线人数（通过axios实例，支持token自动附加和错误静默）
   async function sendHeartbeat() {
     try {
-      const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://api.lsjyapp.cn/api/v1'
-      const token = authStore.token || ''
-      const sessionId = authStore.user?.id || navigator.userAgent.substring(0, 50)
-      await fetch(API_BASE + '/online/heartbeat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + token,
-          'X-Session-Id': sessionId,
-          'X-User-Id': String(authStore.user?.id || '')
-        },
-        body: JSON.stringify({ path: window.location.pathname })
-      })
-      const countRes = await fetch(API_BASE + '/online/count', {
-        headers: { 'Authorization': 'Bearer ' + token }
-      })
-      if (countRes.ok) {
-        const countData = await countRes.json()
-        onlineCount.value = countData.data?.onlineCount || 0
+      await onlineApi.sendHeartbeat({ path: window.location.pathname })
+      const countRes = await onlineApi.getCount()
+      if (countRes.data) {
+        onlineCount.value = countRes.data.onlineCount || 0
       }
     } catch { /* ignore */ }
   }
   sendHeartbeat()
   heartbeatTimer = setInterval(sendHeartbeat, 10000)
 
-  // 获取用户使用记录（从订单API）
-  try {
-    const orderRes = await adminApi.getOrders({ page: 1, pageSize: 4 })
-    if (orderRes.data && orderRes.data.items) {
-      recentUsage.value = orderRes.data.items.slice(0, 4).map((o: any) => ({
-        id: String(o.id),
-        icon: '🛠️',
-        name: o.toolName || o.description || '工具使用',
-        time: o.createdAt ? new Date(o.createdAt).toLocaleDateString('zh-CN') : '',
-        coinCost: Math.abs(o.amount || 0),
-        isFree: (o.amount || 0) === 0
-      }))
-    }
-  } catch { /* ignore */ }
+  // 获取用户使用记录（仅管理员从订单API获取）
+  if (authStore.isAdmin) {
+    try {
+      const orderRes = await adminApi.getOrders({ page: 1, pageSize: 4 })
+      if (orderRes.data && orderRes.data.items) {
+        recentUsage.value = orderRes.data.items.slice(0, 4).map((o: any) => ({
+          id: String(o.id),
+          icon: '🛠️',
+          name: o.toolName || o.description || '工具使用',
+          time: o.createdAt ? new Date(o.createdAt).toLocaleDateString('zh-CN') : '',
+          coinCost: Math.abs(o.amount || 0),
+          isFree: (o.amount || 0) === 0
+        }))
+      }
+    } catch { /* ignore */ }
+  }
 })
 
 onUnmounted(() => {

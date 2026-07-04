@@ -8,7 +8,7 @@
           <div>
             <p class="stat-label">在线用户</p>
             <p class="stat-value" style="color: #00f0ff; text-shadow: 0 0 20px #00f0ff40">{{ formatNum(onlineUsers) }}</p>
-            <p class="stat-change change-up">↑ {{ onlineChange }}%</p>
+            <p v-if="onlineChange != null" class="stat-change change-up">↑ {{ onlineChange }}%</p>
           </div>
           <div class="stat-icon" style="boxShadow: 0 0 20px #00f0ff30"></div>
         </div>
@@ -19,7 +19,7 @@
           <div>
             <p class="stat-label">今日注册</p>
             <p class="stat-value" style="color: #00ff88; text-shadow: 0 0 20px #00ff8840">{{ todayRegistrations }}</p>
-            <p class="stat-change change-up">↑ {{ regChange }}%</p>
+            <p v-if="regChange != null" class="stat-change change-up">↑ {{ regChange }}%</p>
           </div>
           <div class="stat-icon" style="boxShadow: 0 0 20px #00ff8830"></div>
         </div>
@@ -30,7 +30,7 @@
           <div>
             <p class="stat-label">今日营收</p>
             <p class="stat-value" style="color: #f59e0b; text-shadow: 0 0 20px #f59e0b40">¥{{ formatNum(todayRevenue) }}</p>
-            <p class="stat-change change-up">↑ {{ revenueChange }}%</p>
+            <p v-if="revenueChange != null" class="stat-change change-up">↑ {{ revenueChange }}%</p>
           </div>
           <div class="stat-icon" style="boxShadow: 0 0 20px #f59e0b30">💰</div>
         </div>
@@ -41,7 +41,7 @@
           <div>
             <p class="stat-label">圣力消耗</p>
             <p class="stat-value" style="color: #c084fc; text-shadow: 0 0 20px #c084fc40">{{ formatNum(coinConsumed) }}</p>
-            <p class="stat-change change-down">↓ {{ coinChange }}%</p>
+            <p v-if="coinChange != null" class="stat-change change-down">↓ {{ coinChange }}%</p>
           </div>
           <div class="stat-icon" style="boxShadow: 0 0 20px #c084fc30">⚡</div>
         </div>
@@ -295,13 +295,13 @@ const showPaymentFailures = ref(false)
 
 // 4个统计卡片
 const onlineUsers = ref(0)
-const onlineChange = ref(12.5)
+const onlineChange = ref<number | null>(null)
 const todayRegistrations = ref(0)
-const regChange = ref(8.3)
+const regChange = ref<number | null>(null)
 const todayRevenue = ref(0)
-const revenueChange = ref(15.2)
+const revenueChange = ref<number | null>(null)
 const coinConsumed = ref(0)
-const coinChange = ref(3.1)
+const coinChange = ref<number | null>(null)
 
 // API错误率 & 支付失败率
 const apiErrorRate = ref(0)

@@ -377,6 +377,18 @@ export const visitorApi = {
   }
 }
 
+// ===== 在线状态API（静默请求，失败不弹提示）=====
+export const onlineApi = {
+  /** POST /online/heartbeat - 心跳上报 */
+  sendHeartbeat(data: { path?: string }): Promise<ApiResponse<any>> {
+    return service.post('/online/heartbeat', data, { headers: silentHeaders }).then(r => r.data)
+  },
+  /** GET /online/count - 获取在线人数 */
+  getCount(): Promise<ApiResponse<{ onlineCount: number }>> {
+    return service.get('/online/count', { headers: silentHeaders }).then(r => r.data)
+  }
+}
+
 // ===== 公开API（无需管理员权限）=====
 export const publicApi = {
   /** 获取已发布公告（公开接口） */
