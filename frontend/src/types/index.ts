@@ -425,7 +425,7 @@ export interface ImageOptions {
   size?: string
   style?: string
   count?: number
-  quality?: 'standard' | 'hd'
+  quality?: 'standard' | 'hd' | 'ultra' | 'master'
   refImage?: string
 }
 

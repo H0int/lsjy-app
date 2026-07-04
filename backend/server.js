@@ -2068,9 +2068,11 @@ async function generateImageWithAI(prompt, options = {}) {
   const width = options.width || 1024;
   const height = options.height || 1024;
   const style = options.style || 'auto';
+  const count = Math.max(1, Math.min(Number(options.count || 1), 4));
+  const quality = options.quality || 'standard';
 
   if (provider === 'jimeng') {
-    return await callJimengImageAPI(prompt, { width, height, style });
+    return await callJimengImageAPI(prompt, { width, height, style, count, quality });
   } else {
     throw new Error(`不支持的图片生成 Provider: ${provider}`);
   }
@@ -2091,22 +2093,17 @@ async function callJimengImageAPI(prompt, options = {}) {
     enhancedPrompt = prompt + '，高质量，高清细节，专业摄影，8K分辨率，精细纹理';
   }
 
-  // Seedream API 要求总像素在 [3686400, 16777216] 范围内
-  // 映射用户选择的有效尺寸
-  let sizeStr = '2K'; // 默认使用2K
-  const totalPixels = options.width * options.height;
-  if (totalPixels >= 3686400) {
-    sizeStr = `${options.width}x${options.height}`;
+  const aspectRatio = options.width / options.height;
+  const quality = options.quality || 'standard';
+  let sizeStr = '2048x2048';
+  if (quality === 'ultra') {
+    sizeStr = aspectRatio > 1.3 ? '3840x2160' : aspectRatio < 0.77 ? '2160x3840' : '3072x3072';
+  } else if (quality === 'master') {
+    sizeStr = aspectRatio > 1.3 ? '4096x2304' : aspectRatio < 0.77 ? '2304x4096' : '4096x4096';
+  } else if (quality === 'hd') {
+    sizeStr = aspectRatio > 1.3 ? '2560x1440' : aspectRatio < 0.77 ? '1440x2560' : '2048x2048';
   } else {
-    // 用户选择的尺寸太小，映射到有效尺寸
-    const aspectRatio = options.width / options.height;
-    if (aspectRatio > 1.3) {
-      sizeStr = '2560x1440'; // 横版
-    } else if (aspectRatio < 0.77) {
-      sizeStr = '1440x2560'; // 竖版
-    } else {
-      sizeStr = '2048x2048'; // 方形
-    }
+    sizeStr = aspectRatio > 1.3 ? '1920x1080' : aspectRatio < 0.77 ? '1080x1920' : '2048x2048';
   }
 
   const res = await httpsRequest(`${baseUrl}/images/generations`, {
@@ -2125,10 +2122,23 @@ async function callJimengImageAPI(prompt, options = {}) {
   const urls = (res.data.data || []).map(item => item.url || item.b64_json).filter(Boolean);
   if (urls.length === 0) throw new Error('即梦 API 未返回图片');
 
-  return { urls, model: 'jimeng-v2', prompt };
+  return { urls, model: 'jimeng-v2', prompt, width: options.width, height: options.height, quality };
 }
 
 // DALL-E 图片生成已移除（OpenAI未配置）
+
+function parseImageSize(size, width, height) {
+  if (Number(width) && Number(height)) return { width: Number(width), height: Number(height) };
+  const normalized = String(size || '1:1').toLowerCase();
+  if (normalized === '16:9') return { width: 1920, height: 1080 };
+  if (normalized === '9:16') return { width: 1080, height: 1920 };
+  if (normalized === '4:3') return { width: 1600, height: 1200 };
+  if (/^\d+x\d+$/.test(normalized)) {
+    const [w, h] = normalized.split('x').map(Number);
+    return { width: w, height: h };
+  }
+  return { width: 2048, height: 2048 };
+}
 
 // ===== 视频生成 API =====
 async function generateVideoWithAI(prompt, options = {}) {
@@ -3189,7 +3199,7 @@ app.post('/api/v1/ai/tools/:id/generate', authCheck, async (req, res) => {
   const tool = aiToolsStore.find(t => t.id === Number(req.params.id));
   if (!tool) return res.status(404).json({ code: 404, message: '工具不存在', data: null });
 
-  const { prompt, width, height, style, count } = req.body;
+  const { prompt, width, height, size, style, count, quality } = req.body;
   if (!prompt) return res.status(400).json({ code: 400, message: '请提供图片描述', data: null });
 
   const userId = req.user?.id || 1;
@@ -3218,11 +3228,13 @@ app.post('/api/v1/ai/tools/:id/generate', authCheck, async (req, res) => {
         log(`[图片生成] 第 ${attempt}/${imgMaxRetries} 次重试，等待 ${delay}ms`);
         await new Promise(r => setTimeout(r, delay));
       }
+      const parsedSize = parseImageSize(size, width, height);
       imgResult = await generateImageWithAI(prompt, {
-        width: width || 1024,
-        height: height || 1024,
+        width: parsedSize.width,
+        height: parsedSize.height,
         style: style || 'auto',
-        count: count || 1
+        count: count || 1,
+        quality: quality || 'standard',
       });
       log(`图片生成成功: model=${imgResult.model}, urls=${imgResult.urls.length}`);
       break;
@@ -3254,8 +3266,9 @@ app.post('/api/v1/ai/tools/:id/generate', authCheck, async (req, res) => {
       imageUrls: imgResult.urls,
       model: imgResult.model,
       prompt: imgResult.prompt,
-      width: width || 1024,
-      height: height || 1024,
+      width: imgResult.width || parseImageSize(size, width, height).width,
+      height: imgResult.height || parseImageSize(size, width, height).height,
+      quality: quality || 'standard',
       coinCost: IMAGE_COIN_COST,
       balance: deduct.balance,
       durationMs: 3000,

@@ -215,8 +215,10 @@
               <div>
                 <label class="block text-xs mb-1" style="color: var(--cyber-text-dim);">质量</label>
                 <el-select v-model="imageQuality" size="small" class="w-full">
-                  <el-option label="标准" value="standard" />
+                  <el-option label="标准 2K" value="standard" />
                   <el-option label="高清 HD" value="hd" />
+                  <el-option label="超清 Ultra" value="ultra" />
+                  <el-option label="大师 Master" value="master" />
                 </el-select>
               </div>
             </div>
@@ -237,9 +239,9 @@
           </div>
 
           <!-- 生成的图片 -->
-          <div v-if="generatedImages.length > 0 || generating" class="mt-6 pt-6" style="border-top: 1px solid var(--cyber-border);">
+          <div v-if="generatedImages.length > 0 || generating" ref="mediaResultRef" class="mt-6 pt-6" style="border-top: 1px solid var(--cyber-border);">
             <div class="flex items-center justify-between mb-4">
-              <h3 class="font-bold" style="color: var(--cyber-text);">生成结果</h3>
+              <h3 class="font-bold" style="color: var(--cyber-text);">生成结果 · 可直接查看/下载</h3>
               <el-button v-if="generatedImages.length > 0" size="small" @click="generatedImages = []">🗑️ 清除</el-button>
             </div>
             <!-- 加载中占位 -->
@@ -261,21 +263,28 @@
             <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div v-for="(url, idx) in generatedImages" :key="idx"
                 class="relative group rounded-xl overflow-hidden cyber-card">
-                <img :src="url" :alt="`生成图片 ${idx + 1}`" class="w-full h-auto" loading="lazy" />
-                <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                  style="background: rgba(0,0,0,0.6);">
-                  <div class="flex gap-2">
-                    <a :href="url" target="_blank" download
-                      class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
-                      style="background: rgba(255,255,255,0.9); color: #000;">
-                      ⬇️ 下载
-                    </a>
-                    <button @click="copyResult(url)"
-                      class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
-                      style="background: rgba(255,255,255,0.9); color: #000;">
-                       复制链接
-                    </button>
-                  </div>
+                <img :src="url" :alt="`生成图片 ${idx + 1}`" class="w-full h-auto min-h-[260px] object-contain"
+                  loading="eager" @error="markMediaLoadError(url)" />
+                <div v-if="mediaLoadErrors.includes(url)" class="p-3 text-xs"
+                  style="color: var(--cyber-amber); background: rgba(255,184,0,0.08);">
+                  微信内置浏览器没有直接渲染这张图，请点“打开原图”查看。
+                </div>
+                <div class="p-3 flex gap-2 flex-wrap">
+                  <a :href="url" target="_blank" rel="noopener"
+                    class="px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                    style="background: rgba(0,240,255,0.1); color: var(--cyber-cyan); border: 1px solid rgba(0,240,255,0.25);">
+                    🔍 打开原图
+                  </a>
+                  <a :href="url" target="_blank" download
+                    class="px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                    style="background: rgba(255,184,0,0.1); color: var(--cyber-amber); border: 1px solid rgba(255,184,0,0.25);">
+                    ⬇️ 下载图片
+                  </a>
+                  <button @click="copyResult(url)"
+                    class="px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                    style="background: rgba(255,255,255,0.06); color: var(--cyber-text); border: 1px solid var(--cyber-border);">
+                    🔗 复制链接
+                  </button>
                 </div>
               </div>
             </div>
@@ -308,11 +317,14 @@
             <!-- 参数设置 -->
             <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
               <div>
-                <label class="block text-xs mb-1" style="color: var(--cyber-text-dim);">时长</label>
+                <label class="block text-xs mb-1" style="color: var(--cyber-text-dim);">时长（真实上限15秒）</label>
                 <el-select v-model="videoDuration" size="small" class="w-full">
+                  <el-option :label="'2秒 快速测试'" :value="2" />
                   <el-option :label="'5秒'" :value="5" />
+                  <el-option :label="'8秒'" :value="8" />
                   <el-option :label="'10秒'" :value="10" />
-                  <el-option :label="'15秒'" :value="15" />
+                  <el-option :label="'12秒'" :value="12" />
+                  <el-option :label="'15秒 最长'" :value="15" />
                 </el-select>
               </div>
               <div>
@@ -340,9 +352,9 @@
           </div>
 
           <!-- 生成的视频 -->
-          <div v-if="generatedVideo || generating" class="mt-6 pt-6" style="border-top: 1px solid var(--cyber-border);">
+          <div v-if="generatedVideo || generating" ref="mediaResultRef" class="mt-6 pt-6" style="border-top: 1px solid var(--cyber-border);">
             <div class="flex items-center justify-between mb-4">
-              <h3 class="font-bold" style="color: var(--cyber-text);">生成结果</h3>
+              <h3 class="font-bold" style="color: var(--cyber-text);">生成结果 · 可直接播放/下载</h3>
               <el-button v-if="generatedVideo" size="small" @click="generatedVideo = ''">🗑️ 清除</el-button>
             </div>
 
@@ -361,12 +373,22 @@
 
             <!-- 视频结果 -->
             <div v-if="generatedVideo" class="rounded-xl overflow-hidden cyber-card" style="background: rgba(0,240,255,0.03);">
-              <video :src="generatedVideo" controls class="w-full" style="max-height: 500px;"></video>
+              <video :src="generatedVideo" controls playsinline webkit-playsinline preload="metadata" class="w-full"
+                style="max-height: 500px;" @error="markMediaLoadError(generatedVideo)"></video>
+              <div v-if="mediaLoadErrors.includes(generatedVideo)" class="p-3 text-xs"
+                style="color: var(--cyber-amber); background: rgba(255,184,0,0.08);">
+                微信内置浏览器没有直接播放该视频，请点“打开视频”查看。
+              </div>
               <div class="p-4 flex items-center justify-between flex-wrap gap-3">
                 <div class="text-xs" style="color: var(--cyber-text-dim);">
                   模型: {{ lastModel }} | 耗时: {{ lastDurationMs }}ms
                 </div>
                 <div class="flex gap-2">
+                  <a :href="generatedVideo" target="_blank" rel="noopener"
+                    class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
+                    style="background: rgba(255,0,255,0.1); color: var(--cyber-magenta); border: 1px solid rgba(255,0,255,0.2);">
+                    ▶️ 打开视频
+                  </a>
                   <a :href="generatedVideo" target="_blank" download
                     class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
                     style="background: rgba(0,240,255,0.1); color: var(--cyber-cyan); border: 1px solid rgba(0,240,255,0.2);">
@@ -424,6 +446,8 @@ const imageStyle = ref('')
 const imageCount = ref(1)
 const imageQuality = ref('standard')
 const generatedImages = ref<string[]>([])
+const mediaResultRef = ref<HTMLElement | null>(null)
+const mediaLoadErrors = ref<string[]>([])
 
 // ===== 视频生成状态 =====
 const videoPrompt = ref('')
@@ -587,17 +611,20 @@ async function handleGenerateImage() {
         size: imageSize.value,
         style: imageStyle.value || undefined,
         count: imageCount.value,
-        quality: imageQuality.value as 'standard' | 'hd',
+        quality: imageQuality.value as 'standard' | 'hd' | 'ultra' | 'master',
       },
     )
 
     generatedImages.value = normalizeImageUrls(res.data)
+    mediaLoadErrors.value = []
     lastCoinCost.value = res.data.coinCost || 0
     lastDurationMs.value = res.data.durationMs || 0
     lastModel.value = res.data.model || tool.value.modelId
 
     if (generatedImages.value.length > 0) {
       ElMessage.success(`成功生成 ${generatedImages.value.length} 张图片！`)
+      await nextTick()
+      scrollMediaResultIntoView()
     } else {
       ElMessage.warning('图片已生成，但暂未拿到可展示的图片链接，请稍后重试')
     }
@@ -637,11 +664,14 @@ async function handleGenerateVideo() {
     if (!generatedVideo.value) {
       throw new Error('视频生成完成，但没有返回可播放的视频链接')
     }
+    mediaLoadErrors.value = []
     lastCoinCost.value = res.data.data?.coinCost || 0
     lastDurationMs.value = res.data.data?.durationMs || 0
     lastModel.value = res.data.data?.model || tool.value.modelId
 
     ElMessage.success('视频生成成功！')
+    await nextTick()
+    scrollMediaResultIntoView()
   } catch (e: any) {
     ElMessage.error(e?.response?.data?.message || e?.message || '视频生成失败，请重试')
   } finally {
@@ -653,6 +683,14 @@ async function handleGenerateVideo() {
 function copyResult(text: string) {
   navigator.clipboard.writeText(text)
   ElMessage.success('已复制到剪贴板')
+}
+
+function markMediaLoadError(url: string) {
+  if (url && !mediaLoadErrors.value.includes(url)) mediaLoadErrors.value.push(url)
+}
+
+function scrollMediaResultIntoView() {
+  mediaResultRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
 function scrollToBottom() {
