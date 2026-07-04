@@ -53,7 +53,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import service from '@/api/request'
-import { mockFeedbacks } from '@/api/mock'
 import { ElMessage } from 'element-plus'
 
 const loading = ref(false)
@@ -81,9 +80,8 @@ async function fetchFeedback() {
       }
     }
   } catch (e) {
-    console.error('获取反馈列表失败，使用Mock数据', e)
-    feedbacks.value = [...mockFeedbacks]
-    stats.value = { totalFeedback: mockFeedbacks.length, pending: mockFeedbacks.filter(f => f.status === 'pending').length, resolved: mockFeedbacks.filter(f => f.status === 'resolved').length, satisfaction: '92' }
+    console.error('获取反馈列表失败', e)
+    feedbacks.value = []
   } finally {
     loading.value = false
   }
