@@ -2325,25 +2325,56 @@
       chatSend.disabled = true;
       showTyping();
 
-      try {
-        const resp = await fetch('/api/agent/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: text, sessionId })
-        });
-        const data = await resp.json();
-        removeTyping();
-        if (data.reply) {
-          addMessage('ai', data.reply);
-        } else {
-          addMessage('ai', '抱歉，我暂时无法回答这个问题，请稍后再试。');
+      let retries = 2;
+      let success = false;
+      let lastErr = null;
+
+      while (retries >= 0 && !success) {
+        try {
+          const resp = await fetch('/api/agent/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: text, sessionId })
+          });
+          if (!resp.ok) throw new Error('HTTP ' + resp.status);
+          const data = await resp.json();
+          removeTyping();
+          if (data.reply) {
+            addMessage('ai', data.reply);
+            success = true;
+          } else {
+            throw new Error('No reply');
+          }
+        } catch (err) {
+          lastErr = err;
+          retries--;
+          if (retries >= 0) {
+            await new Promise(r => setTimeout(r, 800));
+          }
         }
-      } catch (err) {
+      }
+
+      if (!success) {
         removeTyping();
-        addMessage('ai', '网络连接异常，请检查网络后重试。');
+        const localReply = getLocalReply(text);
+        addMessage('ai', localReply);
       }
       chatSend.disabled = false;
       chatInput.focus();
+    }
+
+    function getLocalReply(message) {
+      const msg = message.toLowerCase();
+      if (/(你好|您好|hi|hello|在吗)/.test(msg)) {
+        return '您好！我是罗圣AI智能体，很高兴为您服务 😊\n\n我可以为您介绍罗圣纪元的六大业务板块（AI、电商、自媒体、宠物、教育、伯雅校园）、合作方式等信息。请问您想了解哪方面？';
+      }
+      if (/(业务|板块|做什么)/.test(msg)) {
+        return '罗圣纪元布局六大业务板块：🤖AI人工智能、🛒电子商务、📱自媒体运营、🐾宠物服务、📚教育科技、🎓伯雅校园。\n\n如需详细了解，可发送邮件至 3196542376@qq.com 洽谈合作！';
+      }
+      if (/(联系|合作|邮箱|怎么联系)/.test(msg)) {
+        return '📞 商务合作联系方式\n📧 邮箱：3196542376@qq.com\n🌐 官网：www.lsjyapp.cn\n📍 地址：湖南省永州市祁阳市\n\n您也可以在页面"联系我们"表单留言，我们会尽快对接！';
+      }
+      return '抱歉，当前网络连接不稳定，您可以刷新页面重试，或直接发送邮件至商务邮箱 3196542376@qq.com 咨询，我们会尽快回复您！';
     }
 
     chatSend.addEventListener('click', () => sendMessage(chatInput.value));
