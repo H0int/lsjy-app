@@ -437,7 +437,7 @@ function getRealToolUsageToday(toolId, userId) {
 }
 
 function withRealUsage(tool) {
-  return { ...tool, usageCount: getRealToolUsageCount(tool.id), seedUsageCount: tool.usageCount || 0 };
+  return { ...tool, usageCount: getRealToolUsageCount(tool.id) };
 }
 
 function addAiHistoryRecord(record) {
@@ -3262,7 +3262,7 @@ function normalizeAiRecord(record) {
     id: record.id,
     userId: record.userId || 1,
     toolId: record.toolId,
-    tool: tool || { id: record.toolId, name: record.toolName || 'AI工具', icon: '🤖' },
+    tool: tool ? withRealUsage(tool) : { id: record.toolId, name: record.toolName || 'AI工具', icon: '🤖', usageCount: getRealToolUsageCount(record.toolId) },
     requestId: record.requestId || `record-${record.id}`,
     inputText: record.inputText || record.input || '',
     outputText: record.outputText || record.output || '',
