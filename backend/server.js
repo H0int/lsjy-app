@@ -623,21 +623,11 @@ function resolveToolProfile(tool) {
   };
 }
 
-function buildToolExamples(tool, profile) {
-  const name = tool.name;
-  const scene = profile.scenario;
-  return [
-    `我是${profile.audience.split('、')[0]}，请用${name}帮我解决一个具体问题：目标、现状、预算和限制如下……`,
-    `请围绕“${scene}”给我一份可直接执行的方案，包含步骤、话术、注意事项和复盘指标。`,
-    `请先问我3个关键信息，再用${name}输出一版专业结果。`
-  ];
-}
-
 function refineTool(tool) {
   const profile = resolveToolProfile(tool);
   const sub = tool.subCategory || profile.scenario;
-  const description = `${profile.pillar}·${sub}专用工具，适合${profile.audience}处理${profile.scenario}，输出结构化、可执行、可复盘的方案。`;
-  const systemPrompt = `你是「${tool.name}」，服务于罗圣纪元 AI 工具中心的${profile.pillar}板块。你的服务对象是${profile.audience}，核心场景是${profile.scenario}。回答必须精细化：先判断用户目标和条件，再输出可直接使用的结果；如果信息不足，先列出需要补充的问题；输出要包含步骤、模板、示例、风险提醒和复盘指标；禁止空泛套话，禁止只给概念。`;
+  const description = `${profile.pillar}·${sub}工具，面向${profile.audience}，用于${profile.scenario}。`;
+  const systemPrompt = `你是「${tool.name}」，属于罗圣纪元 AI 工具中心的${profile.pillar}模块，专注${sub}。请围绕用户需求直接产出专业结果，内容要具体、可执行、有步骤，避免空泛套话。`;
   return Object.assign(tool, {
     isFree: tool.isFree ?? false,
     provider: tool.provider || 'doubao',
@@ -647,38 +637,8 @@ function refineTool(tool) {
     freeDailyLimit: tool.freeDailyLimit || 0,
     sortOrder: tool.sortOrder || tool.id,
     slug: tool.slug || `ai-tool-${tool.id}`,
-    fineDetail: `${tool.name}不是通用聊天入口，而是面向“${sub}”的专用工作台。它会把用户输入拆成目标、对象、场景、限制、执行步骤和复盘指标，尽量给出可复制的话术、表格、清单或方案。`,
     description: /专业工具$/.test(tool.description || '') || !(tool.description || '').includes('适合') ? description : tool.description,
     systemPrompt: /专业、精准、可落地/.test(tool.systemPrompt || '') ? systemPrompt : (tool.systemPrompt || systemPrompt),
-    guideTitle: `${tool.name}使用指南`,
-    scenarios: [
-      `${sub}方案生成`,
-      `${profile.pillar}场景问题诊断`,
-      `话术、模板、清单和流程设计`,
-      `结果复盘与优化建议`
-    ],
-    inputTips: [
-      '说明你的目标、对象、平台或使用场景',
-      '补充预算、时间、人力、限制条件',
-      '给出已有素材、数据、样例或参考风格',
-      '如果要生成文案或方案，写清语气、长度和交付格式'
-    ],
-    examplePrompts: buildToolExamples(tool, profile),
-    outputStructure: [
-      '问题判断：先明确当前任务类型和关键约束',
-      '执行方案：给出步骤、模板、话术或表格',
-      '注意事项：列出常见坑位和规避方式',
-      '复盘指标：给出判断效果的数字或检查项'
-    ],
-    workflow: [
-      '填写需求',
-      '补充关键条件',
-      '生成初稿',
-      '按建议修改',
-      '落地执行并复盘'
-    ],
-    audience: profile.audience,
-    scenarioTag: profile.scenario,
   });
 }
 

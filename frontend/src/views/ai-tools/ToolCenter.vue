@@ -6,7 +6,7 @@
         <h1 class="text-2xl font-bold" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">
           <span style="color: var(--cyber-cyan);">▍</span>AI工具中心
         </h1>
-        <p class="mt-1" style="color: var(--cyber-text-dim);">专业AI工具集，覆盖多种业务场景</p>
+        <p class="mt-1" style="color: var(--cyber-text-dim);">205个AI工具，按6大模块精细分类</p>
       </div>
       <!-- 搜索框 -->
       <div class="flex items-center gap-3">
@@ -35,7 +35,7 @@
       <div class="flex items-start gap-3">
         <div class="text-2xl">{{ activePillar?.icon }}</div>
         <div>
-          <h2 class="font-bold mb-1" style="color: var(--cyber-text);">{{ activePillar?.label }}工具</h2>
+          <h2 class="font-bold mb-1" style="color: var(--cyber-text);">{{ activePillar?.label }}工具 · {{ filteredTools.length }}个</h2>
           <p class="text-sm" style="color: var(--cyber-text-dim);">{{ activePillar?.description }}</p>
         </div>
       </div>
@@ -124,14 +124,14 @@ const activePillar = computed(() => {
   return sixPillars.find(item => item.id === currentPillar.value) || sixPillars[0]
 })
 
-// 后端分类ID到六大板块的映射
+// 后端工具分类到六大板块的固定映射：保证每个模块都有30多个工具
 const categoryToPillar: Record<number, string> = {
-  1: 'ai', 2: 'ai', 3: 'ai', 4: 'ai', 5: 'ai', 6: 'ai', 7: 'ai', 8: 'ai',
-  9: 'ecommerce', 10: 'ecommerce', 11: 'ecommerce', 12: 'ecommerce', 13: 'ecommerce', 14: 'ecommerce',
-  15: 'education', 16: 'education', 17: 'education', 18: 'education', 19: 'education',
-  20: 'media', 21: 'media', 22: 'media', 23: 'media',
-  24: 'pet', 25: 'pet', 26: 'pet', 27: 'pet', 28: 'pet',
-  29: 'campus', 30: 'campus', 31: 'campus', 32: 'campus', 33: 'campus',
+  1: 'media',
+  4: 'ai',
+  5: 'pet',
+  6: 'campus',
+  7: 'ecommerce',
+  8: 'education',
 }
 
 function categoryPillar(tool: Tool): string | null {
@@ -164,6 +164,8 @@ function guessPillar(tool: Tool): string {
 }
 
 function getPillarForTool(tool: Tool): string {
+  if (tool.categoryId && categoryToPillar[tool.categoryId]) return categoryToPillar[tool.categoryId]
+
   const byCategory = categoryPillar(tool)
   const byContent = guessPillar(tool)
 
@@ -172,7 +174,6 @@ function getPillarForTool(tool: Tool): string {
   if (byContent === 'pet' || byContent === 'campus') return byContent
   if (byCategory) return byCategory
   if (byContent !== 'ai') return byContent
-  if (tool.categoryId && categoryToPillar[tool.categoryId]) return categoryToPillar[tool.categoryId]
   return byContent
 }
 
@@ -189,7 +190,7 @@ function getPillarColor(tool: Tool): string {
 }
 
 const filteredTools = computed(() => {
-  let list = toolStore.tools
+  let list = toolStore.tools.filter(t => !(t as any).isAgent)
   if (currentPillar.value !== 'all') {
     list = list.filter(t => getPillarForTool(t) === currentPillar.value)
   }
