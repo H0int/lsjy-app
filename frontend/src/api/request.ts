@@ -4,7 +4,7 @@ import { ElMessage } from 'element-plus'
 import type { ApiResponse } from '@/types'
 import { getToken, removeToken } from '@/utils'
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://api.lsjyapp.cn/api/v1'
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1'
 
 function redirectToLogin() {
   window.location.hash = '#/login'

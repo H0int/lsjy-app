@@ -1,0 +1,5 @@
+[
+  {"id":1,"name":"产品使用指南","type":"product","content":"罗圣纪元SaaS平台提供6大AI模型服务，包括Coze罗圣AI、DeepSeek、豆包、即梦AI绘画、通义千问、腾讯元宝。","creator":"admin","createdAt":"2026-06-16T00:00:00Z"},
+  {"id":2,"name":"圣力充值说明","type":"faq","content":"圣力是平台通用积分，用于调用AI服务。注册送100圣力，可通过套餐充值。通用对话1圣力/次，AI绘画20圣力/次。","creator":"admin","createdAt":"2026-06-16T00:00:00Z"},
+  {"id":3,"name":"VIP会员权益","type":"product","content":"月卡29.9元：每日100圣力。季卡79.9元：每日150圣力+优先响应。年卡299.9元：每日200圣力+专属客服。","creator":"admin","createdAt":"2026-06-16T00:00:00Z"}
+]

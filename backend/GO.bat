@@ -1,0 +1,13 @@
+@echo off
+title LSJY Server
+cd /d "%~dp0"
+echo Killing port 3000...
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr :3000') do taskkill /f /pid %%a >nul 2>&1
+echo Installing...
+call npm install >nul 2>&1
+echo Starting server...
+start "LSJY" cmd /k "cd /d "%~dp0" && node server.js"
+echo Waiting 3s...
+timeout /t 3 /nobreak >nul
+start http://localhost:3000
+exit

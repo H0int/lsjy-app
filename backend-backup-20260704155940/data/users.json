@@ -1,0 +1,277 @@
+[
+  {
+    "id": 1,
+    "username": "KF02V9",
+    "nickname": "罗总",
+    "email": "ceo@lsjyapp.cn",
+    "phone": "",
+    "roles": [
+      "boss"
+    ],
+    "status": "active",
+    "avatar": "",
+    "gender": 1,
+    "bio": "罗圣纪元创始人",
+    "coins": 99999,
+    "totalRecharge": 99999,
+    "unlimited": true,
+    "createdAt": "2026-01-01T00:00:00Z"
+  },
+  {
+    "id": 2,
+    "username": "user1",
+    "nickname": "测试用户",
+    "email": "test@test.com",
+    "phone": "13800138000",
+    "roles": [
+      "user"
+    ],
+    "status": "active",
+    "avatar": "",
+    "gender": 0,
+    "bio": "普通用户",
+    "coins": 500,
+    "totalRecharge": 500,
+    "createdAt": "2026-06-01T00:00:00Z"
+  },
+  {
+    "id": 3,
+    "username": "admin1",
+    "nickname": "管理员",
+    "email": "admin@lsjyapp.cn",
+    "phone": "",
+    "roles": [
+      "admin"
+    ],
+    "status": "active",
+    "avatar": "",
+    "gender": 1,
+    "bio": "系统管理员",
+    "coins": 0,
+    "totalRecharge": 0,
+    "createdAt": "2026-03-01T00:00:00Z"
+  },
+  {
+    "id": 4,
+    "username": "1185368527",
+    "password": "20040219",
+    "nickname": "屾.",
+    "status": "active",
+    "roles": [
+      "normal"
+    ],
+    "coins": 0,
+    "totalRecharge": 0,
+    "createdAt": "2026-06-15T05:29:38.626Z"
+  },
+  {
+    "id": 5,
+    "username": "test_verify_001",
+    "password": "Test123456",
+    "nickname": "test_verify_001",
+    "phone": "13900001111",
+    "status": "active",
+    "roles": [
+      "normal"
+    ],
+    "coins": 0,
+    "totalRecharge": 0,
+    "createdAt": "2026-06-15T06:18:07.451Z"
+  },
+  {
+    "id": 6,
+    "username": "testuser_ozeclaw",
+    "password": "Test123456",
+    "nickname": "测试用户",
+    "status": "active",
+    "roles": [
+      "normal"
+    ],
+    "coins": 0,
+    "totalRecharge": 0,
+    "createdAt": "2026-06-15T06:20:22.839Z"
+  },
+  {
+    "id": 7,
+    "username": "2005",
+    "password": "123456",
+    "nickname": "测试1",
+    "status": "active",
+    "roles": [
+      "normal"
+    ],
+    "coins": 0,
+    "totalRecharge": 0,
+    "createdAt": "2026-06-15T15:20:34.692Z"
+  },
+  {
+    "id": 8,
+    "username": "test_verify_002",
+    "password": "Test123456",
+    "nickname": "test_verify_002",
+    "phone": "13900002222",
+    "status": "active",
+    "roles": [
+      "normal"
+    ],
+    "coins": 0,
+    "totalRecharge": 0,
+    "createdAt": "2026-06-15T15:38:31.977Z"
+  },
+  {
+    "id": 9,
+    "username": "test_coin_001",
+    "password": "Test123456",
+    "nickname": "test_coin_001",
+    "status": "active",
+    "roles": [
+      "normal"
+    ],
+    "coins": 0,
+    "totalRecharge": 0,
+    "createdAt": "2026-06-15T15:44:25.293Z"
+  },
+  {
+    "id": 10,
+    "username": "hacker",
+    "password": "zxcvbnm",
+    "nickname": "hacker",
+    "status": "active",
+    "roles": [
+      "normal"
+    ],
+    "coins": 100,
+    "totalRecharge": 0,
+    "createdAt": "2026-06-15T15:55:55.875Z"
+  },
+  {
+    "id": 11,
+    "username": "15673062686",
+    "password": "zy123456",
+    "nickname": "元辰小张",
+    "status": "active",
+    "roles": [
+      "normal"
+    ],
+    "coins": 100,
+    "totalRecharge": 0,
+    "createdAt": "2026-06-15T16:42:40.469Z"
+  },
+  {
+    "id": 12,
+    "username": "kf002",
+    "password": "2005430",
+    "nickname": "小生",
+    "status": "active",
+    "roles": [
+      "normal"
+    ],
+    "coins": 100,
+    "totalRecharge": 0,
+    "createdAt": "2026-07-03T17:49:04.320Z"
+  },
+  {
+    "id": 13,
+    "username": "testfk52y5",
+    "password": "2005430",
+    "nickname": "小生",
+    "status": "active",
+    "roles": [
+      "normal"
+    ],
+    "coins": 100,
+    "totalRecharge": 0,
+    "createdAt": "2026-07-03T17:58:51.924Z"
+  },
+  {
+    "id": 14,
+    "username": "kf6erxb3o",
+    "password": "2005430",
+    "nickname": "小生",
+    "status": "active",
+    "roles": [
+      "user"
+    ],
+    "coins": 100,
+    "totalRecharge": 0,
+    "createdAt": "2026-07-03T18:02:34.550Z"
+  },
+  {
+    "id": 109,
+    "username": "UF02",
+    "password": "123456",
+    "nickname": "测试002",
+    "status": "active",
+    "roles": [
+      "user"
+    ],
+    "coins": 98,
+    "totalRecharge": 0,
+    "createdAt": "2026-07-03T20:06:08.460Z"
+  },
+  {
+    "id": 110,
+    "username": "ycxz123456",
+    "password": "123456",
+    "nickname": "元辰小张",
+    "status": "active",
+    "roles": [
+      "user"
+    ],
+    "coins": 94,
+    "totalRecharge": 0,
+    "createdAt": "2026-07-04T02:42:12.080Z"
+  },
+  {
+    "id": 111,
+    "username": "7346922210_",
+    "password": "jiang0852",
+    "nickname": "小乖",
+    "status": "active",
+    "roles": [
+      "user"
+    ],
+    "coins": 99,
+    "totalRecharge": 0,
+    "createdAt": "2026-07-04T03:42:24.546Z"
+  },
+  {
+    "id": 112,
+    "username": "123456",
+    "password": "123456",
+    "nickname": "admin11",
+    "status": "active",
+    "roles": [
+      "user"
+    ],
+    "coins": 100,
+    "totalRecharge": 0,
+    "createdAt": "2026-07-04T05:34:55.471Z"
+  },
+  {
+    "id": 113,
+    "username": "7Z1H",
+    "password": "123456",
+    "nickname": "7Z1H",
+    "status": "active",
+    "roles": [
+      "user"
+    ],
+    "coins": 98,
+    "totalRecharge": 0,
+    "createdAt": "2026-07-04T07:26:57.974Z"
+  },
+  {
+    "id": 114,
+    "username": "test",
+    "password": "Czh0731.",
+    "nickname": "1",
+    "status": "active",
+    "roles": [
+      "user"
+    ],
+    "coins": 100,
+    "totalRecharge": 0,
+    "createdAt": "2026-07-04T07:42:40.474Z"
+  }
+]

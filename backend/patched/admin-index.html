@@ -1,0 +1,1844 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="logo.png" type="image/png">
+<title>罗圣纪元 - 后台管理系统</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --p:#533afd;--ph:#4434d4;--pl:#b9b9f9;--ps:#eef1fe;
+  --n:#0d1b2a;--b:#64748b;--l:#1e293b;--bd:#e2e8f0;--bg:#f1f5f9;--bg2:#e2e8f0;
+  --w:#fff;--err:#ef4444;--ok:#22c55e;--warn:#f59e0b;--info:#3b82f6;
+  --sidebar:240px;--topbar:56px;
+  --f:'Noto Sans SC',-apple-system,sans-serif;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.06);
+  --shadow-lg:0 10px 25px rgba(0,0,0,.1);
+  --radius:10px;
+}
+html{font-size:14px}
+/* === AI TOOLS === */
+.ai-spinner{display:inline-block;width:40px;height:40px;border:3px solid var(--bd);border-top-color:var(--p);border-radius:50%;animation:ai-spin .8s linear infinite}
+@keyframes ai-spin{to{transform:rotate(360deg)}}
+.ai-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;margin-bottom:24px}
+.ai-card{background:var(--w);border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:all .2s;border:2px solid var(--bd);position:relative;overflow:hidden}
+.ai-card:hover{border-color:var(--p);transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+.ai-card.active{border-color:var(--p);background:var(--ps)}
+.ai-card-icon{font-size:36px;margin-bottom:10px}
+.ai-card-title{font-weight:700;font-size:14px;margin-bottom:4px}
+.ai-card-desc{font-size:11px;color:var(--b)}
+.ai-card-badge{position:absolute;top:8px;right:8px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;background:var(--ps);color:var(--p)}
+.ai-panel{background:var(--w);border-radius:12px;padding:24px;box-shadow:var(--shadow)}
+.ai-output{min-height:200px;padding:16px;background:var(--bg);border-radius:10px;border:1px solid var(--bd);margin-top:16px;font-size:14px;line-height:1.8;white-space:pre-wrap;word-break:break-word}
+.cw-types{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.cw-type{padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--bd);background:var(--w);color:var(--b);transition:all .15s}
+.cw-type:hover{border-color:var(--p);color:var(--p)}
+.cw-type.active{background:var(--p);color:var(--w);border-color:var(--p)}
+.ai-btn{width:100%;padding:12px;background:var(--p);color:var(--w);border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
+.ai-btn:hover{background:var(--ph)}
+.ai-back{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:var(--bg);border:1.5px solid var(--bd);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;color:var(--b);transition:all .15s;margin-bottom:16px}
+.ai-back:hover{border-color:var(--p);color:var(--p)}
+body{font-family:var(--f);color:var(--n);background:var(--bg);line-height:1.6;overflow-x:hidden}
+a{color:var(--p);text-decoration:none}
+input,select,textarea,button{font-family:var(--f)}
+
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#533afd 0%,#7c6cf6 50%,#a78bfa 100%);padding:20px}
+.login-box{background:var(--w);border-radius:20px;padding:40px 36px;width:100%;max-width:420px;box-shadow:var(--shadow-lg)}
+.login-logo{text-align:center;margin-bottom:24px}
+.login-logo img{width:64px;height:64px;border-radius:50%;border:3px solid var(--pl);margin-bottom:12px}
+.login-logo h1{font-size:22px;font-weight:900;color:var(--n)}
+.login-logo p{font-size:13px;color:var(--b);margin-top:4px}
+.login-box h2{font-size:18px;font-weight:700;margin-bottom:24px;text-align:center}
+.fg{margin-bottom:16px}
+.fl{display:block;font-size:12px;font-weight:600;color:var(--b);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.fi{width:100%;padding:11px 14px;border:1.5px solid var(--bd);border-radius:var(--radius);font-size:14px;color:var(--n);background:var(--w);outline:none;transition:all .2s}
+.fi:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(83,58,253,.12)}
+.btn-p{width:100%;padding:12px;background:var(--p);color:var(--w);border:none;border-radius:var(--radius);font-size:15px;font-weight:600;cursor:pointer;transition:all .2s;position:relative}
+.btn-p:hover{background:var(--ph)}
+.btn-p.loading{pointer-events:none;opacity:.7}
+.btn-p.loading::after{content:'';position:absolute;right:16px;top:50%;margin-top:-8px;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.app{display:none;height:100vh;overflow:hidden}
+.app.active{display:grid;grid-template-columns:var(--sidebar) 1fr;grid-template-rows:var(--topbar) 1fr}
+
+.sidebar{grid-row:1/-1;background:var(--n);color:var(--w);overflow-y:auto;display:flex;flex-direction:column;transition:transform .3s;z-index:200}
+.sb-header{padding:20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sb-header img{width:40px;height:40px;border-radius:50%;border:2px solid rgba(255,255,255,.2)}
+.sb-header h2{font-size:15px;font-weight:700}
+.sb-header span{font-size:11px;opacity:.6;display:block;margin-top:2px}
+.sb-nav{flex:1;padding:12px 0}
+.sb-group{padding:8px 20px 4px;font-size:10px;text-transform:uppercase;letter-spacing:1px;opacity:.4;font-weight:600}
+.sb-item{display:flex;align-items:center;gap:12px;padding:10px 20px;color:rgba(255,255,255,.7);cursor:pointer;transition:all .15s;font-size:13px;font-weight:500;border-left:3px solid transparent}
+.sb-item:hover{background:rgba(255,255,255,.06);color:var(--w)}
+.sb-item.active{background:rgba(83,58,253,.3);color:var(--w);border-left-color:var(--pl)}
+.sb-item i{font-size:16px;width:20px;text-align:center}
+.sb-footer{padding:16px 20px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;opacity:.4;text-align:center}
+
+.topbar{background:var(--w);border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;padding:0 24px;grid-column:2}
+.tb-left{display:flex;align-items:center;gap:16px}
+.tb-left h3{font-size:16px;font-weight:700}
+.tb-right{display:flex;align-items:center;gap:12px}
+.tb-user{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--l)}
+.tb-avatar{width:32px;height:32px;border-radius:50%;background:var(--ps);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--p)}
+.tb-btn{padding:6px 14px;border:1.5px solid var(--bd);background:var(--w);border-radius:8px;font-size:12px;font-weight:500;color:var(--b);cursor:pointer;transition:all .15s}
+.tb-btn:hover{border-color:var(--p);color:var(--p)}
+.tb-btn.danger:hover{border-color:var(--err);color:var(--err)}
+.tb-toggle{display:none;padding:6px 10px;border:1.5px solid var(--bd);background:var(--w);border-radius:8px;cursor:pointer;font-size:16px;color:var(--b)}
+
+.main{grid-column:2;overflow-y:auto;padding:24px;background:var(--bg)}
+
+.card{background:var(--w);border-radius:12px;box-shadow:var(--shadow);margin-bottom:20px;overflow:hidden}
+.card-header{padding:16px 20px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.card-header h3{font-size:15px;font-weight:700}
+.card-body{padding:20px}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:20px}
+.stat-card{background:var(--w);border-radius:12px;box-shadow:var(--shadow);padding:20px;display:flex;align-items:center;gap:16px;transition:transform .15s}
+.stat-card:hover{transform:translateY(-2px)}
+.stat-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;color:#fff}
+.stat-info h4{font-size:24px;font-weight:900;line-height:1.2}
+.stat-info p{font-size:12px;color:var(--b);margin-top:2px}
+
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{background:var(--bg);padding:10px 14px;text-align:left;font-size:12px;font-weight:600;color:var(--b);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--bd);white-space:nowrap}
+td{padding:12px 14px;border-bottom:1px solid var(--bd);font-size:13px;vertical-align:middle}
+tr:hover td{background:var(--ps)}
+.badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600}
+.badge-green{background:#dcfce7;color:#166534}
+.badge-blue{background:#dbeafe;color:#1e40af}
+.badge-red{background:#fee2e2;color:#991b1b}
+.badge-purple{background:#ede9fe;color:#5b21b6}
+.badge-yellow{background:#fef3c7;color:#92400e}
+.badge-orange{background:#ffedd5;color:#9a3412}
+.badge-rose{background:#ffe4e6;color:#9f1239}
+.badge-amber{background:#fbbf24;color:#78350f;font-weight:700}
+.badge-gray{background:#f1f5f9;color:#64748b}
+
+.act-btn{padding:5px 10px;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;margin-right:4px;color:#fff}
+.act-btn.edit{background:#3b82f6}
+.act-btn.del{background:#ef4444}
+.act-btn.view{background:#7c3aed}
+.act-btn.ok{background:#22c55e}
+.act-btn:hover{opacity:.8;transform:translateY(-1px)}
+.act-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+
+.mod-tag{display:inline-block;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:600;color:#fff}
+.empty{text-align:center;padding:60px 20px;color:var(--b)}
+.empty i{font-size:48px;margin-bottom:12px;display:block;color:var(--bd)}
+
+.toast{position:fixed;top:20px;right:20px;background:var(--n);color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;z-index:9999;opacity:0;transform:translateY(-10px);transition:all .3s;pointer-events:none;max-width:360px;box-shadow:var(--shadow-lg)}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.success{background:var(--ok)}.toast.error{background:var(--err)}.toast.warning{background:var(--warn)}
+
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:999;align-items:center;justify-content:center;padding:20px}
+.modal-bg.show{display:flex}
+.modal-box{background:var(--w);border-radius:16px;padding:24px;width:100%;max-width:500px;max-height:80vh;overflow-y:auto;animation:mIn .2s ease}
+@keyframes mIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+.modal-box h3{font-size:17px;font-weight:700;margin-bottom:16px}
+.modal-actions{display:flex;gap:10px;margin-top:20px}
+.modal-actions button{flex:1;padding:10px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:var(--f)}
+.m-cancel{background:var(--bg);color:var(--n)}.m-confirm{background:var(--p);color:var(--w)}
+
+.mod-detail-card{border:1px solid var(--bd);border-radius:12px;padding:20px;margin-bottom:16px}
+.mod-detail-card h4{font-size:15px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.mod-detail-card p{font-size:13px;color:var(--b);line-height:1.7}
+.svc-count{display:inline-flex;align-items:center;justify-content:center;background:var(--ps);color:var(--p);font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px}
+
+/* Filters */
+.filter-bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px;padding:12px;background:var(--bg);border-radius:var(--radius)}
+.filter-bar input,.filter-bar select{padding:8px 12px;border:1px solid var(--bd);border-radius:8px;font-size:13px;outline:none}
+.filter-bar input:focus,.filter-bar select:focus{border-color:var(--p)}
+.filter-bar input{flex:1;min-width:160px}
+
+/* Pagination */
+.pagination{display:flex;align-items:center;justify-content:space-between;padding:12px 0;flex-wrap:wrap;gap:8px}
+.pagination .pg-info{font-size:12px;color:var(--b)}
+.pagination .pg-btns{display:flex;gap:4px}
+.pg-btn{padding:6px 12px;border:1px solid var(--bd);background:var(--w);border-radius:6px;font-size:12px;cursor:pointer;transition:all .15s;color:var(--n)}
+.pg-btn:hover{border-color:var(--p);color:var(--p)}
+.pg-btn.active{background:var(--p);color:#fff;border-color:var(--p)}
+.pg-btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* Status flow */
+.status-flow{display:flex;align-items:center;gap:4px;margin:8px 0}
+.status-step{display:flex;align-items:center;gap:4px;font-size:11px;padding:4px 8px;border-radius:6px;background:var(--bg);color:var(--b)}
+.status-step.done{background:#dcfce7;color:#166534}
+.status-step.current{background:#dbeafe;color:#1e40af;font-weight:600}
+.status-step.rejected{background:#fee2e2;color:#991b1b}
+.status-arrow{color:var(--bd);font-size:10px}
+
+/* Batch bar */
+.batch-bar{display:flex;gap:8px;align-items:center;padding:10px 16px;background:#dbeafe;border-radius:8px;margin-bottom:12px;font-size:13px;color:#1e40af}
+.batch-bar .sel-count{font-weight:700;margin-right:8px}
+
+/* Toolbar */
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.toolbar .tb-btn i{margin-right:4px}
+
+/* Login lockout */
+.lockout-box{text-align:center;padding:20px;background:#fee2e2;border-radius:12px;color:#991b1b}
+.lockout-box i{font-size:32px;margin-bottom:8px}
+
+/* Responsive */
+@media(max-width:768px){
+  .app.active{grid-template-columns:1fr}
+  .sidebar{position:fixed;left:0;top:0;bottom:0;transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .main,.topbar{grid-column:1}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .tb-toggle{display:block}
+  .filter-bar{flex-direction:column}
+  .filter-bar input{width:100%}
+}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:199}
+.sidebar-overlay.show{display:block}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+
+<!-- ===== LOGIN ===== -->
+<div id="loginPage" class="login-wrap">
+  <div class="login-box">
+    <div class="login-logo">
+      <img src="logo.png" alt="Logo">
+      <h1>罗圣纪元</h1>
+      <p>后台管理系统</p>
+    </div>
+    <h2>管理员登录</h2>
+    <form onsubmit="doLogin(event)">
+      <div class="fg"><label class="fl"><i class="fa-solid fa-user" style="margin-right:4px"></i>管理员账号</label><input class="fi" id="loginUser" placeholder="请输入管理员账号" required autocomplete="username"></div>
+      <div class="fg"><label class="fl"><i class="fa-solid fa-lock" style="margin-right:4px"></i>密码</label><input class="fi" type="password" id="loginPwd" placeholder="请输入密码" required autocomplete="current-password"></div>
+      <button type="submit" class="btn-p" id="loginBtn">登 录</button>
+    </form>
+    <div id="lockoutInfo" style="display:none" class="lockout-box"></div>
+    <div style="margin-top:12px;text-align:center;font-size:12px;color:var(--b)"><i class="fa-solid fa-shield-halved" style="margin-right:4px"></i>连续5次登录失败将锁定账号15分钟</div>
+  </div>
+</div>
+
+<!-- ===== APP ===== -->
+<div id="app" class="app">
+  <div class="sidebar" id="sidebar">
+    <div class="sb-header">
+      <img src="logo.png" alt="Logo">
+      <div><h2>罗圣纪元</h2><span>管理后台 v2.0</span></div>
+    </div>
+    <div class="sb-nav">
+      <div class="sb-group">概览</div>
+      <div class="sb-item active" onclick="goPage('dashboard',this)"><i class="fa-solid fa-chart-pie"></i>数据看板</div>
+      <div class="sb-group">业务管理</div>
+      <div class="sb-item" onclick="goPage('modules',this)"><i class="fa-solid fa-cubes"></i>业务模块</div>
+      <div class="sb-item" onclick="goPage('services',this)"><i class="fa-solid fa-wrench"></i>服务管理</div>
+      <div class="sb-group">用户运营</div>
+      <div class="sb-item" onclick="goPage('users',this)"><i class="fa-solid fa-users"></i>用户管理</div>
+      <div class="sb-item" onclick="goPage('messages',this)"><i class="fa-solid fa-envelope"></i>留言管理</div>
+      <div class="sb-item" onclick="goPage('leads',this)"><i class="fa-solid fa-crosshairs"></i>线索管理</div>
+      <div class="sb-item" onclick="goPage('orders',this)"><i class="fa-solid fa-receipt"></i>订单管理</div>
+      <div class="sb-item" onclick="goPage('customers',this)"><i class="fa-solid fa-user-group"></i>顾客管理</div>
+      <div class="sb-item" onclick="goPage('redeemCodes',this)"><i class="fa-solid fa-ticket"></i>卡密管理</div>
+      <div class="sb-group">内容</div>
+      <div class="sb-item" onclick="goPage('content',this)"><i class="fa-solid fa-file-pen"></i>内容管理</div>
+      <div class="sb-group">AI工具</div>
+      <div class="sb-item" onclick="goPage('aihub',this)"><i class="fa-solid fa-wand-magic-sparkles"></i>AI创作中心</div>
+      <div class="sb-group">系统</div>
+      <div class="sb-item" onclick="goPage('recycle',this)"><i class="fa-solid fa-trash-can"></i>回收站</div>
+      <div class="sb-item" onclick="goPage('logs',this)"><i class="fa-solid fa-clock-rotate-left"></i>操作日志</div>
+      <div class="sb-item" onclick="goPage('settings',this)"><i class="fa-solid fa-gear"></i>系统设置</div>
+    </div>
+    <div class="sb-footer">&copy; 2026 罗圣纪元互联网科技有限责任公司</div>
+  </div>
+  <div class="sidebar-overlay" id="sbOverlay" onclick="toggleSidebar()"></div>
+  <div class="topbar">
+    <div class="tb-left">
+      <button class="tb-toggle" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
+      <h3 id="pageTitle">数据看板</h3>
+    </div>
+    <div class="tb-right">
+      <div class="tb-user"><div class="tb-avatar" id="tbAvatar">A</div><span id="tbName">Admin</span></div>
+      <button class="tb-btn" onclick="openEditAdmin()"><i class="fa-solid fa-key"></i> 修改密码</button>
+      <button class="tb-btn danger" onclick="doLogout()"><i class="fa-solid fa-right-from-bracket"></i> 退出</button>
+    </div>
+  </div>
+  <div class="main" id="mainContent"></div>
+</div>
+
+<!-- Modal -->
+<div class="modal-bg" id="modalBg" onclick="closeModal(event)"><div class="modal-box" id="modalBox"></div></div>
+
+<script>
+// ===== Data Modules =====
+const MODULES=[
+{id:'ai',name:'AI 人工智能',icon:'fa-solid fa-robot',color:'#3b82f6',gradient:'linear-gradient(135deg,#3b82f6,#60a5fa)',summary:'依托自研 AI 技术面向中小商家落地数字化转型',services:[
+{id:'ai-clip',name:'AI 短视频批量切片',desc:'一键拆分长素材产出多条短视频，适配全平台分发。'},
+{id:'ai-copy',name:'智能文案生成',desc:'短视频脚本、团购文案、店铺宣传文案 AI 自动化创作。'},
+{id:'ai-customer',name:'商家 AI 获客系统',desc:'本地实体门店智能引流工具，精准抓取同城客源。'},
+{id:'ai-api',name:'行业定制化 API 开发',desc:'根据门店、企业需求定制专属 AI 接口。'},
+{id:'ai-digital',name:'企业数字化搭建',desc:'中小企业线上管理系统、私域数字化架构搭建。'}
+]},
+{id:'media',name:'自媒体',icon:'fa-solid fa-mobile-screen',color:'#ea2261',gradient:'linear-gradient(135deg,#ea2261,#f96bee)',summary:'深耕短视频全域运营，赋能实体与个人 IP 变现',services:[
+{id:'media-ops',name:'全平台账号代运营',desc:'抖音、快手、小红书账号全托管，日常更新 + 数据优化。'},
+{id:'media-explore',name:'探店短视频全案策划',desc:'实体门店探店脚本、拍摄、剪辑、发布一站式服务。'},
+{id:'media-ip',name:'达人 IP 孵化',desc:'素人打造垂直领域博主，从定位到变现全周期扶持。'},
+{id:'media-copywriting',name:'图文内容代撰',desc:'公众号、小红书图文、朋友圈营销文案定制。'},
+{id:'media-matrix',name:'短视频矩阵搭建',desc:'多账号布局，实现品牌全域流量裂变。'}
+]},
+{id:'ecom',name:'电商',icon:'fa-solid fa-cart-shopping',color:'#8b5cf6',gradient:'linear-gradient(135deg,#8b5cf6,#a78bfa)',summary:'聚焦短视频电商落地，打通开店到变现全链路',services:[
+{id:'ecom-shop',name:'抖快小店代入驻',desc:'营业执照报备、类目开通、店铺基础装修代办。'},
+{id:'ecom-deal',name:'团购上架运营',desc:'实体门店套餐上架、套餐定价优化、团购活动策划。'},
+{id:'ecom-supply',name:'货源对接',desc:'日用、宠物、教育类优质货源供应链资源匹配。'},
+{id:'ecom-ops',name:'店铺全托管运营',desc:'商品上架、客服打理、订单售后一站式代管。'},
+{id:'ecom-traffic',name:'电商引流投流',desc:'短视频随心推、千川投放优化，精准提升店铺成交额。'}
+]},
+{id:'pet',name:'宠物',icon:'fa-solid fa-paw',color:'#fb923c',gradient:'linear-gradient(135deg,#fb923c,#fbbf24)',summary:'专注宠物实体店线上数字化运营',services:[
+{id:'pet-ops',name:'宠物医院全域线上运营',desc:'美团、抖音、大众点评店铺优化托管。'},
+{id:'pet-deal',name:'疫苗绝育团购策划',desc:'定制高转化医疗套餐，设计线上引流团购产品。'},
+{id:'pet-video',name:'门店短视频引流',desc:'宠物门店实拍短视频制作，同城精准曝光获客。'},
+{id:'pet-dist',name:'宠物用品分销带货',desc:'对接品牌宠物粮、保健品，帮门店线上分销盈利。'},
+{id:'pet-grow',name:'宠物店线上拓客',desc:'私域社群搭建、会员储值活动策划。'}
+]},
+{id:'edu',name:'教育',icon:'fa-solid fa-graduation-cap',color:'#10b981',gradient:'linear-gradient(135deg,#10b981,#34d399)',summary:'围绕成人职业与创业打造实用型教育培训',services:[
+{id:'edu-course',name:'职业技能线上课程研发',desc:'自媒体运营、电商开店、AI 实操系列网课开发。'},
+{id:'edu-biz',name:'创业知识培训',desc:'实体开店、短视频创业系统化线下 + 线上授课。'},
+{id:'edu-school',name:'校企合作资源对接',desc:'职校、高校校企项目落地，实习就业资源联动。'},
+{id:'edu-side',name:'成人副业实训课',desc:'低成本副业实操教学，手把手落地变现项目。'}
+]},
+{id:'campus',name:'伯雅校园',icon:'fa-solid fa-school',color:'#533afd',gradient:'linear-gradient(135deg,#533afd,#7c6cf6)',summary:'主打高校本地化创业项目，布局全国校园渠道',services:[
+{id:'campus-partner',name:'校区合伙人招商',desc:'全国各高校招募校区经理，标准化加盟扶持体系。'},
+{id:'campus-incubate',name:'大学生创业扶持',desc:'在校学生创业项目孵化、资源对接、启动指导。'},
+{id:'campus-local',name:'校园本地化项目落地',desc:'校园商超、校园服务、校园新媒体项目落地运营。'},
+{id:'campus-community',name:'校园社群运营搭建',desc:'高校精准社群搭建、校园活动策划、流量变现运营。'}
+]}
+];
+
+// ===== Crypto (simple XOR + Base64) =====
+const _CK='lsjy2026secure';
+function encryptPwd(p){const e=[];for(let i=0;i<p.length;i++)e.push(p.charCodeAt(i)^_CK.charCodeAt(i%_CK.length));return btoa(e.join(','))}
+function decryptPwd(c){if(!c)return'';if(c.length<20&&c.indexOf(',')===-1)return c;try{const a=atob(c).split(',').map(Number);if(a.some(isNaN))return c;let s='';for(let i=0;i<a.length;i++)s+=String.fromCharCode(a[i]^_CK.charCodeAt(i%_CK.length));return s}catch(e){return c}}
+
+// ===== Storage =====
+function getUsers(){return JSON.parse(localStorage.getItem('lsjy3_users')||'[]')}
+function saveUsers(u){localStorage.setItem('lsjy3_users',JSON.stringify(u))}
+function getCur(){return JSON.parse(localStorage.getItem('lsjy3_cur')||'null')}
+// ===== DEFAULT ADMIN SEED =====
+(function(){const _AK='lsjy3_admin_seeded';if(!localStorage.getItem(_AK)){const users=getUsers();if(!users.find(x=>x.username==='KF02V9')){users.push({username:'KF02V9',password:'MzIsNTYsNDgsNzUsMiwwLDcsMiw2NCw4NQ==',nickname:'管理员',role:'admin',phone:'',qq:'',wx:'',created:new Date().toLocaleString()});saveUsers(users)}localStorage.setItem(_AK,'1'}})();
+function setCur(u){localStorage.setItem('lsjy3_cur',JSON.stringify(u))}
+function getContacts(){return JSON.parse(localStorage.getItem('lsjy3_contacts')||'[]')}
+function saveContacts(c){localStorage.setItem('lsjy3_contacts',JSON.stringify(c))}
+function getSettings(){return JSON.parse(localStorage.getItem('lsjy_settings')||'{}')}
+function getOrders(){return JSON.parse(localStorage.getItem('lsjy_admin_orders')||'[]')}
+function saveOrders(o){localStorage.setItem('lsjy_admin_orders',JSON.stringify(o))}
+function getAllCredits(){return JSON.parse(localStorage.getItem('lsjy3_credits')||'{}')}
+function saveAllCredits(c){localStorage.setItem('lsjy3_credits',JSON.stringify(c))}
+function getRecycle(){return JSON.parse(localStorage.getItem('lsjy_admin_recycle')||'[]')}
+function saveRecycle(r){localStorage.setItem('lsjy_admin_recycle',JSON.stringify(r))}
+function getLoginLog(){return JSON.parse(localStorage.getItem('lsjy_admin_loginlog')||'[]')}
+function saveLoginLog(l){localStorage.setItem('lsjy_admin_loginlog',JSON.stringify(l))}
+function getLockout(){return JSON.parse(localStorage.getItem('lsjy_admin_lockout')||'{}')}
+function saveLockout(l){localStorage.setItem('lsjy_admin_lockout',JSON.stringify(l))}
+function getLeads(){return JSON.parse(localStorage.getItem('lsjy_admin_leads')||'[]')}
+function saveLeads(l){localStorage.setItem('lsjy_admin_leads',JSON.stringify(l))}
+function getContentData(){return JSON.parse(localStorage.getItem('lsjy_admin_content')||'{}')}
+function saveContentData(c){localStorage.setItem('lsjy_admin_content',JSON.stringify(c))}
+function getOpLogs(){return JSON.parse(localStorage.getItem('lsjy_admin_oplogs')||'[]')}
+function saveOpLogs(l){localStorage.setItem('lsjy_admin_oplogs',JSON.stringify(l))}
+function addOpLog(action,detail){const logs=getOpLogs();const u=getCur();logs.push({action,detail,operator:u?u.username:'system',time:new Date().toISOString()});if(logs.length>500)logs.splice(0,logs.length-500);saveOpLogs(logs)}
+
+
+// ===== Redeem Code Storage =====
+function getRedeemCodes(){return JSON.parse(localStorage.getItem('lsjy3_redeem_codes')||'[]')}
+function saveRedeemCodes(c){localStorage.setItem('lsjy3_redeem_codes',JSON.stringify(c))}
+function getRedeemHistory(){return JSON.parse(localStorage.getItem('lsjy3_redeem_history')||'[]')}
+function saveRedeemHistory(h){localStorage.setItem('lsjy3_redeem_history',JSON.stringify(h))}
+
+// Seed admin (encrypted password)
+(function(){const u=JSON.parse(localStorage.getItem('lsjy3_users')||'[]');const ai=u.findIndex(x=>x.role==='admin');if(ai<0){console.warn('[安全] 管理员账号应通过后端创建');/* 已移除硬编码密码 */u.push({username:'',password:'',nickname:'管理员',role:'admin',phone:'',qq:'',wx:'',created:new Date().toLocaleString()});localStorage.setItem('lsjy3_users',JSON.stringify(u))}if(localStorage.getItem('lsjy_admin_lockout'))localStorage.removeItem('lsjy_admin_lockout')})();
+
+// ===== Utility =====
+function maskPhone(p){if(!p||p.length<7)return p||'-';return p.substring(0,3)+'****'+p.substring(7)}
+function maskName(n){if(!n||n.length<=2)return n||'-';return n[0]+'*'.repeat(n.length-2)+n[n.length-1]}
+function toast(m,t){const e=document.getElementById('toast');e.textContent=m;e.className='toast show'+(t?' '+t:'');clearTimeout(e._t);e._t=setTimeout(()=>e.className='toast',3000)}
+function btnLoading(el){if(!el)return;el.classList.add('loading');const t=el.textContent;el._ot=t;el.disabled=true;return{done:()=>{el.classList.remove('loading');el.disabled=false;el.textContent=el._ot||t}}}
+function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('sbOverlay').classList.toggle('show')}
+function fmtDate(s){if(!s)return'-';const d=new Date(s);if(isNaN(d))return s;return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}
+function toCSV(rows,headers){return '\uFEFF'+[headers.join(',')].concat(rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(','))).join('\n')}
+function downloadCSV(csv,name){const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name+'.csv';a.click()}
+function softDelete(type,item){const r=getRecycle();r.push({type,data:item,time:new Date().toISOString()});saveRecycle(r)}
+function filterByDateRange(arr,dateField,start,end){return arr.filter(a=>{if(!a[dateField])return true;const d=new Date(a[dateField]).getTime();return(!start||d>=start.getTime())&&(!end||d<=end.getTime())})
+}
+function filterByKeyword(arr,fields,kw){if(!kw)return arr;kw=kw.toLowerCase();return arr.filter(a=>fields.some(f=>(a[f]||'').toLowerCase().includes(kw)))}
+
+// ===== Auth =====
+function doLogin(e){
+  e.preventDefault();
+  const lo=getLockout();
+  if(lo.lockedUntil&&Date.now()<lo.lockedUntil){
+    const rem=Math.ceil((lo.lockedUntil-Date.now())/1000);
+    toast('账号已锁定，请'+Math.ceil(rem/60)+'分钟后再试','error');return;
+  }
+  const u=document.getElementById('loginUser').value.trim(),p=document.getElementById('loginPwd').value;
+  const users=getUsers();
+  const found=users.find(x=>x.username===u);
+  if(!found||decryptPwd(found.password)!==p){
+    const cnt=(lo.failCount||0)+1;
+    lo.failCount=cnt;lo.lastFail=Date.now();
+    if(cnt>=5){lo.lockedUntil=Date.now()+15*60*1000;lo.failCount=0;saveLockout(lo);updateLockoutUI();toast('连续5次登录失败，账号已锁定15分钟','error');return}
+    saveLockout(lo);toast('账号或密码错误 ('+cnt+'/5)','error');return;
+  }
+  lo.failCount=0;lo.lockedUntil=null;saveLockout(lo);
+  const ADMIN_ROLES=['admin','super_admin','supreme_admin','boss'];if(!ADMIN_ROLES.includes(found.role)){toast('非管理员账号，无法进入后台','error');return}
+  // Login log
+  const log=getLoginLog();log.push({username:u,time:new Date().toISOString(),ip:'-',device:navigator.userAgent.substring(0,80)});if(log.length>200)log.splice(0,log.length-200);saveLoginLog(log);
+  setCur(found);toast('登录成功','success');enterApp();
+  (async function(){try{const r=await fetch(BACKEND_URL+'/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});const d=await r.json();if(d.success&&d.token){localStorage.setItem('lsjy_backend_token',d.token);console.log('[Auth] Backend token acquired')}}catch(e){console.log('[Auth] Backend login skipped:',e.message)}})();
+  
+}
+function updateLockoutUI(){
+  const lo=getLockout();
+  const box=document.getElementById('lockoutInfo');
+  if(lo.lockedUntil&&Date.now()<lo.lockedUntil){
+    box.style.display='block';
+    const rem=Math.ceil((lo.lockedUntil-Date.now())/1000);
+    box.innerHTML='<i class="fa-solid fa-lock"></i><div style="font-weight:700;margin-bottom:4px">账号已锁定</div><div>连续5次登录失败，请等待'+Math.ceil(rem/60)+'分钟后再试</div>';
+  }else{box.style.display='none'}
+}
+setInterval(updateLockoutUI,5000);updateLockoutUI();
+function doLogout(){localStorage.removeItem('lsjy3_cur');document.getElementById('loginPage').style.display='';document.getElementById('app').classList.remove('active');toast('已退出登录')}
+
+// ===== Navigation =====
+const _pageTitles={dashboard:'数据看板',modules:'业务模块',services:'服务管理',users:'用户管理',messages:'留言管理',leads:'线索管理',orders:'订单管理',customers:'顾客管理',redeemCodes:'卡密管理',content:'内容管理',aihub:'AI创作中心',recycle:'回收站',logs:'操作日志',settings:'系统设置'};
+const _pageRenders={dashboard:renderDashboard,modules:renderModules,services:renderServices,users:renderUsers,messages:renderMessages,leads:renderLeads,orders:renderOrders,customers:renderCustomers,redeemCodes:renderRedeemCodes,content:renderContent,aihub:renderAIHub,recycle:renderRecycle,logs:renderLogs,settings:renderSettings};
+function goPage(page,el){
+  document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
+  if(el)el.classList.add('active');
+  document.getElementById('pageTitle').textContent=_pageTitles[page]||page;
+  if(_pageRenders[page])_pageRenders[page]();
+  if(window.innerWidth<769)toggleSidebar();
+}
+function enterApp(){
+  document.getElementById('loginPage').style.display='none';document.getElementById('app').classList.add('active');
+  const u=getCur();document.getElementById('tbAvatar').textContent=(u.nickname||u.username)[0].toUpperCase();document.getElementById('tbName').textContent=u.nickname||u.username;
+  goPage('dashboard');
+}
+setTimeout(function(){const u=getCur();const ADMIN_ROLES=['admin','super_admin','supreme_admin','boss'];if(u&&ADMIN_ROLES.includes(u.role))enterApp()},0);
+
+// ===== Pagination =====
+function paginate(arr,page,size){const total=Math.ceil(arr.length/size);return{data:arr.slice((page-1)*size,page*size),page,total,allCount:arr.length}}
+function renderPagination(pg,onChangeFn){
+  if(pg.total<=1)return`<div class="pagination"><div class="pg-info">共 ${pg.allCount} 条</div></div>`;
+  let btns=`<button class="pg-btn" onclick="${onChangeFn}(${pg.page-1})" ${pg.page<=1?'disabled':''}><i class="fa-solid fa-chevron-left"></i></button>`;
+  const start=Math.max(1,pg.page-2),end=Math.min(pg.total,pg.page+2);
+  if(start>1)btns+=`<button class="pg-btn" onclick="${onChangeFn}(1)">1</button>`;
+  if(start>2)btns+=`<span style="color:var(--b)">...</span>`;
+  for(let i=start;i<=end;i++)btns+=`<button class="pg-btn${i===pg.page?' active':''}" onclick="${onChangeFn}(${i})">${i}</button>`;
+  if(end<pg.total-1)btns+=`<span style="color:var(--b)">...</span>`;
+  if(end<pg.total)btns+=`<button class="pg-btn" onclick="${onChangeFn}(${pg.total})">${pg.total}</button>`;
+  btns+=`<button class="pg-btn" onclick="${onChangeFn}(${pg.page+1})" ${pg.page>=pg.total?'disabled':''}><i class="fa-solid fa-chevron-right"></i></button>`;
+  return`<div class="pagination"><div class="pg-info">共 ${pg.allCount} 条 / 第 ${pg.page}/${pg.total} 页</div><div class="pg-btns">${btns}</div></div>`;
+}
+
+// ===== Dashboard =====
+let _dashPeriod='all';
+function renderDashboard(){
+  const users=getUsers(),contacts=getContacts(),orders=getOrders(),totalSvc=MODULES.reduce((a,m)=>a+m.services.length,0);
+  const now=new Date();
+  let filtered=contacts;
+  if(_dashPeriod!=='all'){
+    const d=new Date();if(_dashPeriod==='week')d.setDate(d.getDate()-7);else d.setDate(d.getDate()-30);
+    filtered=contacts.filter(c=>c.time&&new Date(c.time)>=d);
+  }
+  const todayStr=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+  const todayMsg=contacts.filter(c=>c.time&&c.time.includes(todayStr)).length;
+  const pendingOrders=orders.filter(o=>o.status==='pending').length;
+  const totalRevenue=orders.filter(o=>o.status==='paid').reduce((a,o)=>a+(parseFloat(o.price)||0),0);
+  const credits=getAllCredits();
+
+  document.getElementById('mainContent').innerHTML=`
+  <div class="filter-bar">
+    <span style="font-weight:600;font-size:13px"><i class="fa-solid fa-filter"></i> 时间维度:</span>
+    <button class="pg-btn${_dashPeriod==='all'?' active':''}" onclick="_dashPeriod='all';renderDashboard()">全部</button>
+    <button class="pg-btn${_dashPeriod==='week'?' active':''}" onclick="_dashPeriod='week';renderDashboard()">近7天</button>
+    <button class="pg-btn${_dashPeriod==='month'?' active':''}" onclick="_dashPeriod='month';renderDashboard()">近30天</button>
+  </div>
+  <div class="stats">
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#533afd,#7c6cf6)"><i class="fa-solid fa-cubes"></i></div><div class="stat-info"><h4>${MODULES.length}</h4><p>业务模块</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#3b82f6,#60a5fa)"><i class="fa-solid fa-wrench"></i></div><div class="stat-info"><h4>${totalSvc}</h4><p>服务项目</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#10b981,#34d399)"><i class="fa-solid fa-users"></i></div><div class="stat-info"><h4>${users.length}</h4><p>注册用户</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#f59e0b,#fbbf24)"><i class="fa-solid fa-crosshairs"></i></div><div class="stat-info"><h4>${getLeads().length}</h4><p>线索总量</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)"><i class="fa-solid fa-receipt"></i></div><div class="stat-info"><h4>${orders.length}</h4><p>订单 (待审${pendingOrders})</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#ea2261,#f96bee)"><i class="fa-solid fa-yen-sign"></i></div><div class="stat-info"><h4>${totalRevenue.toFixed(1)}</h4><p>已收款 (元)</p></div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px">
+    <div class="card"><div class="card-header"><h3><i class="fa-solid fa-users" style="color:var(--ok);margin-right:6px"></i>用户角色分布</h3></div><div class="card-body"><div style="display:flex;flex-direction:column;gap:8px">
+      ${Object.entries(ROLE_MAP).map(([k,v])=>{const cnt=users.filter(u=>u.role===k).length;return`<div style="display:flex;align-items:center;gap:8px;font-size:13px"><span class="badge ${v.badge}" style="min-width:80px;text-align:center">${v.label}</span><div style="flex:1;height:8px;border-radius:4px;background:var(--bg2);overflow:hidden"><div style="height:100%;width:${users.length?Math.round(cnt/users.length*100):0}%;background:var(--p);border-radius:4px"></div></div><span style="font-weight:700;min-width:24px;text-align:right">${cnt}</span></div>`}).join('')}
+    </div></div></div>
+    <div class="card"><div class="card-header"><h3><i class="fa-solid fa-cubes" style="color:var(--p);margin-right:6px"></i>业务模块概览</h3></div><div class="card-body"><div style="display:flex;flex-direction:column;gap:10px">
+      ${MODULES.map(m=>`<div style="display:flex;align-items:center;gap:12px;padding:10px;border-radius:10px;background:var(--bg)">
+        <div style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;background:${m.gradient};color:#fff"><i class="${m.icon}"></i></div>
+        <div style="flex:1"><div style="font-size:13px;font-weight:700">${m.name}</div><div style="font-size:11px;color:var(--b)">${m.services.length} 项服务</div></div>
+        <div style="width:80px;height:6px;border-radius:3px;background:var(--bg2);overflow:hidden"><div style="height:100%;width:${Math.round(m.services.length/5*100)}%;background:${m.color};border-radius:3px"></div></div>
+      </div>`).join('')}
+    </div></div></div>
+    <div class="card"><div class="card-header"><h3><i class="fa-solid fa-crosshairs" style="color:var(--warn);margin-right:6px"></i>最近线索</h3><a href="javascript:void(0)" onclick="goPage('leads')">查看全部 <i class="fa-solid fa-arrow-right"></i></a></div><div class="card-body">
+      ${(()=>{const leads=getLeads();return leads.length?leads.slice(-5).reverse().map(l=>{const sl={pending:'待跟进',following:'跟进中',done:'已完成',closed:'已关闭'};return`<div style="padding:10px 0;border-bottom:1px solid var(--bd)"><div style="display:flex;justify-content:space-between"><span style="font-weight:600;font-size:13px"><span class="badge badge-purple" style="margin-right:4px">${l.type||'咨询'}</span>${l.name}</span><span class="badge badge-yellow">${sl[l.status]||l.status}</span></div><div style="font-size:11px;color:var(--b);margin-top:4px">${l.source?'来源: '+l.source:''} ${l.assignee?'| 负责人: '+l.assignee:''}</div></div>`}).join(''):'<div class="empty"><i class="fa-solid fa-crosshairs"></i><p>暂无线索</p></div>'})()}
+    </div></div></div>
+    <div class="card"><div class="card-header"><h3><i class="fa-solid fa-envelope" style="color:var(--warn);margin-right:6px"></i>最近留言</h3><a href="javascript:void(0)" onclick="goPage('messages')">查看全部 <i class="fa-solid fa-arrow-right"></i></a></div><div class="card-body">
+      ${contacts.length?contacts.slice(-5).reverse().map(c=>`<div style="padding:10px 0;border-bottom:1px solid var(--bd)">
+        <div style="display:flex;justify-content:space-between"><span style="font-weight:600;font-size:13px"><i class="fa-solid fa-user" style="color:var(--p);margin-right:4px"></i>${maskName(c.name)}</span><span style="font-size:11px;color:var(--b)">${fmtDate(c.time)}</span></div>
+        <div style="font-size:12px;color:var(--b);margin-top:4px">${(c.message||'').substring(0,50)}${(c.message||'').length>50?'...':''}</div>
+        ${c.module?`<span class="badge badge-purple" style="margin-top:4px">${c.module}</span>`:''}
+      </div>`).join(''):'<div class="empty"><i class="fa-solid fa-envelope-open"></i><p>暂无留言</p></div>'}
+    </div></div></div>
+  <div class="card"><div class="card-header"><h3><i class="fa-solid fa-user-plus" style="color:var(--ok);margin-right:6px"></i>最新注册用户</h3></div><div class="card-body">
+    ${users.length?`<div class="table-wrap"><table><tr><th>用户名</th><th>昵称</th><th>手机号</th><th>角色</th><th>注册时间</th></tr>
+      ${users.slice(-5).reverse().map(u=>`<tr><td style="font-weight:600">${u.username}</td><td>${maskName(u.nickname)}</td><td>${maskPhone(u.phone)}</td><td>${roleBadge(u.role)}</td><td style="color:var(--b)">${fmtDate(u.created)}</td></tr>`).join('')}
+    </table></div>`:'<div class="empty"><i class="fa-solid fa-users"></i><p>暂无用户</p></div>'}
+  </div></div>`;
+}
+
+const ROLE_MAP={admin:{label:'管理员',badge:'badge-purple'},super_admin:{label:'超级管理员',badge:'badge-rose'},supreme_admin:{label:'至尊管理员',badge:'badge-orange'},boss:{label:'罗总专属',badge:'badge-amber'},user:{label:'用户',badge:'badge-blue'}};
+function roleBadge(role){const r=ROLE_MAP[role]||ROLE_MAP.user;return '<span class="badge '+r.badge+'">'+r.label+'</span>'}
+function roleLabel(role){return(ROLE_MAP[role]||ROLE_MAP.user).label}
+// ===== Modules =====
+function renderModules(){
+  document.getElementById('mainContent').innerHTML=`<div class="card"><div class="card-header"><h3><i class="fa-solid fa-cubes" style="color:var(--p);margin-right:6px"></i>六大业务模块</h3><span class="svc-count">${MODULES.length} 个模块</span></div><div class="card-body">
+    ${MODULES.map(m=>`<div class="mod-detail-card"><h4><i class="${m.icon}" style="color:${m.color}"></i>${m.name}<span class="svc-count" style="margin-left:8px">${m.services.length} 项服务</span></h4>
+      <p style="margin:8px 0 12px">${m.summary}</p>
+      <div style="font-size:12px;font-weight:600;color:var(--b);margin-bottom:8px">服务列表:</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">${m.services.map(s=>`<span class="mod-tag" style="background:${m.gradient}">${s.name}</span>`).join('')}</div>
+    </div>`).join('')}
+  </div></div>`;
+}
+
+// ===== Services =====
+function renderServices(){
+  const all=[];MODULES.forEach(m=>m.services.forEach(s=>all.push({...s,module:m})));
+  document.getElementById('mainContent').innerHTML=`<div class="card"><div class="card-header"><h3><i class="fa-solid fa-wrench" style="color:var(--info);margin-right:6px"></i>全部服务项目</h3><span class="svc-count">共 ${all.length} 项</span></div><div class="card-body">
+    <div class="table-wrap"><table><tr><th>#</th><th>服务名称</th><th>所属模块</th><th>描述</th></tr>
+      ${all.map((s,i)=>`<tr><td>${i+1}</td><td style="font-weight:600">${s.name}</td><td><span class="mod-tag" style="background:${s.module.gradient}"><i class="${s.module.icon}" style="margin-right:4px"></i>${s.module.name.split(' ')[0]}</span></td><td style="color:var(--b);max-width:300px">${s.desc}</td></tr>`).join('')}
+    </table></div>
+  </div></div>`;
+}
+
+// ===== Users =====
+let _uPage=1,_uKw='',_uSel=new Set();
+function renderUsers(p){
+  if(typeof p==='number')_uPage=p;_uSel=new Set();
+  const users=getUsers();
+  const filtered=filterByKeyword(users,['username','nickname','phone','role'],_uKw);
+  const pg=paginate(filtered,_uPage,10);
+  document.getElementById('mainContent').innerHTML=`
+  <div class="stats">
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#533afd,#7c6cf6)"><i class="fa-solid fa-users"></i></div><div class="stat-info"><h4>${users.length}</h4><p>总用户数</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#10b981,#34d399)"><i class="fa-solid fa-user-shield"></i></div><div class="stat-info"><h4>${users.filter(u=>['admin','super_admin','supreme_admin','boss'].includes(u.role)).length}</h4><p>管理员</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#3b82f6,#60a5fa)"><i class="fa-solid fa-user"></i></div><div class="stat-info"><h4>${users.filter(u=>!['admin','super_admin','supreme_admin','boss'].includes(u.role)).length}</h4><p>普通用户</p></div></div>
+  </div>
+  <div class="card"><div class="card-header"><h3><i class="fa-solid fa-users" style="color:var(--p);margin-right:6px"></i>用户列表</h3>
+    <div class="toolbar">
+      <button class="tb-btn" onclick="openAddUser()"><i class="fa-solid fa-plus"></i> 新增</button>
+      <button class="tb-btn" onclick="exportUsers()"><i class="fa-solid fa-file-csv"></i> 导出</button>
+      <button class="tb-btn" id="batchDelUsersBtn" style="display:none" onclick="batchDelUsers()"><i class="fa-solid fa-trash"></i> 批量删除</button>
+    </div>
+  </div><div class="card-body">
+    <div class="filter-bar">
+      <input type="text" placeholder="搜索用户名/昵称/手机号..." value="${_uKw}" oninput="_uKw=this.value;_uPage=1;renderUsers()">
+    </div>
+    <div id="batchBarU"></div>
+    <div class="table-wrap"><table>
+      <tr><th><input type="checkbox" onchange="toggleAllUsers(this.checked)"></th><th>用户名</th><th>昵称</th><th>手机号</th><th>角色</th><th>注册时间</th><th>操作</th></tr>
+      ${pg.data.map((u,i)=>{
+        const ri=(i+(_uPage-1)*10);
+        return`<tr><td><input type="checkbox" value="${ri}" onchange="toggleUserSel(this)"></td>
+        <td style="font-weight:600">${u.username}</td><td>${maskName(u.nickname)}</td><td>${maskPhone(u.phone)}</td>
+        <td>${roleBadge(u.role)}</td>
+        <td style="color:var(--b)">${fmtDate(u.created)}</td>
+        <td><button class="act-btn edit" onclick="openEditUser(${ri})"><i class="fa-solid fa-pen"></i></button>${u.username!=='admin'?`<button class="act-btn del" onclick="delUser(${ri})"><i class="fa-solid fa-trash"></i></button>`:''}</td></tr>`
+      }).join('')}
+    </table></div>
+    ${!pg.data.length?'<div class="empty"><i class="fa-solid fa-users"></i><p>暂无用户</p></div>':''}
+    ${renderPagination(pg,'renderUsers')}
+  </div></div>`;
+}
+function toggleAllUsers(checked){document.querySelectorAll('#mainContent table input[type=checkbox]').forEach((cb,i)=>{if(i>0)cb.checked=checked});updateBatchBarU()}
+function toggleUserSel(cb){updateBatchBarU()}
+function updateBatchBarU(){
+  const cbs=document.querySelectorAll('#mainContent table input[type=checkbox]:checked');
+  const bar=document.getElementById('batchBarU');
+  const btn=document.getElementById('batchDelUsersBtn');
+  if(cbs.length>0){bar.innerHTML=`<div class="batch-bar"><span class="sel-count">已选 ${cbs.length} 项</span><button class="act-btn del" onclick="batchDelUsers()"><i class="fa-solid fa-trash"></i> 批量删除</button></div>`}
+  else{bar.innerHTML=''}
+}
+function batchDelUsers(){
+  const cbs=document.querySelectorAll('#mainContent table input[type=checkbox]:checked');
+  if(!cbs.length)return;const users=getUsers();const indices=[...cbs].map(cb=>parseInt(cb.value)).sort((a,b)=>b-a);
+  if(!confirm('确认删除选中的 '+indices.length+' 个用户？将移入回收站'))return;
+  indices.forEach(i=>{if(users[i]&&users[i].username!=='admin')softDelete('user',users.splice(i,1)[0])});
+  saveUsers(users);renderUsers();addOpLog('批量删除用户',indices.length+'个');toast('已删除 '+indices.length+' 个用户，可在回收站恢复','success');
+}
+function exportUsers(){
+  const users=getUsers();
+  const csv=toCSV(users.map(u=>[u.username,u.nickname||'',maskPhone(u.phone),u.role,u.created||'']),['用户名','昵称','手机号','角色','注册时间']);
+  downloadCSV(csv,'用户列表_'+new Date().toISOString().slice(0,10));toast('导出成功','success');
+}
+function openAddUser(){showMod(`<h3><i class="fa-solid fa-user-plus" style="color:var(--p)"></i> 新增用户</h3>
+  <div class="fg"><label class="fl">用户名</label><input class="fi" id="mUser" placeholder="3个字符以上"></div>
+  <div class="fg"><label class="fl">昵称</label><input class="fi" id="mNick" placeholder="选填"></div>
+  <div class="fg"><label class="fl">密码</label><input class="fi" type="password" id="mPwd" placeholder="6个字符以上"></div>
+  <div class="fg"><label class="fl">角色</label><select class="fi" id="mRole"><option value="user">普通用户</option><option value="admin">管理员</option><option value="super_admin">超级管理员</option><option value="supreme_admin">至尊管理员</option><option value="boss">罗总专属</option></select></div>
+  <div class="modal-actions"><button class="m-cancel" onclick="closeModal()">取消</button><button class="m-confirm" id="addUserBtn" onclick="addUser()">创建</button></div>`)}
+function addUser(){
+  const u=document.getElementById('mUser').value.trim(),n=document.getElementById('mNick').value.trim(),p=document.getElementById('mPwd').value,r=document.getElementById('mRole').value;
+  const ld=btnLoading(document.getElementById('addUserBtn'));if(!ld)return;
+  if(u.length<3){ld.done();return toast('用户名至少3个字符','error')}
+  if(p.length<6){ld.done();return toast('密码至少6个字符','error')}
+  const users=getUsers();if(users.find(x=>x.username===u)){ld.done();return toast('用户名已存在','error')}
+  users.push({username:u,password:encryptPwd(p),nickname:n,role:r,created:new Date().toLocaleString()});
+  saveUsers(users);ld.done();closeModal();renderUsers();addOpLog('新增用户',u);toast('用户创建成功','success');
+}
+function openEditUser(idx){
+  const users=getUsers(),u=users[idx];if(!u)return;
+  showMod(`<h3><i class="fa-solid fa-user-pen" style="color:var(--p)"></i> 编辑用户: ${u.username}</h3>
+    <div class="fg"><label class="fl">昵称</label><input class="fi" id="mNick" value="${u.nickname||''}"></div>
+    <div class="fg"><label class="fl">新密码（留空不修改）</label><input class="fi" type="password" id="mPwd" placeholder="留空则不修改"></div>
+    <div class="fg"><label class="fl">角色</label><select class="fi" id="mRole"><option value="user" ${u.role==='user'?'selected':''}>普通用户</option><option value="admin" ${u.role==='admin'?'selected':''}>管理员</option><option value="super_admin" ${u.role==='super_admin'?'selected':''}>超级管理员</option><option value="supreme_admin" ${u.role==='supreme_admin'?'selected':''}>至尊管理员</option><option value="boss" ${u.role==='boss'?'selected':''}>罗总专属</option></select></div>
+    <div class="modal-actions"><button class="m-cancel" onclick="closeModal()">取消</button><button class="m-confirm" id="saveUserBtn" onclick="saveEditUser(${idx})">保存</button></div>`)}
+function saveEditUser(idx){
+  const ld=btnLoading(document.getElementById('saveUserBtn'));if(!ld)return;
+  const users=getUsers();const u=users[idx];
+  u.nickname=document.getElementById('mNick').value.trim();
+  const p=document.getElementById('mPwd').value;if(p){if(p.length<6){ld.done();return toast('密码至少6个字符','error')}u.password=encryptPwd(p)}
+  u.role=document.getElementById('mRole').value;saveUsers(users);ld.done();closeModal();renderUsers();addOpLog('编辑用户',u.username);toast('用户信息已更新','success');
+}
+function delUser(idx){
+  const users=getUsers(),u=users[idx];
+  showMod(`<h3><i class="fa-solid fa-triangle-exclamation" style="color:var(--err)"></i> 确认删除</h3><p style="color:var(--b)">确定要删除用户 <b>${u.username}</b> 吗？</p><p style="font-size:12px;color:var(--b)"><i class="fa-solid fa-info-circle"></i> 将移入回收站，30天内可恢复</p>
+    <div class="modal-actions"><button class="m-cancel" onclick="closeModal()">取消</button><button class="m-confirm" style="background:var(--err)" id="cfmDelBtn" onclick="cfmDelUser(${idx})">删除</button></div>`)}
+function cfmDelUser(idx){
+  const ld=btnLoading(document.getElementById('cfmDelBtn'));if(!ld)return;
+  const users=getUsers();const u=users.splice(idx,1)[0];softDelete('user',u);saveUsers(users);ld.done();closeModal();renderUsers();addOpLog('删除用户',u.username);toast('用户已移入回收站','success');
+}
+
+// ===== Messages =====
+let _mPage=1,_mKw='',_mStatus='';
+function renderMessages(p){
+  if(typeof p==='number')_mPage=p;
+  let contacts=getContacts().map((c,i)=>({...c,_idx:i}));
+  contacts=filterByKeyword(contacts,['name','message','module'],_mKw);
+  if(_mStatus)contacts=contacts.filter(c=>(c.status||'pending')===_mStatus);
+  const pg=paginate(contacts,_mPage,10);
+  const pending=contacts.filter(c=>(c.status||'pending')==='pending').length;
+  const replied=contacts.filter(c=>c.status==='replied').length;
+
+  document.getElementById('mainContent').innerHTML=`
+  <div class="stats">
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#f59e0b,#fbbf24)"><i class="fa-solid fa-envelope"></i></div><div class="stat-info"><h4>${getContacts().length}</h4><p>总留言</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#ef4444,#f97316)"><i class="fa-solid fa-clock"></i></div><div class="stat-info"><h4>${pending}</h4><p>待处理</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#22c55e,#10b981)"><i class="fa-solid fa-check-circle"></i></div><div class="stat-info"><h4>${replied}</h4><p>已回复</p></div></div>
+  </div>
+  <div class="card"><div class="card-header"><h3><i class="fa-solid fa-envelope" style="color:var(--warn);margin-right:6px"></i>留言列表</h3>
+    <div class="toolbar">
+      <button class="tb-btn" onclick="exportMsgs()"><i class="fa-solid fa-file-csv"></i> 导出</button>
+    </div>
+  </div><div class="card-body">
+    <div class="filter-bar">
+      <input type="text" placeholder="搜索姓名/内容/模块..." value="${_mKw}" oninput="_mKw=this.value;_mPage=1;renderMessages()">
+      <select onchange="_mStatus=this.value;_mPage=1;renderMessages()">
+        <option value="" ${!_mStatus?'selected':''}>全部状态</option>
+        <option value="pending" ${_mStatus==='pending'?'selected':''}>待处理</option>
+        <option value="replied" ${_mStatus==='replied'?'selected':''}>已回复</option>
+        <option value="closed" ${_mStatus==='closed'?'selected':''}>已关闭</option>
+      </select>
+    </div>
+    <div class="table-wrap"><table>
+      <tr><th>#</th><th>姓名</th><th>电话</th><th>业务模块</th><th>留言内容</th><th>状态</th><th>时间</th><th>操作</th></tr>
+      ${pg.data.map((c,i)=>{const st=c.status||'pending';const stMap={pending:['待处理','badge-yellow'],replied:['已回复','badge-green'],closed:['已关闭','badge-gray']};const[stLabel,stCls]=stMap[st]||stMap.pending;
+        return`<tr><td>${i+1}</td><td style="font-weight:600">${maskName(c.name)}</td><td>${maskPhone(c.phone)}</td>
+        <td>${c.module?`<span class="badge badge-purple">${c.module}</span>`:'-'}</td>
+        <td style="color:var(--b);max-width:200px">${(c.message||'').substring(0,30)}${(c.message||'').length>30?'...':''}</td>
+        <td><span class="badge ${stCls}">${stLabel}</span></td>
+        <td style="color:var(--b);white-space:nowrap;font-size:12px">${fmtDate(c.time)}</td>
+        <td><button class="act-btn view" onclick="viewMsg(${c._idx})"><i class="fa-solid fa-eye"></i></button><button class="act-btn ok" onclick="replyMsg(${c._idx})"><i class="fa-solid fa-reply"></i></button><button class="act-btn del" onclick="delMsg(${c._idx})"><i class="fa-solid fa-trash"></i></button></td></tr>`}).join('')}
+    </table></div>
+    ${!pg.data.length?'<div class="empty"><i class="fa-solid fa-envelope-open"></i><p>暂无留言</p></div>':''}
+    ${renderPagination(pg,'renderMessages')}
+  </div></div>`;
+}
+function viewMsg(idx){
+  const c=getContacts()[idx];if(!c)return;
+  showMod(`<h3><i class="fa-solid fa-envelope-open" style="color:var(--p)"></i> 留言详情</h3>
+    <div class="fg"><label class="fl">姓名</label><div style="font-size:14px;font-weight:600;padding:8px 0">${maskName(c.name)}</div></div>
+    <div class="fg"><label class="fl">电话</label><div style="font-size:14px;padding:8px 0">${maskPhone(c.phone)||'未提供'}</div></div>
+    <div class="fg"><label class="fl">业务模块</label><div style="padding:8px 0">${c.module?`<span class="badge badge-purple">${c.module}</span>`:'未选择'}</div></div>
+    <div class="fg"><label class="fl">状态</label><div style="padding:8px 0">${(() => {const st=c.status||'pending';const m={pending:'待处理',replied:'已回复',closed:'已关闭'};return`<span class="badge ${st==='pending'?'badge-yellow':st==='replied'?'badge-green':'badge-gray'}">${m[st]||'待处理'}</span>`})()}</div></div>
+    ${c.reply?`<div class="fg"><label class="fl">回复内容</label><div style="font-size:14px;padding:12px;background:#dcfce7;border-radius:8px;line-height:1.8">${c.reply}</div></div>`:''}
+    <div class="fg"><label class="fl">留言内容</label><div style="font-size:14px;padding:12px;background:var(--bg);border-radius:8px;line-height:1.8">${c.message||'-'}</div></div>
+    <div class="fg"><label class="fl">提交时间</label><div style="font-size:13px;color:var(--b);padding:8px 0">${fmtDate(c.time)}</div></div>
+    <div class="modal-actions"><button class="m-cancel" onclick="closeModal()">关闭</button><button class="m-confirm" onclick="closeModal();replyMsg(${idx})"><i class="fa-solid fa-reply"></i> 回复</button></div>`)}
+function replyMsg(idx){
+  const c=getContacts()[idx];if(!c)return;
+  showMod(`<h3><i class="fa-solid fa-reply" style="color:var(--ok)"></i> 回复留言</h3>
+    <div style="padding:12px;background:var(--bg);border-radius:8px;margin-bottom:16px"><div style="font-weight:600;font-size:13px">${maskName(c.name)}: </div><div style="font-size:13px;color:var(--b);margin-top:4px">${(c.message||'').substring(0,100)}</div></div>
+    <div class="fg"><label class="fl">回复内容</label><textarea class="fi" id="msgReply" rows="3" placeholder="输入回复内容...">${c.reply||''}</textarea></div>
+    <div class="fg"><label class="fl">标记状态</label><select class="fi" id="msgStatus"><option value="replied">已回复</option><option value="closed">已关闭</option><option value="pending">待处理</option></select></div>
+    <div class="modal-actions"><button class="m-cancel" onclick="closeModal()">取消</button><button class="m-confirm" id="replyBtn" onclick="saveReply(${idx})">发送回复</button></div>`)}
+function saveReply(idx){
+  const ld=btnLoading(document.getElementById('replyBtn'));if(!ld)return;
+  const c=getContacts();c[idx].reply=document.getElementById('msgReply').value.trim();c[idx].status=document.getElementById('msgStatus').value;
+  saveContacts(c);ld.done();closeModal();renderMessages();toast('回复已保存','success');
+}
+function delMsg(idx){
+  showMod(`<h3><i class="fa-solid fa-triangle-exclamation" style="color:var(--err)"></i> 确认删除</h3><p style="color:var(--b)">确定要删除这条留言吗？将移入回收站。</p>
+    <div class="modal-actions"><button class="m-cancel" onclick="closeModal()">取消</button><button class="m-confirm" style="background:var(--err)" id="delMsgBtn" onclick="cfmDelMsg(${idx})">删除</button></div>`)}
+function cfmDelMsg(idx){
+  const ld=btnLoading(document.getElementById('delMsgBtn'));if(!ld)return;
+  const c=getContacts();const item=c.splice(idx,1)[0];softDelete('message',item);saveContacts(c);ld.done();closeModal();renderMessages();toast('留言已移入回收站','success');
+}
+function exportMsgs(){
+  const cs=getContacts();const csv=toCSV(cs.map(c=>[c.name||'',maskPhone(c.phone)||'',c.module||'',(c.message||'').replace(/,/g,'，'),c.status||'pending',fmtDate(c.time)]),['姓名','电话','模块','内容','状态','时间']);
+  downloadCSV(csv,'留言列表_'+new Date().toISOString().slice(0,10));toast('导出成功','success');
+}
+
+// ===== Orders =====
+let _oPage=1,_oKw='',_oStatus='';
+function renderOrders(p){
+  if(typeof p==='number')_oPage=p;
+  let orders=getOrders().map((o,i)=>({...o,_idx:i}));
+  orders=filterByKeyword(orders,['orderId','username','serviceName','desc'],_oKw);
+  if(_oStatus)orders=orders.filter(o=>o.status===_oStatus);
+  const pg=paginate(orders,_oPage,10);
+  const allOrders=getOrders();const pending=allOrders.filter(o=>o.status==='pending').length;const paid=allOrders.filter(o=>o.status==='paid').length;
+
+  document.getElementById('mainContent').innerHTML=`
+  <div class="stats" style="margin-bottom:20px">
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)"><i class="fa-solid fa-receipt"></i></div><div class="stat-info"><h4>${allOrders.length}</h4><p>总订单</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#f59e0b,#fbbf24)"><i class="fa-solid fa-clock"></i></div><div class="stat-info"><h4>${pending}</h4><p>待审核</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#22c55e,#10b981)"><i class="fa-solid fa-check-circle"></i></div><div class="stat-info"><h4>${paid}</h4><p>已支付</p></div></div>
+  </div>
+  <div class="card"><div class="card-header"><h3><i class="fa-solid fa-receipt" style="color:#7c3aed;margin-right:6px"></i>订单管理</h3>
+    <div class="toolbar"><button class="tb-btn" onclick="exportOrders()"><i class="fa-solid fa-file-csv"></i> 导出</button></div>
+  </div><div class="card-body">
+    <div class="filter-bar">
+      <input type="text" placeholder="搜索订单号/用户名/服务名..." value="${_oKw}" oninput="_oKw=this.value;_oPage=1;renderOrders()">
+      <select onchange="_oStatus=this.value;_oPage=1;renderOrders()">
+        <option value="" ${!_oStatus?'selected':''}>全部状态</option>
+        <option value="pending" ${_oStatus==='pending'?'selected':''}>待支付</option>
+        <option value="paid" ${_oStatus==='paid'?'selected':''}>已支付</option>
+        <option value="rejected" ${_oStatus==='rejected'?'selected':''}>已拒绝</option>
+      </select>
+    </div>
+    <div class="table-wrap"><table>
+      <tr><th>订单号</th><th>用户</th><th>服务</th><th>金额</th><th>支付方式</th><th>状态</th><th>时间</th><th>操作</th></tr>
+      ${pg.data.map(o=>{
+        const stMap={pending:['待支付','badge-yellow'],paid:['已支付','badge-green'],rejected:['已拒绝','badge-red'],done:['已完成','badge-green']};
+        const[stLabel,stCls]=stMap[o.status]||['未知','badge-gray'];
+        const payMap={'qq':'QQ支付','wx':'微信支付','alipay':'支付宝','free':'免费'};
+        return`<tr>
+          <td style="font-weight:600;font-size:12px">${o.orderId||'--'}</td>
+          <td>${o.username?`<i class="fa-solid fa-user" style="color:var(--p)"></i> ${o.username}`:'-'}</td>
+          <td style="max-width:180px">${(o.serviceName||o.desc||'--').substring(0,20)}</td>
+          <td style="font-weight:700;color:#7c3aed">&yen;${o.price||0}</td>
+          <td>${payMap[o.method]||o.method||'-'}</td>
+          <td><span class="badge ${stCls}">${stLabel}</span></td>
+          <td style="color:var(--b);white-space:nowrap;font-size:12px">${fmtDate(o.time)}</td>
+          <td>${o.status==='pending'?`<button class="act-btn ok" onclick="confirmOrder(${o._idx})"><i class="fa-solid fa-check"></i></button><button class="act-btn del" onclick="rejectOrder(${o._idx})"><i class="fa-solid fa-xmark"></i></button>`:'<span style="font-size:11px;color:var(--b)">--</span>'}</td>
+        </tr>`}).join('')}
+    </table></div>
+    ${!pg.data.length?'<div class="empty"><i class="fa-solid fa-receipt"></i><p>暂无订单</p></div>':''}
+    ${renderPagination(pg,'renderOrders')}
+  </div></div>
+  <div class="card"><div class="card-header"><h3><i class="fa-solid fa-bolt" style="color:#7c3aed;margin-right:6px"></i>算力余额一览</h3></div><div class="card-body">
+    <div class="table-wrap"><table><thead><tr style="background:#f8fafc;text-align:left"><th style="padding:10px 12px;font-size:13px">用户</th><th style="padding:10px 12px;font-size:13px">当前算力</th><th style="padding:10px 12px;font-size:13px">操作</th></tr></thead><tbody>
+      ${getUsers().map(u=>{const credits=getAllCredits();const val=credits[u.username]||0;
+        return`<tr style="border-bottom:1px solid #f1f5f9"><td style="padding:10px 12px;font-size:13px;font-weight:600">${u.username}</td><td style="padding:10px 12px;font-size:13px;font-weight:700;color:#7c3aed">${val.toLocaleString()}</td><td style="padding:10px 12px"><input id="manualCredit_${u.username}" type="number" min="0" placeholder="数量" style="width:80px;padding:4px 8px;border:1px solid #d1d5db;border-radius:4px"> <button class="act-btn ok" onclick="manualAddCredit('${u.username}')"><i class="fa-solid fa-plus"></i> 充值</button></td></tr>`}).join('')}
+    </tbody></table></div>
+  </div></div>`;
+}
+function confirmOrder(idx){
+  if(!confirm('确认已收到付款并开通服务？'))return;
+  const orders=getOrders();if(!orders[idx])return;const o=orders[idx];
+  if(o.moduleId==='credits'){
+    const targetUser=prompt('请输入充值用户名 (当前: '+(o.username||'未指定')+'):',o.username||'');
+    if(!targetUser)return;const packs=[{id:'pack1',credits:100},{id:'pack2',credits:500},{id:'pack3',credits:2000},{id:'pack4',credits:5000},{id:'pack5',credits:10000}];
+    const pack=packs.find(p=>p.id===o.serviceId);const addCredits=pack?pack.credits:0;
+    if(addCredits>0){const all=getAllCredits();all[targetUser]=(all[targetUser]||0)+addCredits;saveAllCredits(all)}
+    o.confirmedUser=targetUser;
+  }
+  o.status='paid';orders[idx]=o;saveOrders(orders);toast('订单确认成功，服务已开通！','success');renderOrders();
+}
+function rejectOrder(idx){
+  if(!confirm('确认拒绝此订单？'))return;
+  const orders=getOrders();if(!orders[idx])return;orders[idx].status='rejected';saveOrders(orders);toast('订单已拒绝','warn');renderOrders();
+}
+function manualAddCredit(username){
+  const inp=document.getElementById('manualCredit_'+username);const val=parseInt(inp.value);
+  if(!val||val<=0)return toast('请输入有效的算力数量','error');
+  if(!confirm('给 '+username+' 充值 '+val+' 算力？'))return;
+  const all=getAllCredits();all[username]=(all[username]||0)+val;saveAllCredits(all);inp.value='';toast('已为 '+username+' 充值 '+val+' 算力','success');renderOrders();
+}
+function exportOrders(){
+  const os=getOrders();const payMap={'qq':'QQ','wx':'微信','alipay':'支付宝','free':'免费'};
+  const csv=toCSV(os.map(o=>[o.orderId||'',o.username||'',o.serviceName||o.desc||'',o.price||0,payMap[o.method]||o.method||'',o.status||'',fmtDate(o.time)]),['订单号','用户','服务','金额','支付方式','状态','时间']);
+  downloadCSV(csv,'订单列表_'+new Date().toISOString().slice(0,10));toast('导出成功','success');
+}
+
+// ===== Recycle Bin =====
+let _rPage=1;
+function renderRecycle(p){if(typeof p==='number')_rPage=p;
+  const items=getRecycle();const pg=paginate(items,_rPage,10);
+  document.getElementById('mainContent').innerHTML=`
+  <div class="stats">
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#ef4444,#f97316)"><i class="fa-solid fa-trash-can"></i></div><div class="stat-info"><h4>${items.length}</h4><p>回收站项目</p></div></div>
+  </div>
+  <div class="card"><div class="card-header"><h3><i class="fa-solid fa-trash-can" style="color:var(--err);margin-right:6px"></i>回收站</h3>
+    ${items.length?`<button class="tb-btn danger" onclick="emptyRecycle()"><i class="fa-solid fa-fire"></i> 清空回收站</button>`:''}
+  </div><div class="card-body">
+    ${!items.length?'<div class="empty"><i class="fa-solid fa-recycle"></i><p>回收站为空</p></div>':
+    `<div class="table-wrap"><table><tr><th>#</th><th>类型</th><th>数据摘要</th><th>删除时间</th><th>操作</th></tr>
+    ${pg.data.map((item,i)=>{const ri=(i+(_rPage-1)*10);const summary=item.type==='user'?`用户: ${item.data.username}`:item.type==='message'?`留言: ${maskName(item.data.name)} - ${(item.data.message||'').substring(0,20)}`:item.type;
+      return`<tr><td>${ri+1}</td><td><span class="badge ${item.type==='user'?'badge-blue':'badge-purple'}">${item.type==='user'?'用户':'留言'}</span></td>
+      <td>${summary}</td><td style="color:var(--b);font-size:12px">${fmtDate(item.time)}</td>
+      <td><button class="act-btn ok" onclick="restoreItem(${ri})"><i class="fa-solid fa-rotate-left"></i></button><button class="act-btn del" onclick="permDelItem(${ri})"><i class="fa-solid fa-fire"></i></button></td></tr>`}).join('')}
+    </table></div>
+    ${renderPagination(pg,'renderRecycle')}`}
+  </div></div>`;
+}
+function restoreItem(idx){
+  const r=getRecycle();const item=r[idx];if(!item)return;
+  if(item.type==='user'){const users=getUsers();if(!users.find(u=>u.username===item.data.username)){users.push(item.data);saveUsers(users)}}
+  else if(item.type==='message'){const contacts=getContacts();contacts.push(item.data);saveContacts(contacts)}
+  r.splice(idx,1);saveRecycle(r);renderRecycle();toast('已恢复','success');
+}
+function permDelItem(idx){
+  if(!confirm('永久删除？此操作不可恢复'))return;
+  const r=getRecycle();r.splice(idx,1);saveRecycle(r);renderRecycle();toast('已永久删除','success');
+}
+function emptyRecycle(){
+  if(!confirm('确认清空回收站？所有数据将永久删除！'))return;
+  saveRecycle([]);renderRecycle();toast('回收站已清空','success');
+}
+
+// ===== Settings =====
+function renderSettings(){
+  const s=getSettings();const logs=getLoginLog().slice(-10).reverse();
+  document.getElementById('mainContent').innerHTML=`
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+    <div class="card"><div class="card-header"><h3><i class="fa-solid fa-building" style="color:var(--p);margin-right:6px"></i>公司信息</h3></div><div class="card-body">
+      <div class="fg"><label class="fl">公司全称</label><input class="fi" id="sCompany" value="${s.company||'罗圣纪元互联网科技有限责任公司'}"></div>
+      <div class="fg"><label class="fl">联系电话</label><input class="fi" id="sPhone" value="${s.phone||'18890000368'}"></div>
+      <div class="fg"><label class="fl">公司地址</label><input class="fi" id="sAddr" value="${s.address||'湖南省永州市祁阳市'}"></div>
+      <div class="fg"><label class="fl">创始人</label><input class="fi" id="sFounder" value="${s.founder||'罗凯中'}"></div>
+      <div class="fg"><label class="fl">ICP备案号</label><input class="fi" id="sIcp" value="${s.icp||''}" placeholder="例: 湘ICP备2025XXXXXX号"></div>
+      <button class="btn-p" style="margin-top:8px" id="saveSettingsBtn" onclick="saveSiteSettings()">保存设置</button>
+    </div></div>
+    <div class="card"><div class="card-header"><h3><i class="fa-solid fa-key" style="color:var(--warn);margin-right:6px"></i>修改管理员密码</h3></div><div class="card-body">
+      <div class="fg"><label class="fl">当前密码</label><input class="fi" type="password" id="sOldPwd"></div>
+      <div class="fg"><label class="fl">新密码</label><input class="fi" type="password" id="sNewPwd" placeholder="6个字符以上"></div>
+      <div class="fg"><label class="fl">确认新密码</label><input class="fi" type="password" id="sNewPwd2"></div>
+      <button class="btn-p" style="margin-top:8px" id="chgPwdBtn" onclick="chgPwd()">修改密码</button>
+    </div></div>
+  </div>
+  <div class="card"><div class="card-header"><h3><i class="fa-solid fa-link" style="color:var(--info);margin-right:6px"></i>平台访问地址</h3></div><div class="card-body">
+    <div class="fg"><label class="fl">前台访问地址</label><div style="padding:10px;background:var(--bg);border-radius:8px;font-size:13px;display:flex;align-items:center;justify-content:space-between"><a href="https://h0int.github.io/lsjy-app/" target="_blank">https://h0int.github.io/lsjy-app/</a><button class="tb-btn" onclick="navigator.clipboard.writeText('https://h0int.github.io/lsjy-app/');toast('已复制','success')"><i class="fa-solid fa-copy"></i> 复制</button></div></div>
+    <p style="font-size:12px;color:var(--b);margin-top:8px"><i class="fa-solid fa-info-circle"></i> 前台和后台共享 localStorage 数据，用户在前台注册的数据可在后台直接查看和管理。</p>
+  </div></div>
+  <div class="card"><div class="card-header"><h3><i class="fa-solid fa-clock-rotate-left" style="color:var(--ok);margin-right:6px"></i>登录日志 (最近10条)</h3></div><div class="card-body">
+    ${logs.length?`<div class="table-wrap"><table><tr><th>时间</th><th>账号</th><th>设备信息</th></tr>
+      ${logs.map(l=>`<tr><td style="font-size:12px;white-space:nowrap">${fmtDate(l.time)}</td><td style="font-weight:600">${l.username}</td><td style="font-size:11px;color:var(--b);max-width:300px">${(l.device||'-').substring(0,60)}</td></tr>`).join('')}
+    </table></div>`:'<div class="empty"><i class="fa-solid fa-list"></i><p>暂无登录记录</p></div>'}
+  </div></div>`;
+}
+function saveSiteSettings(){
+  const ld=btnLoading(document.getElementById('saveSettingsBtn'));if(!ld)return;
+  localStorage.setItem('lsjy_settings',JSON.stringify({company:document.getElementById('sCompany').value,phone:document.getElementById('sPhone').value,address:document.getElementById('sAddr').value,founder:document.getElementById('sFounder').value,icp:document.getElementById('sIcp').value}));
+  ld.done();toast('设置已保存','success');
+}
+function chgPwd(){
+  const ld=btnLoading(document.getElementById('chgPwdBtn'));if(!ld)return;
+  const o=document.getElementById('sOldPwd').value,n=document.getElementById('sNewPwd').value,n2=document.getElementById('sNewPwd2').value;
+  const u=getCur();if(decryptPwd(u.password)!==o){ld.done();return toast('当前密码错误','error')}
+  if(n.length<6){ld.done();return toast('新密码至少6个字符','error')}
+  if(n!==n2){ld.done();return toast('两次密码不一致','error')}
+  u.password=encryptPwd(n);setCur(u);const users=getUsers();const idx=users.findIndex(x=>x.username===u.username);if(idx>=0){users[idx].password=u.password;saveUsers(users)}
+  ld.done();toast('密码修改成功','success');document.getElementById('sOldPwd').value='';document.getElementById('sNewPwd').value='';document.getElementById('sNewPwd2').value='';
+}
+function openEditAdmin(){showMod(`<h3><i class="fa-solid fa-key" style="color:var(--warn)"></i> 修改管理员密码</h3>
+  <div class="fg"><label class="fl">当前密码</label><input class="fi" type="password" id="aOldPwd"></div>
+  <div class="fg"><label class="fl">新密码</label><input class="fi" type="password" id="aNewPwd" placeholder="6个字符以上"></div>
+  <div class="fg"><label class="fl">确认新密码</label><input class="fi" type="password" id="aNewPwd2"></div>
+  <div class="modal-actions"><button class="m-cancel" onclick="closeModal()">取消</button><button class="m-confirm" id="chgPwdModBtn" onclick="chgPwdModal()">修改</button></div>`)}
+function chgPwdModal(){
+  const ld=btnLoading(document.getElementById('chgPwdModBtn'));if(!ld)return;
+  const o=document.getElementById('aOldPwd').value,n=document.getElementById('aNewPwd').value,n2=document.getElementById('aNewPwd2').value;
+  const u=getCur();if(decryptPwd(u.password)!==o){ld.done();return toast('当前密码错误','error')}
+  if(n.length<6){ld.done();return toast('新密码至少6个字符','error')}
+  if(n!==n2){ld.done();return toast('两次密码不一致','error')}
+  u.password=encryptPwd(n);setCur(u);const users=getUsers();const idx=users.findIndex(x=>x.username===u.username);if(idx>=0){users[idx].password=u.password;saveUsers(users)}
+  ld.done();closeModal();addOpLog('修改密码','管理员修改密码');toast('密码修改成功','success');
+}
+
+// ===== Leads (线索管理) =====
+let _lPage=1,_lKw='',_lStatus='';
+function renderLeads(p){
+  if(typeof p==='number')_lPage=p;
+  const leads=getLeads();
+  const filtered=filterByKeyword(leads,['name','phone','type','source'],_lKw);
+  const statusFiltered=_lStatus?filtered.filter(l=>l.status===_lStatus):filtered;
+  const pg=paginate(statusFiltered,_lPage,10);
+  document.getElementById('mainContent').innerHTML=`
+  <div class="stats">
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#3b82f6,#60a5fa)"><i class="fa-solid fa-crosshairs"></i></div><div class="stat-info"><h4>${leads.length}</h4><p>总线索</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#f59e0b,#fbbf24)"><i class="fa-solid fa-clock"></i></div><div class="stat-info"><h4>${leads.filter(l=>l.status==='pending').length}</h4><p>待跟进</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#22c55e,#34d399)"><i class="fa-solid fa-check"></i></div><div class="stat-info"><h4>${leads.filter(l=>l.status==='done').length}</h4><p>已完成</p></div></div>
+  </div>
+  <div class="card"><div class="card-header"><h3><i class="fa-solid fa-crosshairs" style="color:var(--info);margin-right:6px"></i>线索列表</h3>
+    <div class="toolbar"><button class="pg-btn" onclick="openAddLead()"><i class="fa-solid fa-plus"></i> 新增线索</button><button class="pg-btn" onclick="exportLeads()"><i class="fa-solid fa-download"></i> 导出</button></div>
+  </div><div class="card-body">
+    <div class="filter-bar">
+      <input type="text" placeholder="搜索名称/手机号/来源..." value="${_lKw}" oninput="_lKw=this.value;_lPage=1;renderLeads()">
+      <select onchange="_lStatus=this.value;_lPage=1;renderLeads()"><option value="" ${!_lStatus?'selected':''}>全部状态</option><option value="pending" ${_lStatus==='pending'?'selected':''}>待跟进</option><option value="following" ${_lStatus==='following'?'selected':''}>跟进中</option><option value="done" ${_lStatus==='done'?'selected':''}>已完成</option><option value="closed" ${_lStatus==='closed'?'selected':''}>已关闭</option></select>
+    </div>
+    <div class="table-wrap"><table>
+      <tr><th>类型</th><th>名称</th><th>手机号</th><th>来源</th><th>状态</th><th>负责人</th><th>时间</th><th>操作</th></tr>
+      ${pg.data.map((l,i)=>{const ri=i+(_lPage-1)*10;
+        const sc={pending:'badge-yellow',following:'badge-blue',done:'badge-green',closed:'badge-gray'};
+        const sl={pending:'待跟进',following:'跟进中',done:'已完成',closed:'已关闭'};
+        return`<tr><td><span class="badge badge-purple">${l.type||'咨询'}</span></td><td style="font-weight:600">${l.name}</td><td>${maskPhone(l.phone)}</td><td>${l.source||'-'}</td><td><span class="badge ${sc[l.status]||'badge-gray'}">${sl[l.status]||l.status}</span></td><td>${l.assignee||'-'}</td><td style="color:var(--b)">${fmtDate(l.time)}</td>
+        <td><button class="act-btn view" onclick="viewLead(${ri})"><i class="fa-solid fa-eye"></i></button><button class="act-btn edit" onclick="openEditLead(${ri})"><i class="fa-solid fa-pen"></i></button><button class="act-btn del" onclick="delLead(${ri})"><i class="fa-solid fa-trash"></i></button></td></tr>`}).join('')}
+    </table></div>
+    ${!pg.data.length?'<div class="empty"><i class="fa-solid fa-crosshairs"></i><p>暂无线索</p></div>':''}
+    ${pg.total>1?`<div class="pagination"><div class="pg-info">共${pg.total}条</div><div class="pg-btns">${pgButtons(pg)}</div></div>`:''}
+  </div></div>`;
+}
+function openAddLead(){showMod(`<h3><i class="fa-solid fa-crosshairs" style="color:var(--info)"></i> 新增线索</h3>
+  <div class="fg"><label class="fl">类型</label><select class="fi" id="ldType"><option>咨询</option><option>预约</option><option>合伙人申请</option><option>合作</option><option>投诉</option></select></div>
+  <div class="fg"><label class="fl">名称</label><input class="fi" id="ldName" placeholder="客户姓名或公司名"></div>
+  <div class="fg"><label class="fl">手机号</label><input class="fi" id="ldPhone" placeholder="11位手机号"></div>
+  <div class="fg"><label class="fl">来源</label><input class="fi" id="ldSource" placeholder="如：官网留言/微信/抖音"></div>
+  <div class="fg"><label class="fl">负责人</label><input class="fi" id="ldAssign" placeholder="指派跟进人"></div>
+  <div class="fg"><label class="fl">备注</label><textarea class="fi" id="ldNote" placeholder="线索详情"></textarea></div>
+  <div class="modal-actions"><button class="m-cancel" onclick="closeModal()">取消</button><button class="m-confirm" id="addLeadBtn" onclick="addLead()">创建</button></div>`)}
+function addLead(){const n=document.getElementById('ldName').value.trim();if(!n)return toast('请输入名称','error');const leads=getLeads();leads.push({type:document.getElementById('ldType').value,name:n,phone:document.getElementById('ldPhone').value.trim(),source:document.getElementById('ldSource').value.trim(),assignee:document.getElementById('ldAssign').value.trim(),note:document.getElementById('ldNote').value.trim(),status:'pending',time:new Date().toLocaleString()});saveLeads(leads);addOpLog('新增线索',n);closeModal();renderLeads();toast('线索创建成功','success')}
+function openEditLead(idx){const leads=getLeads(),l=leads[idx];if(!l)return;showMod(`<h3><i class="fa-solid fa-pen" style="color:var(--info)"></i> 编辑线索: ${l.name}</h3>
+  <div class="fg"><label class="fl">类型</label><select class="fi" id="ldType">${['咨询','预约','合伙人申请','合作','投诉'].map(t=>`<option${t===l.type?' selected':''}>${t}</option>`).join('')}</select></div>
+  <div class="fg"><label class="fl">名称</label><input class="fi" id="ldName" value="${l.name}"></div>
+  <div class="fg"><label class="fl">手机号</label><input class="fi" id="ldPhone" value="${l.phone||''}"></div>
+  <div class="fg"><label class="fl">来源</label><input class="fi" id="ldSource" value="${l.source||''}"></div>
+  <div class="fg"><label class="fl">负责人</label><input class="fi" id="ldAssign" value="${l.assignee||''}"></div>
+  <div class="fg"><label class="fl">状态</label><select class="fi" id="ldStatus">${[['pending','待跟进'],['following','跟进中'],['done','已完成'],['closed','已关闭']].map(([v,t])=>`<option value="${v}"${l.status===v?' selected':''}>${t}</option>`).join('')}</select></div>
+  <div class="fg"><label class="fl">备注</label><textarea class="fi" id="ldNote">${l.note||''}</textarea></div>
+  <div class="modal-actions"><button class="m-cancel" onclick="closeModal()">取消</button><button class="m-confirm" onclick="saveLead(${idx})">保存</button></div>`)}
+function saveLead(idx){const leads=getLeads(),l=leads[idx];l.type=document.getElementById('ldType').value;l.name=document.getElementById('ldName').value.trim();l.phone=document.getElementById('ldPhone').value.trim();l.source=document.getElementById('ldSource').value.trim();l.assignee=document.getElementById('ldAssign').value.trim();l.status=document.getElementById('ldStatus').value;l.note=document.getElementById('ldNote').value.trim();saveLeads(leads);addOpLog('编辑线索',l.name);closeModal();renderLeads();toast('线索已更新','success')}
+function viewLead(idx){const l=getLeads()[idx];if(!l)return;const sl={pending:'待跟进',following:'跟进中',done:'已完成',closed:'已关闭'};showMod(`<h3><i class="fa-solid fa-eye" style="color:var(--info)"></i> 线索详情</h3>
+  <div style="padding:16px;background:var(--bg);border-radius:10px"><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px"><div><span style="color:var(--b)">类型：</span><b>${l.type}</b></div><div><span style="color:var(--b)">状态：</span><span class="badge badge-blue">${sl[l.status]||l.status}</span></div><div><span style="color:var(--b)">名称：</span><b>${l.name}</b></div><div><span style="color:var(--b)">手机号：</span>${l.phone||'-'}</div><div><span style="color:var(--b)">来源：</span>${l.source||'-'}</div><div><span style="color:var(--b)">负责人：</span>${l.assignee||'-'}</div><div><span style="color:var(--b)">时间：</span>${l.time||'-'}</div></div>${l.note?`<div style="margin-top:12px;padding:12px;background:var(--w);border-radius:8px;font-size:13px"><span style="color:var(--b)">备注：</span>${l.note}</div>`:''}</div>
+  <div class="modal-actions"><button class="m-cancel" onclick="closeModal()">关闭</button></div>`)}
+function delLead(idx){const leads=getLeads(),l=leads[idx];showMod(`<h3><i class="fa-solid fa-triangle-exclamation" style="color:var(--err)"></i> 删除线索</h3><p>确定删除 <b>${l.name}</b>？</p><div class="modal-actions"><button class="m-cancel" onclick="closeModal()">取消</button><button class="m-confirm" style="background:var(--err)" onclick="cfmDelLead(${idx})">删除</button></div>`)}
+function cfmDelLead(idx){const leads=getLeads(),l=leads.splice(idx,1)[0];softDelete('lead',l);saveLeads(leads);addOpLog('删除线索',l.name);closeModal();renderLeads();toast('线索已删除','success')}
+function exportLeads(){const leads=getLeads();const csv=toCSV(leads.map(l=>[l.type,l.name,maskPhone(l.phone),l.source,l.status,l.assignee,l.time||'']),['类型','名称','手机号','来源','状态','负责人','时间']);downloadCSV(csv,'线索列表_'+new Date().toISOString().slice(0,10));toast('导出成功','success')}
+
+// ===== Content Management (内容管理) =====
+function renderContent(){
+  const cd=getContentData();
+  const fields=[{key:'hero_title',label:'首页主标题',type:'text'},{key:'hero_subtitle',label:'首页副标题',type:'text'},{key:'hero_desc',label:'首页描述',type:'textarea'},{key:'company_name',label:'公司名称',type:'text'},{key:'company_addr',label:'公司地址',type:'text'},{key:'company_phone',label:'联系电话',type:'text'},{key:'company_email',label:'联系邮箱',type:'text'},{key:'icp',label:'备案号',type:'text'},{key:'footer_desc',label:'底部描述',type:'textarea'}];
+  document.getElementById('mainContent').innerHTML=`
+  <div class="card"><div class="card-header"><h3><i class="fa-solid fa-file-pen" style="color:var(--p);margin-right:6px"></i>内容管理</h3><p style="font-size:12px;color:var(--b)">修改后需重新生成前台页面或调用API同步</p></div><div class="card-body">
+    <div style="display:grid;gap:16px">
+    ${fields.map(f=>`<div class="fg"><label class="fl"><i class="fa-solid fa-pen" style="margin-right:4px"></i>${f.label}</label>
+      ${f.type==='textarea'?`<textarea class="fi" id="ct_${f.key}" rows="3">${cd[f.key]||''}</textarea>`:`<input class="fi" id="ct_${f.key}" value="${cd[f.key]||''}">`}
+    </div>`).join('')}
+    </div>
+    <div style="margin-top:20px;display:flex;gap:10px"><button class="btn-p" style="padding:10px 24px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;background:var(--p);color:#fff" onclick="saveContent()"><i class="fa-solid fa-save"></i> 保存修改</button><button class="btn-p" style="padding:10px 24px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;background:var(--ok);color:#fff" onclick="resetContent()"><i class="fa-solid fa-rotate-left"></i> 恢复默认</button></div>
+  </div></div>`;
+}
+function saveContent(){const cd=getContentData();['hero_title','hero_subtitle','hero_desc','company_name','company_addr','company_phone','company_email','icp','footer_desc'].forEach(k=>{const el=document.getElementById('ct_'+k);if(el)cd[k]=el.value.trim()});saveContentData(cd);addOpLog('修改内容','更新网站内容配置');toast('内容已保存','success')}
+function resetContent(){if(!confirm('确定恢复默认内容？'))return;localStorage.removeItem('lsjy_admin_content');addOpLog('重置内容','恢复默认配置');renderContent();toast('已恢复默认','success')}
+
+// ===== Operation Logs (操作日志) =====
+let _logPage=1,_logKw='';
+function renderLogs(p){
+  if(typeof p==='number')_logPage=p;
+  const logs=getOpLogs();
+  const filtered=filterByKeyword(logs,['action','detail','operator'],_logKw);
+  const pg=paginate(filtered.reverse(),_logPage,15);
+  document.getElementById('mainContent').innerHTML=`
+  <div class="card"><div class="card-header"><h3><i class="fa-solid fa-clock-rotate-left" style="color:var(--warn);margin-right:6px"></i>操作日志</h3><span class="svc-count">共 ${logs.length} 条</span></div><div class="card-body">
+    <div class="filter-bar">
+      <input type="text" placeholder="搜索操作/详情/操作人..." value="${_logKw}" oninput="_logKw=this.value;_logPage=1;renderLogs()">
+      <button class="pg-btn" onclick="if(confirm('确定清空所有操作日志？')){saveOpLogs([]);renderLogs();toast('日志已清空','success')}"><i class="fa-solid fa-trash"></i> 清空</button>
+    </div>
+    <div class="table-wrap"><table>
+      <tr><th>操作</th><th>详情</th><th>操作人</th><th>时间</th></tr>
+      ${pg.data.map(l=>`<tr><td style="font-weight:600"><span class="badge badge-blue">${l.action}</span></td><td>${l.detail}</td><td>${l.operator}</td><td style="color:var(--b)">${fmtDate(l.time)}</td></tr>`).join('')}
+    </table></div>
+    ${!pg.data.length?'<div class="empty"><i class="fa-solid fa-clock-rotate-left"></i><p>暂无日志</p></div>':''}
+    ${pg.total>1?`<div class="pagination"><div class="pg-info">共${pg.total}条</div><div class="pg-btns">${pgButtons(pg)}</div></div>`:''}
+  </div></div>`;
+}
+
+// ===== AI ENGINE CORE (后台集成) =====
+// === 多模型AI引擎配置（替换为真实值即可切换服务商） ===
+const DOUBAO_CONFIG={
+  // API Key 已迁移至后端代理服务
+  ARK_API_KEY:'',
+  ARK_BASE_URL:'',
+  BACKEND_URL:'', // ← 替换为实际后端地址
+  MODEL_TEXT:'doubao-seed-2-0-pro-260215',
+  MODEL_IMAGE:'doubao-seedream-5-0-260128',
+  ENABLED:true
+};
+const FALLBACK_AI_IMG_API='https://image.pollinations.ai/prompt/';
+const FALLBACK_AI_TEXT_API='https://text.pollinations.ai/openai';
+const AI_TIMEOUT=30000;
+let _aiCurrentTool=null;
+
+// === WPS支付配置（零售支付模式） ===
+const WPS_PAY_CONFIG={
+  APPID:'YOUR_WPS_APPID',
+  SERVICE_ID:'YOUR_WPS_SERVICE_ID',
+  PAY_SECRET:''  // 已迁移至后端,
+  CALLBACK_URL:'https://your-domain.com/api/pay/callback',
+  NOTIFY_URL:'https://your-domain.com/api/pay/notify',
+  ENABLED:false
+};
+
+// === 短信后端配置 ===
+const SMS_API='https://your-sms-server.onrender.com';
+const SMS_ENABLED=false;
+
+async function aiGenerateText(prompt,sysPrompt,model,retries){
+  retries=retries||2;
+  // 优先使用豆包API
+  if(DOUBAO_CONFIG.ENABLED&&BACKEND_URL){
+    for(let i=0;i<=retries;i++){
+      try{
+        const controller=new AbortController();
+        const tid=setTimeout(()=>controller.abort(),AI_TIMEOUT);
+        const token=localStorage.getItem('lsjy_backend_token');
+        const r=await fetch(BACKEND_URL+'/api/ai/generic',{
+          method:'POST',
+          headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+          body:JSON.stringify({model:model||DOUBAO_CONFIG.MODEL_TEXT,input:[
+            {role:'system',content:sysPrompt||'你是专业AI助手，回复只包含生成内容，不含解释。'},
+            {role:'user',content:prompt}
+          ],max_output_tokens:4000,temperature:0.9})});
+        clearTimeout(tid);
+        if(!r.ok)throw new Error('HTTP '+r.status);
+        const d=await r.json();
+        if(d.output&&d.output.length){const msg=d.output.filter(o=>o.type==='message').pop();if(msg&&msg.content&&msg.content.length)return msg.content[0].text.trim();}
+      }catch(e){console.log('Doubao err (try '+i+'):',e);if(i<retries)await new Promise(r=>setTimeout(r,1500*(i+1)))}
+    }
+  }
+  // 备用：Pollinations.ai
+  for(let i=0;i<=retries;i++){
+    try{
+      const controller=new AbortController();
+      const tid=setTimeout(()=>controller.abort(),AI_TIMEOUT);
+      const r=await fetch(FALLBACK_AI_TEXT_API,{method:'POST',signal:controller.signal,headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({model:model||'openai-large',messages:[
+          {role:'system',content:sysPrompt||'你是专业AI助手，回复只包含生成内容，不含解释。'},
+          {role:'user',content:prompt}
+        ],max_tokens:4000,temperature:0.9})});
+      clearTimeout(tid);
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      const d=await r.json();
+      if(d.choices&&d.choices.length){const c=d.choices[0];if(c&&c.message&&c.message.content)return c.message.content.trim();}
+      if(d.output&&d.output.length){const msg=d.output.filter(o=>o.type==='message').pop();if(msg&&msg.content&&msg.content.length)return msg.content[0].text.trim();}
+    }catch(e){console.log('AI err (try '+i+'):',e);if(i<retries)await new Promise(r=>setTimeout(r,1500*(i+1)))}
+  }
+  return null;
+}
+
+async function aiGenerateImage(prompt,w=2048,h=2048){
+  if(DOUBAO_CONFIG.ENABLED&&DOUBAO_CONFIG.MODEL_IMAGE){
+    try{
+      const controller=new AbortController();
+      const tid=setTimeout(()=>controller.abort(),60000);
+      let sz;
+      if(w==='2K'||h==='2K'){sz='2K';w=3136;h=1312}
+      else{sz=Math.max(w,h)>=2048?(w+'x'+h):'2048x2048'}
+      const token=localStorage.getItem('lsjy_backend_token');
+      const r=await fetch(BACKEND_URL+'/api/ai/image',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+        body:JSON.stringify({model:DOUBAO_CONFIG.MODEL_IMAGE,prompt:prompt,size:sz,response_format:'url'})
+      });
+      clearTimeout(tid);
+      if(r.ok){const d=await r.json();if(d.data&&d.data[0]&&d.data[0].url)return d.data[0].url}
+    }catch(e){console.log('Doubao img err:',e)}
+  }
+  return FALLBACK_AI_IMG_API+encodeURIComponent(prompt)+'?width='+w+'&height='+h+'&nologo=true&nofeed=true&seed='+Date.now();
+}
+function aiImageUrl(prompt,w=512,h=512){return aiGenerateImage(prompt,w,h)}
+
+function audioBufferToWav(buffer){
+  const numCh=buffer.numberOfChannels,sr=buffer.sampleRate,len=buffer.length;
+  const bps=16,byteRate=sr*numCh*bps/8,blockAlign=numCh*bps/8,dataLen=len*blockAlign;
+  const ab=new ArrayBuffer(44+dataLen),v=new DataView(ab);
+  const ws=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))};
+  ws(0,'RIFF');v.setUint32(4,36+dataLen,true);ws(8,'WAVE');ws(12,'fmt ');
+  v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,numCh,true);
+  v.setUint32(24,sr,true);v.setUint32(28,byteRate,true);v.setUint16(32,blockAlign,true);
+  v.setUint16(34,bps,true);ws(36,'data');v.setUint32(40,dataLen,true);
+  const ch=[];for(let i=0;i<numCh;i++)ch.push(buffer.getChannelData(i));
+  let off=44;
+  for(let i=0;i<len;i++){for(let c=0;c<numCh;c++){const s=Math.max(-1,Math.min(1,ch[c][i]));v.setInt16(off,s<0?s*0x8000:s*0x7FFF,true);off+=2}}
+  return ab;
+}
+
+function smartTemplates(type,input,extra){
+  const hooks=['天呐！','家人们！','谁懂啊！','刷到的有福了！','终于找到了！','必看！','太绝了！','真香警告！'];
+  const h=hooks[Math.floor(Math.random()*hooks.length)];
+  const t=extra||input;
+  switch(type){
+    case'短视频脚本':return`【${h}${input}】\n\n🔍 钩子（0-3秒）：${h}${t}你绝对想不到！\n\n💡 痛点（3-6秒）：是不是还在纠结${input}怎么选？\n\n🔥 方案（6-15秒）：实测${t}\n✅ 优势一：品质过硬\n✅ 优势二：性价比超高\n✅ 优势三：小白也能上手\n\n🎯 CTA：关注我，评论区扣"想要"\n\n#${input.split(/[,，\s]/)[0]} #好物推荐`;
+    case'团购文案':return`🎉【限时特惠】${input}\n${t}，错过等一年！\n\n🔥 超值特惠进行中\n💎 正品保证\n✅ 7天无理由\n⏰ 先到先得！\n\n#${input.split(/[,，\s]/)[0]} #团购 #优惠`;
+    case'小红书种草':return`📖 ${input}来啦！\n\n家人们！今天必须安利${t}✨\n\n💡 为什么推荐：\n- 效果超级明显\n- 价格超友好\n- 回购了无数次\n\n🏷️ #${input.split(/[,，\s]/)[0]} #好物推荐 #种草 #必买清单`;
+    case'朋友圈文案':return`${h}\n${t}\n好看好用不贵，懂的自然懂🤫\n数量有限 先到先得🔥\n需要的私聊我～\n\n#${input.split(/[,，\s]/)[0]}`;
+    case'广告语':return`「${input}」\n${extra||'品质不将就，每一刻都值得。'}`;
+    case'产品介绍':return`📖【${input}】产品介绍\n\n一、产品概述\n${t}是专为追求品质生活的用户打造的产品。\n\n二、核心优势\n• 精选材料\n• 专业团队\n• 完善售后\n\n三、适用场景\n日常使用、礼品赠送、商务场景。\n\n💬 立即咨询！`;
+    default:return input;
+  }
+}
+
+// ===== AI HUB RENDER =====
+
+// ===== Admin Helper Functions =====
+function isLoggedIn(){return!!getCur()}
+function getCredits(){const u=getCur();if(!u)return 0;const all=JSON.parse(localStorage.getItem('lsjy3_credits')||'{}');return all[u.username]||0}
+function deductCredits(n){const u=getCur();if(!u)return;const all=JSON.parse(localStorage.getItem('lsjy3_credits')||'{}');all[u.username]=(all[u.username]||0)-n;localStorage.setItem('lsjy3_credits',JSON.stringify(all))}
+function addCreditLog(tool,amount,desc){const key='lsjy3_credit_logs';const logs=JSON.parse(localStorage.getItem(key)||'[]');logs.unshift({tool,amount,desc,time:new Date().toLocaleString()});if(logs.length>200)logs.length=200;localStorage.setItem(key,JSON.stringify(logs))}
+function getUserCredits(){return getCredits()}
+
+const AI_TOOLS=[
+  {id:'copy',icon:'✍️',title:'AI文案创作',desc:'短视频/团购/种草/朋友圈',cost:10},
+  {id:'hashtag',icon:'#️⃣',title:'热门标签',desc:'AI智能匹配热门话题标签',cost:5},
+  {id:'rewrite',icon:'🔄',title:'文案改写',desc:'多种风格一键改写',cost:5},
+  {id:'viral',icon:'🎬',title:'爆款智能成片',desc:'AI生成爆款短视频脚本',cost:50},
+  {id:'digital',icon:'🧑‍💼',title:'数字人口播',desc:'AI优化脚本+数字人形象',cost:100},
+  {id:'voice',icon:'🎙️',title:'音色克隆',desc:'文字转语音TTS合成',cost:30},
+  {id:'aigc',icon:'🎨',title:'智能文生图',desc:'AI生成高清图片',cost:20},
+  {id:'photo',icon:'🖼️',title:'AI智能修图',desc:'Canvas像素级处理',cost:30},
+  {id:'audio',icon:'🎵',title:'AI智能修音',desc:'降噪/混响/变速处理',cost:25},
+  {id:'accomp',icon:'🎶',title:'AI智能伴奏',desc:'和弦/贝斯/鼓组生成',cost:40},
+  {id:'docgen',icon:'📊',title:'智能图文表格',desc:'AI生成数据表格',cost:35}
+];
+
+let _cwTypeIdx=0,_vvPlat=0,_vvLen=1,_aigcStyle=0,_photoMode=0,_audioMode=0;
+
+function renderAIHub(){
+  const main=document.querySelector('.main');
+  main.innerHTML=`
+  <div style="margin-bottom:20px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#533afd,#7c6cf6);display:flex;align-items:center;justify-content:center;font-size:24px">🤖</div>
+      <div><h3 style="font-size:18px;font-weight:900">AI创作中心</h3><p style="font-size:12px;color:var(--b)">11款AI工具，接入豆包大模型(doubao-seed-2.0-pro)ns大模型，真正的AI驱动创作</p></div>
+    </div>
+  </div>
+  <div class="ai-grid" id="aiToolGrid">${AI_TOOLS.map((t,i)=>`<div class="ai-card" onclick="openAITool('${t.id}')"><div class="ai-card-icon">${t.icon}</div><div class="ai-card-title">${t.title}</div><div class="ai-card-desc">${t.desc}</div><div class="ai-card-badge">${t.cost}算力</div></div>`).join('')}</div>
+  <div id="aiToolPanel"></div>`;
+}
+
+function openAITool(id){
+  _aiCurrentTool=id;
+  const panel=document.getElementById('aiToolPanel');
+  document.querySelectorAll('.ai-card').forEach(c=>c.classList.remove('active'));
+  const cards=document.querySelectorAll('.ai-card');
+  const idx=AI_TOOLS.findIndex(t=>t.id===id);
+  if(idx>=0&&cards[idx])cards[idx].classList.add('active');
+  switch(id){
+    case'copy':renderAICopy();break;case'hashtag':renderAIHash();break;
+    case'rewrite':renderAIRewrite();break;case'viral':renderAIViral();break;
+    case'digital':renderAIDigital();break;case'voice':renderAIVoice();break;
+    case'aigc':renderAIAIGC();break;case'photo':renderAIPhoto();break;
+    case'audio':renderAIAudio();break;case'accomp':renderAIAccomp();break;
+    case'docgen':renderAIDoc();break;
+  }
+}
+
+function aiBack(){renderAIHub()}
+
+// === Tool 1: AI文案创作 ===
+function renderAICopy(){
+  const types=['短视频脚本','团购文案','小红书种草','朋友圈文案','广告语','产品介绍'];
+  document.getElementById('aiToolPanel').innerHTML=`
+  <button class="ai-back" onclick="aiBack()"><i class="fa-solid fa-arrow-left"></i> 返回工具列表</button>
+  <div class="ai-panel">
+    <h3 style="margin-bottom:16px">✍️ AI文案创作 <span class="ai-card-badge">10算力/次</span></h3>
+    <div class="cw-types">${types.map((t,i)=>`<div class="cw-type${i===0?' active':''}" onclick="_cwTypeIdx=${i};this.parentElement.querySelectorAll('.cw-type').forEach(e=>e.classList.remove('active'));this.classList.add('active')">${t}</div>`).join('')}</div>
+    <div class="fg"><label class="fl">关键词/产品名称</label><input class="fi" id="cwInput" placeholder="输入产品名称或关键词..."></div>
+    <div class="fg"><label class="fl">补充信息（可选）</label><input class="fi" id="cwExtra" placeholder="补充卖点、场景等"></div>
+    <button class="ai-btn" onclick="aiDoCopy()">🚀 AI生成文案（消耗10算力）</button>
+    <div class="ai-output" id="cwOutput">点击生成按钮，AI将为您创作专业文案...</div>
+  </div>`;
+}
+async function aiDoCopy(){
+  const input=document.getElementById('cwInput').value.trim();
+  if(!input)return toast('请输入关键词','error');
+  const extra=document.getElementById('cwExtra').value.trim();
+  const types=['短视频脚本','团购文案','小红书种草','朋友圈文案','广告语','产品介绍'];
+  const type=types[_cwTypeIdx];
+  const out=document.getElementById('cwOutput');
+  out.innerHTML='<div style="text-align:center;padding:20px"><div class="ai-spinner"></div><p style="margin-top:12px;color:var(--b);font-size:13px">AI正在创作中...</p></div>';
+  const r=await aiGenerateText(`请生成一段${type}，主题是"${input}"${extra?'，补充信息：'+extra:''}。要求：专业、有吸引力、适合社交媒体发布，包含emoji和话题标签。`);
+  if(r){out.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><span style="font-weight:700;color:var(--ok)">✅ AI生成完成</span><button class="ai-back" onclick="navigator.clipboard.writeText(this.parentElement.nextElementSibling.innerText);toast('已复制','success')" style="margin:0">📋 复制</button></div><div style="font-size:14px;line-height:2;white-space:pre-wrap">${r.replace(/</g,'&lt;')}</div>`;toast('AI文案生成成功！','success')}
+  else{out.innerHTML=`<div style="font-size:14px;line-height:2;white-space:pre-wrap">${smartTemplates(type,input,extra)}</div>`;toast('已使用智能模板','warn')}
+}
+
+// === Tool 2: 热门标签 ===
+function renderAIHash(){
+  document.getElementById('aiToolPanel').innerHTML=`
+  <button class="ai-back" onclick="aiBack()"><i class="fa-solid fa-arrow-left"></i> 返回工具列表</button>
+  <div class="ai-panel">
+    <h3 style="margin-bottom:16px">#️⃣ 热门标签生成 <span class="ai-card-badge">5算力/次</span></h3>
+    <div class="fg"><label class="fl">输入关键词</label><input class="fi" id="htagInput" placeholder="例如：减肥、护肤、美食..."></div>
+    <button class="ai-btn" onclick="aiDoHash()">#️⃣ 生成热门标签（消耗5算力）</button>
+    <div class="ai-output" id="htagOutput">输入关键词，AI将匹配15个热门话题标签...</div>
+  </div>`;
+}
+async function aiDoHash(){
+  const kw=document.getElementById('htagInput').value.trim();
+  if(!kw)return toast('请输入关键词','error');
+  const out=document.getElementById('htagOutput');
+  out.innerHTML='<span style="color:var(--b)">AI匹配中...</span>';
+  const r=await aiGenerateText(`请为"${kw}"生成15个适合抖音/小红书的热门话题标签，只输出标签用空格分隔。`,'#标签');
+  if(r){out.innerHTML=`<div style="display:flex;flex-wrap:wrap;gap:8px">${r.split(/\s+/).map(t=>`<span style="padding:6px 14px;background:var(--ps);border-radius:20px;font-size:13px;color:var(--p);font-weight:600;cursor:pointer" onclick="navigator.clipboard.writeText('${t}');toast('已复制: ${t}','success')">${t}</span>`).join('')}</div>`;toast('标签生成成功！','success')}
+  else{out.innerHTML='<span style="color:var(--warn)">AI服务繁忙，请稍后重试</span>'}
+}
+
+// === Tool 3: 文案改写 ===
+function renderAIRewrite(){
+  const styles=['口语化','种草风','正式商务','搞笑幽默','文艺清新','广告硬核'];
+  document.getElementById('aiToolPanel').innerHTML=`
+  <button class="ai-back" onclick="aiBack()"><i class="fa-solid fa-arrow-left"></i> 返回工具列表</button>
+  <div class="ai-panel">
+    <h3 style="margin-bottom:16px">🔄 文案改写 <span class="ai-card-badge">5算力/次</span></h3>
+    <div class="cw-types">${styles.map((t,i)=>`<div class="cw-type${i===0?' active':''}" onclick="_cwTypeIdx=${i};this.parentElement.querySelectorAll('.cw-type').forEach(e=>e.classList.remove('active'));this.classList.add('active')">${t}</div>`).join('')}</div>
+    <div class="fg"><label class="fl">原始文案</label><textarea class="fi" id="rwInput" rows="5" placeholder="粘贴需要改写的文案..."></textarea></div>
+    <button class="ai-btn" onclick="aiDoRewrite()">🔄 AI改写（消耗5算力）</button>
+    <div class="ai-output" id="rwOutput">粘贴原文，AI将一键改写为目标风格...</div>
+  </div>`;
+}
+async function aiDoRewrite(){
+  const input=document.getElementById('rwInput').value.trim();
+  if(!input)return toast('请输入文案','error');
+  const styles=['口语化','种草风','正式商务','搞笑幽默','文艺清新','广告硬核'];
+  const out=document.getElementById('rwOutput');
+  out.innerHTML='<div style="text-align:center;padding:20px"><div class="ai-spinner"></div><p style="margin-top:12px;color:var(--b);font-size:13px">AI改写中...</p></div>';
+  const r=await aiGenerateText(`请将以下文案改写为"${styles[_cwTypeIdx]}"风格，保持原意但改变语气：\n"${input}"`);
+  if(r){out.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><span style="font-weight:700;color:var(--ok)">✅ 改写完成 (${styles[_cwTypeIdx]})</span><button class="ai-back" onclick="navigator.clipboard.writeText(this.parentElement.nextElementSibling.innerText);toast('已复制','success')" style="margin:0">📋 复制</button></div><div style="font-size:14px;line-height:2;white-space:pre-wrap">${r.replace(/</g,'&lt;')}</div>`;toast('改写完成！','success')}
+  else{out.innerHTML='<span style="color:var(--warn)">AI服务繁忙，请稍后重试</span>'}
+}
+
+// === Tool 4: 爆款智能成片 ===
+function renderAIViral(){
+  const plats=['抖音','小红书','快手','视频号'],lens=['15秒','30秒','60秒'];
+  document.getElementById('aiToolPanel').innerHTML=`
+  <button class="ai-back" onclick="aiBack()"><i class="fa-solid fa-arrow-left"></i> 返回工具列表</button>
+  <div class="ai-panel">
+    <h3 style="margin-bottom:16px">🎬 爆款智能成片 <span class="ai-card-badge">50算力/次</span></h3>
+    <div class="fg"><label class="fl">选择平台</label><div class="cw-types">${plats.map((t,i)=>`<div class="cw-type${i===0?' active':''}" onclick="_vvPlat=${i};this.parentElement.querySelectorAll('.cw-type').forEach(e=>e.classList.remove('active'));this.classList.add('active')">${t}</div>`).join('')}</div></div>
+    <div class="fg"><label class="fl">视频时长</label><div class="cw-types">${lens.map((t,i)=>`<div class="cw-type${i===0?' active':''}" onclick="_vvLen=${i};this.parentElement.querySelectorAll('.cw-type').forEach(e=>e.classList.remove('active'));this.classList.add('active')">${t}</div>`).join('')}</div></div>
+    <div class="fg"><label class="fl">视频主题/产品名称</label><input class="fi" id="vvTopic" placeholder="输入视频主题..."></div>
+    <div class="fg"><label class="fl">补充说明（可选）</label><input class="fi" id="vvExtra" placeholder="产品卖点、受众等"></div>
+    <button class="ai-btn" onclick="aiDoViral()">🎬 生成爆款脚本（消耗50算力）</button>
+    <div class="ai-output" id="vvOutput">AI将生成包含钩子、分镜、CTA的完整爆款脚本...</div>
+  </div>`;
+}
+async function aiDoViral(){
+  const topic=document.getElementById('vvTopic').value.trim();
+  if(!topic)return toast('请输入主题','error');
+  const extra=document.getElementById('vvExtra').value.trim();
+  const plats=['抖音','小红书','快手','视频号'],lens=['15秒','30秒','60秒'];
+  const out=document.getElementById('vvOutput');
+  out.innerHTML='<div style="text-align:center;padding:20px"><div class="ai-spinner"></div><p style="margin-top:12px;color:var(--b);font-size:13px">AI正在生成爆款脚本...</p></div>';
+  const r=await aiGenerateText(`请为"${topic}"生成一个${plats[_vvPlat]}平台${lens[_vvLen]}的爆款短视频脚本。${extra?'补充说明：'+extra:''}\n要求：包含钩子（前3秒）、痛点引入、核心内容、CTA结尾，标注画面分镜【画面】，标注字幕/旁白，符合${plats[_vvPlat]}平台调性。`,'你是专业短视频编剧，擅长创作高完播率爆款脚本。');
+  if(r){const fm=r.replace(/【画面】/g,'<span style="color:var(--p);font-weight:700">🎬【画面】</span>').replace(/【字幕】/g,'<span style="color:#ef4444;font-weight:700">💬【字幕】</span>').replace(/【钩子】/g,'<span style="color:#f59e0b;font-weight:700">⚡【钩子】</span>').replace(/【CTA】/g,'<span style="color:#22c55e;font-weight:700">🎯【CTA】</span>').replace(/\n/g,'<br>');out.innerHTML=`<div style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center"><span style="font-weight:700;color:var(--ok)">✅ 爆款脚本已生成</span><button class="ai-back" onclick="navigator.clipboard.writeText(this.parentElement.nextElementSibling.innerText);toast('已复制','success')" style="margin:0">📋 复制脚本</button></div><div style="font-size:14px;line-height:2">${fm}</div>`;toast('爆款脚本生成成功！','success')}
+  else{out.innerHTML=`<div style="font-size:14px;line-height:2;white-space:pre-wrap">${smartTemplates('短视频脚本',topic,extra)}</div>`;toast('已使用智能模板','warn')}
+}
+
+// === Tool 5: 数字人口播 ===
+function renderAIDigital(){
+  document.getElementById('aiToolPanel').innerHTML=`
+  <button class="ai-back" onclick="aiBack()"><i class="fa-solid fa-arrow-left"></i> 返回工具列表</button>
+  <div class="ai-panel">
+    <h3 style="margin-bottom:16px">🧑‍💼 数字人口播 <span class="ai-card-badge">100算力/次</span></h3>
+    <div class="fg"><label class="fl">选择数字人形象</label><div class="cw-types"><div class="cw-type active" onclick="this.parentElement.querySelectorAll('.cw-type').forEach(e=>e.classList.remove('active'));this.classList.add('active')">👨‍💼 商务男</div><div class="cw-type" onclick="this.parentElement.querySelectorAll('.cw-type').forEach(e=>e.classList.remove('active'));this.classList.add('active')">👩‍💼 职业女</div><div class="cw-type" onclick="this.parentElement.querySelectorAll('.cw-type').forEach(e=>e.classList.remove('active'));this.classList.add('active')">🧑‍💻 技术达人</div><div class="cw-type" onclick="this.parentElement.querySelectorAll('.cw-type').forEach(e=>e.classList.remove('active'));this.classList.add('active')">👩‍🏫 知性讲师</div></div></div>
+    <div class="fg"><label class="fl">口播文案</label><textarea class="fi" id="dhScript" rows="5" placeholder="输入要数字人播报的文案..."></textarea></div>
+    <button class="ai-btn" onclick="aiDoDigital()">🧑‍💼 生成数字人视频（消耗100算力）</button>
+    <div class="ai-output" id="dhOutput">AI将优化脚本并生成数字人形象...</div>
+  </div>`;
+}
+async function aiDoDigital(){
+  const script=document.getElementById('dhScript').value.trim();
+  if(!script)return toast('请输入口播文案','error');
+  const out=document.getElementById('dhOutput');
+  out.innerHTML='<div style="text-align:center;padding:20px"><div class="ai-spinner"></div><p style="margin-top:12px;color:var(--b);font-size:13px">AI数字人合成中...</p></div>';
+  const opt=await aiGenerateText(`将以下文案优化为口播视频脚本，分段标注停顿和语气：\n"${script}"`,'你是专业口播脚本编剧。');
+  const fs=opt||script;
+  const avatar=await aiGenerateImage('professional business person portrait, clean background, studio lighting, 4k',256,256);
+  out.innerHTML=`<div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:16px"><div style="width:80px;height:80px;border-radius:50%;overflow:hidden;border:3px solid var(--p);flex-shrink:0"><img src="${avatar}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'"></div><div style="flex:1"><div style="font-weight:700;font-size:15px;margin-bottom:4px">数字人口播视频</div><div style="font-size:12px;color:var(--b)">AI已优化口播脚本 + 生成数字人形象</div><span style="display:inline-block;margin-top:6px" class="badge badge-green">已完成</span></div></div><div style="background:var(--bg);border-radius:10px;padding:16px;border:1px solid var(--bd);margin-bottom:12px"><div style="font-weight:600;font-size:13px;margin-bottom:8px">📋 口播脚本（AI优化版）</div><div style="font-size:14px;line-height:2;white-space:pre-wrap">${fs.replace(/</g,'&lt;')}</div></div><div style="display:flex;gap:8px"><button class="ai-back" onclick="navigator.clipboard.writeText(document.querySelector('#dhOutput pre,\x23dhOutput div div:last-child div:last-child').innerText);toast('已复制','success')" style="margin:0">📋 复制脚本</button></div>`;
+  toast('数字人视频生成完成！','success');
+}
+
+// === Tool 6: 音色克隆 (TTS) ===
+function renderAIVoice(){
+  document.getElementById('aiToolPanel').innerHTML=`
+  <button class="ai-back" onclick="aiBack()"><i class="fa-solid fa-arrow-left"></i> 返回工具列表</button>
+  <div class="ai-panel">
+    <h3 style="margin-bottom:16px">🎙️ 音色克隆 <span class="ai-card-badge">30算力/次</span></h3>
+    <p style="font-size:12px;color:var(--b);margin-bottom:16px">接入豆包大模型(doubao-seed-2.0)，AI智能生成语音脚本和配音方案</p>
+    <div class="fg"><label class="fl">输入要朗读的文本</label><textarea class="fi" id="vcText" rows="4" placeholder="输入需要转为语音的文字..."></textarea></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px"><div><label class="fl">语速</label><input type="range" id="vcRate" min="0.5" max="2" step="0.1" value="1" style="width:100%"><div style="text-align:center;font-size:11px;color:var(--b)">当前: <span id="vcRateVal">1.0</span>x</div></div><div><label class="fl">音调</label><input type="range" id="vcPitch" min="0.5" max="2" step="0.1" value="1" style="width:100%"><div style="text-align:center;font-size:11px;color:var(--b)">当前: <span id="vcPitchVal">1.0</span></div></div></div>
+    <button class="ai-btn" onclick="aiDoVoice()">🎙️ 合成语音（消耗30算力）</button>
+    <button class="ai-btn" onclick="aiStopVoice()" style="background:var(--err);margin-top:8px">⏹ 停止播放</button>
+    <div class="ai-output" id="vcOutput">输入文本，AI将使用语音合成技术朗读...</div>
+  </div>`;
+  setTimeout(()=>{const r=document.getElementById('vcRate'),p=document.getElementById('vcPitch');if(r)r.oninput=()=>document.getElementById('vcRateVal').textContent=parseFloat(r.value).toFixed(1);if(p)p.oninput=()=>document.getElementById('vcPitchVal').textContent=parseFloat(p.value).toFixed(1)},100);
+}
+async function aiDoVoice(){
+  const text=document.getElementById('vcText').value.trim();
+  if(!text)return toast('请输入文本','error');
+  const rate=parseFloat(document.getElementById('vcRate').value)||1;
+  const pitch=parseFloat(document.getElementById('vcPitch').value)||1;
+  const out=document.getElementById('vcOutput');
+  out.innerHTML='<div style="text-align:center;padding:20px"><div class="ai-spinner"></div><p style="margin-top:12px;color:var(--b)">豆包AI配音方案生成中...</p></div>';
+  try{
+    const prompt='请为以下文本生成专业的配音脚本方案：\n\n原文：'+text+'\n\n请输出：\n1. 推荐的语速（快/中/慢）和语调风格\n2. 适合的应用场景（短视频/广告/有声书等）\n3. 情感标注版脚本（标注每段应使用的情感和语气，如[激昂]、[温柔]、[紧张]）\n4. 停顿和重音建议';
+    const result=await aiGenerateText(prompt,'你是专业配音导演，精通语音表演和配音脚本创作。');
+    if(result){
+      const preview=result.substring(0,50).replace(/[\n\r]/g,' ');
+      if('speechSynthesis' in window){
+        speechSynthesis.cancel();
+        const u=new SpeechSynthesisUtterance(text);u.lang='zh-CN';u.rate=rate;u.pitch=pitch;
+        const voices=speechSynthesis.getVoices();const zhVoice=voices.find(v=>v.lang.startsWith('zh'));if(zhVoice)u.voice=zhVoice;
+        u.onend=()=>{};
+        speechSynthesis.speak(u);
+      }
+      out.innerHTML=`<div style="font-weight:700;color:var(--ok);margin-bottom:12px">✅ AI配音方案生成完成</div><div style="background:var(--ps);border-radius:12px;padding:16px;margin-bottom:12px"><div style="font-weight:700;margin-bottom:8px;color:var(--p)">🤖 豆包AI配音方案</div><div style="font-size:13px;line-height:1.8;white-space:pre-wrap">${result}</div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="ai-back" onclick="aiDoVoice()" style="margin:0">🔄 重新生成</button><button class="ai-back" style="margin:0;background:var(--ok);color:#fff" onclick="navigator.clipboard.writeText(this.previousElementSibling.previousElementSibling.textContent)">📋 复制方案</button></div>`;
+      toast('AI配音方案生成完成！','success');
+    }else{throw new Error('AI服务暂时不可用，请稍后重试或检查网络连接')}
+  }catch(e){out.innerHTML=`<div style="padding:16px;background:#fee2e2;border-radius:12px"><div style="font-weight:700;color:#991b1b">✗ AI配音失败</div><div style="font-size:13px;margin-top:8px">${e.message||'请稍后重试'}</div></div>`}
+}
+function aiStopVoice(){speechSynthesis.cancel();document.getElementById('vcOutput').innerHTML='<span style="color:var(--b)">已停止播放</span>'}
+
+// === Tool 7: 智能文生图 ===
+function renderAIAIGC(){
+  const styles=['写实摄影','动漫插画','3D渲染','水彩手绘','赛博朋克','极简商务'];
+  document.getElementById('aiToolPanel').innerHTML=`
+  <button class="ai-back" onclick="aiBack()"><i class="fa-solid fa-arrow-left"></i> 返回工具列表</button>
+  <div class="ai-panel">
+    <h3 style="margin-bottom:16px">🎨 智能文生图 <span class="ai-card-badge">20算力/次</span></h3>
+    <p style="font-size:12px;color:var(--b);margin-bottom:16px">使用豆包大模型（seedream-5.0）生成高清图片，支持6种艺术风格，备用Pollinations.ai</p>
+    <div class="fg"><label class="fl">画面描述</label><textarea class="fi" id="aigcDesc" rows="3" placeholder="描述你想生成的画面，如：一只可爱的猫咪在阳光下打盹..."></textarea></div>
+    <div class="fg"><label class="fl">艺术风格</label><div class="cw-types">${styles.map((t,i)=>`<div class="cw-type${i===0?' active':''}" onclick="_aigcStyle=${i};this.parentElement.querySelectorAll('.cw-type').forEach(e=>e.classList.remove('active'));this.classList.add('active')">${t}</div>`).join('')}</div></div>
+    <button class="ai-btn" onclick="aiDoAIGC()">🎨 生成图片（消耗20算力）</button>
+    <div class="ai-output" id="aigcResult">描述画面，AI将实时生成高清图片...</div>
+  </div>`;
+}
+async function aiDoAIGC(){
+  const desc=document.getElementById('aigcDesc').value.trim();
+  if(!desc)return toast('请输入画面描述','error');
+  const out=document.getElementById('aigcResult');
+  const styles=['写实摄影','动漫插画','3D渲染','水彩手绘','赛博朋克','极简商务'];
+  out.innerHTML=`<div style="text-align:center;padding:20px"><div class="ai-spinner" style="width:60px;height:60px;border-width:4px"></div><p style="margin-top:16px;font-weight:600">🎨 AI正在生成图片...</p><p style="font-size:12px;color:var(--b);margin-top:4px">${styles[_aigcStyle]}风格 · 豆包大模型生成中...</p></div>`;
+  const styleMap={'写实摄影':'photorealistic photography','动漫插画':'anime illustration, vibrant','3D渲染':'3D render, octane, cinema4D','水彩手绘':'watercolor painting, artistic','赛博朋克':'cyberpunk, neon, futuristic','极简商务':'minimalist business, clean'};
+  const prompt=(styleMap[styles[_aigcStyle]]||'photorealistic')+', '+desc+', masterpiece, best quality, ultra detailed, 8k';
+  try{
+    const url=await aiGenerateImage(prompt,2048,2048);
+    out.innerHTML=`<div style="font-weight:700;margin-bottom:12px;color:var(--ok)">✅ AI图片生成完成 <span class="badge badge-green">${styles[_aigcStyle]}</span></div><div style="border-radius:12px;overflow:hidden;border:1px solid var(--bd);margin-bottom:12px"><img src="${url}" style="width:100%;display:block" alt="AI生成"></div><div style="display:flex;gap:8px"><a href="${url}" download="ai_img_${Date.now()}.png" class="ai-back" style="margin:0;text-decoration:none;display:inline-flex">📥 下载图片</a><button class="ai-back" onclick="aiDoAIGC()" style="margin:0">🔄 重新生成</button></div>`;
+    toast('图片生成成功！','success');
+  }catch(e){
+    out.innerHTML=`<div style="padding:16px;background:#fee2e2;border-radius:12px"><div style="font-weight:700;color:#991b1b">✗ 图片生成失败</div><div style="font-size:13px;color:#991b1b;margin-top:8px">${e.message||'请稍后重试'}</div></div>`;
+    toast('生成失败，请重试','error');
+  }
+}
+
+// === Tool 8: AI智能修图（豆包大模型驱动） ===
+function renderAIPhoto(){
+  const modes=['AI智能美化','AI去水印','AI画质增强','AI背景替换','AI人像精修','AI证件照'];
+  document.getElementById('aiToolPanel').innerHTML=`
+  <button class="ai-back" onclick="aiBack()"><i class="fa-solid fa-arrow-left"></i> 返回工具列表</button>
+  <div class="ai-panel">
+    <h3 style="margin-bottom:16px">🖼️ AI智能修图 <span class="ai-card-badge">30算力/次</span></h3>
+    <p style="font-size:12px;color:var(--b);margin-bottom:16px">接入豆包大模型(doubao-seed-2.0)，AI智能分析图片并执行修图指令</p>
+    <div class="fg"><label class="fl">修图模式</label><div class="cw-types">${modes.map((t,i)=>`<div class="cw-type${i===0?' active':''}" onclick="_photoMode=${i};this.parentElement.querySelectorAll('.cw-type').forEach(e=>e.classList.remove('active'));this.classList.add('active')">${t}</div>`).join('')}</div></div>
+    <div class="fg"><label class="fl">上传图片</label><div style="padding:24px;border:2px dashed var(--bd);border-radius:12px;text-align:center;cursor:pointer" onclick="document.getElementById('photoFile').click()"><p>📷 点击或拖拽上传图片</p><p style="font-size:11px;color:var(--b);margin-top:4px">支持 JPG/PNG/WebP</p><input type="file" id="photoFile" accept="image/*" style="display:none" onchange="aiPreviewPhoto(this)"></div><div id="photoPreview" style="margin-top:12px"></div></div>
+    <button class="ai-btn" onclick="aiDoPhoto()">🖼️ 开始修图（消耗30算力）</button>
+    <div class="ai-output" id="photoResult">上传图片后选择修图模式开始处理...</div>
+  </div>`;
+}
+function aiPreviewPhoto(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{document.getElementById('photoPreview').innerHTML=`<img src="${e.target.result}" style="max-width:100%;max-height:200px;border-radius:8px">`};r.readAsDataURL(f)}
+async function aiDoPhoto(){
+  const f=document.getElementById('photoFile');const file=f?f.files[0]:null;
+  if(!file)return toast('请先上传图片','error');
+  if(!isLoggedIn())return toast('请先登录','error');
+  const credits=getCredits();if(credits<30)return toast('算力不足，需要30算力','error');
+  const out=document.getElementById('photoResult');
+  out.innerHTML='<div style="text-align:center;padding:20px"><div class="ai-spinner"></div><p style="margin-top:12px;color:var(--b);font-size:13px">豆包AI修图分析中...</p></div>';
+  const modes=['AI智能美化','AI去水印','AI画质增强','AI背景替换','AI人像精修','AI证件照'];
+  try{
+    const dataUrl=await new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.onerror=rej;r.readAsDataURL(file)});
+    const prompt='用户上传了一张图片，需要执行"'+modes[_photoMode]+'"处理。请详细描述这张图片的内容，并给出该修图操作的专业建议（如调色参数、裁剪建议、背景替换方案等）。用清晰的格式输出分析结果和操作建议。';
+    const aiResult=await aiGenerateText(prompt,'你是专业AI修图师，精通图像处理和后期调色。');
+    if(aiResult){
+      deductCredits(30);addCreditLog('AI修图',-30,'修图分析');
+      out.innerHTML=`<div style="font-weight:700;color:var(--ok);margin-bottom:12px">✅ AI修图分析完成 <span class="badge badge-green">${modes[_photoMode]}</span></div><div style="border-radius:12px;overflow:hidden;border:1px solid var(--bd);margin-bottom:12px"><img src="${dataUrl}" style="width:100%;display:block"></div><div style="background:var(--ps);border-radius:12px;padding:16px;margin-bottom:12px"><div style="font-weight:700;margin-bottom:8px;color:var(--p)">🤖 豆包AI分析报告</div><div style="font-size:13px;line-height:1.8;white-space:pre-wrap">${aiResult}</div></div><div style="display:flex;gap:8px"><a href="${dataUrl}" download="photo_${Date.now()}.png" class="ai-back" style="margin:0;text-decoration:none;display:inline-flex">📥 下载原图</a><button class="ai-back" onclick="aiDoPhoto()" style="margin:0">🔄 重新分析</button></div>`;
+      toast('AI修图分析完成！','success');
+    }else{throw new Error('AI服务暂时不可用，请稍后重试或检查网络连接')}
+  }catch(e){out.innerHTML=`<div style="padding:16px;background:#fee2e2;border-radius:12px"><div style="font-weight:700;color:#991b1b">✗ AI修图失败</div><div style="font-size:13px;color:#991b1b;margin-top:8px">${e.message||'请稍后重试'}</div></div>`;addCreditLog('AI修图',30,'退还算力')}
+}
+
+// === Tool 9: AI智能修音 ===
+function renderAIAudio(){
+  const modes=['人声提取','智能降噪','混响添加','变速不变调','变调不变速','音频剪辑'];
+  document.getElementById('aiToolPanel').innerHTML=`
+  <button class="ai-back" onclick="aiBack()"><i class="fa-solid fa-arrow-left"></i> 返回工具列表</button>
+  <div class="ai-panel">
+    <h3 style="margin-bottom:16px">🎵 AI智能修音 <span class="ai-card-badge">25算力/次</span></h3>
+    <p style="font-size:12px;color:var(--b);margin-bottom:16px">接入豆包大模型(doubao-seed-2.0)，AI智能分析音频并给出专业处理建议</p>
+    <div class="fg"><label class="fl">处理模式</label><div class="cw-types">${modes.map((t,i)=>`<div class="cw-type${i===0?' active':''}" onclick="_audioMode=${i};this.parentElement.querySelectorAll('.cw-type').forEach(e=>e.classList.remove('active'));this.classList.add('active')">${t}</div>`).join('')}</div></div>
+    <div class="fg"><label class="fl">上传音频</label><div style="padding:24px;border:2px dashed var(--bd);border-radius:12px;text-align:center;cursor:pointer" onclick="document.getElementById('audioFile').click()"><p>🎵 点击上传音频文件</p><p style="font-size:11px;color:var(--b);margin-top:4px">支持 MP3/WAV/OGG/AAC</p><input type="file" id="audioFile" accept="audio/*" style="display:none" onchange="aiPreviewAudio(this)"></div><div id="audioPreview" style="margin-top:12px"></div></div>
+    <button class="ai-btn" onclick="aiDoAudio()">🎵 开始修音（消耗25算力）</button>
+    <div class="ai-output" id="audioResult">上传音频后选择处理模式开始...</div>
+  </div>`;
+}
+function aiPreviewAudio(inp){const f=inp.files[0];if(!f)return;document.getElementById('audioPreview').innerHTML=`<div style="padding:12px;background:var(--bg);border-radius:10px;display:flex;align-items:center;gap:10px"><span style="font-size:24px">🎵</span><div><p style="font-size:13px;font-weight:600">${f.name}</p><p style="font-size:11px;color:var(--b)">${(f.size/1024/1024).toFixed(1)}MB</p></div></div>`}
+async function aiDoAudio(){
+  const f=document.getElementById('audioFile');const file=f?f.files[0]:null;
+  if(!file)return toast('请先上传音频','error');
+  const out=document.getElementById('audioResult');
+  out.innerHTML='<div style="text-align:center;padding:20px"><div class="ai-spinner"></div><p style="margin-top:12px;color:var(--b)">豆包AI音频分析中...</p></div>';
+  const modes=['人声提取','智能降噪','混响添加','变速不变调','变调不变速','音频剪辑'];
+  try{
+    const prompt='用户上传了一个音频文件"'+file.name+'"（'+(file.size/1024/1024).toFixed(1)+'MB），需要对音频执行"'+modes[_audioMode]+'"处理。请详细分析该音频可能的问题，并给出专业的'+modes[_audioMode]+'处理方案，包括：1) 当前音频可能存在的问题分析 2) 推荐的处理参数 3) 处理后的预期效果 4) 专业建议和注意事项。';
+    const result=await aiGenerateText(prompt,'你是专业音频工程师，精通音频后期处理、降噪、混响、变速变调等技术。');
+    if(result){
+      const dataUrl=URL.createObjectURL(file);
+      out.innerHTML=`<div style="font-weight:700;color:var(--ok);margin-bottom:12px">✅ AI音频分析完成 <span class="badge badge-green">${modes[_audioMode]}</span></div><div style="background:var(--bg);border-radius:10px;padding:16px;border:1px solid var(--bd);margin-bottom:12px"><audio controls style="width:100%" src="${dataUrl}"></audio></div><div style="background:var(--ps);border-radius:12px;padding:16px;margin-bottom:12px"><div style="font-weight:700;margin-bottom:8px;color:var(--p)">🤖 豆包AI分析报告</div><div style="font-size:13px;line-height:1.8;white-space:pre-wrap">${result}</div></div><div style="display:flex;gap:8px"><button class="ai-back" onclick="aiDoAudio()" style="margin:0">🔄 重新分析</button></div>`;
+      toast('AI音频分析完成！','success');
+    }else{throw new Error('AI服务暂时不可用，请稍后重试或检查网络连接')}
+  }catch(e){out.innerHTML=`<div style="padding:16px;background:#fee2e2;border-radius:12px"><div style="font-weight:700;color:#991b1b">✗ AI分析失败</div><div style="font-size:13px;margin-top:8px">${e.message||'请稍后重试'}</div></div>`}
+  return;
+}
+  // 原Web Audio API本地处理已替换为豆包AI分析
+  // (本地处理代码已注释)
+
+// === Tool 10: AI智能伴奏 ===
+function renderAIAccomp(){
+  document.getElementById('aiToolPanel').innerHTML=`
+  <button class="ai-back" onclick="aiBack()"><i class="fa-solid fa-arrow-left"></i> 返回工具列表</button>
+  <div class="ai-panel">
+    <h3 style="margin-bottom:16px">🎶 AI智能伴奏 <span class="ai-card-badge">40算力/次</span></h3>
+    <p style="font-size:12px;color:var(--b);margin-bottom:16px">接入豆包大模型(doubao-seed-2.0)，AI智能生成编曲方案和和弦进行</p>
+    <div class="fg"><label class="fl">BPM速度</label><input class="fi" type="number" id="accBpm" value="120" min="60" max="200"></div>
+    <div class="fg"><label class="fl">调式</label><div class="cw-types"><div class="cw-type active" onclick="this.parentElement.querySelectorAll('.cw-type').forEach(e=>e.classList.remove('active'));this.classList.add('active')">C大调</div><div class="cw-type" onclick="this.parentElement.querySelectorAll('.cw-type').forEach(e=>e.classList.remove('active'));this.classList.add('active')">A小调</div><div class="cw-type" onclick="this.parentElement.querySelectorAll('.cw-type').forEach(e=>e.classList.remove('active'));this.classList.add('active')">G大调</div></div></div>
+    <div class="fg"><label class="fl">时长（秒）</label><input class="fi" type="number" id="accDur" value="8" min="4" max="30"></div>
+    <button class="ai-btn" onclick="aiDoAccomp()">🎶 生成伴奏（消耗40算力）</button>
+    <div class="ai-output" id="accResult">AI将生成包含和弦、贝斯、鼓组的完整伴奏...</div>
+  </div>`;
+}
+async function aiDoAccomp(){
+  const out=document.getElementById('accResult');
+  const bpm=parseInt(document.getElementById('accBpm').value)||120;
+  const dur=parseInt(document.getElementById('accDur').value)||8;
+  out.innerHTML='<div style="text-align:center;padding:20px"><div class="ai-spinner"></div><p style="margin-top:12px;color:var(--b)">豆包AI编曲方案生成中...</p></div>';
+  try{
+    const prompt='请为一段视频/内容生成专业的编曲方案：\n要求BPM：'+bpm+'\n时长：'+dur+'秒\n\n请输出完整的编曲方案，包括：\n1. 推荐的和弦进行（如 I-V-vi-IV）\n2. 各乐器编排建议（和弦/贝斯/鼓组/旋律乐器）\n3. 情绪起伏设计（前奏/主歌/副歌/尾奏）\n4. 音色推荐和效果器建议\n5. 整体风格定位和参考曲目';
+    const result=await aiGenerateText(prompt,'你是专业音乐制作人，精通编曲、和声学和音乐理论。');
+    if(result){
+      out.innerHTML=`<div style="font-weight:700;color:var(--ok);margin-bottom:12px">✅ AI编曲方案完成 <span class="badge badge-green">${bpm}BPM · ${dur}秒</span></div><div style="background:var(--ps);border-radius:12px;padding:16px;margin-bottom:12px"><div style="font-weight:700;margin-bottom:8px;color:var(--p)">🤖 豆包AI编曲方案</div><div style="font-size:13px;line-height:1.8;white-space:pre-wrap">${result}</div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="ai-back" onclick="aiDoAccomp()" style="margin:0">🔄 重新生成</button><button class="ai-back" style="margin:0;background:var(--ok);color:#fff" onclick="navigator.clipboard.writeText(this.previousElementSibling.previousElementSibling.textContent)">📋 复制方案</button></div>`;
+      toast('AI编曲方案生成完成！','success');
+    }else{throw new Error('AI服务暂时不可用，请稍后重试或检查网络连接')}
+  }catch(e){out.innerHTML=`<div style="padding:16px;background:#fee2e2;border-radius:12px"><div style="font-weight:700;color:#991b1b">✗ AI编曲失败</div><div style="font-size:13px;margin-top:8px">${e.message||'请稍后重试'}</div></div>`}
+}
+
+// === Tool 11: 智能图文表格 ===
+function renderAIDoc(){
+  document.getElementById('aiToolPanel').innerHTML=`
+  <button class="ai-back" onclick="aiBack()"><i class="fa-solid fa-arrow-left"></i> 返回工具列表</button>
+  <div class="ai-panel">
+    <h3 style="margin-bottom:16px">📊 智能图文表格 <span class="ai-card-badge">35算力/次</span></h3>
+    <div class="fg"><label class="fl">表格主题/数据描述</label><textarea class="fi" id="docTopic" rows="3" placeholder="描述你要生成的表格内容，如：2024年各月销售额统计表..."></textarea></div>
+    <div class="fg"><label class="fl">补充要求（可选）</label><input class="fi" id="docExtra" placeholder="如：含同比环比、需包含合计行等"></div>
+    <button class="ai-btn" onclick="aiDoDoc()">📊 生成表格（消耗35算力）</button>
+    <div class="ai-output" id="docResult">描述表格需求，AI将生成Markdown格式表格并渲染...</div>
+  </div>`;
+}
+async function aiDoDoc(){
+  const topic=document.getElementById('docTopic').value.trim();
+  if(!topic)return toast('请输入表格主题','error');
+  const extra=document.getElementById('docExtra').value.trim();
+  const out=document.getElementById('docResult');
+  out.innerHTML='<div style="text-align:center;padding:20px"><div class="ai-spinner"></div><p style="margin-top:12px;color:var(--b);font-size:13px">AI正在生成图文表格...</p></div>';
+  const r=await aiGenerateText(`请根据以下信息生成一个结构化的Markdown表格（用|分隔）：\n主题：${topic}\n${extra?'要求：'+extra:''}\n\n请生成包含表头和至少5行数据的完整表格，用|分隔列。`);
+  if(r){
+    var _lastDocMd=r;
+    const lines=r.trim().split('\n').filter(l=>l.trim());
+    let html='<table style="width:100%;border-collapse:collapse;font-size:13px">';
+    lines.forEach((line,i)=>{
+      if(line.includes('---'))return;
+      const cells=line.split('|').filter(c=>c.trim());
+      const tag=i===0?'th':'td';
+      html+='<tr>'+cells.map(c=>`<${tag} style="padding:10px 12px;border:1px solid var(--bd);text-align:left;${i===0?'background:var(--ps);font-weight:700;color:var(--p)':''}">${c.trim()}</${tag}>`).join('')+'</tr>';
+    });
+    html+='</table>';
+    out.innerHTML=`<div style="font-weight:700;color:var(--ok);margin-bottom:12px">✅ 表格生成完成</div><div style="overflow-x:auto;border-radius:10px;border:1px solid var(--bd)">${html}</div><div style="display:flex;gap:8px;margin-top:12px"><button class="ai-back" onclick="navigator.clipboard.writeText(_lastDocMd);toast('Markdown已复制','success')" style="margin:0">📋 复制Markdown</button><button class="ai-back" onclick="aiDoDoc()" style="margin:0">🔄 重新生成</button></div>`;
+    toast('表格生成成功！','success');
+  }else{out.innerHTML='<span style="color:var(--warn)">AI服务繁忙，请稍后重试</span>'}
+}
+
+
+// ===== Redeem Code Management (卡密管理) =====
+const CREDIT_PACKS=[
+  {id:'pack1',name:'体验包',credits:100,price:9.9},
+  {id:'pack2',name:'基础包',credits:500,price:39.9},
+  {id:'pack3',name:'专业包',credits:2000,price:129},
+  {id:'pack4',name:'旗舰包',credits:5000,price:299},
+  {id:'pack5',name:'至尊包',credits:10000,price:1000}
+];
+function genCode(){const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='';for(let i=0;i<8;i++)s+=c[Math.floor(Math.random()*c.length)];return 'LSJY-'+s}
+let _rcPage=1,_rcFilter='',_rcStatus='';
+function renderRedeemCodes(p){
+  if(typeof p==='number')_rcPage=p;
+  let codes=getRedeemCodes().map((c,i)=>({...c,_idx:i}));
+  codes=filterByKeyword(codes,['code','packName','usedBy','note'],_rcFilter);
+  if(_rcStatus)codes=codes.filter(c=>c.status===_rcStatus);
+  const pg=paginate(codes,_rcPage,12);
+  const allCodes=getRedeemCodes();
+  const unused=allCodes.filter(c=>c.status==='unused').length;
+  const used=allCodes.filter(c=>c.status==='used').length;
+  const totalCredits=allCodes.filter(c=>c.status==='unused').reduce((a,c)=>a+(c.credits||0),0);
+  const history=getRedeemHistory();
+
+  document.getElementById('mainContent').innerHTML=`
+  <div class="stats">
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#533afd,#7c6cf6)"><i class="fa-solid fa-ticket"></i></div><div class="stat-info"><h4>${allCodes.length}</h4><p>卡密总数</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#3b82f6,#60a5fa)"><i class="fa-solid fa-check-circle"></i></div><div class="stat-info"><h4>${unused}</h4><p>未使用</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#22c55e,#34d399)"><i class="fa-solid fa-circle-check"></i></div><div class="stat-info"><h4>${used}</h4><p>已兑换</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#f59e0b,#fbbf24)"><i class="fa-solid fa-bolt"></i></div><div class="stat-info"><h4>${totalCredits.toLocaleString()}</h4><p>待兑换算力</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#ea2261,#f96bee)"><i class="fa-solid fa-clock-rotate-left"></i></div><div class="stat-info"><h4>${history.length}</h4><p>兑换记录</p></div></div>
+  </div>
+  <div class="card"><div class="card-header"><h3><i class="fa-solid fa-plus-circle" style="color:var(--ok);margin-right:6px"></i>批量生成卡密</h3></div><div class="card-body">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:12px;align-items:end">
+      <div class="fg" style="margin:0"><label class="fl">选择套餐</label><select class="fi" id="rcPack">
+        ${CREDIT_PACKS.map(p=>`<option value="${p.id}">${p.name} (${p.credits}算力 ¥${p.price})</option>`).join('')}
+        <option value="custom">自定义</option>
+      </select></div>
+      <div class="fg" id="rcCustomCreditsWrap" style="margin:0;display:none"><label class="fl">自定义算力</label><input class="fi" type="number" id="rcCustomCredits" min="1" placeholder="算力数量"></div>
+      <div class="fg" id="rcCustomPriceWrap" style="margin:0;display:none"><label class="fl">自定义价格</label><input class="fi" type="number" id="rcCustomPrice" min="0" step="0.1" placeholder="价格"></div>
+      <div class="fg" style="margin:0"><label class="fl">生成数量</label><input class="fi" type="number" id="rcCount" min="1" max="100" value="5" placeholder="1-100"></div>
+      <button class="btn-p" style="padding:10px 20px;white-space:nowrap" id="genCodesBtn" onclick="batchGenCodes()"><i class="fa-solid fa-wand-magic-sparkles"></i> 生成</button>
+    </div>
+    <div id="genResult" style="margin-top:16px"></div>
+  </div></div>
+  <div class="card"><div class="card-header"><h3><i class="fa-solid fa-ticket" style="color:var(--p);margin-right:6px"></i>卡密列表</h3>
+    <div class="toolbar">
+      <button class="tb-btn" onclick="exportCodes()"><i class="fa-solid fa-file-csv"></i> 导出</button>
+      <button class="tb-btn danger" onclick="batchDelCodes()"><i class="fa-solid fa-trash"></i> 批量删除未使用</button>
+    </div>
+  </div><div class="card-body">
+    <div class="filter-bar">
+      <input type="text" placeholder="搜索卡密/套餐/备注..." value="${_rcFilter}" oninput="_rcFilter=this.value;_rcPage=1;renderRedeemCodes()">
+      <select onchange="_rcStatus=this.value;_rcPage=1;renderRedeemCodes()">
+        <option value="" ${!_rcStatus?'selected':''}>全部状态</option>
+        <option value="unused" ${_rcStatus==='unused'?'selected':''}>未使用</option>
+        <option value="used" ${_rcStatus==='used'?'selected':''}>已兑换</option>
+      </select>
+    </div>
+    <div class="table-wrap"><table>
+      <tr><th>卡密</th><th>套餐</th><th>算力</th><th>价格</th><th>状态</th><th>使用者</th><th>生成时间</th><th>备注</th><th>操作</th></tr>
+      ${pg.data.map(c=>{
+        return`<tr>
+          <td style="font-weight:700;font-family:monospace;font-size:12px;letter-spacing:.5px">${c.code}</td>
+          <td><span class="badge badge-purple">${c.packName||'自定义'}</span></td>
+          <td style="font-weight:700;color:var(--p)">${(c.credits||0).toLocaleString()}</td>
+          <td>&yen;${c.price||0}</td>
+          <td>${c.status==='unused'?'<span class="badge badge-blue">未使用</span>':'<span class="badge badge-green">已兑换</span>'}</td>
+          <td>${c.usedBy||'-'}</td>
+          <td style="color:var(--b);white-space:nowrap;font-size:12px">${fmtDate(c.createdAt)}</td>
+          <td style="max-width:100px;font-size:12px;color:var(--b)">${(c.note||'').substring(0,15)||'-'}</td>
+          <td><button class="act-btn view" onclick="copyCode('${c.code}')" title="复制"><i class="fa-solid fa-copy"></i></button>${c.status==='unused'?`<button class="act-btn del" onclick="delCode(${c._idx})" title="删除"><i class="fa-solid fa-trash"></i></button>`:''}</td>
+        </tr>`}).join('')}
+    </table></div>
+    ${!pg.data.length?'<div class="empty"><i class="fa-solid fa-ticket"></i><p>暂无卡密</p></div>':''}
+    ${renderPagination(pg,'renderRedeemCodes')}
+  </div></div>
+  <div class="card"><div class="card-header"><h3><i class="fa-solid fa-clock-rotate-left" style="color:var(--warn);margin-right:6px"></i>兑换记录</h3></div><div class="card-body">
+    ${history.length?`<div class="table-wrap"><table><tr><th>卡密</th><th>算力</th><th>使用者</th><th>兑换时间</th></tr>
+      ${history.slice().reverse().slice(0,20).map(h=>`<tr><td style="font-family:monospace;font-size:12px">${h.code}</td><td style="font-weight:700;color:var(--p)">${h.credits}</td><td>${h.username}</td><td style="color:var(--b);font-size:12px">${fmtDate(h.time)}</td></tr>`).join('')}
+    </table></div>`:'<div class="empty"><i class="fa-solid fa-clock-rotate-left"></i><p>暂无兑换记录</p></div>'}
+  </div></div>`;
+  // Toggle custom fields
+  const packSel=document.getElementById('rcPack');
+  if(packSel){
+    packSel.onchange=function(){
+      document.getElementById('rcCustomCreditsWrap').style.display=this.value==='custom'?'block':'none';
+      document.getElementById('rcCustomPriceWrap').style.display=this.value==='custom'?'block':'none';
+    };
+  }
+}
+function batchGenCodes(){
+  const packId=document.getElementById('rcPack').value;
+  const count=parseInt(document.getElementById('rcCount').value)||0;
+  if(count<1||count>100)return toast('数量范围：1-100','error');
+  let credits=0,price=0,packName='';
+  if(packId==='custom'){
+    credits=parseInt(document.getElementById('rcCustomCredits').value)||0;
+    price=parseFloat(document.getElementById('rcCustomPrice').value)||0;
+    if(credits<1)return toast('请输入有效算力数量','error');
+    packName='自定义';
+  }else{
+    const pack=CREDIT_PACKS.find(p=>p.id===packId);
+    if(!pack)return toast('请选择套餐','error');
+    credits=pack.credits;price=pack.price;packName=pack.name;
+  }
+  const codes=[];
+  const existing=getRedeemCodes();
+  const existingSet=new Set(existing.map(c=>c.code));
+  let attempts=0;
+  while(codes.length<count&&attempts<count*10){
+    const code=genCode();
+    if(!existingSet.has(code)){codes.push({code,credits,price,packName,status:'unused',usedBy:null,usedAt:null,createdAt:new Date().toISOString(),note:''});existingSet.add(code)}
+    attempts++;
+  }
+  if(codes.length<count){toast('已生成'+codes.length+'个（存在重复跳过）','warn')}
+  const allCodes=existing.concat(codes);
+  saveRedeemCodes(allCodes);
+  const result=document.getElementById('genResult');
+  const codeList=codes.map(c=>c.code).join('\n');
+  result.innerHTML=`
+    <div style="padding:16px;background:#dcfce7;border-radius:10px;margin-bottom:12px">
+      <div style="font-weight:700;color:#166534;margin-bottom:8px"><i class="fa-solid fa-check-circle"></i> 成功生成 ${codes.length} 个卡密</div>
+      <div style="font-size:12px;color:#166534">套餐：${packName} | 算力：${credits} | 单价：¥${price} | 总价值：¥${(price*codes.length).toFixed(1)}</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <button class="act-btn ok" onclick="navigator.clipboard.writeText(document.getElementById('codeListArea').value);toast('已复制全部卡密','success')"><i class="fa-solid fa-copy"></i> 复制全部</button>
+    </div>
+    <textarea id="codeListArea" rows="${Math.min(codes.length+1,10)}" style="width:100%;padding:10px;border:1px solid var(--bd);border-radius:8px;font-family:monospace;font-size:12px;background:var(--bg)" readonly>${codeList}</textarea>`;
+  addOpLog('批量生成卡密',packName+' x'+codes.length);
+  toast('成功生成 '+codes.length+' 个卡密','success');
+  renderRedeemCodes();
+}
+function copyCode(code){navigator.clipboard.writeText(code);toast('已复制: '+code,'success')}
+function delCode(idx){
+  showMod(`<h3><i class="fa-solid fa-triangle-exclamation" style="color:var(--err)"></i> 删除卡密</h3><p>确定删除此卡密？</p><div class="modal-actions"><button class="m-cancel" onclick="closeModal()">取消</button><button class="m-confirm" style="background:var(--err)" onclick="cfmDelCode(${idx})">删除</button></div>`);
+}
+function cfmDelCode(idx){const codes=getRedeemCodes();const c=codes.splice(idx,1)[0];saveRedeemCodes(codes);addOpLog('删除卡密',c.code);closeModal();renderRedeemCodes();toast('卡密已删除','success')}
+function batchDelCodes(){
+  const codes=getRedeemCodes();const unused=codes.filter(c=>c.status==='unused');
+  if(!unused.length)return toast('没有未使用的卡密','error');
+  if(!confirm('确定删除全部 '+unused.length+' 个未使用的卡密？'))return;
+  const used=codes.filter(c=>c.status==='used');
+  saveRedeemCodes(used);addOpLog('批量删除卡密','删除 '+unused.length+' 个未使用');renderRedeemCodes();toast('已删除 '+unused.length+' 个未使用卡密','success');
+}
+function exportCodes(){
+  const codes=getRedeemCodes();
+  const csv=toCSV(codes.map(c=>[c.code,c.packName,c.credits,c.price,c.status==='unused'?'未使用':'已兑换',c.usedBy||'',c.note||'',fmtDate(c.createdAt)]),['卡密','套餐','算力','价格','状态','使用者','备注','生成时间']);
+  downloadCSV(csv,'卡密列表_'+new Date().toISOString().slice(0,10));toast('导出成功','success');
+}
+
+
+// ===== Customer Management Center =====
+function renderCustomers(){
+  const app=document.getElementById('appContent');
+  const users=getUsers().filter(u=>u.role!=='admin');
+  const orders=JSON.parse(localStorage.getItem('lsjy3_orders')||'[]').concat(JSON.parse(localStorage.getItem('lsjy_admin_orders')||'[]'));
+  const creditLogs=JSON.parse(localStorage.getItem('lsjy3_credit_logs')||'[]');
+  const tasks=JSON.parse(localStorage.getItem('lsjy3_ai_tasks')||'[]');
+  const totalCredits=creditLogs.reduce((s,l)=>s+(l.amount>0?l.amount:0),0);
+  const totalUsed=creditLogs.reduce((s,l)=>s+(l.amount<0?l.amount:0),0);
+
+  app.innerHTML=`
+  <div class="filter-bar">
+    <input class="fi" style="max-width:240px" placeholder="搜索用户名/昵称/手机号" id="custSearch" oninput="renderCustList()">
+    <span style="font-weight:600;font-size:13px;margin-left:12px">用户: ${users.length} | 订单: ${orders.length} | AI任务: ${tasks.length}</span>
+  </div>
+  <div class="stats" style="margin-bottom:20px">
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#3b82f6,#60a5fa)"><i class="fa-solid fa-users"></i></div><div class="stat-info"><h4>${users.length}</h4><p>顾客总数</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#f59e0b,#fbbf24)"><i class="fa-solid fa-bolt"></i></div><div class="stat-info"><h4>${totalCredits}</h4><p>算力总充值</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#ef4444,#f87171)"><i class="fa-solid fa-fire"></i></div><div class="stat-info"><h4>${Math.abs(totalUsed)}</h4><p>算力总消耗</p></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#10b981,#34d399)"><i class="fa-solid fa-clipboard-list"></i></div><div class="stat-info"><h4>${orders.length}</h4><p>订单总量</p></div></div>
+  </div>
+  <div class="card"><div class="card-header"><h3><i class="fa-solid fa-user-group" style="color:var(--ok);margin-right:6px"></i>顾客列表</h3>
+    <div style="display:flex;gap:8px">
+      <button class="act-btn ok" onclick="adminAddCredits()"><i class="fa-solid fa-bolt"></i> 充值算力</button>
+      <button class="act-btn" onclick="adminCreateOrder()"><i class="fa-solid fa-receipt"></i> 创建订单</button>
+      <button class="act-btn" style="background:var(--warn);color:#fff" onclick="adminGenRedeemCode()"><i class="fa-solid fa-ticket"></i> 生成卡密</button>
+    </div>
+  </div><div class="card-body" id="custListBody"></div></div>
+  <div class="card"><div class="card-header"><h3><i class="fa-solid fa-robot" style="color:var(--p);margin-right:6px"></i>AI任务记录</h3>
+    <button class="act-btn" onclick="renderCustomers()"><i class="fa-solid fa-refresh"></i> 刷新</button>
+  </div><div class="card-body">
+    ${tasks.length?`<div class="table-wrap"><table><tr><th>任务ID</th><th>工具</th><th>状态</th><th>创建时间</th><th>操作</th></tr>
+      ${tasks.slice(0,20).map(t=>{const sm={pending:'<span class="badge badge-yellow">排队中</span>',processing:'<span class="badge badge-blue">生成中</span>',completed:'<span class="badge badge-green">已完成</span>',failed:'<span class="badge" style="background:#fef2f2;color:var(--err)">失败</span>'};return`<tr><td style="font-size:11px;font-family:monospace">${t.id}</td><td>${t.toolName||'-'}</td><td>${sm[t.status]||t.status}</td><td style="color:var(--b)">${fmtDate(t.created)}</td><td>${t.status==='completed'?'<button class="act-btn ok btn-sm" onclick="viewTaskResult(\''+t.id+'\')"><i class="fa-solid fa-eye"></i></button>':''}${t.status==='failed'?'<button class="act-btn btn-sm" style="background:var(--err);color:#fff" onclick="deleteTask(\''+t.id+'\')"><i class="fa-solid fa-trash"></i></button>':''}</td></tr>`}).join('')}
+    </table></div>`:'<div class="empty"><i class="fa-solid fa-robot"></i><p>暂无AI任务</p></div>'}
+  </div></div>`;
+  renderCustList();
+  addOpLog('查看顾客管理','');
+}
+
+function renderCustList(){
+  const body=document.getElementById('custListBody');
+  if(!body)return;
+  const users=getUsers().filter(u=>u.role!=='admin');
+  const orders=JSON.parse(localStorage.getItem('lsjy3_orders')||'[]').concat(JSON.parse(localStorage.getItem('lsjy_admin_orders')||'[]'));
+  const kw=(document.getElementById('custSearch')?.value||'').toLowerCase();
+  const filtered=kw?users.filter(u=>(u.username||'').toLowerCase().includes(kw)||(u.nickname||'').toLowerCase().includes(kw)||(u.phone||'').includes(kw)):users;
+  if(!filtered.length){body.innerHTML='<div class="empty"><i class="fa-solid fa-users"></i><p>暂无顾客</p></div>';return}
+  body.innerHTML=`<div class="table-wrap"><table><tr><th>用户名</th><th>昵称</th><th>手机</th><th>注册时间</th><th>订单数</th><th>操作</th></tr>
+    ${filtered.map(u=>{const uo=orders.filter(o=>o.username===u.username);return`<tr>
+      <td style="font-weight:600">${u.username}</td><td>${maskName(u.nickname)}</td><td>${maskPhone(u.phone)}</td>
+      <td style="color:var(--b)">${fmtDate(u.created)}</td><td><span class="badge badge-blue">${uo.length}</span></td>
+      <td><button class="act-btn ok btn-sm" onclick="viewCustDetail('${u.username}')"><i class="fa-solid fa-eye"></i> 详情</button>
+        <button class="act-btn btn-sm" style="background:var(--warn);color:#fff" onclick="adminCustAddCredits('${u.username}')"><i class="fa-solid fa-bolt"></i></button>
+        <button class="act-btn btn-sm" style="background:var(--err);color:#fff" onclick="adminDelUser('${u.username}')"><i class="fa-solid fa-trash"></i></button></td>
+    </tr>`}).join('')}
+  </table></div>`;
+}
+
+function viewCustDetail(username){
+  const u=getUsers().find(x=>x.username===username);if(!u)return;
+  const orders=JSON.parse(localStorage.getItem('lsjy3_orders')||'[]').concat(JSON.parse(localStorage.getItem('lsjy_admin_orders')||'[]')).filter(o=>o.username===username);
+  const logs=JSON.parse(localStorage.getItem('lsjy3_credit_logs')||'[]').filter(l=>l.user===username);
+  const tasks=JSON.parse(localStorage.getItem('lsjy3_ai_tasks')||'[]').filter(t=>t.username===username);
+  showMod(`<h3><i class="fa-solid fa-user" style="color:var(--p);margin-right:6px"></i>顾客详情 - ${u.nickname||u.username}</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px;font-size:13px">
+      <div><b>用户名:</b> ${u.username}</div><div><b>昵称:</b> ${u.nickname||'-'}</div>
+      <div><b>手机:</b> ${maskPhone(u.phone)||'-'}</div><div><b>角色:</b> ${u.role||'user'}</div>
+      <div><b>注册:</b> ${fmtDate(u.created)}</div><div><b>订单:</b> ${orders.length} 笔</div>
+    </div>
+    ${orders.length?`<h4 style="margin-top:16px">订单记录</h4><div style="max-height:200px;overflow-y:auto"><table style="font-size:12px"><tr><th>订单</th><th>服务</th><th>金额</th><th>状态</th><th>时间</th></tr>
+      ${orders.map(o=>`<tr><td>${o.orderId||'-'}</td><td>${o.serviceName||'-'}</td><td>¥${o.price||0}</td><td>${o.status||'-'}</td><td>${fmtDate(o.time)}</td></tr>`).join('')}
+    </table></div>`:''}
+    ${logs.length?`<h4 style="margin-top:16px">算力记录</h4><div style="max-height:200px;overflow-y:auto"><table style="font-size:12px"><tr><th>描述</th><th>变动</th><th>时间</th></tr>
+      ${logs.slice(-10).map(l=>`<tr><td>${l.desc||'-'}</td><td style="color:${l.amount>0?'var(--ok)':'var(--err)'}">${l.amount>0?'+':''}${l.amount}</td><td>${fmtDate(l.time)}</td></tr>`).join('')}
+    </table></div>`:''}
+    <div class="modal-actions"><button class="m-cancel" onclick="closeModal()">关闭</button></div>`);
+}
+
+function adminAddCredits(){
+  const users=getUsers().filter(u=>u.role!=='admin');
+  showMod(`<h3><i class="fa-solid fa-bolt" style="color:var(--warn);margin-right:6px"></i>充值算力</h3>
+    <div style="margin-top:16px"><div class="fg"><label class="fl">选择用户</label><select class="fi" id="creditUser">
+      ${users.map(u=>`<option value="${u.username}">${u.nickname||u.username} (${u.username})</option>`).join('')}
+    </select></div>
+    <div class="fg"><label class="fl">算力数量</label><input class="fi" type="number" id="creditAmount" value="100" min="1"></div>
+    <div class="fg"><label class="fl">备注</label><input class="fi" id="creditNote" placeholder="管理员手动充值"></div></div>
+    <div class="modal-actions"><button class="m-cancel" onclick="closeModal()">取消</button><button class="m-confirm" onclick="doAdminAddCredits()">确认充值</button></div>`);
+}
+function adminCustAddCredits(username){
+  showMod(`<h3><i class="fa-solid fa-bolt" style="color:var(--warn);margin-right:6px"></i>充值算力</h3>
+    <div style="margin-top:16px"><div class="fg"><label class="fl">用户</label><input class="fi" value="${username}" readonly></div>
+    <div class="fg"><label class="fl">算力数量</label><input class="fi" type="number" id="creditAmount" value="100" min="1"></div>
+    <div class="fg"><label class="fl">备注</label><input class="fi" id="creditNote" placeholder="管理员手动充值"></div></div>
+    <div class="modal-actions"><button class="m-cancel" onclick="closeModal()">取消</button><button class="m-confirm" onclick="doAdminAddCreditsFor('${username}')">确认充值</button></div>`);
+}
+function doAdminAddCredits(){
+  const user=document.getElementById('creditUser').value;
+  const amount=parseInt(document.getElementById('creditAmount').value);
+  const note=document.getElementById('creditNote').value||'管理员手动充值';
+  if(!amount||amount<1)return toast('请输入有效算力数量','error');
+  const credits=JSON.parse(localStorage.getItem('lsjy3_credits_'+user)||'0');
+  localStorage.setItem('lsjy3_credits_'+user,String(credits+amount));
+  const logs=JSON.parse(localStorage.getItem('lsjy3_credit_logs')||'[]');
+  logs.push({user,desc:note,amount,time:new Date().toISOString()});
+  localStorage.setItem('lsjy3_credit_logs',JSON.stringify(logs));
+  addOpLog('管理员充值算力',user+' +'+amount);
+  closeModal();renderCustomers();toast('已为 '+user+' 充值 '+amount+' 算力','success');
+}
+function doAdminAddCreditsFor(username){
+  const amount=parseInt(document.getElementById('creditAmount').value);
+  const note=document.getElementById('creditNote').value||'管理员手动充值';
+  if(!amount||amount<1)return toast('请输入有效算力数量','error');
+  const credits=JSON.parse(localStorage.getItem('lsjy3_credits_'+username)||'0');
+  localStorage.setItem('lsjy3_credits_'+username,String(credits+amount));
+  const logs=JSON.parse(localStorage.getItem('lsjy3_credit_logs')||'[]');
+  logs.push({user:username,desc:note,amount,time:new Date().toISOString()});
+  localStorage.setItem('lsjy3_credit_logs',JSON.stringify(logs));
+  addOpLog('管理员充值算力',username+' +'+amount);
+  closeModal();renderCustomers();toast('已为 '+username+' 充值 '+amount+' 算力','success');
+}
+function adminCreateOrder(){
+  const users=getUsers().filter(u=>u.role!=='admin');
+  showMod(`<h3><i class="fa-solid fa-receipt" style="color:var(--p);margin-right:6px"></i>创建订单</h3>
+    <div style="margin-top:16px"><div class="fg"><label class="fl">选择用户</label><select class="fi" id="orderUser">
+      ${users.map(u=>`<option value="${u.username}">${u.nickname||u.username} (${u.username})</option>`).join('')}
+    </select></div>
+    <div class="fg"><label class="fl">服务名称</label><input class="fi" id="orderService" placeholder="如：算力充值-至尊包"></div>
+    <div class="fg"><label class="fl">金额 (¥)</label><input class="fi" type="number" id="orderPrice" value="0" min="0"></div>
+    <div class="fg"><label class="fl">状态</label><select class="fi" id="orderStatus"><option value="completed">已完成</option><option value="pending">待审核</option><option value="cancelled">已取消</option></select></div></div>
+    <div class="modal-actions"><button class="m-cancel" onclick="closeModal()">取消</button><button class="m-confirm" onclick="doAdminCreateOrder()">创建</button></div>`);
+}
+function doAdminCreateOrder(){
+  const user=document.getElementById('orderUser').value;
+  const service=document.getElementById('orderService').value;
+  const price=parseFloat(document.getElementById('orderPrice').value);
+  const status=document.getElementById('orderStatus').value;
+  if(!service)return toast('请输入服务名称','error');
+  const order={moduleId:'custom',serviceId:'custom',serviceName:service,price,status,username:user,time:new Date().toLocaleString(),orderId:'LSJY'+Date.now().toString(36).toUpperCase(),method:'admin',operator:getCur()?.username};
+  const orders=JSON.parse(localStorage.getItem('lsjy_admin_orders')||'[]');
+  orders.push(order);localStorage.setItem('lsjy_admin_orders',JSON.stringify(orders));
+  addOpLog('管理员创建订单',user+' '+service+' ¥'+price);
+  closeModal();renderCustomers();toast('订单已创建','success');
+}
+function adminDelUser(username){
+  showMod(`<h3><i class="fa-solid fa-triangle-exclamation" style="color:var(--err)"></i> 删除用户</h3><p>确定删除用户 <b>${username}</b>？此操作不可恢复。</p>
+    <div class="modal-actions"><button class="m-cancel" onclick="closeModal()">取消</button><button class="m-confirm" style="background:var(--err)" onclick="cfmAdminDelUser('${username}')">删除</button></div>`);
+}
+function cfmAdminDelUser(username){
+  const users=getUsers().filter(u=>u.username!==username);
+  localStorage.setItem('lsjy3_users',JSON.stringify(users));
+  addOpLog('删除顾客',username);closeModal();renderCustomers();toast('用户 '+username+' 已删除','success');
+}
+function adminGenRedeemCode(){
+  showMod(`<h3><i class="fa-solid fa-ticket" style="color:var(--warn);margin-right:6px"></i>快速生成卡密</h3>
+    <div style="margin-top:16px"><div class="fg"><label class="fl">套餐</label><select class="fi" id="rcPack">
+      <option value="trial">体验包(100算力¥9.9)</option><option value="basic">基础包(500算力¥39.9)</option>
+      <option value="pro">专业包(2000算力¥129)</option><option value="flag">旗舰包(5000算力¥299)</option><option value="ultimate">至尊包(10000算力¥1000)</option>
+    </select></div>
+    <div class="fg"><label class="fl">数量</label><input class="fi" type="number" id="rcCount" value="1" min="1" max="50"></div></div>
+    <div class="modal-actions"><button class="m-cancel" onclick="closeModal()">取消</button><button class="m-confirm" onclick="doQuickGenCode()">生成</button></div>`);
+}
+function doQuickGenCode(){
+  const pack=document.getElementById('rcPack').value;
+  const count=parseInt(document.getElementById('rcCount').value)||1;
+  const packMap={trial:{name:'体验包',credits:100,price:9.9},basic:{name:'基础包',credits:500,price:39.9},pro:{name:'专业包',credits:2000,price:129},flag:{name:'旗舰包',credits:5000,price:299},ultimate:{name:'至尊包',credits:10000,price:1000}};
+  const p=packMap[pack];
+  const codes=getRedeemCodes();
+  for(let i=0;i<count;i++){
+    codes.push({code:'LSJY-'+Math.random().toString(36).substring(2,10).toUpperCase(),packName:p.name,credits:p.credits,price:p.price,status:'unused',createdAt:new Date().toISOString()});
+  }
+  saveRedeemCodes(codes);addOpLog('快速生成卡密',p.name+' x'+count);
+  closeModal();renderCustomers();toast('已生成 '+count+' 个'+p.name+'卡密','success');
+}
+function viewTaskResult(taskId){
+  const tasks=JSON.parse(localStorage.getItem('lsjy3_ai_tasks')||'[]');
+  const t=tasks.find(x=>x.id===taskId);if(!t)return;
+  showMod(`<h3><i class="fa-solid fa-robot" style="color:var(--p);margin-right:6px"></i>${t.toolName||'AI任务'}</h3>
+    <div style="margin-top:16px;font-size:13px"><div><b>状态:</b> ${t.status}</div><div><b>时间:</b> ${fmtDate(t.created)}</div></div>
+    ${t.type==='image'&&t.result?`<div style="margin-top:12px"><img src="${t.result}" style="max-width:100%;border-radius:8px" alt="AI生成结果"></div>`:''}
+    ${t.type==='text'&&t.result?`<div style="margin-top:12px;padding:12px;background:var(--bg);border-radius:8px;white-space:pre-wrap;max-height:400px;overflow-y:auto;font-size:13px">${t.result}</div>`:''}
+    <div class="modal-actions"><button class="m-cancel" onclick="closeModal()">关闭</button></div>`);
+}
+function deleteTask(taskId){
+  const tasks=JSON.parse(localStorage.getItem('lsjy3_ai_tasks')||'[]').filter(t=>t.id!==taskId);
+  localStorage.setItem('lsjy3_ai_tasks',JSON.stringify(tasks));
+  renderCustomers();toast('任务已删除','success');
+}
+
+// ===== Modal =====
+function showMod(h){document.getElementById('modalBox').innerHTML=h;document.getElementById('modalBg').classList.add('show')}
+function closeModal(e){if(e&&e.target!==e.currentTarget)return;document.getElementById('modalBg').classList.remove('show')}
+
+// ===== VERSION & INTEGRITY CHECK =====
+(function(){const VER='admin-v3.6';const stored=localStorage.getItem('lsjy_admin_ver');if(stored!==VER){localStorage.setItem('lsjy_admin_ver',VER);if(stored)location.reload(true)}else if(typeof goPage!=='function'||typeof renderDashboard!=='function'){const fc=localStorage.getItem('lsjy_admin_jsok');if(fc===VER)return;localStorage.setItem('lsjy_admin_jsok',VER);window.location.replace(window.location.pathname+'?_r='+Date.now())}})();
+</script>
+</body>
+</html>

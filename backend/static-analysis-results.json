@@ -1,0 +1,1346 @@
+{
+  "timestamp": "2026-06-04T18:48:33.301073",
+  "type": "static_code_analysis",
+  "security_issues": [
+    {
+      "severity": "CRITICAL",
+      "location": "前端 index.html",
+      "issue": "ARK_API_KEY 硬编码",
+      "line": 106109
+    },
+    {
+      "severity": "HIGH",
+      "location": "前端 index.html",
+      "issue": "HeyGen API Key 为占位符"
+    },
+    {
+      "severity": "HIGH",
+      "location": "前端 index.html",
+      "issue": "SMS 后端地址为占位符"
+    },
+    {
+      "severity": "HIGH",
+      "location": "前端 index.html",
+      "issue": "用户数据存储在 localStorage"
+    },
+    {
+      "severity": "CRITICAL",
+      "location": "后台 admin/index.html",
+      "issue": "ARK_API_KEY 硬编码",
+      "line": 83816
+    },
+    {
+      "severity": "CRITICAL",
+      "location": "后台 admin/index.html",
+      "issue": "管理员初始密码硬编码"
+    }
+  ],
+  "summary": {
+    "total": 100,
+    "pass": 100,
+    "fail": 0,
+    "rate": "100.0%"
+  },
+  "results": [
+    {
+      "id": "copywriter",
+      "name": "AI文案创作",
+      "module": "AI人工智能",
+      "priority": "P0",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "rewrite",
+      "name": "文案改写",
+      "module": "AI人工智能",
+      "priority": "P1",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "article",
+      "name": "AI长文写作",
+      "module": "AI人工智能",
+      "priority": "P1",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "email",
+      "name": "AI邮件生成",
+      "module": "AI人工智能",
+      "priority": "P1",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "resume",
+      "name": "AI简历生成",
+      "module": "AI人工智能",
+      "priority": "P1",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "proposal",
+      "name": "AI方案撰写",
+      "module": "AI人工智能",
+      "priority": "P1",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "poetry",
+      "name": "AI诗歌创作",
+      "module": "AI人工智能",
+      "priority": "P1",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "novel",
+      "name": "AI小说续写",
+      "module": "AI人工智能",
+      "priority": "P1",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "slogan",
+      "name": "AI广告语",
+      "module": "AI人工智能",
+      "priority": "P1",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "summarize",
+      "name": "AI摘要提取",
+      "module": "AI人工智能",
+      "priority": "P1",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "text2img",
+      "name": "AI文生图",
+      "module": "AI人工智能",
+      "priority": "P0",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "img2img",
+      "name": "AI图生图",
+      "module": "AI人工智能",
+      "priority": "P0",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "removeBg",
+      "name": "AI抠图去背",
+      "module": "AI人工智能",
+      "priority": "P1",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "upscale",
+      "name": "AI超分辨率",
+      "module": "AI人工智能",
+      "priority": "P1",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "aigc",
+      "name": "智能文生图",
+      "module": "AI人工智能",
+      "priority": "P0",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "colorize",
+      "name": "AI老照片上色",
+      "module": "AI人工智能",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "sketch",
+      "name": "AI线稿生成",
+      "module": "AI人工智能",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "voiceClone",
+      "name": "音色克隆",
+      "module": "AI人工智能",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "audioEdit",
+      "name": "AI智能修音",
+      "module": "AI人工智能",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "soundEffect",
+      "name": "AI音效生成",
+      "module": "AI人工智能",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "musicGen",
+      "name": "AI音乐生成",
+      "module": "AI人工智能",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "speech2text",
+      "name": "语音转文字",
+      "module": "AI人工智能",
+      "priority": "P0",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "audioMerge",
+      "name": "音频拼接",
+      "module": "AI人工智能",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "audioSplit",
+      "name": "音频分割",
+      "module": "AI人工智能",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "podcast",
+      "name": "播客脚本",
+      "module": "AI人工智能",
+      "priority": "P1",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "ringtone",
+      "name": "铃声制作",
+      "module": "AI人工智能",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "translater",
+      "name": "AI翻译",
+      "module": "AI人工智能",
+      "priority": "P1",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "proofread",
+      "name": "AI校对",
+      "module": "AI人工智能",
+      "priority": "P1",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "mindMap",
+      "name": "思维导图",
+      "module": "AI人工智能",
+      "priority": "P1",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "codeHelper",
+      "name": "AI代码助手",
+      "module": "AI人工智能",
+      "priority": "P1",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "report",
+      "name": "报告生成",
+      "module": "AI人工智能",
+      "priority": "P1",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "hashtag",
+      "name": "热门标签",
+      "module": "自媒体",
+      "priority": "P1",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "viralVideo",
+      "name": "爆款脚本",
+      "module": "自媒体",
+      "priority": "P1",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "commentReply",
+      "name": "评论回复",
+      "module": "自媒体",
+      "priority": "P1",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "adCopy",
+      "name": "广告文案",
+      "module": "自媒体",
+      "priority": "P1",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "liveScript",
+      "name": "直播话术",
+      "module": "自媒体",
+      "priority": "P1",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "titleGen",
+      "name": "爆款标题",
+      "module": "自媒体",
+      "priority": "P1",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "socialPost",
+      "name": "社媒文案",
+      "module": "自媒体",
+      "priority": "P1",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "brandStory",
+      "name": "品牌故事",
+      "module": "自媒体",
+      "priority": "P1",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "photoEdit",
+      "name": "AI智能修图",
+      "module": "自媒体",
+      "priority": "P1",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "avatar",
+      "name": "AI头像生成",
+      "module": "自媒体",
+      "priority": "P1",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "poster",
+      "name": "AI海报生成",
+      "module": "自媒体",
+      "priority": "P1",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "digitalHuman",
+      "name": "数字人口播",
+      "module": "自媒体",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "videoClip",
+      "name": "AI视频剪辑",
+      "module": "自媒体",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "img2video",
+      "name": "AI图生视频",
+      "module": "自媒体",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "videoParse",
+      "name": "短视频解析",
+      "module": "自媒体",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "videoSrt",
+      "name": "AI字幕生成",
+      "module": "自媒体",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "videoSum",
+      "name": "视频摘要",
+      "module": "自媒体",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "videoTag",
+      "name": "视频标签",
+      "module": "自媒体",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "videoCover",
+      "name": "封面提取",
+      "module": "自媒体",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "videoReverse",
+      "name": "视频倒放",
+      "module": "自媒体",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "videoGif",
+      "name": "视频转GIF",
+      "module": "自媒体",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "docGen",
+      "name": "智能图文表格",
+      "module": "自媒体",
+      "priority": "P1",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "pptOutline",
+      "name": "PPT大纲",
+      "module": "自媒体",
+      "priority": "P1",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "productDesc",
+      "name": "商品文案",
+      "module": "电商",
+      "priority": "P1",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "seoKeywords",
+      "name": "SEO关键词",
+      "module": "电商",
+      "priority": "P1",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "meetingNotes",
+      "name": "会议纪要",
+      "module": "电商",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "contract",
+      "name": "合同生成",
+      "module": "电商",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "qrCode",
+      "name": "二维码生成",
+      "module": "电商",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "qrParse",
+      "name": "二维码识别",
+      "module": "电商",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "shortUrl",
+      "name": "短链接生成",
+      "module": "电商",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "imgCompress",
+      "name": "图片压缩",
+      "module": "电商",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "imgFormat",
+      "name": "格式转换",
+      "module": "电商",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "imgCrop",
+      "name": "图片裁剪",
+      "module": "电商",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "imgWatermark",
+      "name": "文字水印",
+      "module": "电商",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "imgOcr",
+      "name": "OCR识别",
+      "module": "电商",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "colorPicker",
+      "name": "颜色拾取器",
+      "module": "伯雅校园",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "unitConvert",
+      "name": "单位换算",
+      "module": "伯雅校园",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "tsConvert",
+      "name": "时间戳转换",
+      "module": "伯雅校园",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "base64Code",
+      "name": "Base64编解码",
+      "module": "伯雅校园",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "jsonFormat",
+      "name": "JSON格式化",
+      "module": "伯雅校园",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "pwdGen",
+      "name": "密码生成器",
+      "module": "伯雅校园",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "ipLookup",
+      "name": "IP归属查询",
+      "module": "伯雅校园",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "weather",
+      "name": "天气查询",
+      "module": "伯雅校园",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "dailyNews",
+      "name": "每日新闻",
+      "module": "伯雅校园",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "joke",
+      "name": "笑话生成",
+      "module": "伯雅校园",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "horoscope",
+      "name": "星座运势",
+      "module": "伯雅校园",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "calendar",
+      "name": "万年历",
+      "module": "伯雅校园",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "countdown",
+      "name": "倒计时",
+      "module": "伯雅校园",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "bmiCalc",
+      "name": "BMI计算器",
+      "module": "伯雅校园",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "loanCalc",
+      "name": "贷款计算器",
+      "module": "伯雅校园",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "historyToday",
+      "name": "历史上的今天",
+      "module": "伯雅校园",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "idiomDict",
+      "name": "成语词典",
+      "module": "伯雅校园",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "excelFormula",
+      "name": "Excel公式",
+      "module": "教育",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "wordCount",
+      "name": "字数统计",
+      "module": "教育",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "diffText",
+      "name": "文本对比",
+      "module": "教育",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "mdEditor",
+      "name": "Markdown编辑器",
+      "module": "教育",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "credits",
+      "name": "算力中心",
+      "module": "教育",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "redeemCode",
+      "name": "卡密兑换",
+      "module": "教育",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "creditLogs",
+      "name": "算力记录",
+      "module": "教育",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "knowledgeBase",
+      "name": "知识库",
+      "module": "教育",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "taskCenter",
+      "name": "AI任务中心",
+      "module": "教育",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "dataBackup",
+      "name": "数据备份",
+      "module": "教育",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "dataExport",
+      "name": "数据导出",
+      "module": "教育",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "dataClean",
+      "name": "数据清理",
+      "module": "教育",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "hashGen",
+      "name": "哈希生成",
+      "module": "宠物",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "nameGen",
+      "name": "随机取名",
+      "module": "宠物",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "employeeAcct",
+      "name": "员工账号",
+      "module": "宠物",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "videoLib",
+      "name": "作品库",
+      "module": "宠物",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    },
+    {
+      "id": "accompaniment",
+      "name": "AI智能伴奏",
+      "module": "宠物",
+      "priority": "P2",
+      "status": "pass",
+      "error": "",
+      "checks": {
+        "card": true,
+        "map": true,
+        "function": true
+      }
+    }
+  ]
+}

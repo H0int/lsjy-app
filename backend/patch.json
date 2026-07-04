@@ -1,0 +1,90 @@
+{
+  "description": "罗圣纪元平台前端安全修复补丁 - 完整前端重构",
+  "version": "1.0.0",
+  "date": "2026-06-04",
+  "instructions": "请按顺序将每个补丁应用到对应文件中。所有 API Key 已从前端移除，改为后端代理调用。",
+  "prerequisites": "需要先部署 lsjy-backend 后端代理服务，并配置好环境变量",
+  "frontend_patches": [
+    {
+      "name": "移除 ARK_API_KEY 硬编码，改为后端代理",
+      "find": "const DOUBAO_CONFIG={\n  // 火山引擎方舟平台配置\n  ARK_API_KEY:'ark-0eabaec4-127a-4681-8f7f-b211742511b8-aed94',\n  ARK_BASE_URL:'https://ark.cn-beijing.volces.com/api/v3',\n  MODEL_TEXT:'doubao-seed-2-0-pro-260215',  // 豆包Seed模型（支持多模态）\n  MODEL_IMAGE:'doubao-seedream-5-0-260128', // 图片模型\n  ENABLED:true\n}",
+      "replace": "const DOUBAO_CONFIG={\n  // === 安全配置：所有 API Key 已迁移至后端代理服务 ===\n  // 前端不再存储任何 API Key，所有 AI 请求通过后端代理转发\n  // 后端地址：在下方 BACKEND_URL 配置\n  ENABLED:true\n}\n\n// === 后端代理服务配置 ===\nconst BACKEND_URL='https://your-backend.onrender.com'; // ← 替换为实际后端地址"
+    },
+    {
+      "name": "修改 HeyGen 配置为后端代理模式",
+      "find": "// === HeyGen数字人配置 ===\nconst HEYGEN_CONFIG={\n  API_KEY:'YOUR_HEYGEN_API_KEY',        // ← 替换为HeyGen API Key\n  API_URL:'https://api.heygen.com/v2',\n  ENABLED:false,                         // 设为true启用HeyGen数字人（需填入有效API Key）",
+      "replace": "// === HeyGen数字人配置 ===\n// API Key 已迁移至后端，前端通过 /api/heygen 代理调用\nconst HEYGEN_CONFIG={\n  ENABLED:true,                          // 通过后端代理启用（需后端配置 HEYGEN_API_KEY）"
+    },
+    {
+      "name": "修改 SMS 配置为后端代理模式",
+      "find": "// === 短信后端配置 ===\nconst SMS_API='https://your-sms-server.onrender.com'; // ← 替换为实际部署地址\nconst SMS_ENABLED=false;                       // 设为true启用真实短信",
+      "replace": "// === 短信后端配置 ===\n// 短信服务已集成到后端代理服务\nconst SMS_API=''; // 不再需要单独地址，统一使用 BACKEND_URL\nconst SMS_ENABLED=true;                        // 后端代理已集成短信服务"
+    },
+    {
+      "name": "移除 PAY_SECRET 硬编码",
+      "find": "PAY_SECRET:'YOUR_WPS_PAY_SECRET',     // ← 替换为WPS支付密钥",
+      "replace": "PAY_SECRET:'',  // 已迁移至后端环境变量 WPS_PAY_SECRET"
+    },
+    {
+      "name": "修改 aiGenerateText 函数为后端代理",
+      "find": "        const r=await fetch(DOUBAO_CONFIG.ARK_BASE_URL+'/responses',{\n          method:'POST',\n          headers:{'Content-Type':'application/json','Authorization':'Bearer '+DOUBAO_CONFIG.ARK_API_KEY},",
+      "replace": "        const token=localStorage.getItem('lsjy_backend_token');\n        const r=await fetch(BACKEND_URL+'/api/ai/generic',{\n          method:'POST',\n          headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},"
+    },
+    {
+      "name": "修改图片生成为后端代理",
+      "find": "      const r=await fetch(DOUBAO_CONFIG.ARK_BASE_URL+'/images/generations',{\n        method:'POST',\n        headers:{'Content-Type':'application/json','Authorization':'Bearer '+DOUBAO_CONFIG.ARK_API_KEY},",
+      "replace": "      const token=localStorage.getItem('lsjy_backend_token');\n      const r=await fetch(BACKEND_URL+'/api/ai/image',{\n        method:'POST',\n        headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},"
+    },
+    {
+      "name": "修改数字人功能为后端代理",
+      "find": "const isHeyGen=typeof HEYGEN_CONFIG!=='undefined'&&HEYGEN_CONFIG.ENABLED&&HEYGEN_CONFIG.API_KEY!=='YOUR_HEYGEN_API_KEY';",
+      "replace": "const isHeyGen=typeof HEYGEN_CONFIG!=='undefined'&&HEYGEN_CONFIG.ENABLED&&BACKEND_URL;"
+    },
+    {
+      "name": "修改短信发送为后端代理",
+      "find": "SMS_API",
+      "replace": "SMS_API"
+    },
+    {
+      "name": "添加后端代理 API 辅助函数",
+      "find": "// === HeyGen数字人配置 ===",
+      "replace": "// === 后端代理 API 辅助函数 ===\nasync function aiProxy(endpoint, body) {\n  const token = localStorage.getItem('lsjy_backend_token');\n  if (!token) return { error: '未登录，请先登录后使用 AI 功能' };\n  try {\n    const r = await fetch(BACKEND_URL + endpoint, {\n      method: 'POST',\n      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },\n      body: JSON.stringify(body),\n    });\n    const data = await r.json();\n    if (!r.ok) return { error: data.error || 'AI 服务异常' };\n    return data;\n  } catch (e) {\n    return { error: '网络连接失败，请检查网络后重试' };\n  }\n}\n\n// 短信发送（后端代理）\nasync function sendSmsCode(phone) {\n  try {\n    const r = await fetch(BACKEND_URL + '/api/sms/send', {\n      method: 'POST',\n      headers: { 'Content-Type': 'application/json' },\n      body: JSON.stringify({ phone }),\n    });\n    return await r.json();\n  } catch (e) {\n    return { error: '短信发送失败' };\n  }\n}\n\n// 短信验证（后端代理）\nasync function verifySmsCode(phone, code) {\n  try {\n    const r = await fetch(BACKEND_URL + '/api/sms/verify', {\n      method: 'POST',\n      headers: { 'Content-Type': 'application/json' },\n      body: JSON.stringify({ phone, code }),\n    });\n    return await r.json();\n  } catch (e) {\n    return { error: '验证失败' };\n  }\n}\n\n// === HeyGen数字人配置 ==="
+    }
+  ],
+  "admin_patches": [
+    {
+      "name": "移除后台管理员初始密码硬编码",
+      "find": "(function(){const u=JSON.parse(localStorage.getItem('lsjy3_users')||'[]');const ai=u.findIndex(x=>x.role==='admin');if(ai<0){u.push({username:'KF02V9',password:encryptPwd('LKZ2005430'),nickname:'管理员',",
+      "replace": "(function(){const u=JSON.parse(localStorage.getItem('lsjy3_users')||'[]');const ai=u.findIndex(x=>x.role==='admin');if(ai<0){console.warn('[安全] 管理员账号应通过后端创建，请勿使用前端硬编码密码');/* u.push({username:'',password:'',nickname:'管理员',*/"
+    },
+    {
+      "name": "移除后台 ARK_API_KEY 硬编码",
+      "find": "  ARK_API_KEY:'ark-0eabaec4-127a-4681-8f7f-b211742511b8-aed94',\n  ARK_BASE_URL:'https://ark.cn-beijing.volces.com/api/v3',",
+      "replace": "  // API Key 已迁移至后端代理服务，前端不再存储\n  ARK_API_KEY:'',  // 已移除 - 请使用 BACKEND_URL 代理调用\n  ARK_BASE_URL:'',  // 已移除 - 所有请求走后端代理"
+    },
+    {
+      "name": "修改后台 AI 调用为后端代理",
+      "find": "if(DOUBAO_CONFIG.ENABLED&&DOUBAO_CONFIG.ARK_API_KEY!=='YOUR_ARK_API_KEY'){",
+      "replace": "if(DOUBAO_CONFIG.ENABLED&&typeof BACKEND_URL!=='undefined'&&BACKEND_URL){"
+    },
+    {
+      "name": "修改后台 fetch 调用",
+      "find": "        const r=await fetch(DOUBAO_CONFIG.ARK_BASE_URL+'/responses',{\n          method:'POST',\n          headers:{'Content-Type':'application/json','Authorization':'Bearer '+DOUBAO_CONFIG.ARK_API_KEY},",
+      "replace": "        const token=localStorage.getItem('lsjy_backend_token');\n        const r=await fetch(BACKEND_URL+'/api/ai/generic',{\n          method:'POST',\n          headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},"
+    },
+    {
+      "name": "修改后台图片生成 fetch 调用",
+      "find": "      const r=await fetch(DOUBAO_CONFIG.ARK_BASE_URL+'/images/generations',{\n        method:'POST',\n        headers:{'Content-Type':'application/json','Authorization':'Bearer '+DOUBAO_CONFIG.ARK_API_KEY},",
+      "replace": "      const token=localStorage.getItem('lsjy_backend_token');\n      const r=await fetch(BACKEND_URL+'/api/ai/image',{\n        method:'POST',\n        headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},"
+    }
+  ],
+  "manual_steps": [
+    "1. 立即轮换 ARK_API_KEY（当前 Key 已泄露）",
+    "2. 部署 lsjy-backend 到 Render/Vercel",
+    "3. 配置后端 .env 环境变量",
+    "4. 将 BACKEND_URL 替换为实际后端地址",
+    "5. 应用所有补丁到前端和后台代码",
+    "6. 测试登录、AI 工具、短信等功能",
+    "7. 清理 Git 历史中的敏感信息"
+  ]
+}
