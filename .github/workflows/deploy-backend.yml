@@ -35,39 +35,69 @@ jobs:
             set -e
             echo "=== 罗圣纪元 CORS 修复部署 ==="
 
+            # 查找实际的后端和Nginx路径
+            echo "=== 探查服务器目录结构 ==="
+            ls /opt/lsjy-app/ 2>/dev/null || echo "/opt/lsjy-app/ 不存在"
+            find /opt -name "main.js" -path "*nestjs*" 2>/dev/null | head -5
+            find /opt -name "main.js" -path "*dist*" 2>/dev/null | head -5
+            ls /etc/nginx/conf.d/ 2>/dev/null || echo "nginx conf.d 不存在"
+
+            # 确定实际路径
+            BACKEND_MAIN=$(find /opt -name "main.js" -path "*dist*" 2>/dev/null | head -1)
+            NGINX_CONF=$(ls /etc/nginx/conf.d/*.conf 2>/dev/null | head -1)
+            echo "找到后端文件: $BACKEND_MAIN"
+            echo "找到Nginx配置: $NGINX_CONF"
+
+            if [ -z "$BACKEND_MAIN" ]; then
+              echo "ERROR: 找不到后端main.js！尝试pm2查找..."
+              pm2 describe lsjy-backend 2>/dev/null | grep "exec cwd\|script path" || pm2 list
+              BACKEND_MAIN="/opt/lsjy-app/backend-nestjs/dist/main.js"
+              echo "尝试使用默认路径: $BACKEND_MAIN"
+            fi
+
+            # 提取目录
+            BACKEND_DIR=$(dirname "$BACKEND_MAIN")
+            mkdir -p "$BACKEND_DIR"
+            echo "后端目录: $BACKEND_DIR"
+
             # 备份当前配置
             BACKUP_DIR="/opt/lsjy-app/backup-cors-$(date +%Y%m%d%H%M%S)"
             mkdir -p "$BACKUP_DIR"
-            cp /opt/lsjy-app/backend-nestjs/dist/main.js "$BACKUP_DIR/main.js.bak" 2>/dev/null || true
-            cp /etc/nginx/conf.d/lsjy.conf "$BACKUP_DIR/nginx-lsjy.conf.bak" 2>/dev/null || true
+            [ -f "$BACKEND_MAIN" ] && cp "$BACKEND_MAIN" "$BACKUP_DIR/main.js.bak"
+            [ -f "$NGINX_CONF" ] && cp "$NGINX_CONF" "$BACKUP_DIR/nginx-lsjy.conf.bak"
             echo "备份已保存到: $BACKUP_DIR"
 
-            # 解压部署文件（tar从仓库根目录打包，解压后路径为 deploy/ecs-live-config/...）
+            # 解压部署文件
             cd /tmp
             tar -xzf lsjy-cors-fix.tar.gz
-            ls -la /tmp/deploy/ecs-live-config/backend-nestjs/main.js
-            ls -la /tmp/deploy/ecs-live-config/nginx-lsjy-live.conf
 
             # 更新NestJS main.js（含CORS修复）
-            echo "更新后端 main.js..."
-            cp /tmp/deploy/ecs-live-config/backend-nestjs/main.js /opt/lsjy-app/backend-nestjs/dist/main.js
+            echo "更新后端 main.js -> $BACKEND_MAIN ..."
+            cp /tmp/deploy/ecs-live-config/backend-nestjs/main.js "$BACKEND_MAIN"
 
             # 更新Nginx配置（移除OPTIONS if块拦截）
-            echo "更新 Nginx 配置..."
-            cp /tmp/deploy/ecs-live-config/nginx-lsjy-live.conf /etc/nginx/conf.d/lsjy.conf
+            if [ -n "$NGINX_CONF" ]; then
+              echo "更新 Nginx 配置 -> $NGINX_CONF ..."
+              cp /tmp/deploy/ecs-live-config/nginx-lsjy-live.conf "$NGINX_CONF"
 
-            # 验证Nginx配置
-            echo "验证 Nginx 配置..."
-            nginx -t
+              # 验证Nginx配置
+              echo "验证 Nginx 配置..."
+              nginx -t
 
-            # 重启Nginx
-            echo "重启 Nginx..."
-            nginx -s reload
+              # 重启Nginx
+              echo "重启 Nginx..."
+              nginx -s reload
+            else
+              echo "WARNING: 未找到Nginx配置，跳过Nginx更新"
+            fi
 
             # 重启NestJS后端
             echo "重启 NestJS 后端 (lsjy-backend)..."
-            pm2 restart lsjy-backend || pm2 start /opt/lsjy-app/backend-nestjs/dist/main.js --name lsjy-backend --node-args="--max-old-space-size=512"
-            pm2 save
+            pm2 restart lsjy-backend 2>/dev/null || {
+              echo "pm2 restart失败，尝试start..."
+              pm2 start "$BACKEND_MAIN" --name lsjy-backend --node-args="--max-old-space-size=512" 2>/dev/null || true
+            }
+            pm2 save 2>/dev/null || true
 
             sleep 5
 
