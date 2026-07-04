@@ -13,6 +13,43 @@
       </div>
     </div>
 
+    <!-- 官方群入口 -->
+    <div class="rounded-xl p-5 mb-6 flex items-center justify-between gap-4 cursor-pointer transition-all hover:-translate-y-0.5"
+      style="background: linear-gradient(135deg, rgba(99,102,241,0.15) 0%, rgba(168,85,247,0.15) 100%); border: 1px solid rgba(99,102,241,0.3);"
+      @click="showGroupQr = true">
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style="background: linear-gradient(135deg, #6366f1, #a855f7); box-shadow: 0 0 20px rgba(99,102,241,0.4);">
+          💬
+        </div>
+        <div>
+          <div class="font-bold text-base" style="color: var(--cyber-text);">加入官方技术交流群</div>
+          <div class="text-xs mt-1" style="color: var(--cyber-text-dim);">罗圣纪元AIGC-Agent技术核心班 · 扫码加入获取最新动态</div>
+        </div>
+      </div>
+      <div class="px-4 py-2 rounded-lg text-sm font-medium text-white flex-shrink-0"
+        style="background: linear-gradient(135deg, #6366f1, #a855f7); box-shadow: 0 0 15px rgba(99,102,241,0.3);">
+        立即加入 →
+      </div>
+    </div>
+
+    <!-- 官方群二维码弹窗 -->
+    <Teleport to="body">
+      <div v-if="showGroupQr" class="fixed inset-0 z-50 flex items-center justify-center" style="background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);" @click.self="showGroupQr = false">
+        <div class="rounded-2xl p-6 max-w-sm w-full mx-4 text-center" style="background: #1a1a2e; border: 1px solid rgba(99,102,241,0.3);">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-bold text-lg" style="color: var(--cyber-text);">💬 加入官方群</h3>
+            <button @click="showGroupQr = false" class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-white transition-colors" style="background: rgba(255,255,255,0.05);">✕</button>
+          </div>
+          <div class="font-medium text-sm mb-4" style="color: var(--cyber-cyan);">罗圣纪元AIGC-Agent技术核心班✓</div>
+          <div class="rounded-xl p-4 mb-4 inline-block" style="background: white;">
+            <img src="/official-group-qrcode.jpg" alt="官方群二维码" class="w-56 h-56 object-contain" />
+          </div>
+          <p class="text-xs" style="color: var(--cyber-text-dim);">请使用微信或企业微信扫码加入</p>
+          <p class="text-xs mt-1" style="color: var(--cyber-amber);">二维码有效期至 2026年7月11日</p>
+        </div>
+      </div>
+    </Teleport>
+
     <!-- 数据卡片 -->
     <div class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
       <div v-for="card in visibleStatCards" :key="card.label" class="cyber-card rounded-xl p-4" @click="card.route && router.push(card.route)" style="cursor:pointer;">
@@ -133,6 +170,7 @@ const onlineCount = ref(0)
 let heartbeatTimer: any = null
 
 const notices = ref<any[]>([])
+const showGroupQr = ref(false)
 
 onMounted(async () => {
   // 获取热门工具
