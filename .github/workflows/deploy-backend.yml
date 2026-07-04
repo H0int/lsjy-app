@@ -42,9 +42,11 @@ jobs:
             cp /etc/nginx/conf.d/lsjy.conf "$BACKUP_DIR/nginx-lsjy.conf.bak" 2>/dev/null || true
             echo "备份已保存到: $BACKUP_DIR"
 
-            # 解压部署文件
+            # 解压部署文件（tar从仓库根目录打包，解压后路径为 deploy/ecs-live-config/...）
             cd /tmp
             tar -xzf lsjy-cors-fix.tar.gz
+            ls -la /tmp/deploy/ecs-live-config/backend-nestjs/main.js
+            ls -la /tmp/deploy/ecs-live-config/nginx-lsjy-live.conf
 
             # 更新NestJS main.js（含CORS修复）
             echo "更新后端 main.js..."
