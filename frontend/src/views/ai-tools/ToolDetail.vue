@@ -630,7 +630,13 @@ async function handleGenerateVideo() {
       resolution: videoResolution.value,
     })
 
+    if (res.data?.code !== 0) {
+      throw new Error(res.data?.message || '视频生成失败，请重试')
+    }
     generatedVideo.value = res.data.data?.videoUrl || ''
+    if (!generatedVideo.value) {
+      throw new Error('视频生成完成，但没有返回可播放的视频链接')
+    }
     lastCoinCost.value = res.data.data?.coinCost || 0
     lastDurationMs.value = res.data.data?.durationMs || 0
     lastModel.value = res.data.data?.model || tool.value.modelId

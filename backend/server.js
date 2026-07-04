@@ -2146,12 +2146,15 @@ async function generateVideoWithAI(prompt, options = {}) {
 
 // 通义万相视频生成（阿里云 - 国内）
 async function callTongyiVideoAPI(prompt, options = {}) {
-  const apiKey = CONFIG.TONGYI_VIDEO_API_KEY;
+  const apiKey = CONFIG.BAILIAN_API_KEY || CONFIG.TONGYI_VIDEO_API_KEY;
   if (!apiKey) throw new Error('通义万相 API Key 未配置，请在 .env 中配置 TONGYI_API_KEY');
 
   const baseUrl = CONFIG.TONGYI_VIDEO_BASE_URL;
+  const model = process.env.TONGYI_VIDEO_MODEL || 'wan2.7-t2v-2026-06-12';
+  const duration = Math.max(2, Math.min(Number(options.duration || 5), 15));
+  const resolution = String(options.resolution || '720p').toUpperCase();
 
-  const submitRes = await httpsRequest(baseUrl + '/services/aigc/video-generation/generation', {
+  const submitRes = await httpsRequest(baseUrl + '/services/aigc/video-generation/video-synthesis', {
     method: 'POST',
     headers: {
       'Authorization': 'Bearer ' + apiKey,
@@ -2159,11 +2162,14 @@ async function callTongyiVideoAPI(prompt, options = {}) {
       'X-DashScope-Async': 'enable'
     }
   }, {
-    model: 'video-generation-v1',
+    model,
     input: { prompt: prompt },
     parameters: {
-      duration: options.duration || 4,
-      resolution: options.resolution || '720p'
+      duration,
+      resolution,
+      ratio: options.ratio || '16:9',
+      prompt_extend: true,
+      watermark: false,
     }
   });
 
@@ -2185,7 +2191,7 @@ async function callTongyiVideoAPI(prompt, options = {}) {
     if (status === 'SUCCEEDED') {
       const videoUrl = pollRes.data?.output?.video_url;
       if (!videoUrl) throw new Error('通义万相 API 未返回视频 URL');
-      return { videoUrl, model: 'video-generation-v1', prompt, durationMs: (i + 1) * 5000 };
+      return { videoUrl, model, prompt, durationMs: (i + 1) * 5000 };
     } else if (status === 'FAILED') {
       throw new Error('通义万相视频生成失败：' + (pollRes.data?.output?.message || '未知错误'));
     }
