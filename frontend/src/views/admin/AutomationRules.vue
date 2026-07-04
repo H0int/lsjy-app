@@ -152,7 +152,7 @@ const filteredRules = computed(() => {
 async function fetchData() {
   try {
     const res = await adminApi.getAutomationRules()
-    list.value = res.data || []
+    list.value = res.data?.items || res.data || []
   } catch (e) {
     console.error('获取自动化规则失败', e)
     list.value = []

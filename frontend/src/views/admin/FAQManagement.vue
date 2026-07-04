@@ -93,7 +93,7 @@ function getCategoryCount(cat: string) { return list.value.filter(i => i.categor
 async function fetchData() {
   try {
     const res = await adminApi.getFAQs()
-    list.value = res.data || []
+    list.value = res.data?.items || res.data || []
   } catch (e) {
     console.error('获取FAQ列表失败', e)
     list.value = []

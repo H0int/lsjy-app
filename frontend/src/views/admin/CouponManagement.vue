@@ -113,7 +113,7 @@ const filteredCoupons = computed(() => {
 async function fetchData() {
   try {
     const res = await adminApi.getCoupons()
-    list.value = res.data || []
+    list.value = res.data?.items || res.data || []
   } catch (e) {
     console.error('获取优惠券列表失败', e)
     list.value = []

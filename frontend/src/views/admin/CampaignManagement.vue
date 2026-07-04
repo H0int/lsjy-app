@@ -81,7 +81,7 @@ function campaignStatusLabel(s: string) { return { draft: '草稿', active: '进
 
 async function fetchData() {
   const res = await adminApi.getCampaigns()
-  list.value = res.data
+  list.value = res.data?.items || res.data || []
 }
 
 async function handleActivate(item: Campaign) {

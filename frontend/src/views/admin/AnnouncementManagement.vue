@@ -95,7 +95,7 @@ function scopeLabel(s: string) { return { all: '全部用户', personal: '个人
 async function fetchData() {
   try {
     const res = await adminApi.getAnnouncements()
-    list.value = res.data || []
+    list.value = res.data?.items || res.data || []
   } catch (e) {
     console.error('获取公告列表失败', e)
     list.value = []

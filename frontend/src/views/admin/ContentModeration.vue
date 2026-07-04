@@ -123,7 +123,7 @@ function updateStats() {
 async function fetchData() {
   try {
     const res = await adminApi.getContentModerations()
-    list.value = res.data || []
+    list.value = res.data?.items || res.data || []
     updateStats()
   } catch (e) {
     console.error('获取审核内容失败', e)
