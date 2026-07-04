@@ -578,6 +578,115 @@ const aiToolsStore = [
   { id: 180, name: '错题分析师', icon: '🧠', toolType: 'text', categoryId: 8, status: 'active', description: '学习方法专业工具', systemPrompt: "你是专业的错题分析师，专注于学习方法领域服务。请根据用户需求提供专业、精准、可落地的回答。", usageCount: 174, coinCost: 1, subCategory: '学习方法' },
 ];
 
+const extraAiTools = [
+  { id: 181, name: '宠物病症初筛助手', icon: '🐾', toolType: 'text', categoryId: 5, status: 'active', subCategory: '宠物健康', coinCost: 2, usageCount: 238 },
+  { id: 182, name: '猫咪喂养配餐师', icon: '🐱', toolType: 'text', categoryId: 5, status: 'active', subCategory: '宠物喂养', coinCost: 2, usageCount: 286 },
+  { id: 183, name: '狗狗训练计划师', icon: '🐶', toolType: 'text', categoryId: 5, status: 'active', subCategory: '宠物训练', coinCost: 2, usageCount: 254 },
+  { id: 184, name: '宠物用品选购顾问', icon: '🛍️', toolType: 'text', categoryId: 5, status: 'active', subCategory: '宠物用品', coinCost: 1, usageCount: 199 },
+  { id: 185, name: '宠物行为分析师', icon: '🔍', toolType: 'analysis', categoryId: 5, status: 'active', subCategory: '行为纠正', coinCost: 2, usageCount: 221 },
+  { id: 186, name: '宠物绝育护理助手', icon: '🏥', toolType: 'text', categoryId: 5, status: 'active', subCategory: '术后护理', coinCost: 2, usageCount: 167 },
+  { id: 187, name: '宠物店经营顾问', icon: '🏪', toolType: 'text', categoryId: 5, status: 'active', subCategory: '宠物商业', coinCost: 3, usageCount: 143 },
+  { id: 188, name: '宠物短视频脚本师', icon: '🎬', toolType: 'text', categoryId: 5, status: 'active', subCategory: '宠物内容', coinCost: 2, usageCount: 214 },
+  { id: 189, name: '校园活动策划师', icon: '🏫', toolType: 'text', categoryId: 6, status: 'active', subCategory: '校园活动', coinCost: 2, usageCount: 231 },
+  { id: 190, name: '社团招新文案师', icon: '📣', toolType: 'text', categoryId: 6, status: 'active', subCategory: '社团运营', coinCost: 1, usageCount: 203 },
+  { id: 191, name: '校园安全预案师', icon: '🛡️', toolType: 'text', categoryId: 6, status: 'active', subCategory: '校园安全', coinCost: 2, usageCount: 156 },
+  { id: 192, name: '学生职业启蒙师', icon: '🧭', toolType: 'text', categoryId: 6, status: 'active', subCategory: '职业启蒙', coinCost: 2, usageCount: 244 },
+  { id: 193, name: '校园通知润色官', icon: '📌', toolType: 'text', categoryId: 6, status: 'active', subCategory: '校园公文', coinCost: 1, usageCount: 286 },
+  { id: 194, name: '班级管理助手', icon: '👥', toolType: 'text', categoryId: 6, status: 'active', subCategory: '班级管理', coinCost: 2, usageCount: 267 },
+  { id: 195, name: '校园心理疏导助手', icon: '🌱', toolType: 'text', categoryId: 6, status: 'active', subCategory: '心理支持', coinCost: 2, usageCount: 188 },
+  { id: 196, name: '本地生活团购策划师', icon: '🏬', toolType: 'text', categoryId: 7, status: 'active', subCategory: '本地生活', coinCost: 3, usageCount: 312 },
+  { id: 197, name: '门店引流方案师', icon: '📍', toolType: 'text', categoryId: 7, status: 'active', subCategory: '门店引流', coinCost: 3, usageCount: 336 },
+  { id: 198, name: '私域成交话术师', icon: '💬', toolType: 'text', categoryId: 7, status: 'active', subCategory: '私域成交', coinCost: 2, usageCount: 301 },
+  { id: 199, name: '差评回复处理师', icon: '🧯', toolType: 'text', categoryId: 7, status: 'active', subCategory: '客服售后', coinCost: 2, usageCount: 275 },
+  { id: 200, name: '商品标题优化师', icon: '🏷️', toolType: 'text', categoryId: 7, status: 'active', subCategory: '商品优化', coinCost: 2, usageCount: 354 },
+  { id: 201, name: '知识库问答设计师', icon: '🧠', toolType: 'text', categoryId: 4, status: 'active', subCategory: '知识库', coinCost: 3, usageCount: 198 },
+  { id: 202, name: '工作流拆解师', icon: '⚙️', toolType: 'analysis', categoryId: 4, status: 'active', subCategory: '效率自动化', coinCost: 3, usageCount: 223 },
+  { id: 203, name: '合同条款审阅助手', icon: '📑', toolType: 'text', categoryId: 4, status: 'active', subCategory: '合规法务', coinCost: 3, usageCount: 176 },
+  { id: 204, name: '财务报表解读师', icon: '📈', toolType: 'analysis', categoryId: 4, status: 'active', subCategory: '财务分析', coinCost: 3, usageCount: 241 },
+  { id: 205, name: '商业计划书打磨师', icon: '🚀', toolType: 'text', categoryId: 4, status: 'active', subCategory: '商业策划', coinCost: 3, usageCount: 219 },
+];
+
+const toolDomainProfiles = [
+  { test: /宠物|猫|狗|动物/, pillar: '宠物', audience: '宠物主人、宠物店、宠物内容创作者', scenario: '喂养、训练、护理、门店经营和宠物内容运营' },
+  { test: /校园|社团|学生|班级|教务/, pillar: '伯雅校园', audience: '学生、老师、班主任、校园运营人员', scenario: '校园通知、活动策划、学习支持、班级管理和安全预案' },
+  { test: /电商|商品|店铺|门店|团购|成交|差评|标题|直播|带货|供应链|私域/, pillar: '电商', audience: '商家、运营、客服、主播和本地生活门店', scenario: '店铺增长、商品优化、直播成交、私域转化和售后处理' },
+  { test: /课程|学习|考试|教案|教学|学生|英语|数学|语文|刷题|记忆/, pillar: '教育', audience: '老师、学生、家长、培训机构和课程运营者', scenario: '课程设计、备课出题、学习规划、考试复盘和能力提升' },
+  { test: /文案|抖音|小红书|公众号|短视频|脚本|直播|粉丝|热点|选题|封面|剪辑|Vlog/, pillar: '自媒体', audience: '自媒体博主、短视频团队、直播团队和品牌运营', scenario: '选题策划、脚本创作、账号诊断、内容发布和变现增长' },
+];
+
+function resolveToolProfile(tool) {
+  const text = `${tool.name || ''} ${tool.description || ''} ${tool.subCategory || ''}`;
+  return toolDomainProfiles.find(p => p.test.test(text)) || {
+    pillar: 'AI效率',
+    audience: '企业团队、创业者、运营人员和个人用户',
+    scenario: '问答咨询、资料整理、方案生成、数据分析和办公提效'
+  };
+}
+
+function buildToolExamples(tool, profile) {
+  const name = tool.name;
+  const scene = profile.scenario;
+  return [
+    `我是${profile.audience.split('、')[0]}，请用${name}帮我解决一个具体问题：目标、现状、预算和限制如下……`,
+    `请围绕“${scene}”给我一份可直接执行的方案，包含步骤、话术、注意事项和复盘指标。`,
+    `请先问我3个关键信息，再用${name}输出一版专业结果。`
+  ];
+}
+
+function refineTool(tool) {
+  const profile = resolveToolProfile(tool);
+  const sub = tool.subCategory || profile.scenario;
+  const description = `${profile.pillar}·${sub}专用工具，适合${profile.audience}处理${profile.scenario}，输出结构化、可执行、可复盘的方案。`;
+  const systemPrompt = `你是「${tool.name}」，服务于罗圣纪元 AI 工具中心的${profile.pillar}板块。你的服务对象是${profile.audience}，核心场景是${profile.scenario}。回答必须精细化：先判断用户目标和条件，再输出可直接使用的结果；如果信息不足，先列出需要补充的问题；输出要包含步骤、模板、示例、风险提醒和复盘指标；禁止空泛套话，禁止只给概念。`;
+  return Object.assign(tool, {
+    isFree: tool.isFree ?? false,
+    provider: tool.provider || 'doubao',
+    modelId: tool.modelId || (tool.toolType === 'image' ? CONFIG.JIMENG_MODEL : CONFIG.DOUBAO_MODEL),
+    inputType: tool.inputType || (tool.toolType === 'image' ? 'prompt' : 'text'),
+    outputType: tool.outputType || (tool.toolType === 'image' ? 'image' : tool.toolType === 'analysis' ? 'report' : 'text'),
+    freeDailyLimit: tool.freeDailyLimit || 0,
+    sortOrder: tool.sortOrder || tool.id,
+    slug: tool.slug || `ai-tool-${tool.id}`,
+    fineDetail: `${tool.name}不是通用聊天入口，而是面向“${sub}”的专用工作台。它会把用户输入拆成目标、对象、场景、限制、执行步骤和复盘指标，尽量给出可复制的话术、表格、清单或方案。`,
+    description: /专业工具$/.test(tool.description || '') || !(tool.description || '').includes('适合') ? description : tool.description,
+    systemPrompt: /专业、精准、可落地/.test(tool.systemPrompt || '') ? systemPrompt : (tool.systemPrompt || systemPrompt),
+    guideTitle: `${tool.name}使用指南`,
+    scenarios: [
+      `${sub}方案生成`,
+      `${profile.pillar}场景问题诊断`,
+      `话术、模板、清单和流程设计`,
+      `结果复盘与优化建议`
+    ],
+    inputTips: [
+      '说明你的目标、对象、平台或使用场景',
+      '补充预算、时间、人力、限制条件',
+      '给出已有素材、数据、样例或参考风格',
+      '如果要生成文案或方案，写清语气、长度和交付格式'
+    ],
+    examplePrompts: buildToolExamples(tool, profile),
+    outputStructure: [
+      '问题判断：先明确当前任务类型和关键约束',
+      '执行方案：给出步骤、模板、话术或表格',
+      '注意事项：列出常见坑位和规避方式',
+      '复盘指标：给出判断效果的数字或检查项'
+    ],
+    workflow: [
+      '填写需求',
+      '补充关键条件',
+      '生成初稿',
+      '按建议修改',
+      '落地执行并复盘'
+    ],
+    audience: profile.audience,
+    scenarioTag: profile.scenario,
+  });
+}
+
+extraAiTools.forEach(tool => {
+  if (!aiToolsStore.some(item => item.id === tool.id)) aiToolsStore.push(tool);
+});
+aiToolsStore.forEach(refineTool);
+
 // ===== 10 AI员工 Agent 定义 =====
 const agentsStore = [
   {

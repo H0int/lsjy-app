@@ -38,6 +38,68 @@
         </div>
       </div>
 
+      <!-- 精细化工具说明 -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div class="cyber-card p-5">
+          <h2 class="font-bold mb-3" style="color: var(--cyber-text);">
+            <span style="color: var(--cyber-cyan);">▍</span>{{ tool.guideTitle || '工具使用指南' }}
+          </h2>
+          <p class="text-sm leading-relaxed mb-4" style="color: var(--cyber-text-dim);">
+            {{ tool.fineDetail || tool.description }}
+          </p>
+          <div class="flex flex-wrap gap-2">
+            <span v-if="tool.audience" class="detail-pill">适合：{{ tool.audience }}</span>
+            <span v-if="tool.scenarioTag" class="detail-pill">场景：{{ tool.scenarioTag }}</span>
+          </div>
+        </div>
+
+        <div class="cyber-card p-5">
+          <h2 class="font-bold mb-3" style="color: var(--cyber-text);">
+            <span style="color: var(--cyber-cyan);">▍</span>适用场景
+          </h2>
+          <div class="grid grid-cols-1 gap-2">
+            <div v-for="item in tool.scenarios || []" :key="item" class="detail-row">
+              <span>✓</span><span>{{ item }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="cyber-card p-5">
+          <h3 class="font-bold mb-3" style="color: var(--cyber-text);">输入建议</h3>
+          <ul class="space-y-2">
+            <li v-for="item in tool.inputTips || []" :key="item" class="detail-li">{{ item }}</li>
+          </ul>
+        </div>
+        <div class="cyber-card p-5">
+          <h3 class="font-bold mb-3" style="color: var(--cyber-text);">输出结构</h3>
+          <ul class="space-y-2">
+            <li v-for="item in tool.outputStructure || []" :key="item" class="detail-li">{{ item }}</li>
+          </ul>
+        </div>
+        <div class="cyber-card p-5">
+          <h3 class="font-bold mb-3" style="color: var(--cyber-text);">使用流程</h3>
+          <div class="flex flex-wrap gap-2">
+            <span v-for="(item, index) in tool.workflow || []" :key="item" class="detail-step">
+              {{ index + 1 }}. {{ item }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="tool.examplePrompts?.length" class="cyber-card p-5 mb-6">
+        <h2 class="font-bold mb-3" style="color: var(--cyber-text);">
+          <span style="color: var(--cyber-cyan);">▍</span>示例提问
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <button v-for="item in tool.examplePrompts" :key="item" @click="inputContent = item"
+            class="example-prompt text-left">
+            {{ item }}
+          </button>
+        </div>
+      </div>
+
       <!-- 工具使用界面 -->
       <div class="cyber-card p-6">
         <h2 class="font-bold text-lg mb-4" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">
@@ -521,3 +583,72 @@ onMounted(async () => {
   }
 })
 </script>
+
+<style scoped>
+.detail-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--cyber-cyan);
+  background: rgba(0, 240, 255, 0.08);
+  border: 1px solid rgba(0, 240, 255, 0.18);
+}
+.detail-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--cyber-text-dim);
+  background: rgba(0, 240, 255, 0.04);
+  border: 1px solid rgba(0, 240, 255, 0.08);
+}
+.detail-row span:first-child {
+  color: var(--cyber-green);
+}
+.detail-li {
+  position: relative;
+  padding-left: 14px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--cyber-text-dim);
+}
+.detail-li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 10px;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--cyber-cyan);
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.45);
+}
+.detail-step {
+  padding: 6px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--cyber-text);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--cyber-border);
+}
+.example-prompt {
+  min-height: 92px;
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--cyber-text-dim);
+  background: rgba(0, 240, 255, 0.04);
+  border: 1px solid rgba(0, 240, 255, 0.12);
+  transition: all .18s ease;
+}
+.example-prompt:hover {
+  color: var(--cyber-cyan);
+  border-color: rgba(0, 240, 255, 0.35);
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.12);
+}
+</style>

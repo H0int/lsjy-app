@@ -115,6 +115,16 @@ export interface Tool {
   sortOrder: number
   status: 'active' | 'maintenance' | 'disabled'
   createdAt: string
+  subCategory?: string
+  fineDetail?: string
+  guideTitle?: string
+  scenarios?: string[]
+  inputTips?: string[]
+  examplePrompts?: string[]
+  outputStructure?: string[]
+  workflow?: string[]
+  audience?: string
+  scenarioTag?: string
 }
 
 // ===== 圣力交易记录 =====
