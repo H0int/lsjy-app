@@ -412,6 +412,46 @@ const aiHistoryStore = [
   { id: 2, userId: 1, toolId: 2, toolName: '文案创作', input: '帮我写一段产品介绍', output: '这是一个划时代的产品...', model: 'deepseek', tokens: 350, createdAt: '2026-06-14T09:30:00Z' },
 ];
 
+function isRealAiHistory(record) {
+  return record?.source === 'live-generation' || record?.source === 'live-chat' || Number(record?.id) > 100;
+}
+
+function getTodayStart() {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
+function getRealToolUsageCount(toolId) {
+  return aiHistoryStore.filter(h => isRealAiHistory(h) && Number(h.toolId) === Number(toolId)).length;
+}
+
+function getRealToolUsageToday(toolId, userId) {
+  const todayStart = getTodayStart();
+  return aiHistoryStore.filter(h =>
+    isRealAiHistory(h) &&
+    Number(h.toolId) === Number(toolId) &&
+    (!userId || Number(h.userId) === Number(userId)) &&
+    new Date(h.createdAt || 0).getTime() >= todayStart
+  ).length;
+}
+
+function withRealUsage(tool) {
+  return { ...tool, usageCount: getRealToolUsageCount(tool.id), seedUsageCount: tool.usageCount || 0 };
+}
+
+function addAiHistoryRecord(record) {
+  const finalRecord = {
+    id: nextId(),
+    source: 'live-generation',
+    status: 'completed',
+    createdAt: new Date().toISOString(),
+    ...record,
+  };
+  aiHistoryStore.unshift(finalRecord);
+  return finalRecord;
+}
+
 const aiToolsStore = [
   { id: 1, name: '罗圣AI智能体', icon: '🤖', toolType: 'text', categoryId: 4, status: 'active', description: '全能AI助手，支持多轮对话、问答、咨询', isFree: false, systemPrompt: "你是\"罗圣AI智能体\"，由祁阳市罗圣纪元互联网科技有限责任公司开发。全能型AI助手，能回答各类问题。创始人是罗凯中。回复准确、专业、友好。", usageCount: 1256, coinCost: 1, subCategory: '对话聊天' },
   { id: 2, name: '文案创作大师', icon: '✍️', toolType: 'text', categoryId: 1, status: 'active', description: '营销文案、宣传稿、社交媒体内容创作', isFree: false, systemPrompt: "你是专业营销文案创作大师，擅长撰写营销文案、宣传稿、广告语。输出有创意、有感染力、能转化。", usageCount: 890, coinCost: 2, subCategory: '文案撰写' },
@@ -3084,8 +3124,11 @@ app.post('/api/v1/ai/tools/:toolId/chat', authCheck, async (req, res) => {
     aiHistoryStore.unshift({
       id: nextId(), userId, toolId: Number(toolId),
       toolName: aiToolsStore.find(t => t.id === Number(toolId))?.name || '未知工具',
+      source: 'live-chat',
+      requestId: `chat-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
       input: lastMsg?.content || '', output: result.content,
       model: result.model || model || 'default', tokens: result.usage?.totalTokens || 0,
+      coinCost: CHAT_COIN_COST,
       createdAt: new Date().toISOString(),
     });
     res.json({
@@ -3122,9 +3165,56 @@ app.post('/api/v1/ai/tools/:id/call', authCheck, async (req, res) => {
   log(`工具调用: ${tool.name}, input=${input?.slice(0, 50) || ''}`);
   try {
     if (tool.toolType === 'image') {
-      res.json({
+      const userId = req.user?.id || 1;
+      const cost = tool.coinCost || 10;
+      const balance = getUserCoins(userId);
+      if (balance < cost) {
+        return res.status(402).json({ code: 402, message: `圣力不足，当前余额${balance}，本次需要${cost}圣力。请前往个人中心充值。`, data: { balance, cost } });
+      }
+      const startMs = Date.now();
+      const prompt = input || params?.prompt || '';
+      if (!prompt) return res.status(400).json({ code: 400, message: '请提供图片描述', data: null });
+      const parsedSize = parseImageSize(params?.size, params?.width, params?.height);
+      const imgResult = await generateImageWithAI(prompt, {
+        width: parsedSize.width,
+        height: parsedSize.height,
+        style: params?.style || 'auto',
+        count: params?.count || 1,
+        quality: params?.quality || 'standard',
+      });
+      const deduct = deductCoins(userId, cost);
+      const durationMs = Date.now() - startMs;
+      const record = addAiHistoryRecord({
+        userId,
+        toolId: tool.id,
+        toolName: tool.name,
+        requestId: `img-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+        input: prompt,
+        inputText: prompt,
+        output: imgResult.urls.join('\n'),
+        outputText: `生成图片 ${imgResult.urls.length} 张`,
+        outputUrl: imgResult.urls[0] || '',
+        outputUrls: imgResult.urls,
+        model: imgResult.model,
+        coinCost: cost,
+        durationMs,
+        metadata: { width: imgResult.width, height: imgResult.height, quality: params?.quality || 'standard', count: imgResult.urls.length },
+      });
+      return res.json({
         code: 0, message: 'success',
-        data: { imageUrl: `https://placeholder.lsjyapp.cn/ai-generated/${Date.now()}.png`, model: 'jimeng', coinCost: tool.coinCost },
+        data: {
+          imageUrl: imgResult.urls[0] || '',
+          urls: imgResult.urls,
+          images: imgResult.urls.map(url => ({ url })),
+          imageUrls: imgResult.urls,
+          model: imgResult.model,
+          coinCost: cost,
+          balance: deduct.balance,
+          durationMs,
+          callRecordId: record.id,
+          requestId: record.requestId,
+          createdAt: record.createdAt,
+        },
       });
     } else {
       const result = await callAI([{ role: 'user', content: input || JSON.stringify(params || {}) }], { systemPrompt: tool.systemPrompt || CONFIG.SYSTEM_PROMPT, toolId: tool.id, toolName: tool.name });
@@ -3160,7 +3250,7 @@ app.get('/api/v1/agents/:id', (req, res) => {
 // AI调用历史
 app.get('/api/v1/ai/history', authCheck, (req, res) => {
   const { page, pageSize, toolId, toolName } = req.query;
-  let list = [...aiHistoryStore];
+  let list = aiHistoryStore.filter(isRealAiHistory);
   if (toolId) list = list.filter(h => h.toolId === Number(toolId));
   if (toolName) list = list.filter(h => h.toolName.includes(toolName));
   res.json({ code: 0, message: 'success', data: paginate(list, page, pageSize) });
@@ -3173,10 +3263,16 @@ function normalizeAiRecord(record) {
     userId: record.userId || 1,
     toolId: record.toolId,
     tool: tool || { id: record.toolId, name: record.toolName || 'AI工具', icon: '🤖' },
-    requestId: record.requestId || `mock-${record.id}`,
+    requestId: record.requestId || `record-${record.id}`,
     inputText: record.inputText || record.input || '',
     outputText: record.outputText || record.output || '',
+    outputUrl: record.outputUrl || '',
+    outputUrls: record.outputUrls || (record.outputUrl ? [record.outputUrl] : []),
+    model: record.model || '',
     coinCost: record.coinCost || tool?.coinCost || 0,
+    durationMs: record.durationMs || 0,
+    metadata: record.metadata || {},
+    source: record.source || '',
     status: record.status || 'completed',
     isFavorite: record.isFavorite ? 1 : 0,
     createdAt: record.createdAt || new Date().toISOString(),
@@ -3185,13 +3281,13 @@ function normalizeAiRecord(record) {
 
 app.get('/api/v1/ai/works', authCheck, (req, res) => {
   const { page, pageSize } = req.query;
-  const list = aiHistoryStore.map(normalizeAiRecord);
+  const list = aiHistoryStore.filter(isRealAiHistory).map(normalizeAiRecord);
   res.json({ code: 0, message: 'success', data: paginate(list, page, pageSize) });
 });
 
 app.get('/api/v1/ai/favorites', authCheck, (req, res) => {
   const { page, pageSize } = req.query;
-  const list = aiHistoryStore.filter(h => h.isFavorite).map(normalizeAiRecord);
+  const list = aiHistoryStore.filter(h => isRealAiHistory(h) && h.isFavorite).map(normalizeAiRecord);
   res.json({ code: 0, message: 'success', data: paginate(list, page, pageSize) });
 });
 
@@ -3206,9 +3302,11 @@ app.post('/api/v1/ai/history/:id/favorite', authCheck, (req, res) => {
 app.get('/api/v1/ai/quota/:toolId', authCheck, (req, res) => {
   const tool = aiToolsStore.find(t => t.id === Number(req.params.toolId));
   if (!tool) return res.status(404).json({ code: 404, message: '工具不存在', data: null });
+  const dailyLimit = tool.freeDailyLimit || 50;
+  const usedToday = getRealToolUsageToday(tool.id, req.user?.id || 1);
   res.json({
     code: 0, message: 'success',
-    data: { toolId: tool.id, toolName: tool.name, dailyLimit: 50, usedToday: 12, remaining: 38, coinCost: tool.coinCost, isFree: tool.isFree },
+    data: { toolId: tool.id, toolName: tool.name, dailyLimit, usedToday, remaining: Math.max(dailyLimit - usedToday, 0), coinCost: tool.coinCost, isFree: tool.isFree },
   });
 });
 
@@ -3223,6 +3321,7 @@ app.post('/api/v1/ai/tools/:id/generate', authCheck, async (req, res) => {
 
   const userId = req.user?.id || 1;
   const IMAGE_COIN_COST = 10;
+  const startMs = Date.now();
 
   log(`收到图片生成请求: toolId=${req.params.id}, userId=${userId}, prompt=${prompt.slice(0, 50)}...`);
 
@@ -3275,6 +3374,30 @@ app.post('/api/v1/ai/tools/:id/generate', authCheck, async (req, res) => {
 
   // 扣费（仅在成功时扣费）
   const deduct = deductCoins(userId, IMAGE_COIN_COST);
+  const durationMs = Date.now() - startMs;
+  const createdAt = new Date().toISOString();
+  const record = addAiHistoryRecord({
+    userId,
+    toolId: tool.id,
+    toolName: tool.name,
+    requestId: `img-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+    input: prompt,
+    inputText: prompt,
+    output: imgResult.urls.join('\n'),
+    outputText: `生成图片 ${imgResult.urls.length} 张`,
+    outputUrl: imgResult.urls[0] || '',
+    outputUrls: imgResult.urls,
+    model: imgResult.model,
+    coinCost: IMAGE_COIN_COST,
+    durationMs,
+    metadata: {
+      width: imgResult.width || parseImageSize(size, width, height).width,
+      height: imgResult.height || parseImageSize(size, width, height).height,
+      quality: quality || 'standard',
+      count: imgResult.urls.length,
+    },
+    createdAt,
+  });
 
   res.json({
     code: 0,
@@ -3290,8 +3413,10 @@ app.post('/api/v1/ai/tools/:id/generate', authCheck, async (req, res) => {
       quality: quality || 'standard',
       coinCost: IMAGE_COIN_COST,
       balance: deduct.balance,
-      durationMs: 3000,
-      createdAt: new Date().toISOString(),
+      durationMs,
+      callRecordId: record.id,
+      requestId: record.requestId,
+      createdAt,
     },
   });
 });
@@ -3373,12 +3498,35 @@ app.get('/api/v1/ai/video/tasks/:taskId', authCheck, async (req, res) => {
     const result = await getTongyiVideoTaskResult(taskId);
     if (result.status === 'SUCCEEDED') {
       let balance = getUserCoins(userId);
+      let record = null;
       if (taskMeta && !taskMeta.charged) {
         const deduct = deductCoins(userId, 20);
         taskMeta.charged = true;
         taskMeta.videoUrl = result.videoUrl;
         taskMeta.completedAt = Date.now();
         balance = deduct.balance;
+        record = addAiHistoryRecord({
+          userId,
+          toolId: taskMeta.toolId,
+          toolName: aiToolsStore.find(t => t.id === Number(taskMeta.toolId))?.name || 'AI视频生成',
+          requestId: `vid-${taskId}`,
+          input: taskMeta.prompt,
+          inputText: taskMeta.prompt,
+          output: result.videoUrl,
+          outputText: '生成视频 1 条',
+          outputUrl: result.videoUrl,
+          model: taskMeta.model,
+          coinCost: 20,
+          durationMs: taskMeta.createdAt ? Date.now() - taskMeta.createdAt : 0,
+          metadata: {
+            taskId,
+            duration: taskMeta.duration,
+            resolution: taskMeta.resolution,
+          },
+          createdAt: new Date().toISOString(),
+        });
+        taskMeta.callRecordId = record.id;
+        taskMeta.requestId = record.requestId;
       }
       return res.json({
         code: 0,
@@ -3394,6 +3542,8 @@ app.get('/api/v1/ai/video/tasks/:taskId', authCheck, async (req, res) => {
           coinCost: taskMeta?.charged ? 20 : 0,
           balance,
           durationMs: taskMeta?.createdAt ? Date.now() - taskMeta.createdAt : 0,
+          callRecordId: record?.id || taskMeta?.callRecordId || null,
+          requestId: record?.requestId || taskMeta?.requestId || `vid-${taskId}`,
           createdAt: new Date().toISOString(),
         },
       });
@@ -3598,9 +3748,9 @@ app.get('/api/v1/ai/tools', (req, res) => {
   const agentTools = agentsStore.map(a => ({
     id: a.id, name: a.name, toolType: 'agent', categoryId: 4, status: a.status,
     description: a.description, isFree: false, coinCost: a.coinCost,
-    usageCount: 0, icon: a.icon, agentCategory: a.category, isAgent: true, subCategory: a.subCategory || ''
+    usageCount: getRealToolUsageCount(a.id), icon: a.icon, agentCategory: a.category, isAgent: true, subCategory: a.subCategory || ''
   }));
-  let list = [...aiToolsStore, ...agentTools];
+  let list = [...aiToolsStore.map(withRealUsage), ...agentTools];
   if (status) list = list.filter(t => t.status === status);
   res.json({ code: 0, message: 'success', data: paginate(list, page, pageSize) });
 });
@@ -3616,7 +3766,7 @@ app.get('/api/v1/ai/tools/:id', (req, res) => {
     }
   }
   if (!tool) return res.status(404).json({ code: 404, message: '工具不存在', data: null });
-  res.json({ code: 0, message: 'success', data: tool });
+  res.json({ code: 0, message: 'success', data: withRealUsage(tool) });
 });
 
 // 更新工具状态
