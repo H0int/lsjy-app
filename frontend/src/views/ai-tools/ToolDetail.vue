@@ -160,6 +160,18 @@
         <!-- ===== 图像生成模式 ===== -->
         <template v-else-if="isImageTool">
           <div class="space-y-4">
+            <div class="flex items-center justify-between gap-3 flex-wrap p-3 rounded-xl"
+              style="background: rgba(255,0,255,0.05); border: 1px solid rgba(255,0,255,0.16);">
+              <div>
+                <div class="font-bold text-sm" style="color: var(--cyber-text);">当前：AI文生图</div>
+                <div class="text-xs mt-0.5" style="color: var(--cyber-text-dim);">需要动态画面时，可切换到 AI视频生成。</div>
+              </div>
+              <router-link to="/tools/50"
+                class="px-3 py-1.5 rounded-lg text-sm font-medium"
+                style="background: rgba(0,240,255,0.1); color: var(--cyber-cyan); border: 1px solid rgba(0,240,255,0.25);">
+                🎬 去生成视频
+              </router-link>
+            </div>
             <!-- Prompt输入 -->
             <div>
               <label class="block text-sm font-medium mb-2" style="color: var(--cyber-text-dim);">画面描述</label>
@@ -273,6 +285,18 @@
         <!-- ===== 视频生成模式 ===== -->
         <template v-else-if="isVideoTool">
           <div class="space-y-4">
+            <div class="flex items-center justify-between gap-3 flex-wrap p-3 rounded-xl"
+              style="background: rgba(0,240,255,0.05); border: 1px solid rgba(0,240,255,0.16);">
+              <div>
+                <div class="font-bold text-sm" style="color: var(--cyber-text);">当前：AI视频生成</div>
+                <div class="text-xs mt-0.5" style="color: var(--cyber-text-dim);">输入视频描述，选择时长和分辨率后开始生成。</div>
+              </div>
+              <router-link to="/tools/3"
+                class="px-3 py-1.5 rounded-lg text-sm font-medium"
+                style="background: rgba(255,0,255,0.1); color: var(--cyber-magenta); border: 1px solid rgba(255,0,255,0.25);">
+                🎨 去生成图片
+              </router-link>
+            </div>
             <!-- Prompt输入 -->
             <div>
               <label class="block text-sm font-medium mb-2" style="color: var(--cyber-text-dim);">视频描述</label>
@@ -567,17 +591,30 @@ async function handleGenerateImage() {
       },
     )
 
-    generatedImages.value = res.data.images?.map((img: any) => img.url) || []
+    generatedImages.value = normalizeImageUrls(res.data)
     lastCoinCost.value = res.data.coinCost || 0
     lastDurationMs.value = res.data.durationMs || 0
     lastModel.value = res.data.model || tool.value.modelId
 
-    ElMessage.success(`成功生成 ${generatedImages.value.length} 张图片！`)
+    if (generatedImages.value.length > 0) {
+      ElMessage.success(`成功生成 ${generatedImages.value.length} 张图片！`)
+    } else {
+      ElMessage.warning('图片已生成，但暂未拿到可展示的图片链接，请稍后重试')
+    }
   } catch (e: any) {
     ElMessage.error(e?.message || '图片生成失败，请重试')
   } finally {
     generating.value = false
   }
+}
+
+function normalizeImageUrls(data: any): string[] {
+  const urls = data?.urls || data?.imageUrls || data?.images || []
+  if (!Array.isArray(urls)) return []
+  return urls.map((item: any) => {
+    if (typeof item === 'string') return item
+    return item?.url || item?.imageUrl || item?.src || item?.b64_json || ''
+  }).filter(Boolean)
 }
 
 // ===== 视频生成 =====

@@ -3244,6 +3244,8 @@ app.post('/api/v1/ai/tools/:id/generate', authCheck, async (req, res) => {
     message: 'success',
     data: {
       urls: imgResult.urls,
+      images: imgResult.urls.map(url => ({ url })),
+      imageUrls: imgResult.urls,
       model: imgResult.model,
       prompt: imgResult.prompt,
       width: width || 1024,

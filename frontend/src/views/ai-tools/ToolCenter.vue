@@ -31,6 +31,18 @@
       </button>
     </div>
 
+    <!-- 工具类型快捷入口 -->
+    <div class="flex flex-wrap gap-2 mb-6">
+      <button v-for="type in typeFilters" :key="type.id"
+        @click="currentType = type.id"
+        class="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300"
+        :style="currentType === type.id
+          ? `background: ${type.color}; color: #000; box-shadow: 0 0 14px ${type.color}40;`
+          : 'background: rgba(0,240,255,0.03); color: var(--cyber-text-dim); border: 1px solid var(--cyber-border);'">
+        {{ type.icon }} {{ type.label }}
+      </button>
+    </div>
+
     <div class="cyber-card p-4 mb-6">
       <div class="flex items-start gap-3">
         <div class="text-2xl">{{ activePillar?.icon }}</div>
@@ -62,7 +74,7 @@
         <h3 class="font-bold mb-1" style="color: var(--cyber-text);">{{ tool.name }}</h3>
         <p class="text-sm mb-3 line-clamp-2" style="color: var(--cyber-text-dim);">{{ tool.description }}</p>
         <div class="flex items-center justify-between">
-          <span class="text-xs px-2 py-0.5 rounded-full" :style="`background: ${getPillarColor(tool)}15; color: ${getPillarColor(tool)}; border: 1px solid ${getPillarColor(tool)}30;`">{{ getPillarLabel(tool) }}</span>
+          <span class="text-xs px-2 py-0.5 rounded-full" :style="`background: ${getPillarColor(tool)}15; color: ${getPillarColor(tool)}; border: 1px solid ${getPillarColor(tool)}30;`">{{ getPillarLabel(tool) }} · {{ toolTypeLabel(tool.toolType) }}</span>
           <span class="text-xs" style="color: var(--cyber-text-dim);">{{ formatUseCount(tool.usageCount) }}次使用</span>
         </div>
       </router-link>
@@ -77,7 +89,7 @@
           <div class="flex items-center gap-2">
             <h3 class="font-bold" style="color: var(--cyber-text);">{{ tool.name }}</h3>
             <span class="text-xs px-2 py-0.5 rounded-full"
-              :style="`background: ${getPillarColor(tool)}15; color: ${getPillarColor(tool)}; border: 1px solid ${getPillarColor(tool)}30;`">{{ getPillarLabel(tool) }}</span>
+              :style="`background: ${getPillarColor(tool)}15; color: ${getPillarColor(tool)}; border: 1px solid ${getPillarColor(tool)}30;`">{{ getPillarLabel(tool) }} · {{ toolTypeLabel(tool.toolType) }}</span>
           </div>
           <p class="text-sm truncate" style="color: var(--cyber-text-dim);">{{ tool.description }}</p>
         </div>
@@ -107,6 +119,7 @@ import { toolTypeMap } from '@/utils'
 const toolStore = useToolStore()
 const searchQuery = ref('')
 const currentPillar = ref<string>('all')
+const currentType = ref<string>('all')
 const viewMode = ref<'grid' | 'list'>('grid')
 
 // 六大板块定义
@@ -118,6 +131,13 @@ const sixPillars = [
   { id: 'media', label: '自媒体', icon: '📱', color: '#ffe66d', description: '短视频、小红书、公众号、热点选题和内容运营工具。' },
   { id: 'pet', label: '宠物', icon: '🐾', color: '#ff85a2', description: '宠物喂养、训练、健康护理、用品推荐等宠物服务工具。' },
   { id: 'campus', label: '伯雅校园', icon: '🏫', color: '#a78bfa', description: '伯雅校园服务、学业辅导、校园生活、就业规划等校园工具。' },
+]
+
+const typeFilters = [
+  { id: 'all', label: '全部类型', icon: '✨', color: '#00f0ff' },
+  { id: 'text', label: '文本工具', icon: '💬', color: '#4ecdc4' },
+  { id: 'image', label: 'AI文生图', icon: '🎨', color: '#ff00ff' },
+  { id: 'video', label: 'AI视频生成', icon: '🎬', color: '#ffb800' },
 ]
 
 const activePillar = computed(() => {
@@ -193,6 +213,9 @@ const filteredTools = computed(() => {
   let list = toolStore.tools.filter(t => !(t as any).isAgent)
   if (currentPillar.value !== 'all') {
     list = list.filter(t => getPillarForTool(t) === currentPillar.value)
+  }
+  if (currentType.value !== 'all') {
+    list = list.filter(t => t.toolType === currentType.value)
   }
   if (searchQuery.value) {
     const q = searchQuery.value.toLowerCase()
