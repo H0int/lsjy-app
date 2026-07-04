@@ -48,6 +48,23 @@ const CONFIG = {
   TONGYI_BASE_URL: process.env.TONGYI_BASE_URL || 'https://dashscope.aliyuncs.com/compatible-mode/v1',
   TONGYI_MODEL: process.env.TONGYI_MODEL || 'qwen-plus',
 
+  // 已实测可用的大模型渠道（只用于后端，严禁写入前端）
+  SILICONFLOW_API_KEY: process.env.SILICONFLOW_API_KEY || '',
+  SILICONFLOW_BASE_URL: process.env.SILICONFLOW_BASE_URL || 'https://api.siliconflow.cn/v1',
+  SILICONFLOW_MODEL: process.env.SILICONFLOW_MODEL || 'Qwen/Qwen2.5-7B-Instruct',
+  ARK_API_KEY: process.env.ARK_API_KEY || '',
+  ARK_BASE_URL: process.env.ARK_BASE_URL || 'https://ark.cn-beijing.volces.com/api/v3',
+  ARK_MODEL: process.env.ARK_MODEL || 'doubao-1-5-pro-32k-250115',
+  BAILIAN_API_KEY: process.env.BAILIAN_API_KEY || '',
+  BAILIAN_BASE_URL: process.env.BAILIAN_BASE_URL || 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+  BAILIAN_MODEL: process.env.BAILIAN_MODEL || 'qwen-plus',
+  ZHIPU_API_KEY: process.env.ZHIPU_API_KEY || '',
+  ZHIPU_BASE_URL: process.env.ZHIPU_BASE_URL || 'https://open.bigmodel.cn/api/paas/v4',
+  ZHIPU_MODEL: process.env.ZHIPU_MODEL || 'glm-4.6',
+  BAIDU_API_KEY: process.env.BAIDU_API_KEY || '',
+  BAIDU_BASE_URL: process.env.BAIDU_BASE_URL || 'https://qianfan.baidubce.com/v2',
+  BAIDU_MODEL: process.env.BAIDU_MODEL || 'ernie-4.5-turbo-128k',
+
   // 腾讯元宝
   YUANBAO_API_KEY: process.env.YUANBAO_API_KEY || '',
   YUANBAO_BASE_URL: process.env.YUANBAO_BASE_URL || 'https://tokenhub.tencentmaas.com/v1',
@@ -1849,7 +1866,27 @@ async function callCozeAPI(messages, options = {}) {
   throw lastErr;
 }
 
-// OpenAI 兼容 API 调用（支持 DeepSeek/豆包/通义千问/元宝）
+const AI_MODEL_CATALOG = [
+  { provider: 'doubao', displayName: '豆包 Pro', model: 'doubao-1-5-pro-32k-250115', enabled: true },
+  { provider: 'doubao', displayName: '豆包 Lite', model: 'doubao-1-5-lite-32k-250115', enabled: true },
+  { provider: 'ark', displayName: '火山方舟 豆包 Pro', model: 'doubao-1-5-pro-32k-250115', enabled: true },
+  { provider: 'ark', displayName: '火山方舟 Seed', model: 'doubao-seed-1-6-250615', enabled: true },
+  { provider: 'siliconflow', displayName: '硅基流动 Qwen2.5', model: 'Qwen/Qwen2.5-7B-Instruct', enabled: true },
+  { provider: 'siliconflow', displayName: '硅基流动 GLM-5.2', model: 'zai-org/GLM-5.2', enabled: true },
+  { provider: 'bailian', displayName: '阿里百炼 Qwen Plus', model: 'qwen-plus', enabled: true },
+  { provider: 'bailian', displayName: '阿里百炼 Qwen Turbo', model: 'qwen-turbo', enabled: true },
+  { provider: 'bailian', displayName: '阿里百炼 Kimi Code', model: 'kimi-k2.7-code', enabled: true },
+  { provider: 'zhipu', displayName: '智谱 GLM-4.6', model: 'glm-4.6', enabled: true },
+  { provider: 'zhipu', displayName: '智谱 GLM-5', model: 'glm-5', enabled: true },
+  { provider: 'baidu', displayName: '百度千帆 ERNIE 4.5', model: 'ernie-4.5-turbo-128k', enabled: true },
+];
+
+function pickCatalogModel(provider, requestedModel, defaultModel) {
+  const hit = AI_MODEL_CATALOG.find(item => item.enabled && item.provider === provider && item.model === requestedModel);
+  return hit ? hit.model : defaultModel;
+}
+
+// OpenAI 兼容 API 调用（支持 DeepSeek/豆包/通义千问/元宝/硅基/百炼/智谱/百度）
 async function callOpenAICompatibleAPI(messages, options = {}) {
   const provider = options.provider || 'deepseek';
   let apiKey, baseUrl, model;
@@ -1870,6 +1907,31 @@ async function callOpenAICompatibleAPI(messages, options = {}) {
       apiKey = CONFIG.TONGYI_API_KEY;
       baseUrl = CONFIG.TONGYI_BASE_URL;
       model = String(options.model || '').startsWith('qwen') ? options.model : CONFIG.TONGYI_MODEL;
+      break;
+    case 'siliconflow':
+      apiKey = CONFIG.SILICONFLOW_API_KEY;
+      baseUrl = CONFIG.SILICONFLOW_BASE_URL;
+      model = pickCatalogModel(provider, options.model, CONFIG.SILICONFLOW_MODEL);
+      break;
+    case 'ark':
+      apiKey = CONFIG.ARK_API_KEY;
+      baseUrl = CONFIG.ARK_BASE_URL;
+      model = pickCatalogModel(provider, options.model, CONFIG.ARK_MODEL);
+      break;
+    case 'bailian':
+      apiKey = CONFIG.BAILIAN_API_KEY;
+      baseUrl = CONFIG.BAILIAN_BASE_URL;
+      model = pickCatalogModel(provider, options.model, CONFIG.BAILIAN_MODEL);
+      break;
+    case 'zhipu':
+      apiKey = CONFIG.ZHIPU_API_KEY;
+      baseUrl = CONFIG.ZHIPU_BASE_URL;
+      model = pickCatalogModel(provider, options.model, CONFIG.ZHIPU_MODEL);
+      break;
+    case 'baidu':
+      apiKey = CONFIG.BAIDU_API_KEY;
+      baseUrl = CONFIG.BAIDU_BASE_URL;
+      model = pickCatalogModel(provider, options.model, CONFIG.BAIDU_MODEL);
       break;
     case 'yuanbao':
       apiKey = CONFIG.YUANBAO_API_KEY;
@@ -1938,6 +2000,11 @@ async function callAI(messages, options = {}) {
       case 'doubao': return await callOpenAICompatibleAPI(messages, { ...options, provider: 'doubao' });
       case 'deepseek': return await callOpenAICompatibleAPI(messages, { ...options, provider: 'deepseek' });
       case 'tongyi': return await callOpenAICompatibleAPI(messages, { ...options, provider: 'tongyi' });
+      case 'siliconflow': return await callOpenAICompatibleAPI(messages, { ...options, provider: 'siliconflow' });
+      case 'ark': return await callOpenAICompatibleAPI(messages, { ...options, provider: 'ark' });
+      case 'bailian': return await callOpenAICompatibleAPI(messages, { ...options, provider: 'bailian' });
+      case 'zhipu': return await callOpenAICompatibleAPI(messages, { ...options, provider: 'zhipu' });
+      case 'baidu': return await callOpenAICompatibleAPI(messages, { ...options, provider: 'baidu' });
       case 'yuanbao': return await callOpenAICompatibleAPI(messages, { ...options, provider: 'yuanbao' });
       default: throw new Error(`未知的AI Provider: ${provider}`);
     }
@@ -1954,7 +2021,7 @@ async function callAI(messages, options = {}) {
     trackApiError(options.toolId, options.toolName, provider, errorCode, err.message, CONFIG.AI_MAX_RETRIES || 3);
 
     // 自动降级到其他可用的 Provider（优先使用有API Key的）
-    const fallbackProviders = ['deepseek', 'doubao', 'tongyi', 'yuanbao'].filter(p => p !== provider);
+    const fallbackProviders = ['doubao', 'ark', 'siliconflow', 'bailian', 'zhipu', 'baidu', 'tongyi', 'deepseek', 'yuanbao'].filter(p => p !== provider);
 
     // 只有在Coze API Key和Bot ID都配置了的情况下才加入降级列表
     if (CONFIG.COZE_API_KEY && CONFIG.COZE_BOT_ID && provider !== 'coze') {
@@ -1969,6 +2036,11 @@ async function callAI(messages, options = {}) {
         } else {
           const keyMap = {
             doubao: CONFIG.DOUBAO_API_KEY,
+            ark: CONFIG.ARK_API_KEY,
+            siliconflow: CONFIG.SILICONFLOW_API_KEY,
+            bailian: CONFIG.BAILIAN_API_KEY,
+            zhipu: CONFIG.ZHIPU_API_KEY,
+            baidu: CONFIG.BAIDU_API_KEY,
             deepseek: CONFIG.DEEPSEEK_API_KEY,
             tongyi: CONFIG.TONGYI_API_KEY,
             yuanbao: CONFIG.YUANBAO_API_KEY,
@@ -3297,7 +3369,7 @@ app.post('/api/v1/ai/chat', async (req, res) => {
 
 // 前端 AI 智能体专用聊天接口：避开线上 /api/v1/ai/* 独立代理鉴权
 app.post('/api/v1/agent/chat', authCheck, async (req, res) => {
-  const { messages, message, model, agentId = 1, systemPrompt } = req.body || {};
+  const { messages, message, model, provider, agentId = 1, systemPrompt } = req.body || {};
   const userId = req.user?.id || 1;
   const chatMessages = normalizeIncomingMessages(messages, message);
 
@@ -3318,12 +3390,13 @@ app.post('/api/v1/agent/chat', authCheck, async (req, res) => {
   }
 
   const effectiveSystemPrompt = systemPrompt || agent?.systemPrompt || tool?.systemPrompt || CONFIG.SYSTEM_PROMPT;
+  const effectiveProvider = messagesHaveImage(chatMessages) ? 'doubao' : (provider || CONFIG.AI_PROVIDER);
   try {
     const result = await Promise.race([
       callAI(chatMessages, {
         model,
         systemPrompt: effectiveSystemPrompt,
-        provider: CONFIG.AI_PROVIDER,
+        provider: effectiveProvider,
         toolId: Number(agentId),
         toolName: agent?.name || tool?.name || '罗圣AI智能体',
       }),
@@ -3379,6 +3452,11 @@ app.post('/api/v1/agent/chat', authCheck, async (req, res) => {
 app.get('/api/v1/ai/providers', (req, res) => {
   const providers = [
     { name: 'doubao', displayName: '豆包', status: CONFIG.DOUBAO_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
+    { name: 'ark', displayName: '火山方舟', status: CONFIG.ARK_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
+    { name: 'siliconflow', displayName: '硅基流动', status: CONFIG.SILICONFLOW_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
+    { name: 'bailian', displayName: '阿里百炼', status: CONFIG.BAILIAN_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
+    { name: 'zhipu', displayName: '智谱', status: CONFIG.ZHIPU_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
+    { name: 'baidu', displayName: '百度千帆', status: CONFIG.BAIDU_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
     { name: 'deepseek', displayName: 'DeepSeek', status: CONFIG.DEEPSEEK_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
     { name: 'tongyi', displayName: '通义千问', status: CONFIG.TONGYI_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
     { name: 'yuanbao', displayName: '腾讯元宝', status: CONFIG.YUANBAO_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
@@ -3393,13 +3471,33 @@ app.get('/api/v1/ai/providers', (req, res) => {
 // AI模型列表
 app.get('/api/v1/ai/models', (req, res) => {
   const models = [
-    { group: 'doubao', provider: 'doubao', models: [{ id: 'doubao-pro-32k', name: '豆包 Pro 32K', capabilities: ['text'] }] },
-    { group: 'deepseek', provider: 'deepseek', models: [{ id: 'deepseek-chat', name: 'DeepSeek Chat', capabilities: ['text'] }] },
-    { group: 'tongyi', provider: 'tongyi', models: [{ id: 'qwen-plus', name: '通义千问 Plus', capabilities: ['text'] }] },
-    { group: 'yuanbao', provider: 'yuanbao', models: [{ id: 'hy3-preview', name: '腾讯元宝 Hy3 (混元)', capabilities: ['text'] }] },
+    { group: 'doubao', provider: 'doubao', models: [
+      { id: 'doubao-1-5-pro-32k-250115', name: '豆包 Pro 32K', capabilities: ['text'] },
+      { id: 'doubao-1-5-lite-32k-250115', name: '豆包 Lite 32K', capabilities: ['text'] },
+      { id: 'doubao-1-5-vision-pro-32k-250115', name: '豆包视觉 Pro', capabilities: ['vision'] },
+    ] },
+    { group: 'ark', provider: 'ark', models: [
+      { id: 'doubao-1-5-pro-32k-250115', name: '火山方舟 豆包 Pro', capabilities: ['text'] },
+      { id: 'doubao-seed-1-6-250615', name: '火山方舟 Doubao Seed', capabilities: ['text'] },
+    ] },
+    { group: 'siliconflow', provider: 'siliconflow', models: [
+      { id: 'Qwen/Qwen2.5-7B-Instruct', name: '硅基流动 Qwen2.5 7B', capabilities: ['text'] },
+      { id: 'zai-org/GLM-5.2', name: '硅基流动 GLM-5.2', capabilities: ['text'] },
+    ] },
+    { group: 'bailian', provider: 'bailian', models: [
+      { id: 'qwen-plus', name: '阿里百炼 Qwen Plus', capabilities: ['text'] },
+      { id: 'qwen-turbo', name: '阿里百炼 Qwen Turbo', capabilities: ['text'] },
+      { id: 'kimi-k2.7-code', name: '阿里百炼 Kimi Code', capabilities: ['text', 'code'] },
+    ] },
+    { group: 'zhipu', provider: 'zhipu', models: [
+      { id: 'glm-4.6', name: '智谱 GLM-4.6', capabilities: ['text'] },
+      { id: 'glm-5', name: '智谱 GLM-5', capabilities: ['text'] },
+    ] },
+    { group: 'baidu', provider: 'baidu', models: [
+      { id: 'ernie-4.5-turbo-128k', name: '百度千帆 ERNIE 4.5', capabilities: ['text'] },
+    ] },
     { group: 'jimeng', provider: 'jimeng', models: [{ id: 'jimeng-v2', name: '即梦 AI 绘画', capabilities: ['image'] }] },
     { group: 'kling', provider: 'kling', models: [{ id: 'kling-v1', name: '可灵 AI 视频', capabilities: ['video'] }] },
-    { group: 'coze', provider: 'coze', models: [{ id: 'coze-bot', name: 'Coze 智能体', capabilities: ['text'] }] },
   ];
   res.json({ code: 0, message: 'success', data: models });
 });

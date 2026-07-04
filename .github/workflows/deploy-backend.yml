@@ -110,9 +110,22 @@ jobs:
               echo "Nginx配置已更新"
             fi
 
+            # 写入后端模型环境变量（密钥来自 GitHub Secrets，不进入前端和源码）
+            {
+              printf '%s\n' "export SILICONFLOW_API_KEY='${{ secrets.SILICONFLOW_API_KEY }}'"
+              printf '%s\n' "export ARK_API_KEY='${{ secrets.ARK_API_KEY }}'"
+              printf '%s\n' "export BAILIAN_API_KEY='${{ secrets.BAILIAN_API_KEY }}'"
+              printf '%s\n' "export ZHIPU_API_KEY='${{ secrets.ZHIPU_API_KEY }}'"
+              printf '%s\n' "export BAIDU_API_KEY='${{ secrets.BAIDU_API_KEY }}'"
+            } > /etc/profile.d/lsjy-ai-models.sh
+            chmod 600 /etc/profile.d/lsjy-ai-models.sh
+            set -a
+            . /etc/profile.d/lsjy-ai-models.sh
+            set +a
+
             # 重启所有pm2进程
             echo "重启后端服务..."
-            pm2 restart all 2>/dev/null || pm2 restart lsjy-backend 2>/dev/null || true
+            pm2 restart all --update-env 2>/dev/null || pm2 restart lsjy-backend --update-env 2>/dev/null || true
             sleep 8
 
             # 验证

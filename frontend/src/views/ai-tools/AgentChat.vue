@@ -48,6 +48,11 @@
         <div class="text-xs font-bold" style="color: var(--cyber-text);">{{ selectedAgent.name }}</div>
         <div class="text-[10px]" style="color: var(--cyber-text-dim);">{{ selectedAgent.description }}</div>
       </div>
+      <select v-if="selectedAgent.toolType !== 'image'" v-model="selectedModelKey"
+        class="px-2 py-1 rounded text-[10px] outline-none max-w-[140px]"
+        style="background: rgba(0,240,255,0.03); border: 1px solid var(--cyber-border); color: var(--cyber-text);">
+        <option v-for="m in modelOptions" :key="m.key" :value="m.key">{{ m.label }}</option>
+      </select>
       <div class="text-[10px] px-1.5 py-0.5 rounded" style="background: rgba(255,184,0,0.1); color: var(--cyber-amber);">
         ⚡{{ selectedAgent.coinCost }}/次
       </div>
@@ -246,6 +251,8 @@ interface Agent {
   toolType: 'text' | 'image'
   description: string
   coinCost: number
+  provider?: string
+  modelName?: string
   systemPrompt?: string
 }
 
@@ -273,6 +280,20 @@ const aiOnline = ref(true)
 const authStore = useAuthStore()
 const { coinBalance } = storeToRefs(authStore)
 const activeActionIndex = ref<number | null>(null)
+
+const modelOptions = [
+  { key: 'doubao|doubao-1-5-pro-32k-250115', label: '豆包 Pro', provider: 'doubao', model: 'doubao-1-5-pro-32k-250115' },
+  { key: 'doubao|doubao-1-5-lite-32k-250115', label: '豆包 Lite', provider: 'doubao', model: 'doubao-1-5-lite-32k-250115' },
+  { key: 'ark|doubao-1-5-pro-32k-250115', label: '火山方舟', provider: 'ark', model: 'doubao-1-5-pro-32k-250115' },
+  { key: 'siliconflow|Qwen/Qwen2.5-7B-Instruct', label: '硅基 Qwen', provider: 'siliconflow', model: 'Qwen/Qwen2.5-7B-Instruct' },
+  { key: 'siliconflow|zai-org/GLM-5.2', label: '硅基 GLM', provider: 'siliconflow', model: 'zai-org/GLM-5.2' },
+  { key: 'bailian|qwen-plus', label: '百炼 Qwen+', provider: 'bailian', model: 'qwen-plus' },
+  { key: 'bailian|kimi-k2.7-code', label: '百炼 Kimi', provider: 'bailian', model: 'kimi-k2.7-code' },
+  { key: 'zhipu|glm-4.6', label: '智谱 GLM', provider: 'zhipu', model: 'glm-4.6' },
+  { key: 'baidu|ernie-4.5-turbo-128k', label: '百度 ERNIE', provider: 'baidu', model: 'ernie-4.5-turbo-128k' },
+]
+const selectedModelKey = ref(modelOptions[0].key)
+const selectedModel = computed(() => modelOptions.find(m => m.key === selectedModelKey.value) || modelOptions[0])
 
 // 图片上传
 const pendingFile = ref<{url: string; name: string; isImage: boolean; sizeLabel: string; extractedText?: string} | null>(null)
@@ -567,7 +588,8 @@ async function sendMsg() {
     // 系统提示通过 systemPrompt 字段传给后端，不混入用户消息
 
     // 使用主后端 /agent/chat，避开线上 /ai/* 独立代理鉴权
-    const modelName = agent.modelName || 'deepseek-v4-pro'
+    const modelName = agent.modelName || selectedModel.value.model
+    const providerName = agent.provider || selectedModel.value.provider
     const res = await fetch(`${API_BASE}/agent/chat`, {
       method: 'POST',
       headers: {
@@ -577,6 +599,7 @@ async function sendMsg() {
       body: JSON.stringify({ 
         messages: backendMessages,
         model: modelName,
+        provider: providerName,
         agentId: agent.id,
         systemPrompt: agent.systemPrompt
       }),
@@ -689,7 +712,8 @@ async function regenerateMsg(index: number) {
     const backendMessages = msgs.value.slice(-20).map(m => ({ role: m.role, content: toBackendContent(m.content) }))
 
     // 使用主后端 /agent/chat，避开线上 /ai/* 独立代理鉴权
-    const modelName = agent.modelName || 'deepseek-v4-pro'
+    const modelName = agent.modelName || selectedModel.value.model
+    const providerName = agent.provider || selectedModel.value.provider
     const res = await fetch(`${API_BASE}/agent/chat`, {
       method: 'POST',
       headers: {
@@ -699,6 +723,7 @@ async function regenerateMsg(index: number) {
       body: JSON.stringify({ 
         messages: backendMessages,
         model: modelName,
+        provider: providerName,
         agentId: agent.id,
         systemPrompt: agent.systemPrompt
       }),
