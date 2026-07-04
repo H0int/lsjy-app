@@ -2155,7 +2155,7 @@ async function generateVideoWithAI(prompt, options = {}) {
 
 
 // 通义万相视频生成（阿里云 - 国内）
-async function callTongyiVideoAPI(prompt, options = {}) {
+async function submitTongyiVideoTask(prompt, options = {}) {
   const apiKey = CONFIG.BAILIAN_API_KEY || CONFIG.TONGYI_VIDEO_API_KEY;
   if (!apiKey) throw new Error('通义万相 API Key 未配置，请在 .env 中配置 TONGYI_API_KEY');
 
@@ -2173,7 +2173,7 @@ async function callTongyiVideoAPI(prompt, options = {}) {
     }
   }, {
     model,
-    input: { prompt: prompt },
+    input: { prompt },
     parameters: {
       duration,
       resolution,
@@ -2189,21 +2189,40 @@ async function callTongyiVideoAPI(prompt, options = {}) {
 
   const taskId = submitRes.data?.output?.task_id;
   if (!taskId) throw new Error('通义万相 API 未返回任务 ID');
+  return { taskId, model, prompt, duration, resolution };
+}
+
+async function getTongyiVideoTaskResult(taskId) {
+  const apiKey = CONFIG.BAILIAN_API_KEY || CONFIG.TONGYI_VIDEO_API_KEY;
+  if (!apiKey) throw new Error('通义万相 API Key 未配置');
+  const baseUrl = CONFIG.TONGYI_VIDEO_BASE_URL;
+  const pollRes = await httpsRequest(baseUrl + '/tasks/' + taskId, {
+    method: 'GET',
+    headers: { 'Authorization': 'Bearer ' + apiKey }
+  });
+  const output = pollRes.data?.output || {};
+  return {
+    taskId,
+    status: output.task_status || 'UNKNOWN',
+    videoUrl: output.video_url || '',
+    message: output.message || pollRes.data?.message || '',
+    raw: pollRes.data,
+  };
+}
+
+async function callTongyiVideoAPI(prompt, options = {}) {
+  const submitted = await submitTongyiVideoTask(prompt, options);
 
   for (let i = 0; i < 60; i++) {
     await new Promise(r => setTimeout(r, 5000));
-    const pollRes = await httpsRequest(baseUrl + '/tasks/' + taskId, {
-      method: 'GET',
-      headers: { 'Authorization': 'Bearer ' + apiKey }
-    });
-
-    const status = pollRes.data?.output?.task_status;
+    const pollRes = await getTongyiVideoTaskResult(submitted.taskId);
+    const status = pollRes.status;
     if (status === 'SUCCEEDED') {
-      const videoUrl = pollRes.data?.output?.video_url;
+      const videoUrl = pollRes.videoUrl;
       if (!videoUrl) throw new Error('通义万相 API 未返回视频 URL');
-      return { videoUrl, model, prompt, durationMs: (i + 1) * 5000 };
+      return { videoUrl, model: submitted.model, prompt, durationMs: (i + 1) * 5000 };
     } else if (status === 'FAILED') {
-      throw new Error('通义万相视频生成失败：' + (pollRes.data?.output?.message || '未知错误'));
+      throw new Error('通义万相视频生成失败：' + (pollRes.message || '未知错误'));
     }
   }
 
@@ -3277,7 +3296,9 @@ app.post('/api/v1/ai/tools/:id/generate', authCheck, async (req, res) => {
   });
 });
 
-// AI 视频生成（消耗20圣力/次）
+const videoTasksStore = new Map();
+
+// AI 视频生成（异步提交，避免网关超时；成功取回结果时扣20圣力）
 app.post('/api/v1/ai/tools/:id/video', authCheck, async (req, res) => {
   const tool = aiToolsStore.find(t => t.id === Number(req.params.id));
   if (!tool) return res.status(404).json({ code: 404, message: '工具不存在', data: null });
@@ -3300,57 +3321,91 @@ app.post('/api/v1/ai/tools/:id/video', authCheck, async (req, res) => {
     });
   }
 
-  // 带重试的视频生成（最多重试 CONFIG.AI_MAX_RETRIES 次）
-  const vidMaxRetries = CONFIG.AI_MAX_RETRIES || 3;
-  let vidResult = null;
-  let vidLastErr = null;
-  for (let attempt = 0; attempt <= vidMaxRetries; attempt++) {
-    try {
-      if (attempt > 0) {
-        const delay = Math.min(1000 * Math.pow(2, attempt), 8000);
-        log(`[视频生成] 第 ${attempt}/${vidMaxRetries} 次重试，等待 ${delay}ms`);
-        await new Promise(r => setTimeout(r, delay));
-      }
-      vidResult = await generateVideoWithAI(prompt, {
-        duration: duration || 5,
-        resolution: resolution || '720p'
-      });
-      log(`视频生成成功: model=${vidResult.model}, url=${vidResult.videoUrl}`);
-      break;
-    } catch (err) {
-      vidLastErr = err;
-      log(`[视频生成] 第 ${attempt} 次尝试失败: ${err.message}`);
-    }
-  }
-
-  if (!vidResult) {
-    log(`[视频生成] 全部 ${vidMaxRetries + 1} 次尝试均失败: ${vidLastErr?.message}`);
-    // 不扣费，返回友好错误（不返回500，避免前端误判为服务器崩溃）
+  try {
+    const submitted = await submitTongyiVideoTask(prompt, {
+      duration: duration || 5,
+      resolution: resolution || '720p'
+    });
+    videoTasksStore.set(submitted.taskId, {
+      userId,
+      toolId: tool.id,
+      prompt,
+      duration: submitted.duration,
+      resolution: submitted.resolution,
+      model: submitted.model,
+      charged: false,
+      createdAt: Date.now(),
+    });
+    log(`视频任务已提交: taskId=${submitted.taskId}, model=${submitted.model}`);
+    return res.status(200).json({
+      code: 0,
+      message: 'processing',
+      data: {
+        taskId: submitted.taskId,
+        status: 'PROCESSING',
+        model: submitted.model,
+        prompt,
+        duration: submitted.duration,
+        resolution: submitted.resolution,
+        coinCost: VIDEO_COIN_COST,
+        createdAt: new Date().toISOString(),
+      },
+    });
+  } catch (err) {
+    log(`[视频生成] 提交任务失败: ${err.message}`);
     return res.status(200).json({
       code: 5002,
-      message: `视频生成暂时不可用，请稍后重试。（已尝试 ${vidMaxRetries + 1} 次）`,
+      message: `视频生成任务提交失败：${err.message}`,
       data: { retryHint: true },
     });
   }
+});
 
-  // 扣费（仅在成功时扣费）
-  const deduct = deductCoins(userId, VIDEO_COIN_COST);
+app.get('/api/v1/ai/video/tasks/:taskId', authCheck, async (req, res) => {
+  const taskId = req.params.taskId;
+  const taskMeta = videoTasksStore.get(taskId);
+  const userId = req.user?.id;
+  if (taskMeta && taskMeta.userId !== userId) {
+    return res.status(403).json({ code: 403, message: '无权查看该视频任务', data: null });
+  }
 
-  res.json({
-    code: 0,
-    message: 'success',
-    data: {
-      videoUrl: vidResult.videoUrl,
-      model: vidResult.model,
-      prompt: vidResult.prompt,
-      duration: duration || 5,
-      resolution: resolution || '720p',
-      coinCost: VIDEO_COIN_COST,
-      balance: deduct.balance,
-      durationMs: vidResult.durationMs || 10000,
-      createdAt: new Date().toISOString(),
-    },
-  });
+  try {
+    const result = await getTongyiVideoTaskResult(taskId);
+    if (result.status === 'SUCCEEDED') {
+      let balance = getUserCoins(userId);
+      if (taskMeta && !taskMeta.charged) {
+        const deduct = deductCoins(userId, 20);
+        taskMeta.charged = true;
+        taskMeta.videoUrl = result.videoUrl;
+        taskMeta.completedAt = Date.now();
+        balance = deduct.balance;
+      }
+      return res.json({
+        code: 0,
+        message: 'success',
+        data: {
+          taskId,
+          status: 'SUCCEEDED',
+          videoUrl: result.videoUrl,
+          model: taskMeta?.model || process.env.TONGYI_VIDEO_MODEL || 'wan2.7-t2v-2026-06-12',
+          prompt: taskMeta?.prompt || '',
+          duration: taskMeta?.duration || 5,
+          resolution: taskMeta?.resolution || '720P',
+          coinCost: taskMeta?.charged ? 20 : 0,
+          balance,
+          durationMs: taskMeta?.createdAt ? Date.now() - taskMeta.createdAt : 0,
+          createdAt: new Date().toISOString(),
+        },
+      });
+    }
+    if (result.status === 'FAILED') {
+      return res.json({ code: 5002, message: `视频生成失败：${result.message || '未知错误'}`, data: { taskId, status: 'FAILED' } });
+    }
+    return res.json({ code: 0, message: 'processing', data: { taskId, status: result.status || 'PROCESSING' } });
+  } catch (err) {
+    log(`[视频生成] 查询任务失败: ${err.message}`);
+    return res.status(200).json({ code: 5002, message: `查询视频任务失败：${err.message}`, data: { taskId, retryHint: true } });
+  }
 });
 
 

@@ -367,7 +367,8 @@
                   style="background: linear-gradient(135deg, var(--cyber-magenta), var(--cyber-purple));">
                   <span class="text-2xl animate-spin">🎬</span>
                 </div>
-                <p class="text-sm" style="color: var(--cyber-text-dim);">视频生成中，预计需要 1-3 分钟...</p>
+                <p class="text-sm" style="color: var(--cyber-text-dim);">{{ videoTaskStatus || '视频生成中，预计需要 1-3 分钟...' }}</p>
+                <p class="text-xs mt-1" style="color: var(--cyber-text-dim);">页面会自动刷新结果，请不要重复点击生成。</p>
               </div>
             </div>
 
@@ -454,6 +455,7 @@ const videoPrompt = ref('')
 const videoDuration = ref(5)
 const videoResolution = ref('720p')
 const generatedVideo = ref<string>('')
+const videoTaskStatus = ref('')
 
 // ===== 消耗信息 =====
 const lastCoinCost = ref(0)
@@ -650,6 +652,7 @@ async function handleGenerateVideo() {
   if (generating.value) return
 
   generating.value = true
+  videoTaskStatus.value = '正在提交视频生成任务...'
   try {
     const res = await service.post(`/ai/tools/${route.params.id}/video`, {
       prompt: videoPrompt.value,
@@ -659,6 +662,11 @@ async function handleGenerateVideo() {
 
     if (res.data?.code !== 0) {
       throw new Error(res.data?.message || '视频生成失败，请重试')
+    }
+    if (res.data.data?.taskId && !res.data.data?.videoUrl) {
+      videoTaskStatus.value = '任务已提交，正在生成视频...'
+      await pollVideoTask(res.data.data.taskId)
+      return
     }
     generatedVideo.value = res.data.data?.videoUrl || ''
     if (!generatedVideo.value) {
@@ -676,7 +684,37 @@ async function handleGenerateVideo() {
     ElMessage.error(e?.response?.data?.message || e?.message || '视频生成失败，请重试')
   } finally {
     generating.value = false
+    if (!generatedVideo.value) videoTaskStatus.value = ''
   }
+}
+
+async function pollVideoTask(taskId: string) {
+  for (let i = 0; i < 90; i++) {
+    await new Promise(resolve => setTimeout(resolve, 5000))
+    videoTaskStatus.value = `视频生成中，已等待 ${(i + 1) * 5} 秒...`
+    const pollRes = await service.get(`/ai/video/tasks/${taskId}`)
+    if (pollRes.data?.code !== 0) {
+      throw new Error(pollRes.data?.message || '视频生成失败')
+    }
+    const data = pollRes.data.data || {}
+    if (data.status === 'SUCCEEDED' && data.videoUrl) {
+      generatedVideo.value = data.videoUrl
+      mediaLoadErrors.value = []
+      lastCoinCost.value = data.coinCost || 0
+      lastDurationMs.value = data.durationMs || 0
+      lastModel.value = data.model || tool.value?.modelId || ''
+      videoTaskStatus.value = ''
+      generating.value = false
+      ElMessage.success('视频生成成功！')
+      await nextTick()
+      scrollMediaResultIntoView()
+      return
+    }
+    if (data.status === 'FAILED') {
+      throw new Error('视频生成失败，请换个描述重试')
+    }
+  }
+  throw new Error('视频生成仍在处理中，请稍后重试或缩短时长')
 }
 
 // ===== 工具函数 =====
