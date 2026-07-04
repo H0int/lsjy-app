@@ -93,8 +93,13 @@ function statusLabel(s: string) { return { draft: '草稿', scheduled: '定时�
 function scopeLabel(s: string) { return { all: '全部用户', personal: '个人版', merchant: '商户版', enterprise: '企业版' }[s] || s }
 
 async function fetchData() {
-  const res = await adminApi.getAnnouncements()
-  list.value = res.data
+  try {
+    const res = await adminApi.getAnnouncements()
+    list.value = res.data || []
+  } catch (e) {
+    console.error('获取公告列表失败', e)
+    list.value = []
+  }
 }
 
 function openCreateDialog() {

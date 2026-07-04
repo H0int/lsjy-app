@@ -69,7 +69,7 @@ async function fetchFeedback() {
     const res = await service.get('/admin/feedback')
     if (res.data.code === 0) {
       const data = res.data.data
-      feedbacks.value = data.feedbacks || data.list || data || []
+      feedbacks.value = data.feedbacks || data.list || data.items || data || []
       if (data.stats) {
         stats.value = {
           totalFeedback: data.stats.total || 0,
@@ -80,7 +80,9 @@ async function fetchFeedback() {
       }
     }
   } catch (e) {
+    console.error('获取反馈列表失败', e)
     ElMessage.error('加载反馈数据失败')
+    feedbacks.value = []
   } finally {
     loading.value = false
   }

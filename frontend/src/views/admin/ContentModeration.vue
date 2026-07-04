@@ -121,9 +121,14 @@ function updateStats() {
 }
 
 async function fetchData() {
-  const res = await adminApi.getContentModerations()
-  list.value = res.data
-  updateStats()
+  try {
+    const res = await adminApi.getContentModerations()
+    list.value = res.data || []
+    updateStats()
+  } catch (e) {
+    console.error('获取审核内容失败', e)
+    list.value = []
+  }
 }
 
 function toggleAll(e: Event) { const checked = (e.target as HTMLInputElement).checked; selectedIds.value = checked ? list.value.map(i => i.id) : [] }

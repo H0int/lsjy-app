@@ -152,9 +152,14 @@ function updateStats() {
 }
 
 async function fetchData() {
-  const res = await adminApi.getTickets()
-  list.value = res.data
-  updateStats()
+  try {
+    const res = await adminApi.getTickets()
+    list.value = res.data || []
+    updateStats()
+  } catch (e) {
+    console.error('获取工单列表失败', e)
+    list.value = []
+  }
 }
 
 function openDetail(ticket: Ticket) { selectedTicket.value = ticket }

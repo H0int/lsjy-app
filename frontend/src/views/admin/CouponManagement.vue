@@ -30,7 +30,7 @@
     </div>
 
     <div class="cyber-grid-2">
-      <div v-for="coupon in list" :key="coupon.id" class="cyber-coupon-card">
+      <div v-for="coupon in filteredCoupons" :key="coupon.id" class="cyber-coupon-card">
         <div class="coupon-value-side" :class="'coupon-bg-' + coupon.type">
           <span class="coupon-value">{{ coupon.type === 'discount' ? coupon.discountValue + '折' : coupon.type === 'coin_gift' ? '+' + coupon.discountValue : '¥' + coupon.discountValue }}</span>
           <span class="coupon-type-label">{{ couponTypeLabel(coupon.type) }}</span>
@@ -105,9 +105,19 @@ function couponTypeLabel(t: string) { return { full_reduce: '满减券', discoun
 function couponStatusLabel(s: string) { return { active: '生效中', paused: '已暂停', expired: '已过期' }[s] || s }
 function issueRuleLabel(r: string) { return { new_user: '新用户', consume_threshold: '消费满额', activity: '活动发放', manual: '手动发放' }[r] || r }
 
+const filteredCoupons = computed(() => {
+  if (!filterType.value) return list.value
+  return list.value.filter((c: any) => c.type === filterType.value)
+})
+
 async function fetchData() {
-  const res = await adminApi.getCoupons()
-  list.value = res.data
+  try {
+    const res = await adminApi.getCoupons()
+    list.value = res.data || []
+  } catch (e) {
+    console.error('获取优惠券列表失败', e)
+    list.value = []
+  }
 }
 
 async function toggleStatus(c: Coupon) {

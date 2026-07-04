@@ -91,8 +91,13 @@ const filteredList = computed(() => {
 function getCategoryCount(cat: string) { return list.value.filter(i => i.category === cat).length }
 
 async function fetchData() {
-  const res = await adminApi.getFAQs()
-  list.value = res.data
+  try {
+    const res = await adminApi.getFAQs()
+    list.value = res.data || []
+  } catch (e) {
+    console.error('获取FAQ列表失败', e)
+    list.value = []
+  }
 }
 
 async function toggleStatus(item: FAQItem) {

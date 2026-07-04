@@ -61,7 +61,7 @@
           </div>
         </div>
       </div>
-      <div v-if="list.length === 0" class="text-center py-12 text-[#4a4a6a] cyber-card">暂无自动化规则</div>
+      <div v-if="filteredRules.length === 0" class="text-center py-12 text-[#4a4a6a] cyber-card">暂无自动化规则</div>
     </div>
 
     <!-- 执行日志弹窗 -->
@@ -144,9 +144,19 @@ const logsLoading = ref(false)
 function triggerLabel(t: string) { return { user_register: '用户注册', first_recharge: '首次充值', consume_threshold: '消费达标', tool_call_count: '工具调用达标', course_complete: '完成课程', invite_success: '邀请成功' }[t] || t }
 function actionLabel(a: string) { return { send_coins: '发放圣力', send_notification: '发送通知', send_coupon: '发放优惠券', change_role: '变更角色' }[a] || a }
 
+const filteredRules = computed(() => {
+  if (!filterStatus.value) return list.value
+  return list.value.filter((r: any) => r.status === filterStatus.value)
+})
+
 async function fetchData() {
-  const res = await adminApi.getAutomationRules()
-  list.value = res.data
+  try {
+    const res = await adminApi.getAutomationRules()
+    list.value = res.data || []
+  } catch (e) {
+    console.error('获取自动化规则失败', e)
+    list.value = []
+  }
 }
 
 async function toggleStatus(rule: AutomationRule) {
