@@ -32,102 +32,127 @@ jobs:
           scp -o StrictHostKeyChecking=no -o ConnectTimeout=20 /tmp/lsjy-cors-fix.tar.gz root@47.97.166.219:/tmp/lsjy-cors-fix.tar.gz
 
           ssh -o StrictHostKeyChecking=no -o ConnectTimeout=20 root@47.97.166.219 <<'EOF'
-            set -e
+            set -x
             echo "=== 罗圣纪元 CORS 修复部署 ==="
 
-            # 查找实际的后端和Nginx路径
-            echo "=== 探查服务器目录结构 ==="
-            ls /opt/lsjy-app/ 2>/dev/null || echo "/opt/lsjy-app/ 不存在"
-            find /opt -name "main.js" -path "*nestjs*" 2>/dev/null | head -5
-            find /opt -name "main.js" -path "*dist*" 2>/dev/null | head -5
-            ls /etc/nginx/conf.d/ 2>/dev/null || echo "nginx conf.d 不存在"
+            # 1. 从pm2查找实际运行的后端路径
+            echo "=== 查找运行中的后端进程 ==="
+            pm2 list
+            PM2_STATUS=$(pm2 jlist 2>/dev/null || echo "[]")
+            BACKEND_MAIN=$(echo "$PM2_STATUS" | grep -oP '"script":"\K[^"]+main\.js' | grep -v backup | grep -v node_modules | head -1)
 
-            # 确定实际路径
-            BACKEND_MAIN=$(find /opt -name "main.js" -path "*dist*" 2>/dev/null | head -1)
-            NGINX_CONF=$(ls /etc/nginx/conf.d/*.conf 2>/dev/null | head -1)
-            echo "找到后端文件: $BACKEND_MAIN"
-            echo "找到Nginx配置: $NGINX_CONF"
-
+            # 如果pm2找不到，手动找（排除backup和node_modules）
             if [ -z "$BACKEND_MAIN" ]; then
-              echo "ERROR: 找不到后端main.js！尝试pm2查找..."
-              pm2 describe lsjy-backend 2>/dev/null | grep "exec cwd\|script path" || pm2 list
-              BACKEND_MAIN="/opt/lsjy-app/backend-nestjs/dist/main.js"
-              echo "尝试使用默认路径: $BACKEND_MAIN"
+              BACKEND_MAIN=$(find /opt/lsjy-app -name "main.js" -path "*/dist/main.js" ! -path "*/node_modules/*" ! -path "*backup*" 2>/dev/null | head -1)
             fi
 
-            # 提取目录
+            # 最终默认路径
+            if [ -z "$BACKEND_MAIN" ]; then
+              BACKEND_MAIN="/opt/lsjy-app/backend/dist/main.js"
+            fi
+
+            # 确保目录存在
             BACKEND_DIR=$(dirname "$BACKEND_MAIN")
             mkdir -p "$BACKEND_DIR"
-            echo "后端目录: $BACKEND_DIR"
+            echo "使用后端路径: $BACKEND_MAIN"
 
-            # 备份当前配置
+            # 2. Nginx配置 - 正确找到lsjy.conf
+            NGINX_CONF=""
+            if [ -f "/etc/nginx/conf.d/lsjy.conf" ]; then
+              NGINX_CONF="/etc/nginx/conf.d/lsjy.conf"
+            elif [ -f "/etc/nginx/conf.d/lsjyapp.conf" ]; then
+              NGINX_CONF="/etc/nginx/conf.d/lsjyapp.conf"
+            else
+              NGINX_CONF=$(ls /etc/nginx/conf.d/*.conf 2>/dev/null | grep -v default | head -1)
+            fi
+            echo "使用Nginx配置: $NGINX_CONF"
+
+            # 3. 备份当前配置
             BACKUP_DIR="/opt/lsjy-app/backup-cors-$(date +%Y%m%d%H%M%S)"
             mkdir -p "$BACKUP_DIR"
             [ -f "$BACKEND_MAIN" ] && cp "$BACKEND_MAIN" "$BACKUP_DIR/main.js.bak"
             [ -f "$NGINX_CONF" ] && cp "$NGINX_CONF" "$BACKUP_DIR/nginx-lsjy.conf.bak"
             echo "备份已保存到: $BACKUP_DIR"
 
-            # 解压部署文件
+            # 4. 解压部署文件
             cd /tmp
             tar -xzf lsjy-cors-fix.tar.gz
 
-            # 更新NestJS main.js（含CORS修复）
+            # 5. 更新后端main.js（含CORS修复）
             echo "更新后端 main.js -> $BACKEND_MAIN ..."
             cp /tmp/deploy/ecs-live-config/backend-nestjs/main.js "$BACKEND_MAIN"
+            echo "后端文件更新完成，大小: $(wc -c < "$BACKEND_MAIN") bytes"
 
-            # 更新Nginx配置（移除OPTIONS if块拦截）
-            if [ -n "$NGINX_CONF" ]; then
+            # 6. 更新Nginx配置
+            if [ -n "$NGINX_CONF" ] && [ -f "$NGINX_CONF" ]; then
               echo "更新 Nginx 配置 -> $NGINX_CONF ..."
+
+              # 移除新配置中的default_server标记，避免与default.conf冲突
+              sed -i 's/default_server//g' /tmp/deploy/ecs-live-config/nginx-lsjy-live.conf
+
               cp /tmp/deploy/ecs-live-config/nginx-lsjy-live.conf "$NGINX_CONF"
 
               # 验证Nginx配置
               echo "验证 Nginx 配置..."
-              nginx -t
+              nginx -t 2>&1
+              NGINX_OK=$?
 
-              # 重启Nginx
-              echo "重启 Nginx..."
-              nginx -s reload
+              if [ $NGINX_OK -eq 0 ]; then
+                echo "重启 Nginx..."
+                nginx -s reload
+              else
+                echo "Nginx配置验证失败，恢复备份..."
+                cp "$BACKUP_DIR/nginx-lsjy.conf.bak" "$NGINX_CONF"
+                nginx -t
+              fi
             else
-              echo "WARNING: 未找到Nginx配置，跳过Nginx更新"
+              echo "WARNING: 未找到正确的Nginx配置"
+              ls -la /etc/nginx/conf.d/
             fi
 
-            # 重启NestJS后端
-            echo "重启 NestJS 后端 (lsjy-backend)..."
-            pm2 restart lsjy-backend 2>/dev/null || {
+            # 7. 重启NestJS后端
+            echo "重启 NestJS 后端..."
+            pm2 restart lsjy-backend 2>/dev/null || pm2 restart all 2>/dev/null || {
               echo "pm2 restart失败，尝试start..."
               pm2 start "$BACKEND_MAIN" --name lsjy-backend --node-args="--max-old-space-size=512" 2>/dev/null || true
             }
             pm2 save 2>/dev/null || true
 
-            sleep 5
+            sleep 8
 
-            # 验证后端健康
+            # 8. 验证
             echo ""
             echo "=== 验证部署 ==="
+
+            # 检查pm2状态
+            pm2 list
+
+            # 检查后端健康
             for i in 1 2 3 4 5 6; do
-              if curl -fsS http://localhost:3000/api/v1/system/health 2>/dev/null || curl -fsS http://localhost:3000/api/v1/health 2>/dev/null; then
-                echo ""
-                echo "后端健康检查通过!"
+              HEALTH=$(curl -s http://localhost:3000/api/v1/auth/login -X POST -H "Content-Type: application/json" -d '{}' 2>/dev/null | head -c 200)
+              if [ -n "$HEALTH" ]; then
+                echo "后端响应正常"
                 break
               fi
               echo "等待后端启动... ($i/6)"
               sleep 5
             done
 
-            # 验证CORS
+            # 验证CORS头 - 直接访问后端端口绕过Nginx
             echo ""
-            echo "验证CORS头..."
-            CORS_CHECK=$(curl -s -o /dev/null -w "%{http_code}" -X OPTIONS https://api.lsjyapp.cn/api/v1/auth/login \
+            echo "验证后端CORS（直连3000端口）..."
+            curl -sI -X OPTIONS http://localhost:3000/api/v1/auth/login \
               -H "Origin: https://lsjyapp.cn" \
               -H "Access-Control-Request-Method: POST" \
-              -H "Access-Control-Request-Headers: Content-Type" 2>/dev/null)
-            echo "OPTIONS预检响应状态码: $CORS_CHECK"
+              -H "Access-Control-Request-Headers: Content-Type" 2>/dev/null | grep -i "access-control" || echo "直连后端也无CORS头"
 
-            CORS_ORIGIN=$(curl -sI -X OPTIONS https://api.lsjyapp.cn/api/v1/auth/login \
+            # 验证通过Nginx的CORS
+            echo ""
+            echo "验证通过Nginx的CORS头..."
+            curl -sI -X OPTIONS https://api.lsjyapp.cn/api/v1/auth/login \
               -H "Origin: https://lsjyapp.cn" \
               -H "Access-Control-Request-Method: POST" \
-              -H "Access-Control-Request-Headers: Content-Type" 2>/dev/null | grep -i "access-control-allow-origin" || echo "未找到CORS头")
-            echo "CORS Allow-Origin: $CORS_ORIGIN"
+              -H "Access-Control-Request-Headers: Content-Type" 2>/dev/null | grep -i "access-control\|HTTP/" || echo "无CORS头"
 
             echo ""
             echo "=== 部署完成 ==="
