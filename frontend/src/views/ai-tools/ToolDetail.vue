@@ -62,13 +62,60 @@
             </div>
           </div>
 
-          <!-- 输入区域 -->
+          <!-- 精细化输入区域 -->
           <div class="space-y-4">
             <div>
-              <el-input v-model="inputContent" type="textarea" :rows="3" :placeholder="inputPlaceholder"
+              <label class="block text-sm font-medium mb-2" style="color: var(--cyber-text-dim);">需求描述</label>
+              <el-input v-model="inputContent" type="textarea" :rows="4" :placeholder="inputPlaceholder"
                 class="w-full" :disabled="generating" @keydown.ctrl.enter="handleSend" />
               <div class="flex justify-between items-center mt-1">
-                <span class="text-xs" style="color: var(--cyber-text-dim);">Ctrl+Enter 发送</span>
+                <span class="text-xs" style="color: var(--cyber-text-dim);">把目标、对象、限制写清楚，效果更精准</span>
+              </div>
+            </div>
+
+            <!-- 参数设置：文本类工具也像图像生成一样可选择 -->
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+              <div>
+                <label class="block text-xs mb-1" style="color: var(--cyber-text-dim);">使用场景</label>
+                <el-select v-model="textScene" size="small" class="w-full">
+                  <el-option v-for="item in textSceneOptions" :key="item" :label="item" :value="item" />
+                </el-select>
+              </div>
+              <div>
+                <label class="block text-xs mb-1" style="color: var(--cyber-text-dim);">输出格式</label>
+                <el-select v-model="textFormat" size="small" class="w-full">
+                  <el-option label="完整方案" value="完整方案" />
+                  <el-option label="步骤清单" value="步骤清单" />
+                  <el-option label="表格对比" value="表格对比" />
+                  <el-option label="话术模板" value="话术模板" />
+                  <el-option label="文案成稿" value="文案成稿" />
+                  <el-option label="复盘报告" value="复盘报告" />
+                </el-select>
+              </div>
+              <div>
+                <label class="block text-xs mb-1" style="color: var(--cyber-text-dim);">语气风格</label>
+                <el-select v-model="textTone" size="small" class="w-full">
+                  <el-option label="专业严谨" value="专业严谨" />
+                  <el-option label="通俗易懂" value="通俗易懂" />
+                  <el-option label="营销转化" value="营销转化" />
+                  <el-option label="亲和温暖" value="亲和温暖" />
+                  <el-option label="简洁直接" value="简洁直接" />
+                </el-select>
+              </div>
+              <div>
+                <label class="block text-xs mb-1" style="color: var(--cyber-text-dim);">内容长度</label>
+                <el-select v-model="textLength" size="small" class="w-full">
+                  <el-option label="精简版" value="精简版" />
+                  <el-option label="标准版" value="标准版" />
+                  <el-option label="详细版" value="详细版" />
+                  <el-option label="深度版" value="深度版" />
+                </el-select>
+              </div>
+              <div>
+                <label class="block text-xs mb-1" style="color: var(--cyber-text-dim);">适用平台</label>
+                <el-select v-model="textPlatform" size="small" class="w-full">
+                  <el-option v-for="item in textPlatformOptions" :key="item" :label="item" :value="item" />
+                </el-select>
               </div>
             </div>
 
@@ -89,8 +136,8 @@
               </div>
               <el-button type="primary" size="large" :loading="generating" @click="handleSend"
                 :disabled="!inputContent.trim()"
-                style="min-width: 140px; height: 44px;">
-                {{ generating ? '生成中...' : '✨ 发送' }}
+                style="min-width: 160px; height: 44px; background: linear-gradient(135deg, var(--cyber-magenta), var(--cyber-purple)) !important;">
+                {{ generating ? '生成中...' : '✨ 开始生成' }}
               </el-button>
             </div>
           </div>
@@ -340,6 +387,11 @@ const generating = ref(false)
 const inputContent = ref('')
 const chatHistory = ref<ChatMessage[]>([])
 const singleResult = ref('')
+const textScene = ref('自动匹配')
+const textFormat = ref('完整方案')
+const textTone = ref('专业严谨')
+const textLength = ref('标准版')
+const textPlatform = ref('通用')
 
 // ===== 图像生成状态 =====
 const imagePrompt = ref('')
@@ -363,6 +415,42 @@ const lastModel = ref('')
 // ===== 计算属性 =====
 const isImageTool = computed(() => tool.value?.toolType === 'image')
 const isVideoTool = computed(() => tool.value?.toolType === 'video')
+
+const toolText = computed(() => `${tool.value?.name || ''} ${tool.value?.description || ''} ${(tool.value as any)?.subCategory || ''}`)
+
+const toolModule = computed(() => {
+  const text = toolText.value
+  if (/宠物|猫|狗|动物/.test(text)) return 'pet'
+  if (/校园|伯雅|博雅|社团|班级|学生|教务/.test(text)) return 'campus'
+  if (/电商|商品|店铺|门店|团购|成交|差评|供应链|直播带货/.test(text)) return 'ecommerce'
+  if (/教育|教学|学习|课程|考试|刷题|教案|单词|口语/.test(text)) return 'education'
+  if (/自媒体|内容|文案|抖音|小红书|公众号|短视频|脚本|直播|粉丝|热点/.test(text)) return 'media'
+  return 'ai'
+})
+
+const textSceneOptions = computed(() => {
+  const map: Record<string, string[]> = {
+    media: ['自动匹配', '爆款选题', '短视频脚本', '小红书文案', '公众号文章', '直播话术', '账号诊断', '变现方案'],
+    ecommerce: ['自动匹配', '商品上架', '店铺运营', '本地生活团购', '直播带货', '私域成交', '售后客服', '差评处理'],
+    education: ['自动匹配', '课程设计', '教案课件', '学习规划', '考试备考', '错题分析', '语言学习', '职业提升'],
+    pet: ['自动匹配', '喂养配餐', '行为训练', '健康护理', '用品选购', '宠物店经营', '宠物内容创作'],
+    campus: ['自动匹配', '校园通知', '社团活动', '班级管理', '校园安全', '学习辅导', '职业启蒙', '心理支持'],
+    ai: ['自动匹配', '通用问答', '方案策划', '数据分析', '合同审阅', '财务解读', '工作流拆解', '知识库问答'],
+  }
+  return map[toolModule.value] || map.ai
+})
+
+const textPlatformOptions = computed(() => {
+  const map: Record<string, string[]> = {
+    media: ['通用', '抖音', '小红书', '视频号', '公众号', 'B站', '快手'],
+    ecommerce: ['通用', '抖音电商', '淘宝', '拼多多', '京东', '美团/本地生活', '私域社群'],
+    education: ['通用', '课堂教学', '线上课程', '家校沟通', '考试训练', '职业培训'],
+    pet: ['通用', '宠物店', '猫咪', '狗狗', '宠物医院', '宠物短视频'],
+    campus: ['通用', '班级', '社团', '校园公众号', '家校通知', '就业服务'],
+    ai: ['通用', '企业办公', '个人效率', '管理汇报', '项目策划', '数据报告'],
+  }
+  return map[toolModule.value] || map.ai
+})
 
 const providerDisplayName = computed(() => {
   if (!tool.value) return ''
@@ -412,7 +500,8 @@ async function handleSend() {
   if (!inputContent.value.trim() || !tool.value) return ElMessage.warning('请输入内容')
   if (generating.value) return
 
-  const userMessage = inputContent.value.trim()
+  const rawInput = inputContent.value.trim()
+  const userMessage = buildTextToolPrompt(rawInput)
   chatHistory.value.push({ role: 'user', content: userMessage })
   inputContent.value = ''
   generating.value = true
@@ -436,6 +525,22 @@ async function handleSend() {
   } finally {
     generating.value = false
   }
+}
+
+function buildTextToolPrompt(rawInput: string): string {
+  const toolName = tool.value?.name || 'AI工具'
+  return [
+    `工具：${toolName}`,
+    `使用场景：${textScene.value}`,
+    `适用平台：${textPlatform.value}`,
+    `输出格式：${textFormat.value}`,
+    `语气风格：${textTone.value}`,
+    `内容长度：${textLength.value}`,
+    '',
+    `用户需求：${rawInput}`,
+    '',
+    '请严格按以上参数输出。结果要具体、可直接使用，不要空泛解释；如果是方案类，请给步骤；如果是文案类，请直接给成稿；如果是分析类，请给结论、原因和建议。'
+  ].join('\n')
 }
 
 function clearChat() {
