@@ -1,8 +1,10 @@
 /**
  * 日期格式化
  */
-export function formatDate(date: string | Date, fmt = 'YYYY-MM-DD HH:mm:ss'): string {
+export function formatDate(date?: string | Date | null, fmt = 'YYYY-MM-DD HH:mm:ss'): string {
+  if (!date) return '未记录'
   const d = new Date(date)
+  if (Number.isNaN(d.getTime())) return '未记录'
   const map: Record<string, number> = {
     YYYY: d.getFullYear(),
     MM: d.getMonth() + 1,

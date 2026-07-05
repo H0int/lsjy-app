@@ -23,10 +23,73 @@
       <div class="absolute right-6 top-1/2 -translate-y-1/2 text-6xl opacity-15" style="filter: drop-shadow(0 0 10px rgba(255,184,0,0.5));">⚡</div>
       <div class="mt-4 flex gap-3 relative z-10 flex-wrap">
         <el-button type="warning" @click="showRecharge = true" style="min-width: 80px;">⚡ 充值圣力</el-button>
+        <el-button type="success" plain @click="scrollToMemberSection" style="min-width: 96px;">💎 开通会员</el-button>
+        <el-button plain @click="scrollToInviteSection" :style="{ borderColor: 'var(--cyber-cyan)', color: 'var(--cyber-cyan)' }">🎁 邀请好友</el-button>
         <el-button plain @click="showMyOrders = !showMyOrders"
           :style="{ borderColor: 'var(--cyber-green)', color: 'var(--cyber-green)' }">
           {{ showMyOrders ? '隐藏订单' : '我的订单' }}
         </el-button>
+      </div>
+    </div>
+
+    <!-- ========== 会员订阅 ========== -->
+    <div ref="memberSection" class="cyber-card p-5 mb-6">
+      <div class="flex items-center justify-between gap-3 flex-wrap mb-4">
+        <div>
+          <h3 class="font-bold" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">
+            <span style="color: var(--cyber-amber);">▍</span>会员订阅
+          </h3>
+          <p class="text-xs mt-1" style="color: var(--cyber-text-dim);">订阅后每天领取圣力，比单次充值更适合持续使用。</p>
+        </div>
+        <div class="text-xs px-3 py-1 rounded-full"
+          :style="subscriptionStatus.active ? 'background: rgba(0,255,136,0.1); color: var(--cyber-green);' : 'background: rgba(255,184,0,0.1); color: var(--cyber-amber);'">
+          {{ subscriptionStatus.active ? `会员有效至 ${formatDate(subscriptionStatus.expiresAt, 'YYYY-MM-DD')}` : '暂未开通' }}
+        </div>
+      </div>
+      <div class="grid sm:grid-cols-2 gap-3">
+        <div v-for="plan in subscriptionPlans" :key="plan.id" class="rounded-xl p-4 relative"
+          style="background: rgba(255,184,0,0.05); border: 1px solid rgba(255,184,0,0.22);">
+          <div v-if="plan.isRecommended" class="absolute right-3 top-3 text-[10px] px-2 py-0.5 rounded-full text-white"
+            style="background: linear-gradient(135deg, var(--cyber-amber), #ff6b00);">推荐</div>
+          <div class="font-bold" style="color: var(--cyber-text);">{{ plan.name }}</div>
+          <div class="text-2xl font-bold mt-2" style="color: var(--cyber-amber);">¥{{ plan.price }}<span class="text-xs font-normal">/月</span></div>
+          <div class="text-sm mt-2" style="color: var(--cyber-cyan);">每天送 {{ plan.dailyCoins }} 圣力，30天共 {{ plan.totalCoins }} 圣力</div>
+          <div class="text-xs mt-1" style="color: var(--cyber-text-dim);">{{ plan.description }}</div>
+          <el-button class="mt-4 w-full" type="warning" :loading="subscribing" @click="handleSubscribe(plan)">
+            开通 {{ plan.name }}
+          </el-button>
+        </div>
+      </div>
+      <div v-if="subscriptionStatus.active" class="mt-4 flex items-center justify-between gap-3 flex-wrap rounded-xl p-3"
+        style="background: rgba(0,255,136,0.05); border: 1px solid rgba(0,255,136,0.18);">
+        <div class="text-sm" style="color: var(--cyber-text);">
+          当前会员：{{ subscriptionStatus.planName }}，每日可领 {{ subscriptionStatus.dailyCoins }} 圣力
+        </div>
+        <el-button type="success" :loading="claimingDaily" @click="claimDailyCoins">领取今日圣力</el-button>
+      </div>
+    </div>
+
+    <!-- ========== 邀请好友 ========== -->
+    <div ref="inviteSection" class="cyber-card p-5 mb-6">
+      <h3 class="font-bold mb-2" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">
+        <span style="color: var(--cyber-cyan);">▍</span>邀请好友送圣力
+      </h3>
+      <p class="text-xs mb-4" style="color: var(--cyber-text-dim);">好友填写你的邀请码后，你得80圣力，好友得30圣力。每个账号只能填写一次。</p>
+      <div class="grid sm:grid-cols-2 gap-3">
+        <div class="rounded-xl p-4" style="background: rgba(0,240,255,0.05); border: 1px solid rgba(0,240,255,0.18);">
+          <div class="text-xs mb-1" style="color: var(--cyber-text-dim);">我的邀请码</div>
+          <div class="text-2xl font-bold tracking-wider" style="color: var(--cyber-cyan); font-family: 'JetBrains Mono', monospace;">{{ referralInfo.code || '--' }}</div>
+          <div class="text-xs mt-2" style="color: var(--cyber-text-dim);">已邀请 {{ referralInfo.invitedCount || 0 }} 人，累计获得 {{ referralInfo.earnedCoins || 0 }} 圣力</div>
+          <el-button class="mt-3" size="small" @click="copyInviteCode">复制邀请码</el-button>
+        </div>
+        <div class="rounded-xl p-4" style="background: rgba(124,58,237,0.06); border: 1px solid rgba(124,58,237,0.2);">
+          <div class="text-xs mb-2" style="color: var(--cyber-text-dim);">填写好友邀请码</div>
+          <div class="flex gap-2">
+            <el-input v-model="inviteCodeInput" placeholder="例如 LSJY0001" />
+            <el-button type="primary" :loading="applyingInvite" @click="applyInviteCode">领取</el-button>
+          </div>
+          <div class="text-[10px] mt-2" style="color: var(--cyber-text-dim);">成功后立即到账30圣力。</div>
+        </div>
       </div>
     </div>
 
@@ -249,10 +312,19 @@ const coinBalance = ref(0)
 const showRecharge = ref(false)
 const showMyOrders = ref(false)
 const ordersSection = ref<HTMLElement | null>(null)
+const memberSection = ref<HTMLElement | null>(null)
+const inviteSection = ref<HTMLElement | null>(null)
 const selectedPkgId = ref<number | null>(null)
 const recharging = ref(false)
 const packages = ref<RechargePackage[]>([])
 const myOrders = ref<any[]>([])
+const subscriptionPlans = ref<any[]>([])
+const subscriptionStatus = ref<any>({ active: false })
+const referralInfo = ref<any>({})
+const inviteCodeInput = ref('')
+const subscribing = ref(false)
+const claimingDaily = ref(false)
+const applyingInvite = ref(false)
 
 // 支付弹窗相关
 const showPayDialog = ref(false)
@@ -306,6 +378,8 @@ onMounted(async () => {
     coinBalance.value = balRes.data?.balance ?? 0
   } catch { coinBalance.value = 0 }
 
+  await Promise.allSettled([loadSubscriptionInfo(), loadReferralInfo()])
+
   // 获取套餐（静默，失败用兜底数据）
   try {
     const pkgRes = await paymentApi.getPackages()
@@ -325,6 +399,93 @@ onMounted(async () => {
     await openOrdersSection()
   }
 })
+
+async function loadSubscriptionInfo() {
+  try {
+    const [plansRes, statusRes] = await Promise.all([
+      service.get('/payment/subscription/plans'),
+      service.get('/payment/subscription/me')
+    ])
+    subscriptionPlans.value = plansRes.data.data || []
+    subscriptionStatus.value = statusRes.data.data || { active: false }
+  } catch {
+    subscriptionPlans.value = [
+      { id: 201, name: '月度成长会员', price: 29.9, dailyCoins: 30, totalCoins: 900, description: '每天自动送30圣力', isRecommended: true }
+    ]
+  }
+}
+
+async function loadReferralInfo() {
+  try {
+    const res = await service.get('/payment/referral/me')
+    referralInfo.value = res.data.data || {}
+  } catch {
+    referralInfo.value = {}
+  }
+}
+
+async function handleSubscribe(plan: any) {
+  subscribing.value = true
+  try {
+    const res = await service.post('/payment/subscription/subscribe', {
+      planId: plan.id,
+      paymentMethod: payMethod.value
+    })
+    currentOrder.value = res.data.data.order
+    showPayDialog.value = true
+    ElMessage.success('会员订单已创建，请扫码付款后上传截图')
+  } catch (e: any) {
+    ElMessage.error(e?.response?.data?.message || '创建会员订单失败')
+  } finally {
+    subscribing.value = false
+  }
+}
+
+async function claimDailyCoins() {
+  claimingDaily.value = true
+  try {
+    const res = await service.post('/payment/subscription/claim-daily')
+    coinBalance.value = res.data.data.balance
+    ElMessage.success(res.data.message || '领取成功')
+    await loadSubscriptionInfo()
+  } catch (e: any) {
+    ElMessage.warning(e?.response?.data?.message || '今日暂不可领取')
+  } finally {
+    claimingDaily.value = false
+  }
+}
+
+async function applyInviteCode() {
+  if (!inviteCodeInput.value.trim()) return ElMessage.warning('请输入邀请码')
+  applyingInvite.value = true
+  try {
+    const res = await service.post('/payment/referral/apply', { code: inviteCodeInput.value.trim() })
+    coinBalance.value = res.data.data.balance
+    inviteCodeInput.value = ''
+    ElMessage.success(res.data.message || '邀请奖励已到账')
+    await loadReferralInfo()
+  } catch (e: any) {
+    ElMessage.warning(e?.response?.data?.message || '邀请码领取失败')
+  } finally {
+    applyingInvite.value = false
+  }
+}
+
+async function copyInviteCode() {
+  if (!referralInfo.value.code) return
+  await navigator.clipboard.writeText(referralInfo.value.code)
+  ElMessage.success('邀请码已复制')
+}
+
+async function scrollToMemberSection() {
+  await nextTick()
+  memberSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+async function scrollToInviteSection() {
+  await nextTick()
+  inviteSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
 
 async function handleRecharge() {
   if (!selectedPkgId.value) return ElMessage.warning('请选择充值套餐')

@@ -214,6 +214,33 @@ function getUserCoins(userId) {
   return user?.coins || 0;
 }
 
+function creditUserCoins(userId, amount, description = '圣力奖励') {
+  const usersFile = path.join(__dirname, 'data', 'users.json');
+  let users = [];
+  try { users = JSON.parse(fs.readFileSync(usersFile, 'utf8')); } catch (e) { users = [...usersStore]; }
+  let user = users.find(u => Number(u.id) === Number(userId));
+  const source = user ? 'file' : 'memory';
+  if (!user) user = usersStore.find(u => Number(u.id) === Number(userId));
+  if (!user) return { ok: false, error: '用户不存在' };
+  const before = Number(user.coins || 0);
+  user.coins = before + amount;
+  user.totalRecharge = Number(user.totalRecharge || 0) + Math.max(amount, 0);
+  if (source === 'file') {
+    fs.mkdirSync(path.dirname(usersFile), { recursive: true });
+    fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
+  }
+  coinTransactionsStore.unshift({
+    id: nextId(),
+    userId: Number(userId),
+    type: 'bonus',
+    amount,
+    balance: user.coins,
+    description,
+    createdAt: new Date().toISOString(),
+  });
+  return { ok: true, balance: user.coins, before, amount };
+}
+
 function loadFileUsers() {
   const usersFile = path.join(__dirname, 'data', 'users.json');
   try { return JSON.parse(fs.readFileSync(usersFile, 'utf8')); } catch (e) { return []; }
@@ -406,6 +433,12 @@ const paymentOrdersStore = [
   { id: 1, orderNo: 'LSJY20260601001', userId: 1, amount: 129.9, coins: 2000, status: 'completed', payMethod: 'wechat', createdAt: '2026-06-01T10:00:00Z' },
   { id: 2, orderNo: 'LSJY20260610001', userId: 2, amount: 39.9, coins: 500, status: 'pending', payMethod: 'alipay', createdAt: '2026-06-10T14:00:00Z' },
 ];
+
+const subscriptionPlansStore = [
+  { id: 201, name: '月度成长会员', price: 29.9, period: 'monthly', days: 30, dailyCoins: 30, firstDayCoins: 30, totalCoins: 900, description: '每天自动送30圣力，适合持续使用AI工具', isRecommended: true },
+  { id: 202, name: '月度进阶会员', price: 59.9, period: 'monthly', days: 30, dailyCoins: 80, firstDayCoins: 80, totalCoins: 2400, description: '每天自动送80圣力，适合自媒体、电商高频使用', isRecommended: false },
+];
+const referralsStore = [];
 
 const aiHistoryStore = [
   { id: 1, userId: 1, toolId: 1, toolName: '罗圣AI智能体', input: '你好', output: '你好！我是罗圣AI智能体...', model: 'coze', tokens: 120, createdAt: '2026-06-14T09:00:00Z' },
@@ -3879,6 +3912,157 @@ app.post('/api/v1/payment/admin/coins/adjust', authCheck, (req, res) => {
   });
 });
 
+function getReferralCodeForUser(userId) {
+  return `LSJY${String(userId).padStart(4, '0')}`;
+}
+
+function findUserByReferralCode(code) {
+  const normalized = String(code || '').trim().toUpperCase();
+  const m = normalized.match(/^LSJY0*(\d+)$/);
+  if (!m) return null;
+  const id = Number(m[1]);
+  return findCurrentUser(id).user;
+}
+
+app.get('/api/v1/payment/subscription/plans', (req, res) => {
+  res.json({ code: 0, message: 'success', data: subscriptionPlansStore });
+});
+
+app.get('/api/v1/payment/subscription/me', authCheck, (req, res) => {
+  const { user } = findCurrentUser(req.user?.id || 1);
+  const now = Date.now();
+  const expiresAt = user?.subscriptionExpiresAt || null;
+  const active = !!expiresAt && new Date(expiresAt).getTime() > now;
+  res.json({
+    code: 0,
+    message: 'success',
+    data: {
+      active,
+      tier: active ? (user?.subscriptionTier || 'monthly') : '',
+      planName: active ? (user?.subscriptionName || '月度会员') : '',
+      dailyCoins: active ? Number(user?.subscriptionDailyCoins || 0) : 0,
+      expiresAt,
+      lastDailyGrantAt: user?.lastDailyGrantAt || null,
+    },
+  });
+});
+
+app.post('/api/v1/payment/subscription/subscribe', authCheck, (req, res) => {
+  const planId = Number(req.body?.planId);
+  const paymentMethod = req.body?.paymentMethod || 'wechat';
+  const plan = subscriptionPlansStore.find(p => Number(p.id) === planId);
+  if (!plan) return res.status(404).json({ code: 404, message: '会员套餐不存在', data: null });
+  const order = {
+    id: Date.now(),
+    orderNo: 'SUB' + Date.now(),
+    userId: req.user?.id || 1,
+    username: req.user?.username || 'unknown',
+    packageId: plan.id,
+    orderType: 'subscription',
+    planName: plan.name,
+    dailyCoins: plan.dailyCoins,
+    subscriptionDays: plan.days,
+    coinAmount: plan.firstDayCoins,
+    price: plan.price,
+    paymentMethod,
+    screenshotUrl: '',
+    status: 'pending_payment',
+    remark: '',
+    createdAt: new Date().toISOString(),
+    reviewedAt: null,
+    reviewedBy: null,
+  };
+  const orders = getRechargeOrders();
+  orders.push(order);
+  saveRechargeOrders(orders);
+  res.json({ code: 0, message: '会员订单已创建，请扫码付款后上传截图', data: { order } });
+});
+
+app.post('/api/v1/payment/subscription/claim-daily', authCheck, (req, res) => {
+  const userId = req.user?.id || 1;
+  const usersFile = path.join(__dirname, 'data', 'users.json');
+  let users = [];
+  try { users = JSON.parse(fs.readFileSync(usersFile, 'utf8')); } catch (e) { users = [...usersStore]; }
+  let user = users.find(u => Number(u.id) === Number(userId));
+  const source = user ? 'file' : 'memory';
+  if (!user) user = usersStore.find(u => Number(u.id) === Number(userId));
+  if (!user) return res.status(404).json({ code: 404, message: '用户不存在', data: null });
+  const now = new Date();
+  const expiresAt = user.subscriptionExpiresAt ? new Date(user.subscriptionExpiresAt) : null;
+  if (!expiresAt || expiresAt.getTime() <= now.getTime()) {
+    return res.status(400).json({ code: 400, message: '当前没有有效会员订阅', data: null });
+  }
+  const today = now.toISOString().slice(0, 10);
+  if (user.lastDailyGrantAt === today) {
+    return res.status(400).json({ code: 400, message: '今日会员圣力已领取，明天再来', data: { balance: user.coins || 0 } });
+  }
+  const amount = Number(user.subscriptionDailyCoins || 0);
+  if (amount <= 0) return res.status(400).json({ code: 400, message: '当前会员套餐未配置每日圣力', data: null });
+  const before = Number(user.coins || 0);
+  user.coins = before + amount;
+  user.lastDailyGrantAt = today;
+  if (source === 'file') {
+    fs.mkdirSync(path.dirname(usersFile), { recursive: true });
+    fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
+  }
+  coinTransactionsStore.unshift({
+    id: nextId(),
+    userId,
+    type: 'subscription_daily',
+    amount,
+    balance: user.coins,
+    description: `会员每日赠送 ${amount} 圣力`,
+    createdAt: now.toISOString(),
+  });
+  res.json({ code: 0, message: `领取成功，今日获得${amount}圣力`, data: { amount, balance: user.coins, lastDailyGrantAt: today } });
+});
+
+app.get('/api/v1/payment/referral/me', authCheck, (req, res) => {
+  const userId = req.user?.id || 1;
+  const invited = referralsStore.filter(r => Number(r.inviterId) === Number(userId));
+  res.json({
+    code: 0,
+    message: 'success',
+    data: {
+      code: getReferralCodeForUser(userId),
+      inviteReward: 80,
+      newUserReward: 30,
+      invitedCount: invited.length,
+      earnedCoins: invited.reduce((sum, r) => sum + Number(r.inviterReward || 0), 0),
+      records: invited,
+    },
+  });
+});
+
+app.post('/api/v1/payment/referral/apply', authCheck, (req, res) => {
+  const inviteeId = req.user?.id || 1;
+  const code = String(req.body?.code || '').trim().toUpperCase();
+  const inviter = findUserByReferralCode(code);
+  if (!inviter) return res.status(404).json({ code: 404, message: '邀请码不存在，请检查后重试', data: null });
+  if (Number(inviter.id) === Number(inviteeId)) return res.status(400).json({ code: 400, message: '不能填写自己的邀请码', data: null });
+  if (referralsStore.some(r => Number(r.inviteeId) === Number(inviteeId))) {
+    return res.status(400).json({ code: 400, message: '你已经填写过邀请码，不能重复领取', data: null });
+  }
+  const inviterReward = 80;
+  const inviteeReward = 30;
+  const inviterCredit = creditUserCoins(inviter.id, inviterReward, `邀请好友奖励：用户${inviteeId}`);
+  const inviteeCredit = creditUserCoins(inviteeId, inviteeReward, `填写邀请码奖励：${code}`);
+  if (!inviterCredit.ok || !inviteeCredit.ok) {
+    return res.status(500).json({ code: 500, message: '邀请奖励发放失败，请稍后重试', data: null });
+  }
+  const record = {
+    id: nextId(),
+    code,
+    inviterId: inviter.id,
+    inviteeId,
+    inviterReward,
+    inviteeReward,
+    createdAt: new Date().toISOString(),
+  };
+  referralsStore.unshift(record);
+  res.json({ code: 0, message: `领取成功，已获得${inviteeReward}圣力`, data: { record, balance: inviteeCredit.balance } });
+});
+
 // 充值套餐
 app.get('/api/v1/payment/coin/packages', (req, res) => {
   res.json({
@@ -4049,6 +4233,18 @@ app.post('/api/v1/payment/coin/approve/:orderId', authCheck, (req, res) => {
       if (user) {
         previousCoins = user.coins || 0;
         user.coins = previousCoins + order.coinAmount;
+        if (order.orderType === 'subscription') {
+          const now = new Date();
+          const base = user.subscriptionExpiresAt && new Date(user.subscriptionExpiresAt).getTime() > now.getTime()
+            ? new Date(user.subscriptionExpiresAt)
+            : now;
+          base.setDate(base.getDate() + Number(order.subscriptionDays || 30));
+          user.subscriptionTier = 'monthly';
+          user.subscriptionName = order.planName || '月度会员';
+          user.subscriptionDailyCoins = Number(order.dailyCoins || 0);
+          user.subscriptionExpiresAt = base.toISOString();
+          user.lastDailyGrantAt = now.toISOString().slice(0, 10);
+        }
         try {
           fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
           coinsAdded = true;
@@ -4070,6 +4266,18 @@ app.post('/api/v1/payment/coin/approve/:orderId', authCheck, (req, res) => {
       if (memUser) {
         previousCoins = memUser.coins || 0;
         memUser.coins = previousCoins + order.coinAmount;
+        if (order.orderType === 'subscription') {
+          const now = new Date();
+          const base = memUser.subscriptionExpiresAt && new Date(memUser.subscriptionExpiresAt).getTime() > now.getTime()
+            ? new Date(memUser.subscriptionExpiresAt)
+            : now;
+          base.setDate(base.getDate() + Number(order.subscriptionDays || 30));
+          memUser.subscriptionTier = 'monthly';
+          memUser.subscriptionName = order.planName || '月度会员';
+          memUser.subscriptionDailyCoins = Number(order.dailyCoins || 0);
+          memUser.subscriptionExpiresAt = base.toISOString();
+          memUser.lastDailyGrantAt = now.toISOString().slice(0, 10);
+        }
         coinsAdded = true;
         log(`[支付] (内存) 用户 ${memUser.username} 圣力 +${order.coinAmount} (${previousCoins} → ${memUser.coins})`);
       }
