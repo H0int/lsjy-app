@@ -2,8 +2,8 @@
   <div>
     <div class="cyber-grid-4 mb-4">
       <div class="cyber-stat-mini"><p class="stat-num text-green-400">{{ list.filter(c => c.status === 'active').length }}</p><p class="stat-lbl">进行中</p></div>
-      <div class="cyber-stat-mini"><p class="stat-num text-cyan-400">{{ list.reduce((s, c) => s + c.participantCount, 0).toLocaleString() }}</p><p class="stat-lbl">总参与人次</p></div>
-      <div class="cyber-stat-mini"><p class="stat-num text-amber-400">¥{{ list.reduce((s, c) => s + c.totalReward, 0).toLocaleString() }}</p><p class="stat-lbl">累计奖励</p></div>
+      <div class="cyber-stat-mini"><p class="stat-num text-cyan-400">{{ list.reduce((s, c) => s + Number(c.participantCount || 0), 0).toLocaleString() }}</p><p class="stat-lbl">总参与人次</p></div>
+      <div class="cyber-stat-mini"><p class="stat-num text-amber-400">¥{{ list.reduce((s, c) => s + Number(c.totalReward || 0), 0).toLocaleString() }}</p><p class="stat-lbl">累计奖励</p></div>
       <div class="cyber-stat-mini"><p class="stat-num text-purple-400">{{ list.length }}</p><p class="stat-lbl">活动总数</p></div>
     </div>
     <div class="cyber-toolbar">
@@ -21,8 +21,8 @@
             <h3 class="font-semibold text-white mb-1">{{ item.name }}</h3>
             <p class="text-sm text-[#6a6a8a] mb-3">{{ item.description }}</p>
             <div class="cyber-grid-4 campaign-metrics">
-              <div><p class="metric-label">参与人数</p><p class="metric-value">{{ item.participantCount.toLocaleString() }}</p></div>
-              <div><p class="metric-label">奖励总额</p><p class="metric-value text-amber-400">¥{{ item.totalReward.toLocaleString() }}</p></div>
+              <div><p class="metric-label">参与人数</p><p class="metric-value">{{ Number(item.participantCount || 0).toLocaleString() }}</p></div>
+              <div><p class="metric-label">奖励总额</p><p class="metric-value text-amber-400">¥{{ Number(item.totalReward || 0).toLocaleString() }}</p></div>
               <div><p class="metric-label">开始时间</p><p class="metric-time">{{ item.startTime }}</p></div>
               <div><p class="metric-label">结束时间</p><p class="metric-time">{{ item.endTime }}</p></div>
             </div>
@@ -85,13 +85,13 @@ async function fetchData() {
 }
 
 async function handleActivate(item: Campaign) {
-  await adminApi.updateCoupon(item.id, { status: 'active' }) // reuse update
+  await adminApi.updateCampaign(item.id, { status: 'active' })
   ElMessage.success('已上线')
   fetchData()
 }
 
 async function handlePause(item: Campaign) {
-  await adminApi.updateCoupon(item.id, { status: 'paused' })
+  await adminApi.updateCampaign(item.id, { status: 'paused' })
   ElMessage.success('已暂停')
   fetchData()
 }

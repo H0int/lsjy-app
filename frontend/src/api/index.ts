@@ -237,6 +237,9 @@ export const adminApi = {
     if (useMock) return mockApi.createCampaign(data) as any
     return service.post('/campaigns', data).then(r => r.data)
   },
+  updateCampaign(id: number, data: any): Promise<ApiResponse<Campaign>> {
+    return service.put(`/campaigns/${id}`, data).then(r => r.data)
+  },
   deleteCampaign(id: number): Promise<ApiResponse<any>> {
     if (useMock) return mockApi.deleteCampaign(id) as any
     return service.delete(`/campaigns/${id}`).then(r => r.data)

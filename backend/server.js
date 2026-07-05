@@ -458,8 +458,8 @@ const automationRulesStore = [
 ];
 
 const moderationStore = [
-  { id: 1, type: 'user_post', content: '用户发布的内容...', status: 'pending', userId: 2, createdAt: '2026-06-14T09:00:00Z', reason: '' },
-  { id: 2, type: 'ai_generated', content: 'AI生成的图片内容', status: 'approved', userId: 2, createdAt: '2026-06-13T15:00:00Z', reason: '' },
+  { id: 1, contentType: 'post', type: 'post', contentTitle: '用户发布的活动咨询帖', title: '用户发布的活动咨询帖', authorName: '测试用户', summary: '咨询罗圣纪元平台活动、优惠券和圣力使用规则，需要人工确认内容是否合规。', content: '用户发布的活动咨询帖：想了解圣力活动和会员优惠。', status: 'pending', userId: 2, createdAt: '2026-06-14T09:00:00Z', reason: '' },
+  { id: 2, contentType: 'comment', type: 'comment', contentTitle: 'AI生成内容评论', title: 'AI生成内容评论', authorName: '罗总', summary: 'AI生成的内容说明，已通过审核。', content: 'AI生成内容评论：平台功能介绍清晰，无违规内容。', status: 'approved', userId: 1, createdAt: '2026-06-13T15:00:00Z', reason: '' },
 ];
 
 const systemLogsStore = [
@@ -4950,17 +4950,47 @@ app.delete('/api/v1/announcements/:id', authCheck, (req, res) => {
 });
 
 // ----- 优惠券 -----
+function normalizeCoupon(coupon) {
+  return {
+    ...coupon,
+    type: coupon.type || (coupon.discount ? 'full_reduce' : 'coin_gift'),
+    discountValue: Number(coupon.discountValue ?? coupon.discount ?? 0),
+    totalQuantity: Number(coupon.totalQuantity ?? coupon.maxUses ?? 0),
+    usedQuantity: Number(coupon.usedQuantity ?? coupon.usedCount ?? 0),
+    validFrom: coupon.validFrom || '',
+    validTo: coupon.validTo || '',
+    issueRule: coupon.issueRule || 'manual',
+    status: coupon.status || 'active',
+  };
+}
+
 app.get('/api/v1/coupons', authCheck, (req, res) => {
   const { page, pageSize, status } = req.query;
-  let list = [...couponsStore];
+  let list = couponsStore.map(normalizeCoupon);
   if (status) list = list.filter(c => c.status === status);
   res.json({ code: 0, message: 'success', data: paginate(list, page, pageSize) });
 });
 
 app.post('/api/v1/coupons', authCheck, (req, res) => {
-  const { name, code, discount, minAmount, validFrom, validTo, maxUses } = req.body;
-  if (!name || !code) return res.status(400).json({ code: 400, message: '名称和优惠码不能为空', data: null });
-  const item = { id: nextId(), name, code, discount: discount || 0, minAmount: minAmount || 0, validFrom: validFrom || '', validTo: validTo || '', status: 'active', usedCount: 0, maxUses: maxUses || 1000 };
+  const { name, code, discount, discountValue, minAmount, validFrom, validTo, maxUses, totalQuantity, type, issueRule } = req.body;
+  if (!name) return res.status(400).json({ code: 400, message: '优惠券名称不能为空', data: null });
+  const item = normalizeCoupon({
+    id: nextId(),
+    name,
+    code: code || `COUPON${Date.now()}`,
+    type: type || 'full_reduce',
+    discount: discount ?? discountValue ?? 0,
+    discountValue: discountValue ?? discount ?? 0,
+    minAmount: minAmount || 0,
+    validFrom: validFrom || '',
+    validTo: validTo || '',
+    status: 'active',
+    usedCount: 0,
+    usedQuantity: 0,
+    maxUses: maxUses ?? totalQuantity ?? 1000,
+    totalQuantity: totalQuantity ?? maxUses ?? 1000,
+    issueRule: issueRule || 'manual',
+  });
   couponsStore.push(item);
   res.json({ code: 0, message: '优惠券创建成功', data: item });
 });
@@ -4968,16 +4998,20 @@ app.post('/api/v1/coupons', authCheck, (req, res) => {
 app.put('/api/v1/coupons/:id', authCheck, (req, res) => {
   const item = couponsStore.find(c => c.id === Number(req.params.id));
   if (!item) return res.status(404).json({ code: 404, message: '优惠券不存在', data: null });
-  const { name, code, discount, minAmount, validFrom, validTo, status, maxUses } = req.body;
+  const { name, code, discount, discountValue, minAmount, validFrom, validTo, status, maxUses, totalQuantity, type, issueRule } = req.body;
   if (name !== undefined) item.name = name;
   if (code !== undefined) item.code = code;
   if (discount !== undefined) item.discount = discount;
+  if (discountValue !== undefined) item.discountValue = discountValue;
   if (minAmount !== undefined) item.minAmount = minAmount;
   if (validFrom !== undefined) item.validFrom = validFrom;
   if (validTo !== undefined) item.validTo = validTo;
   if (status !== undefined) item.status = status;
   if (maxUses !== undefined) item.maxUses = maxUses;
-  res.json({ code: 0, message: '更新成功', data: item });
+  if (totalQuantity !== undefined) item.totalQuantity = totalQuantity;
+  if (type !== undefined) item.type = type;
+  if (issueRule !== undefined) item.issueRule = issueRule;
+  res.json({ code: 0, message: '更新成功', data: normalizeCoupon(item) });
 });
 
 app.delete('/api/v1/coupons/:id', authCheck, (req, res) => {
@@ -4988,19 +5022,40 @@ app.delete('/api/v1/coupons/:id', authCheck, (req, res) => {
 });
 
 // ----- 活动 -----
+function normalizeCampaign(campaign) {
+  return {
+    ...campaign,
+    type: campaign.type || 'coupon_event',
+    status: campaign.status === 'upcoming' ? 'draft' : (campaign.status || 'draft'),
+    participantCount: Number(campaign.participantCount ?? campaign.participants ?? 0),
+    totalReward: Number(campaign.totalReward ?? campaign.reward ?? 0),
+    startTime: campaign.startTime || campaign.startDate || '',
+    endTime: campaign.endTime || campaign.endDate || '',
+  };
+}
+
 app.get('/api/v1/campaigns', authCheck, (req, res) => {
   const { page, pageSize, status } = req.query;
-  let list = [...campaignsStore];
+  let list = campaignsStore.map(normalizeCampaign);
   if (status) list = list.filter(c => c.status === status);
   res.json({ code: 0, message: 'success', data: paginate(list, page, pageSize) });
 });
 
 app.post('/api/v1/campaigns', authCheck, (req, res) => {
-  const { name, startDate, endDate, description } = req.body;
+  const { name, startDate, endDate, startTime, endTime, description, type, totalReward } = req.body;
   if (!name) return res.status(400).json({ code: 400, message: '活动名称不能为空', data: null });
-  const item = { id: nextId(), name, status: 'upcoming', startDate: startDate || '', endDate: endDate || '', description: description || '', participants: 0 };
+  const item = normalizeCampaign({ id: nextId(), name, status: 'draft', type: type || 'coupon_event', startDate: startDate || startTime || '', endDate: endDate || endTime || '', startTime: startTime || startDate || '', endTime: endTime || endDate || '', description: description || '', participants: 0, participantCount: 0, totalReward: totalReward || 0 });
   campaignsStore.push(item);
   res.json({ code: 0, message: '活动创建成功', data: item });
+});
+
+app.put('/api/v1/campaigns/:id', authCheck, (req, res) => {
+  const item = campaignsStore.find(c => c.id === Number(req.params.id));
+  if (!item) return res.status(404).json({ code: 404, message: '活动不存在', data: null });
+  Object.assign(item, req.body);
+  if (req.body.startTime !== undefined) item.startDate = req.body.startTime;
+  if (req.body.endTime !== undefined) item.endDate = req.body.endTime;
+  res.json({ code: 0, message: '更新成功', data: normalizeCampaign(item) });
 });
 
 app.delete('/api/v1/campaigns/:id', authCheck, (req, res) => {
@@ -5123,11 +5178,33 @@ app.delete('/api/v1/automation/rules/:id', authCheck, (req, res) => {
 });
 
 // ----- 内容审核 -----
+function normalizeModerationItem(item) {
+  const contentType = item.contentType || item.type || 'post';
+  return {
+    ...item,
+    contentType,
+    type: contentType,
+    contentTitle: item.contentTitle || item.title || `${contentType}内容`,
+    authorName: item.authorName || getUserDisplayName(item.userId) || '用户',
+    summary: item.summary || String(item.content || '').slice(0, 80) || '暂无摘要',
+    createdAt: item.createdAt || new Date().toISOString(),
+  };
+}
+
 app.get('/api/v1/moderation/list', authCheck, (req, res) => {
   const { page, pageSize, status, type } = req.query;
-  let list = [...moderationStore];
+  let list = moderationStore.map(normalizeModerationItem);
   if (status) list = list.filter(m => m.status === status);
-  if (type) list = list.filter(m => m.type === type);
+  if (type) list = list.filter(m => m.contentType === type || m.type === type);
+  res.json({ code: 0, message: 'success', data: paginate(list, page, pageSize) });
+});
+
+app.get('/api/v1/moderations', authCheck, (req, res) => {
+  const { page, pageSize, status, contentType, keyword } = req.query;
+  let list = moderationStore.map(normalizeModerationItem);
+  if (status) list = list.filter(m => m.status === status);
+  if (contentType) list = list.filter(m => m.contentType === contentType);
+  if (keyword) list = list.filter(m => (m.contentTitle || '').includes(keyword) || (m.authorName || '').includes(keyword));
   res.json({ code: 0, message: 'success', data: paginate(list, page, pageSize) });
 });
 
@@ -5149,6 +5226,16 @@ app.post('/api/v1/moderation/:id/reject', authCheck, (req, res) => {
   item.reviewedAt = new Date().toISOString();
   item.reviewer = '管理员';
   res.json({ code: 0, message: '已拒绝', data: item });
+});
+
+app.post('/api/v1/moderation/:id/flag', authCheck, (req, res) => {
+  const item = moderationStore.find(m => m.id === Number(req.params.id));
+  if (!item) return res.status(404).json({ code: 404, message: '审核项不存在', data: null });
+  item.status = 'flagged';
+  item.reason = req.body?.reason || '管理员标记';
+  item.reviewedAt = new Date().toISOString();
+  item.reviewer = '罗总';
+  res.json({ code: 0, message: '已标记', data: normalizeModerationItem(item) });
 });
 
 // ----- 系统日志 -----
@@ -5916,9 +6003,11 @@ const chatLogsStore = [
 
 // ===== 内容库数据 =====
 const contentLibraryStore = [
-  { id: 1, title: 'AI绘画作品展示', type: 'image', author: 'user1', status: 'published', views: 234, likes: 45, createdAt: '2026-06-20T10:00:00Z' },
-  { id: 2, title: '营销文案模板集', type: 'text', author: 'admin1', status: 'published', views: 567, likes: 89, createdAt: '2026-06-18T14:00:00Z' },
-  { id: 3, title: '短视频脚本示例', type: 'video', author: 'user1', status: 'draft', views: 0, likes: 0, createdAt: '2026-06-25T09:00:00Z' },
+  { id: 1, title: '罗圣纪元公司介绍文章', type: '文章', summary: '介绍罗圣纪元的公司定位、AI赋能实体经济方向和服务场景。', content: '罗圣纪元是一家以AI赋能实体经济为核心方向的互联网科技公司，服务个人、商家、团队和本地实体业务。', author: '罗总', status: 'published', aiGenerated: false, views: 234, likes: 45, createdAt: '2026-06-20T10:00:00Z' },
+  { id: 2, title: '圣力充值与会员使用教程', type: '教程', summary: '说明圣力、充值套餐、会员订阅和后台审核流程。', content: '用户可以通过圣力中心购买套餐或会员，后台审核通过后自动发放圣力或开通会员权益。', author: '运营中心', status: 'published', aiGenerated: false, views: 567, likes: 89, createdAt: '2026-06-18T14:00:00Z' },
+  { id: 3, title: '平台运营公告模板', type: '公告', summary: '用于首页、消息推送和后台公告管理的标准公告内容。', content: '罗圣纪元平台功能持续升级，新增知识库、模型配置、财务中心和运营管理模块。', author: '运营中心', status: 'published', aiGenerated: false, views: 126, likes: 12, createdAt: '2026-06-22T09:00:00Z' },
+  { id: 4, title: '公司文化知识库摘要', type: '知识库', summary: '沉淀公司文化、来时路、业务板块和智能体回答口径。', content: '罗圣纪元坚持务实、长期、服务实体、帮助普通人使用AI。', author: '知识库', status: 'published', aiGenerated: true, views: 89, likes: 10, createdAt: '2026-07-05T00:00:00Z' },
+  { id: 5, title: '商家活动文案提示词模板', type: '提示词模板', summary: '适合生成优惠券活动、会员促销、短视频脚本和客服回复。', content: '请以罗圣纪元运营专家身份，为本地商家生成一份活动文案，包含标题、卖点、优惠规则、行动引导。', author: 'AI运营助手', status: 'draft', aiGenerated: true, views: 0, likes: 0, createdAt: '2026-07-05T00:05:00Z' },
 ];
 
 // ===== 圣力套餐数据 =====
@@ -6166,29 +6255,47 @@ app.put('/api/v1/admin/affiliates/:id', authCheck, (req, res) => {
 });
 
 // 推送消息
+function normalizePushMessage(message) {
+  const statusMap = { sent: '已发送', draft: '草稿', scheduled: '待发送' };
+  const typeMap = { system: '系统通知', feature: '功能更新', promotion: '营销活动' };
+  const targetMap = { all: '全部用户', vip: 'VIP用户', paid: '付费用户' };
+  return {
+    ...message,
+    type: typeMap[message.type] || message.type || '系统通知',
+    target: targetMap[message.target] || message.target || '全部用户',
+    status: statusMap[message.status] || message.status || '草稿',
+    sentCount: Number(message.sentCount ?? message.totalCount ?? 0),
+    readCount: Number(message.readCount || 0),
+    sentAt: message.sentAt ? formatDateTime(message.sentAt) : '-',
+  };
+}
+
 app.get('/api/v1/admin/push-messages', authCheck, (req, res) => {
-  const list = [...pushMessagesStore].reverse();
+  const list = [...pushMessagesStore].reverse().map(normalizePushMessage);
   const totalSent = pushMessagesStore.filter(m => m.status === 'sent').reduce((s, m) => s + m.totalCount, 0);
-  const pushToday = pushMessagesStore.filter(m => m.sentAt && m.sentAt.startsWith('2026-06-26')).length;
+  const today = new Date().toISOString().slice(0, 10);
+  const pushToday = pushMessagesStore.filter(m => m.sentAt && String(m.sentAt).startsWith(today)).length;
   const totalRead = pushMessagesStore.reduce((s, m) => s + m.readCount, 0);
   const totalAll = pushMessagesStore.reduce((s, m) => s + m.totalCount, 0);
   const readRate = totalAll > 0 ? ((totalRead / totalAll) * 100).toFixed(0) + '%' : '0%';
   res.json({ code: 0, message: 'success', data: {
-    stats: { totalSent, pushToday, readRate, subscribers: usersStore.length },
+    stats: { totalSent, pushToday, todaySent: pushToday, readRate, subscribers: usersStore.length },
+    messages: list,
     list
   }});
 });
 app.post('/api/v1/admin/push-messages', authCheck, (req, res) => {
-  const item = { id: pushMessagesStore.length + 1, ...req.body, status: 'draft', sentAt: null, readCount: 0, totalCount: 0 };
+  const targetMap = { '全部用户': 'all', 'VIP用户': 'vip', '付费用户': 'paid' };
+  const item = { id: pushMessagesStore.length + 1, ...req.body, target: targetMap[req.body?.target] || req.body?.target || 'all', type: 'system', status: 'draft', sentAt: null, readCount: 0, totalCount: 0 };
   pushMessagesStore.push(item);
-  res.json({ code: 0, message: 'success', data: item });
+  res.json({ code: 0, message: 'success', data: normalizePushMessage(item) });
 });
 app.post('/api/v1/admin/push-messages/:id/send', authCheck, (req, res) => {
   const m = pushMessagesStore.find(m => m.id === Number(req.params.id));
   if (!m) return res.json({ code: 404, message: '消息不存在' });
   m.status = 'sent'; m.sentAt = new Date().toISOString();
   m.totalCount = usersStore.length; m.readCount = 0;
-  res.json({ code: 0, message: 'success', data: m });
+  res.json({ code: 0, message: 'success', data: normalizePushMessage(m) });
 });
 
 // 黑名单管理
@@ -6323,10 +6430,11 @@ app.get('/api/v1/admin/content-library', authCheck, (req, res) => {
   if (search) list = list.filter(c => c.title.includes(search));
   if (type) list = list.filter(c => c.type === type);
   if (status) list = list.filter(c => c.status === status);
-  res.json({ code: 0, message: 'success', data: list.reverse() });
+  list = list.reverse();
+  res.json({ code: 0, message: 'success', data: { items: list, list, total: list.length } });
 });
 app.post('/api/v1/admin/content-library', authCheck, (req, res) => {
-  const item = { id: contentLibraryStore.length + 1, ...req.body, views: 0, likes: 0, createdAt: new Date().toISOString() };
+  const item = { id: contentLibraryStore.length + 1, ...req.body, summary: req.body?.summary || String(req.body?.content || '').slice(0, 60), aiGenerated: !!req.body?.aiGenerated, views: 0, likes: 0, createdAt: new Date().toISOString() };
   contentLibraryStore.push(item);
   res.json({ code: 0, message: 'success', data: item });
 });

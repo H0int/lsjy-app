@@ -7,11 +7,11 @@
       </div>
       <div class="cyber-stat-mini">
         <p class="stat-lbl">总发放量</p>
-        <p class="stat-num text-cyan-400">{{ list.reduce((s, c) => s + c.totalQuantity, 0).toLocaleString() }}</p>
+        <p class="stat-num text-cyan-400">{{ list.reduce((s, c) => s + Number(c.totalQuantity || 0), 0).toLocaleString() }}</p>
       </div>
       <div class="cyber-stat-mini">
         <p class="stat-lbl">已使用</p>
-        <p class="stat-num text-green-400">{{ list.reduce((s, c) => s + c.usedQuantity, 0).toLocaleString() }}</p>
+        <p class="stat-num text-green-400">{{ list.reduce((s, c) => s + Number(c.usedQuantity || 0), 0).toLocaleString() }}</p>
       </div>
       <div class="cyber-stat-mini">
         <p class="stat-lbl">使用率</p>
@@ -42,11 +42,11 @@
           </div>
           <p class="text-xs text-[#6a6a8a] mb-2">{{ coupon.minAmount > 0 ? '满¥' + coupon.minAmount + '可用' : '无门槛' }} | 发放规则: {{ issueRuleLabel(coupon.issueRule) }}</p>
           <div class="flex items-center justify-between">
-            <div class="text-xs text-[#4a4a6a]">{{ coupon.usedQuantity }}/{{ coupon.totalQuantity }} 已领取</div>
+            <div class="text-xs text-[#4a4a6a]">{{ Number(coupon.usedQuantity || 0) }}/{{ Number(coupon.totalQuantity || 0) }} 已领取</div>
             <div class="text-xs text-[#4a4a6a]">有效期至 {{ coupon.validTo }}</div>
           </div>
           <div class="cyber-progress mt-2">
-            <div class="cyber-progress-fill" :style="{ width: (coupon.usedQuantity / coupon.totalQuantity * 100) + '%' }"></div>
+            <div class="cyber-progress-fill" :style="{ width: couponProgress(coupon) + '%' }"></div>
           </div>
           <div class="flex gap-2 mt-3">
             <button @click="toggleStatus(coupon)" class="cyber-btn-xs" :class="coupon.status === 'active' ? 'cyber-btn-amber' : 'cyber-btn-green'">{{ coupon.status === 'active' ? '暂停' : '启用' }}</button>
@@ -96,14 +96,19 @@ const form = ref({ name: '', type: 'full_reduce', discountValue: 10, minAmount: 
 const list = ref<Coupon[]>([])
 
 const usageRate = computed(() => {
-  const total = list.value.reduce((s, c) => s + c.totalQuantity, 0)
-  const used = list.value.reduce((s, c) => s + c.usedQuantity, 0)
+  const total = list.value.reduce((s, c) => s + Number(c.totalQuantity || 0), 0)
+  const used = list.value.reduce((s, c) => s + Number(c.usedQuantity || 0), 0)
   return total > 0 ? ((used / total) * 100).toFixed(1) : '0'
 })
 
 function couponTypeLabel(t: string) { return { full_reduce: '满减券', discount: '折扣券', coin_gift: '圣力赠送' }[t] || t }
 function couponStatusLabel(s: string) { return { active: '生效中', paused: '已暂停', expired: '已过期' }[s] || s }
 function issueRuleLabel(r: string) { return { new_user: '新用户', consume_threshold: '消费满额', activity: '活动发放', manual: '手动发放' }[r] || r }
+function couponProgress(coupon: any) {
+  const total = Number(coupon.totalQuantity || 0)
+  if (!total) return 0
+  return Math.min(100, Math.round(Number(coupon.usedQuantity || 0) / total * 100))
+}
 
 const filteredCoupons = computed(() => {
   if (!filterType.value) return list.value

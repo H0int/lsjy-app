@@ -26,11 +26,11 @@
       </div>
       <div class="cyber-stat-mini">
         <p class="stat-lbl">AI生成率</p>
-        <p class="stat-num text-cyan-400">87%</p>
+        <p class="stat-num text-cyan-400">{{ aiRate }}%</p>
       </div>
       <div class="cyber-stat-mini">
         <p class="stat-lbl">本月浏览量</p>
-        <p class="stat-num text-purple-400">24.5K</p>
+        <p class="stat-num text-purple-400">{{ monthlyViews.toLocaleString() }}</p>
       </div>
     </div>
 
@@ -156,6 +156,11 @@ const currentContent = ref<any>(null)
 function statusLabel(s: string) { return { published: '已发布', draft: '草稿', archived: '已下架' }[s] || s }
 
 const filteredContents = computed(() => contents.value)
+const aiRate = computed(() => {
+  if (!contents.value.length) return '0'
+  return ((contents.value.filter(c => c.aiGenerated).length / contents.value.length) * 100).toFixed(0)
+})
+const monthlyViews = computed(() => contents.value.reduce((sum, c) => sum + Number(c.views || 0), 0))
 
 async function fetchData() {
   loading.value = true
