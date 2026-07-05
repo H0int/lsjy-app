@@ -6119,11 +6119,12 @@ function buildVisualFilters(plan, topic, style, subtitleFile, options = {}) {
   const subFile = writeVideoTextFile(plan.jobId, 'sub', profile.subline);
   const styleFile = writeVideoTextFile(plan.jobId, 'style', `${style || plan.style || '短视频'} · ${duration}s`);
   const ctaFile = writeVideoTextFile(plan.jobId, 'cta', profile.cta);
+  const totalFrames = Math.min(duration * 30, 9999);
+  const zoompan = `zoompan=z='min(zoom+0.001,1.3)':d=${totalFrames}:x='iw/2-(iw/zoom/2)+(iw/20)*sin(2*PI*t*2)':y='ih/2-(ih/zoom/2)':s=720x1280`;
   const base = [
     options.realBackground
-      ? "scale=720:1280:force_original_aspect_ratio=increase,crop=720:1280,format=yuv420p"
-      : 'scale=720:1280',
-    'format=yuv420p',
+      ? `${zoompan},format=yuv420p`
+      : `${zoompan},format=yuv420p`,
     ...(options.realBackground ? [
       "drawbox=x=0:y=0:w=iw:h=220:color=0x000000@0.42:t=fill",
       "drawbox=x=0:y=930:w=iw:h=350:color=0x000000@0.48:t=fill",
@@ -6218,6 +6219,35 @@ ${dialogues}
   return filePath;
 }
 
+async function generateTTS(text, outputPath) {
+  try {
+    const ttsUrl = 'https://ark.cn-beijing.volces.com/api/v3/audio/speech';
+    const narration = String(text || '').slice(0, 1800);
+    const response = await fetch(ttsUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${aiModels.doubao.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'speech-01',
+        input: narration,
+        voice: 'zh_female_qingxin',
+      }),
+    });
+    if (!response.ok) {
+      const errText = await response.text().catch(() => '');
+      throw new Error(`TTS API ${response.status}: ${errText.slice(0, 300)}`);
+    }
+    const buffer = await response.arrayBuffer();
+    fs.writeFileSync(outputPath, Buffer.from(buffer));
+    return { success: true, path: outputPath };
+  } catch (error) {
+    console.error('[TTS]', error.message);
+    return { success: false, error: error.message };
+  }
+}
+
 async function createPlayableVideo(plan, topic, style) {
   const dir = path.join(uploadsRoot, 'generated-videos');
   fs.mkdirSync(dir, { recursive: true });
@@ -6233,28 +6263,35 @@ async function createPlayableVideo(plan, topic, style) {
     prompt: realFrame.prompt,
     model: realFrame.model,
   };
+  const narration = plan.narration || (plan.shots || []).map(s => s.scene).join('，');
+  const ttsPath = path.join(dir, `${plan.jobId}-tts.mp3`);
+  const ttsResult = await generateTTS(narration, ttsPath);
   const vf = buildVisualFilters(plan, topic, style, subtitleFile, { realBackground: true });
-  await runCommandFile('ffmpeg', [
+  const ffmpegArgs = [
     '-y',
     '-loop', '1',
     '-framerate', '30',
     '-i', realFrame.filePath,
-    '-f', 'lavfi',
-    '-i', `sine=frequency=330:sample_rate=44100:duration=${duration}`,
     '-t', String(duration),
     '-vf', vf,
-    '-shortest',
     '-c:v', 'libx264',
     '-preset', 'ultrafast',
     '-pix_fmt', 'yuv420p',
-    '-c:a', 'aac',
     '-movflags', '+faststart',
-    filePath
-  ], { timeout: Math.max(180000, duration * 5000) });
+  ];
+  if (ttsResult.success) {
+    ffmpegArgs.push('-i', ttsResult.path, '-c:a', 'aac', '-shortest');
+  } else {
+    ffmpegArgs.push('-f', 'lavfi', '-i', 'anullsrc=r=44100:cl=stereo', '-t', String(duration), '-c:a', 'aac', '-shortest');
+  }
+  ffmpegArgs.push(filePath);
+  await runCommandFile('ffmpeg', ffmpegArgs, { timeout: Math.max(180000, duration * 5000) });
   return {
     videoUrl: `/uploads/generated-videos/${fileName}`,
     videoPath: filePath,
     fileName,
+    hasAudio: ttsResult.success,
+    audioNote: ttsResult.success ? 'AI 配音已生成' : `配音生成失败：${ttsResult.error || '未知错误'}`,
   };
 }
 
