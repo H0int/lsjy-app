@@ -9,7 +9,7 @@
     </div>
     <div class="cyber-card">
       <div class="card-header"><h2>反馈列表</h2></div>
-      <el-table :data="feedbacks" style="width: 100%" class="cyber-table">
+      <el-table :data="feedbacks" style="width: 100%" class="cyber-table" v-loading="loading">
         <el-table-column prop="userId" label="用户ID" width="100" />
         <el-table-column prop="username" label="用户名" width="120" />
         <el-table-column prop="type" label="类型" width="100">
@@ -17,7 +17,7 @@
         </el-table-column>
         <el-table-column prop="content" label="反馈内容" />
         <el-table-column prop="rating" label="评分" width="80">
-          <template #default="{ row }"><span style="color:#FFD700">{{ '⭐'.repeat(row.rating) }}</span></template>
+          <template #default="{ row }"><span style="color:#FFD700">{{ '⭐'.repeat(Number(row.rating || 0)) }}</span></template>
         </el-table-column>
         <el-table-column prop="status" label="状态" width="80">
           <template #default="{ row }"><el-tag :type="row.status === '已处理' ? 'success' : 'warning'" size="small" effect="dark">{{ row.status }}</el-tag></template>
@@ -72,10 +72,10 @@ async function fetchFeedback() {
       feedbacks.value = data.feedbacks || data.list || data.items || data || []
       if (data.stats) {
         stats.value = {
-          totalFeedback: data.stats.total || 0,
+          totalFeedback: data.stats.totalFeedback || data.stats.total || 0,
           pending: data.stats.pending || 0,
           resolved: data.stats.resolved || 0,
-          satisfaction: data.stats.avgSatisfaction ? String(data.stats.avgSatisfaction) : '0'
+          satisfaction: data.stats.avgSatisfaction || data.stats.satisfaction ? String(data.stats.avgSatisfaction || data.stats.satisfaction) : '0'
         }
       }
     }

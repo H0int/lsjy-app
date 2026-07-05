@@ -446,15 +446,18 @@ const ticketsStore = [
 ];
 
 const faqsStore = [
-  { id: 1, question: '如何注册账号？', answer: '点击注册按钮，填写用户名和密码即可。注册后需等待管理员审批。', category: '账号', order: 1, views: 156 },
-  { id: 2, question: 'AI对话怎么使用？', answer: '进入AI工具页面，选择对应工具即可开始对话。', category: '功能', order: 2, views: 230 },
-  { id: 3, question: '如何充值？', answer: '进入个人中心-钱包-充值，选择对应套餐支付即可。', category: '支付', order: 3, views: 189 },
+  { id: 1, question: '如何注册账号？', answer: '点击注册按钮，填写用户名和密码即可。注册后可进入用户端使用 AI 智能体、圣力中心和会员服务。', category: '账号相关', sortOrder: 1, searchCount: 156, status: 'active' },
+  { id: 2, question: '如何充值圣力？', answer: '进入圣力中心，选择圣力套餐或会员订阅，提交支付订单后由后台财务中心审核，审核通过后圣力自动到账。', category: '支付充值', sortOrder: 2, searchCount: 230, status: 'active' },
+  { id: 3, question: 'AI 工具怎么使用？', answer: '进入 AI 工具中心或智能体页面，选择合适的工具，输入需求后即可生成文案、图片、视频、分析报告等内容。', category: 'AI工具', sortOrder: 3, searchCount: 189, status: 'active' },
+  { id: 4, question: '优惠券如何使用？', answer: '可在活动、充值或会员场景领取优惠券。满足使用门槛后，系统会在对应订单中展示可用优惠。', category: '电商购物', sortOrder: 4, searchCount: 88, status: 'active' },
+  { id: 5, question: '课程学习内容在哪里？', answer: '平台会逐步开放教程、知识库和课程学习内容，用户可以在内容库或相关智能体中查看。', category: '课程学习', sortOrder: 5, searchCount: 66, status: 'active' },
+  { id: 6, question: '宠物服务能做什么？', answer: '宠物服务类智能体可辅助宠物喂养、训练、用品选购、宠物店经营和宠物内容创作。', category: '宠物服务', sortOrder: 6, searchCount: 52, status: 'active' },
 ];
 
 const automationRulesStore = [
-  { id: 1, name: '新用户自动欢迎', trigger: 'user.registered', action: 'send_notification', enabled: true, createdAt: '2026-05-01T00:00:00Z' },
-  { id: 2, name: '余额不足提醒', trigger: 'balance.low', action: 'send_email', enabled: true, createdAt: '2026-05-10T00:00:00Z' },
-  { id: 3, name: '工单超时升级', trigger: 'ticket.timeout', action: 'escalate', enabled: false, createdAt: '2026-06-01T00:00:00Z' },
+  { id: 1, name: '新用户自动欢迎', description: '用户注册后自动发送欢迎通知', triggerEvent: 'user_register', actions: [{ type: 'send_notification', config: {} }], status: 'active', executionCount: 0, lastExecutedAt: null, createdAt: '2026-05-01T00:00:00Z' },
+  { id: 2, name: '首次充值奖励', description: '用户首次充值后自动发放圣力奖励', triggerEvent: 'first_recharge', actions: [{ type: 'send_coins', config: { amount: 30 } }], status: 'active', executionCount: 0, lastExecutedAt: null, createdAt: '2026-05-10T00:00:00Z' },
+  { id: 3, name: '邀请成功提醒', description: '用户邀请好友成功后发送通知并记录分销关系', triggerEvent: 'invite_success', actions: [{ type: 'send_notification', config: {} }], status: 'disabled', executionCount: 0, lastExecutedAt: null, createdAt: '2026-06-01T00:00:00Z' },
 ];
 
 const moderationStore = [
@@ -5109,19 +5112,37 @@ app.post('/api/v1/tickets/:id/assign', authCheck, (req, res) => {
   res.json({ code: 0, message: '分配成功', data: ticket });
 });
 
+function normalizeFAQ(item) {
+  return {
+    ...item,
+    sortOrder: Number(item.sortOrder ?? item.order ?? 0),
+    searchCount: Number(item.searchCount ?? item.views ?? 0),
+    status: item.status || 'active',
+    category: item.category || '账号相关',
+  };
+}
+
 // FAQ列表（管理）
 app.get('/api/v1/faqs/admin/list', authCheck, (req, res) => {
   const { page, pageSize, category } = req.query;
-  let list = [...faqsStore];
+  let list = faqsStore.map(normalizeFAQ).sort((a, b) => a.sortOrder - b.sortOrder);
   if (category) list = list.filter(f => f.category === category);
+  res.json({ code: 0, message: 'success', data: paginate(list, page, pageSize) });
+});
+
+app.get('/api/v1/faqs', authCheck, (req, res) => {
+  const { page, pageSize, category, keyword } = req.query;
+  let list = faqsStore.map(normalizeFAQ).sort((a, b) => a.sortOrder - b.sortOrder);
+  if (category) list = list.filter(f => f.category === category);
+  if (keyword) list = list.filter(f => String(f.question || '').includes(keyword) || String(f.answer || '').includes(keyword));
   res.json({ code: 0, message: 'success', data: paginate(list, page, pageSize) });
 });
 
 // 创建FAQ
 app.post('/api/v1/faqs', authCheck, (req, res) => {
-  const { question, answer, category, order } = req.body;
+  const { question, answer, category, order, sortOrder, status } = req.body;
   if (!question || !answer) return res.status(400).json({ code: 400, message: '问题和答案不能为空', data: null });
-  const item = { id: nextId(), question, answer, category: category || '其他', order: order || faqsStore.length + 1, views: 0 };
+  const item = normalizeFAQ({ id: nextId(), question, answer, category: category || '账号相关', order: order || sortOrder || faqsStore.length + 1, sortOrder: sortOrder || order || faqsStore.length + 1, views: 0, searchCount: 0, status: status || 'active' });
   faqsStore.push(item);
   res.json({ code: 0, message: 'FAQ创建成功', data: item });
 });
@@ -5130,12 +5151,14 @@ app.post('/api/v1/faqs', authCheck, (req, res) => {
 app.put('/api/v1/faqs/:id', authCheck, (req, res) => {
   const item = faqsStore.find(f => f.id === Number(req.params.id));
   if (!item) return res.status(404).json({ code: 404, message: 'FAQ不存在', data: null });
-  const { question, answer, category, order } = req.body;
+  const { question, answer, category, order, sortOrder, status } = req.body;
   if (question !== undefined) item.question = question;
   if (answer !== undefined) item.answer = answer;
   if (category !== undefined) item.category = category;
   if (order !== undefined) item.order = order;
-  res.json({ code: 0, message: '更新成功', data: item });
+  if (sortOrder !== undefined) item.sortOrder = sortOrder;
+  if (status !== undefined) item.status = status;
+  res.json({ code: 0, message: '更新成功', data: normalizeFAQ(item) });
 });
 
 // 删除FAQ
@@ -5151,14 +5174,41 @@ app.delete('/api/v1/faqs/:id', authCheck, (req, res) => {
 // ============================================================
 
 // ----- 自动化规则 -----
+function normalizeAutomationRule(rule) {
+  const enabled = rule.enabled !== undefined ? !!rule.enabled : rule.status === 'active';
+  const triggerEvent = rule.triggerEvent || rule.trigger || 'user_register';
+  const actions = Array.isArray(rule.actions) ? rule.actions : [{ type: rule.action || 'send_notification', config: {} }];
+  return {
+    ...rule,
+    triggerEvent,
+    actions,
+    status: enabled ? 'active' : (rule.status === 'active' ? 'active' : 'disabled'),
+    enabled,
+    executionCount: Number(rule.executionCount || 0),
+    lastExecutedAt: rule.lastExecutedAt || null,
+    description: rule.description || '自动化运营规则',
+  };
+}
+
+function automationListResponse() {
+  const items = automationRulesStore.map(normalizeAutomationRule);
+  return { items, list: items, total: items.length, page: 1, pageSize: 20 };
+}
+
 app.get('/api/v1/automation/rules', authCheck, (req, res) => {
-  res.json({ code: 0, message: 'success', data: { items: [...automationRulesStore], total: automationRulesStore.length, page: 1, pageSize: 20 } });
+  res.json({ code: 0, message: 'success', data: automationListResponse() });
+});
+
+app.get('/api/v1/automation-rules', authCheck, (req, res) => {
+  res.json({ code: 0, message: 'success', data: automationListResponse() });
 });
 
 app.post('/api/v1/automation/rules', authCheck, (req, res) => {
-  const { name, trigger, action } = req.body;
-  if (!name || !trigger || !action) return res.status(400).json({ code: 400, message: '名称、触发条件和动作不能为空', data: null });
-  const item = { id: nextId(), name, trigger, action, enabled: false, createdAt: new Date().toISOString() };
+  const { name, description, trigger, triggerEvent, action, actions } = req.body;
+  const finalTrigger = triggerEvent || trigger;
+  const finalActions = Array.isArray(actions) ? actions : [{ type: action || 'send_notification', config: {} }];
+  if (!name || !finalTrigger || !finalActions.length) return res.status(400).json({ code: 400, message: '名称、触发条件和动作不能为空', data: null });
+  const item = normalizeAutomationRule({ id: nextId(), name, description: description || '', triggerEvent: finalTrigger, actions: finalActions, status: 'active', enabled: true, executionCount: 0, lastExecutedAt: null, createdAt: new Date().toISOString() });
   automationRulesStore.push(item);
   res.json({ code: 0, message: '规则创建成功', data: item });
 });
@@ -5166,8 +5216,10 @@ app.post('/api/v1/automation/rules', authCheck, (req, res) => {
 app.put('/api/v1/automation/rules/:id/toggle', authCheck, (req, res) => {
   const rule = automationRulesStore.find(r => r.id === Number(req.params.id));
   if (!rule) return res.status(404).json({ code: 404, message: '规则不存在', data: null });
-  rule.enabled = !rule.enabled;
-  res.json({ code: 0, message: rule.enabled ? '规则已启用' : '规则已禁用', data: rule });
+  const current = normalizeAutomationRule(rule);
+  rule.enabled = !current.enabled;
+  rule.status = rule.enabled ? 'active' : 'disabled';
+  res.json({ code: 0, message: rule.enabled ? '规则已启用' : '规则已禁用', data: normalizeAutomationRule(rule) });
 });
 
 app.delete('/api/v1/automation/rules/:id', authCheck, (req, res) => {
@@ -5175,6 +5227,19 @@ app.delete('/api/v1/automation/rules/:id', authCheck, (req, res) => {
   if (idx === -1) return res.status(404).json({ code: 404, message: '规则不存在', data: null });
   automationRulesStore.splice(idx, 1);
   res.json({ code: 0, message: '删除成功', data: null });
+});
+
+app.get('/api/v1/automation/rules/:id/logs', authCheck, (req, res) => {
+  const rule = automationRulesStore.find(r => r.id === Number(req.params.id));
+  if (!rule) return res.status(404).json({ code: 404, message: '规则不存在', data: null });
+  const normalized = normalizeAutomationRule(rule);
+  const list = normalized.lastExecutedAt ? [{
+    id: `${rule.id}-last`,
+    message: `${normalized.name} 已执行`,
+    success: true,
+    createdAt: normalized.lastExecutedAt,
+  }] : [];
+  res.json({ code: 0, message: 'success', data: { list, items: list, total: list.length } });
 });
 
 // ----- 内容审核 -----
@@ -5923,11 +5988,32 @@ app.get('/api/v1/reports/payment-failure-rate', authCheck, (req, res) => {
 });
 
 // ===== 反馈数据 =====
-const feedbackStore = [
-  { id: 1, userId: 2, username: 'user1', content: 'AI绘画功能很好用，但速度有点慢', type: 'suggestion', status: 'resolved', rating: 4, createdAt: '2026-06-20T10:00:00Z', resolvedAt: '2026-06-21T08:00:00Z', reply: '感谢反馈，已优化图片生成队列' },
-  { id: 2, userId: 2, username: 'user1', content: '充值后圣力没有到账', type: 'bug', status: 'resolved', rating: 3, createdAt: '2026-06-22T14:00:00Z', resolvedAt: '2026-06-22T15:00:00Z', reply: '已核实并补发' },
-  { id: 3, userId: 3, username: 'admin1', content: '希望增加批量导出功能', type: 'feature', status: 'pending', rating: 5, createdAt: '2026-06-25T09:00:00Z', resolvedAt: null, reply: '' },
-];
+const FEEDBACK_FILE = path.join(__dirname, 'data', 'feedback.json');
+function getRealFeedbacks() {
+  try {
+    const parsed = JSON.parse(fs.readFileSync(FEEDBACK_FILE, 'utf8'));
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    return [];
+  }
+}
+function saveRealFeedbacks(list) {
+  fs.mkdirSync(path.dirname(FEEDBACK_FILE), { recursive: true });
+  fs.writeFileSync(FEEDBACK_FILE, JSON.stringify(list, null, 2));
+}
+function normalizeFeedback(item) {
+  const statusMap = { pending: '待处理', resolved: '已处理', closed: '已关闭', '已处理': '已处理', '待处理': '待处理' };
+  const typeMap = { suggestion: '建议', bug: '问题反馈', feature: '功能建议', complaint: '投诉', other: '其他' };
+  return {
+    ...item,
+    rawStatus: item.status || 'pending',
+    username: item.username || item.userName || getUserDisplayName(item.userId),
+    type: typeMap[item.type] || item.type || '其他',
+    status: statusMap[item.status] || item.status || '待处理',
+    rating: Math.max(1, Math.min(5, Number(item.rating || 5))),
+    createdAt: item.createdAt || new Date().toISOString(),
+  };
+}
 
 // ===== 佣金数据 =====
 const commissionStore = [
@@ -6107,23 +6193,51 @@ app.get('/api/v1/admin/online-users', authCheck, (req, res) => {
 // 反馈管理
 app.get('/api/v1/admin/feedback', authCheck, (req, res) => {
   const { status, type } = req.query;
-  let list = [...feedbackStore];
-  if (status) list = list.filter(f => f.status === status);
+  let rows = getRealFeedbacks();
+  let list = rows.map(normalizeFeedback);
+  if (status) list = list.filter(f => f.status === status || f.rawStatus === status);
   if (type) list = list.filter(f => f.type === type);
-  const total = feedbackStore.length;
-  const pending = feedbackStore.filter(f => f.status === 'pending').length;
-  const resolved = feedbackStore.filter(f => f.status === 'resolved').length;
-  const avgRating = (feedbackStore.reduce((s, f) => s + f.rating, 0) / Math.max(total, 1)).toFixed(1);
+  const total = list.length;
+  const pending = list.filter(f => f.status === '待处理').length;
+  const resolved = list.filter(f => f.status === '已处理').length;
+  const avgRating = (list.reduce((s, f) => s + Number(f.rating || 0), 0) / Math.max(total, 1)).toFixed(1);
+  const reversed = [...list].reverse();
   res.json({ code: 0, message: 'success', data: {
-    stats: { totalFeedback: total, pending, resolved, satisfaction: avgRating },
-    list: list.reverse()
+    stats: { total, totalFeedback: total, pending, resolved, avgSatisfaction: avgRating, satisfaction: avgRating },
+    feedbacks: reversed,
+    list: reversed
   }});
 });
 app.put('/api/v1/admin/feedback/:id', authCheck, (req, res) => {
-  const fb = feedbackStore.find(f => f.id === Number(req.params.id));
+  const rows = getRealFeedbacks();
+  const fb = rows.find(f => Number(f.id) === Number(req.params.id));
   if (!fb) return res.json({ code: 404, message: '反馈不存在' });
-  Object.assign(fb, req.body, { resolvedAt: new Date().toISOString() });
-  res.json({ code: 0, message: 'success', data: fb });
+  const status = req.body?.status === '已处理' ? 'resolved' : (req.body?.status || fb.status);
+  Object.assign(fb, req.body, { status, resolvedAt: new Date().toISOString() });
+  saveRealFeedbacks(rows);
+  res.json({ code: 0, message: 'success', data: normalizeFeedback(fb) });
+});
+
+app.post('/api/v1/feedback', authCheck, (req, res) => {
+  const rows = getRealFeedbacks();
+  const userId = req.user?.id || 1;
+  const currentUser = findCurrentUserFileFirst(userId).user;
+  const item = {
+    id: Date.now(),
+    userId,
+    username: currentUser?.username || '',
+    userName: currentUser?.nickname || currentUser?.username || `用户#${userId}`,
+    type: req.body?.type || 'suggestion',
+    content: String(req.body?.content || '').trim(),
+    rating: Number(req.body?.rating || 5),
+    status: 'pending',
+    reply: '',
+    createdAt: new Date().toISOString(),
+  };
+  if (!item.content) return res.status(400).json({ code: 400, message: '反馈内容不能为空', data: null });
+  rows.unshift(item);
+  saveRealFeedbacks(rows);
+  res.json({ code: 0, message: '反馈已提交', data: normalizeFeedback(item) });
 });
 
 // 佣金管理
@@ -6232,18 +6346,55 @@ app.put('/api/v1/admin/distribution/rules', authCheck, (req, res) => {
 });
 
 // 合作伙伴
+function normalizeAffiliate(item) {
+  const statusMap = { active: '合作中', pending: '洽谈中', stopped: '已终止', '合作中': '合作中', '洽谈中': '洽谈中', '已终止': '已终止' };
+  const rate = Number(item.commissionRate ?? item.rate ?? 10);
+  const revenue = Number(item.revenue || 0);
+  return {
+    ...item,
+    name: item.name || item.company || '个人推广伙伴',
+    contact: item.contact || item.username || item.userName || '-',
+    email: item.email || '-',
+    commissionRate: rate,
+    revenue: Number(revenue.toFixed(2)),
+    status: statusMap[item.status] || item.status || '合作中',
+  };
+}
+
+function getReferralAffiliates() {
+  const paidOrders = getRealFinanceOrders().filter(o => o.status === 'success');
+  const inviterIds = Array.from(new Set(referralsStore.map(r => Number(r.inviterId)).filter(Boolean)));
+  return inviterIds.map((inviterId, index) => {
+    const inviter = findCurrentUserFileFirst(inviterId).user;
+    const invitees = referralsStore.filter(r => Number(r.inviterId) === inviterId).map(r => Number(r.inviteeId));
+    const revenue = paidOrders.filter(o => invitees.includes(Number(o.userId))).reduce((sum, o) => sum + Number(o.amount || 0), 0);
+    return normalizeAffiliate({
+      id: `ref-${inviterId}`,
+      name: inviter?.nickname ? `${inviter.nickname}推广伙伴` : `推广伙伴#${inviterId}`,
+      contact: inviter?.nickname || inviter?.username || `用户#${inviterId}`,
+      email: inviter?.email || '-',
+      commissionRate: 10,
+      revenue,
+      status: '合作中',
+      source: 'referral',
+      sortOrder: index,
+    });
+  });
+}
+
 app.get('/api/v1/admin/affiliates', authCheck, (req, res) => {
-  const list = [...affiliatesStore];
+  const list = [...affiliatesStore.map(normalizeAffiliate), ...getReferralAffiliates()];
   const totalPartners = list.length;
-  const active = list.filter(a => a.status === 'active').length;
-  const totalRevenue = list.reduce((s, a) => s + a.revenue, 0);
+  const active = list.filter(a => a.status === '合作中').length;
+  const totalRevenue = list.reduce((s, a) => s + Number(a.revenue || 0), 0);
   res.json({ code: 0, message: 'success', data: {
-    stats: { totalPartners, active, totalRevenue: totalRevenue.toFixed(2) },
+    stats: { total: totalPartners, totalPartners, active, revenue: totalRevenue.toFixed(2), totalRevenue: totalRevenue.toFixed(2) },
+    affiliates: list,
     list
   }});
 });
 app.post('/api/v1/admin/affiliates', authCheck, (req, res) => {
-  const item = { id: affiliatesStore.length + 1, ...req.body, revenue: 0, commission: 0, joinedAt: new Date().toISOString() };
+  const item = normalizeAffiliate({ id: affiliatesStore.length + 1, ...req.body, revenue: 0, commission: 0, joinedAt: new Date().toISOString() });
   affiliatesStore.push(item);
   res.json({ code: 0, message: 'success', data: item });
 });
@@ -6251,7 +6402,7 @@ app.put('/api/v1/admin/affiliates/:id', authCheck, (req, res) => {
   const a = affiliatesStore.find(a => a.id === Number(req.params.id));
   if (!a) return res.json({ code: 404, message: '合作伙伴不存在' });
   Object.assign(a, req.body);
-  res.json({ code: 0, message: 'success', data: a });
+  res.json({ code: 0, message: 'success', data: normalizeAffiliate(a) });
 });
 
 // 推送消息

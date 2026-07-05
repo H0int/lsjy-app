@@ -7,7 +7,7 @@
         <p class="stat-lbl">启用中</p>
       </div>
       <div class="cyber-stat-mini">
-        <p class="stat-num text-green-400">{{ list.reduce((s, r) => s + r.executionCount, 0).toLocaleString() }}</p>
+        <p class="stat-num text-green-400">{{ list.reduce((s, r) => s + Number(r.executionCount || 0), 0).toLocaleString() }}</p>
         <p class="stat-lbl">总执行次数</p>
       </div>
       <div class="cyber-stat-mini">
@@ -32,7 +32,7 @@
 
     <!-- 规则列表 -->
     <div class="space-y-3">
-      <div v-for="rule in list" :key="rule.id" class="cyber-card rule-card">
+      <div v-for="rule in filteredRules" :key="rule.id" class="cyber-card rule-card">
         <div class="flex items-start justify-between">
           <div class="flex-1">
             <div class="flex items-center gap-2 mb-2">
@@ -48,9 +48,9 @@
               </div>
               <div class="flex items-center gap-1">
                 <span class="text-[#4a4a6a]">→ 动作:</span>
-                <span v-for="(action, idx) in rule.actions" :key="idx" class="rule-tag action-tag">{{ actionLabel(action.type) }}<span v-if="idx < rule.actions.length - 1"> + </span></span>
+              <span v-for="(action, idx) in (rule.actions || [])" :key="idx" class="rule-tag action-tag">{{ actionLabel(action.type) }}<span v-if="idx < (rule.actions || []).length - 1"> + </span></span>
               </div>
-              <div class="text-[#4a4a6a] font-mono">执行 {{ rule.executionCount }} 次</div>
+              <div class="text-[#4a4a6a] font-mono">执行 {{ Number(rule.executionCount || 0) }} 次</div>
               <div v-if="rule.lastExecutedAt" class="text-[#4a4a6a] font-mono">最近: {{ rule.lastExecutedAt }}</div>
             </div>
           </div>
