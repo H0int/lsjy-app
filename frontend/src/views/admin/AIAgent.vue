@@ -10,17 +10,17 @@
       <div class="cyber-stat-mini">
         <p class="stat-lbl">今日调用</p>
         <p class="stat-num text-cyan-400">{{ todayCalls.toLocaleString() }}</p>
-        <p class="stat-change change-up">↑ 12.5%</p>
+        <p class="stat-change change-up">前端实时同步</p>
       </div>
       <div class="cyber-stat-mini">
         <p class="stat-lbl">本月Token消耗</p>
         <p class="stat-num text-purple-400">{{ monthlyTokens.toLocaleString() }}</p>
-        <p class="stat-change change-down">↓ 3.2%</p>
+        <p class="stat-change change-up">真实Token统计</p>
       </div>
       <div class="cyber-stat-mini">
         <p class="stat-lbl">平均响应时间</p>
         <p class="stat-num text-green-400">{{ avgLatency }}ms</p>
-        <p class="stat-change change-up">↑ 优化8%</p>
+        <p class="stat-change change-up">按真实调用计算</p>
       </div>
     </div>
 
@@ -64,6 +64,16 @@
             <span class="font-mono text-[#00f0ff]">{{ row.totalCalls.toLocaleString() }}</span>
           </template>
         </el-table-column>
+        <el-table-column label="今日调用" width="100">
+          <template #default="{ row }">
+            <span class="font-mono text-[#00ff88]">{{ (row.todayCalls || 0).toLocaleString() }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="本月Token" width="120">
+          <template #default="{ row }">
+            <span class="font-mono text-[#c084fc]">{{ (row.monthlyTokens || 0).toLocaleString() }}</span>
+          </template>
+        </el-table-column>
         <el-table-column label="状态" width="90">
           <template #default="{ row }">
             <el-switch v-model="row.status" active-value="active" inactive-value="disabled"
@@ -96,6 +106,8 @@
           <span class="cyber-tag tag-purple">{{ row.model }}</span>
           <span class="cyber-tag tag-cyan">温度 {{ row.temperature }}</span>
           <span class="cyber-tag tag-green">{{ row.totalCalls.toLocaleString() }} 次调用</span>
+          <span class="cyber-tag tag-cyan">今日 {{ row.todayCalls || 0 }}</span>
+          <span class="cyber-tag tag-purple">{{ (row.monthlyTokens || 0).toLocaleString() }} Token</span>
         </div>
         <div class="flex gap-2">
           <el-button size="small" type="primary" plain @click="openDialog(row)" class="flex-1">编辑</el-button>
@@ -223,11 +235,11 @@ async function fetchAgents() {
   try {
     const res = await service.get('/admin/agents')
     if (res.data.code === 0) {
-      agents.value = res.data.data.agents || []
+      agents.value = res.data.data.agents || res.data.data.list || []
       const stats = res.data.data.stats || {}
-      todayCalls.value = stats.totalUsage || 0
-      monthlyTokens.value = stats.totalUsage || 0
-      avgLatency.value = 0
+      todayCalls.value = stats.todayCalls || 0
+      monthlyTokens.value = stats.monthlyTokens || 0
+      avgLatency.value = stats.avgLatency || 0
     }
   } catch (e) {
     ElMessage.error('加载智能体列表失败')

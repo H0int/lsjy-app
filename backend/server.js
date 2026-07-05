@@ -522,6 +522,26 @@ function getRealToolUsageToday(toolId, userId) {
   ).length;
 }
 
+function getMonthStart() {
+  const d = new Date();
+  d.setDate(1);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
+function getRealAiRecordsForTool(toolId) {
+  return aiHistoryStore.filter(h => isRealAiHistory(h) && Number(h.toolId) === Number(toolId));
+}
+
+function getUsageTotalTokens(usage) {
+  return Number(usage?.totalTokens ?? usage?.total_tokens ?? usage?.total ?? 0);
+}
+
+function getUserDisplayName(userId) {
+  const found = typeof findCurrentUserFileFirst === 'function' ? findCurrentUserFileFirst(userId).user : null;
+  return found?.nickname || found?.username || `用户#${userId}`;
+}
+
 function withRealUsage(tool) {
   return { ...tool, usageCount: getRealToolUsageCount(tool.id) };
 }
@@ -3234,7 +3254,7 @@ app.post('/api/v1/ai/tools/:toolId/chat', authCheck, async (req, res) => {
       source: 'live-chat',
       requestId: `chat-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
       input: lastMsg?.content || '', output: result.content,
-      model: result.model || model || 'default', tokens: result.usage?.totalTokens || 0,
+      model: result.model || model || 'default', tokens: getUsageTotalTokens(result.usage),
       coinCost: CHAT_COIN_COST,
       createdAt: new Date().toISOString(),
     });
@@ -3724,6 +3744,7 @@ app.post('/api/v1/agent/chat', authCheck, async (req, res) => {
 
   const effectiveSystemPrompt = systemPrompt || agent?.systemPrompt || tool?.systemPrompt || CONFIG.SYSTEM_PROMPT;
   const effectiveProvider = messagesHaveImage(chatMessages) ? 'doubao' : (provider || CONFIG.AI_PROVIDER);
+  const startMs = Date.now();
   try {
     const result = await Promise.race([
       callAI(chatMessages, {
@@ -3739,13 +3760,17 @@ app.post('/api/v1/agent/chat', authCheck, async (req, res) => {
     const lastMsg = chatMessages.filter(m => m.role === 'user').pop();
     aiHistoryStore.unshift({
       id: nextId(),
+      source: 'live-chat',
+      requestId: `agent-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
       userId,
       toolId: Number(agentId),
       toolName: agent?.name || tool?.name || '罗圣AI智能体',
       input: extractTextContent(lastMsg?.content || ''),
       output: result.content,
       model: result.model || model || 'default',
-      tokens: result.usage?.totalTokens || 0,
+      tokens: getUsageTotalTokens(result.usage),
+      coinCost: cost,
+      durationMs: Date.now() - startMs,
       createdAt: new Date().toISOString(),
     });
     return res.json({
@@ -3766,6 +3791,21 @@ app.post('/api/v1/agent/chat', authCheck, async (req, res) => {
     const lastMsg = chatMessages.filter(m => m.role === 'user').pop();
     const content = getLocalResponse(extractTextContent(lastMsg?.content || ''));
     const deduct = deductCoins(userId, cost);
+    aiHistoryStore.unshift({
+      id: nextId(),
+      source: 'live-chat',
+      requestId: `agent-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+      userId,
+      toolId: Number(agentId),
+      toolName: agent?.name || tool?.name || '罗圣AI智能体',
+      input: extractTextContent(lastMsg?.content || ''),
+      output: content,
+      model: 'local-fallback',
+      tokens: 0,
+      coinCost: cost,
+      durationMs: Date.now() - startMs,
+      createdAt: new Date().toISOString(),
+    });
     return res.json({
       code: 0,
       message: 'success',
@@ -5732,10 +5772,30 @@ app.put('/api/v1/admin/permissions/:roleId', authCheck, (req, res) => {
 // 聊天日志
 app.get('/api/v1/admin/chat-logs', authCheck, (req, res) => {
   const { search, toolName } = req.query;
-  let list = [...chatLogsStore].reverse();
-  if (search) list = list.filter(l => l.input.includes(search) || l.username.includes(search));
+  let list = aiHistoryStore
+    .filter(isRealAiHistory)
+    .map(h => ({
+      id: h.id,
+      userId: h.userId,
+      userName: getUserDisplayName(h.userId),
+      username: getUserDisplayName(h.userId),
+      toolId: h.toolId,
+      toolName: h.toolName || 'AI智能体',
+      question: h.inputText || h.input || '',
+      answer: h.outputText || h.output || '',
+      input: h.inputText || h.input || '',
+      output: h.outputText || h.output || '',
+      tokens: Number(h.tokens || 0),
+      latency: Number(h.durationMs || 0),
+      rating: h.rating || 5,
+      model: h.model || '',
+      time: h.createdAt,
+      createdAt: h.createdAt,
+    }))
+    .reverse();
+  if (search) list = list.filter(l => (l.input || '').includes(search) || (l.username || '').includes(search));
   if (toolName) list = list.filter(l => l.toolName === toolName);
-  res.json({ code: 0, message: 'success', data: { list, total: chatLogsStore.length } });
+  res.json({ code: 0, message: 'success', data: { logs: list, list, total: list.length } });
 });
 
 // 内容库
@@ -5795,16 +5855,50 @@ app.get('/api/v1/admin/locations', authCheck, (req, res) => {
 
 // AI Agent管理
 app.get('/api/v1/admin/agents', authCheck, (req, res) => {
-  const list = agentsStore.map(a => ({
-    id: a.id, name: a.name, icon: a.icon, category: a.category,
-    description: a.description, status: a.status || 'active',
-    usageCount: a.usageCount || 0, model: a.model || 'deepseek'
-  }));
+  const todayStart = getTodayStart();
+  const monthStart = getMonthStart();
+  const now = Date.now();
+  const list = agentsStore.map(a => {
+    const records = getRealAiRecordsForTool(a.id);
+    const todayRecords = records.filter(r => new Date(r.createdAt || 0).getTime() >= todayStart);
+    const monthRecords = records.filter(r => new Date(r.createdAt || 0).getTime() >= monthStart);
+    const latencyRecords = records.filter(r => Number(r.durationMs || 0) > 0);
+    const totalCalls = records.length;
+    const monthlyTokens = monthRecords.reduce((s, r) => s + Number(r.tokens || 0), 0);
+    const avgLatency = latencyRecords.length ? Math.round(latencyRecords.reduce((s, r) => s + Number(r.durationMs || 0), 0) / latencyRecords.length) : 0;
+    const lastCall = records.sort((x, y) => new Date(y.createdAt || 0).getTime() - new Date(x.createdAt || 0).getTime())[0];
+    return {
+      id: a.id,
+      name: a.name,
+      icon: a.icon,
+      category: a.category,
+      description: a.description,
+      systemPrompt: a.systemPrompt || '',
+      status: a.status || 'active',
+      provider: a.provider || 'deepseek',
+      model: a.model || a.modelName || a.provider || 'deepseek',
+      temperature: Number(a.temperature ?? 0.7),
+      maxTokens: Number(a.maxTokens || 4096),
+      coinCost: Number(a.coinCost || 0),
+      usageCount: totalCalls,
+      totalCalls,
+      todayCalls: todayRecords.length,
+      monthlyTokens,
+      totalTokens: records.reduce((s, r) => s + Number(r.tokens || 0), 0),
+      avgLatency,
+      lastCallAt: lastCall?.createdAt || null,
+    };
+  });
   const totalAgents = list.length;
   const active = list.filter(a => a.status === 'active').length;
-  const totalUsage = list.reduce((s, a) => s + (a.usageCount || 0), 0);
+  const todayCalls = list.reduce((s, a) => s + Number(a.todayCalls || 0), 0);
+  const monthlyTokens = list.reduce((s, a) => s + Number(a.monthlyTokens || 0), 0);
+  const latencyList = list.filter(a => Number(a.avgLatency || 0) > 0);
+  const avgLatency = latencyList.length ? Math.round(latencyList.reduce((s, a) => s + Number(a.avgLatency || 0), 0) / latencyList.length) : 0;
+  const totalUsage = list.reduce((s, a) => s + Number(a.totalCalls || 0), 0);
   res.json({ code: 0, message: 'success', data: {
-    stats: { totalAgents, active, totalUsage },
+    stats: { totalAgents, active, totalUsage, todayCalls, monthlyTokens, avgLatency, generatedAt: new Date(now).toISOString() },
+    agents: list,
     list
   }});
 });
