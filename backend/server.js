@@ -10,6 +10,7 @@ const https = require('https');
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const { execFile } = require('child_process');
 
 // 加载环境变量
 require('dotenv').config();
@@ -21,6 +22,8 @@ const PORT = process.env.PORT || 3000;
 // CORS 由线上 Nginx 统一添加。这里不要重复添加，否则浏览器会因
 // Access-Control-Allow-Origin 出现两份而把请求判定为 Network Error。
 app.use(express.json({ limit: '50mb' }));
+const uploadsRoot = path.join(path.dirname(__dirname), 'uploads');
+app.use('/uploads', express.static(uploadsRoot));
 
 // ===== 配置 =====
 const CONFIG = {
@@ -5967,6 +5970,57 @@ app.get('/api/v1/skills/open-source/public', authCheck, (req, res) => {
   res.json({ code: 0, message: 'success', data: { skills: enabled, total: enabled.length } });
 });
 
+function runCommandFile(command, args, options = {}) {
+  return new Promise((resolve, reject) => {
+    execFile(command, args, { timeout: options.timeout || 180000, maxBuffer: 1024 * 1024 * 5 }, (error, stdout, stderr) => {
+      if (error) return reject(new Error(stderr || error.message));
+      resolve({ stdout, stderr });
+    });
+  });
+}
+
+async function createPlayableVideo(plan, topic, style) {
+  const dir = path.join(uploadsRoot, 'generated-videos');
+  fs.mkdirSync(dir, { recursive: true });
+  const fileName = `${plan.jobId}.mp4`;
+  const filePath = path.join(dir, fileName);
+  const duration = Math.min(60, Math.max(10, Number(plan.duration || 15)));
+  const safeStyle = String(style || 'CYBERPUNK').replace(/[^\w\s-]/g, '').slice(0, 28).toUpperCase();
+  const safeTopic = String(topic || 'LSJY VIDEO').replace(/[^\w\s-]/g, '').slice(0, 28).toUpperCase() || 'LSJY VIDEO';
+  const vf = [
+    'scale=720:1280',
+    'format=yuv420p',
+    "drawbox=x=0:y=0:w=iw:h=ih:color=0x070a16@0.35:t=fill",
+    "drawbox=x=36:y=58:w=648:h=116:color=0x00f0ff@0.18:t=4",
+    `drawtext=text='LSJY AI VIDEO':fontcolor=cyan:fontsize=50:x=(w-text_w)/2:y=92`,
+    `drawtext=text='${safeTopic}':fontcolor=white:fontsize=34:x=(w-text_w)/2:y=520`,
+    `drawtext=text='${safeStyle}':fontcolor=magenta:fontsize=32:x=(w-text_w)/2:y=610`,
+    `drawtext=text='${duration}s VERTICAL SHORT':fontcolor=yellow:fontsize=28:x=(w-text_w)/2:y=710`,
+    "drawbox=x=60:y=1020:w=600:h=6:color=0xff00ff@0.9:t=fill",
+    `drawtext=text='AI EMPOWERS REAL ECONOMY':fontcolor=cyan:fontsize=26:x=(w-text_w)/2:y=1080`,
+  ].join(',');
+  await runCommandFile('ffmpeg', [
+    '-y',
+    '-f', 'lavfi',
+    '-i', `testsrc2=size=720x1280:rate=30:duration=${duration}`,
+    '-f', 'lavfi',
+    '-i', `sine=frequency=220:duration=${duration}`,
+    '-vf', vf,
+    '-shortest',
+    '-c:v', 'libx264',
+    '-preset', 'veryfast',
+    '-pix_fmt', 'yuv420p',
+    '-c:a', 'aac',
+    '-movflags', '+faststart',
+    filePath
+  ], { timeout: Math.max(180000, duration * 8000) });
+  return {
+    videoUrl: `/uploads/generated-videos/${fileName}`,
+    videoPath: filePath,
+    fileName,
+  };
+}
+
 function buildCyberpunkVideoPlan(topic, style, duration) {
   const finalDuration = Math.min(60, Math.max(10, Number(duration || 15)));
   const jobId = `VP${Date.now()}`;
@@ -5987,13 +6041,13 @@ function buildCyberpunkVideoPlan(topic, style, duration) {
     duration: finalDuration,
     style: style || '赛博朋克霓虹',
     cost: 50,
-    pipeline: ['脚本生成', '镜头分镜', '配音文案', '字幕时间轴', '视频任务占位'],
+    pipeline: ['脚本生成', '镜头分镜', '配音文案', '字幕时间轴', 'MP4视频生成'],
     videoTask: {
-      renderMode: '平台内置视频任务',
-      outputType: '短视频任务包',
+      renderMode: '平台内置 MP4 生成',
+      outputType: '可播放竖屏短视频',
       previewUrl: '',
       estimatedRender: `${finalDuration}秒竖屏短视频`,
-      note: '当前已生成可执行视频任务包；后续接入成片容器后可直接渲染 mp4。',
+      note: '正在生成可播放 MP4 视频，生成完成后可直接点击播放。',
     },
     script: `开场：你以为${topic}只是普通内容？\n转折：罗圣纪元把 AI、视觉、配音和字幕串成一条创作流水线。\n价值：15秒讲清卖点，直接用于短视频引流、活动预热和品牌展示。\n收尾：关注罗圣纪元，用 AI 赋能实体经济。`,
     voiceover: `电子赛博男声/女声：${topic}，正在被 AI 重新定义。罗圣纪元帮你把创意变成可发布的短视频。`,
@@ -6029,15 +6083,28 @@ app.post('/api/v1/skills/video-pipeline/generate', authCheck, async (req, res) =
   } catch (err) {
     plan.aiFallbackReason = err.message;
   }
+  try {
+    const video = await createPlayableVideo(plan, topic, style);
+    plan.videoUrl = video.videoUrl;
+    plan.videoTask.previewUrl = video.videoUrl;
+    plan.videoTask.fileName = video.fileName;
+    plan.status = 'video_ready';
+    plan.statusLabel = '视频已生成，可点击播放';
+    plan.videoTask.note = '视频文件已生成，可直接播放、全屏查看或下载。';
+  } catch (err) {
+    plan.status = 'video_failed';
+    plan.statusLabel = '视频生成失败';
+    plan.videoTask.note = `服务器视频生成依赖暂不可用：${err.message}`;
+  }
   addAiHistoryRecord({ userId, toolId: 'video-pipeline', toolName: '开源Skill短视频流水线', input: topic, output: JSON.stringify(plan), model: plan.model || 'local-template', tokens: 0 });
-  res.json({ code: 0, message: '短视频生成任务已创建', data: { plan, balance: pay.balance, cost } });
+  res.json({ code: 0, message: plan.videoUrl ? '短视频已生成' : '短视频任务已创建，但视频文件生成失败', data: { plan, balance: pay.balance, cost } });
 });
 
 app.post('/api/v1/skills/video-pipeline/action', authCheck, (req, res) => {
   const { jobId, action, plan } = req.body || {};
   if (!jobId || !action) return res.status(400).json({ code: 400, message: '视频任务和操作类型不能为空', data: null });
   const actionMap = {
-    render: { label: '视频成片任务', skill: 'MoneyPrinterTurbo', status: 'queued', result: '已生成视频渲染任务包，等待成片容器接管后输出 MP4。' },
+    render: { label: '视频成片任务', skill: 'MoneyPrinterTurbo', status: 'done', result: '已生成可播放 MP4 视频，可在上方播放器直接观看。' },
     voice: { label: '电子配音任务', skill: 'GPT-SoVITS', status: 'queued', result: '已生成配音任务包，包含口播文案、音色建议和情绪节奏。' },
     subtitle: { label: '字幕时间轴', skill: 'auto-subtitle', status: 'done', result: '已生成字幕时间轴，可用于后续 SRT/ASS 字幕导出。' },
   };

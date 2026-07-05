@@ -46,11 +46,18 @@
             </div>
             <el-tag effect="dark">{{ plan.duration }}秒</el-tag>
           </div>
-          <div class="video-task">
-            <div class="play-mark">▶</div>
+          <div class="video-task" :class="{ clickable: !!videoSrc }" @click="playVideo">
+            <div class="play-mark">{{ videoSrc ? '▶' : '!' }}</div>
             <div>
               <b>{{ plan.videoTask?.estimatedRender || '短视频任务包' }}</b>
               <p>{{ plan.videoTask?.note }}</p>
+            </div>
+          </div>
+          <div v-if="videoSrc" class="video-player-card">
+            <video ref="videoRef" :src="videoSrc" controls playsinline preload="metadata"></video>
+            <div class="video-actions">
+              <el-button size="small" type="primary" @click.stop="playVideo">播放视频</el-button>
+              <el-button size="small" @click.stop="openVideo">打开视频</el-button>
             </div>
           </div>
           <div class="block">
@@ -95,7 +102,7 @@
         </template>
         <div v-else class="empty">
           <div>🎬</div>
-          <p>输入主题后生成赛博朋克短视频任务包</p>
+            <p>输入主题后生成可播放的赛博朋克 MP4 短视频</p>
         </div>
       </div>
     </section>
@@ -103,7 +110,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import service from '@/api/request'
 
@@ -112,6 +119,12 @@ const actionLoading = ref('')
 const form = ref({ topic: '', style: '赛博朋克霓虹', duration: 15 })
 const plan = ref<any>(null)
 const tasks = ref<any[]>([])
+const videoRef = ref<HTMLVideoElement | null>(null)
+const videoSrc = computed(() => {
+  const url = plan.value?.videoUrl || plan.value?.videoTask?.previewUrl || ''
+  if (!url) return ''
+  return url.startsWith('http') ? url : `https://api.lsjyapp.cn${url}`
+})
 
 async function generate() {
   if (!form.value.topic.trim()) return ElMessage.warning('请输入短视频主题')
@@ -145,6 +158,16 @@ async function runAction(action: string) {
 function statusText(status: string) {
   return { queued: '已排队', done: '已完成', failed: '失败' }[status] || status
 }
+
+function playVideo() {
+  if (!videoSrc.value) return ElMessage.warning('视频还没有生成成功')
+  videoRef.value?.play()
+}
+
+function openVideo() {
+  if (!videoSrc.value) return ElMessage.warning('视频还没有生成成功')
+  window.open(videoSrc.value, '_blank')
+}
 </script>
 
 <style scoped>
@@ -162,8 +185,12 @@ h1 { margin: 0; font-size: 30px; } .hero p { color: #99a8c9; line-height: 1.8; m
 .job-line { color: #8ea1c8; margin: 4px 0 0; font-size: 12px; }
 h2 { margin: 0 0 14px; color: #fff; }
 .video-task { display: flex; gap: 14px; align-items: center; margin-top: 10px; padding: 16px; border: 1px solid rgba(255,0,255,.2); border-radius: 14px; background: linear-gradient(135deg, rgba(255,0,255,.08), rgba(0,240,255,.06)); }
+.video-task.clickable { cursor: pointer; box-shadow: 0 0 26px rgba(255,0,255,.2); }
 .play-mark { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #050812; background: linear-gradient(135deg, #00f0ff, #ff00ff); font-weight: 900; box-shadow: 0 0 22px rgba(255,0,255,.35); }
 .video-task b { color: #fff; } .video-task p { color: #9aa4c7; margin: 6px 0 0; line-height: 1.6; }
+.video-player-card { margin-top: 14px; padding: 12px; border-radius: 16px; border: 1px solid rgba(0,240,255,.18); background: rgba(0,0,0,.28); }
+.video-player-card video { width: 100%; max-height: 640px; border-radius: 12px; background: #000; display: block; }
+.video-actions { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
 .block { margin-top: 14px; padding: 14px; background: rgba(0,240,255,.05); border-radius: 12px; }
 h3 { color: #00f0ff; margin: 0 0 8px; font-size: 14px; }
 pre { white-space: pre-wrap; word-break: break-word; color: #dce7ff; line-height: 1.7; font-family: inherit; margin: 0; }

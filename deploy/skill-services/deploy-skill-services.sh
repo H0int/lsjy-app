@@ -28,6 +28,17 @@ if ! command -v docker >/dev/null 2>&1; then
   systemctl start docker || service docker start || true
 fi
 
+if ! command -v ffmpeg >/dev/null 2>&1; then
+  echo "未检测到 ffmpeg，开始安装视频生成依赖..."
+  if command -v apt-get >/dev/null 2>&1; then
+    apt-get update -y
+    apt-get install -y ffmpeg fonts-noto-cjk || apt-get install -y ffmpeg || true
+  elif command -v yum >/dev/null 2>&1; then
+    yum install -y epel-release || true
+    yum install -y ffmpeg || true
+  fi
+fi
+
 mkdir -p /etc/docker
 cat > /etc/docker/daemon.json <<'EOF'
 {
