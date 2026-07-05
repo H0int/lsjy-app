@@ -136,6 +136,8 @@ if ! $COMPOSE pull; then
     mv docker-compose.yml.bak docker-compose.yml
   done
 fi
+# 旧版 docker-compose 在重建 Apache 镜像时可能触发 ContainerConfig 异常，先清理旧 Matomo 容器，保留数据卷
+docker ps -a --format '{{.Names}}' | grep 'lsjy-matomo' | xargs -r docker rm -f || true
 $COMPOSE up -d || true
 
 echo "等待 Matomo 启动..."
@@ -154,5 +156,5 @@ if [ "$MATOMO_OK" != "1" ]; then
   $COMPOSE ps || true
 fi
 echo "检查 Chroma 向量库状态："
-curl -fsS http://127.0.0.1:8008/api/v1/heartbeat || curl -fsS http://127.0.0.1:8008/ || true
+curl -fsS http://127.0.0.1:8008/api/v2/heartbeat || curl -fsS http://127.0.0.1:8008/api/v1/heartbeat || curl -fsS http://127.0.0.1:8008/ || true
 exit 0

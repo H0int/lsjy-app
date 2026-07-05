@@ -5889,8 +5889,11 @@ app.post('/api/v1/admin/skills/open-source/:id/health-check', authCheck, async (
   }
   if (item.id === 'chroma') {
     try {
-      const check = await httpsRequest('http://127.0.0.1:8008/api/v1/heartbeat', { method: 'GET', timeout: 3000, retries: 0 });
-      ok = check.status >= 200 && check.status < 500;
+      let check = await httpsRequest('http://127.0.0.1:8008/api/v2/heartbeat', { method: 'GET', timeout: 3000, retries: 0 });
+      if (check.status < 200 || check.status >= 300) {
+        check = await httpsRequest('http://127.0.0.1:8008/api/v1/heartbeat', { method: 'GET', timeout: 3000, retries: 0 });
+      }
+      ok = check.status >= 200 && check.status < 300;
       if (ok) {
         item.status = 'enabled';
         detail = 'Chroma 向量库容器服务可访问';
