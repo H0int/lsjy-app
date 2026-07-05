@@ -5969,7 +5969,8 @@ app.get('/api/v1/skills/open-source/public', authCheck, (req, res) => {
 
 function buildCyberpunkVideoPlan(topic, style, duration) {
   const finalDuration = Math.min(60, Math.max(10, Number(duration || 15)));
-  const title = `《${topic}》${style || '赛博朋克'}短视频方案`;
+  const jobId = `VP${Date.now()}`;
+  const title = `《${topic}》${style || '赛博朋克'}短视频生成任务`;
   const shots = [
     { time: '0-3秒', scene: '霓虹城市快速推进，主标题故障闪现', prompt: `${topic}, cyberpunk neon city, cinematic opening, cyan magenta glow` },
     { time: '3-7秒', scene: '核心卖点/故事冲突出现，镜头切到人物或产品特写', prompt: `${topic}, close-up, holographic interface, dramatic rim light` },
@@ -5979,14 +5980,30 @@ function buildCyberpunkVideoPlan(topic, style, duration) {
   const subtitles = shots.map(s => `${s.time}：${s.scene}`);
   return {
     title,
+    jobId,
+    type: 'video_generation_job',
+    status: 'generated',
+    statusLabel: '视频任务已生成',
     duration: finalDuration,
     style: style || '赛博朋克霓虹',
-    pipeline: ['文案脚本', '镜头提示词', '电子配音文案', '霓虹字幕', '成片任务占位'],
+    cost: 50,
+    pipeline: ['脚本生成', '镜头分镜', '配音文案', '字幕时间轴', '视频任务占位'],
+    videoTask: {
+      renderMode: '平台内置视频任务',
+      outputType: '短视频任务包',
+      previewUrl: '',
+      estimatedRender: `${finalDuration}秒竖屏短视频`,
+      note: '当前已生成可执行视频任务包；后续接入成片容器后可直接渲染 mp4。',
+    },
     script: `开场：你以为${topic}只是普通内容？\n转折：罗圣纪元把 AI、视觉、配音和字幕串成一条创作流水线。\n价值：15秒讲清卖点，直接用于短视频引流、活动预热和品牌展示。\n收尾：关注罗圣纪元，用 AI 赋能实体经济。`,
     voiceover: `电子赛博男声/女声：${topic}，正在被 AI 重新定义。罗圣纪元帮你把创意变成可发布的短视频。`,
     shots,
     subtitles,
-    nextSteps: ['接入 MoneyPrinterTurbo 容器后自动成片', '接入 GPT-SoVITS 后生成配音', '接入 auto-subtitle 后生成字幕时间轴'],
+    actions: [
+      { id: 'render', label: '生成视频成片任务', skill: 'MoneyPrinterTurbo', status: 'ready', cost: 0 },
+      { id: 'voice', label: '生成电子配音任务', skill: 'GPT-SoVITS', status: 'ready', cost: 0 },
+      { id: 'subtitle', label: '生成字幕时间轴', skill: 'auto-subtitle', status: 'ready', cost: 0 },
+    ],
   };
 }
 
@@ -5994,7 +6011,7 @@ app.post('/api/v1/skills/video-pipeline/generate', authCheck, async (req, res) =
   const userId = req.user?.id || 0;
   const { topic, style, duration } = req.body || {};
   if (!String(topic || '').trim()) return res.status(400).json({ code: 400, message: '请输入短视频主题', data: null });
-  const cost = 3;
+  const cost = 50;
   const pay = deductCoins(userId, cost);
   if (!pay.ok) return res.status(400).json({ code: 400, message: pay.error || '圣力不足', data: { balance: pay.balance || 0 } });
   let plan = buildCyberpunkVideoPlan(String(topic).trim(), style, duration);
@@ -6013,7 +6030,31 @@ app.post('/api/v1/skills/video-pipeline/generate', authCheck, async (req, res) =
     plan.aiFallbackReason = err.message;
   }
   addAiHistoryRecord({ userId, toolId: 'video-pipeline', toolName: '开源Skill短视频流水线', input: topic, output: JSON.stringify(plan), model: plan.model || 'local-template', tokens: 0 });
-  res.json({ code: 0, message: '短视频方案已生成', data: { plan, balance: pay.balance, cost } });
+  res.json({ code: 0, message: '短视频生成任务已创建', data: { plan, balance: pay.balance, cost } });
+});
+
+app.post('/api/v1/skills/video-pipeline/action', authCheck, (req, res) => {
+  const { jobId, action, plan } = req.body || {};
+  if (!jobId || !action) return res.status(400).json({ code: 400, message: '视频任务和操作类型不能为空', data: null });
+  const actionMap = {
+    render: { label: '视频成片任务', skill: 'MoneyPrinterTurbo', status: 'queued', result: '已生成视频渲染任务包，等待成片容器接管后输出 MP4。' },
+    voice: { label: '电子配音任务', skill: 'GPT-SoVITS', status: 'queued', result: '已生成配音任务包，包含口播文案、音色建议和情绪节奏。' },
+    subtitle: { label: '字幕时间轴', skill: 'auto-subtitle', status: 'done', result: '已生成字幕时间轴，可用于后续 SRT/ASS 字幕导出。' },
+  };
+  const item = actionMap[action];
+  if (!item) return res.status(400).json({ code: 400, message: '不支持的操作类型', data: null });
+  const task = {
+    id: `${jobId}-${action}-${Date.now()}`,
+    jobId,
+    action,
+    ...item,
+    createdAt: new Date().toISOString(),
+    subtitles: action === 'subtitle' ? (plan?.subtitles || []) : undefined,
+    voiceover: action === 'voice' ? (plan?.voiceover || '') : undefined,
+    renderShots: action === 'render' ? (plan?.shots || []) : undefined,
+  };
+  addAiHistoryRecord({ userId: req.user?.id || 0, toolId: 'video-pipeline-action', toolName: item.skill, input: `${jobId}:${action}`, output: JSON.stringify(task), model: 'skill-adapter', tokens: 0 });
+  res.json({ code: 0, message: `${item.label}已生成`, data: { task } });
 });
 
 // ===== API错误管理 =====
