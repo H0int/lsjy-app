@@ -6,13 +6,15 @@
         <el-select v-model="agentFilter" placeholder="智能体" class="chat-log-control cyber-input w-40" clearable popper-class="chat-log-popper">
           <el-option v-for="a in agentNames" :key="a" :label="a" :value="a" />
         </el-select>
-        <el-date-picker v-model="dateRange" type="daterange" range-separator="至" start-placeholder="开始日期"
-          end-placeholder="结束日期" class="chat-log-control chat-log-date cyber-input" popper-class="chat-log-date-popper" style="width:260px" />
+        <el-config-provider :locale="zhCn">
+          <el-date-picker v-model="dateRange" type="daterange" range-separator="至" start-placeholder="开始日期"
+            end-placeholder="结束日期" class="chat-log-control chat-log-date cyber-input" popper-class="chat-log-date-popper" format="YYYY年MM月DD日" value-format="YYYY-MM-DD" style="width:260px" />
+        </el-config-provider>
       </div>
       <div class="toolbar-right">
         <span class="sync-text">{{ lastSyncAt ? `已同步 ${lastSyncAt}` : '实时同步中' }}</span>
-        <el-button :loading="loading" @click="fetchLogs">🔄 刷新</el-button>
-        <el-button @click="exportLogs">📥 导出</el-button>
+        <el-button class="chat-log-button" :loading="loading" @click="fetchLogs">🔄 刷新</el-button>
+        <el-button class="chat-log-button" @click="exportLogs">📥 导出</el-button>
       </div>
     </div>
 
@@ -91,6 +93,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
+import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import service from '@/api/request'
 
 const search = ref('')
@@ -118,6 +121,8 @@ async function fetchLogs() {
       params: {
         search: search.value,
         toolName: agentFilter.value,
+        startDate: Array.isArray(dateRange.value) ? dateRange.value[0] : '',
+        endDate: Array.isArray(dateRange.value) ? dateRange.value[1] : '',
         page: page.value,
         pageSize,
         _t: Date.now()
@@ -147,7 +152,7 @@ onUnmounted(() => {
   document.removeEventListener('visibilitychange', handleVisibilitySync)
 })
 
-watch([search, agentFilter, page], () => {
+watch([search, agentFilter, dateRange, page], () => {
   fetchLogs()
 })
 
@@ -207,6 +212,25 @@ function exportLogs() {
   border: 1px solid rgba(0, 240, 255, 0.16) !important;
   box-shadow: none !important;
 }
+.chat-log-date,
+.chat-log-date.el-date-editor,
+.chat-log-date.el-input__wrapper,
+.chat-log-date :deep(.el-input__wrapper) {
+  background: rgba(10, 10, 20, 0.78) !important;
+  border: 1px solid rgba(0, 240, 255, 0.18) !important;
+  box-shadow: none !important;
+  color: var(--cyber-text) !important;
+}
+.chat-log-date :deep(.el-range-input),
+.chat-log-date :deep(input) {
+  background: transparent !important;
+  color: var(--cyber-text) !important;
+  -webkit-text-fill-color: var(--cyber-text) !important;
+}
+.chat-log-date :deep(.el-range-separator) {
+  color: var(--cyber-cyan) !important;
+  flex: 0 0 auto;
+}
 .chat-log-control :deep(.el-input__wrapper.is-focus),
 .chat-log-control :deep(.el-select__wrapper.is-focused) {
   border-color: var(--cyber-cyan) !important;
@@ -236,6 +260,21 @@ function exportLogs() {
 }
 .chat-log-date :deep(.el-range-input) {
   background: transparent !important;
+}
+.chat-log-button {
+  background: rgba(10, 10, 20, 0.76) !important;
+  border: 1px solid rgba(0, 240, 255, 0.18) !important;
+  color: var(--cyber-text) !important;
+  box-shadow: none !important;
+}
+.chat-log-button:hover,
+.chat-log-button:focus {
+  background: rgba(0, 240, 255, 0.12) !important;
+  border-color: var(--cyber-cyan) !important;
+  color: var(--cyber-cyan) !important;
+}
+.chat-log-button :deep(span) {
+  color: inherit !important;
 }
 .w-full { width: 100%; }
 .mt-4 { margin-top: 16px; }
@@ -281,7 +320,11 @@ function exportLogs() {
 :global(.chat-log-date-popper .el-picker-panel),
 :global(.chat-log-date-popper .el-date-range-picker),
 :global(.chat-log-date-popper .el-picker-panel__body),
-:global(.chat-log-date-popper .el-picker-panel__sidebar) {
+:global(.chat-log-date-popper .el-picker-panel__sidebar),
+:global(.chat-log-date-popper .el-picker-panel__content),
+:global(.chat-log-date-popper .el-date-range-picker__content),
+:global(.chat-log-date-popper .el-date-range-picker__time-header),
+:global(.chat-log-date-popper .el-picker-panel__footer) {
   background: #080b18 !important;
   color: #e8f8ff !important;
 }
@@ -289,7 +332,8 @@ function exportLogs() {
 :global(.chat-log-date-popper .el-date-table td),
 :global(.chat-log-date-popper .el-picker-panel__icon-btn),
 :global(.chat-log-date-popper .el-date-range-picker__header),
-:global(.chat-log-date-popper .el-date-range-picker__header div) {
+:global(.chat-log-date-popper .el-date-range-picker__header div),
+:global(.chat-log-date-popper .el-date-table-cell__text) {
   color: #a0a0cc !important;
 }
 :global(.chat-log-date-popper .el-date-table td.available:hover),
@@ -301,6 +345,11 @@ function exportLogs() {
   background: var(--cyber-cyan) !important;
   color: #001018 !important;
 }
+:global(.chat-log-date-popper .el-button) {
+  background: rgba(10, 10, 20, 0.76) !important;
+  border-color: rgba(0, 240, 255, 0.18) !important;
+  color: var(--cyber-text) !important;
+}
 
 :deep(.el-pagination button),
 :deep(.el-pagination .el-pager li) {
@@ -311,6 +360,19 @@ function exportLogs() {
 :deep(.el-pagination .el-pager li.is-active) {
   background: rgba(0, 240, 255, 0.16) !important;
   color: var(--cyber-cyan) !important;
+}
+:deep(.cyber-table),
+:deep(.cyber-table .el-table__inner-wrapper),
+:deep(.cyber-table .el-table__header-wrapper),
+:deep(.cyber-table .el-table__body-wrapper),
+:deep(.cyber-table th.el-table__cell),
+:deep(.cyber-table tr),
+:deep(.cyber-table td.el-table__cell) {
+  background: rgba(10, 10, 20, 0.72) !important;
+  color: var(--cyber-text) !important;
+}
+:deep(.cyber-table th.el-table__cell) {
+  background: rgba(8, 11, 24, 0.95) !important;
 }
 @media (max-width: 767px) { .hidden { display: none; } .md\:hidden { display: none; } .md\:block { display: none; } }
 @media (min-width: 768px) { .md\:hidden { display: block; } .md\:block { display: block; } }
