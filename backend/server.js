@@ -5988,6 +5988,107 @@ function cleanAssText(text) {
     .slice(0, 80);
 }
 
+const cjkFontFile = '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc';
+
+function writeVideoTextFile(jobId, name, text) {
+  const dir = path.join(uploadsRoot, 'generated-videos', 'text');
+  fs.mkdirSync(dir, { recursive: true });
+  const filePath = path.join(dir, `${jobId}-${name}.txt`);
+  fs.writeFileSync(filePath, String(text || '').replace(/[{}]/g, '').slice(0, 120));
+  return filePath;
+}
+
+function drawTextFile(filePath, options = {}) {
+  const x = options.x || '(w-text_w)/2';
+  const y = options.y || '100';
+  const size = options.size || 32;
+  const color = options.color || 'white';
+  const box = options.box ? ':box=1:boxcolor=0x000000@0.45:boxborderw=14' : '';
+  return `drawtext=fontfile='${cjkFontFile}':textfile='${filePath}':fontcolor=${color}:fontsize=${size}:x=${x}:y=${y}${box}`;
+}
+
+function getTopicVisualProfile(topic) {
+  const text = String(topic || '').toLowerCase();
+  const isDog = /边牧|金毛|柯基|拉布拉多|哈士奇|柴犬|狗|犬|宠物|border|collie|golden|retriever/.test(text);
+  if (isDog) {
+    const leftName = /边牧|border|collie/.test(text) ? '边牧 Border Collie' : '聪明工作犬';
+    const rightName = /金毛|golden|retriever/.test(text) ? '金毛 Golden Retriever' : '温暖陪伴犬';
+    return {
+      type: 'dog_compare',
+      headline: text.includes('边牧') && text.includes('金毛') ? '边牧 × 金毛' : '宠物犬主题短视频',
+      subline: '性格对比 · 互动日常 · 饲养建议',
+      leftName,
+      rightName,
+      leftTags: '高智商 / 爱运动 / 牧羊犬',
+      rightTags: '温顺亲人 / 治愈陪伴 / 金色长毛',
+      cta: '适合宠物科普、门店引流、账号涨粉',
+    };
+  }
+  return {
+    type: 'general',
+    headline: String(topic || '主题短视频').slice(0, 32),
+    subline: '痛点 → 卖点 → 案例 → 行动引导',
+    cta: '罗圣纪元 AI 短视频流水线',
+  };
+}
+
+function buildVisualFilters(plan, topic, style, subtitleFile) {
+  const profile = getTopicVisualProfile(topic);
+  const duration = Math.min(300, Math.max(10, Number(plan.duration || 15)));
+  const titleFile = writeVideoTextFile(plan.jobId, 'title', profile.headline);
+  const subFile = writeVideoTextFile(plan.jobId, 'sub', profile.subline);
+  const styleFile = writeVideoTextFile(plan.jobId, 'style', `${style || plan.style || '短视频'} · ${duration}s`);
+  const ctaFile = writeVideoTextFile(plan.jobId, 'cta', profile.cta);
+  const base = [
+    'scale=720:1280',
+    'format=yuv420p',
+    "drawbox=x=0:y=0:w=iw:h=ih:color=0x070a16@0.94:t=fill",
+    "drawbox=x=24:y=42:w=672:h=138:color=0x00f0ff@0.14:t=4",
+    drawTextFile(titleFile, { size: 46, color: 'cyan', y: 78 }),
+    drawTextFile(subFile, { size: 26, color: 'white', y: 138 }),
+    drawTextFile(styleFile, { size: 24, color: 'yellow', y: 204 }),
+  ];
+  if (profile.type === 'dog_compare') {
+    const leftFile = writeVideoTextFile(plan.jobId, 'left-dog', profile.leftName);
+    const rightFile = writeVideoTextFile(plan.jobId, 'right-dog', profile.rightName);
+    const leftTags = writeVideoTextFile(plan.jobId, 'left-tags', profile.leftTags);
+    const rightTags = writeVideoTextFile(plan.jobId, 'right-tags', profile.rightTags);
+    base.push(
+      "drawbox=x=48:y=276:w=286:h=430:color=0x0b1024@0.95:t=fill",
+      "drawbox=x=386:y=276:w=286:h=430:color=0x231405@0.95:t=fill",
+      "drawbox=x=70:y=304:w=242:h=260:color=0xffffff@0.95:t=fill",
+      "drawbox=x=70:y=304:w=95:h=96:color=0x111111@0.95:t=fill",
+      "drawbox=x=216:y=316:w=70:h=92:color=0x111111@0.95:t=fill",
+      "drawbox=x=116:y=420:w=150:h=88:color=0x111111@0.88:t=fill",
+      "drawbox=x=146:y=452:w=86:h=36:color=0xffffff@0.98:t=fill",
+      "drawbox=x=408:y=304:w=242:h=260:color=0xd9a441@0.95:t=fill",
+      "drawbox=x=448:y=330:w=162:h=146:color=0xf2c76b@0.90:t=fill",
+      "drawbox=x=470:y=486:w=118:h=46:color=0x9f681d@0.8:t=fill",
+      "drawbox=x=84:y=586:w=216:h=5:color=0x00f0ff@0.95:t=fill",
+      "drawbox=x=422:y=586:w=216:h=5:color=0xffc15a@0.95:t=fill",
+      drawTextFile(leftFile, { size: 27, color: 'white', x: '64', y: '610', box: true }),
+      drawTextFile(rightFile, { size: 27, color: 'white', x: '402', y: '610', box: true }),
+      drawTextFile(leftTags, { size: 21, color: 'cyan', x: '64', y: '660' }),
+      drawTextFile(rightTags, { size: 21, color: 'yellow', x: '402', y: '660' }),
+      "drawbox=x=74:y=748:w=572:h=84:color=0xff00ff@0.12:t=fill",
+      drawTextFile(writeVideoTextFile(plan.jobId, 'dog-point', '画面主题：边牧的聪明敏捷 + 金毛的温顺治愈'), { size: 28, color: 'white', y: '772', box: true }),
+    );
+  } else {
+    base.push(
+      "drawbox=x=82:y=278:w=556:h=360:color=0xff00ff@0.12:t=fill",
+      "drawbox=x=116:y=318:w=488:h=280:color=0x00f0ff@0.10:t=3",
+      drawTextFile(writeVideoTextFile(plan.jobId, 'general-point', `主题画面：${topic}`), { size: 34, color: 'white', y: '430', box: true }),
+    );
+  }
+  base.push(
+    "drawbox=x=72:y=900:w=576:h=6:color=0xff00ff@0.9:t=fill",
+    "drawbox=x=72:y=928:w=576:h=6:color=0x00f0ff@0.9:t=fill",
+    `subtitles=${subtitleFile}`,
+    drawTextFile(ctaFile, { size: 25, color: 'cyan', y: '1120', box: true }),
+  );
+  return base.join(',');
+}
+
 function secondsToAssTime(seconds) {
   const s = Math.max(0, Number(seconds) || 0);
   const h = Math.floor(s / 3600);
@@ -6036,25 +6137,8 @@ async function createPlayableVideo(plan, topic, style) {
   const fileName = `${plan.jobId}.mp4`;
   const filePath = path.join(dir, fileName);
   const duration = Math.min(300, Math.max(10, Number(plan.duration || 15)));
-  const safeStyle = String(style || 'CYBERPUNK').replace(/[^\w\s-]/g, '').slice(0, 28).toUpperCase();
-  const safeTopic = String(topic || 'LSJY VIDEO').replace(/[^\w\s-]/g, '').slice(0, 28).toUpperCase() || 'LSJY VIDEO';
   const subtitleFile = createAssSubtitleFile(plan, topic);
-  const vf = [
-    'scale=720:1280',
-    'format=yuv420p',
-    "drawbox=x=0:y=0:w=iw:h=ih:color=0x070a16@0.92:t=fill",
-    "drawbox=x=36:y=58:w=648:h=126:color=0x00f0ff@0.18:t=4",
-    "drawbox=x=82:y=238:w=556:h=380:color=0xff00ff@0.12:t=fill",
-    "drawbox=x=116:y=278:w=488:h=300:color=0x00f0ff@0.10:t=3",
-    "drawbox=x=72:y=886:w=576:h=6:color=0xff00ff@0.9:t=fill",
-    "drawbox=x=72:y=914:w=576:h=6:color=0x00f0ff@0.9:t=fill",
-    `drawtext=text='LSJY AI VIDEO':fontcolor=cyan:fontsize=48:x=(w-text_w)/2:y=96`,
-    `drawtext=text='${safeTopic}':fontcolor=white:fontsize=34:x=(w-text_w)/2:y=410`,
-    `drawtext=text='${safeStyle}':fontcolor=magenta:fontsize=30:x=(w-text_w)/2:y=492`,
-    `drawtext=text='${duration}s VERTICAL VIDEO':fontcolor=yellow:fontsize=26:x=(w-text_w)/2:y=790`,
-    `subtitles=${subtitleFile}`,
-    `drawtext=text='MoneyPrinterTurbo + GPT-SoVITS + auto-subtitle':fontcolor=cyan:fontsize=22:x=(w-text_w)/2:y=1120`,
-  ].join(',');
+  const vf = buildVisualFilters(plan, topic, style, subtitleFile);
   await runCommandFile('ffmpeg', [
     '-y',
     '-f', 'lavfi',
@@ -6082,7 +6166,15 @@ function buildCyberpunkVideoPlan(topic, style, duration) {
   const jobId = `VP${Date.now()}`;
   const title = `《${topic}》${style || '赛博朋克'}短视频生成任务`;
   const segment = Math.max(3, Math.floor(finalDuration / 6));
-  const shots = [
+  const visualProfile = getTopicVisualProfile(topic);
+  const shots = visualProfile.type === 'dog_compare' ? [
+    { time: `0-${segment}秒`, scene: `开场直接出现边牧和金毛：左侧边牧黑白高智商，右侧金毛金色治愈`, prompt: `border collie and golden retriever, pet comparison opening, ${style}` },
+    { time: `${segment}-${segment * 2}秒`, scene: `边牧特点：反应快、运动量大、适合飞盘和训练互动`, prompt: `border collie agility, smart dog, training scene` },
+    { time: `${segment * 2}-${segment * 3}秒`, scene: `金毛特点：温顺亲人、陪伴感强、适合家庭和儿童互动`, prompt: `golden retriever warm family companion, friendly dog` },
+    { time: `${segment * 3}-${segment * 4}秒`, scene: `同框互动：边牧负责活力和任务感，金毛负责亲和与治愈氛围`, prompt: `border collie and golden retriever playing together, warm pet video` },
+    { time: `${segment * 4}-${segment * 5}秒`, scene: `饲养建议：边牧重训练和消耗精力，金毛重陪伴、梳毛和饮食管理`, prompt: `pet care tips, dog owner education, border collie golden retriever` },
+    { time: `${segment * 5}-${finalDuration}秒`, scene: `结尾总结：边牧像聪明搭档，金毛像温暖家人，按生活节奏选择`, prompt: `pet account ending card, dog comparison conclusion` },
+  ] : [
     { time: `0-${segment}秒`, scene: `用强视觉开场点出“${topic}”，让用户知道视频要解决什么问题`, prompt: `${topic}, cinematic opening, ${style}, strong hook, neon title` },
     { time: `${segment}-${segment * 2}秒`, scene: `展示目标人群的真实痛点，并把“${topic}”放进具体使用场景`, prompt: `${topic}, target audience pain point, realistic commercial scene, ${style}` },
     { time: `${segment * 2}-${segment * 3}秒`, scene: `突出核心卖点：省时间、提效率、能转化，避免空泛口号`, prompt: `${topic}, product benefit, close-up, clear value proposition` },
@@ -6108,8 +6200,12 @@ function buildCyberpunkVideoPlan(topic, style, duration) {
       estimatedRender: `${finalDuration}秒竖屏短视频`,
       note: '正在生成可播放 MP4 视频，生成完成后可直接点击播放。',
     },
-    script: `开场：你以为${topic}只是普通内容？\n转折：罗圣纪元把 AI、视觉、配音和字幕串成一条创作流水线。\n价值：15秒讲清卖点，直接用于短视频引流、活动预热和品牌展示。\n收尾：关注罗圣纪元，用 AI 赋能实体经济。`,
-    voiceover: `电子赛博男声/女声：${topic}，正在被 AI 重新定义。罗圣纪元帮你把创意变成可发布的短视频。`,
+    script: visualProfile.type === 'dog_compare'
+      ? `开场：边牧和金毛，同样是高人气狗狗，气质完全不一样。\n边牧：聪明、敏捷、精力旺，适合训练、飞盘和高互动陪伴。\n金毛：温顺、亲人、治愈感强，更适合家庭陪伴和温暖日常。\n对比：边牧像执行力很强的搭档，金毛像情绪稳定的家人。\n收尾：如果你喜欢训练挑战选边牧，如果你想要温暖陪伴选金毛。`
+      : `开场：你以为${topic}只是普通内容？\n转折：罗圣纪元把 AI、视觉、配音和字幕串成一条创作流水线。\n价值：15秒讲清卖点，直接用于短视频引流、活动预热和品牌展示。\n收尾：关注罗圣纪元，用 AI 赋能实体经济。`,
+    voiceover: visualProfile.type === 'dog_compare'
+      ? `边牧和金毛怎么选？边牧聪明敏捷，需要更多运动和训练；金毛温顺亲人，陪伴感更强。一个像高智商搭档，一个像温暖家人。`
+      : `电子赛博男声/女声：${topic}，正在被 AI 重新定义。罗圣纪元帮你把创意变成可发布的短视频。`,
     shots,
     subtitles,
     actions: [
