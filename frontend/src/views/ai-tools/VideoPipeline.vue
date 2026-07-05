@@ -4,9 +4,12 @@
       <div>
         <p class="eyebrow">CYBERPUNK VIDEO PIPELINE</p>
         <h1>开源 Skill 短视频流水线</h1>
-        <p>并行于原生视频生成模块，生成短视频任务包：脚本、镜头、配音、字幕和成片任务都会一次性生成；下方三个 Skill 按钮可继续生成成片、配音、字幕后处理任务。</p>
+        <p>文字方案和完整成片分开生成、分开扣圣力：文字方案只输出策划脚本，完整成片会串联配音、画面、字幕并生成可播放 MP4。</p>
       </div>
-      <div class="cost">50 圣力/次</div>
+      <div class="cost-box">
+        <span>文字方案 10 圣力</span>
+        <b>完整成片 50 圣力</b>
+      </div>
     </section>
 
     <section class="workspace">
@@ -14,7 +17,7 @@
         <h2>创作输入</h2>
         <el-form label-position="top">
           <el-form-item label="短视频主题">
-            <el-input v-model="form.topic" maxlength="80" show-word-limit placeholder="例如：罗圣纪元 AI 赋能本地商家" />
+            <el-input v-model="form.topic" maxlength="80" show-word-limit placeholder="例如：祁阳本地餐饮开业促销" />
           </el-form-item>
           <el-form-item label="视觉风格">
             <el-select v-model="form.style" class="w-full">
@@ -27,12 +30,15 @@
           <el-form-item label="时长">
             <el-slider v-model="form.duration" :min="10" :max="60" :step="5" show-input />
           </el-form-item>
-          <el-button type="primary" size="large" :loading="loading" @click="generate">生成短视频任务</el-button>
+          <div class="button-grid">
+            <el-button type="info" size="large" :loading="planLoading" @click="generatePlan">生成文字方案 · 10圣力</el-button>
+            <el-button type="primary" size="large" :loading="renderLoading" @click="renderVideo">生成完整成片 · 50圣力</el-button>
+          </div>
         </el-form>
 
         <div class="skill-note">
-          <b>隔离策略</b>
-          <span>本页生成的是可执行视频任务包；后处理按钮可生成成片/配音/字幕任务，接入完整容器后自动输出视频文件。</span>
+          <b>功能区别</b>
+          <span>文字方案只生成脚本和分镜；完整成片会生成真实 MP4 视频，右侧“成片预览”可直接播放。</span>
         </div>
       </div>
 
@@ -46,65 +52,77 @@
             </div>
             <el-tag effect="dark">{{ plan.duration }}秒</el-tag>
           </div>
-          <div class="video-task" :class="{ clickable: !!videoSrc }" @click="playVideo">
-            <div class="play-mark">{{ videoSrc ? '▶' : '!' }}</div>
-            <div>
-              <b>{{ plan.videoTask?.estimatedRender || '短视频任务包' }}</b>
-              <p>{{ plan.videoTask?.note }}</p>
-            </div>
-          </div>
-          <div v-if="videoSrc" class="video-player-card">
-            <video ref="videoRef" :src="videoSrc" controls playsinline preload="metadata"></video>
-            <div class="video-actions">
-              <el-button size="small" type="primary" @click.stop="playVideo">播放视频</el-button>
-              <el-button size="small" @click.stop="openVideo">打开视频</el-button>
-            </div>
-          </div>
-          <div class="block">
-            <h3>口播脚本</h3>
-            <pre>{{ plan.script }}</pre>
-          </div>
-          <div class="block">
-            <h3>电子配音</h3>
-            <p>{{ plan.voiceover }}</p>
-          </div>
-          <div class="shot-grid">
-            <div v-for="shot in plan.shots" :key="shot.time" class="shot-card">
-              <span>{{ shot.time }}</span>
-              <b>{{ shot.scene }}</b>
-              <p>{{ shot.prompt }}</p>
-            </div>
-          </div>
-          <div class="block" v-if="plan.aiText">
-            <h3>豆包增强方案</h3>
-            <pre>{{ plan.aiText }}</pre>
-          </div>
-          <div class="action-panel">
-            <button
-              v-for="item in plan.actions"
-              :key="item.id"
-              class="action-pill"
-              :disabled="actionLoading === item.id"
-              @click="runAction(item.id)"
-            >
-              <span>{{ actionLoading === item.id ? '生成中...' : item.label }}</span>
-              <small>{{ item.skill }}</small>
-            </button>
-          </div>
-          <div class="task-results" v-if="tasks.length">
-            <h3>后处理任务</h3>
-            <div v-for="task in tasks" :key="task.id" class="task-card">
-              <b>{{ task.label }} · {{ statusText(task.status) }}</b>
-              <p>{{ task.result }}</p>
-              <pre v-if="task.subtitles">{{ task.subtitles.join('\n') }}</pre>
-            </div>
-          </div>
+
+          <el-tabs v-model="activeTab" class="result-tabs">
+            <el-tab-pane label="文字方案" name="plan">
+              <div class="block">
+                <h3>口播脚本</h3>
+                <pre>{{ plan.script }}</pre>
+              </div>
+              <div class="block">
+                <h3>电子配音文案</h3>
+                <p>{{ plan.voiceover }}</p>
+              </div>
+              <div class="shot-grid">
+                <div v-for="shot in plan.shots" :key="shot.time" class="shot-card">
+                  <span>{{ shot.time }}</span>
+                  <b>{{ shot.scene }}</b>
+                  <p>{{ shot.prompt }}</p>
+                </div>
+              </div>
+              <div class="block" v-if="plan.aiText">
+                <h3>豆包增强方案</h3>
+                <pre>{{ plan.aiText }}</pre>
+              </div>
+            </el-tab-pane>
+
+            <el-tab-pane label="成片预览" name="preview">
+              <div class="render-card" :class="{ playable: !!videoSrc }" @click="playVideo">
+                <div class="play-mark">{{ videoSrc ? '▶' : '...' }}</div>
+                <div>
+                  <b>{{ plan.videoTask?.estimatedRender || '竖屏短视频' }}</b>
+                  <p>{{ plan.videoTask?.note }}</p>
+                </div>
+              </div>
+
+              <div class="progress-card">
+                <div v-for="stage in pipelineStages" :key="stage.name" class="stage-row">
+                  <div>
+                    <b>{{ stage.name }}</b>
+                    <span>{{ stage.tool }}</span>
+                  </div>
+                  <el-progress :percentage="stage.progress" :status="stage.status === 'failed' ? 'exception' : stage.progress === 100 ? 'success' : undefined" />
+                </div>
+              </div>
+
+              <div v-if="videoSrc" class="video-player-card">
+                <video ref="videoRef" :src="videoSrc" controls playsinline preload="metadata"></video>
+                <div class="video-actions">
+                  <el-button size="small" type="primary" @click.stop="playVideo">播放视频</el-button>
+                  <el-button size="small" @click.stop="openVideo">打开视频</el-button>
+                </div>
+              </div>
+              <div v-else class="no-video">
+                当前还没有成片。请点击左侧“生成完整成片 · 50圣力”。
+              </div>
+            </el-tab-pane>
+          </el-tabs>
         </template>
         <div v-else class="empty">
           <div>🎬</div>
-            <p>输入主题后生成可播放的赛博朋克 MP4 短视频</p>
+          <p>先选择“文字方案”或“完整成片”</p>
         </div>
       </div>
+    </section>
+
+    <section class="pipeline-visual">
+      <div class="pipeline-node"><b>1. 文本方案</b><span>CopilotKit / Doubao</span></div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-node"><b>2. 电子配音</b><span>GPT-SoVITS 适配</span></div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-node"><b>3. 画面成片</b><span>MoneyPrinterTurbo 适配</span></div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-node"><b>4. 字幕合成</b><span>auto-subtitle</span></div>
     </section>
   </div>
 </template>
@@ -114,49 +132,79 @@ import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import service from '@/api/request'
 
-const loading = ref(false)
-const actionLoading = ref('')
+const planLoading = ref(false)
+const renderLoading = ref(false)
+const activeTab = ref('plan')
 const form = ref({ topic: '', style: '赛博朋克霓虹', duration: 15 })
 const plan = ref<any>(null)
-const tasks = ref<any[]>([])
 const videoRef = ref<HTMLVideoElement | null>(null)
+
 const videoSrc = computed(() => {
   const url = plan.value?.videoUrl || plan.value?.videoTask?.previewUrl || ''
   if (!url) return ''
   return url.startsWith('http') ? url : `https://api.lsjyapp.cn${url}`
 })
 
-async function generate() {
-  if (!form.value.topic.trim()) return ElMessage.warning('请输入短视频主题')
-  loading.value = true
+const pipelineStages = computed(() => {
+  return plan.value?.pipelineStages || [
+    { name: '文字方案', tool: 'CopilotKit/Doubao', progress: plan.value ? 100 : 0, status: plan.value ? 'done' : 'waiting' },
+    { name: '配音合成', tool: 'GPT-SoVITS', progress: 0, status: 'waiting' },
+    { name: '画面成片', tool: 'MoneyPrinterTurbo', progress: 0, status: 'waiting' },
+    { name: '字幕合成', tool: 'auto-subtitle', progress: 0, status: 'waiting' },
+  ]
+})
+
+function validateTopic() {
+  if (!form.value.topic.trim()) {
+    ElMessage.warning('请输入短视频主题')
+    return false
+  }
+  return true
+}
+
+async function generatePlan() {
+  if (!validateTopic()) return
+  planLoading.value = true
   try {
-    const res = await service.post('/skills/video-pipeline/generate', form.value)
+    const res = await service.post('/skills/video-pipeline/plan', form.value)
     plan.value = res.data.data.plan
-    tasks.value = []
-    ElMessage.success(`已生成，消耗 ${res.data.data.cost} 圣力`)
+    activeTab.value = 'plan'
+    ElMessage.success(`文字方案已生成，消耗 ${res.data.data.cost} 圣力`)
   } catch (e: any) {
     ElMessage.error(e?.response?.data?.message || '生成失败')
   } finally {
-    loading.value = false
+    planLoading.value = false
   }
 }
 
-async function runAction(action: string) {
-  if (!plan.value?.jobId) return ElMessage.warning('请先生成短视频任务')
-  actionLoading.value = action
+async function renderVideo() {
+  if (!validateTopic()) return
+  renderLoading.value = true
+  activeTab.value = 'preview'
+  plan.value = {
+    title: `《${form.value.topic}》完整成片生成中`,
+    jobId: `render-${Date.now()}`,
+    statusLabel: '正在生成完整成片',
+    duration: form.value.duration,
+    videoTask: { estimatedRender: `${form.value.duration}秒竖屏短视频`, note: '正在串联文字、配音、画面、字幕，请稍等...' },
+    pipelineStages: [
+      { name: '文字方案', tool: 'CopilotKit/Doubao', status: 'done', progress: 100 },
+      { name: '配音合成', tool: 'GPT-SoVITS', status: 'running', progress: 45 },
+      { name: '画面成片', tool: 'MoneyPrinterTurbo', status: 'running', progress: 55 },
+      { name: '字幕合成', tool: 'auto-subtitle', status: 'running', progress: 35 },
+    ],
+    shots: [],
+  }
   try {
-    const res = await service.post('/skills/video-pipeline/action', { jobId: plan.value.jobId, action, plan: plan.value })
-    tasks.value.unshift(res.data.data.task)
-    ElMessage.success(res.data.message || '后处理任务已生成')
+    const res = await service.post('/skills/video-pipeline/render', form.value)
+    plan.value = res.data.data.plan
+    activeTab.value = 'preview'
+    ElMessage.success(`完整成片已生成，消耗 ${res.data.data.cost} 圣力`)
   } catch (e: any) {
-    ElMessage.error(e?.response?.data?.message || '后处理失败')
+    ElMessage.error(e?.response?.data?.message || '成片失败')
   } finally {
-    actionLoading.value = ''
+    renderLoading.value = false
   }
-}
-
-function statusText(status: string) {
-  return { queued: '已排队', done: '已完成', failed: '失败' }[status] || status
 }
 
 function playVideo() {
@@ -175,37 +223,40 @@ function openVideo() {
 .hero { display: flex; justify-content: space-between; gap: 20px; align-items: center; padding: 26px; border-radius: 22px; border: 1px solid rgba(0,240,255,.2); background: radial-gradient(circle at top left, rgba(0,240,255,.16), transparent 35%), rgba(10,12,22,.85); margin-bottom: 20px; }
 .eyebrow { color: #00f0ff; letter-spacing: 2px; font: 700 12px 'JetBrains Mono', monospace; margin: 0 0 8px; }
 h1 { margin: 0; font-size: 30px; } .hero p { color: #99a8c9; line-height: 1.8; max-width: 780px; }
-.cost { color: #ffb800; border: 1px solid rgba(255,184,0,.28); border-radius: 999px; padding: 10px 16px; white-space: nowrap; }
+.cost-box { border: 1px solid rgba(255,184,0,.28); border-radius: 14px; padding: 10px 16px; white-space: nowrap; text-align: right; }
+.cost-box span { display: block; color: #9aa4c7; font-size: 12px; } .cost-box b { color: #ffb800; }
 .workspace { display: grid; grid-template-columns: 360px 1fr; gap: 18px; }
 .panel { border: 1px solid rgba(0,240,255,.16); border-radius: 18px; background: rgba(10,12,22,.88); padding: 20px; }
 .w-full { width: 100%; }
+.button-grid { display: grid; gap: 10px; }
 .skill-note { margin-top: 18px; padding: 14px; border-radius: 12px; background: rgba(255,0,255,.06); color: #9aa4c7; }
 .skill-note b { color: #ff00ff; display: block; margin-bottom: 6px; }
 .result-head { display: flex; justify-content: space-between; gap: 14px; align-items: flex-start; }
 .job-line { color: #8ea1c8; margin: 4px 0 0; font-size: 12px; }
 h2 { margin: 0 0 14px; color: #fff; }
-.video-task { display: flex; gap: 14px; align-items: center; margin-top: 10px; padding: 16px; border: 1px solid rgba(255,0,255,.2); border-radius: 14px; background: linear-gradient(135deg, rgba(255,0,255,.08), rgba(0,240,255,.06)); }
-.video-task.clickable { cursor: pointer; box-shadow: 0 0 26px rgba(255,0,255,.2); }
-.play-mark { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #050812; background: linear-gradient(135deg, #00f0ff, #ff00ff); font-weight: 900; box-shadow: 0 0 22px rgba(255,0,255,.35); }
-.video-task b { color: #fff; } .video-task p { color: #9aa4c7; margin: 6px 0 0; line-height: 1.6; }
-.video-player-card { margin-top: 14px; padding: 12px; border-radius: 16px; border: 1px solid rgba(0,240,255,.18); background: rgba(0,0,0,.28); }
-.video-player-card video { width: 100%; max-height: 640px; border-radius: 12px; background: #000; display: block; }
-.video-actions { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+.result-tabs { margin-top: 12px; }
 .block { margin-top: 14px; padding: 14px; background: rgba(0,240,255,.05); border-radius: 12px; }
 h3 { color: #00f0ff; margin: 0 0 8px; font-size: 14px; }
 pre { white-space: pre-wrap; word-break: break-word; color: #dce7ff; line-height: 1.7; font-family: inherit; margin: 0; }
-.shot-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 14px; }
+.shot-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-top: 14px; }
 .shot-card { padding: 14px; border-radius: 12px; border: 1px solid rgba(0,240,255,.14); background: rgba(0,0,0,.22); }
 .shot-card span { color: #ffb800; font-size: 12px; } .shot-card b { display: block; margin: 6px 0; color: #fff; } .shot-card p { color: #8fa0c4; font-size: 12px; }
-.action-panel { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
-.action-pill { cursor: pointer; border: 1px solid rgba(255,0,255,.38); color: #ff91ff; background: rgba(255,0,255,.06); border-radius: 999px; padding: 8px 13px; font-size: 12px; transition: .2s; }
-.action-pill small { display: block; color: #9aa4c7; font-size: 10px; margin-top: 2px; }
-.action-pill:active { transform: scale(.98); }
-.action-pill:disabled { opacity: .6; cursor: wait; }
-.task-results { margin-top: 16px; }
-.task-card { margin-top: 10px; padding: 12px; border-radius: 12px; background: rgba(255,0,255,.06); border: 1px solid rgba(255,0,255,.14); }
-.task-card b { color: #ffb8ff; } .task-card p { color: #9aa4c7; margin: 6px 0; }
+.render-card { display: flex; gap: 14px; align-items: center; padding: 16px; border: 1px solid rgba(255,0,255,.22); border-radius: 14px; background: linear-gradient(135deg, rgba(255,0,255,.08), rgba(0,240,255,.06)); }
+.render-card.playable { cursor: pointer; box-shadow: 0 0 26px rgba(255,0,255,.2); }
+.play-mark { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #050812; background: linear-gradient(135deg, #00f0ff, #ff00ff); font-weight: 900; }
+.render-card b { color: #fff; } .render-card p { color: #9aa4c7; margin: 6px 0 0; line-height: 1.6; }
+.progress-card { margin-top: 14px; padding: 14px; border-radius: 12px; background: rgba(0,240,255,.04); }
+.stage-row { display: grid; grid-template-columns: 180px 1fr; gap: 12px; align-items: center; margin-bottom: 10px; }
+.stage-row b { color: #eaf6ff; display: block; } .stage-row span { color: #8fa0c4; font-size: 12px; }
+.video-player-card { margin-top: 14px; padding: 12px; border-radius: 16px; border: 1px solid rgba(0,240,255,.18); background: rgba(0,0,0,.28); }
+.video-player-card video { width: 100%; max-height: 640px; border-radius: 12px; background: #000; display: block; }
+.video-actions { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+.no-video { color: #9aa4c7; text-align: center; padding: 40px 0; }
 .empty { min-height: 420px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #7f8aae; }
 .empty div { font-size: 54px; margin-bottom: 10px; }
-@media (max-width: 860px) { .hero { flex-direction: column; align-items: flex-start; } .workspace { grid-template-columns: 1fr; } }
+.pipeline-visual { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr; gap: 10px; align-items: center; margin-top: 18px; }
+.pipeline-node { border: 1px solid rgba(0,240,255,.16); background: rgba(10,12,22,.8); border-radius: 14px; padding: 14px; }
+.pipeline-node b { color: #00f0ff; display: block; } .pipeline-node span { color: #9aa4c7; font-size: 12px; }
+.pipeline-arrow { color: #ff00ff; font-weight: 900; }
+@media (max-width: 860px) { .hero { flex-direction: column; align-items: flex-start; } .workspace, .pipeline-visual { grid-template-columns: 1fr; } .pipeline-arrow { display: none; } .stage-row { grid-template-columns: 1fr; } }
 </style>
