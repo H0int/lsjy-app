@@ -7,6 +7,7 @@ on:
     paths:
       - 'backend/**'
       - 'deploy/**'
+      - 'docs/**'
       - '.github/workflows/deploy-backend.yml'
 
 jobs:
@@ -30,7 +31,8 @@ jobs:
             deploy/ecs-live-config/nginx-lsjy-live.conf \
             deploy/skill-services/docker-compose.yml \
             deploy/skill-services/deploy-skill-services.sh \
-            backend/server.js
+            backend/server.js \
+            docs
 
           scp -o StrictHostKeyChecking=no -o ConnectTimeout=20 /tmp/lsjy-cors-fix.tar.gz root@47.97.166.219:/tmp/lsjy-cors-fix.tar.gz
 
@@ -102,6 +104,13 @@ jobs:
             else
               echo "WARNING: 未找到Express server.js，搜索pm2中运行的服务..."
               pm2 jlist 2>/dev/null | grep -oP '"script":"\K[^"]+server\.js' | head -1
+            fi
+
+            # 同步前端静态文件到 ECS Nginx 根目录，兜底绕过 GitHub Pages 发布波动
+            if [ -d "/tmp/docs" ]; then
+              echo "同步前端静态文件 -> /usr/share/nginx/html"
+              mkdir -p /usr/share/nginx/html
+              rsync -a --delete /tmp/docs/ /usr/share/nginx/html/
             fi
 
             # 更新Nginx
