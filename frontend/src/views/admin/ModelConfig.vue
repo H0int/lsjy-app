@@ -81,7 +81,7 @@
     </div>
 
     <!-- 对话框 -->
-    <el-dialog v-model="dialogVisible" :title="isEditing ? '编辑Provider' : '添加Provider'" width="560px" destroy-on-close>
+    <el-dialog v-model="dialogVisible" :title="isEditing ? '编辑Provider' : '添加Provider'" width="560px" destroy-on-close class="model-config-dialog">
       <el-form :model="form" label-width="100px" class="cyber-form">
         <div class="form-row">
           <el-form-item label="名称">
@@ -124,55 +124,86 @@ const form = ref({ name: '', icon: '', endpoint: '', apiKey: '', modelsStr: '' }
 
 const providers = ref<any[]>([])
 
+const providerMeta: Record<string, { name: string; icon: string; endpoint: string }> = {
+  doubao: { name: '豆包', icon: '🫘', endpoint: 'https://ark.cn-beijing.volces.com/api/v3' },
+  ark: { name: '火山方舟', icon: '🌋', endpoint: 'https://ark.cn-beijing.volces.com/api/v3' },
+  siliconflow: { name: '硅基流动', icon: '🔷', endpoint: 'https://api.siliconflow.cn/v1' },
+  bailian: { name: '阿里百炼', icon: '🦙', endpoint: 'https://dashscope.aliyuncs.com/compatible-mode/v1' },
+  zhipu: { name: '智谱', icon: '🧠', endpoint: 'https://open.bigmodel.cn/api/paas/v4' },
+  baidu: { name: '百度千帆', icon: '🌊', endpoint: 'https://qianfan.baidubce.com/v2' },
+  deepseek: { name: 'DeepSeek', icon: '🔍', endpoint: 'https://api.deepseek.com/v1' },
+  tongyi: { name: '通义千问', icon: '🦙', endpoint: 'https://dashscope.aliyuncs.com/compatible-mode/v1' },
+  yuanbao: { name: '腾讯元宝', icon: '💎', endpoint: 'https://tokenhub.tencentmaas.com/v1' },
+  jimeng: { name: '即梦图片', icon: '🎨', endpoint: 'https://ark.cn-beijing.volces.com/api/v3' },
+  'tongyi-video': { name: '通义万相视频', icon: '🎬', endpoint: 'https://dashscope.aliyuncs.com/api/v1' },
+  kling: { name: '可灵视频', icon: '🎞️', endpoint: 'https://kling-api.kuaishou.com/v1' },
+  coze: { name: 'Coze智能体', icon: '🤖', endpoint: '' },
+}
+
 async function fetchProviders() {
   loading.value = true
   try {
-    // 使用 /ai/models 替代 /ai/providers（更稳定）
-    const res = await service.get('/ai/models', { timeout: 5000 })
-    if (res.data.code === 0) {
-      const modelGroups = res.data.data || []
-      // 将模型列表转换为 Provider 格式展示
-      const providerMap: Record<string, any> = {}
-      modelGroups.forEach((group: any) => {
-        const providerName = group.provider || 'unknown'
-        if (!providerMap[providerName]) {
-          providerMap[providerName] = {
-            id: Object.keys(providerMap).length + 1,
-            name: getDisplayName(providerName),
-            icon: getIcon(providerName),
-            endpoint: '',
-            apiKey: '',
-            apiKeyMasked: '已配置',
-            models: [],
-            monthlyCost: 0,
-            connected: true
-          }
-        }
-        if (group.models) {
-          providerMap[providerName].models.push(...group.models)
-        }
-      })
-      providers.value = Object.values(providerMap)
-    }
+    const [modelsRes, providersRes] = await Promise.allSettled([
+      service.get('/ai/models', { timeout: 15000, headers: { 'X-Silent-Error': 'true' } }),
+      service.get('/ai/providers', { timeout: 15000, headers: { 'X-Silent-Error': 'true' } }),
+    ])
+    const modelGroups = modelsRes.status === 'fulfilled' && modelsRes.value.data.code === 0 ? (modelsRes.value.data.data || []) : []
+    const providerStatuses = providersRes.status === 'fulfilled' && providersRes.value.data.code === 0 ? (providersRes.value.data.data || []) : []
+    providers.value = buildProviderRows(modelGroups, providerStatuses)
   } catch (e) {
-    // 降级：显示默认 Provider 信息
-    providers.value = [
-      {
-        id: 1,
-        name: 'DeepSeek',
-        icon: '🔍',
-        endpoint: '',
-        apiKey: '',
-        apiKeyMasked: '已配置',
-        models: ['deepseek-v4-pro', 'deepseek-v4-flash'],
-        monthlyCost: 0,
-        connected: true
-      }
-    ]
-    console.warn('加载Provider列表失败，使用默认配置:', e)
+    providers.value = buildProviderRows([], [])
+    console.warn('加载模型配置失败，使用本地同步配置:', e)
   } finally {
     loading.value = false
   }
+}
+
+function buildProviderRows(modelGroups: any[], providerStatuses: any[]) {
+  const statusMap: Record<string, any> = {}
+  providerStatuses.forEach((p: any) => { statusMap[p.name] = p })
+  const providerKeys = Array.from(new Set([...Object.keys(providerMeta), ...modelGroups.map((g: any) => g.provider || g.group).filter(Boolean)]))
+  return providerKeys.map((key, index) => {
+    const meta = providerMeta[key] || { name: getDisplayName(key), icon: getIcon(key), endpoint: '' }
+    const group = modelGroups.find((g: any) => (g.provider || g.group) === key)
+    const status = statusMap[key]
+    const models = normalizeModels(group?.models || defaultModelsFor(key))
+    return {
+      id: index + 1,
+      providerKey: key,
+      name: meta.name,
+      icon: meta.icon,
+      endpoint: meta.endpoint,
+      apiKey: '',
+      apiKeyMasked: status?.status === 'unconfigured' ? '未配置' : '已配置',
+      models,
+      monthlyCost: 0,
+      connected: status ? status.status === 'healthy' : models.length > 0,
+      statusText: status?.status || 'synced',
+    }
+  }).filter(p => p.models.length > 0 || p.providerKey === 'coze')
+}
+
+function normalizeModels(models: any[]) {
+  return models.map((m: any) => {
+    if (typeof m === 'string') return m
+    return m.label || m.name || m.id || ''
+  }).filter(Boolean)
+}
+
+function defaultModelsFor(provider: string) {
+  const map: Record<string, any[]> = {
+    doubao: [{ name: '豆包 Pro' }, { name: '豆包 Lite' }, { name: '豆包视觉 Pro' }],
+    ark: [{ name: '火山方舟' }],
+    siliconflow: [{ name: '硅基 Qwen' }, { name: '硅基 GLM' }],
+    bailian: [{ name: '百炼 Qwen+' }, { name: '百炼 Kimi' }],
+    zhipu: [{ name: '智谱 GLM' }],
+    baidu: [{ name: '百度 ERNIE' }],
+    deepseek: [{ name: 'DeepSeek Chat' }, { name: 'DeepSeek Reasoner' }],
+    jimeng: [{ name: '即梦 AI 绘画' }],
+    kling: [{ name: '可灵 AI 视频' }],
+    'tongyi-video': [{ name: '通义万相视频' }],
+  }
+  return map[provider] || []
 }
 
 function getDisplayName(name: string): string {
@@ -182,43 +213,32 @@ function getDisplayName(name: string): string {
     jimeng: '即梦',
     yuanbao: '元宝',
     qwen: '通义千问',
-    openai: 'OpenAI'
+    openai: 'OpenAI',
+    ark: '火山方舟',
+    siliconflow: '硅基流动',
+    bailian: '阿里百炼',
+    zhipu: '智谱',
+    baidu: '百度千帆',
+    kling: '可灵视频',
+    'tongyi-video': '通义万相视频',
+    coze: 'Coze智能体'
   }
   return map[name.toLowerCase()] || name
-}
-
-async function fetchModels() {
-  // 模型信息已在 fetchProviders 中加载，此处无需额外请求
-  // 如需刷新，可重新调用 fetchProviders
-  try {
-    const res = await service.get('/ai/models', { timeout: 5000 })
-    if (res.data.code === 0) {
-      const modelGroups = res.data.data || []
-      modelGroups.forEach((group: any) => {
-        const p = providers.value.find((pr: any) => 
-          pr.name.toLowerCase() === getDisplayName(group.provider).toLowerCase() ||
-          pr.name.toLowerCase() === group.provider.toLowerCase()
-        )
-        if (p) {
-          p.models = group.models || []
-        }
-      })
-    }
-  } catch (e) {
-    // silent - 已在 fetchProviders 中处理
-  }
 }
 
 function getIcon(name: string): string {
   const map: Record<string, string> = {
     doubao: '🫘', deepseek: '🔍', jimeng: '🎨',
-    yuanbao: '💎', qwen: '🦙', openai: '🤖'
+    yuanbao: '💎', qwen: '🦙', openai: '🤖',
+    ark: '🌋', siliconflow: '🔷', bailian: '🦙',
+    zhipu: '🧠', baidu: '🌊', kling: '🎞️',
+    'tongyi-video': '🎬', coze: '🤖'
   }
   return map[name.toLowerCase()] || '🤖'
 }
 
 onMounted(() => {
-  fetchProviders().then(fetchModels)
+  fetchProviders()
 })
 
 function openDialog(p?: any) {

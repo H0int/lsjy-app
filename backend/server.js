@@ -3845,32 +3845,37 @@ app.get('/api/v1/ai/providers', (req, res) => {
 app.get('/api/v1/ai/models', (req, res) => {
   const models = [
     { group: 'doubao', provider: 'doubao', models: [
-      { id: 'doubao-1-5-pro-32k-250115', name: '豆包 Pro 32K', capabilities: ['text'] },
-      { id: 'doubao-1-5-lite-32k-250115', name: '豆包 Lite 32K', capabilities: ['text'] },
-      { id: 'doubao-1-5-vision-pro-32k-250115', name: '豆包视觉 Pro', capabilities: ['vision'] },
+      { id: 'doubao-1-5-pro-32k-250115', name: '豆包 Pro', label: '豆包 Pro', capabilities: ['text'], source: 'frontend-agent' },
+      { id: 'doubao-1-5-lite-32k-250115', name: '豆包 Lite', label: '豆包 Lite', capabilities: ['text'], source: 'frontend-agent' },
+      { id: 'doubao-1-5-vision-pro-32k-250115', name: '豆包视觉 Pro', label: '豆包视觉 Pro', capabilities: ['vision'], source: 'backend-vision' },
     ] },
     { group: 'ark', provider: 'ark', models: [
-      { id: 'doubao-1-5-pro-32k-250115', name: '火山方舟 豆包 Pro', capabilities: ['text'] },
-      { id: 'doubao-seed-1-6-250615', name: '火山方舟 Doubao Seed', capabilities: ['text'] },
+      { id: 'doubao-1-5-pro-32k-250115', name: '火山方舟', label: '火山方舟', capabilities: ['text'], source: 'frontend-agent' },
+      { id: 'doubao-seed-1-6-250615', name: '火山方舟 Doubao Seed', label: '火山方舟 Doubao Seed', capabilities: ['text'], source: 'backend' },
     ] },
     { group: 'siliconflow', provider: 'siliconflow', models: [
-      { id: 'Qwen/Qwen2.5-7B-Instruct', name: '硅基流动 Qwen2.5 7B', capabilities: ['text'] },
-      { id: 'zai-org/GLM-5.2', name: '硅基流动 GLM-5.2', capabilities: ['text'] },
+      { id: 'Qwen/Qwen2.5-7B-Instruct', name: '硅基 Qwen', label: '硅基 Qwen', capabilities: ['text'], source: 'frontend-agent' },
+      { id: 'zai-org/GLM-5.2', name: '硅基 GLM', label: '硅基 GLM', capabilities: ['text'], source: 'frontend-agent' },
     ] },
     { group: 'bailian', provider: 'bailian', models: [
-      { id: 'qwen-plus', name: '阿里百炼 Qwen Plus', capabilities: ['text'] },
-      { id: 'qwen-turbo', name: '阿里百炼 Qwen Turbo', capabilities: ['text'] },
-      { id: 'kimi-k2.7-code', name: '阿里百炼 Kimi Code', capabilities: ['text', 'code'] },
+      { id: 'qwen-plus', name: '百炼 Qwen+', label: '百炼 Qwen+', capabilities: ['text'], source: 'frontend-agent' },
+      { id: 'qwen-turbo', name: '阿里百炼 Qwen Turbo', label: '阿里百炼 Qwen Turbo', capabilities: ['text'], source: 'backend' },
+      { id: 'kimi-k2.7-code', name: '百炼 Kimi', label: '百炼 Kimi', capabilities: ['text', 'code'], source: 'frontend-agent' },
     ] },
     { group: 'zhipu', provider: 'zhipu', models: [
-      { id: 'glm-4.6', name: '智谱 GLM-4.6', capabilities: ['text'] },
-      { id: 'glm-5', name: '智谱 GLM-5', capabilities: ['text'] },
+      { id: 'glm-4.6', name: '智谱 GLM', label: '智谱 GLM', capabilities: ['text'], source: 'frontend-agent' },
+      { id: 'glm-5', name: '智谱 GLM-5', label: '智谱 GLM-5', capabilities: ['text'], source: 'backend' },
     ] },
     { group: 'baidu', provider: 'baidu', models: [
-      { id: 'ernie-4.5-turbo-128k', name: '百度千帆 ERNIE 4.5', capabilities: ['text'] },
+      { id: 'ernie-4.5-turbo-128k', name: '百度 ERNIE', label: '百度 ERNIE', capabilities: ['text'], source: 'frontend-agent' },
+    ] },
+    { group: 'deepseek', provider: 'deepseek', models: [
+      { id: 'deepseek-chat', name: 'DeepSeek Chat', label: 'DeepSeek Chat', capabilities: ['text'], source: 'backend-agent' },
+      { id: 'deepseek-reasoner', name: 'DeepSeek Reasoner', label: 'DeepSeek Reasoner', capabilities: ['text', 'reasoning'], source: 'backend-agent' },
     ] },
     { group: 'jimeng', provider: 'jimeng', models: [{ id: 'jimeng-v2', name: '即梦 AI 绘画', capabilities: ['image'] }] },
     { group: 'kling', provider: 'kling', models: [{ id: 'kling-v1', name: '可灵 AI 视频', capabilities: ['video'] }] },
+    { group: 'tongyi-video', provider: 'tongyi-video', models: [{ id: 'wanx2.1-t2v-turbo', name: '通义万相视频', capabilities: ['video'] }] },
   ];
   res.json({ code: 0, message: 'success', data: models });
 });
