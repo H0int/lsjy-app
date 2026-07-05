@@ -6120,7 +6120,7 @@ function buildVisualFilters(plan, topic, style, subtitleFile, options = {}) {
   const styleFile = writeVideoTextFile(plan.jobId, 'style', `${style || plan.style || '短视频'} · ${duration}s`);
   const ctaFile = writeVideoTextFile(plan.jobId, 'cta', profile.cta);
   const totalFrames = Math.min(duration * 30, 9999);
-  const zoompan = `zoompan=z=min(zoom+0.001,1.3):d=${totalFrames}:x=iw/2-(iw/zoom/2)+(iw/20)*sin(2*PI*on/d*2):y=ih/2-(ih/zoom/2):s=720x1280`;
+  const zoompan = `zoompan=z=min(zoom+0.001\\,1.3):d=${totalFrames}:x=iw/2-(iw/zoom/2)+(iw/20)*sin(2*PI*on/d*2):y=ih/2-(ih/zoom/2):s=720x1280`;
   const base = [
     options.realBackground
       ? `${zoompan},format=yuv420p`
@@ -6272,14 +6272,13 @@ async function createPlayableVideo(plan, topic, style) {
     '-loop', '1',
     '-framerate', '30',
     '-i', realFrame.filePath,
-    '-vf', vf,
   ];
   if (ttsResult.success) {
     ffmpegArgs.push('-i', ttsResult.path);
   } else {
     ffmpegArgs.push('-f', 'lavfi', '-i', 'anullsrc=r=44100:cl=stereo');
   }
-  ffmpegArgs.push('-shortest', '-t', String(duration), '-c:v', 'libx264', '-preset', 'ultrafast', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-movflags', '+faststart', filePath);
+  ffmpegArgs.push('-vf', vf, '-shortest', '-t', String(duration), '-c:v', 'libx264', '-preset', 'ultrafast', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-movflags', '+faststart', filePath);
   await runCommandFile('ffmpeg', ffmpegArgs, { timeout: Math.max(180000, duration * 5000) });
   return {
     videoUrl: `/uploads/generated-videos/${fileName}`,
