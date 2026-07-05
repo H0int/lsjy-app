@@ -36,6 +36,20 @@ services:
     networks:
       - lsjy_skill_net
 
+  lsjy-chroma:
+    image: chromadb/chroma:latest
+    container_name: lsjy-chroma
+    restart: unless-stopped
+    environment:
+      IS_PERSISTENT: "TRUE"
+      ANONYMIZED_TELEMETRY: "FALSE"
+    ports:
+      - "127.0.0.1:8008:8000"
+    volumes:
+      - lsjy_chroma_data:/chroma/chroma
+    networks:
+      - lsjy_skill_net
+
 networks:
   lsjy_skill_net:
     name: lsjy_skill_net
@@ -43,3 +57,4 @@ networks:
 volumes:
   lsjy_matomo_db:
   lsjy_matomo_app:
+  lsjy_chroma_data:

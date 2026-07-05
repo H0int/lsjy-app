@@ -129,6 +129,7 @@ if ! $COMPOSE pull; then
     cp docker-compose.yml docker-compose.yml.bak
     sed -i "s#image: matomo:5-apache#image: ${prefix}/matomo:5-apache#g" docker-compose.yml
     sed -i "s#image: mariadb:10.11#image: ${prefix}/mariadb:10.11#g" docker-compose.yml
+    sed -i "s#image: chromadb/chroma:latest#image: ${prefix%/library}/chromadb/chroma:latest#g" docker-compose.yml
     if $COMPOSE pull; then
       break
     fi
@@ -138,14 +139,20 @@ fi
 $COMPOSE up -d || true
 
 echo "等待 Matomo 启动..."
+MATOMO_OK=0
 for i in $(seq 1 24); do
   if curl -fsS http://127.0.0.1:8088/ >/dev/null 2>&1; then
     echo "✅ Matomo 已启动：http://127.0.0.1:8088/"
-    exit 0
+    MATOMO_OK=1
+    break
   fi
   sleep 5
 done
 
-echo "⚠️ Matomo 容器已启动但健康检查未通过，查看状态："
-$COMPOSE ps || true
+if [ "$MATOMO_OK" != "1" ]; then
+  echo "⚠️ Matomo 容器已启动但健康检查未通过，查看状态："
+  $COMPOSE ps || true
+fi
+echo "检查 Chroma 向量库状态："
+curl -fsS http://127.0.0.1:8008/api/v1/heartbeat || curl -fsS http://127.0.0.1:8008/ || true
 exit 0

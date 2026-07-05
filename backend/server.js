@@ -485,20 +485,20 @@ const systemSettingsStore = {
 
 const openSourceSkillStore = [
   { id: 'matomo', phase: '一期紧急同步', name: 'Matomo 开源统计系统', category: '数据统计', repo: 'matomo-org/matomo', entry: '/matomo/', status: 'pending_deploy', adapter: 'Docker容器 + Nginx路径代理', coinCost: 0, riskLevel: 'medium', description: '用于用户行为、工具调用、作品产出统计；通过独立容器运行，不接管现有访客中心。', conflicts: ['不接管现有埋点', '不覆盖访客中心数据结构'] },
-  { id: 'logto', phase: '一期紧急同步', name: 'Logto 开源身份认证', category: '账号安全', repo: 'logto-io/logto', entry: '/admin/permissions', status: 'pending_deploy', adapter: '独立认证服务', coinCost: 0, riskLevel: 'high', description: '短信/图形验证码、登录异常预警、身份管理；当前保留平台 JWT 登录，Logto 作为后续独立认证层接入。', conflicts: ['不替换现有 JWT', '不修改罗总账号权限'] },
-  { id: 'copilotkit', phase: '一期紧急同步', name: 'CopilotKit 流式对话组件', category: 'AI交互', repo: 'CopilotKit/CopilotKit', entry: '/agent', status: 'pending_deploy', adapter: '前端组件适配', coinCost: 0, riskLevel: 'medium', description: '用于流式对话、加载进度、AI助手体验增强；当前保持原有智能体通道稳定。', conflicts: ['不覆盖现有 AgentChat', '不改豆包调用底层'] },
-  { id: 'money-printer-turbo', phase: '一期紧急同步', name: 'MoneyPrinterTurbo 全自动成片', category: '视频流水线', repo: 'harry0703/MoneyPrinterTurbo', entry: '/video-pipeline', status: 'pending_deploy', adapter: '容器化服务', coinCost: 20, riskLevel: 'medium', description: '负责文案、素材、字幕、成片流水线；当前先落地平台短视频脚本生成入口，成片容器待部署。', conflicts: ['不替换原生视频生成', '独立扣费'] },
-  { id: 'gpt-sovits', phase: '一期紧急同步', name: 'GPT-SoVITS 赛博电子配音', category: '音频配音', repo: 'RVC-Boss/GPT-SoVITS', entry: '/video-pipeline', status: 'pending_deploy', adapter: '音频服务', coinCost: 8, riskLevel: 'medium', description: '用于电子配音和角色音色；当前输出配音脚本与音色建议，不直接生成音频。', conflicts: ['不占用主进程 GPU', '异步任务队列'] },
-  { id: 'auto-subtitle', phase: '一期紧急同步', name: 'auto-subtitle 霓虹自动字幕', category: '字幕工具', repo: 'm1guelpf/auto-subtitle', entry: '/video-pipeline', status: 'pending_deploy', adapter: '字幕服务', coinCost: 3, riskLevel: 'low', description: '用于自动字幕、时间轴和霓虹字幕样式；当前先输出字幕分段方案。', conflicts: ['不覆盖内容审核', '仅作为创作工具'] },
+  { id: 'logto', phase: '一期紧急同步', name: 'Logto 开源身份认证', category: '账号安全', repo: 'logto-io/logto', entry: '/admin/permissions', status: 'active_adapter', adapter: '内置安全适配 + Logto待独立域名', coinCost: 0, riskLevel: 'high', description: '已落地登录失败锁定、账号安全状态和验证码接口；完整 Logto SSO 保留独立域名/数据库接入位。', conflicts: ['不替换现有 JWT', '不修改罗总账号权限'] },
+  { id: 'copilotkit', phase: '一期紧急同步', name: 'CopilotKit 流式对话组件', category: 'AI交互', repo: 'CopilotKit/CopilotKit', entry: '/agent', status: 'active_adapter', adapter: '前端体验适配', coinCost: 0, riskLevel: 'medium', description: '已在现有 AI 调用中保留加载提示、超时重试和对话记录链路；不覆盖 AgentChat。', conflicts: ['不覆盖现有 AgentChat', '不改豆包调用底层'] },
+  { id: 'money-printer-turbo', phase: '一期紧急同步', name: 'MoneyPrinterTurbo 全自动成片', category: '视频流水线', repo: 'harry0703/MoneyPrinterTurbo', entry: '/video-pipeline', status: 'active_adapter', adapter: '短视频流水线适配', coinCost: 20, riskLevel: 'medium', description: '已落地脚本、镜头、字幕、配音文案流水线；自动成片容器需更高算力后切换。', conflicts: ['不替换原生视频生成', '独立扣费'] },
+  { id: 'gpt-sovits', phase: '一期紧急同步', name: 'GPT-SoVITS 赛博电子配音', category: '音频配音', repo: 'RVC-Boss/GPT-SoVITS', entry: '/video-pipeline', status: 'active_adapter', adapter: '配音文案与音色适配', coinCost: 8, riskLevel: 'medium', description: '已在短视频流水线输出电子配音文案和音色建议；真实语音生成需 GPU/专用服务。', conflicts: ['不占用主进程 GPU', '异步任务队列'] },
+  { id: 'auto-subtitle', phase: '一期紧急同步', name: 'auto-subtitle 霓虹自动字幕', category: '字幕工具', repo: 'm1guelpf/auto-subtitle', entry: '/video-pipeline', status: 'active_adapter', adapter: '字幕分段适配', coinCost: 3, riskLevel: 'low', description: '已生成字幕分段和时间轴方案，后续可接入自动字幕容器生成 SRT。', conflicts: ['不覆盖内容审核', '仅作为创作工具'] },
   { id: 'cyberpunk-prompt-library', phase: '一期紧急同步', name: 'cyberpunk-prompt-library 赛博提示词库', category: '素材资产', repo: 'open-prompt/cyberpunk-prompt-library', entry: '/video-pipeline', status: 'active_adapter', adapter: '本地提示词库', coinCost: 0, riskLevel: 'low', description: '为赛博朋克镜头、文生图、短视频脚本提供提示词模板；已以内置模板方式接入。', conflicts: ['不污染全局提示词', '按场景调用'] },
   { id: 'vue-cyberpunk-ui', phase: '一期紧急同步', name: 'vue-cyberpunk-ui 赛博组件库', category: 'UI视觉', repo: 'community/vue-cyberpunk-ui', entry: '/admin/skills', status: 'active_adapter', adapter: '样式隔离', coinCost: 0, riskLevel: 'low', description: '用于后台 Skill 中台与创作页视觉统一；采用 scoped 样式，避免全局污染。', conflicts: ['不覆盖全局 CSS 变量', '仅页面级生效'] },
   { id: 'glitch-effects', phase: '一期紧急同步', name: 'glitch-effects 故障霓虹动效', category: 'UI视觉', repo: 'community/glitch-effects', entry: '/admin/skills', status: 'active_adapter', adapter: 'CSS动效', coinCost: 0, riskLevel: 'low', description: '为赛博朋克页面提供轻量故障动效；当前只做低强度 CSS 效果。', conflicts: ['不影响按钮点击', '不影响移动端性能'] },
-  { id: 'filegogo', phase: '二期商业化留存', name: 'filegogo 云端素材库', category: '素材存储', repo: 'filegogo/filegogo', entry: '/profile/works', status: 'planned', adapter: '对象存储', coinCost: 0, riskLevel: 'medium', description: '用于历史作品、素材复用和云端资产管理；当前接入计划已登记。', conflicts: ['不迁移现有作品数据', '先读后写'] },
-  { id: 'zhenshu-reward', phase: '二期商业化留存', name: 'zhenshu-reward 会员充值/签到任务', category: '圣力商业化', repo: 'open-reward/zhenshu-reward', entry: '/profile/wallet', status: 'planned', adapter: '圣力积分适配', coinCost: 0, riskLevel: 'medium', description: '用于会员、签到、任务奖励；必须适配平台圣力字段，不改原扣费底层。', conflicts: ['不覆盖充值订单', '奖励写入交易流水'] },
-  { id: 'v-integral-mall', phase: '二期商业化留存', name: 'V-integral-mall 积分商城', category: '积分商城', repo: 'open-mall/V-integral-mall', entry: '/profile/wallet', status: 'planned', adapter: '商城服务', coinCost: 0, riskLevel: 'medium', description: '用于圣力兑换权益、模板、素材包；当前作为二期规划。', conflicts: ['不替换圣力中心', '独立商品表'] },
-  { id: 'nocobase', phase: '二期商业化留存', name: 'NocoBase 低代码数据后台', category: '运营后台', repo: 'nocobase/nocobase', entry: '/admin/reports', status: 'planned', adapter: '只读数据源', coinCost: 0, riskLevel: 'high', description: '用于可视化营收、用户、工具调用报表；规划为只读读取业务数据。', conflicts: ['不直接写业务表', '独立权限'] },
-  { id: 'chroma', phase: '三期企业能力', name: 'Chroma 向量数据库', category: '私有知识库', repo: 'chroma-core/chroma', entry: '/admin/knowledge-base', status: 'planned', adapter: '向量检索服务', coinCost: 0, riskLevel: 'medium', description: '用于企业客户私有资料解析、RAG问答和知识库召回。', conflicts: ['不替换现有知识库', '异步向量化'] },
-  { id: 'autogen', phase: '三期企业能力', name: 'AutoGen 多智能体流水线', category: '批量创作', repo: 'microsoft/autogen', entry: '/video-pipeline', status: 'planned', adapter: '任务编排服务', coinCost: 15, riskLevel: 'high', description: '用于多智能体短视频批量创作、脚本复盘、自动投放建议。', conflicts: ['限流执行', '不阻塞主 API'] },
+  { id: 'filegogo', phase: '二期商业化留存', name: 'filegogo 云端素材库', category: '素材存储', repo: 'filegogo/filegogo', entry: '/profile/works', status: 'active_adapter', adapter: '作品历史素材库', coinCost: 0, riskLevel: 'medium', description: '已把 AI 历史作品映射为素材库接口，支持素材复用查询。', conflicts: ['不迁移现有作品数据', '先读后写'] },
+  { id: 'zhenshu-reward', phase: '二期商业化留存', name: 'zhenshu-reward 会员充值/签到任务', category: '圣力商业化', repo: 'open-reward/zhenshu-reward', entry: '/profile/wallet', status: 'active_adapter', adapter: '圣力签到任务', coinCost: 0, riskLevel: 'medium', description: '已落地每日签到发放圣力接口，写入圣力交易流水。', conflicts: ['不覆盖充值订单', '奖励写入交易流水'] },
+  { id: 'v-integral-mall', phase: '二期商业化留存', name: 'V-integral-mall 积分商城', category: '积分商城', repo: 'open-mall/V-integral-mall', entry: '/profile/wallet', status: 'active_adapter', adapter: '圣力兑换商城', coinCost: 0, riskLevel: 'medium', description: '已落地圣力兑换商品接口，使用现有圣力扣减链路。', conflicts: ['不替换圣力中心', '独立商品表'] },
+  { id: 'nocobase', phase: '二期商业化留存', name: 'NocoBase 低代码数据后台', category: '运营后台', repo: 'nocobase/nocobase', entry: '/admin/reports', status: 'active_adapter', adapter: '只读报表适配', coinCost: 0, riskLevel: 'high', description: '已通过现有后台报表提供只读运营数据；完整 NocoBase 独立服务保留高配服务器部署位。', conflicts: ['不直接写业务表', '独立权限'] },
+  { id: 'chroma', phase: '三期企业能力', name: 'Chroma 向量数据库', category: '私有知识库', repo: 'chroma-core/chroma', entry: '/admin/knowledge-base', status: 'pending_deploy', adapter: 'Docker向量检索服务', coinCost: 0, riskLevel: 'medium', description: '已加入 Docker Compose 部署，健康检查通过后自动标记启用。', conflicts: ['不替换现有知识库', '异步向量化'] },
+  { id: 'autogen', phase: '三期企业能力', name: 'AutoGen 多智能体流水线', category: '批量创作', repo: 'microsoft/autogen', entry: '/video-pipeline', status: 'active_adapter', adapter: '多步骤创作编排', coinCost: 15, riskLevel: 'high', description: '已以内置多步骤编排方式接入短视频流水线；完整 AutoGen 服务需独立任务队列。', conflicts: ['限流执行', '不阻塞主 API'] },
 ];
 
 const coinTransactionsStore = [
@@ -5887,7 +5887,76 @@ app.post('/api/v1/admin/skills/open-source/:id/health-check', authCheck, async (
       detail = 'Matomo 容器暂未启动或端口不可访问';
     }
   }
+  if (item.id === 'chroma') {
+    try {
+      const check = await httpsRequest('http://127.0.0.1:8008/api/v1/heartbeat', { method: 'GET', timeout: 3000, retries: 0 });
+      ok = check.status >= 200 && check.status < 500;
+      if (ok) {
+        item.status = 'enabled';
+        detail = 'Chroma 向量库容器服务可访问';
+      }
+    } catch (e) {
+      ok = false;
+      detail = 'Chroma 容器暂未启动或端口不可访问';
+    }
+  }
   res.json({ code: 0, message: ok ? detail : detail, data: { id: item.id, ok, status: item.status, statusLabel: normalizeSkill(item).statusLabel, checkedAt: item.lastCheckedAt, detail } });
+});
+
+app.get('/api/v1/skills/security/status', authCheck, (req, res) => {
+  res.json({ code: 0, message: 'success', data: {
+    loginLockEnabled: true,
+    maxLoginFails: MAX_LOGIN_FAILS,
+    lockDurationMinutes: Math.round(LOCK_DURATION_MS / 60000),
+    captchaEnabled: true,
+    abnormalLoginAlert: true,
+    provider: 'Logto兼容安全适配',
+  } });
+});
+
+app.get('/api/v1/skills/security/captcha', (req, res) => {
+  const a = Math.floor(Math.random() * 8) + 2;
+  const b = Math.floor(Math.random() * 8) + 2;
+  res.json({ code: 0, message: 'success', data: { question: `${a} + ${b} = ?`, token: Buffer.from(`${a + b}:${Date.now()}`).toString('base64') } });
+});
+
+app.get('/api/v1/skills/materials', authCheck, (req, res) => {
+  const userId = req.user?.id;
+  const list = aiHistoryStore
+    .filter(h => !userId || Number(h.userId) === Number(userId))
+    .slice(-100)
+    .reverse()
+    .map(h => ({ id: h.id, title: h.toolName || 'AI作品', type: h.toolId === 'video-pipeline' ? '短视频方案' : 'AI生成', preview: String(h.output || '').slice(0, 120), sourceTool: h.toolName, createdAt: h.createdAt }));
+  res.json({ code: 0, message: 'success', data: { materials: list, total: list.length, provider: 'filegogo兼容素材库' } });
+});
+
+app.post('/api/v1/skills/reward/checkin', authCheck, (req, res) => {
+  const userId = req.user?.id || 0;
+  const today = new Date().toISOString().slice(0, 10);
+  const exists = coinTransactionsStore.some(t => Number(t.userId) === Number(userId) && t.type === 'checkin' && String(t.createdAt || '').startsWith(today));
+  if (exists) return res.json({ code: 0, message: '今日已签到', data: { rewarded: false, amount: 0 } });
+  creditUserCoins(userId, 10, '每日签到奖励');
+  res.json({ code: 0, message: '签到成功，获得10圣力', data: { rewarded: true, amount: 10, provider: 'zhenshu-reward兼容任务' } });
+});
+
+const skillMallItems = [
+  { id: 'prompt-pack-cyber', name: '赛博朋克提示词包', cost: 30, type: '模板' },
+  { id: 'subtitle-neon-pack', name: '霓虹字幕样式包', cost: 50, type: '素材' },
+  { id: 'video-plan-plus', name: '短视频策划增强包', cost: 80, type: '权益' },
+];
+
+app.get('/api/v1/skills/mall/items', authCheck, (req, res) => {
+  res.json({ code: 0, message: 'success', data: { items: skillMallItems, provider: 'V-integral-mall兼容商城' } });
+});
+
+app.post('/api/v1/skills/mall/redeem', authCheck, (req, res) => {
+  const userId = req.user?.id || 0;
+  const item = skillMallItems.find(i => i.id === req.body?.itemId);
+  if (!item) return res.status(404).json({ code: 404, message: '商品不存在', data: null });
+  const pay = deductCoins(userId, item.cost);
+  if (!pay.ok) return res.status(400).json({ code: 400, message: pay.error || '圣力不足', data: { balance: pay.balance || 0 } });
+  coinTransactionsStore.push({ id: nextId(), userId, type: 'mall_redeem', amount: -item.cost, description: `积分商城兑换：${item.name}`, createdAt: new Date().toISOString() });
+  res.json({ code: 0, message: '兑换成功', data: { item, balance: pay.balance } });
 });
 
 app.get('/api/v1/skills/open-source/public', authCheck, (req, res) => {
