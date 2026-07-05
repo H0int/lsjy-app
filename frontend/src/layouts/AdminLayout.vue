@@ -171,6 +171,7 @@ const menuGroups = [
       { path: '/admin/ai-agent', label: 'AI智能体', icon: '🤖' },
       { path: '/admin/chat-logs', label: '对话记录', icon: '💬' },
       { path: '/admin/model-config', label: '模型配置', icon: '🧠' },
+      { path: '/admin/skills', label: '开源Skill中台', icon: '🧩' },
       { path: '/admin/knowledge-base', label: '知识库管理', icon: '📚' },
     ]
   },

@@ -483,6 +483,24 @@ const systemSettingsStore = {
   klingApiKey: '',
 };
 
+const openSourceSkillStore = [
+  { id: 'matomo', phase: '一期紧急同步', name: 'Matomo 开源统计系统', category: '数据统计', repo: 'matomo-org/matomo', entry: '/admin/reports', status: 'pending_deploy', adapter: '中转API', coinCost: 0, riskLevel: 'medium', description: '用于用户行为、工具调用、作品产出统计；当前先接入平台真实日志与报表接口，Matomo 容器待部署。', conflicts: ['不接管现有埋点', '不覆盖访客中心数据结构'] },
+  { id: 'logto', phase: '一期紧急同步', name: 'Logto 开源身份认证', category: '账号安全', repo: 'logto-io/logto', entry: '/admin/permissions', status: 'pending_deploy', adapter: '独立认证服务', coinCost: 0, riskLevel: 'high', description: '短信/图形验证码、登录异常预警、身份管理；当前保留平台 JWT 登录，Logto 作为后续独立认证层接入。', conflicts: ['不替换现有 JWT', '不修改罗总账号权限'] },
+  { id: 'copilotkit', phase: '一期紧急同步', name: 'CopilotKit 流式对话组件', category: 'AI交互', repo: 'CopilotKit/CopilotKit', entry: '/agent', status: 'pending_deploy', adapter: '前端组件适配', coinCost: 0, riskLevel: 'medium', description: '用于流式对话、加载进度、AI助手体验增强；当前保持原有智能体通道稳定。', conflicts: ['不覆盖现有 AgentChat', '不改豆包调用底层'] },
+  { id: 'money-printer-turbo', phase: '一期紧急同步', name: 'MoneyPrinterTurbo 全自动成片', category: '视频流水线', repo: 'harry0703/MoneyPrinterTurbo', entry: '/video-pipeline', status: 'pending_deploy', adapter: '容器化服务', coinCost: 20, riskLevel: 'medium', description: '负责文案、素材、字幕、成片流水线；当前先落地平台短视频脚本生成入口，成片容器待部署。', conflicts: ['不替换原生视频生成', '独立扣费'] },
+  { id: 'gpt-sovits', phase: '一期紧急同步', name: 'GPT-SoVITS 赛博电子配音', category: '音频配音', repo: 'RVC-Boss/GPT-SoVITS', entry: '/video-pipeline', status: 'pending_deploy', adapter: '音频服务', coinCost: 8, riskLevel: 'medium', description: '用于电子配音和角色音色；当前输出配音脚本与音色建议，不直接生成音频。', conflicts: ['不占用主进程 GPU', '异步任务队列'] },
+  { id: 'auto-subtitle', phase: '一期紧急同步', name: 'auto-subtitle 霓虹自动字幕', category: '字幕工具', repo: 'm1guelpf/auto-subtitle', entry: '/video-pipeline', status: 'pending_deploy', adapter: '字幕服务', coinCost: 3, riskLevel: 'low', description: '用于自动字幕、时间轴和霓虹字幕样式；当前先输出字幕分段方案。', conflicts: ['不覆盖内容审核', '仅作为创作工具'] },
+  { id: 'cyberpunk-prompt-library', phase: '一期紧急同步', name: 'cyberpunk-prompt-library 赛博提示词库', category: '素材资产', repo: 'open-prompt/cyberpunk-prompt-library', entry: '/video-pipeline', status: 'active_adapter', adapter: '本地提示词库', coinCost: 0, riskLevel: 'low', description: '为赛博朋克镜头、文生图、短视频脚本提供提示词模板；已以内置模板方式接入。', conflicts: ['不污染全局提示词', '按场景调用'] },
+  { id: 'vue-cyberpunk-ui', phase: '一期紧急同步', name: 'vue-cyberpunk-ui 赛博组件库', category: 'UI视觉', repo: 'community/vue-cyberpunk-ui', entry: '/admin/skills', status: 'active_adapter', adapter: '样式隔离', coinCost: 0, riskLevel: 'low', description: '用于后台 Skill 中台与创作页视觉统一；采用 scoped 样式，避免全局污染。', conflicts: ['不覆盖全局 CSS 变量', '仅页面级生效'] },
+  { id: 'glitch-effects', phase: '一期紧急同步', name: 'glitch-effects 故障霓虹动效', category: 'UI视觉', repo: 'community/glitch-effects', entry: '/admin/skills', status: 'active_adapter', adapter: 'CSS动效', coinCost: 0, riskLevel: 'low', description: '为赛博朋克页面提供轻量故障动效；当前只做低强度 CSS 效果。', conflicts: ['不影响按钮点击', '不影响移动端性能'] },
+  { id: 'filegogo', phase: '二期商业化留存', name: 'filegogo 云端素材库', category: '素材存储', repo: 'filegogo/filegogo', entry: '/profile/works', status: 'planned', adapter: '对象存储', coinCost: 0, riskLevel: 'medium', description: '用于历史作品、素材复用和云端资产管理；当前接入计划已登记。', conflicts: ['不迁移现有作品数据', '先读后写'] },
+  { id: 'zhenshu-reward', phase: '二期商业化留存', name: 'zhenshu-reward 会员充值/签到任务', category: '圣力商业化', repo: 'open-reward/zhenshu-reward', entry: '/profile/wallet', status: 'planned', adapter: '圣力积分适配', coinCost: 0, riskLevel: 'medium', description: '用于会员、签到、任务奖励；必须适配平台圣力字段，不改原扣费底层。', conflicts: ['不覆盖充值订单', '奖励写入交易流水'] },
+  { id: 'v-integral-mall', phase: '二期商业化留存', name: 'V-integral-mall 积分商城', category: '积分商城', repo: 'open-mall/V-integral-mall', entry: '/profile/wallet', status: 'planned', adapter: '商城服务', coinCost: 0, riskLevel: 'medium', description: '用于圣力兑换权益、模板、素材包；当前作为二期规划。', conflicts: ['不替换圣力中心', '独立商品表'] },
+  { id: 'nocobase', phase: '二期商业化留存', name: 'NocoBase 低代码数据后台', category: '运营后台', repo: 'nocobase/nocobase', entry: '/admin/reports', status: 'planned', adapter: '只读数据源', coinCost: 0, riskLevel: 'high', description: '用于可视化营收、用户、工具调用报表；规划为只读读取业务数据。', conflicts: ['不直接写业务表', '独立权限'] },
+  { id: 'chroma', phase: '三期企业能力', name: 'Chroma 向量数据库', category: '私有知识库', repo: 'chroma-core/chroma', entry: '/admin/knowledge-base', status: 'planned', adapter: '向量检索服务', coinCost: 0, riskLevel: 'medium', description: '用于企业客户私有资料解析、RAG问答和知识库召回。', conflicts: ['不替换现有知识库', '异步向量化'] },
+  { id: 'autogen', phase: '三期企业能力', name: 'AutoGen 多智能体流水线', category: '批量创作', repo: 'microsoft/autogen', entry: '/video-pipeline', status: 'planned', adapter: '任务编排服务', coinCost: 15, riskLevel: 'high', description: '用于多智能体短视频批量创作、脚本复盘、自动投放建议。', conflicts: ['限流执行', '不阻塞主 API'] },
+];
+
 const coinTransactionsStore = [
   { id: 1, userId: 1, type: 'recharge', amount: 50000, balance: 99999, description: '充值50000币', createdAt: '2026-06-01T00:00:00Z' },
   { id: 2, userId: 1, type: 'consume', amount: -100, balance: 99899, description: '使用AI工具消耗', createdAt: '2026-06-10T00:00:00Z' },
@@ -5791,6 +5809,124 @@ app.get('/api/v1/admin/dashboard', authCheck, (req, res) => {
     todayRevenueChange: yRev > 0 ? parseFloat(((todayRevenue / yRev - 1) * 100).toFixed(1)) : (todayRevenue > 0 ? 100 : 0),
     energyConsumptionChange: yEnergy > 0 ? parseFloat(((energyConsumption / yEnergy - 1) * 100).toFixed(1)) : (energyConsumption > 0 ? 100 : 0),
   }});
+});
+
+function normalizeSkill(item) {
+  const statusLabel = {
+    active_adapter: '已内置适配',
+    enabled: '已启用',
+    disabled: '已停用',
+    pending_deploy: '待部署',
+    planned: '规划中'
+  }[item.status] || item.status;
+  const configured = item.status === 'active_adapter' || item.status === 'enabled';
+  return {
+    ...item,
+    statusLabel,
+    configured,
+    isolation: '独立命名空间 + 中转 API + 页面级样式隔离',
+    lastCheckedAt: item.lastCheckedAt || null,
+  };
+}
+
+function skillStats() {
+  const list = openSourceSkillStore.map(normalizeSkill);
+  const phases = {};
+  list.forEach(item => { phases[item.phase] = (phases[item.phase] || 0) + 1; });
+  return {
+    total: list.length,
+    activeAdapters: list.filter(i => i.status === 'active_adapter' || i.status === 'enabled').length,
+    pendingDeploy: list.filter(i => i.status === 'pending_deploy').length,
+    planned: list.filter(i => i.status === 'planned').length,
+    highRisk: list.filter(i => i.riskLevel === 'high').length,
+    phases,
+  };
+}
+
+app.get('/api/v1/admin/skills/open-source', authCheck, (req, res) => {
+  const { phase, status, category } = req.query;
+  let list = openSourceSkillStore.map(normalizeSkill);
+  if (phase) list = list.filter(i => i.phase === phase);
+  if (status) list = list.filter(i => i.status === status);
+  if (category) list = list.filter(i => i.category === category);
+  res.json({ code: 0, message: 'success', data: { stats: skillStats(), skills: list, list, total: list.length } });
+});
+
+app.put('/api/v1/admin/skills/open-source/:id', authCheck, (req, res) => {
+  const item = openSourceSkillStore.find(i => i.id === req.params.id);
+  if (!item) return res.status(404).json({ code: 404, message: 'Skill 不存在', data: null });
+  const nextStatus = req.body?.status;
+  if (nextStatus) {
+    if (item.status === 'pending_deploy' && nextStatus === 'enabled') {
+      return res.status(400).json({ code: 400, message: '该 Skill 还未部署容器或配置服务地址，不能标记为已启用', data: normalizeSkill(item) });
+    }
+    item.status = nextStatus;
+  }
+  if (req.body?.entry) item.entry = req.body.entry;
+  systemLogsStore.unshift({ id: systemLogsStore.length + 1, level: 'info', module: 'skills', message: `Skill 状态更新：${item.name} -> ${item.status}`, ip: req.ip, createdAt: new Date().toISOString() });
+  res.json({ code: 0, message: '更新成功', data: normalizeSkill(item) });
+});
+
+app.post('/api/v1/admin/skills/open-source/:id/health-check', authCheck, (req, res) => {
+  const item = openSourceSkillStore.find(i => i.id === req.params.id);
+  if (!item) return res.status(404).json({ code: 404, message: 'Skill 不存在', data: null });
+  item.lastCheckedAt = new Date().toISOString();
+  const ok = item.status === 'active_adapter' || item.status === 'enabled';
+  res.json({ code: 0, message: ok ? '内置适配可用' : '第三方服务未部署，已保持隔离', data: { id: item.id, ok, status: item.status, statusLabel: normalizeSkill(item).statusLabel, checkedAt: item.lastCheckedAt } });
+});
+
+app.get('/api/v1/skills/open-source/public', authCheck, (req, res) => {
+  const enabled = openSourceSkillStore.map(normalizeSkill).filter(i => i.status === 'active_adapter' || i.status === 'enabled');
+  res.json({ code: 0, message: 'success', data: { skills: enabled, total: enabled.length } });
+});
+
+function buildCyberpunkVideoPlan(topic, style, duration) {
+  const finalDuration = Math.min(60, Math.max(10, Number(duration || 15)));
+  const title = `《${topic}》${style || '赛博朋克'}短视频方案`;
+  const shots = [
+    { time: '0-3秒', scene: '霓虹城市快速推进，主标题故障闪现', prompt: `${topic}, cyberpunk neon city, cinematic opening, cyan magenta glow` },
+    { time: '3-7秒', scene: '核心卖点/故事冲突出现，镜头切到人物或产品特写', prompt: `${topic}, close-up, holographic interface, dramatic rim light` },
+    { time: '7-12秒', scene: '三段式信息爆点，配合电子鼓点和字幕跳动', prompt: `${topic}, fast montage, glitch effect, futuristic UI overlay` },
+    { time: `12-${finalDuration}秒`, scene: '行动引导与品牌露出，罗圣纪元蓝紫霓虹收尾', prompt: `${topic}, brand ending card, cyberpunk logo glow, call to action` },
+  ];
+  const subtitles = shots.map(s => `${s.time}：${s.scene}`);
+  return {
+    title,
+    duration: finalDuration,
+    style: style || '赛博朋克霓虹',
+    pipeline: ['文案脚本', '镜头提示词', '电子配音文案', '霓虹字幕', '成片任务占位'],
+    script: `开场：你以为${topic}只是普通内容？\n转折：罗圣纪元把 AI、视觉、配音和字幕串成一条创作流水线。\n价值：15秒讲清卖点，直接用于短视频引流、活动预热和品牌展示。\n收尾：关注罗圣纪元，用 AI 赋能实体经济。`,
+    voiceover: `电子赛博男声/女声：${topic}，正在被 AI 重新定义。罗圣纪元帮你把创意变成可发布的短视频。`,
+    shots,
+    subtitles,
+    nextSteps: ['接入 MoneyPrinterTurbo 容器后自动成片', '接入 GPT-SoVITS 后生成配音', '接入 auto-subtitle 后生成字幕时间轴'],
+  };
+}
+
+app.post('/api/v1/skills/video-pipeline/generate', authCheck, async (req, res) => {
+  const userId = req.user?.id || 0;
+  const { topic, style, duration } = req.body || {};
+  if (!String(topic || '').trim()) return res.status(400).json({ code: 400, message: '请输入短视频主题', data: null });
+  const cost = 3;
+  const pay = deductCoins(userId, cost);
+  if (!pay.ok) return res.status(400).json({ code: 400, message: pay.error || '圣力不足', data: { balance: pay.balance || 0 } });
+  let plan = buildCyberpunkVideoPlan(String(topic).trim(), style, duration);
+  try {
+    const ai = await callAI([{ role: 'user', content: `请为“${topic}”生成一个${duration || 15}秒${style || '赛博朋克'}短视频方案，包含标题、口播、4个镜头、字幕分段。` }], {
+      provider: 'doubao',
+      systemPrompt: '你是罗圣纪元短视频流水线导演，输出精炼、可执行、适合赛博朋克视觉的方案。',
+      maxTokens: 1200,
+      temperature: 0.7,
+      toolId: 'video-pipeline',
+      toolName: '开源Skill短视频流水线'
+    });
+    plan.aiText = ai.content;
+    plan.model = ai.model;
+  } catch (err) {
+    plan.aiFallbackReason = err.message;
+  }
+  addAiHistoryRecord({ userId, toolId: 'video-pipeline', toolName: '开源Skill短视频流水线', input: topic, output: JSON.stringify(plan), model: plan.model || 'local-template', tokens: 0 });
+  res.json({ code: 0, message: '短视频方案已生成', data: { plan, balance: pay.balance, cost } });
 });
 
 // ===== API错误管理 =====

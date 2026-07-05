@@ -53,6 +53,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: 'AI工具中心', icon: '🤖' }
       },
       {
+        path: 'video-pipeline',
+        name: 'VideoPipeline',
+        component: () => import('@/views/ai-tools/VideoPipeline.vue'),
+        meta: { title: '短视频流水线', icon: '🎬' }
+      },
+      {
         path: 'agent-hub',
         name: 'AgentHub',
         component: () => import('@/views/ai-tools/AgentHubView.vue'),
@@ -227,6 +233,12 @@ const routes: RouteRecordRaw[] = [
         name: 'AdminModelConfig',
         component: () => import('@/views/admin/ModelConfig.vue'),
         meta: { title: '模型配置' }
+      },
+      {
+        path: 'skills',
+        name: 'AdminOpenSourceSkills',
+        component: () => import('@/views/admin/OpenSourceSkills.vue'),
+        meta: { title: '开源Skill中台' }
       },
       {
         path: 'content-library',
