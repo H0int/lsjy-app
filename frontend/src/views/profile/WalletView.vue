@@ -32,6 +32,43 @@
       </div>
     </div>
 
+    <!-- ========== 现金佣金提现 ========== -->
+    <div class="cyber-card p-5 mb-6">
+      <h3 class="font-bold mb-2" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">
+        <span style="color: var(--cyber-green);">▍</span>现金佣金提现
+      </h3>
+      <p class="text-xs mb-4" style="color: var(--cyber-text-dim);">好友通过你的邀请码注册后，后续产生已通过的充值/会员订单，会按订单金额的 10% 计入现金佣金。</p>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+        <div class="rounded-xl p-3" style="background: rgba(0,240,255,0.05); border: 1px solid rgba(0,240,255,0.18);">
+          <div class="text-[10px]" style="color: var(--cyber-text-dim);">累计佣金</div>
+          <div class="text-xl font-bold" style="color: var(--cyber-cyan);">¥{{ commissionInfo.totalCommission || 0 }}</div>
+        </div>
+        <div class="rounded-xl p-3" style="background: rgba(0,255,136,0.05); border: 1px solid rgba(0,255,136,0.18);">
+          <div class="text-[10px]" style="color: var(--cyber-text-dim);">可提现</div>
+          <div class="text-xl font-bold" style="color: var(--cyber-green);">¥{{ commissionInfo.available || 0 }}</div>
+        </div>
+        <div class="rounded-xl p-3" style="background: rgba(255,184,0,0.06); border: 1px solid rgba(255,184,0,0.18);">
+          <div class="text-[10px]" style="color: var(--cyber-text-dim);">审核中</div>
+          <div class="text-xl font-bold" style="color: var(--cyber-amber);">¥{{ commissionInfo.pendingWithdraw || 0 }}</div>
+        </div>
+        <div class="rounded-xl p-3" style="background: rgba(124,58,237,0.06); border: 1px solid rgba(124,58,237,0.2);">
+          <div class="text-[10px]" style="color: var(--cyber-text-dim);">已打款</div>
+          <div class="text-xl font-bold" style="color: #c084fc;">¥{{ commissionInfo.approvedWithdraw || 0 }}</div>
+        </div>
+      </div>
+      <div class="flex gap-2 flex-wrap">
+        <el-button type="success" :disabled="Number(commissionInfo.available || 0) <= 0" @click="openWithdrawDialog('wechat')">微信提现</el-button>
+        <el-button type="primary" :disabled="Number(commissionInfo.available || 0) <= 0" @click="openWithdrawDialog('alipay')">支付宝提现</el-button>
+        <el-button :disabled="Number(commissionInfo.available || 0) <= 0" @click="openWithdrawDialog('qq')">QQ提现</el-button>
+      </div>
+      <div v-if="commissionInfo.records?.length" class="mt-4 space-y-2">
+        <div v-for="item in commissionInfo.records.slice(0, 3)" :key="item.id" class="text-xs flex justify-between gap-3 py-2" style="border-bottom: 1px solid var(--cyber-border); color: var(--cyber-text-dim);">
+          <span>{{ item.fromUser }} · {{ item.orderId }}</span>
+          <span style="color: var(--cyber-green);">+¥{{ item.commission }}</span>
+        </div>
+      </div>
+    </div>
+
     <!-- ========== 会员订阅 ========== -->
     <div ref="memberSection" class="cyber-card p-5 mb-6">
       <div class="flex items-center justify-between gap-3 flex-wrap mb-4">
@@ -265,6 +302,25 @@
       </template>
     </el-dialog>
 
+    <el-dialog v-model="showWithdrawDialog" title="申请提现" width="420px" :close-on-click-modal="false">
+      <div class="space-y-3">
+        <div class="text-sm" style="color: var(--cyber-text);">当前可提现：<span style="color: var(--cyber-green); font-weight: bold;">¥{{ commissionInfo.available || 0 }}</span></div>
+        <el-select v-model="withdrawForm.method" class="w-full" placeholder="提现方式">
+          <el-option label="微信提现" value="wechat" />
+          <el-option label="支付宝提现" value="alipay" />
+          <el-option label="QQ提现" value="qq" />
+        </el-select>
+        <el-input v-model="withdrawForm.amount" type="number" placeholder="提现金额" />
+        <el-input v-model="withdrawForm.account" placeholder="收款账号 / 微信号 / 支付宝账号 / QQ号" />
+        <el-input v-model="withdrawForm.realName" placeholder="收款姓名（可选）" />
+        <p class="text-[10px]" style="color: var(--cyber-text-dim);">提交后进入后台提现管理，由罗总账号审核打款。</p>
+      </div>
+      <template #footer>
+        <el-button @click="showWithdrawDialog = false">取消</el-button>
+        <el-button type="success" :loading="withdrawing" @click="submitWithdraw">提交提现</el-button>
+      </template>
+    </el-dialog>
+
     <!-- ========== 我的订单 ========== -->
     <div ref="ordersSection" class="cyber-card p-6" v-if="showMyOrders">
       <div class="flex items-center justify-between gap-3 mb-4">
@@ -336,10 +392,14 @@ let orderSyncTimer: ReturnType<typeof setInterval> | null = null
 const subscriptionPlans = ref<any[]>([])
 const subscriptionStatus = ref<any>({ active: false })
 const referralInfo = ref<any>({})
+const commissionInfo = ref<any>({ totalCommission: 0, available: 0, pendingWithdraw: 0, approvedWithdraw: 0, records: [] })
 const inviteCodeInput = ref('')
 const subscribing = ref(false)
 const claimingDaily = ref(false)
 const applyingInvite = ref(false)
+const showWithdrawDialog = ref(false)
+const withdrawing = ref(false)
+const withdrawForm = ref({ method: 'wechat', amount: '', account: '', realName: '' })
 
 // 支付弹窗相关
 const showPayDialog = ref(false)
@@ -393,7 +453,7 @@ onMounted(async () => {
     coinBalance.value = balRes.data?.balance ?? 0
   } catch { coinBalance.value = 0 }
 
-  await Promise.allSettled([loadSubscriptionInfo(), loadReferralInfo()])
+  await Promise.allSettled([loadSubscriptionInfo(), loadReferralInfo(), loadCommissionInfo()])
 
   // 获取套餐（静默，失败用兜底数据）
   try {
@@ -444,6 +504,15 @@ async function loadReferralInfo() {
   }
 }
 
+async function loadCommissionInfo() {
+  try {
+    const res = await service.get('/payment/commission/me', { params: { _t: Date.now() } })
+    commissionInfo.value = res.data.data || { totalCommission: 0, available: 0, pendingWithdraw: 0, approvedWithdraw: 0, records: [] }
+  } catch {
+    commissionInfo.value = { totalCommission: 0, available: 0, pendingWithdraw: 0, approvedWithdraw: 0, records: [] }
+  }
+}
+
 async function handleSubscribe(plan: any) {
   subscribing.value = true
   try {
@@ -485,10 +554,44 @@ async function applyInviteCode() {
     inviteCodeInput.value = ''
     ElMessage.success(res.data.message || '邀请奖励已到账')
     await loadReferralInfo()
+    await loadCommissionInfo()
   } catch (e: any) {
     ElMessage.warning(e?.response?.data?.message || '邀请码领取失败')
   } finally {
     applyingInvite.value = false
+  }
+}
+
+function openWithdrawDialog(method: string) {
+  withdrawForm.value = {
+    method,
+    amount: String(commissionInfo.value.available || ''),
+    account: '',
+    realName: ''
+  }
+  showWithdrawDialog.value = true
+}
+
+async function submitWithdraw() {
+  const amount = Number(withdrawForm.value.amount || 0)
+  if (!amount || amount <= 0) return ElMessage.warning('请输入正确的提现金额')
+  if (!withdrawForm.value.account.trim()) return ElMessage.warning('请填写收款账号')
+  withdrawing.value = true
+  try {
+    const res = await service.post('/payment/withdraw/apply', {
+      method: withdrawForm.value.method,
+      amount,
+      account: withdrawForm.value.account.trim(),
+      realName: withdrawForm.value.realName.trim()
+    })
+    ElMessage.success(res.data.message || '提现申请已提交')
+    showWithdrawDialog.value = false
+    commissionInfo.value = res.data.data?.summary || commissionInfo.value
+    await loadCommissionInfo()
+  } catch (e: any) {
+    ElMessage.warning(e?.response?.data?.message || '提现申请失败')
+  } finally {
+    withdrawing.value = false
   }
 }
 
@@ -597,6 +700,7 @@ async function syncWalletState() {
       loadMyOrders(),
       loadSubscriptionInfo(),
       loadReferralInfo(),
+      loadCommissionInfo(),
     ])
     coinBalance.value = balRes.data?.balance ?? coinBalance.value
   } catch { /* ignore */ }

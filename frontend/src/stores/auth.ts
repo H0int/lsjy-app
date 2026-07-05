@@ -23,6 +23,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isLoggedIn = computed(() => !!token.value)
   const isAdmin = computed(() => userRoles.value.some(r => ['boss', 'founder', 'ultimate_admin', 'super_admin', 'admin', 'operator'].includes(r)))
+  const isBossAccount = computed(() => Number(user.value?.id) === 1 && user.value?.username === 'KF02V9' && userRoles.value.includes('boss'))
   const nickname = computed(() => user.value?.nickname || (user.value?.username || '用户'))
 
   function setSession(data: any) {
@@ -140,7 +141,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   return {
     token, user, userRoles, coinBalance, loading, lastLoginError,
-    isLoggedIn, isAdmin, nickname,
+    isLoggedIn, isAdmin, isBossAccount, nickname,
     login, setSession, fetchUserProfile, fetchBalance, logout
   }
 })

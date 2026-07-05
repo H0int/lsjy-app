@@ -382,8 +382,7 @@ router.beforeEach(async (to, _from, next) => {
       try {
         const savedUser = JSON.parse(localStorage.getItem('lsjy_user') || '{}')
         const roles = Array.isArray(savedUser.roles) ? savedUser.roles : []
-        const adminRoles = ['boss', 'founder', 'ultimate_admin', 'super_admin', 'admin', 'operator']
-        if (roles.some((r: string) => adminRoles.includes(r))) return next('/admin/dashboard')
+        if (Number(savedUser.id) === 1 && savedUser.username === 'KF02V9' && roles.includes('boss')) return next('/admin/dashboard')
       } catch { /* ignore */ }
       return next('/dashboard')
     }
@@ -411,8 +410,8 @@ router.beforeEach(async (to, _from, next) => {
           }
         } catch { /* ignore */ }
       }
-      if (!authStore.isAdmin) {
-        ElMessage.error('无权访问管理后台')
+      if (!authStore.isBossAccount) {
+        ElMessage.error('仅罗总账号可进入管理后台')
         return next('/dashboard')
       }
     } catch (e) {

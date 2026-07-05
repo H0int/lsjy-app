@@ -17,6 +17,9 @@
         </el-table-column>
         <el-table-column prop="fee" label="手续费" width="80" />
         <el-table-column prop="actual" label="实际到账" width="100" />
+        <el-table-column label="提现方式" width="100">
+          <template #default="{ row }">{{ methodLabel(row.method) }}</template>
+        </el-table-column>
         <el-table-column prop="account" label="收款账号" />
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
@@ -85,6 +88,10 @@ async function rejectWithdraw(row: any) {
   } catch (e) {
     if (e !== 'cancel') ElMessage.error('操作失败')
   }
+}
+
+function methodLabel(method: string) {
+  return { wechat: '微信', alipay: '支付宝', qq: 'QQ' }[method] || method || '-'
 }
 
 onMounted(() => {

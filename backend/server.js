@@ -182,6 +182,14 @@ function authCheck(req, res, next) {
       }
     }
   }
+  if (req.path.startsWith('/api/v1/admin')) {
+    const current = findCurrentUserFileFirst(req.user?.id || 0).user;
+    const roles = Array.isArray(current?.roles) ? current.roles : [];
+    const isBoss = Number(current?.id) === 1 && current?.username === 'KF02V9' && roles.includes('boss');
+    if (!isBoss) {
+      return res.status(403).json({ code: 403, message: '仅罗总账号可进入后台管理', data: null });
+    }
+  }
   next();
 }
 
@@ -492,6 +500,21 @@ const subscriptionPlansStore = [
   { id: 206, name: '季度专业会员', price: 199.9, period: 'quarterly', days: 90, dailyCoins: 120, firstDayCoins: 120, totalCoins: 10800, description: '90天每天送120圣力，适合长期高频业务', isRecommended: false },
 ];
 const referralsStore = [];
+const REFERRALS_FILE = path.join(__dirname, 'data', 'referrals.json');
+
+function loadReferralsStore() {
+  try {
+    const parsed = JSON.parse(fs.readFileSync(REFERRALS_FILE, 'utf8'));
+    if (Array.isArray(parsed)) referralsStore.splice(0, referralsStore.length, ...parsed);
+  } catch (e) {}
+}
+
+function saveReferralsStore() {
+  fs.mkdirSync(path.dirname(REFERRALS_FILE), { recursive: true });
+  fs.writeFileSync(REFERRALS_FILE, JSON.stringify(referralsStore, null, 2));
+}
+
+loadReferralsStore();
 
 const aiHistoryStore = [
   { id: 1, userId: 1, toolId: 1, toolName: '罗圣AI智能体', input: '你好', output: '你好！我是罗圣AI智能体...', model: 'coze', tokens: 120, createdAt: '2026-06-14T09:00:00Z' },
@@ -4322,6 +4345,7 @@ app.get('/api/v1/payment/referral/me', authCheck, (req, res) => {
       newUserReward: 30,
       invitedCount: invited.length,
       earnedCoins: invited.reduce((sum, r) => sum + Number(r.inviterReward || 0), 0),
+      commission: getUserCommissionSummary(userId),
       records: invited,
     },
   });
@@ -4353,7 +4377,54 @@ app.post('/api/v1/payment/referral/apply', authCheck, (req, res) => {
     createdAt: new Date().toISOString(),
   };
   referralsStore.unshift(record);
+  saveReferralsStore();
   res.json({ code: 0, message: `领取成功，已获得${inviteeReward}圣力`, data: { record, balance: inviteeCredit.balance } });
+});
+
+app.get('/api/v1/payment/commission/me', authCheck, (req, res) => {
+  const userId = req.user?.id || 1;
+  res.json({ code: 0, message: 'success', data: getUserCommissionSummary(userId) });
+});
+
+app.post('/api/v1/payment/withdraw/apply', authCheck, (req, res) => {
+  const userId = req.user?.id || 1;
+  const amount = Number(req.body?.amount || 0);
+  const method = String(req.body?.method || '').trim();
+  const account = String(req.body?.account || '').trim();
+  const realName = String(req.body?.realName || '').trim();
+  if (!['wechat', 'alipay', 'qq'].includes(method)) {
+    return res.status(400).json({ code: 400, message: '请选择微信提现、支付宝提现或QQ提现', data: null });
+  }
+  if (!account) return res.status(400).json({ code: 400, message: '请填写收款账号', data: null });
+  if (amount <= 0) return res.status(400).json({ code: 400, message: '提现金额必须大于0', data: null });
+  const summary = getUserCommissionSummary(userId);
+  if (amount > summary.available) {
+    return res.status(400).json({ code: 400, message: `可提现佣金不足，当前可提现 ¥${summary.available}`, data: summary });
+  }
+  const fee = Number((amount * 0.01).toFixed(2));
+  const now = new Date().toISOString();
+  const currentUser = findCurrentUserFileFirst(userId).user;
+  const rows = getRealWithdraws();
+  const item = {
+    id: Date.now(),
+    requestId: 'WD' + Date.now(),
+    userId,
+    username: currentUser?.username || '',
+    userName: currentUser?.nickname || currentUser?.username || `用户#${userId}`,
+    amount,
+    fee,
+    actualAmount: Number((amount - fee).toFixed(2)),
+    method,
+    account,
+    realName,
+    status: 'pending',
+    remark: '',
+    createdAt: now,
+    processedAt: null,
+  };
+  rows.push(item);
+  saveRealWithdraws(rows);
+  res.json({ code: 0, message: '提现申请已提交，等待后台审核', data: { withdraw: normalizeWithdraw(item), summary: getUserCommissionSummary(userId) } });
 });
 
 // 充值套餐
@@ -4676,6 +4747,51 @@ function getFinanceStats(list) {
     totalOrders: list.length,
     pendingRefunds: list.filter(o => o.status === 'refunded' || o.refundStatus === 'pending').length,
   };
+}
+
+function getRealCommissionRecords() {
+  const paidOrders = getRealFinanceOrders().filter(o => o.status === 'success' && Number(o.amount || 0) > 0);
+  const records = [];
+  referralsStore.forEach(ref => {
+    paidOrders
+      .filter(order => Number(order.userId) === Number(ref.inviteeId))
+      .forEach(order => {
+        const amount = Number(order.amount || 0);
+        const commission = Number((amount * 0.1).toFixed(2));
+        if (commission <= 0) return;
+        const inviter = findCurrentUserFileFirst(ref.inviterId).user;
+        const invitee = findCurrentUserFileFirst(ref.inviteeId).user;
+        records.push({
+          id: `${ref.id}-${order.id || order.orderNo}`,
+          referralId: ref.id,
+          orderId: order.orderNo,
+          orderNo: order.orderNo,
+          fromUser: invitee?.nickname || invitee?.username || `用户#${ref.inviteeId}`,
+          toUser: inviter?.nickname || inviter?.username || `用户#${ref.inviterId}`,
+          inviterId: Number(ref.inviterId),
+          inviteeId: Number(ref.inviteeId),
+          amount,
+          rate: '10%',
+          commission,
+          commissionAmount: commission,
+          status: '待结算',
+          rawStatus: 'pending',
+          createdAt: order.paidAt || order.createdAt,
+        });
+      });
+  });
+  return records.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+}
+
+function getUserCommissionSummary(userId) {
+  const commissions = getRealCommissionRecords().filter(r => Number(r.inviterId) === Number(userId));
+  const totalCommission = Number(commissions.reduce((s, r) => s + Number(r.commission || 0), 0).toFixed(2));
+  const withdraws = getRealWithdraws().filter(w => Number(w.userId) === Number(userId));
+  const pendingWithdraw = Number(withdraws.filter(w => w.status === 'pending').reduce((s, w) => s + Number(w.amount || 0), 0).toFixed(2));
+  const approvedWithdraw = Number(withdraws.filter(w => ['approved', 'completed'].includes(w.status)).reduce((s, w) => s + Number(w.amount || 0), 0).toFixed(2));
+  const rejectedWithdraw = Number(withdraws.filter(w => w.status === 'rejected').reduce((s, w) => s + Number(w.amount || 0), 0).toFixed(2));
+  const available = Number(Math.max(totalCommission - pendingWithdraw - approvedWithdraw, 0).toFixed(2));
+  return { totalCommission, pendingWithdraw, approvedWithdraw, rejectedWithdraw, available, records: commissions, withdraws: withdraws.map(normalizeWithdraw) };
 }
 
 // 充值（旧接口保留，但改为直接创建订单）
@@ -5879,11 +5995,14 @@ app.put('/api/v1/admin/feedback/:id', authCheck, (req, res) => {
 
 // 佣金管理
 app.get('/api/v1/admin/commissions', authCheck, (req, res) => {
-  const list = [];
-  const totalCommission = 0;
-  const monthCommission = 0;
-  const pendingSettle = 0;
-  const settleCount = 0;
+  const list = getRealCommissionRecords();
+  const monthKey = new Date().toISOString().slice(0, 7);
+  const totalCommission = Number(list.reduce((s, c) => s + Number(c.commission || 0), 0).toFixed(2));
+  const monthCommission = Number(list.filter(c => String(c.createdAt || '').slice(0, 7) === monthKey).reduce((s, c) => s + Number(c.commission || 0), 0).toFixed(2));
+  const withdraws = getRealWithdraws();
+  const settledAmount = Number(withdraws.filter(w => ['approved', 'completed'].includes(w.status)).reduce((s, w) => s + Number(w.amount || 0), 0).toFixed(2));
+  const pendingSettle = Number(Math.max(totalCommission - settledAmount, 0).toFixed(2));
+  const settleCount = withdraws.filter(w => ['approved', 'completed'].includes(w.status)).length;
   res.json({ code: 0, message: 'success', data: {
     stats: {
       total: totalCommission,
