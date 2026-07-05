@@ -6120,7 +6120,7 @@ function buildVisualFilters(plan, topic, style, subtitleFile, options = {}) {
   const styleFile = writeVideoTextFile(plan.jobId, 'style', `${style || plan.style || '短视频'} · ${duration}s`);
   const ctaFile = writeVideoTextFile(plan.jobId, 'cta', profile.cta);
   const totalFrames = Math.min(duration * 30, 9999);
-  const zoompan = `zoompan=z=min(zoom+0.001\\,1.3):d=${totalFrames}:x=iw/2-(iw/zoom/2)+(iw/20)*sin(2*PI*on/d*2):y=ih/2-(ih/zoom/2):s=720x1280`;
+  const zoompan = `zoompan=z=min(zoom+0.001\\,1.3):d=${totalFrames}:x=iw/2-(iw/zoom/2)+(iw/20)*sin(2*PI*on/${totalFrames}*2):y=ih/2-(ih/zoom/2):s=720x1280`;
   const base = [
     options.realBackground
       ? `${zoompan},format=yuv420p`
