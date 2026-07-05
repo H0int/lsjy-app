@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="chat-logs-page">
     <div class="cyber-toolbar">
       <div class="toolbar-left">
         <el-input v-model="search" placeholder="搜索对话内容..." class="chat-log-control cyber-input w-64" clearable />
@@ -8,7 +8,7 @@
         </el-select>
         <el-config-provider :locale="zhCn">
           <el-date-picker v-model="dateRange" type="daterange" range-separator="至" start-placeholder="开始日期"
-            end-placeholder="结束日期" class="chat-log-control chat-log-date cyber-input" popper-class="chat-log-date-popper" format="YYYY年MM月DD日" value-format="YYYY-MM-DD" style="width:260px" />
+            end-placeholder="结束日期" class="chat-log-control chat-log-date cyber-input" popper-class="chat-log-date-popper" format="YYYY年MM月DD日" value-format="YYYY-MM-DD" unlink-panels style="width:260px" />
         </el-config-provider>
       </div>
       <div class="toolbar-right">
@@ -83,7 +83,7 @@
       </div>
     </div>
 
-    <div class="mt-4 flex justify-end">
+    <div class="chat-log-pagination mt-4 flex justify-end">
       <el-pagination layout="total, prev, pager, next" :total="total" :page-size="pageSize"
         @current-change="(p: number) => page = p" />
     </div>
@@ -201,6 +201,13 @@ function exportLogs() {
 </script>
 
 <style scoped>
+.chat-logs-page {
+  --chat-bg: #080b18;
+  --chat-bg-soft: rgba(10, 10, 20, 0.86);
+  --chat-border: rgba(0, 240, 255, 0.18);
+  --chat-text: #e8f8ff;
+  --chat-muted: #a0a0cc;
+}
 .cyber-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }
 .toolbar-left { display: flex; gap: 12px; flex-wrap: wrap; }
 .toolbar-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
@@ -303,6 +310,80 @@ function exportLogs() {
 .tag-cyan { background: rgba(0,240,255,0.1); color: #00f0ff; border: 1px solid rgba(0,240,255,0.2); }
 .tag-purple { background: rgba(124,58,237,0.15); color: #c084fc; border: 1px solid rgba(124,58,237,0.3); }
 
+:global(.chat-logs-page .el-input__wrapper),
+:global(.chat-logs-page .el-select__wrapper),
+:global(.chat-logs-page .el-date-editor),
+:global(.chat-logs-page .el-range-editor),
+:global(.chat-logs-page .el-button),
+:global(.chat-logs-page .el-pagination button),
+:global(.chat-logs-page .el-pager li) {
+  background: rgba(10, 10, 20, 0.86) !important;
+  background-color: rgba(10, 10, 20, 0.86) !important;
+  border-color: rgba(0, 240, 255, 0.18) !important;
+  color: #e8f8ff !important;
+  box-shadow: none !important;
+}
+
+:global(.chat-logs-page .el-input__inner),
+:global(.chat-logs-page .el-select__placeholder),
+:global(.chat-logs-page .el-select__selected-item),
+:global(.chat-logs-page .el-range-input),
+:global(.chat-logs-page .el-range-separator),
+:global(.chat-logs-page .el-input__prefix),
+:global(.chat-logs-page .el-input__suffix),
+:global(.chat-logs-page .el-select__caret),
+:global(.chat-logs-page .el-button span),
+:global(.chat-logs-page .el-pagination__total) {
+  color: #e8f8ff !important;
+  -webkit-text-fill-color: #e8f8ff !important;
+}
+
+:global(.chat-logs-page input),
+:global(.chat-logs-page .el-range-input) {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+:global(.chat-logs-page .el-input__inner::placeholder),
+:global(.chat-logs-page .el-range-input::placeholder) {
+  color: #a0a0cc !important;
+  -webkit-text-fill-color: #a0a0cc !important;
+}
+
+:global(.chat-logs-page .el-input__wrapper.is-focus),
+:global(.chat-logs-page .el-select__wrapper.is-focused),
+:global(.chat-logs-page .el-date-editor.is-active),
+:global(.chat-logs-page .el-button:hover),
+:global(.chat-logs-page .el-button:focus) {
+  border-color: var(--cyber-cyan) !important;
+  color: var(--cyber-cyan) !important;
+  background: rgba(0, 240, 255, 0.12) !important;
+  box-shadow: 0 0 0 1px rgba(0, 240, 255, 0.2), 0 0 12px rgba(0, 240, 255, 0.12) !important;
+}
+
+:global(.chat-logs-page .el-table),
+:global(.chat-logs-page .el-table__inner-wrapper),
+:global(.chat-logs-page .el-table__header-wrapper),
+:global(.chat-logs-page .el-table__body-wrapper),
+:global(.chat-logs-page .el-table__empty-block),
+:global(.chat-logs-page .el-table tr),
+:global(.chat-logs-page .el-table th.el-table__cell),
+:global(.chat-logs-page .el-table td.el-table__cell),
+:global(.chat-logs-page .el-table--striped .el-table__body tr.el-table__row--striped td.el-table__cell) {
+  background: rgba(10, 10, 20, 0.86) !important;
+  background-color: rgba(10, 10, 20, 0.86) !important;
+  color: #e8f8ff !important;
+}
+
+:global(.chat-logs-page .el-table th.el-table__cell) {
+  background: #080b18 !important;
+  background-color: #080b18 !important;
+}
+
+:global(.chat-logs-page .el-table__empty-text) {
+  color: #a0a0cc !important;
+}
+
 :global(.chat-log-popper),
 :global(.chat-log-date-popper) {
   background: #080b18 !important;
@@ -349,6 +430,39 @@ function exportLogs() {
   background: rgba(10, 10, 20, 0.76) !important;
   border-color: rgba(0, 240, 255, 0.18) !important;
   color: var(--cyber-text) !important;
+}
+:global(.chat-log-date-popper),
+:global(.chat-log-date-popper *),
+:global(.chat-log-popper),
+:global(.chat-log-popper *) {
+  --el-bg-color: #080b18 !important;
+  --el-bg-color-overlay: #080b18 !important;
+  --el-fill-color-blank: #080b18 !important;
+  --el-fill-color-light: rgba(0, 240, 255, 0.08) !important;
+  --el-text-color-primary: #e8f8ff !important;
+  --el-text-color-regular: #a0a0cc !important;
+  --el-border-color-light: rgba(0, 240, 255, 0.18) !important;
+}
+:global(.chat-log-date-popper .el-popper__arrow::before),
+:global(.chat-log-popper .el-popper__arrow::before) {
+  background: #080b18 !important;
+  border-color: rgba(0, 240, 255, 0.2) !important;
+}
+:global(.chat-log-date-popper .el-date-table td.disabled .el-date-table-cell),
+:global(.chat-log-date-popper .el-date-table td.next-month),
+:global(.chat-log-date-popper .el-date-table td.prev-month) {
+  background: #080b18 !important;
+  color: #4a4a6a !important;
+}
+:global(.chat-log-date-popper .el-date-table td.start-date .el-date-table-cell__text),
+:global(.chat-log-date-popper .el-date-table td.end-date .el-date-table-cell__text) {
+  background: var(--cyber-cyan) !important;
+  color: #001018 !important;
+}
+:global(.chat-log-date-popper .el-picker-panel__shortcut:hover),
+:global(.chat-log-date-popper .el-picker-panel__icon-btn:hover) {
+  color: var(--cyber-cyan) !important;
+  background: rgba(0, 240, 255, 0.1) !important;
 }
 
 :deep(.el-pagination button),
