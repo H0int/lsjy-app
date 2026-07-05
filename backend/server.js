@@ -3841,9 +3841,8 @@ app.get('/api/v1/ai/providers', (req, res) => {
   res.json({ code: 0, message: 'success', data: providers });
 });
 
-// AI模型列表
-app.get('/api/v1/ai/models', (req, res) => {
-  const models = [
+function getAiModelGroups() {
+  return [
     { group: 'doubao', provider: 'doubao', models: [
       { id: 'doubao-1-5-pro-32k-250115', name: '豆包 Pro', label: '豆包 Pro', capabilities: ['text'], source: 'frontend-agent' },
       { id: 'doubao-1-5-lite-32k-250115', name: '豆包 Lite', label: '豆包 Lite', capabilities: ['text'], source: 'frontend-agent' },
@@ -3877,7 +3876,31 @@ app.get('/api/v1/ai/models', (req, res) => {
     { group: 'kling', provider: 'kling', models: [{ id: 'kling-v1', name: '可灵 AI 视频', capabilities: ['video'] }] },
     { group: 'tongyi-video', provider: 'tongyi-video', models: [{ id: 'wanx2.1-t2v-turbo', name: '通义万相视频', capabilities: ['video'] }] },
   ];
-  res.json({ code: 0, message: 'success', data: models });
+}
+
+// AI模型列表
+app.get('/api/v1/ai/models', (req, res) => {
+  res.json({ code: 0, message: 'success', data: getAiModelGroups() });
+});
+
+// 后台模型配置：稳定同步前端模型清单 + Provider 状态
+app.get('/api/v1/admin/model-config', authCheck, (req, res) => {
+  const providers = [
+    { name: 'doubao', displayName: '豆包', status: CONFIG.DOUBAO_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
+    { name: 'ark', displayName: '火山方舟', status: CONFIG.ARK_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
+    { name: 'siliconflow', displayName: '硅基流动', status: CONFIG.SILICONFLOW_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
+    { name: 'bailian', displayName: '阿里百炼', status: CONFIG.BAILIAN_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
+    { name: 'zhipu', displayName: '智谱', status: CONFIG.ZHIPU_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
+    { name: 'baidu', displayName: '百度千帆', status: CONFIG.BAIDU_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
+    { name: 'deepseek', displayName: 'DeepSeek', status: CONFIG.DEEPSEEK_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
+    { name: 'tongyi', displayName: '通义千问', status: CONFIG.TONGYI_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
+    { name: 'yuanbao', displayName: '腾讯元宝', status: CONFIG.YUANBAO_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
+    { name: 'jimeng', displayName: '即梦图片', status: CONFIG.JIMENG_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
+    { name: 'tongyi-video', displayName: '通义万相视频', status: CONFIG.TONGYI_VIDEO_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
+    { name: 'kling', displayName: '可灵视频', status: CONFIG.KLING_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
+    { name: 'coze', displayName: 'Coze智能体', status: CONFIG.COZE_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
+  ];
+  res.json({ code: 0, message: 'success', data: { providers, models: getAiModelGroups(), syncedFrom: 'frontend-agent-models' } });
 });
 
 // AI工具分类

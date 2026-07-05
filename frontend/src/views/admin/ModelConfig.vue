@@ -143,6 +143,13 @@ const providerMeta: Record<string, { name: string; icon: string; endpoint: strin
 async function fetchProviders() {
   loading.value = true
   try {
+    const configRes = await service.get('/admin/model-config', { timeout: 15000, headers: { 'X-Silent-Error': 'true' } })
+    if (configRes.data.code === 0) {
+      providers.value = buildProviderRows(configRes.data.data?.models || [], configRes.data.data?.providers || [])
+      return
+    }
+    throw new Error('模型配置接口异常')
+  } catch (e) {
     const [modelsRes, providersRes] = await Promise.allSettled([
       service.get('/ai/models', { timeout: 15000, headers: { 'X-Silent-Error': 'true' } }),
       service.get('/ai/providers', { timeout: 15000, headers: { 'X-Silent-Error': 'true' } }),
@@ -150,9 +157,7 @@ async function fetchProviders() {
     const modelGroups = modelsRes.status === 'fulfilled' && modelsRes.value.data.code === 0 ? (modelsRes.value.data.data || []) : []
     const providerStatuses = providersRes.status === 'fulfilled' && providersRes.value.data.code === 0 ? (providersRes.value.data.data || []) : []
     providers.value = buildProviderRows(modelGroups, providerStatuses)
-  } catch (e) {
-    providers.value = buildProviderRows([], [])
-    console.warn('加载模型配置失败，使用本地同步配置:', e)
+    console.warn('后台模型配置专用接口失败，已使用兼容模式:', e)
   } finally {
     loading.value = false
   }
