@@ -6272,19 +6272,14 @@ async function createPlayableVideo(plan, topic, style) {
     '-loop', '1',
     '-framerate', '30',
     '-i', realFrame.filePath,
-    '-t', String(duration),
     '-vf', vf,
-    '-c:v', 'libx264',
-    '-preset', 'ultrafast',
-    '-pix_fmt', 'yuv420p',
-    '-movflags', '+faststart',
   ];
   if (ttsResult.success) {
-    ffmpegArgs.push('-i', ttsResult.path, '-c:a', 'aac', '-shortest');
+    ffmpegArgs.push('-i', ttsResult.path);
   } else {
-    ffmpegArgs.push('-f', 'lavfi', '-i', 'anullsrc=r=44100:cl=stereo', '-t', String(duration), '-c:a', 'aac', '-shortest');
+    ffmpegArgs.push('-f', 'lavfi', '-i', 'anullsrc=r=44100:cl=stereo');
   }
-  ffmpegArgs.push(filePath);
+  ffmpegArgs.push('-shortest', '-t', String(duration), '-c:v', 'libx264', '-preset', 'ultrafast', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-movflags', '+faststart', filePath);
   await runCommandFile('ffmpeg', ffmpegArgs, { timeout: Math.max(180000, duration * 5000) });
   return {
     videoUrl: `/uploads/generated-videos/${fileName}`,
