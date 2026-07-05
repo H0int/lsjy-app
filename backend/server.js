@@ -3982,10 +3982,24 @@ app.get('/api/v1/payment/subscription/plans', (req, res) => {
 });
 
 app.get('/api/v1/payment/subscription/me', authCheck, (req, res) => {
-  const user = repairApprovedSubscriptionIfNeeded(req.user?.id || 1) || findCurrentUserFileFirst(req.user?.id || 1).user;
+  const userId = req.user?.id || 1;
+  const user = repairApprovedSubscriptionIfNeeded(userId) || findCurrentUserFileFirst(userId).user;
   const now = Date.now();
   const expiresAt = user?.subscriptionExpiresAt || null;
   const active = !!expiresAt && new Date(expiresAt).getTime() > now;
+  const today = new Date().toISOString().slice(0, 10);
+  let lastDailyGrantAt = user?.lastDailyGrantAt || null;
+  if (lastDailyGrantAt && lastDailyGrantAt > today) {
+    const found = findCurrentUserFileFirst(userId);
+    if (found.source === 'file') {
+      const idx = found.users.findIndex(u => Number(u.id) === Number(userId));
+      if (idx >= 0) {
+        found.users[idx].lastDailyGrantAt = today;
+        saveFileUsers(found.users);
+      }
+    }
+    lastDailyGrantAt = today;
+  }
   res.json({
     code: 0,
     message: 'success',
@@ -3995,7 +4009,7 @@ app.get('/api/v1/payment/subscription/me', authCheck, (req, res) => {
       planName: active ? (user?.subscriptionName || '月度会员') : '',
       dailyCoins: active ? Number(user?.subscriptionDailyCoins || 0) : 0,
       expiresAt,
-      lastDailyGrantAt: user?.lastDailyGrantAt || null,
+      lastDailyGrantAt,
     },
   });
 });
