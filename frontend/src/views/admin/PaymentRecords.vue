@@ -83,7 +83,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import service from '@/api/request'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
@@ -95,6 +95,7 @@ const pageSize = ref(20)
 const searchQuery = ref('')
 const statusFilter = ref('')
 const stats = ref({ todayIncome: 0, monthIncome: 0, totalOrders: 0, pendingRefunds: 0 })
+let syncTimer: ReturnType<typeof setInterval> | null = null
 
 async function fetchRecords() {
   loading.value = true
@@ -106,6 +107,7 @@ async function fetchRecords() {
     if (res.data.code === 0) {
       records.value = res.data.data.list || []
       total.value = res.data.data.total || 0
+      if (res.data.data.stats) stats.value = { ...stats.value, ...res.data.data.stats }
     }
   } catch (e) {
     ElMessage.error('加载支付记录失败')
@@ -116,7 +118,7 @@ async function fetchRecords() {
 
 async function fetchStats() {
   try {
-    const res = await service.get('/admin/payment-failures', { params: { page: 1, pageSize: 1 } })
+    const res = await service.get('/payment/orders', { params: { page: 1, pageSize: 1, _t: Date.now() } })
     if (res.data.code === 0 && res.data.data.stats) {
       stats.value = { ...stats.value, ...res.data.data.stats }
     }
@@ -143,5 +145,13 @@ function viewDetail(record: any) {
   )
 }
 
-onMounted(() => { fetchRecords(); fetchStats() })
+onMounted(() => {
+  fetchRecords()
+  fetchStats()
+  syncTimer = setInterval(fetchRecords, 5000)
+})
+
+onUnmounted(() => {
+  if (syncTimer) clearInterval(syncTimer)
+})
 </script>

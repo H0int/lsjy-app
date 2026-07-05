@@ -35,13 +35,14 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import service from '@/api/request'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const loading = ref(false)
 const stats = ref({ totalRequests: 0, pending: 0, totalPaid: '0', rejected: 0 })
 const withdrawals = ref<any[]>([])
+let syncTimer: ReturnType<typeof setInterval> | null = null
 
 async function fetchWithdrawals() {
   loading.value = true
@@ -86,7 +87,14 @@ async function rejectWithdraw(row: any) {
   }
 }
 
-onMounted(fetchWithdrawals)
+onMounted(() => {
+  fetchWithdrawals()
+  syncTimer = setInterval(fetchWithdrawals, 5000)
+})
+
+onUnmounted(() => {
+  if (syncTimer) clearInterval(syncTimer)
+})
 </script>
 <style scoped>
 .cyber-page { padding: 1.5rem; min-height: 100vh; background: #0a0a0f; color: #e0e0ff; }

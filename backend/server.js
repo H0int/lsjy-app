@@ -4607,6 +4607,77 @@ app.get('/api/v1/payment/coin/my-orders', authCheck, (req, res) => {
   res.json({ code: 0, message: 'success', data: { items: myOrders, total: myOrders.length } });
 });
 
+function getLegacyPaymentOrders() {
+  const file = path.join(__dirname, 'data', 'payment_orders.json');
+  try {
+    const parsed = JSON.parse(fs.readFileSync(file, 'utf8'));
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function mapFinanceStatus(status) {
+  if (['approved', 'completed', 'success', 'paid'].includes(status)) return 'success';
+  if (['rejected', 'failed', 'cancelled'].includes(status)) return 'failed';
+  if (['refunded'].includes(status)) return 'refunded';
+  return 'pending';
+}
+
+function normalizeFinanceOrder(order, source) {
+  const normalized = source === 'recharge' ? normalizeCoinOrder(order) : order;
+  const status = mapFinanceStatus(normalized.status || order.status || 'pending');
+  const isSubscription = normalized.orderType === 'subscription';
+  const amount = Number(normalized.price ?? normalized.amount ?? 0);
+  const coinAmount = Number(normalized.coinAmount ?? normalized.coins ?? 0);
+  const userName = normalized.userName || normalized.username || normalized.nickname || getUserDisplayName(normalized.userId);
+  const transactionNo = normalized.orderNo || normalized.transactionNo || normalized.orderId || `PAY${normalized.id || Date.now()}`;
+  return {
+    ...normalized,
+    id: normalized.id || transactionNo,
+    source,
+    transactionNo,
+    orderNo: transactionNo,
+    user: userName,
+    userName,
+    username: normalized.username || userName,
+    amount,
+    price: amount,
+    coins: coinAmount,
+    coinAmount,
+    channel: normalized.paymentMethod || normalized.payMethod || normalized.payChannel || 'wechat',
+    payChannel: normalized.paymentMethod || normalized.payMethod || normalized.payChannel || 'wechat',
+    paymentMethod: normalized.paymentMethod || normalized.payMethod || normalized.payChannel || 'wechat',
+    status,
+    rawStatus: normalized.status,
+    bizType: isSubscription ? 'subscription' : (source === 'legacy_payment' ? 'order_pay' : 'recharge'),
+    direction: 'in',
+    time: normalized.reviewedAt || normalized.paidAt || normalized.createdAt,
+    paidAt: status === 'success' ? (normalized.reviewedAt || normalized.paidAt || normalized.createdAt) : null,
+    createdAt: normalized.createdAt || new Date().toISOString(),
+  };
+}
+
+function getRealFinanceOrders() {
+  const rechargeOrders = getRechargeOrders().map(o => normalizeFinanceOrder(o, 'recharge'));
+  const legacyOrders = getLegacyPaymentOrders().map(o => normalizeFinanceOrder(o, 'legacy_payment'));
+  return [...rechargeOrders, ...legacyOrders].sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+}
+
+function getFinanceStats(list) {
+  const now = new Date();
+  const today = now.toISOString().slice(0, 10);
+  const month = now.toISOString().slice(0, 7);
+  const success = list.filter(o => o.status === 'success');
+  const sum = arr => arr.reduce((s, o) => s + Number(o.amount || 0), 0);
+  return {
+    todayIncome: Number(sum(success.filter(o => String(o.paidAt || o.createdAt || '').slice(0, 10) === today)).toFixed(2)),
+    monthIncome: Number(sum(success.filter(o => String(o.paidAt || o.createdAt || '').slice(0, 7) === month)).toFixed(2)),
+    totalOrders: list.length,
+    pendingRefunds: list.filter(o => o.status === 'refunded' || o.refundStatus === 'pending').length,
+  };
+}
+
 // 充值（旧接口保留，但改为直接创建订单）
 app.post('/api/v1/payment/coin/recharge-legacy', authCheck, (req, res) => {
   const { packageId, amount, payMethod } = req.body;
@@ -4625,20 +4696,68 @@ app.post('/api/v1/payment/coin/recharge-legacy', authCheck, (req, res) => {
 
 // 订单列表
 app.get('/api/v1/payment/orders', authCheck, (req, res) => {
-  const { page, pageSize, status, userId } = req.query;
-  let list = [...paymentOrdersStore];
-  if (status) list = list.filter(o => o.status === status);
-  if (userId) list = list.filter(o => o.userId === Number(userId));
-  res.json({ code: 0, message: 'success', data: paginate(list, page, pageSize) });
+  const { page, pageSize, status, userId, search } = req.query;
+  let list = getRealFinanceOrders();
+  if (status) list = list.filter(o => o.status === status || o.rawStatus === status);
+  if (userId) {
+    const keyword = String(userId).trim().toLowerCase();
+    list = list.filter(o =>
+      String(o.userId || '').includes(keyword) ||
+      String(o.userName || '').toLowerCase().includes(keyword) ||
+      String(o.username || '').toLowerCase().includes(keyword) ||
+      String(o.orderNo || '').toLowerCase().includes(keyword)
+    );
+  }
+  if (search) {
+    const keyword = String(search).trim().toLowerCase();
+    list = list.filter(o => String(o.orderNo || '').toLowerCase().includes(keyword) || String(o.userName || '').toLowerCase().includes(keyword));
+  }
+  const result = paginate(list, page, pageSize);
+  res.json({ code: 0, message: 'success', data: { ...result, list: result.items, stats: getFinanceStats(getRealFinanceOrders()) } });
 });
 
 // 确认订单
 app.put('/api/v1/payment/orders/:id/confirm', authCheck, (req, res) => {
-  const order = paymentOrdersStore.find(o => o.id === Number(req.params.id));
-  if (!order) return res.status(404).json({ code: 404, message: '订单不存在', data: null });
-  order.status = 'completed';
-  order.confirmedAt = new Date().toISOString();
-  res.json({ code: 0, message: '订单已确认', data: order });
+  const orderId = Number(req.params.id);
+  const rechargeOrders = getRechargeOrders();
+  const rechargeOrder = rechargeOrders.find(o => Number(o.id) === orderId);
+  if (rechargeOrder) {
+    if (rechargeOrder.status === 'approved') return res.json({ code: 0, message: '订单已确认', data: normalizeFinanceOrder(rechargeOrder, 'recharge') });
+    const credit = creditUserCoins(
+      rechargeOrder.userId,
+      Number(rechargeOrder.coinAmount || 0),
+      rechargeOrder.orderType === 'subscription'
+        ? `会员订阅 ${rechargeOrder.planName || '会员'}：首日${rechargeOrder.coinAmount || 0}圣力`
+        : `充值订单 ${rechargeOrder.orderNo}：${rechargeOrder.coinAmount || 0}圣力`
+    );
+    if (!credit.ok) return res.status(500).json({ code: 500, message: credit.error || '圣力到账失败', data: null });
+    if (rechargeOrder.orderType === 'subscription') {
+      const found = findCurrentUserFileFirst(rechargeOrder.userId);
+      if (found.user && found.source === 'file') {
+        const idx = found.users.findIndex(u => Number(u.id) === Number(rechargeOrder.userId));
+        if (idx >= 0) {
+          applySubscriptionToUser(found.users[idx], rechargeOrder);
+          saveFileUsers(found.users);
+          rechargeOrder.subscriptionActivatedAt = new Date().toISOString();
+        }
+      }
+    }
+    rechargeOrder.status = 'approved';
+    rechargeOrder.reviewedAt = new Date().toISOString();
+    rechargeOrder.reviewedBy = req.user?.username || 'admin';
+    rechargeOrder.remark = rechargeOrder.remark || '订单管理确认支付';
+    rechargeOrder.coinsAdded = true;
+    saveRechargeOrders(rechargeOrders);
+    return res.json({ code: 0, message: '订单已确认', data: normalizeFinanceOrder(rechargeOrder, 'recharge') });
+  }
+  const legacyOrders = getLegacyPaymentOrders();
+  const legacyOrder = legacyOrders.find(o => Number(o.id) === orderId || String(o.orderNo) === String(req.params.id));
+  if (!legacyOrder) return res.status(404).json({ code: 404, message: '订单不存在', data: null });
+  legacyOrder.status = 'completed';
+  legacyOrder.confirmedAt = new Date().toISOString();
+  const file = path.join(__dirname, 'data', 'payment_orders.json');
+  fs.writeFileSync(file, JSON.stringify(legacyOrders, null, 2));
+  res.json({ code: 0, message: '订单已确认', data: normalizeFinanceOrder(legacyOrder, 'legacy_payment') });
 });
 
 // ============================================================
@@ -5760,46 +5879,87 @@ app.put('/api/v1/admin/feedback/:id', authCheck, (req, res) => {
 
 // 佣金管理
 app.get('/api/v1/admin/commissions', authCheck, (req, res) => {
-  const list = [...commissionStore].reverse();
-  const totalCommission = commissionStore.reduce((s, c) => s + c.commissionAmount, 0);
-  const monthCommission = commissionStore.filter(c => c.createdAt.startsWith('2026-06')).reduce((s, c) => s + c.commissionAmount, 0);
-  const pendingSettle = commissionStore.filter(c => c.status === 'pending').reduce((s, c) => s + c.commissionAmount, 0);
-  const settleCount = commissionStore.filter(c => c.status === 'settled').length;
+  const list = [];
+  const totalCommission = 0;
+  const monthCommission = 0;
+  const pendingSettle = 0;
+  const settleCount = 0;
   res.json({ code: 0, message: 'success', data: {
-    stats: { totalCommission: totalCommission.toFixed(2), monthCommission: monthCommission.toFixed(2), pendingSettle: pendingSettle.toFixed(2), settleCount },
+    stats: {
+      total: totalCommission,
+      monthly: monthCommission,
+      pendingSettle,
+      settleCount,
+      totalCommission: totalCommission.toFixed(2),
+      monthCommission: monthCommission.toFixed(2),
+    },
+    commissions: list,
     list
   }});
 });
 app.put('/api/v1/admin/commissions/:id/settle', authCheck, (req, res) => {
-  const c = commissionStore.find(c => c.id === Number(req.params.id));
-  if (!c) return res.json({ code: 404, message: '佣金记录不存在' });
-  c.status = 'settled'; c.settledAt = new Date().toISOString();
-  res.json({ code: 0, message: 'success', data: c });
+  res.json({ code: 404, message: '佣金记录不存在', data: null });
 });
 
 // 提现管理
+const WITHDRAWS_FILE = path.join(__dirname, 'data', 'withdraws.json');
+function getRealWithdraws() {
+  try {
+    const parsed = JSON.parse(fs.readFileSync(WITHDRAWS_FILE, 'utf8'));
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    return [];
+  }
+}
+function saveRealWithdraws(list) {
+  fs.mkdirSync(path.dirname(WITHDRAWS_FILE), { recursive: true });
+  fs.writeFileSync(WITHDRAWS_FILE, JSON.stringify(list, null, 2));
+}
+function normalizeWithdraw(w) {
+  const statusMap = { pending: '待审核', approved: '已完成', completed: '已完成', rejected: '已拒绝' };
+  const amount = Number(w.amount || 0);
+  const fee = Number(w.fee || 0);
+  return {
+    ...w,
+    requestId: w.requestId || w.orderNo || `WD${w.id}`,
+    username: w.username || w.userName || getUserDisplayName(w.userId),
+    amount,
+    fee,
+    actual: Number(w.actual ?? w.actualAmount ?? Math.max(amount - fee, 0)),
+    actualAmount: Number(w.actualAmount ?? w.actual ?? Math.max(amount - fee, 0)),
+    account: w.account || w.accountNo || w.withdrawAccount || '-',
+    status: statusMap[w.status] || w.status || '待审核',
+    rawStatus: w.status || 'pending',
+    createdAt: w.createdAt || new Date().toISOString(),
+  };
+}
 app.get('/api/v1/admin/withdraws', authCheck, (req, res) => {
-  const list = [...withdrawStore].reverse();
-  const totalRequests = withdrawStore.length;
-  const pending = withdrawStore.filter(w => w.status === 'pending').length;
-  const totalPaid = withdrawStore.filter(w => w.status === 'approved').reduce((s, w) => s + w.actualAmount, 0);
-  const rejected = withdrawStore.filter(w => w.status === 'rejected').length;
+  const list = getRealWithdraws().map(normalizeWithdraw).reverse();
+  const totalRequests = list.length;
+  const pending = list.filter(w => w.rawStatus === 'pending' || w.status === '待审核').length;
+  const totalPaid = list.filter(w => w.rawStatus === 'approved' || w.rawStatus === 'completed' || w.status === '已完成').reduce((s, w) => s + Number(w.actualAmount || 0), 0);
+  const rejected = list.filter(w => w.rawStatus === 'rejected' || w.status === '已拒绝').length;
   res.json({ code: 0, message: 'success', data: {
-    stats: { totalRequests, pending, totalPaid: totalPaid.toFixed(2), rejected },
+    stats: { total: totalRequests, totalRequests, pending, paid: totalPaid, totalPaid: totalPaid.toFixed(2), rejected },
+    withdraws: list,
     list
   }});
 });
 app.put('/api/v1/admin/withdraws/:id/approve', authCheck, (req, res) => {
-  const w = withdrawStore.find(w => w.id === Number(req.params.id));
+  const rows = getRealWithdraws();
+  const w = rows.find(w => Number(w.id) === Number(req.params.id));
   if (!w) return res.json({ code: 404, message: '提现记录不存在' });
   w.status = 'approved'; w.processedAt = new Date().toISOString();
-  res.json({ code: 0, message: 'success', data: w });
+  saveRealWithdraws(rows);
+  res.json({ code: 0, message: 'success', data: normalizeWithdraw(w) });
 });
 app.put('/api/v1/admin/withdraws/:id/reject', authCheck, (req, res) => {
-  const w = withdrawStore.find(w => w.id === Number(req.params.id));
+  const rows = getRealWithdraws();
+  const w = rows.find(w => Number(w.id) === Number(req.params.id));
   if (!w) return res.json({ code: 404, message: '提现记录不存在' });
   w.status = 'rejected'; w.processedAt = new Date().toISOString();
-  res.json({ code: 0, message: 'success', data: w });
+  saveRealWithdraws(rows);
+  res.json({ code: 0, message: 'success', data: normalizeWithdraw(w) });
 });
 
 // 分销管理

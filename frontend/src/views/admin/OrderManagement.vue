@@ -113,7 +113,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { adminApi } from '@/api'
 import { formatDate } from '@/utils'
 import type { PaymentTransaction } from '@/types'
@@ -126,6 +126,7 @@ const total = ref(0)
 const pageSize = 20
 const detailVisible = ref(false)
 const selectedOrder = ref<PaymentTransaction | null>(null)
+let syncTimer: ReturnType<typeof setInterval> | null = null
 
 const filteredOrders = computed(() => {
   let list = orders.value
@@ -201,7 +202,14 @@ function handleExport() {
   ElMessage.success(`已导出 ${data.length} 条订单`)
 }
 
-onMounted(() => fetchOrders())
+onUnmounted(() => {
+  if (syncTimer) clearInterval(syncTimer)
+})
+
+onMounted(() => {
+  fetchOrders()
+  syncTimer = setInterval(() => fetchOrders(), 5000)
+})
 </script>
 
 <style scoped>

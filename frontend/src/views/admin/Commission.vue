@@ -33,13 +33,14 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import service from '@/api/request'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const loading = ref(false)
 const stats = ref({ totalCommission: '0', monthCommission: '0', pendingSettle: '0', settleCount: 0 })
 const commissions = ref<any[]>([])
+let syncTimer: ReturnType<typeof setInterval> | null = null
 
 async function fetchCommissions() {
   loading.value = true
@@ -73,7 +74,13 @@ async function settleCommission(row: any) {
   }
 }
 
-onMounted(fetchCommissions)
+onMounted(() => {
+  fetchCommissions()
+  syncTimer = setInterval(fetchCommissions, 5000)
+})
+onUnmounted(() => {
+  if (syncTimer) clearInterval(syncTimer)
+})
 </script>
 <style scoped>
 .cyber-page { padding: 1.5rem; min-height: 100vh; background: #0a0a0f; color: #e0e0ff; }
