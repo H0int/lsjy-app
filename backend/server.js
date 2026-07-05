@@ -4360,18 +4360,7 @@ app.post('/api/v1/payment/referral/apply', authCheck, (req, res) => {
 app.get('/api/v1/payment/coin/packages', (req, res) => {
   res.json({
     code: 0, message: 'success',
-    data: [
-      { id: 1, name: '体验包', coinAmount: 10, price: 1, originalPrice: 1, bonusCoins: 0, isRecommended: 0, sortOrder: 1 },
-      { id: 2, name: '入门包', coinAmount: 100, price: 9.9, originalPrice: 10, bonusCoins: 10, isRecommended: 0, sortOrder: 2 },
-      { id: 3, name: '标准包', coinAmount: 300, price: 24.9, originalPrice: 30, bonusCoins: 30, isRecommended: 0, sortOrder: 3 },
-      { id: 4, name: '进阶包', coinAmount: 500, price: 39.9, originalPrice: 50, bonusCoins: 100, isRecommended: 1, sortOrder: 4 },
-      { id: 5, name: '专业包', coinAmount: 1000, price: 69.9, originalPrice: 100, bonusCoins: 200, isRecommended: 0, sortOrder: 5 },
-      { id: 6, name: '企业包', coinAmount: 2000, price: 129.9, originalPrice: 200, bonusCoins: 500, isRecommended: 0, sortOrder: 6 },
-      { id: 7, name: '旗舰包', coinAmount: 5000, price: 299.9, originalPrice: 500, bonusCoins: 1500, isRecommended: 0, sortOrder: 7 },
-      { id: 8, name: '至尊包', coinAmount: 10000, price: 549.9, originalPrice: 1000, bonusCoins: 3500, isRecommended: 0, sortOrder: 8 },
-      { id: 9, name: '豪华包', coinAmount: 25000, price: 1299.9, originalPrice: 2500, bonusCoins: 10000, isRecommended: 0, sortOrder: 9 },
-      { id: 10, name: '王者包', coinAmount: 50000, price: 1999.9, originalPrice: 5000, bonusCoins: 25000, isRecommended: 0, sortOrder: 10 },
-    ],
+    data: getFrontendCoinPackages(),
   });
 });
 
@@ -4397,19 +4386,7 @@ function saveRechargeOrders(orders) {
 // 创建充值订单（待支付）
 app.post('/api/v1/payment/coin/recharge', authCheck, (req, res) => {
   const { packageId, paymentMethod } = req.body;
-  const packages = [
-    { id: 1, coins: 10, price: 1, coinAmount: 10, name: '10圣力' },
-    { id: 2, coins: 50, price: 4.9, coinAmount: 50, name: '50圣力' },
-    { id: 3, coins: 100, price: 9.9, coinAmount: 100, name: '100圣力' },
-    { id: 4, coins: 300, price: 24.9, coinAmount: 300, name: '300圣力' },
-    { id: 5, coins: 500, price: 39.9, coinAmount: 500, name: '500圣力' },
-    { id: 6, coins: 1000, price: 69.9, coinAmount: 1000, name: '1000圣力' },
-    { id: 7, coins: 2000, price: 129, coinAmount: 2000, name: '2000圣力' },
-    { id: 8, coins: 5000, price: 299, coinAmount: 5000, name: '5000圣力' },
-    { id: 9, coins: 10000, price: 499, coinAmount: 10000, name: '10000圣力' },
-    { id: 10, coins: 50000, price: 1999, coinAmount: 50000, name: '至尊包' },
-  ];
-  const pkg = packages.find(p => p.id === packageId);
+  const pkg = getFrontendCoinPackages().find(p => Number(p.id) === Number(packageId));
   if (!pkg) return res.status(404).json({ code: 404, message: '套餐不存在', data: null });
   
   const order = {
@@ -5667,11 +5644,66 @@ const contentLibraryStore = [
 
 // ===== 圣力套餐数据 =====
 const coinPackagesStore = [
-  { id: 1, name: '新手体验包', coins: 100, price: 9.9, bonus: 10, status: 'active', salesCount: 234 },
-  { id: 2, name: '标准充值包', coins: 500, price: 39.9, bonus: 50, status: 'active', salesCount: 567 },
-  { id: 3, name: '豪华充值包', coins: 1000, price: 69.9, bonus: 150, status: 'active', salesCount: 189 },
-  { id: 4, name: '企业定制包', coins: 5000, price: 299.9, bonus: 1000, status: 'active', salesCount: 45 },
+  { id: 1, name: '体验包', coins: 10, coinAmount: 10, price: 1, originalPrice: 1, bonusCoins: 0, status: 'active', isRecommended: 0, sortOrder: 1, salesCount: 0 },
+  { id: 2, name: '入门包', coins: 100, coinAmount: 100, price: 9.9, originalPrice: 10, bonusCoins: 10, status: 'active', isRecommended: 0, sortOrder: 2, salesCount: 0 },
+  { id: 3, name: '标准包', coins: 300, coinAmount: 300, price: 24.9, originalPrice: 30, bonusCoins: 30, status: 'active', isRecommended: 0, sortOrder: 3, salesCount: 0 },
+  { id: 4, name: '进阶包', coins: 500, coinAmount: 500, price: 39.9, originalPrice: 50, bonusCoins: 100, status: 'active', isRecommended: 1, sortOrder: 4, salesCount: 0 },
+  { id: 5, name: '专业包', coins: 1000, coinAmount: 1000, price: 69.9, originalPrice: 100, bonusCoins: 200, status: 'active', isRecommended: 0, sortOrder: 5, salesCount: 0 },
+  { id: 6, name: '企业包', coins: 2000, coinAmount: 2000, price: 129.9, originalPrice: 200, bonusCoins: 500, status: 'active', isRecommended: 0, sortOrder: 6, salesCount: 0 },
+  { id: 7, name: '旗舰包', coins: 5000, coinAmount: 5000, price: 299.9, originalPrice: 500, bonusCoins: 1500, status: 'active', isRecommended: 0, sortOrder: 7, salesCount: 0 },
+  { id: 8, name: '至尊包', coins: 10000, coinAmount: 10000, price: 549.9, originalPrice: 1000, bonusCoins: 3500, status: 'active', isRecommended: 0, sortOrder: 8, salesCount: 0 },
+  { id: 9, name: '豪华包', coins: 25000, coinAmount: 25000, price: 1299.9, originalPrice: 2500, bonusCoins: 10000, status: 'active', isRecommended: 0, sortOrder: 9, salesCount: 0 },
+  { id: 10, name: '王者包', coins: 50000, coinAmount: 50000, price: 1999.9, originalPrice: 5000, bonusCoins: 25000, status: 'active', isRecommended: 0, sortOrder: 10, salesCount: 0 },
 ];
+
+function parseCoinNumber(value, fallback = 0) {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : fallback;
+  const matched = String(value ?? '').match(/-?\d+(\.\d+)?/);
+  return matched ? Number(matched[0]) : fallback;
+}
+
+function normalizeCoinPackage(pkg) {
+  const coins = parseCoinNumber(pkg.coinAmount ?? pkg.coins, 0);
+  const bonusCoins = parseCoinNumber(pkg.bonusCoins ?? pkg.bonus, 0);
+  return {
+    ...pkg,
+    coins,
+    coinAmount: coins,
+    price: Number(pkg.price || 0),
+    originalPrice: Number(pkg.originalPrice || pkg.price || 0),
+    bonusCoins,
+    bonus: bonusCoins > 0 ? `赠送 ${bonusCoins} 圣力` : '无赠送',
+    sold: Number(pkg.sold ?? pkg.salesCount ?? 0),
+    salesCount: Number(pkg.salesCount ?? pkg.sold ?? 0),
+    highlight: !!(pkg.highlight || pkg.isRecommended),
+    isRecommended: pkg.isRecommended ? 1 : 0,
+    status: pkg.status || 'active',
+    sortOrder: Number(pkg.sortOrder || pkg.id || 0),
+  };
+}
+
+function getFrontendCoinPackages() {
+  return coinPackagesStore
+    .map(normalizeCoinPackage)
+    .filter(pkg => pkg.status === 'active')
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map(pkg => ({
+      id: pkg.id,
+      name: pkg.name,
+      coinAmount: pkg.coinAmount,
+      price: pkg.price,
+      originalPrice: pkg.originalPrice,
+      bonusCoins: pkg.bonusCoins,
+      isRecommended: pkg.isRecommended,
+      sortOrder: pkg.sortOrder,
+    }));
+}
+
+function getAdminCoinPackages() {
+  return coinPackagesStore
+    .map(normalizeCoinPackage)
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+}
 
 // ===== 实时定位数据 =====
 const locationStore = [
@@ -5989,18 +6021,31 @@ app.delete('/api/v1/admin/content-library/:id', authCheck, (req, res) => {
 
 // 圣力套餐管理
 app.get('/api/v1/admin/coin-packages', authCheck, (req, res) => {
-  res.json({ code: 0, message: 'success', data: [...coinPackagesStore] });
+  res.json({ code: 0, message: 'success', data: getAdminCoinPackages() });
 });
 app.post('/api/v1/admin/coin-packages', authCheck, (req, res) => {
-  const item = { id: coinPackagesStore.length + 1, ...req.body, salesCount: 0 };
+  const newId = Math.max(0, ...coinPackagesStore.map(p => Number(p.id || 0))) + 1;
+  const item = normalizeCoinPackage({
+    id: newId,
+    ...req.body,
+    coinAmount: req.body?.coinAmount ?? req.body?.coins,
+    bonusCoins: req.body?.bonusCoins ?? req.body?.bonus,
+    sortOrder: req.body?.sortOrder || newId,
+    salesCount: 0,
+  });
   coinPackagesStore.push(item);
   res.json({ code: 0, message: 'success', data: item });
 });
 app.put('/api/v1/admin/coin-packages/:id', authCheck, (req, res) => {
   const p = coinPackagesStore.find(p => p.id === Number(req.params.id));
   if (!p) return res.json({ code: 404, message: '套餐不存在' });
-  Object.assign(p, req.body);
-  res.json({ code: 0, message: 'success', data: p });
+  Object.assign(p, normalizeCoinPackage({
+    ...p,
+    ...req.body,
+    coinAmount: req.body?.coinAmount ?? req.body?.coins ?? p.coinAmount,
+    bonusCoins: req.body?.bonusCoins ?? req.body?.bonus ?? p.bonusCoins,
+  }));
+  res.json({ code: 0, message: 'success', data: normalizeCoinPackage(p) });
 });
 app.delete('/api/v1/admin/coin-packages/:id', authCheck, (req, res) => {
   const idx = coinPackagesStore.findIndex(p => p.id === Number(req.params.id));
