@@ -280,6 +280,55 @@ function findCurrentUser(userId) {
   return { user: applyProfileOverride(fileUser) || null, source: 'file', users };
 }
 
+function findCurrentUserFileFirst(userId) {
+  const users = loadFileUsers();
+  const fileUser = users.find(u => Number(u.id) === Number(userId));
+  if (fileUser) return { user: applyProfileOverride(fileUser), source: 'file', users };
+  const memoryUser = usersStore.find(u => Number(u.id) === Number(userId));
+  return { user: applyProfileOverride(memoryUser) || null, source: 'memory', users };
+}
+
+function applySubscriptionToUser(user, order) {
+  const now = new Date();
+  const base = user.subscriptionExpiresAt && new Date(user.subscriptionExpiresAt).getTime() > now.getTime()
+    ? new Date(user.subscriptionExpiresAt)
+    : now;
+  base.setDate(base.getDate() + Number(order.subscriptionDays || 30));
+  user.subscriptionTier = order.subscriptionTier || 'monthly';
+  user.subscriptionName = order.planName || '月度会员';
+  user.subscriptionDailyCoins = Number(order.dailyCoins || 0);
+  user.subscriptionExpiresAt = base.toISOString();
+  user.lastDailyGrantAt = now.toISOString().slice(0, 10);
+  return user;
+}
+
+function repairApprovedSubscriptionIfNeeded(userId) {
+  const found = findCurrentUserFileFirst(userId);
+  const user = found.user;
+  if (!user || found.source !== 'file') return user;
+  const now = Date.now();
+  const active = user.subscriptionExpiresAt && new Date(user.subscriptionExpiresAt).getTime() > now;
+  if (active) return user;
+  const orders = getRechargeOrders();
+  const latestApproved = orders
+    .filter(o => Number(o.userId) === Number(userId) && o.orderType === 'subscription' && o.status === 'approved')
+    .sort((a, b) => new Date(b.reviewedAt || b.createdAt || 0).getTime() - new Date(a.reviewedAt || a.createdAt || 0).getTime())[0];
+  if (!latestApproved) return user;
+  const idx = found.users.findIndex(u => Number(u.id) === Number(userId));
+  if (idx < 0) return user;
+  const beforeCoins = Number(found.users[idx].coins || 0);
+  const needsFirstDayGrant = !latestApproved.subscriptionActivatedAt;
+  applySubscriptionToUser(found.users[idx], latestApproved);
+  if (needsFirstDayGrant) {
+    found.users[idx].coins = beforeCoins + Number(latestApproved.coinAmount || 0);
+    latestApproved.subscriptionActivatedAt = new Date().toISOString();
+    latestApproved.coinsAdded = true;
+    saveRechargeOrders(orders);
+  }
+  saveFileUsers(found.users);
+  return applyProfileOverride(found.users[idx]);
+}
+
 // 分页工具
 function paginate(arr, page, pageSize) {
   page = parseInt(page) || 1;
@@ -435,8 +484,12 @@ const paymentOrdersStore = [
 ];
 
 const subscriptionPlansStore = [
-  { id: 201, name: '月度成长会员', price: 29.9, period: 'monthly', days: 30, dailyCoins: 30, firstDayCoins: 30, totalCoins: 900, description: '每天自动送30圣力，适合持续使用AI工具', isRecommended: true },
-  { id: 202, name: '月度进阶会员', price: 59.9, period: 'monthly', days: 30, dailyCoins: 80, firstDayCoins: 80, totalCoins: 2400, description: '每天自动送80圣力，适合自媒体、电商高频使用', isRecommended: false },
+  { id: 201, name: '月度轻享会员', price: 19.9, period: 'monthly', days: 30, dailyCoins: 15, firstDayCoins: 15, totalCoins: 450, description: '每天送15圣力，适合轻量体验和偶尔使用', isRecommended: false },
+  { id: 202, name: '月度成长会员', price: 29.9, period: 'monthly', days: 30, dailyCoins: 30, firstDayCoins: 30, totalCoins: 900, description: '每天送30圣力，适合持续使用AI工具', isRecommended: true },
+  { id: 203, name: '月度进阶会员', price: 59.9, period: 'monthly', days: 30, dailyCoins: 80, firstDayCoins: 80, totalCoins: 2400, description: '每天送80圣力，适合自媒体、电商高频使用', isRecommended: false },
+  { id: 204, name: '月度专业会员', price: 99.9, period: 'monthly', days: 30, dailyCoins: 160, firstDayCoins: 160, totalCoins: 4800, description: '每天送160圣力，适合团队和高频创作', isRecommended: false },
+  { id: 205, name: '季度成长会员', price: 79.9, period: 'quarterly', days: 90, dailyCoins: 35, firstDayCoins: 35, totalCoins: 3150, description: '90天每天送35圣力，适合长期稳定使用', isRecommended: false },
+  { id: 206, name: '季度专业会员', price: 199.9, period: 'quarterly', days: 90, dailyCoins: 120, firstDayCoins: 120, totalCoins: 10800, description: '90天每天送120圣力，适合长期高频业务', isRecommended: false },
 ];
 const referralsStore = [];
 
@@ -3929,7 +3982,7 @@ app.get('/api/v1/payment/subscription/plans', (req, res) => {
 });
 
 app.get('/api/v1/payment/subscription/me', authCheck, (req, res) => {
-  const { user } = findCurrentUser(req.user?.id || 1);
+  const user = repairApprovedSubscriptionIfNeeded(req.user?.id || 1) || findCurrentUserFileFirst(req.user?.id || 1).user;
   const now = Date.now();
   const expiresAt = user?.subscriptionExpiresAt || null;
   const active = !!expiresAt && new Date(expiresAt).getTime() > now;
@@ -3952,7 +4005,7 @@ app.post('/api/v1/payment/subscription/subscribe', authCheck, (req, res) => {
   const paymentMethod = req.body?.paymentMethod || 'wechat';
   const plan = subscriptionPlansStore.find(p => Number(p.id) === planId);
   if (!plan) return res.status(404).json({ code: 404, message: '会员套餐不存在', data: null });
-  const currentUser = findCurrentUser(req.user?.id || 1).user;
+  const currentUser = findCurrentUserFileFirst(req.user?.id || 1).user;
   const order = {
     id: Date.now(),
     orderNo: 'SUB' + Date.now(),
@@ -4254,16 +4307,8 @@ app.post('/api/v1/payment/coin/approve/:orderId', authCheck, (req, res) => {
         previousCoins = user.coins || 0;
         user.coins = previousCoins + order.coinAmount;
         if (order.orderType === 'subscription') {
-          const now = new Date();
-          const base = user.subscriptionExpiresAt && new Date(user.subscriptionExpiresAt).getTime() > now.getTime()
-            ? new Date(user.subscriptionExpiresAt)
-            : now;
-          base.setDate(base.getDate() + Number(order.subscriptionDays || 30));
-          user.subscriptionTier = 'monthly';
-          user.subscriptionName = order.planName || '月度会员';
-          user.subscriptionDailyCoins = Number(order.dailyCoins || 0);
-          user.subscriptionExpiresAt = base.toISOString();
-          user.lastDailyGrantAt = now.toISOString().slice(0, 10);
+          applySubscriptionToUser(user, order);
+          order.subscriptionActivatedAt = new Date().toISOString();
         }
         try {
           fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
@@ -4287,16 +4332,8 @@ app.post('/api/v1/payment/coin/approve/:orderId', authCheck, (req, res) => {
         previousCoins = memUser.coins || 0;
         memUser.coins = previousCoins + order.coinAmount;
         if (order.orderType === 'subscription') {
-          const now = new Date();
-          const base = memUser.subscriptionExpiresAt && new Date(memUser.subscriptionExpiresAt).getTime() > now.getTime()
-            ? new Date(memUser.subscriptionExpiresAt)
-            : now;
-          base.setDate(base.getDate() + Number(order.subscriptionDays || 30));
-          memUser.subscriptionTier = 'monthly';
-          memUser.subscriptionName = order.planName || '月度会员';
-          memUser.subscriptionDailyCoins = Number(order.dailyCoins || 0);
-          memUser.subscriptionExpiresAt = base.toISOString();
-          memUser.lastDailyGrantAt = now.toISOString().slice(0, 10);
+          applySubscriptionToUser(memUser, order);
+          order.subscriptionActivatedAt = new Date().toISOString();
         }
         coinsAdded = true;
         log(`[支付] (内存) 用户 ${memUser.username} 圣力 +${order.coinAmount} (${previousCoins} → ${memUser.coins})`);
@@ -4313,18 +4350,27 @@ app.post('/api/v1/payment/coin/approve/:orderId', authCheck, (req, res) => {
     const txRecord = {
       id: Date.now(),
       userId: order.userId,
-      type: 'recharge',
+      type: order.orderType === 'subscription' ? 'subscription' : 'recharge',
       amount: order.coinAmount,
       balance: previousCoins + order.coinAmount,
-      description: `充值 ${order.price}元 → ${order.coinAmount}圣力`,
+      description: order.orderType === 'subscription'
+        ? `会员订阅 ${order.planName || '月度会员'}：首日${order.coinAmount}圣力，每日${order.dailyCoins || 0}圣力`
+        : `充值 ${order.price}元 → ${order.coinAmount}圣力`,
       orderNo: order.orderNo,
       createdAt: new Date().toISOString(),
     };
     coinTransactionsStore.unshift(txRecord);
 
     saveRechargeOrders(orders);
+    const latestUser = findCurrentUserFileFirst(order.userId).user;
     log(`[支付] 订单 ${order.orderNo} 审批通过，金额 ${order.price}元，圣力 ${order.coinAmount}`);
-    res.json({ code: 0, message: '已审批，用户获得' + order.coinAmount + '圣力', data: { order } });
+    res.json({
+      code: 0,
+      message: order.orderType === 'subscription'
+        ? `会员已开通，首日${order.coinAmount}圣力已到账`
+        : '已审批，用户获得' + order.coinAmount + '圣力',
+      data: { order: normalizeCoinOrder(order), account: latestUser ? { balance: latestUser.coins || 0, subscriptionExpiresAt: latestUser.subscriptionExpiresAt || null, subscriptionName: latestUser.subscriptionName || '' } : null }
+    });
   } else {
     order.status = 'rejected';
     order.remark = remark || '审批拒绝';

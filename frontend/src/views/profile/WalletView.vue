@@ -52,8 +52,8 @@
           <div v-if="plan.isRecommended" class="absolute right-3 top-3 text-[10px] px-2 py-0.5 rounded-full text-white"
             style="background: linear-gradient(135deg, var(--cyber-amber), #ff6b00);">推荐</div>
           <div class="font-bold" style="color: var(--cyber-text);">{{ plan.name }}</div>
-          <div class="text-2xl font-bold mt-2" style="color: var(--cyber-amber);">¥{{ plan.price }}<span class="text-xs font-normal">/月</span></div>
-          <div class="text-sm mt-2" style="color: var(--cyber-cyan);">每天送 {{ plan.dailyCoins }} 圣力，30天共 {{ plan.totalCoins }} 圣力</div>
+          <div class="text-2xl font-bold mt-2" style="color: var(--cyber-amber);">¥{{ plan.price }}<span class="text-xs font-normal">/{{ plan.period === 'quarterly' ? '季' : '月' }}</span></div>
+          <div class="text-sm mt-2" style="color: var(--cyber-cyan);">每天送 {{ plan.dailyCoins }} 圣力，{{ plan.days || 30 }}天共 {{ plan.totalCoins }} 圣力</div>
           <div class="text-xs mt-1" style="color: var(--cyber-text-dim);">{{ plan.description }}</div>
           <el-button class="mt-4 w-full" type="warning" :loading="subscribing" @click="handleSubscribe(plan)">
             开通 {{ plan.name }}
@@ -427,7 +427,10 @@ async function loadSubscriptionInfo() {
     subscriptionStatus.value = statusRes.data.data || { active: false }
   } catch {
     subscriptionPlans.value = [
-      { id: 201, name: '月度成长会员', price: 29.9, dailyCoins: 30, totalCoins: 900, description: '每天自动送30圣力', isRecommended: true }
+      { id: 201, name: '月度轻享会员', price: 19.9, period: 'monthly', days: 30, dailyCoins: 15, totalCoins: 450, description: '每天送15圣力', isRecommended: false },
+      { id: 202, name: '月度成长会员', price: 29.9, period: 'monthly', days: 30, dailyCoins: 30, totalCoins: 900, description: '每天送30圣力', isRecommended: true },
+      { id: 203, name: '月度进阶会员', price: 59.9, period: 'monthly', days: 30, dailyCoins: 80, totalCoins: 2400, description: '每天送80圣力', isRecommended: false },
+      { id: 205, name: '季度成长会员', price: 79.9, period: 'quarterly', days: 90, dailyCoins: 35, totalCoins: 3150, description: '90天每天送35圣力', isRecommended: false }
     ]
   }
 }
