@@ -137,7 +137,6 @@ const providerMeta: Record<string, { name: string; icon: string; endpoint: strin
   jimeng: { name: '即梦图片', icon: '🎨', endpoint: 'https://ark.cn-beijing.volces.com/api/v3' },
   'tongyi-video': { name: '通义万相视频', icon: '🎬', endpoint: 'https://dashscope.aliyuncs.com/api/v1' },
   kling: { name: '可灵视频', icon: '🎞️', endpoint: 'https://kling-api.kuaishou.com/v1' },
-  coze: { name: 'Coze智能体', icon: '🤖', endpoint: '' },
 }
 
 async function fetchProviders() {
@@ -185,7 +184,7 @@ function buildProviderRows(modelGroups: any[], providerStatuses: any[]) {
       connected: status ? status.status === 'healthy' : models.length > 0,
       statusText: status?.status || 'synced',
     }
-  }).filter(p => p.models.length > 0 || p.providerKey === 'coze')
+  }).filter(p => p.models.length > 0)
 }
 
 function normalizeModels(models: any[]) {
@@ -225,8 +224,7 @@ function getDisplayName(name: string): string {
     zhipu: '智谱',
     baidu: '百度千帆',
     kling: '可灵视频',
-    'tongyi-video': '通义万相视频',
-    coze: 'Coze智能体'
+    'tongyi-video': '通义万相视频'
   }
   return map[name.toLowerCase()] || name
 }
@@ -237,7 +235,7 @@ function getIcon(name: string): string {
     yuanbao: '💎', qwen: '🦙', openai: '🤖',
     ark: '🌋', siliconflow: '🔷', bailian: '🦙',
     zhipu: '🧠', baidu: '🌊', kling: '🎞️',
-    'tongyi-video': '🎬', coze: '🤖'
+    'tongyi-video': '🎬'
   }
   return map[name.toLowerCase()] || '🤖'
 }

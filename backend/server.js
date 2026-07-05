@@ -3836,7 +3836,7 @@ app.get('/api/v1/ai/providers', (req, res) => {
     { name: 'jimeng', displayName: '即梦 (图片)', status: CONFIG.JIMENG_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
     { name: 'tongyi-video', displayName: '通义万相 (视频)', status: CONFIG.TONGYI_VIDEO_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
     { name: 'kling', displayName: '可灵 (视频)', status: CONFIG.KLING_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
-    { name: 'coze', displayName: 'Coze 智能体', status: CONFIG.COZE_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
+    ...(CONFIG.COZE_API_KEY && CONFIG.COZE_BOT_ID ? [{ name: 'coze', displayName: 'Coze 智能体', status: 'healthy', latencyMs: 0 }] : []),
   ];
   res.json({ code: 0, message: 'success', data: providers });
 });
@@ -3898,7 +3898,7 @@ app.get('/api/v1/admin/model-config', authCheck, (req, res) => {
     { name: 'jimeng', displayName: '即梦图片', status: CONFIG.JIMENG_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
     { name: 'tongyi-video', displayName: '通义万相视频', status: CONFIG.TONGYI_VIDEO_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
     { name: 'kling', displayName: '可灵视频', status: CONFIG.KLING_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
-    { name: 'coze', displayName: 'Coze智能体', status: CONFIG.COZE_API_KEY ? 'healthy' : 'unconfigured', latencyMs: 0 },
+    ...(CONFIG.COZE_API_KEY && CONFIG.COZE_BOT_ID ? [{ name: 'coze', displayName: 'Coze智能体', status: 'healthy', latencyMs: 0 }] : []),
   ];
   res.json({ code: 0, message: 'success', data: { providers, models: getAiModelGroups(), syncedFrom: 'frontend-agent-models' } });
 });
