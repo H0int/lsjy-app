@@ -82,7 +82,7 @@
                 <el-input v-model="profileForm.bio" type="textarea" :rows="2" placeholder="介绍一下自己..." />
               </el-form-item>
               <el-form-item label="性别">
-                <el-select v-model="profileForm.gender" class="w-full">
+                <el-select v-model="profileForm.gender" class="w-full profile-gender-select">
                   <el-option label="未设置" :value="0" />
                   <el-option label="男" :value="1" />
                   <el-option label="女" :value="2" />
@@ -253,3 +253,24 @@ async function saveProfile() {
   }
 }
 </script>
+
+<style scoped>
+.profile-gender-select :deep(.el-select__wrapper) {
+  background: rgba(10, 10, 20, 0.6);
+  border: 1px solid var(--cyber-border);
+  box-shadow: none;
+}
+
+.profile-gender-select :deep(.el-select__wrapper.is-focused) {
+  border-color: var(--cyber-cyan);
+  box-shadow: 0 0 0 1px rgba(0, 240, 255, 0.18);
+}
+
+.profile-gender-select :deep(.el-select__selected-item) {
+  color: var(--cyber-text);
+}
+
+.profile-gender-select :deep(.el-select__caret) {
+  color: var(--cyber-cyan);
+}
+</style>
