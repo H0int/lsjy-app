@@ -196,7 +196,12 @@
           订单金额：<span style="color: var(--cyber-amber); font-family: 'JetBrains Mono', monospace;">¥{{ currentOrder?.price }}</span>
         </p>
         <p class="text-sm" style="color: var(--cyber-text-dim);">
-          获得 <span style="color: var(--cyber-cyan); font-weight: bold;">{{ currentOrder?.coinAmount }}</span> 圣力
+          <template v-if="currentOrder?.orderType === 'subscription'">
+            {{ currentOrder?.planName || '会员订阅' }} · 首日<span style="color: var(--cyber-cyan); font-weight: bold;">{{ currentOrder?.coinAmount }}</span>圣力 · 每日{{ currentOrder?.dailyCoins }}圣力
+          </template>
+          <template v-else>
+            获得 <span style="color: var(--cyber-cyan); font-weight: bold;">{{ currentOrder?.coinAmount }}</span> 圣力
+          </template>
         </p>
       </div>
 
@@ -237,7 +242,7 @@
 
       <!-- 上传付款截图 -->
       <div class="border-t pt-4" style="border-color: var(--cyber-border);">
-        <p class="text-sm font-bold mb-2" style="color: var(--cyber-text);">📸 上传付款截图（提交后自动到账）</p>
+        <p class="text-sm font-bold mb-2" style="color: var(--cyber-text);">📸 上传付款截图（提交后台审核）</p>
         <el-upload
           action="#"
           :auto-upload="false"
@@ -248,14 +253,14 @@
             {{ uploading ? '上传中...' : '选择截图' }}
           </el-button>
         </el-upload>
-        <p v-if="screenshotUrl" class="text-xs mt-2" style="color: var(--cyber-green);">✅ 截图已上传，点击"确认到账"完成充值</p>
+        <p v-if="screenshotUrl" class="text-xs mt-2" style="color: var(--cyber-green);">✅ 截图已上传，点击“提交审核”等待后台通过</p>
         <p v-else class="text-[10px] mt-1" style="color: var(--cyber-text-dim);">支持 JPG/PNG 格式</p>
       </div>
 
       <template #footer>
         <el-button @click="showPayDialog = false">取消</el-button>
         <el-button type="success" :disabled="!screenshotUrl" :loading="submitting" @click="submitScreenshot">
-          ✅ 确认到账
+          ✅ 提交审核
         </el-button>
       </template>
     </el-dialog>
@@ -263,7 +268,7 @@
     <!-- ========== 我的订单 ========== -->
     <div ref="ordersSection" class="cyber-card p-6" v-if="showMyOrders">
       <h3 class="font-bold mb-4" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">
-        <span style="color: var(--cyber-green);"></span>我的充值订单
+        <span style="color: var(--cyber-green);"></span>我的圣力/会员订单
       </h3>
       <div class="space-y-3">
         <div v-for="order in myOrders" :key="order.id"
@@ -279,7 +284,12 @@
               {{ order.status === 'approved' ? '✅' : order.status === 'rejected' ? '❌' : '⏳' }}
             </div>
             <div>
-              <div class="text-sm font-medium" style="color: var(--cyber-text);">{{ order.coinAmount }} 圣力</div>
+              <div class="text-sm font-medium" style="color: var(--cyber-text);">
+                {{ order.orderType === 'subscription' ? (order.planName || '会员订阅') : `${order.coinAmount} 圣力` }}
+              </div>
+              <div v-if="order.orderType === 'subscription'" class="text-[10px]" style="color: var(--cyber-cyan);">
+                首日{{ order.coinAmount }}圣力 · 每日{{ order.dailyCoins }}圣力
+              </div>
               <div class="text-xs" style="color: var(--cyber-text-dim);">{{ formatDate(order.createdAt) }}</div>
             </div>
           </div>

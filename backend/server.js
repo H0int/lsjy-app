@@ -3952,11 +3952,13 @@ app.post('/api/v1/payment/subscription/subscribe', authCheck, (req, res) => {
   const paymentMethod = req.body?.paymentMethod || 'wechat';
   const plan = subscriptionPlansStore.find(p => Number(p.id) === planId);
   if (!plan) return res.status(404).json({ code: 404, message: '会员套餐不存在', data: null });
+  const currentUser = findCurrentUser(req.user?.id || 1).user;
   const order = {
     id: Date.now(),
     orderNo: 'SUB' + Date.now(),
     userId: req.user?.id || 1,
-    username: req.user?.username || 'unknown',
+    username: currentUser?.username || req.user?.username || '',
+    userName: currentUser?.nickname || currentUser?.username || req.user?.username || '',
     packageId: plan.id,
     orderType: 'subscription',
     planName: plan.name,
@@ -4194,7 +4196,23 @@ app.post('/api/v1/payment/coin/submit-screenshot', authCheck, (req, res) => {
 // 获取充值订单列表（管理员）
 app.get('/api/v1/payment/coin/orders', (req, res) => {
   const orders = getRechargeOrders();
-  res.json({ code: 0, message: 'success', data: { items: orders, total: orders.length } });
+  const usersFile = path.join(__dirname, 'data', 'users.json');
+  let users = [];
+  try { users = JSON.parse(fs.readFileSync(usersFile, 'utf8')); } catch (e) { users = usersStore; }
+  const normalized = orders.map(order => {
+    const user = users.find(u => Number(u.id) === Number(order.userId)) || usersStore.find(u => Number(u.id) === Number(order.userId));
+    const isSubscription = order.orderType === 'subscription';
+    return {
+      ...order,
+      orderType: order.orderType || 'recharge',
+      typeLabel: isSubscription ? '会员订阅' : '圣力充值',
+      displayName: isSubscription ? (order.planName || '月度会员') : `${order.coinAmount || 0}圣力充值`,
+      userName: order.userName || (order.username && order.username !== 'unknown' ? order.username : '') || user?.nickname || user?.username || `用户#${order.userId}`,
+      dailyCoins: Number(order.dailyCoins || 0),
+      subscriptionDays: Number(order.subscriptionDays || 0),
+    };
+  });
+  res.json({ code: 0, message: 'success', data: { items: normalized, total: normalized.length } });
 });
 
 // 审批充值订单（管理员 - 需要鉴权）— 带错误恢复和日志

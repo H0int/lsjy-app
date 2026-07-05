@@ -60,10 +60,11 @@
             <div v-for="o in recentOrders" :key="o.id" class="order-row">
               <div class="order-row-left">
                 <span class="order-no">{{ o.orderNo || o.id }}</span>
+                <span :class="['status-tag', o.orderType === 'subscription' ? 'st-approved' : 'st-pending_payment']">{{ orderTypeLabel(o) }}</span>
                 <span class="order-time">{{ fmtDate(o.createdAt) }}</span>
               </div>
               <div class="order-row-right">
-                <span class="order-coins">{{ o.coinAmount }} 圣力</span>
+                <span class="order-coins">{{ orderBenefitText(o) }}</span>
                 <span :class="['status-tag', 'st-' + o.status]">{{ statusLabel(o.status) }}</span>
               </div>
             </div>
@@ -127,7 +128,7 @@
       <div v-if="tab === 'approve'" class="tab-content">
         <div class="cyber-card p-6">
           <div class="approve-header">
-            <h3 class="card-title" style="margin-bottom:0"><span style="color: var(--cyber-cyan);">▍</span>充值订单审批</h3>
+            <h3 class="card-title" style="margin-bottom:0"><span style="color: var(--cyber-cyan);">▍</span>圣力/会员订单审批</h3>
             <div class="approve-filters">
               <button v-for="f in orderFilters" :key="f.key"
                 :class="['filter-btn', { active: orderFilter === f.key }]"
@@ -143,16 +144,22 @@
             <div class="approve-table-head">
               <span class="col-order">订单号</span>
               <span class="col-user">用户</span>
-              <span class="col-coins">圣力</span>
+              <span class="col-coins">订单内容</span>
               <span class="col-price">金额</span>
               <span class="col-time">时间</span>
               <span class="col-status">状态</span>
               <span class="col-action">操作</span>
             </div>
             <div v-for="o in filteredOrders" :key="o.id" class="approve-table-row">
-              <span class="col-order code-text">{{ o.orderNo || o.id }}</span>
+              <span class="col-order code-text">
+                {{ o.orderNo || o.id }}
+                <small class="order-type-line">{{ orderTypeLabel(o) }}</small>
+              </span>
               <span class="col-user">{{ o.userName || ('用户#' + o.userId) }}</span>
-              <span class="col-coins highlight">{{ o.coinAmount }}</span>
+              <span class="col-coins highlight">
+                {{ orderBenefitText(o) }}
+                <small v-if="o.orderType === 'subscription'" class="order-type-line">{{ o.planName || '月度会员' }}</small>
+              </span>
               <span class="col-price">¥{{ o.price }}</span>
               <span class="col-time">{{ fmtDate(o.createdAt) }}</span>
               <span class="col-status"><span :class="['status-tag', 'st-' + o.status]">{{ statusLabel(o.status) }}</span></span>
@@ -332,12 +339,16 @@ const orderFilters = computed(() => {
   return [
     { key: 'all', label: '全部', count: allOrders.value.length },
     { key: 'pending_review', label: '待审批', count: pending.length },
+    { key: 'subscription', label: '会员订阅', count: allOrders.value.filter(o => o.orderType === 'subscription').length },
+    { key: 'recharge', label: '圣力充值', count: allOrders.value.filter(o => (o.orderType || 'recharge') === 'recharge').length },
     { key: 'approved', label: '已通过', count: allOrders.value.filter(o => o.status === 'approved').length },
     { key: 'rejected', label: '已拒绝', count: allOrders.value.filter(o => o.status === 'rejected').length }
   ]
 })
 const filteredOrders = computed(() => {
   if (orderFilter.value === 'all') return allOrders.value.slice().reverse()
+  if (orderFilter.value === 'subscription') return allOrders.value.filter(o => o.orderType === 'subscription').slice().reverse()
+  if (orderFilter.value === 'recharge') return allOrders.value.filter(o => (o.orderType || 'recharge') === 'recharge').slice().reverse()
   return allOrders.value.filter(o => o.status === orderFilter.value).slice().reverse()
 })
 const recentOrders = computed(() => allOrders.value.slice(-8).reverse())
@@ -499,6 +510,17 @@ function statusLabel(s: string) {
     rejected: '已拒绝', completed: '已完成'
   }
   return map[s] || s
+}
+
+function orderTypeLabel(order: any) {
+  return order?.orderType === 'subscription' ? '会员订阅' : '圣力充值'
+}
+
+function orderBenefitText(order: any) {
+  if (order?.orderType === 'subscription') {
+    return `首日${order.coinAmount || 0}圣力 · 每日${order.dailyCoins || 0}圣力 · ${order.subscriptionDays || 30}天`
+  }
+  return `${order?.coinAmount || 0} 圣力`
 }
 
 // ============ 工具函数 ============
@@ -686,6 +708,7 @@ onUnmounted(() => { if (timer) clearInterval(timer) })
 .code-text { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--cyber-cyan); }
 .highlight { color: var(--cyber-green); font-weight: 700; font-family: 'JetBrains Mono', monospace; }
 .dim-text { font-size: 12px; color: rgba(255,255,255,0.4); }
+.order-type-line { display: block; margin-top: 3px; font-size: 10px; color: rgba(255,255,255,0.45); font-family: inherit; }
 
 .status-tag { font-size: 11px; padding: 3px 10px; border-radius: 4px; font-weight: 600; display: inline-block; }
 .st-pending_payment { background: rgba(255,165,0,0.15); color: #ffa500; }
