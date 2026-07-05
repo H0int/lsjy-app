@@ -4193,25 +4193,27 @@ app.post('/api/v1/payment/coin/submit-screenshot', authCheck, (req, res) => {
   res.json({ code: 0, message: '付款截图已提交，等待管理员审核。审核通过后圣力将到账。', data: { order } });
 });
 
-// 获取充值订单列表（管理员）
-app.get('/api/v1/payment/coin/orders', (req, res) => {
-  const orders = getRechargeOrders();
+function normalizeCoinOrder(order) {
   const usersFile = path.join(__dirname, 'data', 'users.json');
   let users = [];
   try { users = JSON.parse(fs.readFileSync(usersFile, 'utf8')); } catch (e) { users = usersStore; }
-  const normalized = orders.map(order => {
-    const user = users.find(u => Number(u.id) === Number(order.userId)) || usersStore.find(u => Number(u.id) === Number(order.userId));
-    const isSubscription = order.orderType === 'subscription';
-    return {
-      ...order,
-      orderType: order.orderType || 'recharge',
-      typeLabel: isSubscription ? '会员订阅' : '圣力充值',
-      displayName: isSubscription ? (order.planName || '月度会员') : `${order.coinAmount || 0}圣力充值`,
-      userName: order.userName || (order.username && order.username !== 'unknown' ? order.username : '') || user?.nickname || user?.username || `用户#${order.userId}`,
-      dailyCoins: Number(order.dailyCoins || 0),
-      subscriptionDays: Number(order.subscriptionDays || 0),
-    };
-  });
+  const user = users.find(u => Number(u.id) === Number(order.userId)) || usersStore.find(u => Number(u.id) === Number(order.userId));
+  const isSubscription = order.orderType === 'subscription';
+  return {
+    ...order,
+    orderType: order.orderType || 'recharge',
+    typeLabel: isSubscription ? '会员订阅' : '圣力充值',
+    displayName: isSubscription ? (order.planName || '月度会员') : `${order.coinAmount || 0}圣力充值`,
+    userName: order.userName || (order.username && order.username !== 'unknown' ? order.username : '') || user?.nickname || user?.username || `用户#${order.userId}`,
+    dailyCoins: Number(order.dailyCoins || 0),
+    subscriptionDays: Number(order.subscriptionDays || 0),
+  };
+}
+
+// 获取充值订单列表（管理员）
+app.get('/api/v1/payment/coin/orders', (req, res) => {
+  const orders = getRechargeOrders();
+  const normalized = orders.map(normalizeCoinOrder);
   res.json({ code: 0, message: 'success', data: { items: normalized, total: normalized.length } });
 });
 
@@ -4340,7 +4342,7 @@ app.post('/api/v1/payment/coin/approve/:orderId', authCheck, (req, res) => {
 app.get('/api/v1/payment/coin/my-orders', authCheck, (req, res) => {
   const orders = getRechargeOrders();
   const userId = req.user?.id || 1;
-  const myOrders = orders.filter(o => o.userId === userId);
+  const myOrders = orders.filter(o => o.userId === userId).map(normalizeCoinOrder);
   res.json({ code: 0, message: 'success', data: { items: myOrders, total: myOrders.length } });
 });
 

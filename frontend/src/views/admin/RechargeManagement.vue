@@ -29,7 +29,8 @@
       <el-button :type="statusFilter === 'approved' ? 'success' : ''" @click="statusFilter = 'approved'">已通过</el-button>
       <el-button :type="statusFilter === 'rejected' ? 'danger' : ''" @click="statusFilter = 'rejected'">已拒绝</el-button>
       <el-button :type="statusFilter === 'pending_payment' ? 'info' : ''" @click="statusFilter = 'pending_payment'">待支付</el-button>
-      <el-button @click="fetchOrders" style="margin-left: auto;">🔄 刷新</el-button>
+      <span class="text-xs ml-auto" style="color: #6a6a8a;">{{ orderSyncText }}</span>
+      <el-button :loading="loading" @click="fetchOrders">🔄 刷新</el-button>
     </div>
 
     <!-- 订单列表 -->
@@ -40,9 +41,9 @@
             <tr style="background: rgba(26,26,46,0.5);">
               <th class="text-left p-3" style="color: #6a6a8a;">订单号</th>
               <th class="text-left p-3" style="color: #6a6a8a;">用户</th>
-              <th class="text-left p-3" style="color: #6a6a8a;">支付方式</th>
+              <th class="text-left p-3" style="color: #6a6a8a;">类型</th>
               <th class="text-left p-3" style="color: #6a6a8a;">金额</th>
-              <th class="text-left p-3" style="color: #6a6a8a;">圣力</th>
+              <th class="text-left p-3" style="color: #6a6a8a;">内容</th>
               <th class="text-left p-3" style="color: #6a6a8a;">状态</th>
               <th class="text-left p-3" style="color: #6a6a8a;">时间</th>
               <th class="text-left p-3" style="color: #6a6a8a;">操作</th>
@@ -51,14 +52,14 @@
           <tbody>
             <tr v-for="order in filteredOrders" :key="order.id" style="border-top: 1px solid #1a1a2e;">
               <td class="p-3 font-mono text-xs" style="color: #00f0ff;">{{ order.orderNo }}</td>
-              <td class="p-3" style="color: #e0e0ff;">{{ order.username || 'user' + order.userId }}</td>
+              <td class="p-3" style="color: #e0e0ff;">{{ order.userName || order.username || 'user' + order.userId }}</td>
               <td class="p-3">
-                <span class="text-xs px-2 py-1 rounded" :style="payMethodStyle(order.paymentMethod)">
-                  {{ payMethodLabel(order.paymentMethod) }}
+                <span class="text-xs px-2 py-1 rounded" :style="order.orderType === 'subscription' ? 'background: rgba(255,184,0,0.1); color: #ffb800;' : 'background: rgba(0,240,255,0.1); color: #00f0ff;'">
+                  {{ order.orderType === 'subscription' ? '会员订阅' : '圣点充值' }}
                 </span>
               </td>
               <td class="p-3 font-bold" style="color: #00ff88;">¥{{ order.price }}</td>
-              <td class="p-3" style="color: #ffb800;">{{ order.coinAmount }}</td>
+              <td class="p-3" style="color: #ffb800;">{{ orderContent(order) }}</td>
               <td class="p-3">
                 <span class="text-xs px-2 py-1 rounded-full" :style="statusStyle(order.status)">
                   {{ statusLabel(order.status) }}
@@ -67,8 +68,8 @@
               <td class="p-3" style="color: #5a5a7a;">{{ formatDate(order.createdAt) }}</td>
               <td class="p-3">
                 <div class="flex gap-2">
-                  <el-button v-if="order.status === 'pending_review'" size="small" type="success" @click="handleApprove(order)">通过</el-button>
-                  <el-button v-if="order.status === 'pending_review'" size="small" type="danger" @click="handleReject(order)">拒绝</el-button>
+                  <el-button v-if="order.status === 'pending_review' || order.status === 'pending_payment'" size="small" type="success" @click="handleApprove(order)">通过</el-button>
+                  <el-button v-if="order.status === 'pending_review' || order.status === 'pending_payment'" size="small" type="danger" @click="handleReject(order)">拒绝</el-button>
                   <el-button v-if="order.screenshotUrl" size="small" type="info" @click="showScreenshot(order)">查看截图</el-button>
                 </div>
               </td>
@@ -92,7 +93,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { formatDate } from '@/utils'
 import service from '@/api/request'
@@ -102,8 +103,14 @@ interface RechargeOrder {
   orderNo: string
   userId: number
   username: string
+  userName?: string
   packageId: number
+  orderType?: string
+  planName?: string
+  displayName?: string
   coinAmount: number
+  dailyCoins?: number
+  subscriptionDays?: number
   price: number
   paymentMethod: string
   screenshotUrl: string
@@ -119,6 +126,8 @@ const statusFilter = ref('')
 const showScreenshotDialog = ref(false)
 const currentScreenshot = ref('')
 const loading = ref(false)
+const lastOrderSyncAt = ref('')
+let orderSyncTimer: ReturnType<typeof setInterval> | null = null
 
 const filteredOrders = computed(() => {
   if (!statusFilter.value) return orders.value
@@ -131,6 +140,7 @@ const rejectedCount = computed(() => orders.value.filter(o => o.status === 'reje
 const totalAmount = computed(() =>
   orders.value.filter(o => o.status === 'approved').reduce((sum, o) => sum + o.price, 0)
 )
+const orderSyncText = computed(() => lastOrderSyncAt.value ? `已同步 ${lastOrderSyncAt.value}` : '实时同步中')
 
 function statusLabel(s: string): string {
   return {
@@ -163,16 +173,25 @@ function payMethodStyle(m: string) {
 }
 
 async function fetchOrders() {
+  if (loading.value) return
   loading.value = true
   try {
-    const res = await service.get('/payment/coin/orders')
+    const res = await service.get('/payment/coin/orders', { params: { _t: Date.now() } })
     orders.value = res.data?.data?.items || []
+    lastOrderSyncAt.value = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
   } catch (e) {
     console.error('Failed to fetch orders:', e)
     ElMessage.error('获取订单列表失败')
   } finally {
     loading.value = false
   }
+}
+
+function orderContent(order: RechargeOrder): string {
+  if (order.orderType === 'subscription') {
+    return `${order.planName || order.displayName || '月度会员'} · 首日${order.coinAmount} · 每日${order.dailyCoins || 0} · ${order.subscriptionDays || 30}天`
+  }
+  return `${order.coinAmount} 圣点`
 }
 
 async function handleApprove(order: RechargeOrder) {
@@ -213,5 +232,18 @@ function showScreenshot(order: RechargeOrder) {
   showScreenshotDialog.value = true
 }
 
-onMounted(() => fetchOrders())
+function handleVisibilitySync() {
+  if (!document.hidden) fetchOrders()
+}
+
+onMounted(() => {
+  fetchOrders()
+  orderSyncTimer = setInterval(fetchOrders, 5000)
+  document.addEventListener('visibilitychange', handleVisibilitySync)
+})
+
+onUnmounted(() => {
+  if (orderSyncTimer) clearInterval(orderSyncTimer)
+  document.removeEventListener('visibilitychange', handleVisibilitySync)
+})
 </script>

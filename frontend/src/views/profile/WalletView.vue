@@ -267,9 +267,12 @@
 
     <!-- ========== 我的订单 ========== -->
     <div ref="ordersSection" class="cyber-card p-6" v-if="showMyOrders">
-      <h3 class="font-bold mb-4" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">
-        <span style="color: var(--cyber-green);"></span>我的圣力/会员订单
-      </h3>
+      <div class="flex items-center justify-between gap-3 mb-4">
+        <h3 class="font-bold" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">
+          <span style="color: var(--cyber-green);"></span>我的圣力/会员订单
+        </h3>
+        <span class="text-xs" style="color: var(--cyber-text-dim);">{{ lastOrderSyncAt ? `已同步 ${lastOrderSyncAt}` : '实时同步中' }}</span>
+      </div>
       <div class="space-y-3">
         <div v-for="order in myOrders" :key="order.id"
           class="flex items-center justify-between py-3"
@@ -309,7 +312,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { paymentApi } from '@/api'
 import { formatDate } from '@/utils'
@@ -328,6 +331,8 @@ const selectedPkgId = ref<number | null>(null)
 const recharging = ref(false)
 const packages = ref<RechargePackage[]>([])
 const myOrders = ref<any[]>([])
+const lastOrderSyncAt = ref('')
+let orderSyncTimer: ReturnType<typeof setInterval> | null = null
 const subscriptionPlans = ref<any[]>([])
 const subscriptionStatus = ref<any>({ active: false })
 const referralInfo = ref<any>({})
@@ -408,6 +413,8 @@ onMounted(async () => {
   if (route.query.section === 'orders') {
     await openOrdersSection()
   }
+  orderSyncTimer = setInterval(syncWalletState, 8000)
+  document.addEventListener('visibilitychange', handleVisibilitySync)
 })
 
 async function loadSubscriptionInfo() {
@@ -443,6 +450,7 @@ async function handleSubscribe(plan: any) {
     })
     currentOrder.value = res.data.data.order
     showPayDialog.value = true
+    await loadMyOrders()
     ElMessage.success('会员订单已创建，请扫码付款后上传截图')
   } catch (e: any) {
     ElMessage.error(e?.response?.data?.message || '创建会员订单失败')
@@ -507,6 +515,7 @@ async function handleRecharge() {
     })
     currentOrder.value = res.data.data.order
     showPayDialog.value = true
+    await loadMyOrders()
     ElMessage.success('订单已创建，请扫码付款后上传截图')
   } catch (e: any) {
     ElMessage.error(e?.response?.data?.message || '创建订单失败')
@@ -553,10 +562,8 @@ async function submitScreenshot() {
       orderId: currentOrder.value.id,
       screenshotUrl: screenshotUrl.value
     })
-    // 后端已改为自动到账，检查返回
     if (res.data.code === 0) {
-      ElMessage.success(` 充值成功！${currentOrder.value.coinAmount} 圣力已到账`)
-      // 刷新余额
+      ElMessage.success('截图已提交，后台审核通过后自动到账/激活会员')
       const balRes = await paymentApi.getBalance()
       coinBalance.value = balRes.data.balance
     } else {
@@ -564,7 +571,7 @@ async function submitScreenshot() {
     }
     showPayDialog.value = false
     screenshotUrl.value = ''
-    loadMyOrders()
+    await syncWalletState()
   } catch (e: any) {
     ElMessage.error(e?.response?.data?.message || '提交失败')
   } finally {
@@ -574,8 +581,21 @@ async function submitScreenshot() {
 
 async function loadMyOrders() {
   try {
-    const res = await service.get('/payment/coin/my-orders')
+    const res = await service.get('/payment/coin/my-orders', { params: { _t: Date.now() } })
     myOrders.value = res.data.data.items || []
+    lastOrderSyncAt.value = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+  } catch { /* ignore */ }
+}
+
+async function syncWalletState() {
+  try {
+    const [balRes] = await Promise.all([
+      paymentApi.getBalance(),
+      loadMyOrders(),
+      loadSubscriptionInfo(),
+      loadReferralInfo(),
+    ])
+    coinBalance.value = balRes.data?.balance ?? coinBalance.value
   } catch { /* ignore */ }
 }
 
@@ -592,5 +612,14 @@ watch(showMyOrders, (val) => {
 
 watch(() => route.query.section, (section) => {
   if (section === 'orders') openOrdersSection()
+})
+
+function handleVisibilitySync() {
+  if (!document.hidden) syncWalletState()
+}
+
+onUnmounted(() => {
+  if (orderSyncTimer) clearInterval(orderSyncTimer)
+  document.removeEventListener('visibilitychange', handleVisibilitySync)
 })
 </script>

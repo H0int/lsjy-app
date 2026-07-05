@@ -72,7 +72,10 @@
           <h3 class="font-bold" style="color: #e0e0ff;">前台圣点/会员订单同步</h3>
           <p class="text-xs mt-1" style="color: #6a6a8a;">这里显示用户在前端圣力中心创建的充值订单和会员订阅订单。</p>
         </div>
-        <el-button size="small" @click="fetchOrders">刷新订单</el-button>
+        <div class="flex items-center gap-2">
+          <span class="text-[11px]" style="color: #6a6a8a;">{{ orderSyncText }}</span>
+          <el-button size="small" :loading="ordersLoading" @click="fetchOrders">刷新订单</el-button>
+        </div>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-sm">
@@ -126,7 +129,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { adminApi } from '@/api'
 import type { User } from '@/types'
@@ -134,6 +137,9 @@ import service from '@/api/request'
 
 const users = ref<User[]>([])
 const frontOrders = ref<any[]>([])
+const ordersLoading = ref(false)
+const lastOrderSyncAt = ref('')
+let orderSyncTimer: ReturnType<typeof setInterval> | null = null
 const submitting = ref(false)
 const form = reactive({
   userId: undefined as number | undefined,
@@ -147,9 +153,18 @@ async function fetchUsers() {
 }
 
 async function fetchOrders() {
-  const res = await service.get('/payment/coin/orders')
-  frontOrders.value = (res.data?.data?.items || []).slice().reverse()
+  if (ordersLoading.value) return
+  ordersLoading.value = true
+  try {
+    const res = await service.get('/payment/coin/orders', { params: { _t: Date.now() } })
+    frontOrders.value = (res.data?.data?.items || []).slice().reverse()
+    lastOrderSyncAt.value = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+  } finally {
+    ordersLoading.value = false
+  }
 }
+
+const orderSyncText = computed(() => lastOrderSyncAt.value ? `已同步 ${lastOrderSyncAt.value}` : '实时同步中')
 
 function selectUser(userId: number) {
   form.userId = userId
@@ -238,5 +253,16 @@ async function rejectOrder(order: any) {
 onMounted(() => {
   fetchUsers()
   fetchOrders()
+  orderSyncTimer = setInterval(fetchOrders, 5000)
+  document.addEventListener('visibilitychange', handleVisibilitySync)
 })
+
+onUnmounted(() => {
+  if (orderSyncTimer) clearInterval(orderSyncTimer)
+  document.removeEventListener('visibilitychange', handleVisibilitySync)
+})
+
+function handleVisibilitySync() {
+  if (!document.hidden) fetchOrders()
+}
 </script>
