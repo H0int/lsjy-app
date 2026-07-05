@@ -138,28 +138,47 @@ async function fetchStats() {
         todayVisitors: data.logs?.length ?? data.list?.length ?? 0,
         onlineNow: data.stats?.activeUsers ?? 0,
         pageViews: data.logs?.length ?? data.list?.length ?? 0,
-        avgDuration: data.serverTime || '-'
+        avgDuration: (() => {
+          const logs = data.logs || data.list || [];
+          if (!logs.length) return '0秒';
+          const avg = logs.reduce((s: number, l: any) => s + (l.elapsedSeconds || 0), 0) / logs.length;
+          return `${Math.round(avg)}秒`;
+        })()
       }
       liveVisitors.value = (data.logs || data.list || []).map(normalizeVisitor)
-      // Update trend data if hourly breakdown is available
+      // 从真实访客数据按小时聚合趋势
       if (data.hourly && Array.isArray(data.hourly)) {
         const maxVal = Math.max(...data.hourly.map((h: any) => h.count || h.visitors || 0), 1)
         trendData.value = data.hourly.map((h: any, i: number) => ({
           hour: `${i}:00`,
           height: Math.round(((h.count || h.visitors || 0) / maxVal) * 100)
         }))
+      } else {
+        // 从真实访客记录按小时聚合
+        const logs = data.logs || data.list || [];
+        const hourCounts: Record<number, number> = {};
+        logs.forEach((l: any) => {
+          try {
+            const h = new Date(l.time || l.visitTime || l.lastHeartbeatFormatted || Date.now()).getHours();
+            hourCounts[h] = (hourCounts[h] || 0) + 1;
+          } catch {}
+        });
+        const maxVal = Math.max(...Object.values(hourCounts), 1);
+        trendData.value = Array.from({ length: 24 }, (_, i) => ({
+          hour: `${i}:00`,
+          height: Math.round(((hourCounts[i] || 0) / maxVal) * 100)
+        }))
       }
-      // 如果没有hourly数据但有todayVisitors>0，生成模拟趋势
-      if ((!data.hourly || !data.hourly.length) && (data.logs?.length || data.list?.length || 0) > 0) {
-        trendData.value = Array.from({ length: 24 }, (_, i) => {
-          const now = new Date().getHours()
-          if (i <= now) {
-            const factor = i === now ? 1.5 : Math.random() * 0.8 + 0.2
-            return { hour: `${i}:00`, height: Math.round(factor * 60 + 10) }
-          }
-          return { hour: `${i}:00`, height: 0 }
-        })
-      }
+      // 热门页面 TOP10 从真实访客当前页面聚合
+      const pageCounts: Record<string, number> = {};
+      (data.logs || data.list || []).forEach((l: any) => {
+        const p = l.currentPage || l.path || '/';
+        pageCounts[p] = (pageCounts[p] || 0) + 1;
+      });
+      hotPages.value = Object.entries(pageCounts)
+        .sort(([, a], [, b]) => (b as number) - (a as number))
+        .slice(0, 10)
+        .map(([page, count]) => ({ page, count }));
     }
   } catch (e) {
     console.warn('加载访客统计失败:', (e as any)?.message)
@@ -237,12 +256,10 @@ async function blockIP(row: any) {
 onMounted(() => {
   tickClock()
   fetchStats()
-  fetchList()
   clockTimer = setInterval(() => {
     tickClock()
     fetchStats()
-    fetchList()
-  }, 1000)
+  }, 5000)
 })
 
 onUnmounted(() => {

@@ -2666,7 +2666,26 @@ function locateByIp(ip = '') {
   if (/^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.)/.test(raw)) {
     return { country: '中国', province: '内网', city: '内网', isp: '局域网', location: '内网访问', accuracy: '秒级心跳 / 内网IP' };
   }
+  // 缓存命中
+  if (ipCache[raw]) return ipCache[raw];
+  // 异步解析（不阻塞当前请求，下次请求生效）
+  resolveIpLocation(raw);
+  // 兜底
   return { country: '中国', province: 'IP定位', city: '待解析', isp: '公网网络', location: `公网IP ${raw}`, accuracy: '秒级心跳 / IP定位' };
+}
+
+// IP缓存和异步解析
+const ipCache = {};
+function resolveIpLocation(ip) {
+  if (ipCache[ip]) return ipCache[ip];
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 3000);
+  fetch(`http://ip-api.com/json/${ip}?lang=zh-CN&fields=status,country,regionName,city,isp`, { signal: controller.signal })
+    .then(r => r.json()).then(d => {
+      if (d.status === 'success') {
+        ipCache[ip] = { country: d.country || '中国', province: d.regionName || '未知', city: d.city || '未知', isp: d.isp || '公网', location: `${d.regionName || ''} ${d.city || ''}`, accuracy: '秒级心跳 / IP定位' };
+      }
+    }).catch(() => {}).finally(() => clearTimeout(timer));
 }
 
 // 记录访客访问
@@ -2901,6 +2920,20 @@ app.delete('/api/v1/admin/permissions/:id', authCheck, (req, res) => {
 const onlineUsers = new Map();
 const ONLINE_TIMEOUT = 60000;
 
+// 中国省份→地图坐标（百分比，左上角0,0 右下角100,100）
+const PROVINCE_COORDS = {
+  '北京':[62,26],'天津':[67,28],'上海':[72,44],'重庆':[52,50],
+  '河北':[61,29],'山西':[56,30],'辽宁':[72,22],'吉林':[76,17],
+  '黑龙江':[78,11],'江苏':[70,37],'浙江':[71,43],'安徽':[67,38],
+  '福建':[70,48],'江西':[67,46],'山东':[66,33],'河南':[60,36],
+  '湖北':[58,42],'湖南':[57,48],'广东':[63,57],'广西':[56,58],
+  '海南':[58,66],'四川':[44,42],'贵州':[50,52],'云南':[42,56],
+  '陕西':[52,34],'甘肃':[42,31],'青海':[34,29],'台湾':[74,51],
+  '内蒙古':[62,18],'广西壮族自治区':[56,58],'新疆维吾尔自治区':[22,22],
+  '西藏自治区':[24,38],'宁夏回族自治区':[48,30],'香港':[69,58],
+  '澳门':[65,60],'南海':[60,72],
+};
+
 app.post('/api/v1/online/heartbeat', (req, res) => {
   const sessionId = req.headers['x-session-id'] || req.ip || 'anonymous';
   const userId = req.headers['x-user-id'] || '';
@@ -3012,10 +3045,12 @@ app.get('/api/v1/admin/locations', authCheck, (req, res) => {
       cities: toRank(cities),
       logs: merged,
       list: merged,
-      mapDots: merged.slice(0, 20).map((item, i) => ({
+      mapDots: merged.filter(i => i.province).map((item, i) => ({
         id: item.id,
-        x: 18 + (i % 5) * 15 + ((i * 7) % 8),
-        y: 20 + Math.floor(i / 5) * 15 + ((i * 5) % 8),
+        province: item.province,
+        city: item.city,
+        x: PROVINCE_COORDS[item.province]?.[0] ?? (20 + (i % 8) * 8 + ((i * 3) % 5)),
+        y: PROVINCE_COORDS[item.province]?.[1] ?? (15 + Math.floor(i / 8) * 10 + ((i * 5) % 6)),
       })),
     },
   });
@@ -5431,12 +5466,12 @@ app.get('/api/v1/admin/dashboard', authCheck, (req, res) => {
     const moduleUsers = realUsers.filter(u => {
       const prefs = u.modulePreferences || u.preferences || '';
       return (typeof prefs === 'string' && prefs.includes(name)) || (u.preferredModule === name);
-    }).length || Math.max(1, Math.floor(totalUsers / 6));
+    }).length;
     const moduleRevenue = allOrders.filter(o => {
       const mod = o.module || o.source || '';
       return mod.includes(name) || mod === name;
-    }).reduce((s, o) => s + (o.amount || 0), 0) || parseFloat((totalRevenue / 6).toFixed(2));
-    return { name, users: moduleUsers, revenue: moduleRevenue };
+    }).reduce((s, o) => s + (o.amount || 0), 0);
+    return { name, users: moduleUsers || 0, revenue: moduleRevenue || 0 };
   });
 
   // ===== 告警数据 =====
@@ -5512,8 +5547,17 @@ app.get('/api/v1/admin/dashboard', authCheck, (req, res) => {
 
   // ===== 其他指标 =====
   const openTickets = ticketsStore.filter(t => t.status === 'open').length;
-  const knowledgeCount = 3;
-  const vipPlanCount = 3;
+  const knowledgeCount = readJSON(path.join(dataDir, 'knowledge_base.json'), []).length;
+  const vipPlanCount = coinPackagesStore.filter(p => p.type === 'subscription' || p.planId).length;
+
+  // ===== 百分比变化（与昨日对比）=====
+  const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+  const yStr = yesterday.toISOString().slice(0, 10);
+  const yReg = realUsers.filter(u => (u.created_at || u.createdAt || '').startsWith(yStr)).length;
+  const yRev = allOrders.filter(o => (o.created_at || o.createdAt || '').startsWith(yStr)).reduce((s, o) => s + (o.amount || 0), 0);
+  const yEnergy = aiHistoryStore.filter(h => h.createdAt && h.createdAt.startsWith(yStr)).length;
+  const yVisitors = realVisitors.filter(v => (v.visitTime || '').startsWith(yStr));
+  const yOnline = Math.max(new Set(yVisitors.map(v => v.ip)).size, 1);
 
   res.json({ code: 0, message: 'success', data: {
     // 基础指标
@@ -5557,11 +5601,11 @@ app.get('/api/v1/admin/dashboard', authCheck, (req, res) => {
     // 排行榜
     topTools,
     topProducts,
-    // 百分比变化
-    onlineUsersChange: todayVisitors.length > 0 ? parseFloat(((todayVisitors.length / Math.max(realVisitors.filter(v => (v.visitTime || '').startsWith(today.slice(0,8) + String(parseInt(today.slice(8)) - 1).padStart(2,'0'))).length, 1) - 1) * 100).toFixed(1)) : 0,
-    todayRegistrationsChange: 0,
-    todayRevenueChange: 0,
-    energyConsumptionChange: 0,
+    // 百分比变化（与昨日对比）
+    onlineUsersChange: yOnline > 0 ? parseFloat(((onlineUsers / yOnline - 1) * 100).toFixed(1)) : 0,
+    todayRegistrationsChange: yReg > 0 ? parseFloat(((todayRegistrations / yReg - 1) * 100).toFixed(1)) : (todayRegistrations > 0 ? 100 : 0),
+    todayRevenueChange: yRev > 0 ? parseFloat(((todayRevenue / yRev - 1) * 100).toFixed(1)) : (todayRevenue > 0 ? 100 : 0),
+    energyConsumptionChange: yEnergy > 0 ? parseFloat(((energyConsumption / yEnergy - 1) * 100).toFixed(1)) : (energyConsumption > 0 ? 100 : 0),
   }});
 });
 

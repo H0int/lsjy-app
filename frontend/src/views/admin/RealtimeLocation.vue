@@ -183,16 +183,11 @@ async function fetchLocations() {
       } else if (data.list && Array.isArray(data.list)) {
         locationLogs.value = data.list.map(normalizeLog)
       }
-      // Map dots - generate from location data
+      // Map dots - 从后端真实省份坐标生成
       if (data.mapDots && Array.isArray(data.mapDots)) {
         mapDots.value = data.mapDots
       } else {
-        // Generate dots from city data positions
-        mapDots.value = (cityRank.value || []).slice(0, 20).map((_: any, i: number) => ({
-          id: i,
-          x: 15 + (i % 5) * 15 + Math.random() * 8,
-          y: 20 + Math.floor(i / 5) * 15 + Math.random() * 8
-        }))
+        mapDots.value = []
       }
     }
   } catch (e) {
