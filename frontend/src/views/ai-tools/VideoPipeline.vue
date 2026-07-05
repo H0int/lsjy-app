@@ -4,11 +4,11 @@
       <div>
         <p class="eyebrow">CYBERPUNK VIDEO PIPELINE</p>
         <h1>开源 Skill 短视频流水线</h1>
-        <p>文字方案和完整成片分开生成、分开扣圣力：文字方案只输出策划脚本，完整成片会串联配音、画面、字幕并生成可播放 MP4。</p>
+        <p>文字方案和完整成片分开生成、分开扣圣力：文字方案输出可执行脚本，完整成片会异步串联配音、画面、字幕并生成可播放 MP4，最长支持 5 分钟。</p>
       </div>
       <div class="cost-box">
-        <span>文字方案 10 圣力</span>
-        <b>完整成片 50 圣力</b>
+        <span>文字方案 50 圣力</span>
+        <b>完整成片 100 圣力</b>
       </div>
     </section>
 
@@ -25,14 +25,22 @@
               <el-option label="电子商务爆款" value="电子商务爆款" />
               <el-option label="企业科技宣传" value="企业科技宣传" />
               <el-option label="校园活力短片" value="校园活力短片" />
+              <el-option label="本地生活探店" value="本地生活探店" />
+              <el-option label="知识口播科普" value="知识口播科普" />
+              <el-option label="品牌招商宣传" value="品牌招商宣传" />
+              <el-option label="房地产航拍感" value="房地产航拍感" />
+              <el-option label="餐饮美食种草" value="餐饮美食种草" />
+              <el-option label="国潮高级质感" value="国潮高级质感" />
+              <el-option label="科技蓝企业片" value="科技蓝企业片" />
+              <el-option label="温暖纪实风" value="温暖纪实风" />
             </el-select>
           </el-form-item>
           <el-form-item label="时长">
-            <el-slider v-model="form.duration" :min="10" :max="60" :step="5" show-input />
+            <el-slider v-model="form.duration" :min="10" :max="300" :step="10" show-input />
           </el-form-item>
           <div class="button-grid">
-            <el-button type="info" size="large" :loading="planLoading" @click="generatePlan">生成文字方案 · 10圣力</el-button>
-            <el-button type="primary" size="large" :loading="renderLoading" @click="renderVideo">生成完整成片 · 50圣力</el-button>
+            <el-button type="info" size="large" :loading="planLoading" @click="generatePlan">生成文字方案 · 50圣力</el-button>
+            <el-button type="primary" size="large" :loading="renderLoading" @click="renderVideo">生成完整成片 · 100圣力</el-button>
           </div>
         </el-form>
 
@@ -103,7 +111,7 @@
                 </div>
               </div>
               <div v-else class="no-video">
-                当前还没有成片。请点击左侧“生成完整成片 · 50圣力”。
+                当前还没有成片。请点击左侧“生成完整成片 · 100圣力”。
               </div>
             </el-tab-pane>
           </el-tabs>
@@ -138,6 +146,7 @@ const activeTab = ref('plan')
 const form = ref({ topic: '', style: '赛博朋克霓虹', duration: 15 })
 const plan = ref<any>(null)
 const videoRef = ref<HTMLVideoElement | null>(null)
+let pollTimer: number | null = null
 
 const videoSrc = computed(() => {
   const url = plan.value?.videoUrl || plan.value?.videoTask?.previewUrl || ''
@@ -162,6 +171,13 @@ function validateTopic() {
   return true
 }
 
+function stopPolling() {
+  if (pollTimer) {
+    window.clearInterval(pollTimer)
+    pollTimer = null
+  }
+}
+
 async function generatePlan() {
   if (!validateTopic()) return
   planLoading.value = true
@@ -181,7 +197,8 @@ async function renderVideo() {
   if (!validateTopic()) return
   renderLoading.value = true
   activeTab.value = 'preview'
-  plan.value = {
+    stopPolling()
+    plan.value = {
     title: `《${form.value.topic}》完整成片生成中`,
     jobId: `render-${Date.now()}`,
     statusLabel: '正在生成完整成片',
@@ -199,12 +216,34 @@ async function renderVideo() {
     const res = await service.post('/skills/video-pipeline/render', form.value)
     plan.value = res.data.data.plan
     activeTab.value = 'preview'
-    ElMessage.success(`完整成片已生成，消耗 ${res.data.data.cost} 圣力`)
+    ElMessage.success(`完整成片任务已创建，消耗 ${res.data.data.cost} 圣力`)
+    startPolling(plan.value.jobId)
   } catch (e: any) {
     ElMessage.error(e?.response?.data?.message || '成片失败')
   } finally {
     renderLoading.value = false
   }
+}
+
+function startPolling(jobId: string) {
+  stopPolling()
+  pollTimer = window.setInterval(async () => {
+    try {
+      const res = await service.get(`/skills/video-pipeline/status/${jobId}`)
+      const job = res.data.data
+      plan.value = job.plan
+      if (job.status === 'video_ready') {
+        stopPolling()
+        ElMessage.success('完整成片已生成，可以播放了')
+      }
+      if (job.status === 'video_failed') {
+        stopPolling()
+        ElMessage.error('完整成片生成失败，请换短一点的时长或稍后重试')
+      }
+    } catch (_) {
+      stopPolling()
+    }
+  }, 3000)
 }
 
 function playVideo() {

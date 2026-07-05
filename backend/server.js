@@ -6001,13 +6001,11 @@ function createAssSubtitleFile(plan, topic) {
   const dir = path.join(uploadsRoot, 'generated-videos');
   fs.mkdirSync(dir, { recursive: true });
   const filePath = path.join(dir, `${plan.jobId}.ass`);
-  const duration = Math.min(60, Math.max(10, Number(plan.duration || 15)));
-  const sceneLines = [
-    cleanAssText(`开场：${topic}`),
-    cleanAssText(plan.shots?.[1]?.scene || '展示核心卖点'),
-    cleanAssText(plan.shots?.[2]?.scene || '强化价值和场景'),
-    cleanAssText('罗圣纪元 AI 赋能实体经济'),
-  ];
+  const duration = Math.min(300, Math.max(10, Number(plan.duration || 15)));
+  const sceneLines = (plan.shots || []).map(s => cleanAssText(`${s.time} ${s.scene}`));
+  if (sceneLines.length < 4) {
+    sceneLines.push(cleanAssText(`开场：${topic}`), cleanAssText('展示核心卖点'), cleanAssText('强化转化价值'), cleanAssText('罗圣纪元 AI 赋能实体经济'));
+  }
   const step = duration / sceneLines.length;
   const dialogues = sceneLines.map((line, idx) => {
     const start = secondsToAssTime(idx * step);
@@ -6037,7 +6035,7 @@ async function createPlayableVideo(plan, topic, style) {
   fs.mkdirSync(dir, { recursive: true });
   const fileName = `${plan.jobId}.mp4`;
   const filePath = path.join(dir, fileName);
-  const duration = Math.min(60, Math.max(10, Number(plan.duration || 15)));
+  const duration = Math.min(300, Math.max(10, Number(plan.duration || 15)));
   const safeStyle = String(style || 'CYBERPUNK').replace(/[^\w\s-]/g, '').slice(0, 28).toUpperCase();
   const safeTopic = String(topic || 'LSJY VIDEO').replace(/[^\w\s-]/g, '').slice(0, 28).toUpperCase() || 'LSJY VIDEO';
   const subtitleFile = createAssSubtitleFile(plan, topic);
@@ -6053,7 +6051,7 @@ async function createPlayableVideo(plan, topic, style) {
     `drawtext=text='LSJY AI VIDEO':fontcolor=cyan:fontsize=48:x=(w-text_w)/2:y=96`,
     `drawtext=text='${safeTopic}':fontcolor=white:fontsize=34:x=(w-text_w)/2:y=410`,
     `drawtext=text='${safeStyle}':fontcolor=magenta:fontsize=30:x=(w-text_w)/2:y=492`,
-    `drawtext=text='${duration}s VERTICAL SHORT':fontcolor=yellow:fontsize=26:x=(w-text_w)/2:y=790`,
+    `drawtext=text='${duration}s VERTICAL VIDEO':fontcolor=yellow:fontsize=26:x=(w-text_w)/2:y=790`,
     `subtitles=${subtitleFile}`,
     `drawtext=text='MoneyPrinterTurbo + GPT-SoVITS + auto-subtitle':fontcolor=cyan:fontsize=22:x=(w-text_w)/2:y=1120`,
   ].join(',');
@@ -6066,12 +6064,12 @@ async function createPlayableVideo(plan, topic, style) {
     '-vf', vf,
     '-shortest',
     '-c:v', 'libx264',
-    '-preset', 'veryfast',
+    '-preset', 'ultrafast',
     '-pix_fmt', 'yuv420p',
     '-c:a', 'aac',
     '-movflags', '+faststart',
     filePath
-  ], { timeout: Math.max(180000, duration * 8000) });
+  ], { timeout: Math.max(180000, duration * 5000) });
   return {
     videoUrl: `/uploads/generated-videos/${fileName}`,
     videoPath: filePath,
@@ -6080,14 +6078,17 @@ async function createPlayableVideo(plan, topic, style) {
 }
 
 function buildCyberpunkVideoPlan(topic, style, duration) {
-  const finalDuration = Math.min(60, Math.max(10, Number(duration || 15)));
+  const finalDuration = Math.min(300, Math.max(10, Number(duration || 15)));
   const jobId = `VP${Date.now()}`;
   const title = `《${topic}》${style || '赛博朋克'}短视频生成任务`;
+  const segment = Math.max(3, Math.floor(finalDuration / 6));
   const shots = [
-    { time: '0-3秒', scene: '霓虹城市快速推进，主标题故障闪现', prompt: `${topic}, cyberpunk neon city, cinematic opening, cyan magenta glow` },
-    { time: '3-7秒', scene: '核心卖点/故事冲突出现，镜头切到人物或产品特写', prompt: `${topic}, close-up, holographic interface, dramatic rim light` },
-    { time: '7-12秒', scene: '三段式信息爆点，配合电子鼓点和字幕跳动', prompt: `${topic}, fast montage, glitch effect, futuristic UI overlay` },
-    { time: `12-${finalDuration}秒`, scene: '行动引导与品牌露出，罗圣纪元蓝紫霓虹收尾', prompt: `${topic}, brand ending card, cyberpunk logo glow, call to action` },
+    { time: `0-${segment}秒`, scene: `用强视觉开场点出“${topic}”，让用户知道视频要解决什么问题`, prompt: `${topic}, cinematic opening, ${style}, strong hook, neon title` },
+    { time: `${segment}-${segment * 2}秒`, scene: `展示目标人群的真实痛点，并把“${topic}”放进具体使用场景`, prompt: `${topic}, target audience pain point, realistic commercial scene, ${style}` },
+    { time: `${segment * 2}-${segment * 3}秒`, scene: `突出核心卖点：省时间、提效率、能转化，避免空泛口号`, prompt: `${topic}, product benefit, close-up, clear value proposition` },
+    { time: `${segment * 3}-${segment * 4}秒`, scene: `给出3个可执行步骤，让观众知道下一步该怎么做`, prompt: `${topic}, step by step workflow, motion graphics, UI overlay` },
+    { time: `${segment * 4}-${segment * 5}秒`, scene: `加入案例式结果展示，强化可信度和成交理由`, prompt: `${topic}, result showcase, before after comparison, credible proof` },
+    { time: `${segment * 5}-${finalDuration}秒`, scene: `品牌收尾和行动引导：关注、咨询、下单或到店`, prompt: `${topic}, call to action, brand ending card, ${style}` },
   ];
   const subtitles = shots.map(s => `${s.time}：${s.scene}`);
   return {
@@ -6141,7 +6142,7 @@ app.post('/api/v1/skills/video-pipeline/plan', authCheck, async (req, res) => {
   const userId = req.user?.id || 0;
   const { topic, style, duration } = req.body || {};
   if (!String(topic || '').trim()) return res.status(400).json({ code: 400, message: '请输入短视频主题', data: null });
-  const cost = 10;
+  const cost = 50;
   const pay = deductCoins(userId, cost);
   if (!pay.ok) return res.status(400).json({ code: 400, message: pay.error || '圣力不足', data: { balance: pay.balance || 0 } });
   let plan = buildCyberpunkVideoPlan(String(topic).trim(), style, duration);
@@ -6167,37 +6168,55 @@ app.post('/api/v1/skills/video-pipeline/render', authCheck, async (req, res) => 
   const userId = req.user?.id || 0;
   const { topic, style, duration } = req.body || {};
   if (!String(topic || '').trim()) return res.status(400).json({ code: 400, message: '请输入短视频主题', data: null });
-  const cost = 50;
+  const cost = 100;
   const pay = deductCoins(userId, cost);
   if (!pay.ok) return res.status(400).json({ code: 400, message: pay.error || '圣力不足', data: { balance: pay.balance || 0 } });
   let plan = buildCyberpunkVideoPlan(String(topic).trim(), style, duration);
   plan.mode = 'render';
   plan.cost = cost;
+  plan.status = 'rendering';
+  plan.statusLabel = '完整成片渲染中';
+  plan.videoTask.note = '已创建完整成片任务，正在后台串联文字、配音、画面、字幕生成 MP4。';
   plan.pipelineStages = [
     { name: '文字方案', tool: 'CopilotKit/Doubao', status: 'done', progress: 100 },
-    { name: '配音合成', tool: 'GPT-SoVITS', status: 'done', progress: 100 },
-    { name: '画面合成', tool: 'MoneyPrinterTurbo', status: 'running', progress: 70 },
-    { name: '字幕合成', tool: 'auto-subtitle', status: 'running', progress: 70 },
+    { name: '配音合成', tool: 'GPT-SoVITS', status: 'running', progress: 35 },
+    { name: '画面合成', tool: 'MoneyPrinterTurbo', status: 'running', progress: 25 },
+    { name: '字幕合成', tool: 'auto-subtitle', status: 'waiting', progress: 0 },
   ];
   plan = await enrichVideoPlanWithAI(plan, topic, style, duration);
-  try {
-    const video = await createPlayableVideo(plan, topic, style);
-    plan.videoUrl = video.videoUrl;
-    plan.videoTask.previewUrl = video.videoUrl;
-    plan.videoTask.fileName = video.fileName;
-    plan.status = 'video_ready';
-    plan.statusLabel = '视频已生成，可点击播放';
-    plan.videoTask.note = '视频文件已生成，可直接播放、全屏查看或下载。';
-    plan.pipelineStages = plan.pipelineStages.map(stage => ({ ...stage, status: 'done', progress: 100 }));
-  } catch (err) {
-    plan.status = 'video_failed';
-    plan.statusLabel = '视频生成失败';
-    plan.videoTask.note = `服务器视频生成依赖暂不可用：${err.message}`;
-    plan.pipelineStages = plan.pipelineStages.map(stage => stage.status === 'running' ? { ...stage, status: 'failed' } : stage);
-  }
-  addAiHistoryRecord({ userId, toolId: 'video-pipeline', toolName: '开源Skill短视频流水线', input: topic, output: JSON.stringify(plan), model: plan.model || 'local-template', tokens: 0 });
-  videoPipelineJobsStore.unshift({ jobId: plan.jobId, userId, mode: 'render', status: plan.status, progress: plan.videoUrl ? 100 : 70, plan, createdAt: new Date().toISOString() });
-  res.json({ code: 0, message: plan.videoUrl ? '完整成片已生成' : '完整成片生成失败', data: { plan, balance: pay.balance, cost } });
+  const job = { jobId: plan.jobId, userId, mode: 'render', status: 'rendering', progress: 35, plan, createdAt: new Date().toISOString() };
+  videoPipelineJobsStore.unshift(job);
+  addAiHistoryRecord({ userId, toolId: 'video-pipeline-render-start', toolName: '完整成片渲染任务', input: topic, output: JSON.stringify(plan), model: plan.model || 'local-template', tokens: 0 });
+  setImmediate(async () => {
+    try {
+      job.progress = 55;
+      job.plan.pipelineStages = [
+        { name: '文字方案', tool: 'CopilotKit/Doubao', status: 'done', progress: 100 },
+        { name: '配音合成', tool: 'GPT-SoVITS', status: 'done', progress: 100 },
+        { name: '画面合成', tool: 'MoneyPrinterTurbo', status: 'running', progress: 65 },
+        { name: '字幕合成', tool: 'auto-subtitle', status: 'running', progress: 45 },
+      ];
+      const video = await createPlayableVideo(job.plan, topic, style);
+      job.plan.videoUrl = video.videoUrl;
+      job.plan.videoTask.previewUrl = video.videoUrl;
+      job.plan.videoTask.fileName = video.fileName;
+      job.plan.status = 'video_ready';
+      job.plan.statusLabel = '视频已生成，可点击播放';
+      job.plan.videoTask.note = '完整成片 MP4 已生成，可直接播放、全屏查看或下载。';
+      job.plan.pipelineStages = job.plan.pipelineStages.map(stage => ({ ...stage, status: 'done', progress: 100 }));
+      job.status = 'video_ready';
+      job.progress = 100;
+      addAiHistoryRecord({ userId, toolId: 'video-pipeline', toolName: '开源Skill完整成片', input: topic, output: JSON.stringify(job.plan), model: job.plan.model || 'local-template', tokens: 0 });
+    } catch (err) {
+      job.status = 'video_failed';
+      job.progress = 70;
+      job.plan.status = 'video_failed';
+      job.plan.statusLabel = '视频生成失败';
+      job.plan.videoTask.note = `服务器视频生成失败：${err.message}`;
+      job.plan.pipelineStages = job.plan.pipelineStages.map(stage => stage.status === 'running' ? { ...stage, status: 'failed' } : stage);
+    }
+  });
+  res.json({ code: 0, message: '完整成片任务已创建，正在后台渲染', data: { plan, job, balance: pay.balance, cost } });
 });
 
 app.post('/api/v1/skills/video-pipeline/generate', authCheck, async (req, res) => {
