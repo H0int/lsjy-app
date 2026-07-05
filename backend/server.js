@@ -6422,8 +6422,7 @@ app.post('/api/v1/skills/video-pipeline/render', authCheck, async (req, res) => 
       ];
       const video = await createPlayableVideo(job.plan, topic, style);
       job.plan.videoUrl = video.videoUrl;
-      job.plan.videoTask.previewUrl = video.videoUrl;
-      job.plan.videoTask.fileName = video.fileName;
+      job.plan.videoTask = { ...job.plan.videoTask, ...video, previewUrl: video.videoUrl };
       job.plan.status = 'video_ready';
       job.plan.statusLabel = '视频已生成，可点击播放';
       job.plan.videoTask.note = '完整成片 MP4 已生成，可直接播放、全屏查看或下载。';
