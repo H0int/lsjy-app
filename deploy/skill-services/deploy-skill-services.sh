@@ -28,6 +28,20 @@ if ! command -v docker >/dev/null 2>&1; then
   systemctl start docker || service docker start || true
 fi
 
+mkdir -p /etc/docker
+cat > /etc/docker/daemon.json <<'EOF'
+{
+  "registry-mirrors": [
+    "https://docker.m.daocloud.io",
+    "https://docker.1panel.live",
+    "https://docker.1ms.run"
+  ]
+}
+EOF
+systemctl daemon-reload || true
+systemctl restart docker || service docker restart || true
+sleep 3
+
 if docker compose version >/dev/null 2>&1; then
   COMPOSE="docker compose"
 elif command -v docker-compose >/dev/null 2>&1; then
@@ -87,6 +101,8 @@ PY
     echo "已注入 Matomo 代理：$conf"
   fi
 done
+echo "当前 api.lsjyapp.cn 配置位置："
+grep -R "server_name .*api\\.lsjyapp\\.cn" -n /etc/nginx/conf.d /etc/nginx/sites-enabled 2>/dev/null || true
 nginx -t && nginx -s reload || true
 
 if [ ! -f .env ]; then
@@ -100,8 +116,20 @@ EOF
 fi
 
 echo "拉取并启动 Matomo..."
-$COMPOSE pull
-$COMPOSE up -d
+if ! $COMPOSE pull; then
+  echo "DockerHub 拉取失败，切换公共镜像前缀重试..."
+  for prefix in "docker.m.daocloud.io/library" "docker.1panel.live/library" "docker.1ms.run/library"; do
+    echo "尝试镜像前缀：$prefix"
+    cp docker-compose.yml docker-compose.yml.bak
+    sed -i "s#image: matomo:5-apache#image: ${prefix}/matomo:5-apache#g" docker-compose.yml
+    sed -i "s#image: mariadb:10.11#image: ${prefix}/mariadb:10.11#g" docker-compose.yml
+    if $COMPOSE pull; then
+      break
+    fi
+    mv docker-compose.yml.bak docker-compose.yml
+  done
+fi
+$COMPOSE up -d || true
 
 echo "等待 Matomo 启动..."
 for i in $(seq 1 24); do
