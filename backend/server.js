@@ -2460,6 +2460,104 @@ app.get('/api/v1', (req, res) => {
 const visitorsStore = [];
 const clickStore = [];
 const knowledgeStore = [];
+const KNOWLEDGE_FILE = path.join(__dirname, 'data', 'knowledge_base.json');
+const DEFAULT_COMPANY_KNOWLEDGE = [
+  {
+    id: 101,
+    title: '罗圣纪元公司介绍、文化与来时路',
+    type: '公司',
+    tags: ['公司介绍', '企业文化', '来时路', '罗圣纪元'],
+    content: `罗圣纪元，全称祁阳市罗圣纪元互联网科技有限责任公司，是一家以“AI赋能实体经济”为核心方向的科技服务公司。平台不是只做单点工具，而是把 AI 智能体、内容生产、电商服务、校园场景、企业运营和本地实体服务连接起来，让普通用户、商家、团队和创业者都能用得上 AI。
+
+公司相信技术要落到真实生活里。AI 不应该只是少数专业人士的玩具，而应该成为小店老板做活动、客服回复客户、学生整理资料、创作者做内容、企业梳理运营的日常助手。罗圣纪元的价值观可以概括为四句话：帮实体解决问题，帮普通人提高效率，帮团队降低试错成本，帮地方商业连接新技术。
+
+公司的来时路来自一个朴素判断：很多实体经营者并不是没有想法，而是缺少工具、内容、流量和数字化能力。罗圣纪元从本地服务、内容创作和 AI 工具聚合出发，把复杂模型能力包装成更容易理解的智能体，让用户不必学习复杂提示词，也能直接完成文案、图片、视频、客服、运营分析和业务咨询。
+
+罗圣纪元的品牌气质是务实、长期、敢闯。务实，是因为平台里的每一个智能体都要能帮助用户完成具体事情；长期，是因为公司不追短期噱头，要持续建设知识库、模型配置、支付体系、会员体系和业务后台；敢闯，是因为公司面向县域、本地商家、校园和新媒体等真实场景，把 AI 与实体经济结合，而不是停留在概念层面。
+
+对外介绍公司时，可以这样表达：罗圣纪元是一家扎根本地、面向全国的 AI 赋能型互联网科技公司，致力于把先进 AI 能力变成普通人和实体商家都能使用的生产力工具。`,
+    status: 'indexed',
+    createdAt: '2026-07-05T00:00:00.000Z',
+    updatedAt: '2026-07-05T00:00:00.000Z',
+  },
+  {
+    id: 102,
+    title: '罗圣纪元业务板块说明',
+    type: '产品',
+    tags: ['业务板块', 'AI智能体', '圣力', '会员'],
+    content: `罗圣纪元平台的业务由多个板块组成，核心是 AI 智能体和圣力体系。用户通过圣力调用 AI 工具，平台通过会员订阅、充值套餐和业务服务承载长期使用。
+
+AI 智能体板块提供文案创作、商业咨询、数据分析、客服回复、学习辅导、图片生成、视频生成等能力。每个智能体都要尽量贴近真实场景，例如帮助商家写活动文案，帮助客服整理回复话术，帮助创作者生成短视频脚本，帮助团队做业务分析。
+
+圣力中心是平台的能力计量系统。用户调用 AI 服务会消耗圣力，购买会员或充值套餐可以获得圣力。会员订阅不仅代表身份权益，也代表持续使用 AI 的能力补给，例如每日赠送圣力、订阅周期内保持会员状态。
+
+后台管理系统用于支撑平台运营，包括用户管理、在线用户、访客中心、AI 智能体、对话记录、模型配置、知识库管理、充值记录、订单管理和系统设置。后台数据要尽量与前端真实使用同步，避免出现用户看到一套、后台看到另一套的情况。
+
+公司的长期方向是把 AI 工具、知识库、模型能力和实体业务场景连成一个平台。用户可以从一个入口完成内容、咨询、客服、经营分析和创意生成，商家可以用更低成本获得数字化能力。`,
+    status: 'indexed',
+    createdAt: '2026-07-05T00:01:00.000Z',
+    updatedAt: '2026-07-05T00:01:00.000Z',
+  },
+  {
+    id: 103,
+    title: '罗圣纪元智能体统一回答口径',
+    type: 'FAQ',
+    tags: ['智能体口径', '客服问答', '品牌介绍'],
+    content: `当用户询问“罗圣纪元是什么”时，智能体应回答：罗圣纪元是祁阳市罗圣纪元互联网科技有限责任公司打造的 AI 赋能平台，面向个人、商家、团队和实体经济场景，提供 AI 智能体、内容创作、图片视频生成、业务咨询和平台运营服务。
+
+当用户询问“平台能做什么”时，智能体应围绕实际用途回答：可以写文案、做活动方案、生成短视频脚本、辅助客服回复、分析经营数据、生成图片和视频、整理学习资料、辅助商家做营销。回答要具体，不要只说“我们很强”。
+
+当用户询问“圣力是什么”时，智能体应回答：圣力是平台内调用 AI 工具和智能体服务的能力值。用户可以通过充值套餐、会员订阅和平台活动获得圣力。不同模型和工具可能消耗不同数量的圣力。
+
+当用户询问“会员有什么用”时，智能体应回答：会员代表平台持续使用权益，通常包含订阅周期、每日赠送圣力、专属能力或后续扩展权益。用户购买会员后，后台审核通过即可开通会员并发放首日圣力。
+
+当用户询问“公司文化”时，智能体应强调务实、长期、服务实体、帮助普通人使用 AI。回答要自然、清楚、有温度，不要堆砌空洞口号。`,
+    status: 'indexed',
+    createdAt: '2026-07-05T00:02:00.000Z',
+    updatedAt: '2026-07-05T00:02:00.000Z',
+  },
+  {
+    id: 104,
+    title: '公司文化知识片段',
+    type: '公司',
+    tags: ['知识片段', '文化', '价值观'],
+    content: `知识片段一：罗圣纪元的核心方向是 AI 赋能实体经济。平台希望把复杂 AI 能力变成商家、创作者、学生和团队都能使用的工具。
+
+知识片段二：罗圣纪元重视真实场景。一个功能好不好，不只看技术名字是否先进，更看它能不能帮助用户更快完成文案、客服、分析、图片、视频和经营决策。
+
+知识片段三：罗圣纪元的服务对象包括个人用户、本地商家、内容创作者、校园场景、创业团队和企业客户。平台要让不同用户都能找到适合自己的智能体。
+
+知识片段四：罗圣纪元的产品风格是把前端体验和后台管理打通。用户购买、调用、消耗、会员状态、订单审核和后台统计都应尽量同步。
+
+知识片段五：罗圣纪元的长期目标是建设一个可持续演进的 AI 服务平台，而不是一次性工具集合。知识库、模型配置、对话记录和智能体管理都要逐步沉淀为平台资产。`,
+    status: 'indexed',
+    createdAt: '2026-07-05T00:03:00.000Z',
+    updatedAt: '2026-07-05T00:03:00.000Z',
+  },
+  {
+    id: 105,
+    title: '客户常见问题知识片段',
+    type: 'FAQ',
+    tags: ['客户问题', '售前', '售后', '知识片段'],
+    content: `问题：为什么要使用罗圣纪元？
+回答：罗圣纪元把多种 AI 能力集中在一个平台里，用户不用反复切换工具，可以直接用智能体完成文案、图片、视频、客服、学习和经营分析等任务。
+
+问题：平台适合哪些人？
+回答：适合个人创作者、实体商家、校园用户、创业团队、电商从业者、客服人员和需要提高内容生产效率的用户。
+
+问题：后台知识库有什么用？
+回答：知识库用于沉淀公司介绍、业务说明、客服口径、产品规则和常见问题。智能体可以围绕这些内容回答用户，后台运营人员也能统一查看和维护。
+
+问题：用户不了解公司怎么办？
+回答：智能体应先用简洁语言介绍公司，再结合用户的问题说明平台能帮什么，不要只说概念。必要时引导用户查看圣力中心、AI 智能体、会员订阅和客服入口。
+
+问题：如何表达公司的可信度？
+回答：可以说明公司全称、平台方向、服务场景和后台体系。表达要实在，避免夸大承诺，不承诺无法保证的收益。`,
+    status: 'indexed',
+    createdAt: '2026-07-05T00:04:00.000Z',
+    updatedAt: '2026-07-05T00:04:00.000Z',
+  },
+];
 const adminRolesStore = [
   { id: 1, name: 'boss', displayName: 'Boss账号', description: '老板最高权限', permissions: ['dashboard:view', 'users:manage', 'finance:manage', 'system:manage'], userCount: 1, status: '启用' },
   { id: 2, name: 'admin', displayName: '管理员', description: '后台管理权限', permissions: ['dashboard:view', 'users:manage'], userCount: 0, status: '启用' },
@@ -2478,6 +2576,39 @@ function saveVisitors() {
   fs.mkdirSync(path.dirname(VISITORS_FILE), { recursive: true });
   fs.writeFileSync(VISITORS_FILE, JSON.stringify(visitorsStore, null, 2));
 }
+
+function normalizeKnowledgeItem(item) {
+  const content = String(item.content || '');
+  return {
+    ...item,
+    chunks: Number(item.chunks || Math.max(1, Math.ceil(content.length / 500))),
+    status: item.status || 'indexed',
+    updatedAt: item.updatedAt || item.createdAt || new Date().toISOString(),
+  };
+}
+
+function saveKnowledgeStore() {
+  fs.mkdirSync(path.dirname(KNOWLEDGE_FILE), { recursive: true });
+  fs.writeFileSync(KNOWLEDGE_FILE, JSON.stringify(knowledgeStore.map(normalizeKnowledgeItem), null, 2));
+}
+
+function loadKnowledgeStore() {
+  let existing = [];
+  try {
+    existing = JSON.parse(fs.readFileSync(KNOWLEDGE_FILE, 'utf8'));
+  } catch (e) {
+    existing = [];
+  }
+  const byTitle = new Map();
+  [...existing, ...DEFAULT_COMPANY_KNOWLEDGE].forEach(item => {
+    if (!item?.title) return;
+    byTitle.set(item.title, normalizeKnowledgeItem(item));
+  });
+  knowledgeStore.splice(0, knowledgeStore.length, ...Array.from(byTitle.values()));
+  saveKnowledgeStore();
+}
+
+loadKnowledgeStore();
 
 function formatDateTime(dateInput = new Date()) {
   const d = dateInput instanceof Date ? dateInput : new Date(dateInput);
@@ -2684,12 +2815,16 @@ app.post('/api/v1/knowledge', authCheck, (req, res) => {
     updatedAt: new Date().toISOString(),
   };
   knowledgeStore.unshift(item);
+  saveKnowledgeStore();
   res.json({ code: 0, message: '上传成功', data: item });
 });
 
 app.delete('/api/v1/knowledge/:id', authCheck, (req, res) => {
   const idx = knowledgeStore.findIndex(item => String(item.id) === String(req.params.id));
-  if (idx >= 0) knowledgeStore.splice(idx, 1);
+  if (idx >= 0) {
+    knowledgeStore.splice(idx, 1);
+    saveKnowledgeStore();
+  }
   res.json({ code: 0, message: '删除成功', data: null });
 });
 
