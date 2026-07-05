@@ -52,7 +52,7 @@
           <el-button size="small" @click="healthCheck(item)">自检</el-button>
           <el-button size="small" type="success" :disabled="item.status === 'pending_deploy' || item.status === 'planned'" @click="setStatus(item, 'enabled')">启用</el-button>
           <el-button size="small" type="warning" @click="setStatus(item, 'disabled')">停用</el-button>
-          <el-button size="small" link type="primary" @click="$router.push(item.entry)">打开入口</el-button>
+          <el-button size="small" link type="primary" @click="openEntry(item)">打开入口</el-button>
         </div>
       </div>
     </div>
@@ -110,6 +110,16 @@ async function setStatus(item: any, status: string) {
   } catch (e: any) {
     ElMessage.warning(e?.response?.data?.message || '当前 Skill 还不能启用')
   }
+}
+
+function openEntry(item: any) {
+  const entry = item.entry || ''
+  if (entry.startsWith('http') || entry.startsWith('/matomo')) {
+    const url = entry.startsWith('http') ? entry : `https://api.lsjyapp.cn${entry}`
+    window.open(url, '_blank')
+    return
+  }
+  window.location.hash = entry
 }
 
 onMounted(fetchData)

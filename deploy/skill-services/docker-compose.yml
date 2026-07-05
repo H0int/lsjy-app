@@ -1,0 +1,45 @@
+services:
+  lsjy-matomo-db:
+    image: mariadb:10.11
+    container_name: lsjy-matomo-db
+    restart: unless-stopped
+    command: --max-allowed-packet=64MB
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MATOMO_DB_ROOT_PASSWORD:-lsjy_matomo_root_2026}
+      MYSQL_DATABASE: ${MATOMO_DB_NAME:-matomo}
+      MYSQL_USER: ${MATOMO_DB_USER:-matomo}
+      MYSQL_PASSWORD: ${MATOMO_DB_PASSWORD:-lsjy_matomo_2026}
+    volumes:
+      - lsjy_matomo_db:/var/lib/mysql
+    networks:
+      - lsjy_skill_net
+
+  lsjy-matomo:
+    image: matomo:5-apache
+    container_name: lsjy-matomo
+    restart: unless-stopped
+    depends_on:
+      - lsjy-matomo-db
+    environment:
+      MATOMO_DATABASE_HOST: lsjy-matomo-db
+      MATOMO_DATABASE_ADAPTER: mysql
+      MATOMO_DATABASE_TABLES_PREFIX: matomo_
+      MATOMO_DATABASE_USERNAME: ${MATOMO_DB_USER:-matomo}
+      MATOMO_DATABASE_PASSWORD: ${MATOMO_DB_PASSWORD:-lsjy_matomo_2026}
+      MATOMO_DATABASE_DBNAME: ${MATOMO_DB_NAME:-matomo}
+      MATOMO_ENABLE_PROXY_URI_HEADER: 1
+      PHP_MEMORY_LIMIT: 256M
+    ports:
+      - "127.0.0.1:8088:80"
+    volumes:
+      - lsjy_matomo_app:/var/www/html
+    networks:
+      - lsjy_skill_net
+
+networks:
+  lsjy_skill_net:
+    name: lsjy_skill_net
+
+volumes:
+  lsjy_matomo_db:
+  lsjy_matomo_app:

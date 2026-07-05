@@ -28,6 +28,8 @@ jobs:
           tar -czf /tmp/lsjy-cors-fix.tar.gz \
             deploy/ecs-live-config/backend-nestjs/main.js \
             deploy/ecs-live-config/nginx-lsjy-live.conf \
+            deploy/skill-services/docker-compose.yml \
+            deploy/skill-services/deploy-skill-services.sh \
             backend/server.js
 
           scp -o StrictHostKeyChecking=no -o ConnectTimeout=20 /tmp/lsjy-cors-fix.tar.gz root@47.97.166.219:/tmp/lsjy-cors-fix.tar.gz
@@ -108,6 +110,12 @@ jobs:
               cp /tmp/deploy/ecs-live-config/nginx-lsjy-live.conf "$NGINX_CONF"
               nginx -t && nginx -s reload
               echo "Nginx配置已更新"
+            fi
+
+            # 部署开源Skill独立服务（当前先启动 Matomo，Docker不存在时安全跳过）
+            if [ -f "/tmp/deploy/skill-services/deploy-skill-services.sh" ]; then
+              chmod +x /tmp/deploy/skill-services/deploy-skill-services.sh
+              bash /tmp/deploy/skill-services/deploy-skill-services.sh || true
             fi
 
             # 写入后端模型环境变量（密钥来自 GitHub Secrets，不进入前端和源码）

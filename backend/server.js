@@ -484,7 +484,7 @@ const systemSettingsStore = {
 };
 
 const openSourceSkillStore = [
-  { id: 'matomo', phase: '一期紧急同步', name: 'Matomo 开源统计系统', category: '数据统计', repo: 'matomo-org/matomo', entry: '/admin/reports', status: 'pending_deploy', adapter: '中转API', coinCost: 0, riskLevel: 'medium', description: '用于用户行为、工具调用、作品产出统计；当前先接入平台真实日志与报表接口，Matomo 容器待部署。', conflicts: ['不接管现有埋点', '不覆盖访客中心数据结构'] },
+  { id: 'matomo', phase: '一期紧急同步', name: 'Matomo 开源统计系统', category: '数据统计', repo: 'matomo-org/matomo', entry: '/matomo/', status: 'pending_deploy', adapter: 'Docker容器 + Nginx路径代理', coinCost: 0, riskLevel: 'medium', description: '用于用户行为、工具调用、作品产出统计；通过独立容器运行，不接管现有访客中心。', conflicts: ['不接管现有埋点', '不覆盖访客中心数据结构'] },
   { id: 'logto', phase: '一期紧急同步', name: 'Logto 开源身份认证', category: '账号安全', repo: 'logto-io/logto', entry: '/admin/permissions', status: 'pending_deploy', adapter: '独立认证服务', coinCost: 0, riskLevel: 'high', description: '短信/图形验证码、登录异常预警、身份管理；当前保留平台 JWT 登录，Logto 作为后续独立认证层接入。', conflicts: ['不替换现有 JWT', '不修改罗总账号权限'] },
   { id: 'copilotkit', phase: '一期紧急同步', name: 'CopilotKit 流式对话组件', category: 'AI交互', repo: 'CopilotKit/CopilotKit', entry: '/agent', status: 'pending_deploy', adapter: '前端组件适配', coinCost: 0, riskLevel: 'medium', description: '用于流式对话、加载进度、AI助手体验增强；当前保持原有智能体通道稳定。', conflicts: ['不覆盖现有 AgentChat', '不改豆包调用底层'] },
   { id: 'money-printer-turbo', phase: '一期紧急同步', name: 'MoneyPrinterTurbo 全自动成片', category: '视频流水线', repo: 'harry0703/MoneyPrinterTurbo', entry: '/video-pipeline', status: 'pending_deploy', adapter: '容器化服务', coinCost: 20, riskLevel: 'medium', description: '负责文案、素材、字幕、成片流水线；当前先落地平台短视频脚本生成入口，成片容器待部署。', conflicts: ['不替换原生视频生成', '独立扣费'] },
@@ -5867,12 +5867,27 @@ app.put('/api/v1/admin/skills/open-source/:id', authCheck, (req, res) => {
   res.json({ code: 0, message: '更新成功', data: normalizeSkill(item) });
 });
 
-app.post('/api/v1/admin/skills/open-source/:id/health-check', authCheck, (req, res) => {
+app.post('/api/v1/admin/skills/open-source/:id/health-check', authCheck, async (req, res) => {
   const item = openSourceSkillStore.find(i => i.id === req.params.id);
   if (!item) return res.status(404).json({ code: 404, message: 'Skill 不存在', data: null });
   item.lastCheckedAt = new Date().toISOString();
-  const ok = item.status === 'active_adapter' || item.status === 'enabled';
-  res.json({ code: 0, message: ok ? '内置适配可用' : '第三方服务未部署，已保持隔离', data: { id: item.id, ok, status: item.status, statusLabel: normalizeSkill(item).statusLabel, checkedAt: item.lastCheckedAt } });
+  let ok = item.status === 'active_adapter' || item.status === 'enabled';
+  let detail = ok ? '内置适配可用' : '第三方服务未部署，已保持隔离';
+  if (item.id === 'matomo') {
+    try {
+      const check = await httpsRequest('http://127.0.0.1:8088/', { method: 'GET', timeout: 3000, retries: 0 });
+      ok = check.status >= 200 && check.status < 500;
+      if (ok) {
+        item.status = 'enabled';
+        item.entry = '/matomo/';
+        detail = 'Matomo 容器服务可访问';
+      }
+    } catch (e) {
+      ok = false;
+      detail = 'Matomo 容器暂未启动或端口不可访问';
+    }
+  }
+  res.json({ code: 0, message: ok ? detail : detail, data: { id: item.id, ok, status: item.status, statusLabel: normalizeSkill(item).statusLabel, checkedAt: item.lastCheckedAt, detail } });
 });
 
 app.get('/api/v1/skills/open-source/public', authCheck, (req, res) => {
