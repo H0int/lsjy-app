@@ -2,14 +2,18 @@
   <div>
     <div class="cyber-toolbar">
       <div class="toolbar-left">
-        <el-input v-model="search" placeholder="搜索对话内容..." class="cyber-input w-64" clearable />
-        <el-select v-model="agentFilter" placeholder="智能体" class="cyber-input w-40" clearable>
+        <el-input v-model="search" placeholder="搜索对话内容..." class="chat-log-control cyber-input w-64" clearable />
+        <el-select v-model="agentFilter" placeholder="智能体" class="chat-log-control cyber-input w-40" clearable popper-class="chat-log-popper">
           <el-option v-for="a in agentNames" :key="a" :label="a" :value="a" />
         </el-select>
         <el-date-picker v-model="dateRange" type="daterange" range-separator="至" start-placeholder="开始日期"
-          end-placeholder="结束日期" class="cyber-input" style="width:260px" />
+          end-placeholder="结束日期" class="chat-log-control chat-log-date cyber-input" popper-class="chat-log-date-popper" style="width:260px" />
       </div>
-      <el-button @click="exportLogs">📥 导出</el-button>
+      <div class="toolbar-right">
+        <span class="sync-text">{{ lastSyncAt ? `已同步 ${lastSyncAt}` : '实时同步中' }}</span>
+        <el-button :loading="loading" @click="fetchLogs">🔄 刷新</el-button>
+        <el-button @click="exportLogs">📥 导出</el-button>
+      </div>
     </div>
 
     <!-- 桌面端 -->
@@ -27,7 +31,7 @@
         </el-table-column>
         <el-table-column label="智能体" width="120">
           <template #default="{ row }">
-            <span class="cyber-tag tag-cyan">{{ row.agentName }}</span>
+            <span class="cyber-tag tag-cyan">{{ row.agentName || row.toolName }}</span>
           </template>
         </el-table-column>
         <el-table-column label="用户提问" min-width="200">
@@ -85,7 +89,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import service from '@/api/request'
 
@@ -95,8 +99,10 @@ const dateRange = ref(null)
 const page = ref(1)
 const pageSize = 20
 const loading = ref(false)
+const lastSyncAt = ref('')
+let syncTimer: ReturnType<typeof setInterval> | null = null
 
-const agentNames = ['代码助手', '文案创作', '数据分析', '客服机器人', '翻译专家', '学习导师']
+const agentNames = ref<string[]>([])
 
 const allLogs = ref<any[]>([])
 
@@ -105,6 +111,7 @@ const total = ref(0)
 const filteredLogs = computed(() => allLogs.value)
 
 async function fetchLogs() {
+  if (loading.value) return
   loading.value = true
   try {
     const res = await service.get('/admin/chat-logs', {
@@ -112,12 +119,15 @@ async function fetchLogs() {
         search: search.value,
         toolName: agentFilter.value,
         page: page.value,
-        pageSize
+        pageSize,
+        _t: Date.now()
       }
     })
     if (res.data.code === 0) {
-      allLogs.value = res.data.data.logs || []
+      allLogs.value = (res.data.data.logs || res.data.data.list || []).map(normalizeLog)
       total.value = res.data.data.total || 0
+      agentNames.value = Array.from(new Set(allLogs.value.map(l => l.agentName).filter(Boolean)))
+      lastSyncAt.value = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
     }
   } catch (e) {
     ElMessage.error('加载对话记录失败')
@@ -126,11 +136,45 @@ async function fetchLogs() {
   }
 }
 
-onMounted(fetchLogs)
+onMounted(() => {
+  fetchLogs()
+  syncTimer = setInterval(fetchLogs, 5000)
+  document.addEventListener('visibilitychange', handleVisibilitySync)
+})
+
+onUnmounted(() => {
+  if (syncTimer) clearInterval(syncTimer)
+  document.removeEventListener('visibilitychange', handleVisibilitySync)
+})
 
 watch([search, agentFilter, page], () => {
   fetchLogs()
 })
+
+function handleVisibilitySync() {
+  if (!document.hidden) fetchLogs()
+}
+
+function normalizeLog(log: any) {
+  return {
+    ...log,
+    userName: log.userName || log.username || `用户#${log.userId || ''}`,
+    agentName: log.agentName || log.toolName || 'AI智能体',
+    question: log.question || log.input || '',
+    answer: log.answer || log.output || '',
+    latency: Number(log.latency ?? log.durationMs ?? log.duration ?? 0),
+    tokens: Number(log.tokens || 0),
+    rating: Number(log.rating || 5),
+    time: formatLogTime(log.time || log.createdAt),
+  }
+}
+
+function formatLogTime(value: string) {
+  if (!value) return ''
+  const d = new Date(value)
+  if (Number.isNaN(d.getTime())) return value
+  return d.toLocaleString('zh-CN', { hour12: false })
+}
 
 function exportLogs() {
   if (!allLogs.value.length) {
@@ -154,7 +198,45 @@ function exportLogs() {
 <style scoped>
 .cyber-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }
 .toolbar-left { display: flex; gap: 12px; flex-wrap: wrap; }
+.toolbar-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.sync-text { font-size: 11px; color: #6a6a8a; }
 .cyber-input { flex-shrink: 0; }
+.chat-log-control :deep(.el-input__wrapper),
+.chat-log-control :deep(.el-select__wrapper) {
+  background: rgba(10, 10, 20, 0.72) !important;
+  border: 1px solid rgba(0, 240, 255, 0.16) !important;
+  box-shadow: none !important;
+}
+.chat-log-control :deep(.el-input__wrapper.is-focus),
+.chat-log-control :deep(.el-select__wrapper.is-focused) {
+  border-color: var(--cyber-cyan) !important;
+  box-shadow: 0 0 0 1px rgba(0, 240, 255, 0.2), 0 0 12px rgba(0, 240, 255, 0.12) !important;
+}
+.chat-log-control :deep(.el-input__inner),
+.chat-log-control :deep(.el-select__selected-item),
+.chat-log-control :deep(.el-range-input) {
+  color: var(--cyber-text) !important;
+  -webkit-text-fill-color: var(--cyber-text) !important;
+}
+.chat-log-control :deep(.el-input__inner::placeholder),
+.chat-log-control :deep(.el-range-input::placeholder) {
+  color: rgba(160, 160, 204, 0.72) !important;
+  -webkit-text-fill-color: rgba(160, 160, 204, 0.72) !important;
+}
+.chat-log-control :deep(.el-input__prefix),
+.chat-log-control :deep(.el-input__suffix),
+.chat-log-control :deep(.el-select__caret),
+.chat-log-date :deep(.el-range-separator),
+.chat-log-date :deep(.el-range__icon),
+.chat-log-date :deep(.el-range__close-icon) {
+  color: var(--cyber-cyan) !important;
+}
+.chat-log-date :deep(.el-date-editor) {
+  background: rgba(10, 10, 20, 0.72) !important;
+}
+.chat-log-date :deep(.el-range-input) {
+  background: transparent !important;
+}
 .w-full { width: 100%; }
 .mt-4 { margin-top: 16px; }
 .mb-1 { margin-bottom: 4px; }
@@ -181,6 +263,55 @@ function exportLogs() {
 .cyber-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
 .tag-cyan { background: rgba(0,240,255,0.1); color: #00f0ff; border: 1px solid rgba(0,240,255,0.2); }
 .tag-purple { background: rgba(124,58,237,0.15); color: #c084fc; border: 1px solid rgba(124,58,237,0.3); }
+
+:global(.chat-log-popper),
+:global(.chat-log-date-popper) {
+  background: #080b18 !important;
+  border: 1px solid rgba(0, 240, 255, 0.2) !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.55), 0 0 20px rgba(0, 240, 255, 0.1) !important;
+}
+:global(.chat-log-popper .el-select-dropdown__item) {
+  color: #e8f8ff !important;
+}
+:global(.chat-log-popper .el-select-dropdown__item.is-hovering),
+:global(.chat-log-popper .el-select-dropdown__item.is-selected) {
+  background: rgba(0, 240, 255, 0.12) !important;
+  color: var(--cyber-cyan) !important;
+}
+:global(.chat-log-date-popper .el-picker-panel),
+:global(.chat-log-date-popper .el-date-range-picker),
+:global(.chat-log-date-popper .el-picker-panel__body),
+:global(.chat-log-date-popper .el-picker-panel__sidebar) {
+  background: #080b18 !important;
+  color: #e8f8ff !important;
+}
+:global(.chat-log-date-popper .el-date-table th),
+:global(.chat-log-date-popper .el-date-table td),
+:global(.chat-log-date-popper .el-picker-panel__icon-btn),
+:global(.chat-log-date-popper .el-date-range-picker__header),
+:global(.chat-log-date-popper .el-date-range-picker__header div) {
+  color: #a0a0cc !important;
+}
+:global(.chat-log-date-popper .el-date-table td.available:hover),
+:global(.chat-log-date-popper .el-date-table td.in-range .el-date-table-cell) {
+  background: rgba(0, 240, 255, 0.12) !important;
+}
+:global(.chat-log-date-popper .el-date-table td.current:not(.disabled) .el-date-table-cell__text),
+:global(.chat-log-date-popper .el-date-table td.today .el-date-table-cell__text) {
+  background: var(--cyber-cyan) !important;
+  color: #001018 !important;
+}
+
+:deep(.el-pagination button),
+:deep(.el-pagination .el-pager li) {
+  background: rgba(10, 10, 20, 0.72) !important;
+  color: var(--cyber-text) !important;
+  border: 1px solid rgba(0, 240, 255, 0.12);
+}
+:deep(.el-pagination .el-pager li.is-active) {
+  background: rgba(0, 240, 255, 0.16) !important;
+  color: var(--cyber-cyan) !important;
+}
 @media (max-width: 767px) { .hidden { display: none; } .md\:hidden { display: none; } .md\:block { display: none; } }
 @media (min-width: 768px) { .md\:hidden { display: block; } .md\:block { display: block; } }
 </style>
