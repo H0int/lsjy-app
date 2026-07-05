@@ -12,9 +12,9 @@
         <h2>API错误列表</h2>
         <div style="display:flex;gap:8px;">
           <el-select v-model="statusFilter" placeholder="状态筛选" clearable size="small" style="width:120px" @change="fetchErrors">
-            <el-option label="pending" value="pending" />
-            <el-option label="resolved" value="resolved" />
-            <el-option label="ignored" value="ignored" />
+            <el-option label="待处理" value="pending" />
+            <el-option label="已解决" value="resolved" />
+            <el-option label="已忽略" value="ignored" />
           </el-select>
           <el-button size="small" type="primary" @click="batchResolve" :disabled="!selectedIds.length">批量解决</el-button>
         </div>
@@ -25,7 +25,7 @@
         <el-table-column prop="apiPath" label="路径" />
         <el-table-column prop="errorMessage" label="错误信息" show-overflow-tooltip />
         <el-table-column prop="status" label="状态" width="100">
-          <template #default="{ row }"><el-tag :type="row.status === 'resolved' ? 'success' : row.status === 'ignored' ? 'info' : 'danger'" size="small" effect="dark">{{ row.status }}</el-tag></template>
+          <template #default="{ row }"><el-tag :type="row.status === 'resolved' ? 'success' : row.status === 'ignored' ? 'info' : 'danger'" size="small" effect="dark">{{ statusLabel(row.status) }}</el-tag></template>
         </el-table-column>
         <el-table-column prop="createdAt" label="时间" width="160" />
         <el-table-column label="操作" width="180" fixed="right">
@@ -55,6 +55,10 @@ const pageSize = 20
 const statusFilter = ref('')
 const selectedIds = ref<number[]>([])
 const stats = ref<any>({})
+
+function statusLabel(status: string) {
+  return { pending: '待处理', resolved: '已解决', ignored: '已忽略' }[status] || status || '-'
+}
 
 async function fetchErrors() {
   loading.value = true

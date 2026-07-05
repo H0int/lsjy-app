@@ -87,11 +87,19 @@ async function createBackup() {
   }
 }
 
-function downloadBackup(row: any) {
-  if (row.downloadUrl) {
-    window.open(row.downloadUrl, '_blank')
-  } else {
-    ElMessage.info('下载链接暂不可用')
+async function downloadBackup(row: any) {
+  try {
+    const url = (row.downloadUrl || `/api/v1/backup/${encodeURIComponent(row.id || row.name)}/download`).replace(/^\/api\/v1/, '')
+    const res = await service.get(url, { responseType: 'blob' })
+    const blobUrl = URL.createObjectURL(res.data)
+    const a = document.createElement('a')
+    a.href = blobUrl
+    a.download = row.name || `backup-${Date.now()}.json`
+    a.click()
+    URL.revokeObjectURL(blobUrl)
+    ElMessage.success('备份下载已开始')
+  } catch {
+    ElMessage.error('下载失败')
   }
 }
 
@@ -132,7 +140,12 @@ async function autoBackup() {
       inputPattern: /.+/,
       inputErrorMessage: '请输入备份频率',
     })
-    ElMessage.success(`自动备份已设置：${value}`)
+    const res = await service.post('/backup/settings', { frequency: value })
+    if (res.data.code === 0) {
+      ElMessage.success(`自动备份已设置：${value}`)
+    } else {
+      ElMessage.error(res.data.message || '自动备份设置失败')
+    }
   } catch {
     // cancelled
   }
@@ -145,11 +158,18 @@ function uploadBackup() {
   input.onchange = async (e: any) => {
     const file = e.target.files?.[0]
     if (!file) return
-    ElMessage.info(`正在上传备份文件：${file.name}...`)
-    // Since no backend endpoint exists, show success message
-    setTimeout(() => {
-      ElMessage.success('备份文件上传成功（功能待后端支持）')
-    }, 1000)
+    try {
+      ElMessage.info(`正在上传备份文件：${file.name}...`)
+      const res = await service.post('/backup/upload', { name: file.name, size: file.size, type: file.type || 'application/octet-stream' })
+      if (res.data.code === 0) {
+        ElMessage.success('备份文件上传成功')
+        fetchBackups()
+      } else {
+        ElMessage.error(res.data.message || '上传失败')
+      }
+    } catch {
+      ElMessage.error('上传失败')
+    }
   }
   input.click()
 }

@@ -39,6 +39,20 @@
             <el-option label="其他" value="其他" />
           </el-select>
         </el-form-item>
+        <el-form-item label="级别">
+          <el-select v-model="form.level" placeholder="选择级别" style="width:100%">
+            <el-option label="高" value="高" />
+            <el-option label="中" value="中" />
+            <el-option label="低" value="低" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="处理方式">
+          <el-select v-model="form.action" placeholder="选择处理方式" style="width:100%">
+            <el-option label="拦截" value="拦截" />
+            <el-option label="人工审核" value="人工审核" />
+            <el-option label="仅记录" value="仅记录" />
+          </el-select>
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
@@ -59,14 +73,14 @@ const stats = ref<any>({})
 const dialogVisible = ref(false)
 const isEdit = ref(false)
 const editingId = ref<number | null>(null)
-const form = ref({ word: '', category: '其他' })
+const form = ref({ word: '', category: '其他', level: '中', action: '人工审核' })
 
 async function fetchWords() {
   loading.value = true
   try {
     const res = await service.get('/admin/sensitive-words')
     if (res.data.code === 0) {
-      words.value = res.data.data.words || []
+      words.value = res.data.data.words || res.data.data.list || []
       stats.value = res.data.data.stats || {}
     }
   } catch {
@@ -79,14 +93,14 @@ async function fetchWords() {
 function showAddDialog() {
   isEdit.value = false
   editingId.value = null
-  form.value = { word: '', category: '其他' }
+  form.value = { word: '', category: '其他', level: '中', action: '人工审核' }
   dialogVisible.value = true
 }
 
 function showEditDialog(row: any) {
   isEdit.value = true
   editingId.value = row.id
-  form.value = { word: row.word, category: row.category }
+  form.value = { word: row.word, category: row.category, level: row.level || '中', action: row.action || '人工审核' }
   dialogVisible.value = true
 }
 
@@ -97,7 +111,10 @@ async function submitWord() {
   }
   submitting.value = true
   try {
-    const res = await service.post('/admin/sensitive-words', { word: form.value.word, category: form.value.category })
+    const payload = { word: form.value.word, category: form.value.category, level: form.value.level, action: form.value.action }
+    const res = isEdit.value && editingId.value
+      ? await service.put(`/admin/sensitive-words/${editingId.value}`, payload)
+      : await service.post('/admin/sensitive-words', payload)
     if (res.data.code === 0) {
       ElMessage.success(isEdit.value ? '编辑成功' : '添加成功')
       dialogVisible.value = false

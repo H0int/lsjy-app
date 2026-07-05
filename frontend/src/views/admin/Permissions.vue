@@ -22,6 +22,18 @@
       </el-table>
     </div>
 
+    <div class="cyber-card">
+      <div class="card-header"><h2>权限矩阵</h2><span class="hint-text">按模块查看每个角色可用能力</span></div>
+      <div class="permission-groups">
+        <div v-for="group in permissionGroups" :key="group.name" class="permission-group">
+          <div class="group-title">{{ group.name }}</div>
+          <div class="perm-list">
+            <span v-for="p in group.items" :key="p" class="perm-chip">{{ p }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 编辑权限对话框 -->
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="92vw" class="mobile-safe-dialog" append-to-body>
       <el-form label-width="80px" class="permission-form">
@@ -45,7 +57,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import service from '@/api/request'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
@@ -59,6 +71,26 @@ const dialogTitle = ref('编辑角色')
 const editingRoleId = ref<number | null>(null)
 const editForm = ref({ displayName: '', description: '', permissions: [] as string[] })
 
+const permissionGroups = computed(() => {
+  const groups: Record<string, string[]> = {
+    '数据看板': [],
+    '用户与财务': [],
+    '运营内容': [],
+    '客服自动化': [],
+    'AI与模型': [],
+    '系统安全': [],
+  }
+  allPermissions.value.forEach(p => {
+    if (p.startsWith('dashboard')) groups['数据看板'].push(p)
+    else if (p.startsWith('users') || p.startsWith('finance') || p.startsWith('payment') || p.startsWith('withdraw') || p.startsWith('commission')) groups['用户与财务'].push(p)
+    else if (p.startsWith('content') || p.startsWith('campaign') || p.startsWith('coupon') || p.startsWith('message')) groups['运营内容'].push(p)
+    else if (p.startsWith('faq') || p.startsWith('ticket') || p.startsWith('feedback') || p.startsWith('automation')) groups['客服自动化'].push(p)
+    else if (p.startsWith('tools') || p.startsWith('ai') || p.startsWith('model')) groups['AI与模型'].push(p)
+    else groups['系统安全'].push(p)
+  })
+  return Object.entries(groups).map(([name, items]) => ({ name, items }))
+})
+
 async function fetchData() {
   loading.value = true
   try {
@@ -66,7 +98,7 @@ async function fetchData() {
     if (res.data.code === 0) {
       const d = res.data.data
       roles.value = d.roles || []
-      allPermissions.value = d.permissions || []
+      allPermissions.value = d.permissions || d.allPermissions || []
       stats.value = d.stats || {}
     }
   } catch {
@@ -153,6 +185,12 @@ onMounted(fetchData)
 .cyber-card { background: rgba(15,15,25,0.8); border: 1px solid rgba(0,240,255,0.15); border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 1.5rem; }
 .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
 .card-header h2 { font-size: 1rem; font-weight: bold; color: #e0e0ff; margin: 0; }
+.hint-text { color: #8888aa; font-size: 12px; }
+.permission-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.permission-group { background: rgba(0,240,255,0.04); border: 1px solid rgba(0,240,255,0.12); border-radius: 10px; padding: 14px; }
+.group-title { color: #00f0ff; font-weight: 700; font-size: 13px; margin-bottom: 10px; }
+.perm-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.perm-chip { color: #d8e7ff; border: 1px solid rgba(0,240,255,0.18); background: rgba(0,0,0,0.25); border-radius: 999px; padding: 4px 8px; font-size: 11px; font-family: 'JetBrains Mono', monospace; }
 .cyber-table { --el-table-bg-color: transparent; --el-table-tr-bg-color: transparent; --el-table-header-bg-color: rgba(0,240,255,0.05); --el-table-row-hover-bg-color: rgba(0,240,255,0.08); --el-table-border-color: rgba(0,240,255,0.1); --el-table-text-color: #e0e0ff; --el-table-header-text-color: #00f0ff; }
 
 :deep(.mobile-safe-dialog) {
