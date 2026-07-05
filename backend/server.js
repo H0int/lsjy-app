@@ -3041,7 +3041,11 @@ app.get('/api/v1/users/me/roles', authCheck, (req, res) => {
 
 // 更新个人资料
 app.put('/api/v1/users/me', authCheck, (req, res) => {
-  const { nickname, avatar, gender, bio, phone, email } = req.body;
+  const {
+    nickname, avatar, gender, bio, phone, email,
+    wechatId, qq, emergencyContact, emergencyPhone,
+    loginAlertEnabled, deviceLockEnabled, securityQuestion,
+  } = req.body;
   const found = findCurrentUser(req.user?.id || 1);
   const user = found.user;
   if (!user) return res.status(404).json({ code: 404, message: '用户不存在', data: null });
@@ -3054,6 +3058,13 @@ app.put('/api/v1/users/me', authCheck, (req, res) => {
   if (bio !== undefined) user.bio = bio;
   if (phone !== undefined) user.phone = phone;
   if (email !== undefined) user.email = email;
+  if (wechatId !== undefined) user.wechatId = wechatId;
+  if (qq !== undefined) user.qq = qq;
+  if (emergencyContact !== undefined) user.emergencyContact = emergencyContact;
+  if (emergencyPhone !== undefined) user.emergencyPhone = emergencyPhone;
+  if (loginAlertEnabled !== undefined) user.loginAlertEnabled = !!loginAlertEnabled;
+  if (deviceLockEnabled !== undefined) user.deviceLockEnabled = !!deviceLockEnabled;
+  if (securityQuestion !== undefined) user.securityQuestion = securityQuestion;
   const patch = {};
   if (nickname !== undefined) patch.nickname = nickname;
   if (avatar !== undefined) patch.avatar = avatar;
@@ -3061,6 +3072,16 @@ app.put('/api/v1/users/me', authCheck, (req, res) => {
   if (bio !== undefined) patch.bio = bio;
   if (phone !== undefined) patch.phone = phone;
   if (email !== undefined) patch.email = email;
+  if (wechatId !== undefined) patch.wechatId = wechatId;
+  if (qq !== undefined) patch.qq = qq;
+  if (emergencyContact !== undefined) patch.emergencyContact = emergencyContact;
+  if (emergencyPhone !== undefined) patch.emergencyPhone = emergencyPhone;
+  if (loginAlertEnabled !== undefined) patch.loginAlertEnabled = !!loginAlertEnabled;
+  if (deviceLockEnabled !== undefined) patch.deviceLockEnabled = !!deviceLockEnabled;
+  if (securityQuestion !== undefined) patch.securityQuestion = securityQuestion;
+  if (Object.keys(patch).some(k => ['phone', 'email', 'wechatId', 'qq', 'emergencyContact', 'emergencyPhone', 'loginAlertEnabled', 'deviceLockEnabled', 'securityQuestion'].includes(k))) {
+    patch.securityUpdatedAt = new Date().toISOString();
+  }
   if (found.source === 'file') {
     const idx = found.users.findIndex(u => Number(u.id) === Number(user.id));
     if (idx >= 0) found.users[idx] = { ...found.users[idx], ...patch };
