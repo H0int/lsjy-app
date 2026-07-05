@@ -49,7 +49,7 @@
         <div class="text-[10px]" style="color: var(--cyber-text-dim);">{{ selectedAgent.description }}</div>
       </div>
       <select v-if="selectedAgent.toolType !== 'image'" v-model="selectedModelKey"
-        class="px-2 py-1 rounded text-[10px] outline-none max-w-[140px]"
+        class="agent-select px-2 py-1 rounded text-[10px] outline-none max-w-[140px]"
         style="background: rgba(0,240,255,0.03); border: 1px solid var(--cyber-border); color: var(--cyber-text);">
         <option v-for="m in modelOptions" :key="m.key" :value="m.key">{{ m.label }}</option>
       </select>
@@ -202,14 +202,14 @@
       </div>
       <div class="cyber-card p-2 flex-shrink-0">
         <div class="flex gap-1.5 mb-1.5">
-          <select v-model="imgSize" class="px-2 py-1 rounded text-[10px] outline-none"
+          <select v-model="imgSize" class="agent-select px-2 py-1 rounded text-[10px] outline-none"
             style="background: rgba(0,240,255,0.03); border: 1px solid var(--cyber-border); color: var(--cyber-text);">
             <option value="512x512">512×512</option>
             <option value="1024x1024">1024×1024</option>
             <option value="1024x1792">1024×1792 竖版</option>
             <option value="1792x1024">1792×1024 横版</option>
           </select>
-          <select v-model="imgStyle" class="px-2 py-1 rounded text-[10px] outline-none"
+          <select v-model="imgStyle" class="agent-select px-2 py-1 rounded text-[10px] outline-none"
             style="background: rgba(0,240,255,0.03); border: 1px solid var(--cyber-border); color: var(--cyber-text);">
             <option value="">自动风格</option>
             <option value="写实">写实</option>
@@ -918,6 +918,28 @@ onMounted(async () => {
 .plus-menu button:hover {
   color: var(--cyber-cyan);
   background: rgba(0,240,255,0.08);
+}
+
+.agent-select {
+  background-color: rgba(5, 10, 20, 0.92) !important;
+  color: var(--cyber-text) !important;
+  color-scheme: dark;
+}
+
+.agent-select:focus {
+  border-color: var(--cyber-cyan) !important;
+  box-shadow: 0 0 0 1px rgba(0, 240, 255, 0.22), 0 0 12px rgba(0, 240, 255, 0.14);
+}
+
+.agent-select option {
+  background: #050a14;
+  color: #e8f8ff;
+}
+
+.agent-select option:checked,
+.agent-select option:hover {
+  background: #082435;
+  color: var(--cyber-cyan);
 }
 
 /* AI回复操作按钮：默认隐藏，触摸/悬停消息时显示 */
