@@ -6007,6 +6007,86 @@ function drawTextFile(filePath, options = {}) {
   return `drawtext=fontfile='${cjkFontFile}':textfile='${filePath}':fontcolor=${color}:fontsize=${size}:x=${x}:y=${y}${box}`;
 }
 
+function fetchBinary(url) {
+  return new Promise((resolve, reject) => {
+    const client = String(url).startsWith('https') ? https : http;
+    const req = client.get(url, { timeout: 240000 }, (res) => {
+      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        res.resume();
+        return fetchBinary(res.headers.location).then(resolve).catch(reject);
+      }
+      if (res.statusCode !== 200) {
+        res.resume();
+        return reject(new Error(`下载图片失败：HTTP ${res.statusCode}`));
+      }
+      const chunks = [];
+      res.on('data', chunk => chunks.push(chunk));
+      res.on('end', () => resolve(Buffer.concat(chunks)));
+    });
+    req.on('timeout', () => req.destroy(new Error('下载真实图片超时，请稍后重试')));
+    req.on('error', reject);
+  });
+}
+
+function buildRealFramePrompt(topic, style) {
+  const profile = getTopicVisualProfile(topic);
+  if (profile.type === 'dog_compare') {
+    return [
+      '真实摄影风格，竖屏9:16短视频关键帧，画面里必须真实出现两只狗：一只黑白边境牧羊犬 Border Collie，一只金色金毛寻回犬 Golden Retriever',
+      '两只狗在户外草地或温暖客厅自然互动，清晰可辨认犬种特征，边牧黑白毛色、机警眼神、敏捷姿态，金毛金色长毛、温顺亲人、治愈表情',
+      '真实镜头感，宠物博主视频封面质感，自然光，浅景深，高清细节，不要卡通，不要插画，不要文字，不要UI，不要色块，不要抽象图形',
+      `视频主题：${topic}，视觉风格：${style || '温暖纪实风'}`
+    ].join('，');
+  }
+  return [
+    '真实摄影风格，竖屏9:16短视频关键帧，主体必须和用户主题高度一致',
+    `主题：${topic}`,
+    `视觉风格：${style || '真实商业短视频'}`,
+    '真实场景、真实主体、自然光、高清细节、短视频封面质感，不要卡通，不要插画，不要文字，不要UI，不要抽象色块'
+  ].join('，');
+}
+
+async function createRealisticVideoFrame(plan, topic, style) {
+  const dir = path.join(uploadsRoot, 'generated-videos', 'frames');
+  fs.mkdirSync(dir, { recursive: true });
+  const prompt = buildRealFramePrompt(topic, style);
+  let result;
+  try {
+    result = await generateImageWithAI(prompt, { width: 1440, height: 2560, quality: 'hd', count: 1, style: 'realistic' });
+  } catch (err) {
+    throw new Error(`真实图片生成失败：${err?.message || JSON.stringify(err)}`);
+  }
+  const first = result.urls?.[0];
+  if (!first) throw new Error('真实画面生成失败：图片模型未返回图片');
+  const filePath = path.join(dir, `${plan.jobId}-real-frame.png`);
+  try {
+    if (String(first).startsWith('data:image')) {
+      const base64 = String(first).replace(/^data:image\/\w+;base64,/, '');
+      fs.writeFileSync(filePath, Buffer.from(base64, 'base64'));
+    } else if (/^[A-Za-z0-9+/=]+$/.test(String(first).slice(0, 120)) && String(first).length > 1000) {
+      fs.writeFileSync(filePath, Buffer.from(String(first), 'base64'));
+    } else {
+      let lastErr;
+      for (let i = 0; i < 2; i++) {
+        try {
+          const buf = await fetchBinary(first);
+          fs.writeFileSync(filePath, buf);
+          lastErr = null;
+          break;
+        } catch (err) {
+          lastErr = err;
+          await new Promise(r => setTimeout(r, 2000));
+        }
+      }
+      if (lastErr) throw lastErr;
+    }
+  } catch (err) {
+    throw new Error(`真实图片下载失败：${err?.message || JSON.stringify(err)}；图片源=${String(first).slice(0, 160)}`);
+  }
+  if (!fs.existsSync(filePath) || fs.statSync(filePath).size < 1024) throw new Error('真实图片保存失败：文件为空');
+  return { filePath, prompt, model: result.model };
+}
+
 function getTopicVisualProfile(topic) {
   const text = String(topic || '').toLowerCase();
   const isDog = /边牧|金毛|柯基|拉布拉多|哈士奇|柴犬|狗|犬|宠物|border|collie|golden|retriever/.test(text);
@@ -6032,7 +6112,7 @@ function getTopicVisualProfile(topic) {
   };
 }
 
-function buildVisualFilters(plan, topic, style, subtitleFile) {
+function buildVisualFilters(plan, topic, style, subtitleFile, options = {}) {
   const profile = getTopicVisualProfile(topic);
   const duration = Math.min(300, Math.max(10, Number(plan.duration || 15)));
   const titleFile = writeVideoTextFile(plan.jobId, 'title', profile.headline);
@@ -6040,15 +6120,22 @@ function buildVisualFilters(plan, topic, style, subtitleFile) {
   const styleFile = writeVideoTextFile(plan.jobId, 'style', `${style || plan.style || '短视频'} · ${duration}s`);
   const ctaFile = writeVideoTextFile(plan.jobId, 'cta', profile.cta);
   const base = [
-    'scale=720:1280',
+    options.realBackground
+      ? "scale=720:1280:force_original_aspect_ratio=increase,crop=720:1280,format=yuv420p"
+      : 'scale=720:1280',
     'format=yuv420p',
-    "drawbox=x=0:y=0:w=iw:h=ih:color=0x070a16@0.94:t=fill",
+    ...(options.realBackground ? [
+      "drawbox=x=0:y=0:w=iw:h=220:color=0x000000@0.42:t=fill",
+      "drawbox=x=0:y=930:w=iw:h=350:color=0x000000@0.48:t=fill",
+    ] : [
+      "drawbox=x=0:y=0:w=iw:h=ih:color=0x070a16@0.94:t=fill",
+    ]),
     "drawbox=x=24:y=42:w=672:h=138:color=0x00f0ff@0.14:t=4",
     drawTextFile(titleFile, { size: 46, color: 'cyan', y: 78 }),
     drawTextFile(subFile, { size: 26, color: 'white', y: 138 }),
     drawTextFile(styleFile, { size: 24, color: 'yellow', y: 204 }),
   ];
-  if (profile.type === 'dog_compare') {
+  if (profile.type === 'dog_compare' && !options.realBackground) {
     const leftFile = writeVideoTextFile(plan.jobId, 'left-dog', profile.leftName);
     const rightFile = writeVideoTextFile(plan.jobId, 'right-dog', profile.rightName);
     const leftTags = writeVideoTextFile(plan.jobId, 'left-tags', profile.leftTags);
@@ -6073,7 +6160,7 @@ function buildVisualFilters(plan, topic, style, subtitleFile) {
       "drawbox=x=74:y=748:w=572:h=84:color=0xff00ff@0.12:t=fill",
       drawTextFile(writeVideoTextFile(plan.jobId, 'dog-point', '画面主题：边牧的聪明敏捷 + 金毛的温顺治愈'), { size: 28, color: 'white', y: '772', box: true }),
     );
-  } else {
+  } else if (!options.realBackground) {
     base.push(
       "drawbox=x=82:y=278:w=556:h=360:color=0xff00ff@0.12:t=fill",
       "drawbox=x=116:y=318:w=488:h=280:color=0x00f0ff@0.10:t=3",
@@ -6138,13 +6225,23 @@ async function createPlayableVideo(plan, topic, style) {
   const filePath = path.join(dir, fileName);
   const duration = Math.min(300, Math.max(10, Number(plan.duration || 15)));
   const subtitleFile = createAssSubtitleFile(plan, topic);
-  const vf = buildVisualFilters(plan, topic, style, subtitleFile);
+  const realFrame = await createRealisticVideoFrame(plan, topic, style);
+  plan.visualAsset = {
+    type: 'realistic_ai_image',
+    provider: 'jimeng',
+    imagePath: `/uploads/generated-videos/frames/${path.basename(realFrame.filePath)}`,
+    prompt: realFrame.prompt,
+    model: realFrame.model,
+  };
+  const vf = buildVisualFilters(plan, topic, style, subtitleFile, { realBackground: true });
   await runCommandFile('ffmpeg', [
     '-y',
-    '-f', 'lavfi',
-    '-i', `color=c=0x070a16:size=720x1280:rate=30:duration=${duration}`,
+    '-loop', '1',
+    '-framerate', '30',
+    '-i', realFrame.filePath,
     '-f', 'lavfi',
     '-i', `sine=frequency=330:sample_rate=44100:duration=${duration}`,
+    '-t', String(duration),
     '-vf', vf,
     '-shortest',
     '-c:v', 'libx264',
