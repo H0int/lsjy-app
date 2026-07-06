@@ -15,9 +15,11 @@ export interface PageParams {
 // ===== 分页响应（以后端 items + meta 为准）=====
 export interface PageResult<T> {
   items: T[]
+  list?: T[]
   total: number
   page: number
   pageSize: number
+  totalPages?: number
 }
 
 // ===== 用户相关 =====
@@ -30,7 +32,7 @@ export interface User {
   phone: string | null
   gender: number
   bio: string | null
-  userType: 'personal' | 'merchant' | 'enterprise'
+  userType: 'personal' | 'merchant' | 'enterprise' | 'founder'
   vipLevel: number
   status: 'active' | 'frozen' | 'banned'
   roles: string[]
@@ -147,13 +149,18 @@ export interface PaymentTransaction {
   id: number
   transactionNo: string
   userId: number
+  user?: Pick<User, 'id' | 'username' | 'nickname'>
   bizType: string
   payChannel: string
+  payMethod?: string
   amount: number
   coinAmount: number
   direction: string
-  status: 'pending' | 'success' | 'failed' | 'refunded'
+  status: 'pending' | 'success' | 'failed' | 'refunded' | 'approved' | 'rejected' | 'paid'
   remark: string | null
+  note?: string | null
+  screenshotUrl?: string | null
+  rejectReason?: string | null
   createdAt: string
   paidAt: string | null
 }

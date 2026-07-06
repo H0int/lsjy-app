@@ -27,7 +27,7 @@
       <div class="space-y-3">
         <div v-for="order in userOrders" :key="order.id" class="sl-order-card" :class="`sl-order-${order.status}`">
           <div class="sl-order-header">
-            <span class="sl-order-id">订单 #{{ order.id?.slice(-6) }}</span>
+            <span class="sl-order-id">订单 #{{ order.id?.toString().slice(-6) }}</span>
             <span class="sl-order-status">{{ orderStatusText(order.status) }}</span>
           </div>
           <div class="sl-order-body">
