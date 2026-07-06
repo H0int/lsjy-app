@@ -131,10 +131,9 @@ const popularTags = ['热门', '免费']
 const totalCount = computed(() => toolStore.total)
 
 const categoryList = computed(() => {
-  const countByCategory = (id: number) => toolStore.tools.filter(t => Number(t.categoryId) === Number(id)).length
   const cats = [
-    { id: null, label: '全部工具', icon: '📦', count: totalCount.value },
-    ...toolStore.categories.map(c => ({ id: c.id, label: c.name, icon: c.icon || '📁', count: countByCategory(c.id) }))
+    { id: null, label: '全部工具', icon: '📦', count: toolStore.categories.reduce((s, c) => s + c.toolCount, 0) },
+    ...toolStore.categories.map(c => ({ id: c.id, label: c.name, icon: c.icon || '📁', count: c.toolCount }))
   ]
   return cats
 })
