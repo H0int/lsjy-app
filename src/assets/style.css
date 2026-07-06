@@ -2,44 +2,404 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ===== 赛博朋克主题 - 罗圣纪元 ===== */
+
+/* CSS 变量 */
 :root {
-  --cyber-bg: #0d0d1a;
-  --cyber-surface: #1a1a2e;
-  --cyber-border: #00f0ff30;
-  --cyber-text: #e0e0ff;
-  --cyber-accent: #00f0ff;
-  --cyber-pink: #ff2d95;
-  --cyber-purple: #b700ff;
+  --cyber-bg: #0a0a0f;
+  --cyber-bg-secondary: #111122;
+  --cyber-card: #12121f;
+  --cyber-border: #1a1a2e;
+  --cyber-border-hover: #2a2a4e;
+  --cyber-cyan: #00f0ff;
+  --cyber-magenta: #ff00ff;
+  --cyber-purple: #7c3aed;
+  --cyber-green: #00ff88;
+  --cyber-amber: #ffb800;
+  --cyber-text: #e0e0f0;
+  --cyber-text-dim: #8888aa;
+  --cyber-glow-cyan: 0 0 10px rgba(0, 240, 255, 0.3), 0 0 20px rgba(0, 240, 255, 0.1);
+  --cyber-glow-magenta: 0 0 10px rgba(255, 0, 255, 0.3), 0 0 20px rgba(255, 0, 255, 0.1);
+  --cyber-glow-purple: 0 0 10px rgba(124, 58, 237, 0.3), 0 0 20px rgba(124, 58, 237, 0.1);
+}
+
+/* 全局样式 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  background-color: var(--cyber-bg);
 }
 
 body {
-  background: var(--cyber-bg);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--cyber-bg);
   color: var(--cyber-text);
-  font-family: 'Segoe UI', system-ui, sans-serif;
 }
 
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: var(--cyber-bg); }
-::-webkit-scrollbar-thumb { background: var(--cyber-accent); border-radius: 3px; }
-
-@keyframes neon-pulse {
-  0%,100% { box-shadow: 0 0 5px var(--cyber-accent), 0 0 15px #00f0ff20; }
-  50% { box-shadow: 0 0 10px var(--cyber-accent), 0 0 30px #00f0ff40; }
+/* 标题字体 - 等宽科技感 */
+h1, h2, h3, h4, h5, h6,
+.font-mono-cyber {
+  font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
 }
 
-.cyber-glow-text { text-shadow: 0 0 10px var(--cyber-accent), 0 0 20px #00f0ff40; }
+/* 背景网格纹理 */
+.cyber-grid-bg {
+  background-image:
+    linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* 电路纹理背景 */
+.cyber-circuit-bg {
+  background-image:
+    linear-gradient(rgba(0, 240, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, 0.02) 1px, transparent 1px),
+    radial-gradient(circle at 20% 80%, rgba(124, 58, 237, 0.05) 0%, transparent 40%),
+    radial-gradient(circle at 80% 20%, rgba(0, 240, 255, 0.05) 0%, transparent 40%);
+  background-size: 40px 40px, 40px 40px, 100% 100%, 100% 100%;
+}
+
+/* 霓虹发光文字 */
+.glow-cyan {
+  text-shadow: 0 0 7px rgba(0, 240, 255, 0.6), 0 0 10px rgba(0, 240, 255, 0.4), 0 0 21px rgba(0, 240, 255, 0.2);
+}
+
+.glow-magenta {
+  text-shadow: 0 0 7px rgba(255, 0, 255, 0.6), 0 0 10px rgba(255, 0, 255, 0.4), 0 0 21px rgba(255, 0, 255, 0.2);
+}
+
+.glow-purple {
+  text-shadow: 0 0 7px rgba(124, 58, 237, 0.6), 0 0 10px rgba(124, 58, 237, 0.4);
+}
+
+.glow-green {
+  text-shadow: 0 0 7px rgba(0, 255, 136, 0.6), 0 0 10px rgba(0, 255, 136, 0.4);
+}
+
+/* 赛博朋克卡片 */
+.cyber-card {
+  background: var(--cyber-card);
+  border: 1px solid var(--cyber-border);
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.cyber-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--cyber-cyan), transparent);
+  opacity: 0.5;
+}
+
+.cyber-card:hover {
+  border-color: var(--cyber-border-hover);
+  box-shadow: var(--cyber-glow-cyan);
+}
+
+/* 霓虹按钮 */
+.cyber-btn {
+  position: relative;
+  padding: 12px 28px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.cyber-btn-primary {
+  background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple));
+  color: #000;
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+}
+
+.cyber-btn-primary:hover {
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.5), 0 0 50px rgba(0, 240, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.cyber-btn-magenta {
+  background: linear-gradient(135deg, var(--cyber-magenta), var(--cyber-purple));
+  color: #fff;
+  box-shadow: 0 0 15px rgba(255, 0, 255, 0.3);
+}
+
+.cyber-btn-magenta:hover {
+  box-shadow: 0 0 25px rgba(255, 0, 255, 0.5), 0 0 50px rgba(255, 0, 255, 0.2);
+}
+
+/* 扫光动画 */
+@keyframes scanline {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.cyber-scanline::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.05), transparent);
+  animation: scanline 3s ease-in-out infinite;
+}
+
+/* 霓虹闪烁 */
+@keyframes neon-flicker {
+  0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+    opacity: 1;
+  }
+  20%, 24%, 55% {
+    opacity: 0.6;
+  }
+}
+
+.neon-flicker {
+  animation: neon-flicker 3s infinite;
+}
+
+/* 脉冲光点 */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 5px var(--cyber-cyan), 0 0 10px var(--cyber-cyan); }
+  50% { box-shadow: 0 0 10px var(--cyber-cyan), 0 0 20px var(--cyber-cyan), 0 0 30px var(--cyber-cyan); }
+}
+
+.pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* 脉冲边框 */
+@keyframes border-glow {
+  0%, 100% { border-color: rgba(0, 240, 255, 0.3); }
+  50% { border-color: rgba(0, 240, 255, 0.8); }
+}
+
+/* 赛博朋克输入框 */
+.cyber-input {
+  background: rgba(0, 240, 255, 0.03) !important;
+  border: 1px solid var(--cyber-border) !important;
+  border-radius: 8px !important;
+  color: var(--cyber-text) !important;
+  transition: all 0.3s ease !important;
+}
+
+.cyber-input:focus,
+.cyber-input:hover {
+  border-color: var(--cyber-cyan) !important;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.15) !important;
+}
+
+/* 兼容旧版赛博按钮样式 */
+.cyber-glow-text { text-shadow: 0 0 10px var(--cyber-cyan), 0 0 20px rgba(0, 240, 255, 0.25); }
 
 .cyber-btn {
-  background: linear-gradient(135deg, #00f0ff20, #ff2d9520);
-  border: 1px solid var(--cyber-accent);
-  color: var(--cyber-accent);
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.15), rgba(255, 0, 255, 0.15));
+  border: 1px solid var(--cyber-cyan);
+  color: var(--cyber-cyan);
   transition: all 0.3s;
   letter-spacing: 2px;
   font-weight: 700;
   cursor: pointer;
 }
+
 .cyber-btn:hover {
-  background: linear-gradient(135deg, #00f0ff40, #ff2d9540);
-  box-shadow: 0 0 15px #00f0ff60, 0 0 30px #ff2d9530;
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.3), rgba(255, 0, 255, 0.3));
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.4), 0 0 30px rgba(255, 0, 255, 0.2);
   transform: translateY(-1px);
+}
+
+/* Element Plus 赛博朋克覆盖 */
+.el-input__wrapper {
+  background-color: rgba(0, 240, 255, 0.03) !important;
+  box-shadow: 0 0 0 1px var(--cyber-border) inset !important;
+  border-radius: 8px !important;
+}
+
+.el-input__wrapper:hover {
+  box-shadow: 0 0 0 1px rgba(0, 240, 255, 0.4) inset !important;
+}
+
+.el-input__wrapper.is-focus {
+  box-shadow: 0 0 0 1px var(--cyber-cyan) inset, 0 0 10px rgba(0, 240, 255, 0.15) !important;
+}
+
+.el-input__inner {
+  color: var(--cyber-text) !important;
+}
+
+.el-input__inner::placeholder {
+  color: var(--cyber-text-dim) !important;
+}
+
+.el-input__prefix .el-icon {
+  color: var(--cyber-cyan) !important;
+}
+
+.el-textarea__inner {
+  background-color: rgba(0, 240, 255, 0.03) !important;
+  box-shadow: 0 0 0 1px var(--cyber-border) inset !important;
+  color: var(--cyber-text) !important;
+}
+
+.el-textarea__inner:focus {
+  box-shadow: 0 0 0 1px var(--cyber-cyan) inset, 0 0 10px rgba(0, 240, 255, 0.15) !important;
+}
+
+.el-select-dropdown {
+  background-color: var(--cyber-card) !important;
+  border: 1px solid var(--cyber-border) !important;
+}
+
+.el-select-dropdown__item {
+  color: var(--cyber-text) !important;
+}
+
+.el-select-dropdown__item.hover,
+.el-select-dropdown__item:hover {
+  background-color: rgba(0, 240, 255, 0.05) !important;
+}
+
+.el-select .el-input__wrapper {
+  background-color: rgba(0, 240, 255, 0.03) !important;
+  box-shadow: 0 0 0 1px var(--cyber-border) inset !important;
+}
+
+.el-select .el-input__wrapper:hover {
+  box-shadow: 0 0 0 1px rgba(0, 240, 255, 0.4) inset !important;
+}
+
+.el-select .el-input.is-focus .el-input__wrapper {
+  box-shadow: 0 0 0 1px var(--cyber-cyan) inset, 0 0 10px rgba(0, 240, 255, 0.15) !important;
+}
+
+.el-select .el-input__inner {
+  color: var(--cyber-text) !important;
+}
+
+.el-select__caret {
+  color: var(--cyber-cyan) !important;
+}
+
+.el-popper.is-light {
+  background: var(--cyber-card) !important;
+  border: 1px solid var(--cyber-border) !important;
+}
+
+.el-dropdown-menu {
+  background-color: var(--cyber-card) !important;
+  border: 1px solid var(--cyber-border) !important;
+}
+
+.el-dropdown-menu__item {
+  color: var(--cyber-text) !important;
+}
+
+.el-dropdown-menu__item:hover {
+  background-color: rgba(0, 240, 255, 0.08) !important;
+  color: var(--cyber-cyan) !important;
+}
+
+.el-form-item__label {
+  color: var(--cyber-text-dim) !important;
+}
+
+.el-button--primary {
+  background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple)) !important;
+  border: none !important;
+  color: #000 !important;
+  font-weight: 600 !important;
+}
+
+.el-button--primary:hover {
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.4) !important;
+}
+
+.el-button--warning {
+  background: linear-gradient(135deg, var(--cyber-amber), #ff8c00) !important;
+  border: none !important;
+  color: #000 !important;
+  font-weight: 600 !important;
+}
+
+/* 自定义滚动条 - 赛博朋克 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--cyber-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--cyber-cyan), var(--cyber-purple));
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--cyber-magenta), var(--cyber-purple));
+}
+
+/* 动画 */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s ease-out;
+}
+
+/* 文本截断 */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 赛博朋克链接 */
+a {
+  color: var(--cyber-cyan);
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+a:hover {
+  color: #fff;
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.5);
+}
+
+/* 选择高亮 */
+::selection {
+  background: rgba(0, 240, 255, 0.3);
+  color: #fff;
 }
