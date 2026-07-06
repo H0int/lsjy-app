@@ -32,6 +32,7 @@ jobs:
             deploy/skill-services/docker-compose.yml \
             deploy/skill-services/deploy-skill-services.sh \
             backend/server.js \
+            backend/express-package.json \
             docs
 
           scp -o StrictHostKeyChecking=no -o ConnectTimeout=20 /tmp/lsjy-cors-fix.tar.gz root@47.97.166.219:/tmp/lsjy-cors-fix.tar.gz
@@ -65,6 +66,10 @@ jobs:
               EXPRESS_SERVER=$(find /opt -name "server.js" ! -path "*/node_modules/*" ! -path "*backup*" 2>/dev/null | while read f; do
                 if grep -q "agentsStore" "$f" 2>/dev/null; then echo "$f"; break; fi
               done)
+            fi
+            if [ -z "$EXPRESS_SERVER" ]; then
+              EXPRESS_SERVER="/opt/lsjy-app/backend/server.js"
+              mkdir -p "$(dirname "$EXPRESS_SERVER")"
             fi
 
             NEST_DIR=$(dirname "$NEST_MAIN")
@@ -101,9 +106,14 @@ jobs:
             if [ -n "$EXPRESS_SERVER" ] && [ -f "/tmp/backend/server.js" ]; then
               echo "更新Express server.js -> $EXPRESS_SERVER"
               cp /tmp/backend/server.js "$EXPRESS_SERVER"
+              cp /tmp/backend/express-package.json "$(dirname "$EXPRESS_SERVER")/package.json"
+              cd "$(dirname "$EXPRESS_SERVER")"
+              if [ ! -d "node_modules" ]; then
+                npm install --omit=dev
+              fi
             else
-              echo "WARNING: 未找到Express server.js，搜索pm2中运行的服务..."
-              pm2 jlist 2>/dev/null | grep -oP '"script":"\K[^"]+server\.js' | head -1
+              echo "ERROR: 未找到可部署的Express server.js"
+              exit 1
             fi
 
             # 同步前端静态文件到 ECS Nginx 根目录，兜底绕过 GitHub Pages 发布波动
@@ -115,6 +125,12 @@ jobs:
 
             # 更新Nginx
             if [ -n "$NGINX_CONF" ] && [ -f "/tmp/deploy/ecs-live-config/nginx-lsjy-live.conf" ]; then
+              for conf in /etc/nginx/conf.d/*.conf; do
+                if [ "$conf" != "$NGINX_CONF" ] && grep -q "server_name.*api.lsjyapp.cn" "$conf" 2>/dev/null; then
+                  echo "禁用重复Nginx配置: $conf"
+                  mv "$conf" "$conf.disabled-$(date +%Y%m%d%H%M%S)"
+                fi
+              done
               sed -i 's/default_server//g' /tmp/deploy/ecs-live-config/nginx-lsjy-live.conf
               cp /tmp/deploy/ecs-live-config/nginx-lsjy-live.conf "$NGINX_CONF"
               nginx -t && nginx -s reload
@@ -142,7 +158,12 @@ jobs:
 
             # 重启所有pm2进程
             echo "重启后端服务..."
-            pm2 restart all --update-env 2>/dev/null || pm2 restart lsjy-backend --update-env 2>/dev/null || true
+            if pm2 describe lsjy-express >/dev/null 2>&1; then
+              pm2 restart lsjy-express --update-env
+            else
+              pm2 start "$EXPRESS_SERVER" --name lsjy-express --update-env
+            fi
+            pm2 save || true
             sleep 8
 
             # 验证
@@ -161,6 +182,14 @@ jobs:
               echo "✅ 180个AI员工部署成功!"
             else
               echo "⚠️ Agents数量异常，检查pm2日志..."
+              pm2 logs lsjy-express --lines 80 --nostream || true
+              exit 1
+            fi
+
+            if [ "$TOOLS_COUNT" -lt 1 ]; then
+              echo "⚠️ Tools数量异常，检查pm2日志..."
+              pm2 logs lsjy-express --lines 80 --nostream || true
+              exit 1
             fi
 
             echo ""
