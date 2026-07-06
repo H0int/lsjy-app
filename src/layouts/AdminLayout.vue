@@ -1,6 +1,8 @@
 <template>
-  <div class="min-h-screen cyber-bg">
-    <div v-if="sidebarOpen && isMobile" class="fixed inset-0 z-30" style="background:rgba(0,0,0,0.7);" @click="sidebarOpen=false"></div>
+  <div class="min-h-screen cyber-circuit-bg" style="background-color: var(--cyber-bg); position: relative;">
+    <!-- 赛博朋克背景网格 -->
+    <div class="fixed inset-0 pointer-events-none" style="z-index:0; background-image: linear-gradient(rgba(0,240,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,240,255,0.03) 1px, transparent 1px); background-size: 40px 40px;"></div>
+    <div v-if="sidebarOpen && isMobile" class="fixed inset-0 z-30" style="background:rgba(0,0,0,0.7); backdrop-filter: blur(4px);" @click="sidebarOpen=false"></div>
     <aside class="fixed left-0 top-0 bottom-0 z-40 w-64 transition-transform duration-300 overflow-y-auto cyber-sidebar"
       :class="isMobile ? (sidebarOpen?'':'-translate-x-full') : (appStore.sidebarCollapsed?'-translate-x-full':'')"
       style="scrollbar-width:thin;scrollbar-color:#00f0ff40 transparent;">
