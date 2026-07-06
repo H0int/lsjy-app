@@ -1,1 +1,0 @@
-import{az as r,k as a}from"./vendor-vue-gRcGM2h9.js";import{g as l,s as u}from"./index-DzrP5JE3.js";const g=r("app",()=>{const t=a(!1),e=a(l());function o(){t.value=!t.value}function s(){e.value=e.value==="light"?"dark":"light",u(e.value)}return{sidebarCollapsed:t,theme:e,toggleSidebar:o,toggleTheme:s}});export{g as u};
