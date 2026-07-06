@@ -107,9 +107,8 @@ const authStore = useAuthStore()
 
 const navItems = [
   { path: '/dashboard', label: '控制台', icon: '🏠' },
-  { path: '/agent', label: 'AI智能体', icon: '🧠' },
+  { path: '/chat', label: 'AI智能体', icon: '🧠' },
   { path: '/tools', label: 'AI工具', icon: '🤖' },
-  { path: '/video-pipeline', label: '视频', icon: '🎬' },
   { path: '/profile', label: '我的', icon: '👤' },
 ]
 
