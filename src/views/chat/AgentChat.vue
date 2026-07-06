@@ -428,7 +428,7 @@ function fmt(c: string): string {
   if (!c) return ''
   return c
     // Markdown图片 ![alt](url) → <img>
-    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width:100%;border-radius:8px;margin:4px 0;cursor:pointer;" onclick="window.open(this.src,\'_blank\')" />')
+    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" loading="lazy" style="display:block;width:auto;max-width:min(100%,260px);max-height:180px;object-fit:contain;border-radius:8px;margin:4px 0;cursor:pointer;background:rgba(0,0,0,0.18);border:1px solid var(--cyber-border);" onclick="window.open(this.src,\'_blank\')" />')
     // Markdown链接 [text](url) → <a>
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color:var(--cyber-cyan);text-decoration:underline;">$1</a>')
     // 加粗
