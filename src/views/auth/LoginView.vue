@@ -17,7 +17,7 @@
       <div class="logo-section">
         <div class="logo-ring">
           <div class="logo-ring-inner">
-            <img src="/company-logo.jpg" alt="罗圣纪元" class="company-logo-img" />
+            <div class="logo-text">罗</div>
           </div>
           <div class="logo-ring-glow"></div>
         </div>
@@ -307,7 +307,19 @@ async function handleLogin() {
   0%, 100% { box-shadow: 0 0 20px rgba(0, 240, 255, 0.2), 0 0 40px rgba(0, 240, 255, 0.1); }
   50% { box-shadow: 0 0 30px rgba(0, 240, 255, 0.3), 0 0 60px rgba(0, 240, 255, 0.15); }
 }
-.company-logo-img { width: 100%; height: 100%; object-fit: cover; }
+.logo-text {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 42px;
+  font-weight: 900;
+  background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple), var(--cyber-magenta));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
 .logo-ring-glow {
   position: absolute;
   inset: -10px;
