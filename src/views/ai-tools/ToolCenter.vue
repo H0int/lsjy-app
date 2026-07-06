@@ -1,12 +1,10 @@
 <template>
-  <div class="max-w-7xl mx-auto px-4 py-6 cyber-tools">
+  <div class="max-w-7xl mx-auto px-4 py-6">
     <!-- 顶部区域 -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
       <div>
-        <h1 class="text-2xl font-bold cyber-glow-text" style="color: var(--cyber-cyan); font-family: 'JetBrains Mono', monospace;">
-          🤖 AI工具中心
-        </h1>
-        <p class="cyber-sub-text mt-1">专业AI工具集，覆盖多种业务场景 · 共 <span class="cyber-cyan-text">{{ totalCount }}</span> 个工具</p>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">🤖 AI工具中心</h1>
+        <p class="text-gray-500 dark:text-gray-400 mt-1">专业AI工具集，覆盖多种业务场景 · 共 {{ totalCount }} 个工具</p>
       </div>
       <!-- 搜索框 -->
       <div class="flex items-center gap-3">
@@ -23,61 +21,69 @@
     <div class="flex flex-wrap gap-2 mb-4">
       <button v-for="cat in categoryList" :key="cat.id ?? 'all'"
         @click="selectCategory(cat.id)"
-        class="cyber-cat-btn"
-        :class="{ active: currentCategoryId === cat.id }">
-        <span class="cat-icon">{{ cat.icon }}</span>
-        <span>{{ cat.label }}</span>
-        <span v-if="cat.count !== undefined" class="cat-count">({{ cat.count }})</span>
+        class="px-4 py-2 rounded-full text-sm font-medium transition-all"
+        :class="currentCategoryId === cat.id
+          ? 'bg-primary text-white shadow-md shadow-blue-500/20'
+          : 'bg-white dark:bg-dark-100 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-300 border border-gray-200 dark:border-gray-700'">
+        {{ cat.icon }} {{ cat.label }}
+        <span v-if="cat.count !== undefined" class="ml-1 opacity-70 text-xs">({{ cat.count }})</span>
       </button>
     </div>
 
     <!-- 二级子分类标签 -->
-    <div v-if="subCategories.length > 0" class="flex flex-wrap gap-2 mb-6 pl-3 cyber-sub-border">
+    <div v-if="subCategories.length > 0" class="flex flex-wrap gap-2 mb-6 pl-2 border-l-4 border-primary/30">
       <button v-for="sub in subCategories" :key="sub.value"
         @click="selectSubCategory(sub.value)"
-        class="cyber-sub-btn"
-        :class="{ active: currentSubCategory === sub.value }">
+        class="px-3 py-1.5 rounded-full text-xs font-medium transition-all"
+        :class="currentSubCategory === sub.value
+          ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400'
+          : 'bg-gray-50 dark:bg-dark-200 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-dark-300'">
         {{ sub.label }}
       </button>
     </div>
 
     <!-- 加载状态 -->
     <div v-if="toolStore.loading" class="flex justify-center py-20">
-      <div class="cyber-spinner"></div>
+      <div class="animate-spin w-8 h-8 border-3 border-primary border-t-transparent rounded-full"></div>
     </div>
 
     <!-- 工具统计 -->
-    <div v-if="!toolStore.loading" class="flex items-center gap-4 mb-4 text-sm cyber-stat-row">
-      <span>共 <strong class="cyber-cyan-text">{{ filteredTools.length }}</strong> 个工具</span>
-      <span v-if="searchQuery" class="cyber-amber-text">搜索: "{{ searchQuery }}"</span>
+    <div v-if="!toolStore.loading" class="flex items-center gap-4 mb-4 text-sm text-gray-500 dark:text-gray-400">
+      <span>共 <strong class="text-primary">{{ filteredTools.length }}</strong> 个工具</span>
+      <span v-if="searchQuery" class="text-orange-500">搜索: "{{ searchQuery }}"</span>
       <div class="flex gap-1">
         <span v-for="tag in popularTags" :key="tag"
           @click="searchQuery = tag"
-          class="cyber-tag-hot">🔥{{ tag }}</span>
+          class="cursor-pointer px-2 py-0.5 bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 rounded text-xs hover:bg-orange-100">
+          🔥{{ tag }}
+        </span>
       </div>
     </div>
 
     <!-- 网格视图 -->
     <div v-if="!toolStore.loading && viewMode === 'grid'" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
       <router-link v-for="tool in filteredTools" :key="tool.id" :to="`/tools/${tool.id}`"
-        class="cyber-tool-card group">
-        <div class="cyber-tool-tags">
-          <span v-for="tag in tool.tags?.slice(0, 2)" :key="tag" class="cyber-tool-tag">{{ tag }}</span>
+        class="bg-white dark:bg-dark-100 rounded-xl p-5 hover:shadow-lg transition-all hover:-translate-y-1 group border border-gray-100 dark:border-gray-700 relative overflow-hidden">
+        <div class="absolute top-0 right-0 flex gap-1 p-2">
+          <span v-for="tag in tool.tags?.slice(0, 2)" :key="tag"
+            class="text-[10px] px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 font-medium">
+            {{ tag }}
+          </span>
         </div>
-        <div class="cyber-tool-head">
-          <span class="cyber-tool-icon">{{ tool.icon }}</span>
+        <div class="flex items-start justify-between mb-3">
+          <span class="text-3xl group-hover:scale-110 transition-transform">{{ tool.icon }}</span>
           <div class="flex gap-1">
-            <span v-if="tool.isFree" class="cyber-badge cyber-badge-green">免费</span>
-            <span class="cyber-badge cyber-badge-cyan">{{ toolTypeLabel(tool.toolType) }}</span>
+            <span v-if="tool.isFree" class="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-600">免费</span>
+            <span class="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-600">{{ toolTypeLabel(tool.toolType) }}</span>
           </div>
         </div>
-        <h3 class="cyber-tool-name">{{ tool.name }}</h3>
-        <p class="cyber-tool-desc">{{ tool.description }}</p>
-        <div class="cyber-tool-foot">
-          <span class="cyber-cost" :class="tool.isFree ? 'cyber-cost-free' : 'cyber-cost-paid'">
+        <h3 class="font-bold text-gray-900 dark:text-white mb-1">{{ tool.name }}</h3>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-3 line-clamp-2 h-10">{{ tool.description }}</p>
+        <div class="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
+          <span class="text-sm font-medium" :class="tool.isFree ? 'text-green-500' : 'text-amber-500'">
             {{ tool.isFree ? '免费使用' : `${tool.coinCost} 圣点/次` }}
           </span>
-          <span class="cyber-use-count">{{ formatUseCount(tool.usageCount) }}次使用</span>
+          <span class="text-xs text-gray-400">{{ formatUseCount(tool.usageCount) }}次使用</span>
         </div>
       </router-link>
     </div>
@@ -85,30 +91,33 @@
     <!-- 列表视图 -->
     <div v-else-if="!toolStore.loading" class="space-y-3">
       <router-link v-for="tool in filteredTools" :key="tool.id" :to="`/tools/${tool.id}`"
-        class="cyber-tool-list-row">
-        <span class="cyber-tool-icon">{{ tool.icon }}</span>
-        <div class="cyber-list-info">
+        class="bg-white dark:bg-dark-100 rounded-xl p-4 flex items-center gap-4 hover:shadow-md transition-all border border-gray-100 dark:border-gray-700">
+        <span class="text-3xl w-12 text-center flex-shrink-0">{{ tool.icon }}</span>
+        <div class="flex-1 min-w-0">
           <div class="flex items-center gap-2 flex-wrap">
-            <h3 class="cyber-tool-name">{{ tool.name }}</h3>
-            <span v-for="tag in tool.tags?.slice(0, 2)" :key="tag" class="cyber-tool-tag">{{ tag }}</span>
-            <span class="cyber-badge cyber-badge-cyan">{{ toolTypeLabel(tool.toolType) }}</span>
+            <h3 class="font-bold text-gray-900 dark:text-white">{{ tool.name }}</h3>
+            <span v-for="tag in tool.tags?.slice(0, 2)" :key="tag"
+              class="text-[10px] px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 font-medium">
+              {{ tag }}
+            </span>
+            <span class="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-600">{{ toolTypeLabel(tool.toolType) }}</span>
           </div>
-          <p class="cyber-tool-desc truncate mt-1">{{ tool.description }}</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400 truncate mt-1">{{ tool.description }}</p>
         </div>
-        <div class="cyber-list-right">
-          <div class="cyber-cost" :class="tool.isFree ? 'cyber-cost-free' : 'cyber-cost-paid'">
+        <div class="text-right flex-shrink-0">
+          <div class="text-sm font-medium" :class="tool.isFree ? 'text-green-500' : 'text-amber-500'">
             {{ tool.isFree ? '免费' : `${tool.coinCost} 圣点` }}
           </div>
-          <div class="cyber-use-count">{{ formatUseCount(tool.usageCount) }}次使用</div>
+          <div class="text-xs text-gray-400">{{ formatUseCount(tool.usageCount) }}次使用</div>
         </div>
       </router-link>
     </div>
 
     <!-- 空状态 -->
-    <div v-if="!toolStore.loading && filteredTools.length === 0" class="cyber-empty">
-      <div class="cyber-empty-icon">🔍</div>
-      <p class="cyber-empty-text">未找到相关工具</p>
-      <button @click="searchQuery='';currentCategoryId=null;currentSubCategory=''" class="cyber-clear-btn">清除筛选条件</button>
+    <div v-if="!toolStore.loading && filteredTools.length === 0" class="text-center py-20">
+      <div class="text-5xl mb-4">🔍</div>
+      <p class="text-gray-500 mb-2">未找到相关工具</p>
+      <button @click="searchQuery='';currentCategoryId=null;currentSubCategory=''" class="text-primary text-sm hover:underline">清除筛选条件</button>
     </div>
   </div>
 </template>
@@ -187,214 +196,3 @@ onMounted(() => {
   toolStore.fetchTools()
 })
 </script>
-
-<style scoped>
-.cyber-tools { position: relative; }
-.cyber-glow-text { text-shadow: 0 0 10px var(--cyber-cyan), 0 0 20px rgba(0,240,255,0.25); }
-.cyber-sub-text { color: var(--cyber-text-dim); font-size: 13px; }
-.cyber-cyan-text { color: var(--cyber-cyan); text-shadow: 0 0 6px rgba(0,240,255,0.4); }
-.cyber-amber-text { color: var(--cyber-amber); }
-
-/* 一级分类按钮 */
-.cyber-cat-btn {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 8px 16px;
-  border-radius: 999px;
-  font-size: 13px; font-weight: 500;
-  background: rgba(13,13,40,0.6);
-  border: 1px solid rgba(0,240,255,0.15);
-  color: var(--cyber-text-dim);
-  cursor: pointer;
-  transition: all 0.25s;
-  font-family: 'JetBrains Mono', monospace;
-}
-.cyber-cat-btn:hover {
-  border-color: rgba(0,240,255,0.4);
-  color: var(--cyber-cyan);
-  background: rgba(0,240,255,0.05);
-}
-.cyber-cat-btn.active {
-  background: linear-gradient(135deg, rgba(0,240,255,0.18), rgba(124,58,237,0.18));
-  border-color: var(--cyber-cyan);
-  color: var(--cyber-cyan);
-  box-shadow: 0 0 12px rgba(0,240,255,0.25);
-  text-shadow: 0 0 6px rgba(0,240,255,0.5);
-}
-.cat-icon { font-size: 14px; }
-.cat-count { opacity: 0.7; font-size: 11px; }
-
-/* 二级子分类 */
-.cyber-sub-border { border-left: 3px solid rgba(0,240,255,0.3); }
-.cyber-sub-btn {
-  padding: 6px 12px;
-  border-radius: 999px;
-  font-size: 12px;
-  background: rgba(0,240,255,0.03);
-  border: 1px solid rgba(0,240,255,0.1);
-  color: var(--cyber-text-dim);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.cyber-sub-btn:hover { color: var(--cyber-cyan); border-color: rgba(0,240,255,0.3); }
-.cyber-sub-btn.active {
-  background: rgba(0,240,255,0.12);
-  border-color: var(--cyber-cyan);
-  color: var(--cyber-cyan);
-}
-
-/* 加载器 */
-.cyber-spinner {
-  width: 36px; height: 36px;
-  border: 3px solid rgba(0,240,255,0.15);
-  border-top-color: var(--cyber-cyan);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  box-shadow: 0 0 12px rgba(0,240,255,0.3);
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
-.cyber-stat-row { color: var(--cyber-text-dim); font-size: 13px; }
-.cyber-tag-hot {
-  cursor: pointer;
-  padding: 2px 8px;
-  border-radius: 6px;
-  background: rgba(255,140,0,0.1);
-  color: var(--cyber-amber);
-  font-size: 11px;
-  border: 1px solid rgba(255,140,0,0.2);
-}
-.cyber-tag-hot:hover { background: rgba(255,140,0,0.2); }
-
-/* 工具卡片 */
-.cyber-tool-card {
-  display: block;
-  background: linear-gradient(135deg, #0d0d2b, #1a0a3a);
-  border: 1px solid rgba(0,240,255,0.12);
-  border-radius: 14px;
-  padding: 18px;
-  transition: all 0.3s;
-  position: relative;
-  overflow: hidden;
-}
-.cyber-tool-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--cyber-cyan), transparent);
-  opacity: 0.5;
-}
-.cyber-tool-card:hover {
-  border-color: rgba(0,240,255,0.4);
-  transform: translateY(-4px);
-  box-shadow: 0 8px 30px rgba(0,240,255,0.12);
-}
-.cyber-tool-tags {
-  position: absolute;
-  top: 8px; right: 8px;
-  display: flex; gap: 4px;
-}
-.cyber-tool-tag {
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: rgba(255,0,255,0.1);
-  color: var(--cyber-magenta);
-  border: 1px solid rgba(255,0,255,0.25);
-  font-weight: 500;
-}
-.cyber-tool-head {
-  display: flex; justify-content: space-between; align-items: flex-start;
-  margin-bottom: 10px;
-}
-.cyber-tool-icon { font-size: 30px; transition: transform 0.3s; }
-.cyber-tool-card:hover .cyber-tool-icon { transform: scale(1.1); filter: drop-shadow(0 0 8px rgba(0,240,255,0.4)); }
-
-.cyber-badge {
-  font-size: 10px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-weight: 600;
-}
-.cyber-badge-green { background: rgba(0,255,136,0.12); color: var(--cyber-green); border: 1px solid rgba(0,255,136,0.3); }
-.cyber-badge-cyan { background: rgba(0,240,255,0.1); color: var(--cyber-cyan); border: 1px solid rgba(0,240,255,0.3); }
-
-.cyber-tool-name {
-  font-size: 15px; font-weight: 700;
-  color: var(--cyber-text);
-  margin-bottom: 4px;
-  font-family: 'JetBrains Mono', monospace;
-}
-.cyber-tool-desc {
-  font-size: 12px;
-  color: var(--cyber-text-dim);
-  line-height: 1.5;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  height: 36px;
-}
-.cyber-tool-foot {
-  display: flex; justify-content: space-between; align-items: center;
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px solid rgba(0,240,255,0.08);
-}
-.cyber-cost { font-size: 13px; font-weight: 600; }
-.cyber-cost-free { color: var(--cyber-green); text-shadow: 0 0 6px rgba(0,255,136,0.3); }
-.cyber-cost-paid { color: var(--cyber-amber); text-shadow: 0 0 6px rgba(255,184,0,0.3); }
-.cyber-use-count { font-size: 11px; color: var(--cyber-text-dim); }
-
-/* 列表视图 */
-.cyber-tool-list-row {
-  display: flex; align-items: center; gap: 16px;
-  background: linear-gradient(135deg, #0d0d2b, #1a0a3a);
-  border: 1px solid rgba(0,240,255,0.12);
-  border-radius: 12px;
-  padding: 14px 18px;
-  transition: all 0.25s;
-}
-.cyber-tool-list-row:hover {
-  border-color: rgba(0,240,255,0.4);
-  box-shadow: 0 4px 16px rgba(0,240,255,0.1);
-}
-.cyber-tool-list-row .cyber-tool-icon { font-size: 28px; width: 44px; text-align: center; flex-shrink: 0; }
-.cyber-list-info { flex: 1; min-width: 0; }
-.cyber-list-info .cyber-tool-name { margin-bottom: 0; }
-.cyber-list-right { text-align: right; flex-shrink: 0; }
-.cyber-list-right .cyber-use-count { margin-top: 4px; }
-
-/* 空状态 */
-.cyber-empty { text-align: center; padding: 80px 20px; }
-.cyber-empty-icon { font-size: 56px; margin-bottom: 16px; filter: drop-shadow(0 0 12px rgba(0,240,255,0.4)); }
-.cyber-empty-text { color: var(--cyber-text-dim); margin-bottom: 12px; font-size: 14px; }
-.cyber-clear-btn {
-  background: transparent;
-  border: 1px solid rgba(0,240,255,0.4);
-  color: var(--cyber-cyan);
-  padding: 6px 16px;
-  border-radius: 8px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-family: 'JetBrains Mono', monospace;
-}
-.cyber-clear-btn:hover { background: rgba(0,240,255,0.1); box-shadow: 0 0 12px rgba(0,240,255,0.3); }
-
-/* 搜索框样式覆盖 */
-:deep(.el-input__wrapper) {
-  background-color: rgba(0,240,255,0.03) !important;
-  box-shadow: 0 0 0 1px rgba(0,240,255,0.2) inset !important;
-  border-radius: 10px !important;
-}
-:deep(.el-input__wrapper:hover) {
-  box-shadow: 0 0 0 1px rgba(0,240,255,0.4) inset !important;
-}
-:deep(.el-input__wrapper.is-focus) {
-  box-shadow: 0 0 0 1px var(--cyber-cyan) inset, 0 0 12px rgba(0,240,255,0.15) !important;
-}
-:deep(.el-input__inner) { color: var(--cyber-text) !important; }
-:deep(.el-input__inner::placeholder) { color: var(--cyber-text-dim) !important; }
-:deep(.el-input__prefix .el-icon) { color: var(--cyber-cyan) !important; }
-</style>
