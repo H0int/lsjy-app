@@ -27,7 +27,7 @@
           <div class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium"
             style="background: rgba(255, 184, 0, 0.1); border: 1px solid rgba(255, 184, 0, 0.3); color: var(--cyber-amber);">
             <span>⚡</span>
-            <span>{{ (authStore.coinBalance || 0) >= 999999 ? '∞ 无限' : (authStore.coinBalance?.toFixed(2) || '0.00') }}</span>
+            <span>{{ authStore.isAdmin || (authStore.coinBalance || 0) >= 999999 ? '∞ 无限' : (authStore.coinBalance?.toFixed(2) || '0.00') }}</span>
           </div>
           <!-- 用户头像 -->
           <el-dropdown trigger="click">
