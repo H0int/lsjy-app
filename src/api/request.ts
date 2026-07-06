@@ -50,10 +50,23 @@ service.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config
 
-    // 401处理：尝试Token刷新
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // 本地认证Token跳过401处理
+    const curToken = localStorage.getItem('lsjy_token')
+    const isLocalToken = curToken && curToken.startsWith('lsjy_') && curToken.includes('_token_')
+
+    // 网络错误处理
+    const isNetErr = !error.response || error.code === 'ERR_NETWORK' || error.message === 'Network Error'
+    if (isNetErr) {
+      const isLoginReq = originalRequest.url?.includes('/auth/login')
+      if (!isLoginReq && !isLocalToken) {
+        ElMessage.warning('网络连接异常，部分功能可能受限')
+      }
+      return Promise.reject(error)
+    }
+
+    // 401处理：尝试Token刷新（本地Token跳过）
+    if (error.response?.status === 401 && !originalRequest._retry && !isLocalToken) {
       if (isRefreshing) {
-        // 已在刷新中，加入等待队列
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject })
         }).then((token) => {
@@ -67,15 +80,13 @@ service.interceptors.response.use(
 
       const refreshToken = localStorage.getItem('lsjy_refresh_token')
       if (!refreshToken) {
-        // 无refreshToken，直接登出
         removeToken()
         localStorage.removeItem('lsjy_refresh_token')
-        window.location.href = '/login'
+        window.location.href = '/#/login'
         return Promise.reject(error)
       }
 
       try {
-        // 尝试刷新Token
         const { data } = await axios.post(
           `${import.meta.env.VITE_API_BASE_URL || '/api/v1'}/auth/refresh`,
           { refreshToken }
@@ -85,9 +96,7 @@ service.interceptors.response.use(
 
         if (newAccessToken) {
           localStorage.setItem('lsjy_token', newAccessToken)
-          if (newRefreshToken) {
-            localStorage.setItem('lsjy_refresh_token', newRefreshToken)
-          }
+          if (newRefreshToken) localStorage.setItem('lsjy_refresh_token', newRefreshToken)
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`
           processQueue(null, newAccessToken)
           return service(originalRequest)
@@ -99,16 +108,19 @@ service.interceptors.response.use(
         removeToken()
         localStorage.removeItem('lsjy_refresh_token')
         ElMessage.error('登录已过期，请重新登录')
-        window.location.href = '/login'
+        window.location.href = '/#/login'
         return Promise.reject(refreshError)
       } finally {
         isRefreshing = false
       }
     }
 
-    // 非401错误：统一提示
-    const msg = error.response?.data?.message || error.message || '网络异常'
-    ElMessage.error(msg)
+    // 非401错误：登录请求由登录页处理，避免重复弹窗
+    const isLoginReq = originalRequest.url?.includes('/auth/login')
+    if (!isLoginReq) {
+      const msg = error.response?.data?.message || error.message || '请求失败'
+      ElMessage.error(msg)
+    }
     return Promise.reject(error)
   }
 )
