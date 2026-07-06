@@ -1,654 +1,1021 @@
 <template>
-  <div class="chat-root" style="height:calc(100vh - 7rem);display:flex;flex-direction:column;background:#0a0a1a;">
-    <!-- 背景粒子效果 -->
-    <div class="bg-particles">
-      <div v-for="n in 20" :key="n" class="particle" :style="particleStyle(n)"></div>
+  <div class="max-w-4xl mx-auto px-4 py-3 flex flex-col" style="height: calc(100vh - 80px);">
+    <!-- 头部 -->
+    <div class="cyber-card p-2.5 mb-2 flex items-center gap-2 flex-shrink-0">
+      <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+        style="box-shadow: 0 0 12px rgba(0,240,255,0.4);">
+        <img src="/logo.png" alt="罗圣纪元" style="width:100%;height:100%;border-radius:10px;object-fit:cover;" />
+      </div>
+      <div class="flex-1 min-w-0">
+        <h1 class="text-sm font-bold" style="color: var(--cyber-cyan); font-family: 'JetBrains Mono', monospace;">罗圣AI中心</h1>
+        <div class="flex items-center gap-1 mt-0.5">
+          <span class="w-1.5 h-1.5 rounded-full animate-pulse"
+            :style="aiOnline ? 'background: var(--cyber-green);' : 'background: #ff6b00;'"></span>
+          <span class="text-[10px]" style="color: var(--cyber-text-dim);">{{ statusText }}</span>
+        </div>
+      </div>
+      <div class="flex gap-1 flex-shrink-0">
+        <button @click="$router.push('/profile/wallet')" class="px-2 py-1 rounded-lg text-[11px] flex items-center gap-0.5"
+          style="background: rgba(255,184,0,0.08); color: var(--cyber-amber); border: 1px solid rgba(255,184,0,0.2);" title="点击充值">
+          <span>⚡</span><span class="font-bold" style="font-family: 'JetBrains Mono', monospace;">{{ agentCoinDisplay }}</span>
+        </button>
+        <button @click="clearChat" class="px-2 py-1 rounded-lg text-[11px]"
+          style="background: rgba(255,68,68,0.08); color: #ff4444; border: 1px solid rgba(255,68,68,0.2);">🗑️</button>
+      </div>
     </div>
 
-    <!-- Header - 紧凑版 -->
-    <div class="chat-header">
-      <div class="avatar-container">
-        <div class="avatar-ring ring-outer"></div>
-        <div class="avatar-ring ring-inner"></div>
-        <div class="avatar-core">
-          <svg viewBox="0 0 40 40" class="avatar-svg">
-            <defs>
-              <linearGradient id="ag1" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#00f0ff"/>
-                <stop offset="50%" stop-color="#b700ff"/>
-                <stop offset="100%" stop-color="#ff006a"/>
-              </linearGradient>
-              <filter id="glow"><feGaussianBlur stdDeviation="2" result="g"/><feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-            </defs>
-            <circle cx="20" cy="20" r="12" fill="none" stroke="url(#ag1)" stroke-width="1.5" filter="url(#glow)"/>
-            <circle cx="14" cy="16" r="2" fill="#00f0ff" filter="url(#glow)"/>
-            <circle cx="26" cy="16" r="2" fill="#b700ff" filter="url(#glow)"/>
-            <path d="M14 24 Q20 29 26 24" fill="none" stroke="#00f0ff" stroke-width="1.2" filter="url(#glow)"/>
-            <line x1="20" y1="6" x2="20" y2="2" stroke="#00f0ff" stroke-width="1" opacity="0.6"/>
-            <line x1="20" y1="34" x2="20" y2="38" stroke="#b700ff" stroke-width="1" opacity="0.6"/>
-            <line x1="6" y1="20" x2="2" y2="20" stroke="#00f0ff" stroke-width="1" opacity="0.6"/>
-            <line x1="34" y1="20" x2="38" y2="20" stroke="#b700ff" stroke-width="1" opacity="0.6"/>
-          </svg>
-        </div>
-        <div class="status-pulse"></div>
-      </div>
-      <div class="header-info">
-        <div class="header-title">罗圣AI</div>
-        <div class="header-sub">
-          <span class="status-dot"></span>
-          <span>{{loading ? thinkingText : currentCap.desc}}</span>
-        </div>
-      </div>
-
-      <!-- 融合选择器：能力+模型合一 -->
-      <div class="combo-selector" @click="showComboMenu = !showComboMenu">
-        <span class="cs-icon">{{currentCap.icon}}</span>
-        <span class="cs-label">{{currentCap.name}}</span>
-        <span class="cs-model" v-if="selectedModel">· {{currentModelLabel}}</span>
-        <span class="cs-arrow" :class="{open: showComboMenu}">▾</span>
-        
-        <div v-if="showComboMenu" class="cs-dropdown" @click.stop>
-          <!-- 能力列表 -->
-          <div class="cs-section-title">⚙️ AI员工能力</div>
-          <div v-for="c in aiCapabilities" :key="c.id"
-            class="cs-option" :class="{active: selectedToolId === c.id}"
-            @click.stop="selectCapability(c.id)">
-            <span class="cso-icon">{{c.icon}}</span>
-            <span class="cso-name">{{c.name}}</span>
-            <span class="cso-cost">{{c.cost}}SP</span>
-            <span v-if="selectedToolId === c.id" class="cso-check">✓</span>
+    <!-- AI员工选择器 -->
+    <div class="flex-shrink-0 mb-2 overflow-x-auto" style="-webkit-overflow-scrolling: touch;">
+      <div class="flex gap-1.5 pb-1" style="min-width: max-content;">
+        <button v-for="agent in agents" :key="agent.id" @click="selectAgent(agent)"
+          class="flex-shrink-0 px-2.5 py-1.5 rounded-xl text-left transition-all"
+          :style="selectedAgent?.id === agent.id
+            ? 'background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple)); color: #000; box-shadow: 0 0 12px rgba(0,240,255,0.3);'
+            : 'background: rgba(0,240,255,0.03); color: var(--cyber-text-dim); border: 1px solid var(--cyber-border);'">
+          <div class="flex items-center gap-1">
+            <span class="text-sm">{{ agent.icon }}</span>
+            <span class="text-[11px] font-bold whitespace-nowrap">{{ agent.name }}</span>
           </div>
-          
-          <!-- 分割线 -->
-          <div class="cs-divider"></div>
-          
-          <!-- 模型列表 -->
-          <div class="cs-section-title">🤖 大模型</div>
-          <div v-for="m in models" :key="m.value"
-            class="cs-option" :class="{active: selectedModel === m.value}"
-            @click.stop="selectModel(m.value)">
-            <span class="cso-icon">{{m.icon}}</span>
-            <span class="cso-name">{{m.label}}</span>
-            <span v-if="selectedModel === m.value" class="cso-check">✓</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- 圣力余额（紧凑） -->
-      <div class="sl-balance-mini">
-        <span class="sl-icon">⚡</span>
-        <span class="sl-val">{{userCoins}}</span>
+          <div class="text-[9px] mt-0.5 opacity-70">⚡{{ agent.coinCost }}/次</div>
+        </button>
       </div>
     </div>
 
-    <!-- 圣力不足弹窗 -->
-    <div v-if="showCoinLow" class="coin-low-modal" @click.self="showCoinLow = false">
-      <div class="coin-low-card">
-        <div class="clc-icon">⚡</div>
-        <div class="clc-title">圣力不足</div>
-        <div class="clc-desc">当前圣力已用完，请充值后继续使用</div>
-        <div class="clc-btns">
-          <button class="clc-cancel" @click="showCoinLow = false">稍后再说</button>
-          <button class="clc-confirm" @click="$router.push('/profile/wallet'); showCoinLow = false">立即充值</button>
-        </div>
+    <!-- 当前选中Agent信息 -->
+    <div v-if="selectedAgent" class="cyber-card p-2 mb-2 flex-shrink-0 flex items-center gap-2">
+      <span class="text-xl">{{ selectedAgent.icon }}</span>
+      <div class="flex-1 min-w-0">
+        <div class="text-xs font-bold" style="color: var(--cyber-text);">{{ selectedAgent.name }}</div>
+        <div class="text-[10px]" style="color: var(--cyber-text-dim);">{{ selectedAgent.description }}</div>
+      </div>
+      <select v-if="selectedAgent.toolType !== 'image'" v-model="selectedModelKey"
+        class="agent-select px-2 py-1 rounded text-[10px] outline-none max-w-[140px]"
+        style="background: rgba(0,240,255,0.03); border: 1px solid var(--cyber-border); color: var(--cyber-text);">
+        <option v-for="m in modelOptions" :key="m.key" :value="m.key">{{ m.label }}</option>
+      </select>
+      <div class="text-[10px] px-1.5 py-0.5 rounded" style="background: rgba(255,184,0,0.1); color: var(--cyber-amber);">
+        ⚡{{ selectedAgent.coinCost }}/次
       </div>
     </div>
 
-    <!-- Messages -->
-    <div ref="msgContainer" class="chat-messages">
+    <!-- ========== 文本对话（非图片Agent） ========== -->
+    <template v-if="selectedAgent && selectedAgent.toolType !== 'image'">
       <!-- 欢迎页 -->
-      <div v-if="messages.length===0" class="welcome-screen">
-        <div class="welcome-avatar">
-          <div class="wa-ring wa-r1"></div>
-          <div class="wa-ring wa-r2"></div>
-          <div class="wa-ring wa-r3"></div>
-          <div class="wa-core">
-            <svg viewBox="0 0 80 80" width="80" height="80">
-              <defs>
-                <linearGradient id="wg1" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#00f0ff"/>
-                  <stop offset="100%" stop-color="#b700ff"/>
-                </linearGradient>
-                <filter id="wglow"><feGaussianBlur stdDeviation="3" result="g"/><feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-              </defs>
-              <circle cx="40" cy="40" r="24" fill="none" stroke="url(#wg1)" stroke-width="2" filter="url(#wglow)"/>
-              <circle cx="30" cy="34" r="4" fill="#00f0ff" filter="url(#wglow)"><animate attributeName="opacity" values="1;0.5;1" dur="2s" repeatCount="indefinite"/></circle>
-              <circle cx="50" cy="34" r="4" fill="#b700ff" filter="url(#wglow)"><animate attributeName="opacity" values="1;0.5;1" dur="2s" begin="0.3s" repeatCount="indefinite"/></circle>
-              <path d="M28 50 Q40 60 52 50" fill="none" stroke="url(#wg1)" stroke-width="2" filter="url(#wglow)"/>
-            </svg>
-          </div>
+      <div v-if="msgs.length === 0" class="flex-1 overflow-y-auto mb-2">
+        <div class="text-center py-3">
+          <div class="text-3xl mb-1">{{ selectedAgent.icon }}</div>
+          <h2 class="text-sm font-bold" style="color: var(--cyber-cyan);">{{ selectedAgent.name }}</h2>
+          <p class="text-[10px]" style="color: var(--cyber-text-dim);">{{ selectedAgent.description }}</p>
         </div>
-        <h2 class="welcome-title">你好，我是 <span class="gradient-text">罗圣AI</span></h2>
-        <p class="welcome-desc">你的全能AI助手，有什么可以帮你的？</p>
-        <div class="suggestions-grid">
-          <div v-for="s in suggestions" :key="s.text" class="suggestion-card" @click="useSuggestion(s.text)">
-            <span class="sug-icon">{{s.icon}}</span>
-            <span class="sug-text">{{s.text}}</span>
-          </div>
+        <div class="grid grid-cols-2 gap-1.5">
+          <button v-for="c in currentQuickCmds" :key="c.t" @click="sendQuick(c.t)"
+            class="cyber-card p-2 text-left transition-all hover:-translate-y-0.5">
+            <div class="text-sm mb-0.5">{{ c.icon }}</div>
+            <div class="text-[11px] font-medium" style="color: var(--cyber-text);">{{ c.l }}</div>
+          </button>
         </div>
       </div>
 
       <!-- 消息列表 -->
-      <template v-for="(msg, idx) in messages" :key="idx">
-        <div :class="['msg-row', msg.role === 'user' ? 'msg-user' : 'msg-ai']">
-          <div v-if="msg.role === 'assistant'" class="msg-avatar-sm">
-            <span style="font-size:14px;">🤖</span>
-          </div>
-          <div :class="['msg-bubble', msg.role === 'user' ? 'bubble-user' : 'bubble-ai']">
-            <div class="msg-text">{{msg.content}}</div>
-            <div v-if="msg.role === 'assistant'" class="msg-model-tag">{{msg.model || 'AI'}}</div>
+      <div v-else ref="chatBox" class="flex-1 overflow-y-auto mb-2 space-y-2 pr-1" style="scroll-behavior: smooth;" @scroll="hideMsgActions">
+        <div v-for="(msg, i) in msgs" :key="i" class="flex" :class="msg.role === 'user' ? 'justify-end' : 'justify-start'">
+          <div
+            class="max-w-[85%] msg-item"
+            :class="{ 'msg-item-active': activeActionIndex === i }"
+            @click="showMsgActions(i, msg.role)"
+            @touchstart.passive="showMsgActions(i, msg.role)"
+            @mouseenter="showMsgActions(i, msg.role)"
+            @mouseleave="hideMsgActions"
+          >
+            <div class="rounded-xl px-3 py-2 text-xs"
+              :style="msg.role === 'user'
+                ? 'background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple)); color: #000; border-radius: 12px 12px 4px 12px;'
+                : 'background: rgba(0,240,255,0.05); color: var(--cyber-text); border: 1px solid var(--cyber-border); border-radius: 12px 12px 12px 4px;'"
+              v-html="fmt(msg.content)">
+            </div>
+            <!-- AI回复操作按钮栏 -->
+            <div v-if="msg.role === 'assistant' && !msg.content.startsWith('⚠️')" class="msg-actions flex items-center gap-2 ml-1 flex-wrap">
+              <button @click.stop="copyMsg(msg.content)" class="msg-action-btn" title="复制">
+                <span>📋</span><span>复制</span>
+              </button>
+              <button @click.stop="shareMsg(msg.content)" class="msg-action-btn" title="分享">
+                <span>🔗</span><span>分享</span>
+              </button>
+              <button @click.stop="quoteMsg(msg.content)" class="msg-action-btn" title="引用">
+                <span>💬</span><span>引用</span>
+              </button>
+              <button @click.stop="regenerateMsg(i)" :disabled="loading" class="msg-action-btn" title="重新生成">
+                <span>🔄</span><span>重新生成</span>
+              </button>
+              <button @click.stop="likeMsg(i)" class="msg-action-btn" :class="{ 'active-good': msg.liked === 'good', 'active-bad': msg.liked === 'bad' }" title="点赞">
+                <span>{{ msg.liked === 'good' ? '👍' : '👍' }}</span>
+              </button>
+              <button @click.stop="dislikeMsg(i)" class="msg-action-btn" :class="{ 'active-bad': msg.liked === 'bad' }" title="点踩">
+                <span>👎</span>
+              </button>
+              <button @click.stop="exportMsg(msg.content)" class="msg-action-btn" title="导出">
+                <span>📥</span><span>导出</span>
+              </button>
+            </div>
           </div>
         </div>
-      </template>
-
-      <!-- 思考中 -->
-      <div v-if="loading" class="msg-row msg-ai">
-        <div class="msg-avatar-sm"><span style="font-size:14px;">🤖</span></div>
-        <div class="msg-bubble bubble-ai">
-          <div class="thinking-container">
-            <div class="thinking-visual">
-              <div class="tv-ring tv-r1"></div>
-              <div class="tv-ring tv-r2"></div>
-              <div class="tv-core-dot"></div>
-            </div>
-            <div class="thinking-bars">
-              <div v-for="i in 5" :key="i" class="tbar" :style="{animationDelay: i*0.1+'s'}"></div>
-            </div>
-            <div class="thinking-text">{{thinkingText}}</div>
-            <div class="thinking-dots">
-              <div v-for="i in 3" :key="i" class="tdot" :style="{animationDelay: i*0.15+'s'}"></div>
+        <div v-if="loading" class="flex justify-start">
+          <div class="rounded-xl px-3 py-2 text-xs"
+            style="background: rgba(0,240,255,0.05); border: 1px solid var(--cyber-border);">
+            <div class="flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full animate-bounce" style="background: var(--cyber-cyan);"></span>
+              <span class="w-1.5 h-1.5 rounded-full animate-bounce" style="background: var(--cyber-cyan); animation-delay: 0.2s;"></span>
+              <span class="w-1.5 h-1.5 rounded-full animate-bounce" style="background: var(--cyber-cyan); animation-delay: 0.4s;"></span>
+              <span class="text-[10px] ml-1" style="color: var(--cyber-text-dim);">{{ selectedAgent.name }}思考中...</span>
             </div>
           </div>
         </div>
       </div>
-    </div>
+      <!-- Toast提示 -->
+      <div v-if="toastMsg" class="fixed top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-lg text-xs font-bold animate-fade-in"
+        style="background: rgba(0,240,255,0.15); color: var(--cyber-cyan); border: 1px solid rgba(0,240,255,0.3); backdrop-filter: blur(8px);">
+        {{ toastMsg }}
+      </div>
 
-    <!-- Input -->
-    <div class="chat-input-area">
-      <div class="input-glow"></div>
-      <input ref="inputRef" v-model="inputText" @keyup.enter="sendMessage" 
-        :disabled="loading" class="chat-input" placeholder="输入你的问题..."/>
-      <button class="send-btn" @click="sendMessage" :disabled="loading || !inputText.trim()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13"/>
-        </svg>
-      </button>
-    </div>
+      <!-- 输入框 -->
+      <div class="cyber-card p-2 flex-shrink-0">
+        <!-- 文件/图片预览 -->
+        <div v-if="pendingFile" class="mb-1.5 flex items-center gap-2 p-1.5 rounded-lg" style="background: rgba(0,240,255,0.05); border: 1px solid var(--cyber-border);">
+          <img v-if="pendingFile.isImage" :src="pendingFile.url" class="w-10 h-10 rounded object-cover" style="border: 1px solid var(--cyber-border);" />
+          <div v-else class="w-10 h-10 rounded flex items-center justify-center text-lg" style="background: rgba(0,240,255,0.08); border: 1px solid var(--cyber-border);">📄</div>
+          <div class="flex-1 min-w-0">
+            <div class="text-[10px] truncate" style="color: var(--cyber-text);">{{ pendingFile.name }}</div>
+            <div class="text-[9px]" style="color: var(--cyber-text-dim);">{{ pendingFile.isImage ? '图片' : '文件' }} · {{ pendingFile.sizeLabel }}{{ pendingFile.extractedText ? ' · 已提取内容' : '' }}</div>
+          </div>
+          <button @click="pendingFile = null" class="text-[10px] px-1.5 py-0.5 rounded" style="color: #ff4444; background: rgba(255,68,68,0.1);">✕</button>
+        </div>
+        <div class="flex gap-1.5">
+          <!-- 加号功能菜单 -->
+          <div class="relative flex-shrink-0">
+          <button @click.stop.prevent="togglePlusMenu" @touchstart.stop.prevent="togglePlusMenu" :disabled="loading"
+            class="px-2.5 py-2 rounded-lg text-sm flex-shrink-0"
+            style="background: rgba(0,240,255,0.05); border: 1px solid var(--cyber-border); color: var(--cyber-cyan); font-size:16px; line-height:1;"
+            title="更多功能">
+            ＋
+          </button>
+            <div v-if="showPlusMenu" class="plus-menu-mask" @click="showPlusMenu = false"></div>
+            <div v-if="showPlusMenu" class="plus-menu">
+              <button @click.stop="openUpload('image')">🖼️ 图片识别</button>
+              <button @click.stop="openUpload('camera')">📷 拍照识别</button>
+              <button @click.stop="openUpload('file')">📄 上传文件</button>
+              <button @click.stop="showPlusMenu = false; quoteMsg('请根据我上传的图片，识别图片内容并详细分析。')">🔎 识图提示</button>
+              <button @click.stop="clearChat">🧹 清空对话</button>
+            </div>
+          </div>
+          <input ref="fileUploadRef" type="file" :accept="uploadAccept" :capture="uploadCapture" class="hidden" @change="handleFileUpload" />
+          <input v-model="input" @keyup.enter="sendMsg"
+            :placeholder="loading ? '思考中...' : '向' + selectedAgent?.name + '提问（' + selectedAgent?.coinCost + '/次）'"
+            :disabled="loading"
+            class="flex-1 px-2.5 py-2 rounded-lg text-xs outline-none"
+            style="background: rgba(0,240,255,0.03); border: 1px solid var(--cyber-border); color: var(--cyber-text);"
+            @focus="($event.target as HTMLInputElement).style.borderColor='var(--cyber-cyan)'"
+            @blur="($event.target as HTMLInputElement).style.borderColor='var(--cyber-border)'" />
+          <button @click="sendMsg" :disabled="(!input.trim() && !pendingFile) || loading"
+            class="px-4 py-2 rounded-lg text-xs font-bold"
+            style="background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple)); color: #000;"
+            :style="((!input.trim() && !pendingFile) || loading) ? 'opacity: 0.5;' : 'box-shadow: 0 0 12px rgba(0,240,255,0.4);'">
+            发送
+          </button>
+        </div>
+      </div>
+    </template>
+
+    <!-- ========== 图片生成（AI绘画师） ========== -->
+    <template v-if="selectedAgent && selectedAgent.toolType === 'image'">
+      <div class="flex-1 overflow-y-auto mb-2 space-y-2">
+        <div v-if="images.length === 0" class="text-center py-6">
+          <div class="text-3xl mb-1">🎨</div>
+          <p class="text-xs" style="color: var(--cyber-text-dim);">描述你想生成的图片，AI为你创作</p>
+          <p class="text-[10px] mt-1" style="color: var(--cyber-amber);">⚡ 每次生成消耗{{ selectedAgent.coinCost }}圣力</p>
+        </div>
+        <div v-for="(img, i) in images" :key="i" class="cyber-card p-2.5">
+          <p class="text-[10px] mb-1.5" style="color: var(--cyber-text-dim);">🎨 {{ img.prompt }}</p>
+          <img v-if="img.url" :src="img.url" class="w-full rounded-lg" style="border: 1px solid var(--cyber-border);" />
+          <p v-else-if="img.loading" class="text-xs text-center py-6" style="color: var(--cyber-cyan);">⏳ 生成中...</p>
+          <p v-else-if="img.error" class="text-[10px] text-center py-3" style="color: #ff4444;">{{ img.error }}</p>
+        </div>
+      </div>
+      <div class="cyber-card p-2 flex-shrink-0">
+        <div class="flex gap-1.5 mb-1.5">
+          <select v-model="imgSize" class="agent-select px-2 py-1 rounded text-[10px] outline-none"
+            style="background: rgba(0,240,255,0.03); border: 1px solid var(--cyber-border); color: var(--cyber-text);">
+            <option value="512x512">512×512</option>
+            <option value="1024x1024">1024×1024</option>
+            <option value="1024x1792">1024×1792 竖版</option>
+            <option value="1792x1024">1792×1024 横版</option>
+          </select>
+          <select v-model="imgStyle" class="agent-select px-2 py-1 rounded text-[10px] outline-none"
+            style="background: rgba(0,240,255,0.03); border: 1px solid var(--cyber-border); color: var(--cyber-text);">
+            <option value="">自动风格</option>
+            <option value="写实">写实</option>
+            <option value="动漫">动漫</option>
+            <option value="油画">油画</option>
+            <option value="赛博朋克">赛博朋克</option>
+          </select>
+        </div>
+        <div class="flex gap-1.5">
+          <input v-model="imgPrompt" @keyup.enter="genImage" placeholder="描述你想生成的图片..."
+            class="flex-1 px-2.5 py-2 rounded-lg text-xs outline-none"
+            style="background: rgba(0,240,255,0.03); border: 1px solid var(--cyber-border); color: var(--cyber-text);" />
+          <button @click="genImage" :disabled="!imgPrompt.trim() || genLoading"
+            class="px-4 py-2 rounded-lg text-xs font-bold"
+            style="background: linear-gradient(135deg, #ff6b9d, var(--cyber-purple)); color: #000;">
+            {{ genLoading ? '生成中...' : '生成' }}
+          </button>
+        </div>
+      </div>
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick, watch } from 'vue'
+import { useAuthStore } from '@/stores/auth'
+import { storeToRefs } from 'pinia'
 
-const inputText = ref('')
+// ========== API配置 ==========
+const API_BASE = 'https://api.lsjyapp.cn/api/v1'
+// 动态获取token（登录后token会变化，不能静态获取）
+const authToken = computed(() => localStorage.getItem('lsjy_token') || '')
+
+// ========== AI员工列表 ==========
+interface Agent {
+  id: number
+  name: string
+  icon: string
+  toolType: 'text' | 'image'
+  description: string
+  coinCost: number
+  provider?: string
+  modelName?: string
+  systemPrompt?: string
+}
+
+// 10 AI员工 - 罗圣纪元团队
+const agents: Agent[] = [
+  { id: 101, name: '罗圣AI-智能体', icon: '🤖', toolType: 'text', description: '您的全能AI助手，有问必答', coinCost: 1, systemPrompt: '你是"罗圣AI-智能体"，罗圣纪元SaaS平台的官方AI客服助手。公司：祁阳市罗圣纪元互联网科技有限责任公司（"祁阳"不是"祈阳"）。创始人/CEO：罗凯中。六大业务：AI智能服务、自媒体运营、电商服务、在线教育、宠物医疗、伯雅校园。你的职责是热情、耐心地为用户解答问题，提供产品使用指导、业务咨询和技术支持。态度友好亲切，回复清晰详细，让用户感受到专业和温暖。遇到无法回答的问题，礼貌引导用户联系人工客服。严禁对用户使用命令式、居高临下或冷漠的语气。' },
+  { id: 102, name: '运营文案师', icon: '✍️', toolType: 'text', description: '文案输出、用户路径设计', coinCost: 1, systemPrompt: '你是"罗圣纪元-运营文案师"，负责产品体验与运营文案。公司：祁阳市罗圣纪元互联网科技有限责任公司（严禁写成"祈阳"）。你负责输出页面文案、运营位文案、充值引导文案、工具引导文案，设计AI工具交互逻辑，输出运营活动策划。文案简洁专业，符合商务调性，可直接落地。' },
+  { id: 103, name: '调研分析师', icon: '🔍', toolType: 'text', description: '竞品对标、数据分析', coinCost: 1, systemPrompt: '你是"罗圣纪元-调研分析师"，负责全平台问题盘点与竞品对标。公司：祁阳市罗圣纪元互联网科技有限责任公司（严禁写成"祈阳"）。你负责走查页面功能接口输出bug清单，对标行业主流AI平台输出可落地方案，分析用户反馈与需求。客观中立，只摆事实与数据。' },
+  { id: 104, name: '投资理财顾问', icon: '💰', toolType: 'text', description: '充值定价、分销体系', coinCost: 2, systemPrompt: '你是"罗圣纪元-投资理财顾问"，负责商业体系设计与落地。公司：祁阳市罗圣纪元互联网科技有限责任公司（严禁写成"祈阳"）。你负责设计充值套餐与定价策略、规划分销商体系与返佣规则、设计会员体系与增值服务、核算平台收支。所有定价必须有成本测算依据。' },
+  { id: 105, name: '智能能力官', icon: '🧠', toolType: 'text', description: '知识库优化、提示词工程', coinCost: 2, systemPrompt: '你是"罗圣纪元-智能能力负责人"，负责知识库与AI能力优化。公司：祁阳市罗圣纪元互联网科技有限责任公司（严禁写成"祈阳"）。你负责重构知识库切片规则、优化向量召回与重排序、为Agent定制提示词、建立知识库质检流程、优化多轮对话记忆。以问答准确率为核心标准。' },
+  { id: 106, name: '合规风控官', icon: '⚖️', toolType: 'text', description: '法律审核、合规把关', coinCost: 2, systemPrompt: '你是"罗圣纪元-合规风控负责人"，对全平台内容合规性全权把关。公司：祁阳市罗圣纪元互联网科技有限责任公司（严禁写成"祈阳"）。你负责审核用户协议、隐私政策、充值协议，审核运营活动合规性，输出AI内容免责声明。合规零容忍，同时给出可落地修改建议。' },
+  { id: 107, name: '首席架构师', icon: '🏗️', toolType: 'text', description: 'API网关、系统架构', coinCost: 2, systemPrompt: '你是"罗圣纪元-首席技术架构师"，大模型API中台第一责任人。公司：祁阳市罗圣纪元互联网科技有限责任公司（严禁写成"祈阳"）。你负责搭建统一API网关、对接多算力渠道、制定接口标准与错误码规范、优化算力调用链路、保障调用成功率≥99%。技术方案必须可落地可验证。' },
+  { id: 108, name: '后端开发官', icon: '⚙️', toolType: 'text', description: '服务端开发、数据库优化', coinCost: 2, systemPrompt: '你是"罗圣纪元-后端开发总负责人"，主导服务端逻辑与数据库开发。公司：祁阳市罗圣纪元互联网科技有限责任公司（严禁写成"祈阳"）。你负责修复登录鉴权bug、开发充值订单计费接口、优化数据库索引、打通算力调用与Token扣减链路。所有接口做参数校验与异常兜底。' },
+  { id: 109, name: '前端开发官', icon: '🎨', toolType: 'text', description: '页面开发、移动端适配', coinCost: 2, systemPrompt: '你是"罗圣纪元-前端开发总负责人"，对所有页面体验与视觉质量负责。公司：祁阳市罗圣纪元互联网科技有限责任公司（严禁写成"祈阳"）。你负责修复布局错乱与适配问题、落地登录跳转与工具交互开发、性能优化资源压缩CDN。页面质量零容忍，优先保障移动端体验。' },
+  { id: 110, name: '质量测试官', icon: '🧪', toolType: 'text', description: '功能测试、压力测试', coinCost: 1, systemPrompt: '你是"罗圣纪元-质量测试负责人"，所有功能上线必经你验收。公司：祁阳市罗圣纪元互联网科技有限责任公司（严禁写成"祈阳"）。你负责全量功能测试、兼容性测试、并发压力测试，输出标准化测试报告与bug清单。质量底线不妥协，bug描述清晰可复现。' },
+]
+
+// ========== 状态 ==========
+const selectedAgent = ref<Agent | null>(agents[0])
+const msgsByAgent = ref<Record<number, {role:'user'|'assistant'; content:string; coinCost?:number; liked?:'good'|'bad'|null}[]>>({})
+const input = ref('')
 const loading = ref(false)
-const thinkingText = ref('思考中...')
-const msgContainer = ref<HTMLElement | null>(null)
-const inputRef = ref<HTMLInputElement | null>(null)
-const messages = ref<{role: string, content: string, model?: string}[]>([])
+const chatBox = ref<HTMLElement|null>(null)
+const aiOnline = ref(true)
+const authStore = useAuthStore()
+const { coinBalance } = storeToRefs(authStore)
+const activeActionIndex = ref<number | null>(null)
 
-const selectedModel = ref('') // 默认空，用户自选
-const selectedToolId = ref(1)
-const userCoins = ref(0)
-const showCoinLow = ref(false)
-const showComboMenu = ref(false)
-
-// 15个AI员工能力
-const aiCapabilities = [
-  {id: 1, icon: '🤖', name: '罗圣AI', desc: '罗总数字分身·全能AI助手', cost: 1},
-  {id: 2, icon: '📝', name: '文案创作', desc: '营销文案生成', cost: 10},
-  {id: 3, icon: '🎨', name: 'AI绘画', desc: 'AI图片生成', cost: 20},
-  {id: 4, icon: '📊', name: '数据分析', desc: '数据解读分析', cost: 15},
-  {id: 5, icon: '💻', name: '代码助手', desc: '代码生成调试', cost: 20},
-  {id: 6, icon: '🔍', name: '调研分析', desc: '深度调研报告', cost: 15},
-  {id: 7, icon: '💰', name: '投资理财', desc: '投资建议分析', cost: 20},
-  {id: 8, icon: '⚖️', name: '合规风控', desc: '风险合规审查', cost: 25},
-  {id: 9, icon: '🏗️', name: '代码架构', desc: '系统架构设计', cost: 30},
-  {id: 10, icon: '📢', name: '营销策划', desc: '营销方案策划', cost: 15},
-  {id: 11, icon: '🎯', name: '产品设计', desc: '产品方案设计', cost: 20},
-  {id: 12, icon: '📈', name: '运营优化', desc: '运营策略优化', cost: 15},
-  {id: 13, icon: '💬', name: '客户服务', desc: '客户沟通支持', cost: 5},
-  {id: 14, icon: '📚', name: '技术培训', desc: '知识分享培训', cost: 10},
-  {id: 15, icon: '🤝', name: '商务拓展', desc: '商务合作资源', cost: 20},
+const modelOptions = [
+  { key: 'doubao|doubao-1-5-pro-32k-250115', label: '豆包 Pro', provider: 'doubao', model: 'doubao-1-5-pro-32k-250115' },
+  { key: 'doubao|doubao-1-5-lite-32k-250115', label: '豆包 Lite', provider: 'doubao', model: 'doubao-1-5-lite-32k-250115' },
+  { key: 'ark|doubao-1-5-pro-32k-250115', label: '火山方舟', provider: 'ark', model: 'doubao-1-5-pro-32k-250115' },
+  { key: 'siliconflow|Qwen/Qwen2.5-7B-Instruct', label: '硅基 Qwen', provider: 'siliconflow', model: 'Qwen/Qwen2.5-7B-Instruct' },
+  { key: 'siliconflow|zai-org/GLM-5.2', label: '硅基 GLM', provider: 'siliconflow', model: 'zai-org/GLM-5.2' },
+  { key: 'bailian|qwen-plus', label: '百炼 Qwen+', provider: 'bailian', model: 'qwen-plus' },
+  { key: 'bailian|kimi-k2.7-code', label: '百炼 Kimi', provider: 'bailian', model: 'kimi-k2.7-code' },
+  { key: 'zhipu|glm-4.6', label: '智谱 GLM', provider: 'zhipu', model: 'glm-4.6' },
+  { key: 'baidu|ernie-4.5-turbo-128k', label: '百度 ERNIE', provider: 'baidu', model: 'ernie-4.5-turbo-128k' },
 ]
+const selectedModelKey = ref(modelOptions[0].key)
+const selectedModel = computed(() => modelOptions.find(m => m.key === selectedModelKey.value) || modelOptions[0])
 
-// 模型列表 - 默认空
-const models = [
-  {value: '', icon: '✨', label: '默认', desc: '系统自动选择'},
-  {value:'coze', icon:'🧠', label:'罗圣AI', desc: '深度理解'},
-  {value:'deepseek', icon:'🔮', label:'DeepSeek', desc: '深度推理'},
-  {value:'doubao', icon:'🫘', label:'豆包', desc: '通用对话'},
-  {value:'tongyi', icon:'🌐', label:'通义千问', desc: '知识问答'},
-  {value:'yuanbao', icon:'💎', label:'腾讯元宝', desc: '创意写作'},
-]
+// 图片上传
+const pendingFile = ref<{url: string; name: string; isImage: boolean; sizeLabel: string; extractedText?: string} | null>(null)
+const fileUploadRef = ref<HTMLInputElement | null>(null)
+const showPlusMenu = ref(false)
+const uploadAccept = ref('image/*,.txt,.md,.json,.csv,.js,.ts,.py,.html,.css,.xml,.log,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx')
+const uploadCapture = ref<boolean | 'user' | 'environment' | undefined>(undefined)
 
-const currentCap = computed(() => aiCapabilities.find(c => c.id === selectedToolId.value) || aiCapabilities[0])
-const currentModelLabel = computed(() => models.find(m => m.value === selectedModel.value)?.label || '默认')
-
-function selectModel(v: string) {
-  selectedModel.value = v
-  showComboMenu.value = false
+// Toast提示
+const toastMsg = ref('')
+let toastTimer: ReturnType<typeof setTimeout> | null = null
+function showToast(msg: string) {
+  toastMsg.value = msg
+  if (toastTimer) clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => { toastMsg.value = '' }, 2000)
 }
 
-function selectCapability(id: number) {
-  selectedToolId.value = id
-  showComboMenu.value = false
+function showMsgActions(index: number, role: 'user' | 'assistant') {
+  if (role !== 'assistant') return
+  activeActionIndex.value = index
 }
 
-// 实时获取余额
-async function fetchBalance() {
-  try {
-    const token = localStorage.getItem('lsjy_token')
-    if (!token) return
-    const res = await fetch('https://api.lsjyapp.cn/api/v1/payment/coin/balance', {
-      headers: {'Authorization': `Bearer ${token}`}
-    })
-    const data = await res.json()
-    if (data.code === 0) userCoins.value = data.data.balance
-  } catch(e) { console.log('获取余额失败', e) }
+function hideMsgActions() {
+  activeActionIndex.value = null
 }
 
-const suggestions = [
-  {icon:'💡', text:'帮我写一篇小红书爆款文案'},
-  {icon:'📈', text:'分析今天A股行情走势'},
-  {icon:'🧠', text:'罗圣纪元公司有哪些业务'},
-  {icon:'✍️', text:'帮我写一份商业计划书'},
-  {icon:'🎯', text:'制定一个营销推广方案'},
-  {icon:'💼', text:'分析一个创业项目的可行性'},
-  {icon:'📊', text:'帮我做一份竞品分析报告'},
-  {icon:'🎨', text:'生成赛博朋克风格图片'},
-  {icon:'📝', text:'帮我写一篇公众号文章'},
-  {icon:'🤖', text:'罗总，帮我写一份商业计划书'}
-]
+// 图片生成
+const imgPrompt = ref('')
+const imgSize = ref('1024x1024')
+const imgStyle = ref('')
+const genLoading = ref(false)
+const images = ref<{prompt:string; url?:string; loading?:boolean; error?:string}[]>([])
 
-const thinkingPhrases = ['正在连接量子计算节点','神经网络推理中','扫描知识库数据','生成最优回答策略','深度语义分析中','跨维度信息整合']
-let thinkIdx = 0
-let thinkTimer: any = null
+// 当前Agent的消息
+const msgs = computed(() => {
+  if (!selectedAgent.value) return []
+  if (!msgsByAgent.value[selectedAgent.value.id]) {
+    msgsByAgent.value[selectedAgent.value.id] = []
+  }
+  return msgsByAgent.value[selectedAgent.value.id]
+})
 
-function startThinking() {
-  thinkIdx = 0
-  thinkingText.value = thinkingPhrases[0]
-  thinkTimer = setInterval(() => {
-    thinkIdx = (thinkIdx + 1) % thinkingPhrases.length
-    thinkingText.value = thinkingPhrases[thinkIdx]
-  }, 1500)
+// 快捷指令（根据Agent不同）
+const quickCmdsMap: Record<number, {icon:string; l:string; t:string}[]> = {
+  101: [
+    { icon: '🏢', l: '了解罗圣', t: '罗圣纪元是做什么的？有哪些业务？' },
+    { icon: '📈', l: '战略规划', t: '分析一下我们平台的核心竞争力' },
+    { icon: '🎯', l: '资源协调', t: '目前各个岗位的工作进度怎么样？' },
+    { icon: '💡', l: '商业建议', t: '给平台下一步发展提些建议' },
+  ],
+  102: [
+    { icon: '📝', l: '营销文案', t: '写一篇AI培训课程的朋友圈推广文案' },
+    { icon: '🎬', l: '视频脚本', t: '写一个30秒短视频广告脚本' },
+    { icon: '📱', l: '用户路径', t: '优化新用户从注册到付费的路径' },
+    { icon: '💰', l: '充值引导', t: '设计一套有吸引力的充值引导文案' },
+  ],
+  103: [
+    { icon: '🔍', l: '竞品分析', t: '分析一下目前主流的AI SaaS平台有什么优势' },
+    { icon: '📊', l: '数据复盘', t: '帮我设计一套平台上线后的数据复盘框架' },
+    { icon: '🐛', l: '问题排查', t: '帮我列一个全平台功能走查的checklist' },
+    { icon: '📋', l: '需求整理', t: '怎么科学地管理需求池和排优先级？' },
+  ],
+  104: [
+    { icon: '💎', l: '定价策略', t: '分析下我们10个充值套餐的定价是否合理' },
+    { icon: '📊', l: '成本核算', t: '核算一下每次AI对话1圣力的利润空间' },
+    { icon: '🤝', l: '分销设计', t: '设计一套分销商返佣规则' },
+    { icon: '📈', l: '盈利模型', t: '分析平台月营收达到10万的路径' },
+  ],
+  105: [
+    { icon: '🧠', l: '知识库优化', t: '怎么优化知识库的语义切片和向量召回？' },
+    { icon: '📝', l: '提示词设计', t: '帮我设计一个客服Agent的系统提示词' },
+    { icon: '🔄', l: '多轮对话', t: '怎么优化多轮上下文记忆能力？' },
+    { icon: '📏', l: '准确率测试', t: '设计一套问答准确率的测试方案' },
+  ],
+  106: [
+    { icon: '📜', l: '用户协议', t: '起草一份AI平台的用户服务协议要点' },
+    { icon: '🔒', l: '隐私政策', t: '我们的隐私政策需要包含哪些必要条款？' },
+    { icon: '⚠️', l: '免责声明', t: 'AI生成内容需要什么样的免责声明？' },
+    { icon: '💳', l: '退款规则', t: '设计一套合理的充值退款规则' },
+  ],
+  107: [
+    { icon: '🏗️', l: 'API网关', t: '设计一个大模型API网关的架构方案' },
+    { icon: '⚡', l: '性能优化', t: '怎么降低AI对话的首字延迟？' },
+    { icon: '🔄', l: '故障切换', t: '设计多算力渠道的负载均衡和故障切换方案' },
+    { icon: '📐', l: '接口标准', t: '制定全平台的API接口标准和错误码规范' },
+  ],
+  108: [
+    { icon: '🔧', l: '接口开发', t: '设计充值-扣费-结算的完整后端接口' },
+    { icon: '🗄️', l: '数据库优化', t: '怎么优化用户表和订单表的查询性能？' },
+    { icon: '💳', l: '支付对接', t: '设计微信支付和支付宝支付的对接方案' },
+    { icon: '🔐', l: '鉴权修复', t: '登录态失效和循环跳转怎么彻底修复？' },
+  ],
+  109: [
+    { icon: '📱', l: '移动适配', t: '怎么解决移动端布局错位的问题？' },
+    { icon: '⚡', l: '性能优化', t: '前端首屏加载怎么优化到2秒以内？' },
+    { icon: '🎨', l: 'UI规范', t: '制定一套赛博朋克风格的UI规范' },
+    { icon: '🐛', l: '白屏修复', t: '前端白屏问题怎么排查和解决？' },
+  ],
+  110: [
+    { icon: '📋', l: '测试计划', t: '帮我制定一个全平台功能测试计划' },
+    { icon: '🐛', l: 'Bug清单', t: '设计一个标准化的Bug清单模板' },
+    { icon: '⚡', l: '压力测试', t: '怎么做AI接口的并发压力测试？' },
+    { icon: '✅', l: '验收标准', t: '功能上线的验收标准应该包含哪些？' },
+  ],
 }
-function stopThinking() {
-  if (thinkTimer) { clearInterval(thinkTimer); thinkTimer = null }
-  thinkingText.value = '思考中...'
+
+const currentQuickCmds = computed(() => {
+  if (!selectedAgent.value) return []
+  return quickCmdsMap[selectedAgent.value.id] || quickCmdsMap[1] || []
+})
+
+const statusText = computed(() => {
+  if (loading.value) return `${selectedAgent.value?.name || 'AI'}思考中...`
+  if (genLoading.value) return '生成图片中...'
+  return aiOnline.value ? `在线 · ${selectedAgent.value?.name || '罗圣AI'}待命` : '连接中...'
+})
+
+const agentCoinDisplay = computed(() => {
+  return authStore.isAdmin || coinBalance.value >= 999999 ? '∞' : String(coinBalance.value)
+})
+
+// ========== 方法 ==========
+function selectAgent(agent: Agent) {
+  selectedAgent.value = agent
+  // 切换Agent时清空图片历史
+  if (agent.toolType === 'image') {
+    images.value = []
+  }
 }
 
-function useSuggestion(text: string) {
-  inputText.value = text
-  sendMessage()
+function fmt(c: string): string {
+  if (!c) return ''
+  return c
+    // Markdown图片 ![alt](url) → <img>
+    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" loading="lazy" style="display:block;width:auto;max-width:min(100%,260px);max-height:180px;object-fit:contain;border-radius:8px;margin:4px 0;cursor:pointer;background:rgba(0,0,0,0.18);border:1px solid var(--cyber-border);" onclick="window.open(this.src,\'_blank\')" />')
+    // Markdown链接 [text](url) → <a>
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color:var(--cyber-cyan);text-decoration:underline;">$1</a>')
+    // 加粗
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    // 代码块
+    .replace(/```([\s\S]*?)```/g, '<pre style="background:rgba(0,0,0,0.3);padding:6px;border-radius:4px;overflow-x:auto;margin:3px 0;font-size:11px;">$1</pre>')
+    // 行内代码
+    .replace(/`([^`]+)`/g, '<code style="background:rgba(0,240,255,0.1);padding:1px 3px;border-radius:2px;">$1</code>')
+    // 换行
+    .replace(/\n/g, '<br>')
 }
 
-async function sendMessage() {
-  const text = inputText.value.trim()
-  if (!text || loading.value) return
+function scrollToBottom() {
+  nextTick(() => { if (chatBox.value) chatBox.value.scrollTop = chatBox.value.scrollHeight })
+}
 
-  messages.value.push({role: 'user', content: text})
-  inputText.value = ''
+function clearChat() {
+  if (!selectedAgent.value) return
+  msgsByAgent.value[selectedAgent.value.id] = []
+  images.value = []
+  pendingFile.value = null
+  showPlusMenu.value = false
+}
+
+function sendQuick(t: string) { input.value = t; sendMsg() }
+
+let plusTouchLock = false
+function togglePlusMenu() {
+  if (loading.value) return
+  if (plusTouchLock) return
+  plusTouchLock = true
+  showPlusMenu.value = !showPlusMenu.value
+  setTimeout(() => { plusTouchLock = false }, 180)
+}
+
+function openUpload(type: 'image' | 'camera' | 'file') {
+  showPlusMenu.value = false
+  if (type === 'image') {
+    uploadAccept.value = 'image/*'
+    uploadCapture.value = undefined
+  } else if (type === 'camera') {
+    uploadAccept.value = 'image/*'
+    uploadCapture.value = 'environment'
+  } else {
+    uploadAccept.value = '.txt,.md,.json,.csv,.js,.ts,.py,.html,.css,.xml,.log,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx'
+    uploadCapture.value = undefined
+  }
+  nextTick(() => fileUploadRef.value?.click())
+}
+
+// 文件/图片上传处理
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return bytes + 'B'
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + 'KB'
+  return (bytes / 1024 / 1024).toFixed(1) + 'MB'
+}
+
+async function handleFileUpload(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  const isImage = file.type.startsWith('image/')
+  const maxSize = isImage ? 12 * 1024 * 1024 : 10 * 1024 * 1024
+  const sizeLabel = formatFileSize(file.size)
+  if (file.size > maxSize) {
+    showToast(isImage ? '图片不能超过12MB' : '文件不能超过10MB')
+    return
+  }
+  // 图片：压缩后用于预览和视觉识别
+  if (isImage) {
+    try {
+      const dataUrl = await compressImageForVision(file)
+      pendingFile.value = { url: dataUrl, name: file.name, isImage: true, sizeLabel }
+      if (!input.value.trim()) input.value = '请识别这张图片，并说明图片里的关键信息。'
+      showToast('✅ 图片已准备识别')
+    } catch {
+      showToast('图片处理失败，请换一张')
+    }
+  } else {
+    // 文本类文件：提取内容
+    const textExts = ['txt','md','json','csv','js','ts','py','html','css','xml','log']
+    const ext = file.name.split('.').pop()?.toLowerCase() || ''
+    if (textExts.includes(ext)) {
+      const reader = new FileReader()
+      reader.onload = () => {
+        const text = reader.result as string
+        pendingFile.value = { url: '', name: file.name, isImage: false, sizeLabel, extractedText: text.substring(0, 8000) }
+      }
+      reader.readAsText(file)
+    } else {
+      // PDF/Office等：仅显示文件信息，由AI识别文件名
+      pendingFile.value = { url: '', name: file.name, isImage: false, sizeLabel }
+    }
+  }
+  ;(e.target as HTMLInputElement).value = ''
+}
+
+function compressImageForVision(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onerror = () => reject(new Error('图片读取失败'))
+    reader.onload = () => {
+      const img = new Image()
+      img.onerror = () => reject(new Error('图片解析失败'))
+      img.onload = () => {
+        const maxSide = 1280
+        const scale = Math.min(1, maxSide / Math.max(img.width, img.height))
+        const canvas = document.createElement('canvas')
+        canvas.width = Math.max(16, Math.round(img.width * scale))
+        canvas.height = Math.max(16, Math.round(img.height * scale))
+        const ctx = canvas.getContext('2d')
+        if (!ctx) return reject(new Error('图片压缩失败'))
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+        resolve(canvas.toDataURL('image/jpeg', 0.82))
+      }
+      img.src = String(reader.result)
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
+// ========== 核心：AI对话 ==========
+async function sendMsg() {
+  const text = input.value.trim()
+  const file = pendingFile.value
+  if ((!text && !file) || loading.value || !selectedAgent.value) return
+
+  const agent = selectedAgent.value
+  // 组合消息内容：文件/图片 + 文字
+  let userContent = ''
+  if (file) {
+    if (file.isImage) {
+      userContent += `![图片](${file.url})\n`
+    } else if (file.extractedText) {
+      userContent += `📄 [文件: ${file.name}]\n\`\`\`\n${file.extractedText}\n\`\`\`\n\n`
+    } else {
+      userContent += `📄 [文件: ${file.name} (${file.sizeLabel})]\n`
+    }
+  }
+  if (text) {
+    userContent += text
+  }
+  msgs.value.push({ role: 'user', content: userContent })
+  hideMsgActions()
+  input.value = ''
+  pendingFile.value = null
   loading.value = true
-  startThinking()
-  await nextTick()
   scrollToBottom()
 
   try {
-    const token = localStorage.getItem('lsjy_token')
-    if (!token) {
-      messages.value.push({role: 'assistant', content: '请先登录后使用', model: '系统'})
-      return
+    const backendMessages = msgs.value.slice(-20).map(m => ({ role: m.role, content: toBackendContent(m.content) }))
+    if (file?.isImage) {
+      const lastUserIndex = backendMessages.map(m => m.role).lastIndexOf('user')
+      if (lastUserIndex >= 0) {
+        backendMessages[lastUserIndex].content = [
+          { type: 'text', text: text || '请识别这张图片，并说明图片里的关键信息。' },
+          { type: 'image_url', image_url: { url: file.url } }
+        ] as any
+      }
     }
 
-    const allMessages = messages.value.map(m => ({role: m.role, content: m.content}))
-    
-      const apiPath = `/api/v1/ai/tools/${selectedToolId.value}/chat`
-      const res = await fetch(`https://api.lsjyapp.cn${apiPath}`, {
+    // 系统提示通过 systemPrompt 字段传给后端，不混入用户消息
+
+    // 使用主后端 /agent/chat，避开线上 /ai/* 独立代理鉴权
+    const modelName = agent.modelName || selectedModel.value.model
+    const providerName = agent.provider || selectedModel.value.provider
+    const res = await fetch(`${API_BASE}/agent/chat`, {
       method: 'POST',
       headers: {
+        'Authorization': `Bearer ${authToken.value}`,
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify({
-        messages: allMessages,
-        model: selectedModel.value || undefined,
-        content: text
-      })
+      body: JSON.stringify({ 
+        messages: backendMessages,
+        model: modelName,
+        provider: providerName,
+        agentId: agent.id,
+        systemPrompt: agent.systemPrompt
+      }),
     })
 
-    const data = await res.json()
-
-    if (data.code === 402) {
-      showCoinLow.value = true
-      messages.value.push({role: 'assistant', content: '圣力不足，请充值后继续使用。', model: '系统'})
+    // 圣力不足
+    if (res.status === 402) {
+      const errData = await res.json()
+      coinBalance.value = errData.data?.balance || 0
+      msgs.value.push({
+        role: 'assistant',
+        content: `⚡ **圣力不足**\n\n当前余额：${coinBalance.value}\n本次需要：${errData.data?.cost || agent.coinCost}\n\n点击右上角「⚡」前往充值`,
+      })
+      loading.value = false
+      scrollToBottom()
       return
     }
 
-    if (data.code === 0) {
-      const reply = data.data?.content || '抱歉，暂时无法回复'
-      const modelName = data.data?.model || 'AI'
-      messages.value.push({role: 'assistant', content: reply, model: modelName})
-      
-      // 实时更新圣力余额
-      if (data.data?.balance !== undefined) {
-        userCoins.value = data.data.balance
-      } else {
-        await fetchBalance()
-      }
-    } else {
-      messages.value.push({role: 'assistant', content: '出了点问题，请稍后再试', model: '系统'})
+    if (!res.ok) throw new Error(`API ${res.status}`)
+
+    const result = await res.json()
+    if (result.code !== 0) throw new Error(result.message || '服务错误')
+
+    if (result.data.balance !== undefined) {
+      coinBalance.value = result.data.balance
     }
-  } catch(e) {
-    messages.value.push({role: 'assistant', content: '网络连接失败，请检查网络', model: '系统'})
+
+    msgs.value.push({
+      role: 'assistant',
+      content: result.data.content || result.data.reply || '⚠️ 未返回内容',
+      coinCost: result.data.coinCost || agent.coinCost
+    })
+  } catch (e: any) {
+    msgs.value.push({
+      role: 'assistant',
+      content: `⚠️ 连接失败：${e.message || '网络异常'}`,
+    })
   } finally {
     loading.value = false
-    stopThinking()
-    await nextTick()
     scrollToBottom()
   }
 }
 
-function scrollToBottom() {
-  if (msgContainer.value) {
-    msgContainer.value.scrollTop = msgContainer.value.scrollHeight
+function toBackendContent(content: string): string | Array<any> {
+  if (!content.includes('data:image')) return content
+  const imageMatches = Array.from(content.matchAll(/!\[图片\]\((data:image\/[^;]+;base64,[^)]+)\)/g))
+  if (!imageMatches.length) return content
+  const text = content.replace(/!\[图片\]\(data:image\/[^;]+;base64,[^)]+\)\n?/g, '').trim() || '请识别并分析这张图片。'
+  const parts: any[] = [{ type: 'text', text }]
+  imageMatches.slice(0, 3).forEach(match => {
+    parts.push({ type: 'image_url', image_url: { url: match[1] } })
+  })
+  return parts
+}
+
+// ========== 消息操作：复制/转发/重新生成 ==========
+async function copyMsg(content: string) {
+  try {
+    await navigator.clipboard.writeText(content)
+    showToast('✅ 已复制到剪贴板')
+  } catch {
+    const ta = document.createElement('textarea')
+    ta.value = content
+    ta.style.position = 'fixed'
+    ta.style.opacity = '0'
+    document.body.appendChild(ta)
+    ta.select()
+    document.execCommand('copy')
+    document.body.removeChild(ta)
+    showToast('✅ 已复制到剪贴板')
   }
 }
 
-function particleStyle(n: number) {
-  const size = Math.random() * 3 + 1
-  return {
-    width: size + 'px', height: size + 'px',
-    left: Math.random() * 100 + '%',
-    top: Math.random() * 100 + '%',
-    animationDuration: (Math.random() * 10 + 5) + 's',
-    animationDelay: Math.random() * 5 + 's',
-    opacity: Math.random() * 0.5 + 0.1,
+async function shareMsg(content: string) {
+  const shareText = content.length > 500 ? content.substring(0, 500) + '...' : content
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: `罗圣AI - ${selectedAgent.value?.name || '智能体'}`, text: shareText })
+      return
+    } catch { /* 用户取消 */ }
+  }
+  // 降级：复制到剪贴板
+  await copyMsg(content)
+  showToast('✅ 已复制，可粘贴转发')
+}
+
+async function regenerateMsg(index: number) {
+  if (loading.value || !selectedAgent.value) return
+  const msg = msgs.value[index]
+  if (msg?.role !== 'assistant') return
+
+  // 找到上一条用户消息
+  let userContent = ''
+  for (let j = index - 1; j >= 0; j--) {
+    if (msgs.value[j].role === 'user') {
+      userContent = msgs.value[j].content
+      break
+    }
+  }
+  if (!userContent) return
+
+  const agent = selectedAgent.value
+
+  // 删除当前AI回复
+  msgs.value.splice(index, 1)
+  loading.value = true
+  scrollToBottom()
+
+  try {
+    const backendMessages = msgs.value.slice(-20).map(m => ({ role: m.role, content: toBackendContent(m.content) }))
+
+    // 使用主后端 /agent/chat，避开线上 /ai/* 独立代理鉴权
+    const modelName = agent.modelName || selectedModel.value.model
+    const providerName = agent.provider || selectedModel.value.provider
+    const res = await fetch(`${API_BASE}/agent/chat`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${authToken.value}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        messages: backendMessages,
+        model: modelName,
+        provider: providerName,
+        agentId: agent.id,
+        systemPrompt: agent.systemPrompt
+      }),
+    })
+
+    if (!res.ok) throw new Error(`API ${res.status}`)
+    const result = await res.json()
+    if (result.code !== 0) throw new Error(result.message || '服务错误')
+
+    if (result.data.balance !== undefined) {
+      coinBalance.value = result.data.balance
+    }
+
+    msgs.value.push({
+      role: 'assistant',
+      content: result.data.content || result.data.reply || '⚠️ 未返回内容',
+      coinCost: result.data.coinCost || agent.coinCost
+    })
+    showToast('🔄 已重新生成')
+  } catch (e: any) {
+    msgs.value.push({
+      role: 'assistant',
+      content: `⚠️ 重新生成失败：${e.message || '网络异常'}`,
+    })
+  } finally {
+    loading.value = false
+    scrollToBottom()
   }
 }
 
-// 点击外部关闭菜单
-function handleClickOutside(e: Event) {
-  const target = e.target as HTMLElement
-  if (!target.closest('.combo-selector')) {
-    showComboMenu.value = false
+// ========== 消息操作：引用/点赞/导出 ==========
+function quoteMsg(content: string) {
+  // 引用消息内容到输入框
+  const quoteText = content.length > 100 ? content.substring(0, 100) + '...' : content
+  input.value = `> ${quoteText}\n\n`
+  // 聚焦输入框
+  nextTick(() => {
+    const inputEl = document.querySelector('input[placeholder*="提问"]') as HTMLInputElement
+    if (inputEl) inputEl.focus()
+  })
+  showToast('💬 已引用到输入框')
+}
+
+function likeMsg(index: number) {
+  const msg = msgs.value[index]
+  if (!msg) return
+  msg.liked = msg.liked === 'good' ? null : 'good'
+  showToast(msg.liked === 'good' ? '👍 感谢反馈' : '')
+}
+
+function dislikeMsg(index: number) {
+  const msg = msgs.value[index]
+  if (!msg) return
+  msg.liked = msg.liked === 'bad' ? null : 'bad'
+  showToast(msg.liked === 'bad' ? '👎 感谢反馈，我们会改进' : '')
+}
+
+async function exportMsg(content: string) {
+  try {
+    // 创建文本文件并下载
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `AI回复_${new Date().toISOString().slice(0,10)}.txt`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+    showToast('📥 已导出为文本文件')
+  } catch (e) {
+    showToast('⚠️ 导出失败')
   }
 }
 
-onMounted(() => {
-  fetchBalance()
-  document.addEventListener('click', handleClickOutside)
-})
+// ========== 图片生成 ==========
+async function genImage() {
+  const prompt = imgPrompt.value.trim()
+  if (!prompt || genLoading.value || !selectedAgent.value) return
 
-watch(() => messages.value.length, () => {
-  nextTick(() => scrollToBottom())
+  const fullPrompt = imgStyle.value ? `以${imgStyle.value}风格生成：${prompt}` : prompt
+  images.value.unshift({ prompt, loading: true })
+  genLoading.value = true
+
+  try {
+    const res = await fetch(`${API_BASE}/ai/tools/${selectedAgent.value.id}/generate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authToken.value}`,
+      },
+      body: JSON.stringify({
+        prompt: fullPrompt,
+        width: parseInt(imgSize.value.split('x')[0]) || 1024,
+        height: parseInt(imgSize.value.split('x')[1]) || 1024,
+        style: imgStyle.value || 'auto',
+        count: 1,
+      }),
+    })
+
+    if (res.status === 402) {
+      const errData = await res.json()
+      coinBalance.value = errData.data?.balance || 0
+      images.value[0] = { prompt, error: `⚡ 圣力不足！余额${coinBalance.value}，需要${selectedAgent.value.coinCost}。点击充值` }
+      genLoading.value = false
+      return
+    }
+
+    if (!res.ok) throw new Error(`API ${res.status}`)
+    const data = await res.json()
+
+    if (data.code === 0 && data.data?.urls?.length > 0) {
+      if (data.data.balance !== undefined) coinBalance.value = data.data.balance
+      images.value[0] = { prompt, url: data.data.urls[0] }
+    } else {
+      throw new Error(data.message || '生成失败')
+    }
+  } catch (err: any) {
+    images.value[0] = { prompt, error: `生成失败：${err?.message || '未知错误'}` }
+  } finally {
+    genLoading.value = false
+  }
+}
+
+// ========== 生命周期 ==========
+onMounted(async () => {
+  // 从URL参数选择Agent（从AI员工中心跳转过来）
+  const urlParams = new URLSearchParams(window.location.search)
+  const agentIdParam = urlParams.get('agentId') || new URLSearchParams(window.location.hash.split('?')[1] || '').get('agentId')
+  if (agentIdParam) {
+    const found = agents.find(a => a.id === Number(agentIdParam))
+    if (found) selectedAgent.value = found
+  }
+
+  // 检测API - 使用 /health 端点（更稳定）
+  fetch(`${API_BASE}/health`, { signal: AbortSignal.timeout(5000) })
+    .then(r => { aiOnline.value = r.ok })
+    .catch(() => {
+      // 降级尝试 /ai/models
+      fetch(`${API_BASE}/ai/models`, { signal: AbortSignal.timeout(5000) })
+        .then(r => { aiOnline.value = r.ok })
+        .catch(() => { aiOnline.value = false })
+    })
+
+  // 获取余额（从 auth store 获取，已登录则自动拉取）
+  if (authStore.isLoggedIn) {
+    await authStore.fetchBalance()
+  }
 })
 </script>
 
 <style scoped>
-* { box-sizing: border-box; }
-
-.bg-particles { position:fixed; inset:0; pointer-events:none; z-index:0; }
-.particle {
-  position:absolute; border-radius:50%;
-  background: radial-gradient(circle, #00f0ff, transparent);
-  animation: float linear infinite;
+.animate-bounce {
+  animation: bounce 1.4s infinite;
 }
-@keyframes float {
-  0% { transform: translateY(100vh) scale(0); opacity:0; }
-  10% { opacity:1; }
-  90% { opacity:1; }
-  100% { transform: translateY(-100vh) scale(1); opacity:0; }
+@keyframes bounce {
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1.0); }
 }
 
-/* === Header - 紧凑 === */
-.chat-header {
-  display:flex; align-items:center; gap:10px;
-  padding:10px 16px;
-  background: rgba(10,10,30,0.8);
-  border-bottom:1px solid rgba(0,240,255,0.1);
-  z-index:10; position:relative;
+.plus-menu {
+  position: fixed;
+  left: 14px;
+  bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  z-index: 100001;
+  width: 148px;
+  padding: 6px;
+  border-radius: 12px;
+  background: rgba(5, 10, 20, 0.96);
+  border: 1px solid var(--cyber-border);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), 0 0 18px rgba(0, 240, 255, 0.12);
   backdrop-filter: blur(10px);
 }
-.avatar-container { position:relative; width:40px; height:40px; flex-shrink:0; }
-.avatar-ring { position:absolute; border-radius:50%; border:1.5px solid transparent; }
-.ring-outer { inset:0; border-top-color:#00f0ff; border-right-color:#00f0ff40; animation: spin 3s linear infinite; }
-.ring-inner { inset:4px; border-bottom-color:#b700ff; border-left-color:#b700ff40; animation: spin 2s linear infinite reverse; }
-@keyframes spin { to { transform:rotate(360deg); } }
-.avatar-core {
-  position:absolute; inset:6px; border-radius:50%;
-  background: radial-gradient(circle, #1a1a3a, #0a0a1a);
-  display:flex; align-items:center; justify-content:center;
+.plus-menu-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  background: transparent;
 }
-.avatar-svg { width:100%; height:100%; }
-.status-pulse {
-  position:absolute; bottom:0; right:0; width:8px; height:8px;
-  background:#00ff88; border-radius:50%;
-  box-shadow: 0 0 6px #00ff88;
-  animation: pulse 2s ease-in-out infinite;
+.plus-menu button {
+  width: 100%;
+  display: block;
+  padding: 7px 8px;
+  border-radius: 8px;
+  text-align: left;
+  font-size: 11px;
+  color: var(--cyber-text);
+  background: transparent;
+  border: 0;
 }
-@keyframes pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.5; transform:scale(0.8); } }
-
-.header-info { flex:1; min-width:0; }
-.header-title {
-  font-size:14px; font-weight:bold;
-  background: linear-gradient(90deg, #00f0ff, #b700ff);
-  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-}
-.header-sub { display:flex; align-items:center; gap:4px; font-size:10px; color:#a0a0cc; }
-.status-dot { width:5px; height:5px; border-radius:50%; background:#00ff88; box-shadow:0 0 4px #00ff88; }
-
-/* === 融合选择器 - 紧凑 === */
-.combo-selector {
-  position:relative; display:flex; align-items:center; gap:5px;
-  padding:5px 10px; border-radius:14px; cursor:pointer;
-  background: rgba(0,240,255,0.06);
-  border:1px solid rgba(0,240,255,0.15);
-  transition: all 0.3s; z-index:100;
-  max-width: 200px;
-}
-.combo-selector:hover { border-color: rgba(0,240,255,0.35); background: rgba(0,240,255,0.1); }
-.cs-icon { font-size:14px; }
-.cs-label { font-size:11px; color:#e0e0ff; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:70px; }
-.cs-model { font-size:10px; color:#00f0ff; white-space:nowrap; }
-.cs-arrow { font-size:9px; color:#00f0ff; transition: transform 0.2s; }
-.cs-arrow.open { transform: rotate(180deg); }
-
-.cs-dropdown {
-  position:absolute; top:calc(100% + 6px); right:0;
-  width:240px; max-height:380px; overflow-y:auto; padding:8px;
-  background: rgba(10,10,30,0.97);
-  border:1px solid rgba(0,240,255,0.2);
-  border-radius:14px;
-  backdrop-filter: blur(20px);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 20px rgba(0,240,255,0.08);
-  animation: dropIn 0.2s ease-out;
-  scrollbar-width:thin; scrollbar-color:#00f0ff30 transparent;
-}
-@keyframes dropIn {
-  from { opacity:0; transform:translateY(-6px); }
-  to { opacity:1; transform:translateY(0); }
+.plus-menu button:active,
+.plus-menu button:hover {
+  color: var(--cyber-cyan);
+  background: rgba(0,240,255,0.08);
 }
 
-.cs-section-title {
-  font-size:10px; color:#00f0ff; padding:4px 8px; font-weight:bold;
-  letter-spacing: 1px;
-}
-.cs-divider {
-  height:1px; background: rgba(0,240,255,0.1); margin:4px 0;
-}
-.cs-option {
-  display:flex; align-items:center; gap:8px;
-  padding:7px 8px; border-radius:10px; cursor:pointer;
-  transition: all 0.15s;
-}
-.cs-option:hover { background: rgba(0,240,255,0.08); }
-.cs-option.active { background: rgba(0,240,255,0.12); }
-.cso-icon { font-size:14px; width:20px; text-align:center; flex-shrink:0; }
-.cso-name { font-size:11px; color:#e0e0ff; flex:1; }
-.cso-cost { font-size:9px; color:#ffd700; }
-.cso-check { color:#00f0ff; font-size:12px; font-weight:bold; }
-
-/* === 圣力余额 - 紧凑 === */
-.sl-balance-mini {
-  display:flex; align-items:center; gap:3px;
-  padding:4px 8px; border-radius:12px;
-  background: rgba(255,200,0,0.06);
-  border:1px solid rgba(255,200,0,0.15);
-}
-.sl-icon { font-size:11px; }
-.sl-val { font-size:11px; color:#ffd700; font-weight:bold; min-width:24px; text-align:center; }
-
-/* === Messages === */
-.chat-messages {
-  flex:1; overflow-y:auto; padding:16px;
-  z-index:1; position:relative;
-  scrollbar-width:thin; scrollbar-color:#00f0ff30 transparent;
+.agent-select {
+  background-color: rgba(5, 10, 20, 0.92) !important;
+  color: var(--cyber-text) !important;
+  color-scheme: dark;
 }
 
-/* === Welcome === */
-.welcome-screen {
-  display:flex; flex-direction:column; align-items:center;
-  justify-content:center; height:100%; text-align:center;
-}
-.welcome-avatar { position:relative; width:100px; height:100px; margin-bottom:16px; }
-.wa-ring { position:absolute; border-radius:50%; border:1.5px solid transparent; }
-.wa-r1 { inset:0; border-top-color:#00f0ff; border-right-color:#00f0ff30; animation: spin 4s linear infinite; }
-.wa-r2 { inset:8px; border-bottom-color:#b700ff; border-left-color:#b700ff30; animation: spin 3s linear infinite reverse; }
-.wa-r3 { inset:16px; border-top-color:#ff006a30; animation: spin 5s linear infinite; }
-.wa-core {
-  position:absolute; inset:20px; border-radius:50%;
-  background: radial-gradient(circle, #1a1a3a, #0a0a1a);
-  display:flex; align-items:center; justify-content:center;
-  box-shadow: 0 0 30px rgba(0,240,255,0.2);
-}
-.welcome-title { font-size:18px; font-weight:bold; color:#e0e0ff; margin-bottom:6px; }
-.gradient-text {
-  background: linear-gradient(90deg, #00f0ff, #b700ff);
-  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-}
-.welcome-desc { font-size:12px; color:#a0a0cc; margin-bottom:20px; }
-
-.suggestions-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; max-width:380px; width:100%; padding:0 16px; }
-.suggestion-card {
-  display:flex; align-items:center; gap:6px;
-  padding:10px 12px; border-radius:10px;
-  background: rgba(0,240,255,0.04);
-  border:1px solid rgba(0,240,255,0.1);
-  cursor:pointer; transition:all 0.3s;
-  text-align:left;
-}
-.suggestion-card:hover {
-  background: rgba(0,240,255,0.1);
-  border-color: rgba(0,240,255,0.3);
-  transform: translateY(-2px);
-}
-.sug-icon { font-size:16px; }
-.sug-text { font-size:11px; color:#c0c0e0; }
-
-/* === Message Bubbles === */
-.msg-row { display:flex; margin-bottom:14px; align-items:flex-start; }
-.msg-user { justify-content:flex-end; }
-.msg-ai { justify-content:flex-start; }
-.msg-avatar-sm {
-  width:28px; height:28px; border-radius:50%;
-  background: rgba(0,240,255,0.1);
-  border:1px solid rgba(0,240,255,0.2);
-  display:flex; align-items:center; justify-content:center;
-  margin-right:8px; flex-shrink:0;
-}
-.msg-bubble { max-width:80%; padding:10px 14px; position:relative; }
-.bubble-user {
-  background: linear-gradient(135deg, #00f0ff, #b700ff);
-  color:#fff; border-radius:18px 18px 4px 18px;
-  box-shadow: 0 2px 12px rgba(0,240,255,0.3);
-}
-.bubble-ai {
-  background: rgba(0,240,255,0.06);
-  border:1px solid rgba(0,240,255,0.12);
-  color:#e0e0ff; border-radius:18px 18px 18px 4px;
-  backdrop-filter: blur(5px);
-}
-.msg-text { font-size:13px; line-height:1.6; word-break:break-word; }
-.msg-model-tag {
-  margin-top:4px; font-size:9px; color:#606088;
-  padding:2px 6px; border-radius:6px;
-  background: rgba(0,240,255,0.06);
-  display:inline-block;
+.agent-select:focus {
+  border-color: var(--cyber-cyan) !important;
+  box-shadow: 0 0 0 1px rgba(0, 240, 255, 0.22), 0 0 12px rgba(0, 240, 255, 0.14);
 }
 
-/* === Thinking === */
-.thinking-container { display:flex; flex-direction:column; align-items:center; gap:8px; padding:12px 20px; }
-.thinking-visual { position:relative; width:40px; height:40px; }
-.tv-ring { position:absolute; border-radius:50%; border:2px solid transparent; }
-.tv-r1 { inset:0; border-top-color:#00f0ff; border-right-color:#00f0ff40; animation: spin 1s linear infinite; }
-.tv-r2 { inset:6px; border-bottom-color:#b700ff; border-left-color:#b700ff40; animation: spin 0.7s linear infinite reverse; }
-.tv-core-dot {
-  position:absolute; inset:12px; border-radius:50%;
-  background: radial-gradient(circle, #00f0ff, #b700ff);
-  animation: corePulse 0.8s ease-in-out infinite;
+.agent-select option {
+  background: #050a14;
+  color: #e8f8ff;
 }
-@keyframes corePulse { 0%,100% { transform:scale(0.8); opacity:0.6; } 50% { transform:scale(1.2); opacity:1; } }
-.thinking-bars { display:flex; gap:3px; align-items:flex-end; height:16px; }
-.tbar { width:3px; border-radius:2px; background: linear-gradient(to top, #00f0ff, #b700ff); animation: barBounce 0.8s ease-in-out infinite; }
-@keyframes barBounce { 0%,100% { height:4px; opacity:0.4; } 50% { height:16px; opacity:1; } }
-.thinking-text { font-size:11px; color:#00f0ff; text-shadow: 0 0 10px rgba(0,240,255,0.5); }
-.thinking-dots { display:flex; gap:4px; }
-.tdot { width:4px; height:4px; border-radius:50%; background:#00f0ff; animation: dotPulse 0.8s ease-in-out infinite; }
-@keyframes dotPulse { 0%,100% { opacity:0.2; transform:scale(0.6); } 50% { opacity:1; transform:scale(1.2); } }
 
-/* === Input === */
-.chat-input-area {
-  display:flex; align-items:center; gap:8px;
-  padding:10px 14px; margin:0 14px 10px;
-  background: rgba(0,240,255,0.04);
-  border:1px solid rgba(0,240,255,0.12);
-  border-radius:14px; z-index:1; position:relative;
-  backdrop-filter: blur(10px);
+.agent-select option:checked,
+.agent-select option:hover {
+  background: #082435;
+  color: var(--cyber-cyan);
 }
-.input-glow {
-  position:absolute; inset:-1px; border-radius:14px;
-  background: linear-gradient(90deg, #00f0ff20, transparent, #b700ff20);
-  opacity:0; transition:opacity 0.3s; pointer-events:none;
-}
-.chat-input-area:focus-within .input-glow { opacity:1; }
-.chat-input { flex:1; background:transparent; border:none; outline:none; font-size:13px; color:#e0e0ff; padding:4px 6px; }
-.chat-input::placeholder { color:#606088; }
-.chat-input:disabled { opacity:0.5; }
-.send-btn {
-  width:36px; height:36px; border-radius:10px; border:none;
-  background: linear-gradient(135deg, #00f0ff, #b700ff);
-  color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center;
-  transition:all 0.3s; box-shadow: 0 2px 10px rgba(0,240,255,0.3);
-}
-.send-btn:hover:not(:disabled) { transform:scale(1.05); box-shadow: 0 4px 20px rgba(0,240,255,0.5); }
-.send-btn:disabled { opacity:0.3; cursor:not-allowed; }
 
-/* === 圣力不足弹窗 === */
-.coin-low-modal {
-  position:fixed; inset:0; background:rgba(0,0,0,0.7);
-  display:flex; align-items:center; justify-content:center;
-  z-index:9999;
+/* AI回复操作按钮：默认隐藏，触摸/悬停消息时显示 */
+.msg-item .msg-actions {
+  max-height: 0;
+  margin-top: 0;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+  transform: translateY(-4px);
+  transition: opacity 0.18s ease, max-height 0.18s ease, margin-top 0.18s ease, transform 0.18s ease;
 }
-.coin-low-card {
-  width:300px; padding:28px 20px; text-align:center;
-  background: linear-gradient(135deg, #1a1a3a, #0a0a2a);
-  border:1px solid rgba(255,200,0,0.3);
-  border-radius:18px;
-  box-shadow: 0 0 40px rgba(255,200,0,0.1);
+.msg-item:hover .msg-actions,
+.msg-item:focus-within .msg-actions,
+.msg-item.msg-item-active .msg-actions {
+  max-height: 56px;
+  margin-top: 6px;
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
 }
-.clc-icon { font-size:40px; margin-bottom:12px; }
-.clc-title { font-size:18px; color:#ffd700; font-weight:bold; margin-bottom:6px; }
-.clc-desc { font-size:12px; color:#a0a0cc; margin-bottom:20px; }
-.clc-btns { display:flex; gap:10px; justify-content:center; }
-.clc-cancel {
-  padding:7px 16px; border-radius:8px; border:1px solid rgba(255,255,255,0.2);
-  background:transparent; color:#a0a0cc; cursor:pointer; font-size:12px;
+
+.msg-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 10px;
+  color: var(--cyber-text-dim);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  opacity: 0.6;
 }
-.clc-confirm {
-  padding:7px 16px; border-radius:8px; border:none;
-  background: linear-gradient(135deg, #ffd700, #ff8c00);
-  color:#1a1a3a; font-weight:bold; cursor:pointer; font-size:12px;
+.msg-action-btn:hover {
+  opacity: 1;
+  background: rgba(0,240,255,0.08);
+  color: var(--cyber-cyan);
+}
+.msg-action-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.msg-action-btn.active-good {
+  color: var(--cyber-green);
+  opacity: 1;
+}
+.msg-action-btn.active-bad {
+  color: #ff6b6b;
+  opacity: 1;
+}
+
+/* Toast动画 */
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translate(-50%, -8px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* 隐藏滚动条但保持可滚动 */
+.overflow-x-auto::-webkit-scrollbar {
+  height: 3px;
+}
+.overflow-x-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background: rgba(0,240,255,0.2);
+  border-radius: 2px;
 }
 </style>
-
