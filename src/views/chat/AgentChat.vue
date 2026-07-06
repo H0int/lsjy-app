@@ -862,8 +862,15 @@ onMounted(async () => {
     if (found) selectedAgent.value = found
   }
 
-  // 主对话接口是 /agent/chat；健康检查不可用时不阻断前台对话状态。
-  aiOnline.value = true
+  // 检测API - 使用 /health 端点（更稳定）
+  fetch(`${API_BASE}/health`, { signal: AbortSignal.timeout(5000) })
+    .then(r => { aiOnline.value = r.ok })
+    .catch(() => {
+      // 降级尝试 /ai/models
+      fetch(`${API_BASE}/ai/models`, { signal: AbortSignal.timeout(5000) })
+        .then(r => { aiOnline.value = r.ok })
+        .catch(() => { aiOnline.value = false })
+    })
 
   // 获取余额（从 auth store 获取，已登录则自动拉取）
   if (authStore.isLoggedIn) {

@@ -46,14 +46,17 @@ export const userApi = {
 
 // ===== AI工具API =====
 export const toolApi = {
-  async getCategories(): Promise<ApiResponse<ToolCategory[]>> {
-    return mockApi.getCategories() as any
+  getCategories(): Promise<ApiResponse<ToolCategory[]>> {
+    if (useMock) return mockApi.getCategories() as any
+    return service.get('/ai/categories').then(r => r.data)
   },
-  async getTools(params?: { categoryId?: number; subCategory?: string; toolType?: string; page?: number; pageSize?: number }): Promise<ApiResponse<PageResult<Tool>>> {
-    return mockApi.getTools(params) as any
+  getTools(params?: { categoryId?: number; subCategory?: string; toolType?: string; page?: number; pageSize?: number }): Promise<ApiResponse<PageResult<Tool>>> {
+    if (useMock) return mockApi.getTools(params) as any
+    return service.get('/ai/tools', { params }).then(r => r.data)
   },
-  async getToolDetail(id: number | string): Promise<ApiResponse<Tool>> {
-    return mockApi.getToolDetail(id) as any
+  getToolDetail(id: number | string): Promise<ApiResponse<Tool>> {
+    if (useMock) return mockApi.getToolDetail(id) as any
+    return service.get(`/ai/tools/${id}`).then(r => r.data)
   },
   callTool(id: number | string, input: { text?: string; params?: Record<string, any>; files?: string[] }): Promise<ApiResponse<AiCallRecord>> {
     if (useMock) return mockApi.callTool(id, input) as any
@@ -68,18 +71,6 @@ export const toolApi = {
   },
   getQuota(toolId: number): Promise<ApiResponse<{ used: number; limit: number; date: string }>> {
     return service.get(`/ai/quota/${toolId}`).then(r => r.data)
-  },
-  getWorks(params?: { page?: number; pageSize?: number }): Promise<ApiResponse<PageResult<AiCallRecord>>> {
-    if (useMock) return mockApi.getHistory(params) as any
-    return service.get('/ai/history', { params }).then(r => r.data).catch(() => mockApi.getHistory(params) as any)
-  },
-  getFavorites(params?: { page?: number; pageSize?: number }): Promise<ApiResponse<PageResult<AiCallRecord>>> {
-    if (useMock) return mockApi.getHistory(params) as any
-    return service.get('/ai/history', { params: { ...params, favorite: 1 } }).then(r => r.data).catch(() => mockApi.getHistory(params) as any)
-  },
-  toggleFavorite(id: number): Promise<ApiResponse<{ message: string }>> {
-    if (useMock) return Promise.resolve({ code: 0, message: 'success', data: { message: 'ok' } })
-    return service.post(`/ai/history/${id}/favorite`).then(r => r.data).catch(() => ({ code: 0, message: 'success', data: { message: 'ok' } }))
   }
 }
 

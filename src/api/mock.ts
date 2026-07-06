@@ -293,31 +293,6 @@ export const mockTools: Tool[] = [
   mkTool(6, 'social', '表白文案', 'confession', '表白情话、情书文案', '💕', 'text', 8, 0, 0, 5600, ['热门']),
   mkTool(6, 'social', '道歉信', 'apology-letter', '道歉信、和好话术', '🙏', 'text', 8, 0, 0, 3200),
   mkTool(6, 'social', '小组作业分工', 'group-work', '小组作业分工建议、沟通话术', '👥', 'text', 5, 1, 10, 2400),
-  mkTool(1, 'chat', 'DeepSeek深度推理', 'deepseek-reasoning', '复杂问题推理、代码逻辑和方案拆解', '🧩', 'text', 12, 0, 0, 16800, ['热门']),
-  mkTool(1, 'chat', '豆包多模态助手', 'doubao-multimodal', '文本、图片理解和创意问答', '🌈', 'analysis', 10, 1, 5, 14300),
-  mkTool(1, 'writing', '短剧脚本生成', 'short-drama-script', '短剧分集大纲、对白和反转设计', '🎭', 'text', 18, 0, 0, 9800, ['热门']),
-  mkTool(1, 'image', '商品场景图生成', 'product-scene-image', '电商商品场景图、氛围图一键生成', '🛍️', 'image', 25, 0, 0, 7600),
-  mkTool(1, 'video', '图生视频', 'image-to-video-pro', '上传图片生成动态短视频', '🎞️', 'video', 80, 0, 0, 6400),
-  mkTool(2, 'script', '爆款开头生成器', 'viral-hook', '3秒抓人开头、黄金标题和停留话术', '🎣', 'text', 8, 1, 10, 15400, ['热门']),
-  mkTool(2, 'operation', '账号复盘报告', 'account-review', '账号内容、涨粉和转化复盘分析', '📋', 'analysis', 20, 0, 0, 5200),
-  mkTool(2, 'parser', '热点选题雷达', 'hot-topic-radar', '短视频热点选题和内容角度推荐', '📡', 'text', 12, 0, 0, 8900),
-  mkTool(2, 'image', '小红书封面标题', 'xhs-cover-title', '小红书封面标题、排版关键词生成', '📕', 'text', 8, 1, 10, 11800),
-  mkTool(3, 'product', '私域成交话术', 'private-domain-sales', '朋友圈、社群和一对一成交话术', '💬', 'text', 10, 0, 0, 6800),
-  mkTool(3, 'design', '主图点击率优化', 'main-image-ctr', '主图卖点、视觉层级和点击率优化建议', '🎯', 'analysis', 18, 0, 0, 4700),
-  mkTool(3, 'operation', '店铺诊断报告', 'shop-diagnosis', '店铺流量、转化和商品结构诊断', '🏪', 'analysis', 25, 0, 0, 3900),
-  mkTool(3, 'marketing', '团购套餐设计', 'group-buy-package', '本地生活团购套餐、定价和卖点设计', '🍱', 'text', 15, 0, 0, 5600),
-  mkTool(4, 'health', '宠物体检清单', 'pet-checkup-list', '猫狗日常体检项目和注意事项', '🩺', 'text', 5, 1, 10, 4100),
-  mkTool(4, 'food', '宠物减肥计划', 'pet-weight-loss', '宠物体重管理、喂食和运动计划', '⚖️', 'text', 8, 0, 0, 3300),
-  mkTool(4, 'training', '幼犬训练计划', 'puppy-training-plan', '幼犬定点、随行、社交训练计划', '🐕‍🦺', 'text', 10, 0, 0, 4500),
-  mkTool(4, 'grooming', '宠物造型灵感', 'pet-style-ideas', '宠物美容造型和拍照灵感推荐', '📸', 'image', 15, 0, 0, 3700),
-  mkTool(5, 'lesson', '公开课设计', 'open-class-design', '公开课流程、互动环节和板书设计', '🏫', 'text', 15, 0, 0, 2300),
-  mkTool(5, 'exam', '题库解析生成', 'question-analysis', '题目解析、知识点和易错点生成', '🧾', 'text', 12, 0, 0, 3100),
-  mkTool(5, 'tutoring', '学习陪跑计划', 'study-coach-plan', '按目标和时间制定每日学习计划', '🏃', 'text', 12, 0, 0, 2800),
-  mkTool(5, 'quality', '研学活动方案', 'study-tour-plan', '研学路线、课程目标和活动流程设计', '🚌', 'text', 15, 0, 0, 1800),
-  mkTool(6, 'career', '就业岗位匹配', 'job-match', '根据专业和能力匹配就业方向', '🧭', 'analysis', 12, 0, 0, 2600),
-  mkTool(6, 'paper', '论文致谢生成', 'thesis-acknowledgement', '毕业论文致谢、摘要和结语润色', '🙏', 'text', 8, 1, 5, 3600),
-  mkTool(6, 'study', '社群学习打卡', 'study-checkin', '学习打卡文案、复盘和激励话术', '✅', 'text', 5, 1, 10, 2900),
-  mkTool(6, 'activity', '校园推文排版', 'campus-post-layout', '校园公众号推文结构和排版建议', '📰', 'text', 10, 0, 0, 2400),
 ]
 
 export const mockPackages: RechargePackage[] = [
@@ -390,7 +365,6 @@ export const mockApi = {
     if (params?.categoryId) list = list.filter(t => t.categoryId === params.categoryId)
     if (params?.subCategory) list = list.filter(t => t.subCategory === params.subCategory)
     if (params?.toolType) list = list.filter(t => t.toolType === params.toolType)
-    if (!params?.categoryId && !params?.subCategory && !params?.toolType && list.length > 205) list = list.slice(0, 205)
     const result: PageResult<Tool> = { items: list, total: list.length, page: 1, pageSize: 100 }
     return { code: 0, message: 'success', data: result }
   },
@@ -409,40 +383,6 @@ export const mockApi = {
       coinCost: 10, status: 'completed', isFavorite: 0, createdAt: new Date().toISOString()
     }
     return { code: 0, message: 'success', data: record }
-  },
-
-  async getHistory(_params?: any) {
-    await delay(300)
-    const history: AiCallRecord[] = [
-      {
-        id: 201,
-        userId: 1,
-        toolId: 1,
-        tool: mockTools.find(t => t.id === 1),
-        requestId: 'mock-history-001',
-        inputText: '帮我写一篇小红书爆款文案',
-        outputText: '【小红书爆款文案】标题、正文、标签已生成，可继续在罗圣AI中优化。',
-        coinCost: 10,
-        status: 'completed',
-        isFavorite: 1,
-        createdAt: '2026-07-06T09:30:00.000Z'
-      },
-      {
-        id: 202,
-        userId: 1,
-        toolId: 17,
-        tool: mockTools.find(t => t.id === 17),
-        requestId: 'mock-history-002',
-        inputText: '生成赛博朋克风格宣传视频脚本',
-        outputText: '已生成短视频脚本大纲、分镜和口播文案。',
-        coinCost: 80,
-        status: 'completed',
-        isFavorite: 0,
-        createdAt: '2026-07-05T16:20:00.000Z'
-      }
-    ]
-    const result: PageResult<AiCallRecord> = { items: history, total: history.length, page: 1, pageSize: 20 }
-    return { code: 0, message: 'success', data: result }
   },
 
   async getBalance() {
