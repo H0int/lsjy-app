@@ -39,6 +39,53 @@
 
         <!-- 输入区域 -->
         <div class="space-y-4">
+          <!-- 工具专属参数面板 -->
+          <template v-if="hasParams">
+            <div v-for="group in toolParamGroups" :key="group.title" class="cyber-param-group">
+              <h3 class="cyber-param-title">
+                <span class="title-bar"></span>{{ group.title }}
+              </h3>
+              <div class="cyber-param-grid">
+                <div v-for="param in group.params" :key="param.key" class="cyber-param-item">
+                  <label class="cyber-input-label">{{ param.label }}</label>
+                  <select
+                    v-if="param.type === 'select'"
+                    v-model="paramValues[param.key]"
+                    class="cyber-select"
+                    :disabled="generating"
+                  >
+                    <option v-for="opt in param.options" :key="opt.value" :value="opt.value">
+                      {{ opt.label }}
+                    </option>
+                  </select>
+                  <input
+                    v-else-if="param.type === 'input'"
+                    v-model="paramValues[param.key]"
+                    :placeholder="param.placeholder"
+                    class="cyber-input"
+                    :disabled="generating"
+                  />
+                  <textarea
+                    v-else-if="param.type === 'textarea'"
+                    v-model="paramValues[param.key]"
+                    :placeholder="param.placeholder"
+                    class="cyber-textarea"
+                    :disabled="generating"
+                    rows="3"
+                  ></textarea>
+                  <input
+                    v-else-if="param.type === 'number'"
+                    v-model.number="paramValues[param.key]"
+                    type="number"
+                    :placeholder="param.placeholder"
+                    class="cyber-input"
+                    :disabled="generating"
+                  />
+                </div>
+              </div>
+            </div>
+          </template>
+
           <div>
             <label class="cyber-input-label">输入内容</label>
             <el-input v-model="inputContent" type="textarea" :rows="5" :placeholder="inputPlaceholder"
@@ -116,6 +163,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { toolApi } from '@/api'
 import { toolTypeMap } from '@/utils'
+import { getToolParams, hasToolParams } from '@/utils/toolParams'
 import type { Tool } from '@/types'
 import { ElMessage } from 'element-plus'
 
@@ -130,6 +178,25 @@ const selectedDuration = ref(5)
 const progressText = ref('生成中...')
 
 const isVideoTool = computed(() => tool.value?.toolType === 'video')
+
+// 工具参数配置
+const paramValues = ref<Record<string, any>>({})
+const toolParamGroups = computed(() => {
+  if (!tool.value?.subCategory) return []
+  return getToolParams(tool.value.subCategory)
+})
+const hasParams = computed(() => toolParamGroups.value.length > 0)
+
+// 初始化参数默认值
+function initParamValues() {
+  const values: Record<string, any> = {}
+  toolParamGroups.value.forEach(group => {
+    group.params.forEach(param => {
+      values[param.key] = param.defaultValue ?? ''
+    })
+  })
+  paramValues.value = values
+}
 
 const durationOptions = [
   { value: 5, label: '5秒', cost: 1 },
@@ -191,7 +258,7 @@ async function handleGenerate() {
       }
       ElMessage.success('视频生成完成！')
     } else {
-      const res = await toolApi.callTool(Number(route.params.id), { text: inputContent.value })
+      const res = await toolApi.callTool(Number(route.params.id), { text: inputContent.value, params: paramValues.value })
       result.value = res.data?.outputText || '生成完成，暂无详细输出'
       ElMessage.success('生成完成！')
     }
@@ -212,6 +279,8 @@ onMounted(async () => {
   try {
     const res = await toolApi.getToolDetail(Number(route.params.id))
     tool.value = res.data
+    // 初始化参数默认值
+    initParamValues()
   } finally { loading.value = false }
 })
 </script>
@@ -473,4 +542,96 @@ onMounted(async () => {
   box-shadow: 0 0 0 1px var(--cyber-cyan) inset, 0 0 12px rgba(0,240,255,0.15) !important;
 }
 :deep(.el-textarea__inner::placeholder) { color: var(--cyber-text-dim) !important; }
+
+/* 参数面板 */
+.cyber-param-group {
+  background: rgba(0, 240, 255, 0.03);
+  border: 1px solid rgba(0, 240, 255, 0.12);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.cyber-param-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--cyber-text);
+  margin-bottom: 14px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.cyber-param-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+@media (max-width: 480px) {
+  .cyber-param-grid { grid-template-columns: 1fr; }
+}
+.cyber-param-item { display: flex; flex-direction: column; gap: 6px; }
+
+.cyber-select {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(0, 240, 255, 0.05);
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  color: var(--cyber-text);
+  font-size: 13px;
+  font-family: 'JetBrains Mono', monospace;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.25s;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2300f0ff' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 30px;
+}
+.cyber-select:focus {
+  border-color: var(--cyber-cyan);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.15);
+}
+.cyber-select:disabled { opacity: 0.4; cursor: not-allowed; }
+.cyber-select option {
+  background: #0d0d2b;
+  color: var(--cyber-text);
+}
+
+.cyber-input {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(0, 240, 255, 0.05);
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  color: var(--cyber-text);
+  font-size: 13px;
+  font-family: 'JetBrains Mono', monospace;
+  outline: none;
+  transition: all 0.25s;
+}
+.cyber-input:focus {
+  border-color: var(--cyber-cyan);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.15);
+}
+.cyber-input:disabled { opacity: 0.4; cursor: not-allowed; }
+.cyber-input::placeholder { color: var(--cyber-text-dim); }
+
+.cyber-textarea {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(0, 240, 255, 0.05);
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  color: var(--cyber-text);
+  font-size: 13px;
+  font-family: 'JetBrains Mono', monospace;
+  outline: none;
+  resize: vertical;
+  transition: all 0.25s;
+}
+.cyber-textarea:focus {
+  border-color: var(--cyber-cyan);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.15);
+}
+.cyber-textarea:disabled { opacity: 0.4; cursor: not-allowed; }
+.cyber-textarea::placeholder { color: var(--cyber-text-dim); }
 </style>
