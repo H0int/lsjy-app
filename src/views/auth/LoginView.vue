@@ -76,6 +76,11 @@
           <span class="link-text">尚未注册？</span>
           <router-link to="/register" class="cyber-link">创建身份 &rarr;</router-link>
         </div>
+
+        <div class="login-footer">
+          <div class="footer-tags">● SYSTEM v2.0 ● ENCRYPTED ● SECURE ●</div>
+          <div class="footer-copy">© 2026 罗圣纪元 · 祁阳市罗圣纪元互联网科技有限责任公司</div>
+        </div>
       </div>
     </div>
   </div>
@@ -563,6 +568,26 @@ async function handleLogin() {
   font-size: 13px;
   color: var(--cyber-text-dim);
   font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 1px;
+}
+
+.login-footer {
+  text-align: center;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(0, 240, 255, 0.1);
+}
+.footer-tags {
+  font-size: 11px;
+  color: var(--cyber-cyan);
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 2px;
+  margin-bottom: 6px;
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.3);
+}
+.footer-copy {
+  font-size: 11px;
+  color: var(--cyber-text-dim);
   letter-spacing: 1px;
 }
 
