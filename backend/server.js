@@ -2144,6 +2144,14 @@ async function callOpenAICompatibleAPI(messages, options = {}) {
 
   const fullMessages = [{ role: 'system', content: options.systemPrompt || CONFIG.SYSTEM_PROMPT }, ...messages];
   console.log('[DEBUG] System prompt:', fullMessages[0]?.content?.substring(0, 200));
+  // Debug: log if messages contain images
+  const imgCount = fullMessages.filter(m => contentHasImage(m.content)).length;
+  if (imgCount > 0) {
+    const imgMsg = fullMessages.find(m => contentHasImage(m.content));
+    const parts = Array.isArray(imgMsg.content) ? imgMsg.content : [];
+    const imgParts = parts.filter(p => p.type === 'image_url');
+    console.log(`[DEBUG] Vision: ${imgCount} messages with images, ${imgParts.length} image parts, first url length: ${imgParts[0]?.image_url?.url?.length || 0}`);
+  }
 
   // 带重试的 API 调用（httpsRequest 已处理网络重试，这里处理业务级失败）
   const apiMaxRetries = CONFIG.AI_MAX_RETRIES || 3;
@@ -3417,6 +3425,16 @@ app.post('/api/v1/ai/chat', authCheck, async (req, res) => {
   const { messages, message, model, agentId = 1, systemPrompt } = req.body || {};
   const userId = req.user?.id || 1;
   const chatMessages = normalizeIncomingMessages(messages, message);
+
+  // Debug: log message format for vision detection
+  const hasImg = messagesHaveImage(chatMessages);
+  console.log(`[agent/chat] messages count: ${chatMessages.length}, hasImage: ${hasImg}, effectiveProvider will be: ${hasImg ? 'doubao' : (provider || CONFIG.AI_PROVIDER)}`);
+  chatMessages.forEach((m, i) => {
+    if (Array.isArray(m.content)) {
+      const types = m.content.map(p => p.type).join(',');
+      console.log(`[agent/chat] msg[${i}] role=${m.role} content=[${types}]`);
+    }
+  });
 
   const lastMsg = chatMessages.filter(m => m.role === 'user').pop();
   if (!lastMsg || (!extractTextContent(lastMsg.content).trim() && !contentHasImage(lastMsg.content))) {
