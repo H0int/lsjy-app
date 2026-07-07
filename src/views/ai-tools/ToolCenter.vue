@@ -125,6 +125,7 @@ const toolStore = useToolStore()
 const searchQuery = ref('')
 const currentCategoryId = ref<number | null>(null)
 const currentSubCategory = ref<string>('')
+const currentTag = ref('')
 const viewMode = ref<'grid' | 'list'>('grid')
 
 const popularTags = ['热门', '免费']
@@ -166,9 +167,9 @@ const filteredTools = computed(() => {
   }
   // 热门/免费筛选
   if (currentTag.value === '热门') {
-    list = list.filter(t => t.isHot)
+    list = list.filter(t => Boolean((t as any).isHot))
   } else if (currentTag.value === '免费') {
-    list = list.filter(t => t.isFree)
+    list = list.filter(t => Boolean(t.isFree))
   }
   // 搜索筛选
   if (searchQuery.value) {

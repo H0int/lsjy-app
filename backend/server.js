@@ -3292,8 +3292,10 @@ app.post('/api/v1/auth/register', (req, res) => {
     createdAt: new Date().toISOString(),
   };
   users.push(newUser);
-  fs.mkdirSync(path.dirname(usersFile), { recursive: true });
-  fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
+  saveFileUsers(users);
+  if (!usersStore.some(u => Number(u.id) === Number(newUser.id))) {
+    usersStore.push(newUser);
+  }
   const accessToken = 'jwt_' + newUser.id + '_' + Date.now();
   const refreshToken = 'refresh_' + newUser.id + '_' + Date.now();
   res.json({
