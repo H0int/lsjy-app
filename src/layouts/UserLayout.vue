@@ -84,7 +84,7 @@
     <main class="pt-16 pb-28 md:pb-8" style="min-height: calc(100vh - 4rem); background: var(--cyber-bg);">
       <router-view v-slot="{ Component }">
         <transition name="fade" mode="out-in">
-          <component :is="Component" />
+          <component :is="Component" :key="route.fullPath" />
         </transition>
       </router-view>
     </main>
