@@ -103,10 +103,12 @@
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { authApi } from '@/api'
+import { useAuthStore } from '@/stores/auth'
 import { ElMessage } from 'element-plus'
 import type { FormInstance } from 'element-plus'
 
 const router = useRouter()
+const authStore = useAuthStore()
 const loading = ref(false)
 const formRef = ref<FormInstance>()
 
@@ -167,8 +169,15 @@ async function handleRegister() {
         phone: form.phone || undefined,
         email: form.email || undefined
       })
-      ElMessage.success('注册成功，请登录')
-      router.push('/login')
+      ElMessage.success('注册成功，正在自动登录...')
+      // 自动登录
+      const success = await authStore.login(form.username, form.password)
+      if (success) {
+        router.push('/dashboard')
+      } else {
+        ElMessage.warning('自动登录失败，请手动登录')
+        router.push('/login')
+      }
     } catch (e: any) {
       // 错误已由拦截器处理
     } finally {
