@@ -863,11 +863,11 @@ onMounted(async () => {
   }
 
   // 检测API - 使用 /health 端点（更稳定）
-  fetch(`${API_BASE}/health`, { signal: AbortSignal.timeout(5000) })
+  fetch(`${API_BASE}/health?t=${Date.now()}`, { signal: AbortSignal.timeout(5000) })
     .then(r => { aiOnline.value = r.ok })
     .catch(() => {
       // 降级尝试 /ai/models
-      fetch(`${API_BASE}/ai/models`, { signal: AbortSignal.timeout(5000) })
+      fetch(`${API_BASE}/ai/models?t=${Date.now()}`, { signal: AbortSignal.timeout(5000) })
         .then(r => { aiOnline.value = r.ok })
         .catch(() => { aiOnline.value = false })
     })
