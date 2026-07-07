@@ -52,8 +52,9 @@
       <span v-if="searchQuery" class="cyber-amber-text">搜索: "{{ searchQuery }}"</span>
       <div class="flex gap-1">
         <span v-for="tag in popularTags" :key="tag"
-          @click="searchQuery = tag"
-          class="cyber-tag-hot">🔥{{ tag }}</span>
+          @click="selectTag(tag)"
+          class="cyber-tag-hot"
+          :class="{ active: currentTag === tag }">🔥{{ tag }}</span>
       </div>
     </div>
 
@@ -163,6 +164,12 @@ const filteredTools = computed(() => {
       list = list.filter(t => Number(t.categoryId) === Number(catId))
     }
   }
+  // 热门/免费筛选
+  if (currentTag.value === '热门') {
+    list = list.filter(t => t.isHot)
+  } else if (currentTag.value === '免费') {
+    list = list.filter(t => t.isFree)
+  }
   // 搜索筛选
   if (searchQuery.value) {
     const q = searchQuery.value.toLowerCase()
@@ -192,6 +199,10 @@ function selectCategory(catId: number | null) {
 
 function selectSubCategory(sub: string) {
   currentSubCategory.value = sub
+}
+
+function selectTag(tag: string) {
+  currentTag.value = currentTag.value === tag ? '' : tag
 }
 
 watch([currentCategoryId, currentSubCategory], () => {
