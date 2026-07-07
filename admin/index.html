@@ -758,6 +758,247 @@ body::after{
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:rgba(0,245,255,.2);border-radius:2px;}
 ::-webkit-scrollbar-thumb:hover{background:rgba(0,245,255,.4);}
+/* ===== COLLAPSIBLE SIDEBAR MENU ===== */
+.sb-group-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 18px;margin:4px 10px 0;border-radius:10px;
+  cursor:pointer;transition:all .25s;color:var(--p);font-size:11px;
+  font-weight:700;text-transform:uppercase;letter-spacing:1.5px;
+  opacity:.7;user-select:none;
+}
+.sb-group-header:hover{opacity:1;background:var(--w2);}
+.sb-group-header .group-title{display:flex;align-items:center;gap:10px;}
+.sb-group-header .group-title i{width:20px;text-align:center;font-size:14px;}
+.sb-group-header .arrow-icon{
+  font-size:10px;transition:transform .3s ease;color:var(--nd);
+}
+.sb-group-header.expanded .arrow-icon{transform:rotate(90deg);}
+
+.sb-submenu{
+  max-height:0;overflow:hidden;transition:max-height .35s ease, opacity .25s ease;
+  opacity:0;
+}
+.sb-submenu.open{opacity:1;}
+
+.sb-submenu-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 14px 9px 48px;margin:1px 10px;border-radius:8px;
+  cursor:pointer;transition:all .2s;color:var(--nd);font-size:13px;
+  white-space:nowrap;position:relative;
+}
+.sb-submenu-item:hover{
+  background:var(--sidebar-active);color:var(--w);
+}
+.sb-submenu-item.active{
+  background:var(--sidebar-active);color:var(--p);font-weight:600;
+}
+.sb-submenu-item.active::before{
+  content:'';position:absolute;left:0;top:20%;bottom:20%;width:3px;
+  background:var(--p);border-radius:0 3px 3px 0;box-shadow:var(--glow-p);
+}
+.sb-submenu-item i{font-size:12px;opacity:.7;width:16px;text-align:center;}
+
+/* Collapsed sidebar overrides (desktop) */
+#sidebar.collapsed .sb-group-header .arrow-icon,
+#sidebar.collapsed .sb-submenu{display:none !important;}
+#sidebar.collapsed .sb-group-header{padding:10px 0;margin:4px 8px;justify-content:center;}
+#sidebar.collapsed .sb-group-header .group-title span{display:none;}
+#sidebar.collapsed .sb-group-header .group-title i{margin:0;font-size:18px;}
+
+/* ===== BREADCRUMB ===== */
+.breadcrumb-bar{
+  display:flex;align-items:center;gap:8px;
+  font-size:12px;color:var(--nd);flex-wrap:wrap;
+}
+.breadcrumb-bar .bc-item{display:flex;align-items:center;gap:8px;}
+.breadcrumb-bar .bc-item a{color:var(--nd);text-decoration:none;transition:color .2s;}
+.breadcrumb-bar .bc-item a:hover{color:var(--p);}
+.breadcrumb-bar .bc-item.active{color:var(--p);font-weight:600;}
+.breadcrumb-bar .bc-sep{color:var(--l);font-size:10px;}
+
+/* ===== TOPBAR ENHANCEMENTS ===== */
+.topbar-center{
+  display:flex;align-items:center;gap:16px;flex:1;justify-content:center;
+}
+.search-box{
+  position:relative;display:flex;align-items:center;
+}
+.search-box input{
+  width:260px;padding:9px 14px 9px 36px;
+  background:var(--bg2);border:var(--border-glow);
+  border-radius:10px;color:var(--w);font-size:13px;outline:none;
+  transition:all .25s;
+}
+.search-box input:focus{
+  border-color:var(--p);box-shadow:0 0 0 3px var(--ps);width:320px;
+}
+.search-box i{
+  position:absolute;left:12px;color:var(--nd);font-size:13px;pointer-events:none;
+}
+
+/* ===== FILTER TAGS ===== */
+.filter-bar{
+  display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap;
+}
+.filter-label{font-size:12px;color:var(--nd);font-weight:600;}
+.filter-tags{display:flex;gap:8px;flex-wrap:wrap;}
+.filter-tag{
+  padding:6px 14px;border-radius:20px;border:var(--border-glow);
+  background:var(--bg2);color:var(--nd);font-size:12px;cursor:pointer;
+  transition:all .25s;user-select:none;
+}
+.filter-tag:hover{border-color:var(--p);color:var(--p);}
+.filter-tag.active{
+  background:linear-gradient(135deg,var(--p),var(--p2));
+  color:#000;border-color:transparent;font-weight:700;
+  box-shadow:var(--glow-p);
+}
+
+/* ===== SKILL CARD GRID ===== */
+.skill-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(340px,1fr));
+  gap:20px;
+}
+.skill-card{
+  background:var(--card);border:var(--border-glow);border-radius:16px;
+  padding:20px;display:flex;flex-direction:column;gap:14px;
+  transition:all .35s;position:relative;overflow:hidden;
+  backdrop-filter:blur(10px);
+}
+.skill-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--p),var(--p2));
+  opacity:0;transition:opacity .3s;
+}
+.skill-card:hover{
+  border-color:rgba(0,245,255,.25);
+  transform:translateY(-4px);
+  box-shadow:var(--shadow-lg),var(--glow-p);
+}
+.skill-card:hover::before{opacity:1;}
+.skill-card-header{
+  display:flex;align-items:flex-start;gap:14px;
+}
+.skill-icon{
+  width:52px;height:52px;border-radius:14px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;flex-shrink:0;
+  background:linear-gradient(135deg,rgba(0,245,255,.15),rgba(139,92,246,.15));
+  border:1px solid rgba(0,245,255,.2);
+  color:var(--p);text-shadow:0 0 10px rgba(0,245,255,.3);
+}
+.skill-info{flex:1;min-width:0;}
+.skill-name{
+  font-size:16px;font-weight:700;color:var(--w);
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+}
+.skill-desc{
+  font-size:12px;color:var(--nd);margin-top:6px;line-height:1.5;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+.skill-meta{
+  display:grid;grid-template-columns:repeat(2,1fr);gap:8px;
+}
+.skill-meta-item{
+  display:flex;align-items:center;gap:6px;font-size:12px;color:var(--nd);
+  background:var(--w2);padding:6px 10px;border-radius:8px;
+}
+.skill-meta-item i{font-size:11px;color:var(--p);opacity:.7;width:14px;text-align:center;}
+.skill-meta-item .meta-label{opacity:.6;}
+.skill-meta-item .meta-value{color:var(--w);font-weight:500;}
+
+.skill-status-row{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+}
+.skill-status{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;
+}
+.skill-status.online{background:rgba(16,185,129,.12);color:var(--ok);border:1px solid rgba(16,185,129,.2);}
+.skill-status.offline{background:rgba(244,63,94,.12);color:var(--err);border:1px solid rgba(244,63,94,.2);}
+.skill-status.beta{background:rgba(245,158,11,.12);color:var(--warn);border:1px solid rgba(245,158,11,.2);}
+.skill-status.dev{background:rgba(0,245,255,.08);color:var(--p);border:1px solid rgba(0,245,255,.15);}
+
+.skill-github a{
+  color:var(--nd);font-size:12px;text-decoration:none;display:flex;align-items:center;gap:6px;
+  transition:color .2s;
+}
+.skill-github a:hover{color:var(--p);}
+
+.skill-actions{
+  display:flex;gap:8px;flex-wrap:wrap;
+}
+.action-btn{
+  padding:7px 14px;border-radius:8px;border:none;font-size:12px;font-weight:600;
+  cursor:pointer;transition:all .25s;display:inline-flex;align-items:center;gap:6px;
+}
+.action-btn.start{
+  background:linear-gradient(135deg,var(--ok),#059669);color:#fff;
+}
+.action-btn.start:hover{
+  transform:translateY(-1px);box-shadow:0 4px 15px rgba(16,185,129,.3);
+}
+.action-btn.config{
+  background:transparent;border:var(--border-glow);color:var(--nd);
+}
+.action-btn.config:hover{border-color:var(--p);color:var(--p);}
+.action-btn.stop{
+  background:transparent;border:1px solid var(--err);color:var(--err);
+}
+.action-btn.stop:hover{background:var(--err);color:#fff;}
+.action-btn.open{
+  background:linear-gradient(135deg,var(--p),var(--p2));color:#000;
+}
+.action-btn.open:hover{
+  transform:translateY(-1px);box-shadow:var(--glow-p);
+}
+
+/* ===== SECTION HEADER ===== */
+.section-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:20px;flex-wrap:wrap;gap:12px;
+}
+.section-title{
+  font-size:20px;font-weight:900;color:var(--w);
+  font-family:'Orbitron','Noto Sans SC',sans-serif;
+  letter-spacing:1px;
+  background:linear-gradient(135deg,var(--p),var(--p2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.section-subtitle{font-size:12px;color:var(--nd);margin-top:4px;}
+
+/* ===== RESPONSIVE CARD GRID & SIDEBAR ===== */
+@media(max-width:1024px){
+  .skill-grid{grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;}
+  .search-box input{width:200px;}
+  .search-box input:focus{width:240px;}
+}
+@media(max-width:768px){
+  .skill-grid{grid-template-columns:1fr;gap:14px;}
+  .skill-card{padding:16px;}
+  .topbar-center{display:none;}
+  .search-box input{width:100%;}
+  .section-header{flex-direction:column;align-items:flex-start;}
+  .filter-bar{margin-bottom:16px;}
+  .filter-tags{overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px;}
+
+  /* Mobile sidebar collapsed fix */
+  #sidebar.collapsed{width:280px !important;}
+  #sidebar.collapsed .sb-group-header{padding:10px 18px !important;margin:4px 10px !important;justify-content:space-between !important;}
+  #sidebar.collapsed .sb-group-header .group-title span{display:inline !important;}
+  #sidebar.collapsed .sb-group-header .group-title i{margin:0 !important;font-size:14px !important;}
+  #sidebar.collapsed .sb-group-header .arrow-icon{display:inline-block !important;}
+  #sidebar.collapsed .sb-submenu{display:block !important;opacity:1 !important;}
+  #sidebar.collapsed .sb-submenu-item{justify-content:flex-start !important;padding:9px 14px 9px 48px !important;}
+}
+@media(max-width:400px){
+  .skill-grid{grid-template-columns:1fr;}
+  .skill-meta{grid-template-columns:1fr;}
+  .skill-actions{width:100%;}
+  .action-btn{flex:1;justify-content:center;}
+}
 </style>
 </head>
 <body>
@@ -809,64 +1050,12 @@ body::after{
   <!-- SIDEBAR -->
   <aside id="sidebar">
     <div class="sb-brand">
-      <div class="sb-brand-icon">LS</div>
-      <span>LUOSHENG</span>
+      <div class="sb-brand-icon">SK</div>
+      <span>开源Skill中台</span>
     </div>
-    <nav class="sb-nav">
-      <div class="sb-group">概览</div>
-      <div class="sb-item active" data-page="dashboard" onclick="navigate('dashboard')">
-        <i class="fa-solid fa-chart-pie"></i><span>数据看板</span>
-      </div>
-
-      <div class="sb-group">管理</div>
-      <div class="sb-item" data-page="users" onclick="navigate('users')">
-        <i class="fa-solid fa-users"></i><span>用户管理</span>
-      </div>
-      <div class="sb-item" data-page="tools" onclick="navigate('tools')">
-        <i class="fa-solid fa-wand-magic-sparkles"></i><span>AI工具管理</span>
-      </div>
-      <div class="sb-item" data-page="agent" onclick="navigate('agent')">
-        <i class="fa-solid fa-robot"></i><span>AI智能体</span>
-      </div>
-      <div class="sb-item" data-page="orders" onclick="navigate('orders')">
-        <i class="fa-solid fa-receipt"></i><span>订单管理</span>
-      </div>
-      <div class="sb-item" data-page="recharge-review" onclick="navigate('recharge-review')">
-        <i class="fa-solid fa-clipboard-check"></i><span>充值审核</span>
-      </div>
-      <div class="sb-item" data-page="finance" onclick="navigate('finance')">
-        <i class="fa-solid fa-coins"></i><span>财务管理</span>
-      </div>
-      <div class="sb-item" data-page="content" onclick="navigate('content')">
-        <i class="fa-solid fa-newspaper"></i><span>内容管理</span>
-      </div>
-
-      <div class="sb-group">运营</div>
-      <div class="sb-item" data-page="coupons" onclick="navigate('coupons')">
-        <i class="fa-solid fa-ticket"></i><span>优惠券</span>
-      </div>
-      <div class="sb-item" data-page="tickets" onclick="navigate('tickets')">
-        <i class="fa-solid fa-headset"></i><span>工单管理</span>
-      </div>
-      <div class="sb-item" data-page="marketing" onclick="navigate('marketing')">
-        <i class="fa-solid fa-bullhorn"></i><span>营销管理</span>
-      </div>
-      <div class="sb-item" data-page="reports" onclick="navigate('reports')">
-        <i class="fa-solid fa-chart-line"></i><span>数据报表</span>
-      </div>
-      <div class="sb-item" data-page="visitors" onclick="navigate('visitors')">
-        <i class="fa-solid fa-eye"></i><span>访客管理</span>
-      </div>
-
-      <div class="sb-group">系统</div>
-      <div class="sb-item" data-page="permissions" onclick="navigate('permissions')">
-        <i class="fa-solid fa-user-shield"></i><span>权限管理</span>
-      </div>
-      <div class="sb-item" data-page="settings" onclick="navigate('settings')">
-        <i class="fa-solid fa-gear"></i><span>系统设置</span>
-      </div>
+    <nav class="sb-nav" id="sb-nav">
     </nav>
-    <div class="sb-footer">LUOSHENG SYSTEM V8.0</div>
+    <div class="sb-footer">开源Skill中台 V8.0</div>
   </aside>
 
   <!-- CONTENT AREA -->
@@ -876,7 +1065,17 @@ body::after{
       <div class="topbar-left">
         <button id="mobile-menu"><i class="fa-solid fa-bars"></i></button>
         <button id="sidebar-toggle"><i class="fa-solid fa-angles-left"></i></button>
-        <span id="page-title">数据看板</span>
+        <div class="breadcrumb-bar" id="breadcrumb">
+          <span class="bc-item"><a href="#" onclick="navigate('dashboard','','首页')">首页</a></span>
+          <span class="bc-sep"><i class="fa-solid fa-chevron-right"></i></span>
+          <span class="bc-item active">Skill工作台</span>
+        </div>
+      </div>
+      <div class="topbar-center">
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="global-search" placeholder="搜索技能、插件、工具..." oninput="filterSkills(this.value)">
+        </div>
       </div>
       <div class="topbar-right">
         <span id="admin-info"></span>
@@ -887,11 +1086,333 @@ body::after{
 
     <!-- MAIN CONTENT -->
     <main id="main-content">
-      <!-- 动态渲染 -->
+      <div class="section-header">
+        <div>
+          <div class="section-title">Skill 工作台</div>
+          <div class="section-subtitle">管理和配置所有开源技能与插件服务</div>
+        </div>
+      </div>
+
+      <div class="filter-bar">
+        <span class="filter-label"><i class="fa-solid fa-filter"></i> 筛选：</span>
+        <div class="filter-tags" id="filter-tags">
+          <span class="filter-tag active" data-filter="all" onclick="setFilter('all')">全部</span>
+          <span class="filter-tag" data-filter="online" onclick="setFilter('online')">运行中</span>
+          <span class="filter-tag" data-filter="offline" onclick="setFilter('offline')">已停用</span>
+          <span class="filter-tag" data-filter="beta" onclick="setFilter('beta')">内测版</span>
+          <span class="filter-tag" data-filter="dev" onclick="setFilter('dev')">开发中</span>
+          <span class="filter-tag" data-filter="api" onclick="setFilter('api')">API接入</span>
+          <span class="filter-tag" data-filter="sdk" onclick="setFilter('sdk')">SDK接入</span>
+        </div>
+      </div>
+
+      <div class="skill-grid" id="skill-grid">
+      </div>
     </main>
   </div>
 </div>
 
 <script src="admin-app.js?v=8.1"></script>
+<script>
+(function(){
+  const menuData=[
+    {title:'开源Skill中台',icon:'fa-solid fa-cubes',items:[
+      {name:'Skill工作台',icon:'fa-solid fa-layer-group',page:'skill-workbench'},
+      {name:'Skill市场',icon:'fa-solid fa-store',page:'skill-market'},
+      {name:'Skill编排引擎',icon:'fa-solid fa-network-wired',page:'skill-orchestration'},
+      {name:'自定义Skill',icon:'fa-solid fa-code',page:'custom-skill'},
+      {name:'API网关',icon:'fa-solid fa-server',page:'api-gateway'},
+      {name:'开发者中心',icon:'fa-solid fa-terminal',page:'developer-center'}
+    ]},
+    {title:'用户管理',icon:'fa-solid fa-users-gear',items:[
+      {name:'用户列表',icon:'fa-solid fa-list',page:'user-list'},
+      {name:'用户分组',icon:'fa-solid fa-object-group',page:'user-group'},
+      {name:'实名认证',icon:'fa-solid fa-id-card',page:'real-name'},
+      {name:'在线用户',icon:'fa-solid fa-signal',page:'online-users'},
+      {name:'黑名单管理',icon:'fa-solid fa-ban',page:'blacklist'},
+      {name:'用户画像',icon:'fa-solid fa-user-tag',page:'user-profile'}
+    ]},
+    {title:'AI智能化',icon:'fa-solid fa-brain',items:[
+      {name:'智能助手',icon:'fa-solid fa-robot',page:'ai-assistant'},
+      {name:'对话引擎',icon:'fa-solid fa-comments',page:'chat-engine'},
+      {name:'模型管理',icon:'fa-solid fa-microchip',page:'model-mgmt'},
+      {name:'Prompt模板',icon:'fa-solid fa-file-code',page:'prompt-template'},
+      {name:'向量检索',icon:'fa-solid fa-magnifying-glass-chart',page:'vector-search'},
+      {name:'语义分析',icon:'fa-solid fa-language',page:'semantic-analysis'}
+    ]},
+    {title:'配置管理',icon:'fa-solid fa-sliders',items:[
+      {name:'全局参数',icon:'fa-solid fa-globe',page:'global-params'},
+      {name:'环境配置',icon:'fa-solid fa-leaf',page:'env-config'},
+      {name:'密钥管理',icon:'fa-solid fa-key',page:'secret-mgmt'},
+      {name:'字典管理',icon:'fa-solid fa-book',page:'dict-mgmt'},
+      {name:'配置模板',icon:'fa-solid fa-copy',page:'config-template'},
+      {name:'变更记录',icon:'fa-solid fa-clock-rotate-left',page:'change-log'}
+    ]},
+    {title:'服务监控',icon:'fa-solid fa-heart-pulse',items:[
+      {name:'服务状态',icon:'fa-solid fa-tower-broadcast',page:'service-status'},
+      {name:'性能监控',icon:'fa-solid fa-gauge-high',page:'perf-monitor'},
+      {name:'告警规则',icon:'fa-solid fa-bell',page:'alert-rules'},
+      {name:'链路追踪',icon:'fa-solid fa-route',page:'trace'},
+      {name:'资源监控',icon:'fa-solid fa-chart-area',page:'resource-monitor'},
+      {name:'日志分析',icon:'fa-solid fa-file-waveform',page:'log-analysis'}
+    ]},
+    {title:'后台配置',icon:'fa-solid fa-gears',items:[
+      {name:'站点设置',icon:'fa-solid fa-globe',page:'site-settings'},
+      {name:'主题管理',icon:'fa-solid fa-palette',page:'theme-mgmt'},
+      {name:'通知配置',icon:'fa-solid fa-envelope',page:'notification'},
+      {name:'邮件服务',icon:'fa-solid fa-at',page:'email-service'},
+      {name:'短信网关',icon:'fa-solid fa-message',page:'sms-gateway'},
+      {name:'存储配置',icon:'fa-solid fa-hard-drive',page:'storage-config'}
+    ]},
+    {title:'菜单管理',icon:'fa-solid fa-bars-staggered',items:[
+      {name:'菜单列表',icon:'fa-solid fa-list-ul',page:'menu-list'},
+      {name:'菜单排序',icon:'fa-solid fa-arrow-up-short-wide',page:'menu-sort'},
+      {name:'权限绑定',icon:'fa-solid fa-link',page:'perm-binding'},
+      {name:'快捷入口',icon:'fa-solid fa-bolt',page:'quick-entry'},
+      {name:'菜单回收站',icon:'fa-solid fa-trash-can',page:'menu-trash'},
+      {name:'导入导出',icon:'fa-solid fa-file-import',page:'menu-io'}
+    ]},
+    {title:'日志记录',icon:'fa-solid fa-clipboard-list',items:[
+      {name:'操作日志',icon:'fa-solid fa-computer-mouse',page:'op-log'},
+      {name:'登录日志',icon:'fa-solid fa-right-to-bracket',page:'login-log'},
+      {name:'异常日志',icon:'fa-solid fa-triangle-exclamation',page:'error-log'},
+      {name:'审计日志',icon:'fa-solid fa-scale-balanced',page:'audit-log'},
+      {name:'系统日志',icon:'fa-solid fa-gear',page:'sys-log'},
+      {name:'接口日志',icon:'fa-solid fa-plug',page:'api-log'}
+    ]},
+    {title:'权限管理',icon:'fa-solid fa-user-lock',items:[
+      {name:'权限列表',icon:'fa-solid fa-shield-halved',page:'perm-list'},
+      {name:'接口权限',icon:'fa-solid fa-network-wired',page:'api-perm'},
+      {name:'数据权限',icon:'fa-solid fa-database',page:'data-perm'},
+      {name:'资源权限',icon:'fa-solid fa-folder-tree',page:'resource-perm'},
+      {name:'权限审批',icon:'fa-solid fa-check-double',page:'perm-approval'},
+      {name:'权限模板',icon:'fa-solid fa-file-shield',page:'perm-template'}
+    ]},
+    {title:'系统管理',icon:'fa-solid fa-server',items:[
+      {name:'系统信息',icon:'fa-solid fa-circle-info',page:'sys-info'},
+      {name:'定时任务',icon:'fa-solid fa-clock',page:'cron-job'},
+      {name:'数据备份',icon:'fa-solid fa-cloud-arrow-up',page:'backup'},
+      {name:'缓存管理',icon:'fa-solid fa-memory',page:'cache-mgmt'},
+      {name:'消息队列',icon:'fa-solid fa-list-check',page:'mq'},
+      {name:'系统公告',icon:'fa-solid fa-bullhorn',page:'announcement'}
+    ]},
+    {title:'角色管理',icon:'fa-solid fa-user-shield',items:[
+      {name:'角色列表',icon:'fa-solid fa-users',page:'role-list'},
+      {name:'角色权限',icon:'fa-solid fa-key',page:'role-perm'},
+      {name:'角色成员',icon:'fa-solid fa-user-group',page:'role-members'},
+      {name:'角色模板',icon:'fa-solid fa-id-badge',page:'role-template'},
+      {name:'角色审批',icon:'fa-solid fa-user-check',page:'role-approval'},
+      {name:'继承关系',icon:'fa-solid fa-sitemap',page:'role-inherit'}
+    ]},
+    {title:'插件管理',icon:'fa-solid fa-puzzle-piece',items:[
+      {name:'插件市场',icon:'fa-solid fa-bag-shopping',page:'plugin-market'},
+      {name:'已安装插件',icon:'fa-solid fa-box-open',page:'installed-plugins'},
+      {name:'插件审核',icon:'fa-solid fa-gavel',page:'plugin-audit'},
+      {name:'插件配置',icon:'fa-solid fa-sliders',page:'plugin-config'},
+      {name:'插件开发',icon:'fa-solid fa-code-branch',page:'plugin-dev'},
+      {name:'版本管理',icon:'fa-solid fa-code-commit',page:'plugin-version'}
+    ]},
+    {title:'内容运营',icon:'fa-solid fa-pen-nib',items:[
+      {name:'内容发布',icon:'fa-solid fa-upload',page:'content-publish'},
+      {name:'内容审核',icon:'fa-solid fa-eye',page:'content-audit'},
+      {name:'评论管理',icon:'fa-solid fa-comment-dots',page:'comment-mgmt'},
+      {name:'分类标签',icon:'fa-solid fa-tags',page:'category-tags'},
+      {name:'推荐策略',icon:'fa-solid fa-thumbs-up',page:'recommend'},
+      {name:'热搜管理',icon:'fa-solid fa-fire',page:'hot-search'}
+    ]},
+    {title:'版本日志',icon:'fa-solid fa-code-branch',items:[
+      {name:'版本列表',icon:'fa-solid fa-list-ol',page:'version-list'},
+      {name:'发布记录',icon:'fa-solid fa-rocket',page:'release-record'},
+      {name:'更新说明',icon:'fa-solid fa-file-lines',page:'release-note'},
+      {name:'回滚管理',icon:'fa-solid fa-rotate-left',page:'rollback'},
+      {name:'灰度发布',icon:'fa-solid fa-filter',page:'gray-release'},
+      {name:'版本对比',icon:'fa-solid fa-code-compare',page:'version-compare'}
+    ]},
+    {title:'AI训练中心',icon:'fa-solid fa-dumbbell',items:[
+      {name:'数据集管理',icon:'fa-solid fa-database',page:'dataset'},
+      {name:'模型训练',icon:'fa-solid fa-wand-magic-sparkles',page:'model-train'},
+      {name:'微调任务',icon:'fa-solid fa-screwdriver-wrench',page:'fine-tune'},
+      {name:'评估报告',icon:'fa-solid fa-chart-pie',page:'eval-report'},
+      {name:'模型仓库',icon:'fa-solid fa-warehouse',page:'model-repo'},
+      {name:'训练日志',icon:'fa-solid fa-scroll',page:'train-log'}
+    ]},
+    {title:'AIGC记录',icon:'fa-solid fa-wand-sparkles',items:[
+      {name:'生成记录',icon:'fa-solid fa-clock-rotate-left',page:'gen-record'},
+      {name:'内容审核',icon:'fa-solid fa-shield-halved',page:'aigc-audit'},
+      {name:'质量评估',icon:'fa-solid fa-star-half-stroke',page:'quality-eval'},
+      {name:'用户反馈',icon:'fa-solid fa-message',page:'user-feedback'},
+      {name:'统计报表',icon:'fa-solid fa-chart-column',page:'aigc-stats'},
+      {name:'内容归档',icon:'fa-solid fa-box-archive',page:'content-archive'}
+    ]},
+    {title:'知识库管理',icon:'fa-solid fa-book-open',items:[
+      {name:'知识库列表',icon:'fa-solid fa-list',page:'kb-list'},
+      {name:'文档管理',icon:'fa-solid fa-file-lines',page:'doc-mgmt'},
+      {name:'知识分类',icon:'fa-solid fa-folder-open',page:'kb-category'},
+      {name:'检索测试',icon:'fa-solid fa-magnifying-glass',page:'search-test'},
+      {name:'知识图谱',icon:'fa-solid fa-circle-nodes',page:'knowledge-graph'},
+      {name:'导入导出',icon:'fa-solid fa-file-export',page:'kb-io'}
+    ]},
+    {title:'支付管理',icon:'fa-solid fa-credit-card',items:[
+      {name:'支付渠道',icon:'fa-solid fa-money-bill-wave',page:'pay-channel'},
+      {name:'订单查询',icon:'fa-solid fa-receipt',page:'order-query'},
+      {name:'退款管理',icon:'fa-solid fa-hand-holding-dollar',page:'refund'},
+      {name:'对账中心',icon:'fa-solid fa-scale-balanced',page:'reconciliation'},
+      {name:'费率配置',icon:'fa-solid fa-percent',page:'rate-config'},
+      {name:'发票管理',icon:'fa-solid fa-file-invoice',page:'invoice'}
+    ]},
+    {title:'应用管理',icon:'fa-solid fa-mobile-screen-button',items:[
+      {name:'应用列表',icon:'fa-solid fa-table-list',page:'app-list'},
+      {name:'应用审核',icon:'fa-solid fa-stamp',page:'app-audit'},
+      {name:'应用分类',icon:'fa-solid fa-icons',page:'app-category'},
+      {name:'应用统计',icon:'fa-solid fa-chart-line',page:'app-stats'},
+      {name:'应用配置',icon:'fa-solid fa-wrench',page:'app-config'},
+      {name:'上架下架',icon:'fa-solid fa-shop',page:'app-shelf'}
+    ]}
+  ];
+
+  const skillsData=[
+    {icon:'fa-solid fa-robot',name:'智能对话引擎',desc:'基于大语言模型的多轮对话系统，支持上下文记忆与意图识别，可接入微信、钉钉、飞书等多平台。',input:'文本/语音',mode:'API接入',cost:'120 圣力/次',difficulty:'中等',github:'github.com/lsjy/chat-engine',status:'online',actions:['open','config']},
+    {icon:'fa-solid fa-image',name:'AI绘画生成器',desc:'Stable Diffusion与Midjourney双引擎驱动，支持文生图、图生图、ControlNet精准控制，4096px高清输出。',input:'文本/图像',mode:'SDK接入',cost:'350 圣力/次',difficulty:'困难',github:'github.com/lsjy/ai-paint',status:'online',actions:['open','config','stop']},
+    {icon:'fa-solid fa-file-code',name:'代码生成助手',desc:'支持50+编程语言的智能补全、Bug修复、代码重构，集成GitHub Copilot与Codeium双模型。',input:'文本',mode:'API接入',cost:'80 圣力/千token',difficulty:'简单',github:'github.com/lsjy/code-gen',status:'online',actions:['open','config']},
+    {icon:'fa-solid fa-language',name:'多语言翻译器',desc:'支持200+语言实时互译，保留文档格式，支持PDF/Word/Excel全文翻译，术语库自定义。',input:'文本/文档',mode:'API接入',cost:'45 圣力/千字符',difficulty:'简单',github:'github.com/lsjy/translator',status:'beta',actions:['open','config','stop']},
+    {icon:'fa-solid fa-music',name:'AI音乐创作',desc:'基于Suno与Udio架构的音乐生成引擎，支持歌词输入、风格选择、多轨道编辑与MIDI导出。',input:'文本/音频',mode:'SDK接入',cost:'500 圣力/首',difficulty:'困难',github:'github.com/lsjy/ai-music',status:'dev',actions:['config']},
+    {icon:'fa-solid fa-video',name:'视频智能剪辑',desc:'自动识别精彩片段、添加字幕与转场特效，支持AI配音与数字人主播，一键分发至多平台。',input:'视频/文本',mode:'SDK接入',cost:'800 圣力/分钟',difficulty:'困难',github:'github.com/lsjy/video-edit',status:'online',actions:['open','config']},
+    {icon:'fa-solid fa-magnifying-glass-chart',name:'数据分析洞察',desc:'自动连接数据库与Excel，通过自然语言生成SQL查询、可视化图表与业务洞察报告。',input:'文本/数据',mode:'API接入',cost:'150 圣力/次',difficulty:'中等',github:'github.com/lsjy/data-insight',status:'online',actions:['open','config','stop']},
+    {icon:'fa-solid fa-pen-nib',name:'智能写作助手',desc:'营销文案、学术论文、小说创作全场景覆盖，支持SEO优化、风格模仿与多版本对比。',input:'文本',mode:'API接入',cost:'60 圣力/千token',difficulty:'简单',github:'github.com/lsjy/writer',status:'online',actions:['open','config']},
+    {icon:'fa-solid fa-comments',name:'情感分析引擎',desc:'基于BERT的情感极性分析，支持细粒度情绪识别（愤怒/喜悦/悲伤等），适用于舆情监控。',input:'文本',mode:'API接入',cost:'30 圣力/千字符',difficulty:'简单',github:'github.com/lsjy/sentiment',status:'beta',actions:['open','config','stop']},
+    {icon:'fa-solid fa-microphone',name:'语音合成TTS',desc:'支持100+音色克隆与情感表达，实时流式合成延迟低于200ms，支持SSML精细控制。',input:'文本',mode:'API接入',cost:'25 圣力/千字符',difficulty:'中等',github:'github.com/lsjy/tts-engine',status:'online',actions:['open','config']},
+    {icon:'fa-solid fa-id-card',name:'证件照智能处理',desc:'AI自动抠图、背景替换、美颜修图，支持各国签证照规格一键生成，打印级300DPI输出。',input:'图像',mode:'SDK接入',cost:'100 圣力/张',difficulty:'简单',github:'github.com/lsjy/id-photo',status:'online',actions:['open','config','stop']},
+    {icon:'fa-solid fa-spell-check',name:'智能校对审核',desc:'错别字、语法错误、政治敏感词、隐私信息泄露一站式检测，支持Word修订模式导出。',input:'文本/文档',mode:'API接入',cost:'20 圣力/千字符',difficulty:'简单',github:'github.com/lsjy/proofread',status:'dev',actions:['config']}
+  ];
+
+  let currentFilter='all';
+  let activePage='skill-workbench';
+
+  function renderSidebar(){
+    const nav=document.getElementById('sb-nav');
+    if(!nav)return;
+    let html='';
+    menuData.forEach((group,gi)=>{
+      const expanded=gi<3?'open':'';
+      const arrowRotated=gi<3?'expanded':'';
+      html+=`<div class="sb-group-header ${arrowRotated}" onclick="toggleGroup(this,${gi})">
+        <span class="group-title"><i class="${group.icon}"></i><span>${group.title}</span></span>
+        <i class="fa-solid fa-chevron-right arrow-icon"></i>
+      </div>
+      <div class="sb-submenu ${expanded}" id="sb-group-${gi}">`;
+      group.items.forEach(item=>{
+        const active=item.page===activePage?'active':'';
+        html+=`<div class="sb-submenu-item ${active}" data-page="${item.page}" onclick="navigate('${item.page}','${group.title}','${item.name}')">
+          <i class="${item.icon}"></i><span>${item.name}</span>
+        </div>`;
+      });
+      html+='</div>';
+    });
+    nav.innerHTML=html;
+  }
+
+  window.toggleGroup=function(header,gi){
+    const submenu=document.getElementById('sb-group-'+gi);
+    const isOpen=submenu.classList.contains('open');
+    if(isOpen){
+      submenu.classList.remove('open');
+      submenu.style.maxHeight='0px';
+      header.classList.remove('expanded');
+    }else{
+      submenu.classList.add('open');
+      submenu.style.maxHeight=submenu.scrollHeight+'px';
+      header.classList.add('expanded');
+    }
+  };
+
+  window.navigate=function(page,groupTitle,itemName){
+    activePage=page;
+    document.querySelectorAll('.sb-submenu-item').forEach(el=>el.classList.remove('active'));
+    const target=document.querySelector(`.sb-submenu-item[data-page="${page}"]`);
+    if(target)target.classList.add('active');
+    const titleEl=document.getElementById('page-title');
+    if(titleEl)titleEl.textContent=itemName||'Skill工作台';
+    const bc=document.getElementById('breadcrumb');
+    if(bc){
+      const g=groupTitle||'开源Skill中台';
+      const i=itemName||'Skill工作台';
+      bc.innerHTML=`<span class="bc-item"><a href="#" onclick="navigate('dashboard','','首页')">首页</a></span>
+      <span class="bc-sep"><i class="fa-solid fa-chevron-right"></i></span>
+      <span class="bc-item"><a href="#" onclick="return false;">${g}</a></span>
+      <span class="bc-sep"><i class="fa-solid fa-chevron-right"></i></span>
+      <span class="bc-item active">${i}</span>`;
+    }
+    renderSkills();
+  };
+
+  function renderSkills(){
+    const grid=document.getElementById('skill-grid');
+    if(!grid)return;
+    let data=skillsData;
+    if(currentFilter!=='all'){
+      data=skillsData.filter(s=>s.status===currentFilter||(currentFilter==='api'&&s.mode==='API接入')||(currentFilter==='sdk'&&s.mode==='SDK接入'));
+    }
+    const searchVal=(document.getElementById('global-search')?.value||'').toLowerCase();
+    if(searchVal){
+      data=data.filter(s=>s.name.includes(searchVal)||s.desc.includes(searchVal));
+    }
+    if(data.length===0){
+      grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--nd);">
+        <i class="fa-solid fa-box-open" style="font-size:48px;opacity:.3;margin-bottom:16px;display:block;"></i>
+        <div>暂无匹配的技能或插件</div>
+      </div>`;
+      return;
+    }
+    grid.innerHTML=data.map(s=>{
+      const statusClass='skill-status '+s.status;
+      const statusText={online:'运行中',offline:'已停用',beta:'内测版',dev:'开发中'}[s.status];
+      const statusIcon={online:'fa-solid fa-circle-check',offline:'fa-solid fa-circle-xmark',beta:'fa-solid fa-flask',dev:'fa-solid fa-code'}[s.status];
+      let actionsHtml='';
+      s.actions.forEach(act=>{
+        if(act==='start')actionsHtml+=`<button class="action-btn start"><i class="fa-solid fa-play"></i> 启动</button>`;
+        if(act==='config')actionsHtml+=`<button class="action-btn config"><i class="fa-solid fa-gear"></i> 配置</button>`;
+        if(act==='stop')actionsHtml+=`<button class="action-btn stop"><i class="fa-solid fa-pause"></i> 停用</button>`;
+        if(act==='open')actionsHtml+=`<button class="action-btn open"><i class="fa-solid fa-arrow-up-right-from-square"></i> 打开入口</button>`;
+      });
+      return `<div class="skill-card" data-status="${s.status}" data-mode="${s.mode}">
+        <div class="skill-card-header">
+          <div class="skill-icon"><i class="${s.icon}"></i></div>
+          <div class="skill-info">
+            <div class="skill-name">${s.name} <span class="${statusClass}"><i class="${statusIcon}"></i> ${statusText}</span></div>
+            <div class="skill-desc">${s.desc}</div>
+          </div>
+        </div>
+        <div class="skill-meta">
+          <div class="skill-meta-item"><i class="fa-solid fa-keyboard"></i><span class="meta-label">输入</span><span class="meta-value">${s.input}</span></div>
+          <div class="skill-meta-item"><i class="fa-solid fa-plug"></i><span class="meta-label">接入</span><span class="meta-value">${s.mode}</span></div>
+          <div class="skill-meta-item"><i class="fa-solid fa-bolt"></i><span class="meta-label">消耗</span><span class="meta-value">${s.cost}</span></div>
+          <div class="skill-meta-item"><i class="fa-solid fa-layer-group"></i><span class="meta-label">难度</span><span class="meta-value">${s.difficulty}</span></div>
+        </div>
+        <div class="skill-status-row">
+          <div class="skill-github"><a href="https://${s.github}" target="_blank" rel="noopener"><i class="fa-brands fa-github"></i> ${s.github}</a></div>
+          <div class="skill-actions">${actionsHtml}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  window.setFilter=function(filter){
+    currentFilter=filter;
+    document.querySelectorAll('.filter-tag').forEach(t=>{
+      t.classList.toggle('active',t.dataset.filter===filter);
+    });
+    renderSkills();
+  };
+
+  window.filterSkills=function(val){
+    renderSkills();
+  };
+
+  document.addEventListener('DOMContentLoaded',function(){
+    renderSidebar();
+    renderSkills();
+  });
+})();
+</script>
 </body>
 </html>
