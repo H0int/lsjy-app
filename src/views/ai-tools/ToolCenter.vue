@@ -109,17 +109,16 @@
     <div v-if="!toolStore.loading && filteredTools.length === 0" class="cyber-empty">
       <div class="cyber-empty-icon">🔍</div>
       <p class="cyber-empty-text">未找到相关工具</p>
-      <button @click="searchQuery='';currentCategoryId=null;currentSubCategory=''" class="cyber-clear-btn">清除筛选条件</button>
+      <button @click="resetFilters" class="cyber-clear-btn">清除筛选条件</button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useToolStore } from '@/stores/tool'
 import type { Tool } from '@/types'
 import { toolTypeMap } from '@/utils'
-import { toolSubCategories } from '@/api/mock'
 
 const toolStore = useToolStore()
 const searchQuery = ref('')
@@ -129,6 +128,57 @@ const currentTag = ref('')
 const viewMode = ref<'grid' | 'list'>('grid')
 
 const popularTags = ['热门', '免费']
+
+const subCategoryIconMap: Record<string, string> = {
+  内容策划: '💡',
+  文案撰写: '✍️',
+  视频脚本: '📝',
+  直播运营: '📺',
+  视觉设计: '🖼️',
+  账号运营: '📱',
+  数据复盘: '📈',
+  变现指导: '💎',
+  对话聊天: '💬',
+  AI绘画: '🎨',
+  AI视频: '🎬',
+  AI音频: '🎙️',
+  编程开发: '💻',
+  知识库: '🧠',
+  效率自动化: '⚙️',
+  合规法务: '📑',
+  财务分析: '📊',
+  商业策划: '🚀',
+  商品运营: '🏷️',
+  店铺管理: '🏪',
+  直播带货: '🔴',
+  客服售后: '💬',
+  供应链: '🚚',
+  跨境电商: '🌍',
+  学科辅导: '📖',
+  考试备考: '📝',
+  语言学习: '🗣️',
+  素质教育: '🎨',
+  职业教育: '💼',
+  教学方案: '👨‍🏫',
+  学习方法: '🧠',
+  宠物健康: '🏥',
+  宠物喂养: '🍖',
+  宠物训练: '🐶',
+  宠物用品: '🛍️',
+  行为纠正: '🔍',
+  术后护理: '🏥',
+  宠物商业: '🏪',
+  宠物内容: '🎬',
+  养宠指导: '🐾',
+  校园生活: '🏫',
+  校园活动: '🎪',
+  社团运营: '📣',
+  校园安全: '🛡️',
+  职业启蒙: '🧭',
+  校园公文: '📌',
+  班级管理: '👥',
+  心理支持: '🌱',
+}
 
 const totalCount = computed(() => toolStore.total)
 
@@ -146,9 +196,26 @@ const categoryList = computed(() => {
   return cats
 })
 
+function toolsByCategory(catId: number) {
+  if (catId === 9) return toolStore.tools.filter(t => t.toolType === 'image')
+  if (catId === 10) return toolStore.tools.filter(t => t.toolType === 'video')
+  return toolStore.tools.filter(t => Number(t.categoryId) === Number(catId))
+}
+
 const subCategories = computed(() => {
   if (!currentCategoryId.value) return []
-  return toolSubCategories[currentCategoryId.value] || []
+  const names = Array.from(new Set(
+    toolsByCategory(currentCategoryId.value)
+      .map(t => String(t.subCategory || '').trim())
+      .filter(Boolean)
+  ))
+  return [
+    { label: '全部', value: '' },
+    ...names.map(name => ({
+      label: `${subCategoryIconMap[name] || '🔹'} ${name}`,
+      value: name,
+    }))
+  ]
 })
 
 const filteredTools = computed(() => {
@@ -164,6 +231,10 @@ const filteredTools = computed(() => {
     } else {
       list = list.filter(t => Number(t.categoryId) === Number(catId))
     }
+  }
+  // 按二级小框架筛选，使用后端真实 subCategory 精确匹配
+  if (currentSubCategory.value) {
+    list = list.filter(t => String(t.subCategory || '').trim() === currentSubCategory.value)
   }
   // 热门/免费筛选
   if (currentTag.value === '热门') {
@@ -206,12 +277,12 @@ function selectTag(tag: string) {
   currentTag.value = currentTag.value === tag ? '' : tag
 }
 
-watch([currentCategoryId, currentSubCategory], () => {
-  toolStore.fetchTools({
-    categoryId: currentCategoryId.value || undefined,
-    subCategory: currentSubCategory.value || undefined
-  })
-})
+function resetFilters() {
+  searchQuery.value = ''
+  currentCategoryId.value = null
+  currentSubCategory.value = ''
+  currentTag.value = ''
+}
 
 onMounted(() => {
   toolStore.fetchCategories()
