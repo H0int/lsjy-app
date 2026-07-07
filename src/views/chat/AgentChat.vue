@@ -533,7 +533,8 @@ function compressImageForVision(file: File): Promise<string> {
       const img = new Image()
       img.onerror = () => reject(new Error('图片解析失败'))
       img.onload = () => {
-        const maxSide = 1280
+        // 限制最大边长为 768px，质量 0.65，确保 base64 不会太大
+        const maxSide = 768
         const scale = Math.min(1, maxSide / Math.max(img.width, img.height))
         const canvas = document.createElement('canvas')
         canvas.width = Math.max(16, Math.round(img.width * scale))
@@ -541,7 +542,7 @@ function compressImageForVision(file: File): Promise<string> {
         const ctx = canvas.getContext('2d')
         if (!ctx) return reject(new Error('图片压缩失败'))
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-        resolve(canvas.toDataURL('image/jpeg', 0.82))
+        resolve(canvas.toDataURL('image/jpeg', 0.65))
       }
       img.src = String(reader.result)
     }

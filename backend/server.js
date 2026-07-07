@@ -2219,10 +2219,14 @@ async function callAI(messages, options = {}) {
     trackApiError(options.toolId, options.toolName, provider, errorCode, err.message, CONFIG.AI_MAX_RETRIES || 3);
 
     // 自动降级到其他可用的 Provider（优先使用有API Key的）
-    const fallbackProviders = ['doubao', 'ark', 'siliconflow', 'bailian', 'zhipu', 'baidu', 'tongyi', 'deepseek', 'yuanbao'].filter(p => p !== provider);
+    // 如果消息包含图片，只降级到支持 vision 的 provider
+    const hasImage = messagesHaveImage(messages);
+    const visionProviders = ['doubao', 'ark', 'siliconflow', 'bailian'];
+    const allProviders = ['doubao', 'ark', 'siliconflow', 'bailian', 'zhipu', 'baidu', 'tongyi', 'deepseek', 'yuanbao'];
+    const fallbackProviders = (hasImage ? visionProviders : allProviders).filter(p => p !== provider);
 
     // 只有在Coze API Key和Bot ID都配置了的情况下才加入降级列表
-    if (CONFIG.COZE_API_KEY && CONFIG.COZE_BOT_ID && provider !== 'coze') {
+    if (CONFIG.COZE_API_KEY && CONFIG.COZE_BOT_ID && provider !== 'coze' && !hasImage) {
       fallbackProviders.push('coze');
     }
 
