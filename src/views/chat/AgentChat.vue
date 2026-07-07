@@ -239,7 +239,7 @@ import { useAuthStore } from '@/stores/auth'
 import { storeToRefs } from 'pinia'
 
 // ========== API配置 ==========
-const API_BASE = 'https://api.lsjyapp.cn/api/v1'
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'https://api.lsjyapp.cn/api/v1').replace(/\/$/, '')
 // 动态获取token（登录后token会变化，不能静态获取）
 const authToken = computed(() => localStorage.getItem('lsjy_token') || '')
 
@@ -408,7 +408,7 @@ const currentQuickCmds = computed(() => {
 const statusText = computed(() => {
   if (loading.value) return `${selectedAgent.value?.name || 'AI'}思考中...`
   if (genLoading.value) return '生成图片中...'
-  return aiOnline.value ? `在线 · ${selectedAgent.value?.name || '罗圣AI'}待命` : '连接中...'
+  return aiOnline.value ? `在线 · ${selectedAgent.value?.name || '罗圣AI'}待命` : 'AI服务暂不可用'
 })
 
 const agentCoinDisplay = computed(() => {
@@ -454,6 +454,58 @@ function clearChat() {
 }
 
 function sendQuick(t: string) { input.value = t; sendMsg() }
+
+async function requestAgentChat(agent: Agent, payload: Record<string, any>) {
+  const headers = {
+    'Authorization': `Bearer ${authToken.value}`,
+    'Content-Type': 'application/json',
+  }
+  const endpoints = [
+    `${API_BASE}/agent/chat`,
+    `${API_BASE}/ai/tools/${agent.id}/chat`,
+  ]
+  let lastError: Error | null = null
+
+  for (const endpoint of endpoints) {
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(45000),
+      })
+      if (res.status === 404 || res.status === 405) {
+        lastError = new Error(`API ${res.status}`)
+        continue
+      }
+      return res
+    } catch (err: any) {
+      lastError = err instanceof Error ? err : new Error(err?.message || '网络异常')
+    }
+  }
+
+  throw lastError || new Error('网络异常')
+}
+
+function formatChatError(err: any): string {
+  const msg = String(err?.message || err || '网络异常')
+  if (msg.includes('502') || msg.includes('503') || msg.includes('504')) return 'AI服务暂时不可用，请稍后重试'
+  if (msg.includes('timeout') || msg.includes('aborted')) return 'AI服务响应超时，请稍后重试'
+  if (msg.includes('Failed to fetch') || msg.includes('Network')) return '网络连接异常，请检查网络或稍后重试'
+  return msg
+}
+
+async function checkAgentConnection() {
+  try {
+    const res = await fetch(`${API_BASE}/health?t=${Date.now()}`, {
+      signal: AbortSignal.timeout(6000),
+      cache: 'no-store',
+    })
+    aiOnline.value = res.ok
+  } catch {
+    aiOnline.value = false
+  }
+}
 
 let plusTouchLock = false
 function togglePlusMenu() {
@@ -592,22 +644,15 @@ async function sendMsg() {
 
     // 系统提示通过 systemPrompt 字段传给后端，不混入用户消息
 
-    // 使用主后端 /agent/chat，避开线上 /ai/* 独立代理鉴权
+    // 使用主后端 /agent/chat，并在入口不可用时兜底到 /ai/tools/:id/chat
     const modelName = agent.modelName || selectedModel.value.model
     const providerName = agent.provider || selectedModel.value.provider
-    const res = await fetch(`${API_BASE}/agent/chat`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${authToken.value}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ 
-        messages: backendMessages,
-        model: modelName,
-        provider: providerName,
-        agentId: agent.id,
-        systemPrompt: agent.systemPrompt
-      }),
+    const res = await requestAgentChat(agent, {
+      messages: backendMessages,
+      model: modelName,
+      provider: providerName,
+      agentId: agent.id,
+      systemPrompt: agent.systemPrompt,
     })
 
     // 圣力不足
@@ -640,7 +685,7 @@ async function sendMsg() {
   } catch (e: any) {
     msgs.value.push({
       role: 'assistant',
-      content: `⚠️ 连接失败：${e.message || '网络异常'}`,
+      content: `⚠️ 连接失败：${formatChatError(e)}`,
     })
   } finally {
     loading.value = false
@@ -863,15 +908,8 @@ onMounted(async () => {
     if (found) selectedAgent.value = found
   }
 
-  // 检测API - 使用 /health 端点（更稳定）
-  fetch(`${API_BASE}/health?t=${Date.now()}`, { signal: AbortSignal.timeout(5000) })
-    .then(r => { aiOnline.value = r.ok })
-    .catch(() => {
-      // 降级尝试 /ai/models
-      fetch(`${API_BASE}/ai/models?t=${Date.now()}`, { signal: AbortSignal.timeout(5000) })
-        .then(r => { aiOnline.value = r.ok })
-        .catch(() => { aiOnline.value = false })
-    })
+  // 检测AI服务连接状态，不使用无关模型接口误判聊天入口
+  checkAgentConnection()
 
   // 获取余额（从 auth store 获取，已登录则自动拉取）
   if (authStore.isLoggedIn) {
