@@ -62,12 +62,21 @@ export const toolApi = {
     if (useMock) return mockApi.callTool(id, input) as any
     return service.post(`/ai/tools/${id}/call`, input).then(r => r.data)
   },
+  generateImage(id: number | string, params: { prompt: string; width?: number; height?: number; size?: string; style?: string; count?: number; quality?: string }): Promise<ApiResponse<any>> {
+    return service.post(`/ai/tools/${id}/generate`, params, { timeout: 180000 }).then(r => r.data)
+  },
   /** POST /ai/tools/:id/video - 生成视频（支持时长/分辨率参数） */
   generateVideo(id: number | string, params: { prompt: string; duration?: number; resolution?: string; style?: string; engine?: string }): Promise<ApiResponse<any>> {
     return service.post(`/ai/tools/${id}/video`, params, { timeout: 300000 }).then(r => r.data)
   },
+  getVideoTask(taskId: string): Promise<ApiResponse<any>> {
+    return service.get(`/ai/video/tasks/${taskId}`, { timeout: 60000 }).then(r => r.data)
+  },
   getHistory(params?: { page?: number; pageSize?: number }): Promise<ApiResponse<PageResult<AiCallRecord>>> {
     return service.get('/ai/history', { params }).then(r => r.data)
+  },
+  getWorks(params?: { page?: number; pageSize?: number }): Promise<ApiResponse<PageResult<AiCallRecord>>> {
+    return service.get('/ai/works', { params }).then(r => r.data)
   },
   getQuota(toolId: number): Promise<ApiResponse<{ used: number; limit: number; date: string }>> {
     return service.get(`/ai/quota/${toolId}`).then(r => r.data)

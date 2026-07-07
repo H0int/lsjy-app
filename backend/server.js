@@ -3658,12 +3658,49 @@ app.post('/api/v1/ai/tools/:id/call', authCheck, async (req, res) => {
         },
       });
     } else {
-      const result = await callAI([{ role: 'user', content: input || JSON.stringify(params || {}) }], { systemPrompt: tool.systemPrompt || CONFIG.SYSTEM_PROMPT, toolId: tool.id, toolName: tool.name });
-      res.json({ code: 0, message: 'success', data: { content: result.content, model: result.model, coinCost: tool.coinCost } });
+      const userId = req.user?.id || 1;
+      const startMs = Date.now();
+      const prompt = input || text || JSON.stringify(params || {});
+      const result = await callAI([{ role: 'user', content: prompt }], { systemPrompt: tool.systemPrompt || CONFIG.SYSTEM_PROMPT, toolId: tool.id, toolName: tool.name });
+      const record = addAiHistoryRecord({
+        userId,
+        toolId: tool.id,
+        toolName: tool.name,
+        requestId: `txt-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+        input: prompt,
+        inputText: prompt,
+        output: result.content,
+        outputText: result.content,
+        outputUrl: '',
+        outputUrls: [],
+        model: result.model,
+        coinCost: tool.coinCost || 0,
+        durationMs: Date.now() - startMs,
+        metadata: { mediaType: tool.toolType || 'text' },
+      });
+      res.json({ code: 0, message: 'success', data: { content: result.content, outputText: result.content, model: result.model, coinCost: tool.coinCost, callRecordId: record.id, requestId: record.requestId, createdAt: record.createdAt } });
     }
   } catch (err) {
     trackApiError(tool.id, tool.name, 'unknown', 'CALL_ERROR', err.message, CONFIG.AI_MAX_RETRIES || 3);
-    res.json({ code: 0, message: 'success', data: { content: `工具 ${tool.name} 处理完成`, model: 'local', coinCost: 0, fallback: true } });
+    const userId = req.user?.id || 1;
+    const fallbackContent = `工具 ${tool.name} 处理完成`;
+    const record = addAiHistoryRecord({
+      userId,
+      toolId: tool.id,
+      toolName: tool.name,
+      requestId: `fallback-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+      input: input || text || JSON.stringify(params || {}),
+      inputText: input || text || JSON.stringify(params || {}),
+      output: fallbackContent,
+      outputText: fallbackContent,
+      outputUrl: '',
+      outputUrls: [],
+      model: 'local',
+      coinCost: 0,
+      status: 'completed',
+      metadata: { fallback: true },
+    });
+    res.json({ code: 0, message: 'success', data: { content: fallbackContent, outputText: fallbackContent, model: 'local', coinCost: 0, fallback: true, callRecordId: record.id, requestId: record.requestId } });
   }
 });
 
@@ -3722,7 +3759,10 @@ function normalizeAiRecord(record) {
 
 app.get('/api/v1/ai/works', authCheck, (req, res) => {
   const { page, pageSize } = req.query;
-  const list = aiHistoryStore.filter(isRealAiHistory).map(normalizeAiRecord);
+  const userId = req.user?.id || 1;
+  const list = aiHistoryStore
+    .filter(h => isRealAiHistory(h) && Number(h.userId || 1) === Number(userId))
+    .map(normalizeAiRecord);
   res.json({ code: 0, message: 'success', data: paginate(list, page, pageSize) });
 });
 
@@ -3902,6 +3942,32 @@ app.post('/api/v1/ai/tools/:id/video', authCheck, async (req, res) => {
       charged: false,
       createdAt: Date.now(),
     });
+    const pendingRecord = addAiHistoryRecord({
+      userId,
+      toolId: tool.id,
+      toolName: tool.name,
+      requestId: `vid-${submitted.taskId}`,
+      input: prompt,
+      inputText: prompt,
+      output: '',
+      outputText: '视频生成中，请稍后在作品库查看',
+      outputUrl: '',
+      outputUrls: [],
+      model: submitted.model,
+      coinCost: 0,
+      durationMs: 0,
+      status: 'processing',
+      metadata: {
+        taskId: submitted.taskId,
+        duration: submitted.duration,
+        resolution: submitted.resolution,
+        mediaType: 'video',
+      },
+      createdAt: new Date().toISOString(),
+    });
+    const taskInfo = videoTasksStore.get(submitted.taskId);
+    taskInfo.callRecordId = pendingRecord.id;
+    taskInfo.requestId = pendingRecord.requestId;
     log(`视频任务已提交: taskId=${submitted.taskId}, model=${submitted.model}`);
     return res.status(200).json({
       code: 0,
@@ -3914,6 +3980,8 @@ app.post('/api/v1/ai/tools/:id/video', authCheck, async (req, res) => {
         duration: submitted.duration,
         resolution: submitted.resolution,
         coinCost: VIDEO_COIN_COST,
+        callRecordId: pendingRecord.id,
+        requestId: pendingRecord.requestId,
         createdAt: new Date().toISOString(),
       },
     });
@@ -3946,28 +4014,37 @@ app.get('/api/v1/ai/video/tasks/:taskId', authCheck, async (req, res) => {
         taskMeta.videoUrl = result.videoUrl;
         taskMeta.completedAt = Date.now();
         balance = deduct.balance;
-        record = addAiHistoryRecord({
-          userId,
-          toolId: taskMeta.toolId,
-          toolName: aiToolsStore.find(t => t.id === Number(taskMeta.toolId))?.name || 'AI视频生成',
-          requestId: `vid-${taskId}`,
-          input: taskMeta.prompt,
-          inputText: taskMeta.prompt,
-          output: result.videoUrl,
-          outputText: '生成视频 1 条',
-          outputUrl: result.videoUrl,
-          model: taskMeta.model,
-          coinCost: 20,
-          durationMs: taskMeta.createdAt ? Date.now() - taskMeta.createdAt : 0,
-          metadata: {
-            taskId,
-            duration: taskMeta.duration,
-            resolution: taskMeta.resolution,
-          },
-          createdAt: new Date().toISOString(),
-        });
-        taskMeta.callRecordId = record.id;
-        taskMeta.requestId = record.requestId;
+        record = aiHistoryStore.find(h => h.id === Number(taskMeta.callRecordId));
+        if (record) {
+          record.status = 'completed';
+          record.output = result.videoUrl;
+          record.outputText = '生成视频 1 条';
+          record.outputUrl = result.videoUrl;
+          record.outputUrls = [result.videoUrl];
+          record.coinCost = 20;
+          record.durationMs = taskMeta.createdAt ? Date.now() - taskMeta.createdAt : 0;
+          record.metadata = { ...(record.metadata || {}), taskId, duration: taskMeta.duration, resolution: taskMeta.resolution, mediaType: 'video' };
+        } else {
+          record = addAiHistoryRecord({
+            userId,
+            toolId: taskMeta.toolId,
+            toolName: aiToolsStore.find(t => t.id === Number(taskMeta.toolId))?.name || 'AI视频生成',
+            requestId: `vid-${taskId}`,
+            input: taskMeta.prompt,
+            inputText: taskMeta.prompt,
+            output: result.videoUrl,
+            outputText: '生成视频 1 条',
+            outputUrl: result.videoUrl,
+            outputUrls: [result.videoUrl],
+            model: taskMeta.model,
+            coinCost: 20,
+            durationMs: taskMeta.createdAt ? Date.now() - taskMeta.createdAt : 0,
+            metadata: { taskId, duration: taskMeta.duration, resolution: taskMeta.resolution, mediaType: 'video' },
+            createdAt: new Date().toISOString(),
+          });
+          taskMeta.callRecordId = record.id;
+          taskMeta.requestId = record.requestId;
+        }
       }
       return res.json({
         code: 0,

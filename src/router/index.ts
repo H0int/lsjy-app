@@ -26,6 +26,7 @@ const routes: RouteRecordRaw[] = [
       { path: 'tools/:id', name: 'ToolDetail', component: () => import('@/views/ai-tools/ToolDetail.vue'), meta: { title: '工具详情', hidden: true } },
       { path: 'chat', name: 'AgentChat', component: () => import('@/views/chat/AgentChat.vue'), meta: { title: '罗圣AI', icon: '🤖' } },
       { path: 'profile', name: 'Profile', component: () => import('@/views/profile/ProfileView.vue'), meta: { title: '个人中心', icon: '👤' } },
+      { path: 'profile/works', name: 'Works', component: () => import('@/views/profile/WorksView.vue'), meta: { title: '我的作品', icon: '🎨' } },
       { path: 'profile/wallet', name: 'Wallet', component: () => import('@/views/profile/WalletView.vue'), meta: { title: '圣力中心', icon: '💰' } }
     ]
   },
@@ -130,4 +131,3 @@ router.beforeEach((to, _from, next) => {
 })
 
 export default router
-

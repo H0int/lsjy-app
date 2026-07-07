@@ -339,8 +339,7 @@ function handleQuickAction(item: any) {
       ElMessage.info('我的订单功能开发中')
       break
     case 'works':
-      router.push('/tools')
-      ElMessage.info('我的作品功能开发中')
+      router.push('/profile/works')
       break
     case 'favorites':
       router.push('/tools')

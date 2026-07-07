@@ -119,6 +119,21 @@
           </div>
         </div>
 
+        <!-- 生成进度与作品库提示 -->
+        <div v-if="generating || generationMessage || generationError" class="cyber-job-panel" :class="{ error: generationError }">
+          <div v-if="generating" class="cyber-spinner"></div>
+          <div class="job-info">
+            <h3>{{ generationError ? '生成失败' : generationTitle }}</h3>
+            <p>{{ generationError || generationMessage }}</p>
+            <div v-if="!generationError" class="job-steps">
+              <span class="active">提交任务</span>
+              <span :class="{ active: !generating }">写入作品库</span>
+              <span :class="{ active: imageUrls.length || videoUrl || result || videoTaskId }">可查看结果</span>
+            </div>
+          </div>
+          <button v-if="!generating" class="cyber-action-pill cyber-pill-green" @click="goWorks">去我的作品</button>
+        </div>
+
         <!-- 图片结果展示 -->
         <div v-if="isImageTool && imageUrls.length > 0" class="cyber-result-section">
           <div class="cyber-result-head">
@@ -174,7 +189,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { toolApi } from '@/api'
 import { toolTypeMap } from '@/utils'
 import { getToolParams, hasToolParams } from '@/utils/toolParams'
@@ -182,18 +197,27 @@ import type { Tool } from '@/types'
 import { ElMessage } from 'element-plus'
 
 const route = useRoute()
+const router = useRouter()
 const tool = ref<Tool | null>(null)
 const loading = ref(true)
 const generating = ref(false)
 const inputContent = ref('')
 const result = ref('')
 const videoUrl = ref('')
+const videoTaskId = ref('')
 const selectedDuration = ref(5)
 const progressText = ref('生成中...')
+const generationMessage = ref('')
+const generationError = ref('')
 
 const isVideoTool = computed(() => tool.value?.toolType === 'video')
 const isImageTool = computed(() => tool.value?.toolType === 'image')
 const isImageProcessing = computed(() => tool.value?.inputType === 'image')
+const generationTitle = computed(() => {
+  if (isVideoTool.value) return videoTaskId.value ? '视频任务已提交' : '正在提交视频任务'
+  if (isImageTool.value) return '正在生成图片'
+  return '正在生成内容'
+})
 
 // 图片生成结果
 const imageUrls = ref<string[]>([])
@@ -263,7 +287,14 @@ async function handleGenerate() {
   generating.value = true
   result.value = ''
   videoUrl.value = ''
+  videoTaskId.value = ''
   imageUrls.value = []
+  generationError.value = ''
+  generationMessage.value = isVideoTool.value
+    ? '正在提交视频生成任务，提交成功后可在我的作品里查看进度。'
+    : isImageTool.value
+      ? '图片正在生成，请稍候；完成后会自动保存到图文库。'
+      : '内容正在生成，请稍候；完成后会自动保存到作品库。'
 
   try {
     if (isVideoTool.value) {
@@ -282,6 +313,8 @@ async function handleGenerate() {
         aspectRatio: paramValues.value.aspectRatio || '16:9',
       })
 
+      if (res.code !== 0) throw new Error(res.message || '视频任务提交失败')
+      videoTaskId.value = res.data?.taskId || ''
       const url = res.data?.videoUrl || res.data?.outputText || ''
       if (url) {
         if (url.startsWith('/')) {
@@ -290,10 +323,20 @@ async function handleGenerate() {
           videoUrl.value = url
         }
       }
-      ElMessage.success('视频生成完成！')
+      generationMessage.value = videoTaskId.value
+        ? '视频任务已提交，已写入视频库。你可以离开当前页面，到我的作品里查看进度和结果。'
+        : '视频生成完成，已写入视频库。'
+      ElMessage.success('视频任务已提交到作品库')
       recordUsage()
     } else if (isImageTool.value) {
-      const res = await toolApi.callTool(Number(route.params.id), { text: inputContent.value, params: paramValues.value })
+      const res = await toolApi.generateImage(Number(route.params.id), {
+        prompt: inputContent.value,
+        size: paramValues.value.size,
+        style: paramValues.value.style,
+        count: Number(paramValues.value.count || 1),
+        quality: paramValues.value.quality,
+      })
+      if (res.code !== 0) throw new Error(res.message || '图片生成失败')
       const urls = res.data?.urls || res.data?.imageUrls || []
       const singleUrl = res.data?.imageUrl || res.data?.outputUrl || ''
       if (urls.length > 0) {
@@ -302,18 +345,22 @@ async function handleGenerate() {
         imageUrls.value = [singleUrl]
       }
       if (imageUrls.value.length === 0) {
-        result.value = res.data?.outputText || '生成完成，暂无图片输出'
+        throw new Error(res.data?.outputText || '生成完成但未返回图片，请稍后重试')
       }
+      generationMessage.value = `已生成 ${imageUrls.value.length} 张图片，并保存到图文库。`
       ElMessage.success(imageUrls.value.length > 0 ? `生成 ${imageUrls.value.length} 张图片！` : '生成完成！')
       recordUsage()
     } else {
       const res = await toolApi.callTool(Number(route.params.id), { text: inputContent.value, params: paramValues.value })
+      if (res.code !== 0) throw new Error(res.message || '生成失败')
       result.value = res.data?.outputText || res.data?.content || '生成完成，暂无详细输出'
+      generationMessage.value = '内容已生成，并保存到作品库。'
       ElMessage.success('生成完成！')
       recordUsage()
     }
   } catch (e: any) {
-    // error handled by interceptor
+    generationError.value = e?.message || '生成失败，请稍后重试'
+    ElMessage.error(generationError.value)
   } finally {
     generating.value = false
     progressText.value = '生成中...'
@@ -339,12 +386,23 @@ function recordUsage() {
   if (imageUrls.value.length > 0 || videoUrl.value || result.value) {
     const works = JSON.parse(localStorage.getItem('lsjy_generated_works') || '[]')
     works.push({
+      id: Date.now(),
       toolName: tool.value.name,
+      inputText: inputContent.value,
+      outputText: result.value || (imageUrls.value.length ? `生成图片 ${imageUrls.value.length} 张` : videoTaskId.value ? '视频生成中' : ''),
+      outputUrl: imageUrls.value[0] || videoUrl.value || '',
+      outputUrls: imageUrls.value.length ? imageUrls.value : (videoUrl.value ? [videoUrl.value] : []),
       time: new Date().toLocaleString('zh-CN'),
       type: tool.value.toolType || 'text',
+      status: videoTaskId.value && !videoUrl.value ? 'processing' : 'completed',
+      taskId: videoTaskId.value,
     })
     localStorage.setItem('lsjy_generated_works', JSON.stringify(works.slice(-100)))
   }
+}
+
+function goWorks() {
+  router.push('/profile/works')
 }
 
 function copyResult() {
@@ -573,6 +631,52 @@ onMounted(async () => {
   100% { left: 100%; }
 }
 .cyber-btn-content { position: relative; z-index: 1; }
+
+.cyber-job-panel {
+  margin-top: 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,240,255,0.22);
+  background: rgba(0,240,255,0.05);
+}
+.cyber-job-panel.error {
+  border-color: rgba(255,80,80,0.35);
+  background: rgba(255,80,80,0.06);
+}
+.job-info { flex: 1; min-width: 0; }
+.job-info h3 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--cyber-cyan);
+  margin-bottom: 4px;
+}
+.cyber-job-panel.error .job-info h3 { color: #ff8a8a; }
+.job-info p {
+  color: var(--cyber-text-dim);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.job-steps {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.job-steps span {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  color: var(--cyber-text-dim);
+  border: 1px solid rgba(0,240,255,0.12);
+}
+.job-steps span.active {
+  color: var(--cyber-cyan);
+  border-color: rgba(0,240,255,0.35);
+  background: rgba(0,240,255,0.08);
+}
 
 /* 结果区 */
 .cyber-result-section {
