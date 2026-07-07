@@ -40,5 +40,9 @@ export default defineConfig({
         assetFileNames: 'assets/[ext]/[name]-[hash].[ext]'
       }
     }
+  },
+  // 强制哈希变化，防止缓存
+  define: {
+    __BUILD_TIME__: JSON.stringify(Date.now())
   }
 })
