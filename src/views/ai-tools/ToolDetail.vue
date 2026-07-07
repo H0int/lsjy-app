@@ -291,6 +291,7 @@ async function handleGenerate() {
         }
       }
       ElMessage.success('视频生成完成！')
+      recordUsage()
     } else if (isImageTool.value) {
       const res = await toolApi.callTool(Number(route.params.id), { text: inputContent.value, params: paramValues.value })
       const urls = res.data?.urls || res.data?.imageUrls || []
@@ -304,16 +305,45 @@ async function handleGenerate() {
         result.value = res.data?.outputText || '生成完成，暂无图片输出'
       }
       ElMessage.success(imageUrls.value.length > 0 ? `生成 ${imageUrls.value.length} 张图片！` : '生成完成！')
+      recordUsage()
     } else {
       const res = await toolApi.callTool(Number(route.params.id), { text: inputContent.value, params: paramValues.value })
       result.value = res.data?.outputText || res.data?.content || '生成完成，暂无详细输出'
       ElMessage.success('生成完成！')
+      recordUsage()
     }
   } catch (e: any) {
     // error handled by interceptor
   } finally {
     generating.value = false
     progressText.value = '生成中...'
+  }
+}
+
+function recordUsage() {
+  if (!tool.value) return
+  const usedTools = JSON.parse(localStorage.getItem('lsjy_used_tools') || '[]')
+  const record = {
+    id: tool.value.id,
+    name: tool.value.name,
+    icon: tool.value.icon || '🤖',
+    time: new Date().toLocaleString('zh-CN'),
+    category: tool.value.category || tool.value.subCategory || 'AI工具',
+  }
+  // 去重：如果已有同ID记录，先删除旧的
+  const filtered = usedTools.filter((u: any) => u.id !== tool.value!.id)
+  filtered.push(record)
+  localStorage.setItem('lsjy_used_tools', JSON.stringify(filtered.slice(-20)))
+
+  // 如果是图片/视频/文本生成，记录作品
+  if (imageUrls.value.length > 0 || videoUrl.value || result.value) {
+    const works = JSON.parse(localStorage.getItem('lsjy_generated_works') || '[]')
+    works.push({
+      toolName: tool.value.name,
+      time: new Date().toLocaleString('zh-CN'),
+      type: tool.value.toolType || 'text',
+    })
+    localStorage.setItem('lsjy_generated_works', JSON.stringify(works.slice(-100)))
   }
 }
 

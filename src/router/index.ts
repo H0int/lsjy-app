@@ -1,6 +1,7 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import { getToken } from '@/utils'
+import { useAuthStore } from '@/stores/auth'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -117,6 +118,11 @@ router.beforeEach((to, _from, next) => {
   }
   if (to.matched.some(r => r.meta.requiresAdmin)) {
     if (!token) return next('/login')
+    // 只有 KF02V9 可以访问管理后台
+    const authStore = useAuthStore()
+    if (authStore.user?.username !== 'KF02V9') {
+      return next('/dashboard')
+    }
     return next()
   }
   if (!token) return next('/login')

@@ -1,5 +1,6 @@
 <template>
   <div class="max-w-7xl mx-auto px-4 py-6">
+    <!-- 欢迎卡片 -->
     <div class="cyber-welcome-banner rounded-2xl p-6 mb-6 relative overflow-hidden">
       <div class="welcome-bg-grid"></div>
       <div class="welcome-glow"></div>
@@ -21,6 +22,7 @@
       </div>
     </div>
 
+    <!-- 官方群 -->
     <div
       class="official-group-card rounded-xl p-5 mb-6 flex items-center justify-between gap-4 cursor-pointer transition-all hover:-translate-y-0.5"
       @click="showGroupQr = true"
@@ -71,13 +73,115 @@
       </div>
     </Teleport>
 
+    <!-- 统计卡片 -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-      <div v-for="card in statCards" :key="card.label" class="cyber-stat-card rounded-xl p-5">
+      <div
+        v-for="card in statCards"
+        :key="card.label"
+        class="cyber-stat-card rounded-xl p-5 cursor-pointer"
+        @click="router.push(card.path)"
+      >
         <div class="text-3xl mb-3">{{ card.icon }}</div>
         <div class="text-3xl font-bold mb-2" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">
           {{ card.value }}
         </div>
         <div class="text-sm" style="color: var(--cyber-text-dim);">{{ card.label }}</div>
+        <div class="text-xs mt-2" style="color: var(--cyber-cyan);">点击跳转 →</div>
+      </div>
+    </div>
+
+    <!-- 功能模块区域 -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <!-- 快捷入口 -->
+      <div class="cyber-module-card rounded-xl p-5">
+        <h3 class="cyber-module-title">
+          <span class="title-bar"></span>快捷入口
+        </h3>
+        <div class="grid grid-cols-3 gap-3 mt-4">
+          <div
+            v-for="item in quickLinks"
+            :key="item.name"
+            class="cyber-quick-item rounded-lg p-3 text-center cursor-pointer"
+            @click="router.push(item.path)"
+          >
+            <div class="text-2xl mb-1">{{ item.icon }}</div>
+            <div class="text-xs" style="color: var(--cyber-text);">{{ item.name }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 最近使用 -->
+      <div class="cyber-module-card rounded-xl p-5">
+        <h3 class="cyber-module-title">
+          <span class="title-bar"></span>最近使用
+        </h3>
+        <div class="mt-4 space-y-3">
+          <div
+            v-for="(item, idx) in recentTools"
+            :key="idx"
+            class="cyber-recent-item flex items-center gap-3 p-3 rounded-lg cursor-pointer"
+            @click="router.push(`/tools/${item.id}`)"
+          >
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center text-xl" style="background: rgba(0,240,255,0.08);">
+              {{ item.icon }}
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-medium truncate" style="color: var(--cyber-text);">{{ item.name }}</div>
+              <div class="text-xs" style="color: var(--cyber-text-dim);">{{ item.time }}</div>
+            </div>
+            <div class="text-xs" style="color: var(--cyber-cyan);">使用</div>
+          </div>
+          <div v-if="recentTools.length === 0" class="text-center py-6 text-sm" style="color: var(--cyber-text-dim);">
+            暂无使用记录，快去体验AI工具吧
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 推荐工具 -->
+    <div class="cyber-module-card rounded-xl p-5 mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="cyber-module-title m-0">
+          <span class="title-bar"></span>热门推荐
+        </h3>
+        <button class="cyber-text-link text-sm" @click="router.push('/tools')">查看全部 →</button>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div
+          v-for="tool in hotTools"
+          :key="tool.id"
+          class="cyber-tool-card rounded-lg p-4 cursor-pointer"
+          @click="router.push(`/tools/${tool.id}`)"
+        >
+          <div class="text-2xl mb-2">{{ tool.icon }}</div>
+          <div class="text-sm font-medium mb-1 truncate" style="color: var(--cyber-text);">{{ tool.name }}</div>
+          <div class="text-xs" style="color: var(--cyber-text-dim);">{{ tool.desc }}</div>
+          <div class="flex items-center gap-2 mt-2">
+            <span class="cyber-tag text-xs px-2 py-0.5 rounded">{{ tool.category }}</span>
+            <span class="text-xs" style="color: var(--cyber-amber);">⚡{{ tool.cost }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 系统公告 -->
+    <div class="cyber-module-card rounded-xl p-5">
+      <h3 class="cyber-module-title">
+        <span class="title-bar"></span>系统公告
+      </h3>
+      <div class="mt-4 space-y-3">
+        <div
+          v-for="(notice, idx) in notices"
+          :key="idx"
+          class="cyber-notice-item flex items-start gap-3 p-3 rounded-lg"
+        >
+          <div class="w-2 h-2 rounded-full mt-1.5 flex-shrink-0" :class="notice.isNew ? 'bg-red-500' : 'bg-gray-500'"></div>
+          <div class="flex-1 min-w-0">
+            <div class="text-sm" style="color: var(--cyber-text);">{{ notice.title }}</div>
+            <div class="text-xs mt-1" style="color: var(--cyber-text-dim);">{{ notice.date }}</div>
+          </div>
+          <span v-if="notice.isNew" class="cyber-new-badge text-xs px-2 py-0.5 rounded">NEW</span>
+        </div>
       </div>
     </div>
   </div>
@@ -85,16 +189,45 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { toolApi } from '@/api'
+import { ElMessage } from 'element-plus'
 
+const router = useRouter()
 const authStore = useAuthStore()
 const showGroupQr = ref(false)
 
+// 统计卡片 - 带跳转路径
 const statCards = ref([
-  { icon: '⚡', label: '圣力余额', value: '0' },
-  { icon: '🛠️', label: '已用工具', value: '0' },
-  { icon: '📄', label: '生成作品', value: '0' },
-  { icon: '🎯', label: '会员等级', value: '普通' },
+  { icon: '⚡', label: '圣力余额', value: '0', path: '/profile/wallet' },
+  { icon: '🛠️', label: '已用工具', value: '0', path: '/tools' },
+  { icon: '📄', label: '生成作品', value: '0', path: '/tools' },
+  { icon: '🎯', label: '会员等级', value: '普通', path: '/profile' },
+])
+
+// 快捷入口
+const quickLinks = [
+  { name: 'AI智能体', icon: '🤖', path: '/chat' },
+  { name: 'AI工具', icon: '🛠️', path: '/tools' },
+  { name: '个人中心', icon: '👤', path: '/profile' },
+  { name: '圣力中心', icon: '💰', path: '/profile/wallet' },
+  { name: '创作记录', icon: '📝', path: '/tools' },
+  { name: '帮助中心', icon: '❓', path: '/chat' },
+]
+
+// 最近使用（从localStorage读取）
+const recentTools = ref<any[]>([])
+
+// 热门推荐
+const hotTools = ref<any[]>([])
+
+// 公告
+const notices = ref([
+  { title: '🎉 罗圣纪元SaaS平台正式上线，205个AI工具全面开放', date: '2026-07-07', isNew: true },
+  { title: '🔧 AI绘画功能升级，支持8种风格、4种尺寸选择', date: '2026-07-06', isNew: true },
+  { title: '📹 视频生成功能上线，支持电影感、动漫等6种风格', date: '2026-07-05', isNew: false },
+  { title: '💬 加入官方技术交流群，获取最新动态和技术支持', date: '2026-07-04', isNew: false },
 ])
 
 function getMemberLabel() {
@@ -112,11 +245,49 @@ function getMemberLabel() {
   return '普通'
 }
 
-onMounted(() => {
-  statCards.value[0].value = authStore.isAdmin || authStore.coinBalance >= 999999
+async function loadRealTimeData() {
+  // 圣力余额
+  statCards.value[0].value = authStore.isAdmin || (authStore.user?.username === 'KF02V9')
     ? '∞ 无限'
     : (authStore.coinBalance ? authStore.coinBalance.toLocaleString() : '0')
+
+  // 会员等级
   statCards.value[3].value = getMemberLabel()
+
+  // 从 localStorage 读取已用工具和生成作品
+  const usedTools = JSON.parse(localStorage.getItem('lsjy_used_tools') || '[]')
+  const generatedWorks = JSON.parse(localStorage.getItem('lsjy_generated_works') || '[]')
+  statCards.value[1].value = String(usedTools.length)
+  statCards.value[2].value = String(generatedWorks.length)
+
+  // 最近使用
+  recentTools.value = usedTools.slice(0, 5).reverse()
+
+  // 加载热门工具
+  try {
+    const res = await toolApi.getToolList(1, 8)
+    const items = res.data?.items || []
+    hotTools.value = items.slice(0, 4).map((t: any) => ({
+      id: t.id,
+      name: t.name,
+      icon: t.icon || '🤖',
+      desc: t.description?.substring(0, 20) + '...' || 'AI智能工具',
+      category: t.category || 'AI工具',
+      cost: t.coinCost || 1,
+    }))
+  } catch (e) {
+    // 使用默认数据
+    hotTools.value = [
+      { id: 1, name: 'AI文生图', icon: '🎨', desc: '根据描述生成精美图片', category: 'AI绘画', cost: 2 },
+      { id: 2, name: 'AI文案助手', icon: '✍️', desc: '一键生成营销文案', category: '内容创作', cost: 1 },
+      { id: 3, name: 'AI视频生成', icon: '🎬', desc: '文本生成创意视频', category: '视频创作', cost: 5 },
+      { id: 4, name: 'AI智能对话', icon: '💬', desc: '多轮对话智能问答', category: 'AI智能', cost: 1 },
+    ]
+  }
+}
+
+onMounted(() => {
+  loadRealTimeData()
 })
 </script>
 
@@ -126,17 +297,13 @@ onMounted(() => {
   border: 1px solid rgba(0, 240, 255, 0.15);
   position: relative;
 }
-
 .cyber-welcome-banner::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
+  top: 0; left: 0; right: 0;
   height: 2px;
   background: linear-gradient(90deg, transparent, var(--cyber-cyan), var(--cyber-purple), transparent);
 }
-
 .welcome-bg-grid {
   position: absolute;
   inset: 0;
@@ -145,13 +312,10 @@ onMounted(() => {
     linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
   background-size: 30px 30px;
 }
-
 .welcome-glow {
   position: absolute;
-  top: -50%;
-  right: -20%;
-  width: 300px;
-  height: 300px;
+  top: -50%; right: -20%;
+  width: 300px; height: 300px;
   background: radial-gradient(circle, rgba(0, 240, 255, 0.08) 0%, transparent 70%);
   border-radius: 50%;
 }
@@ -160,9 +324,7 @@ onMounted(() => {
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(168, 85, 247, 0.15) 100%);
   border: 1px solid rgba(99, 102, 241, 0.3);
 }
-
-.group-icon,
-.group-action {
+.group-icon, .group-action {
   background: linear-gradient(135deg, #6366f1, #a855f7);
   box-shadow: 0 0 20px rgba(99, 102, 241, 0.35);
 }
@@ -173,9 +335,91 @@ onMounted(() => {
   backdrop-filter: blur(8px);
   transition: all 0.3s;
 }
-
 .cyber-stat-card:hover {
-  border-color: rgba(0, 240, 255, 0.25);
+  border-color: rgba(0, 240, 255, 0.3);
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+/* 功能模块卡片 */
+.cyber-module-card {
+  background: rgba(15, 15, 25, 0.7);
+  border: 1px solid rgba(0, 240, 255, 0.08);
+  backdrop-filter: blur(8px);
+}
+.cyber-module-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--cyber-text);
+  margin: 0 0 4px 0;
+  font-family: 'JetBrains Mono', monospace;
+}
+.cyber-module-title .title-bar {
+  width: 3px;
+  height: 16px;
+  background: linear-gradient(180deg, var(--cyber-cyan), var(--cyber-purple));
+  border-radius: 2px;
+}
+
+/* 快捷入口 */
+.cyber-quick-item {
+  background: rgba(0, 240, 255, 0.03);
+  border: 1px solid rgba(0, 240, 255, 0.08);
+  transition: all 0.3s;
+}
+.cyber-quick-item:hover {
+  background: rgba(0, 240, 255, 0.06);
+  border-color: rgba(0, 240, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+/* 最近使用 */
+.cyber-recent-item {
+  background: rgba(0, 240, 255, 0.02);
+  border: 1px solid transparent;
+  transition: all 0.25s;
+}
+.cyber-recent-item:hover {
+  background: rgba(0, 240, 255, 0.05);
+  border-color: rgba(0, 240, 255, 0.1);
+}
+
+/* 推荐工具 */
+.cyber-tool-card {
+  background: rgba(0, 240, 255, 0.02);
+  border: 1px solid rgba(0, 240, 255, 0.08);
+  transition: all 0.3s;
+}
+.cyber-tool-card:hover {
+  border-color: rgba(0, 240, 255, 0.2);
   box-shadow: 0 0 15px rgba(0, 240, 255, 0.05);
+  transform: translateY(-2px);
+}
+.cyber-tag {
+  background: rgba(0, 240, 255, 0.1);
+  color: var(--cyber-cyan);
+  border: 1px solid rgba(0, 240, 255, 0.15);
+}
+.cyber-text-link {
+  color: var(--cyber-cyan);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.cyber-text-link:hover {
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.3);
+}
+
+/* 公告 */
+.cyber-notice-item {
+  background: rgba(0, 240, 255, 0.02);
+  border-left: 2px solid rgba(0, 240, 255, 0.15);
+}
+.cyber-new-badge {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
 }
 </style>
