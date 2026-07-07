@@ -7,20 +7,20 @@
 /* CSS 变量 */
 :root {
   --cyber-bg: #0a0a0f;
-  --cyber-bg-secondary: #111122;
-  --cyber-card: #12121f;
-  --cyber-border: #1a1a2e;
-  --cyber-border-hover: #2a2a4e;
-  --cyber-cyan: #00f0ff;
-  --cyber-magenta: #ff00ff;
-  --cyber-purple: #7c3aed;
+  --cyber-bg-secondary: #1a0a0a;
+  --cyber-card: #1f1212;
+  --cyber-border: #2e1a1a;
+  --cyber-border-hover: #4e2a2a;
+  --cyber-cyan: #ff3333;
+  --cyber-magenta: #ff0044;
+  --cyber-purple: #ff1a1a;
   --cyber-green: #00ff88;
   --cyber-amber: #ffb800;
-  --cyber-text: #e0e0f0;
-  --cyber-text-dim: #8888aa;
-  --cyber-glow-cyan: 0 0 10px rgba(0, 240, 255, 0.3), 0 0 20px rgba(0, 240, 255, 0.1);
-  --cyber-glow-magenta: 0 0 10px rgba(255, 0, 255, 0.3), 0 0 20px rgba(255, 0, 255, 0.1);
-  --cyber-glow-purple: 0 0 10px rgba(124, 58, 237, 0.3), 0 0 20px rgba(124, 58, 237, 0.1);
+  --cyber-text: #f0e0e0;
+  --cyber-text-dim: #aa8888;
+  --cyber-glow-cyan: 0 0 10px rgba(255, 50, 50, 0.3), 0 0 20px rgba(255, 50, 50, 0.1);
+  --cyber-glow-magenta: 0 0 10px rgba(255, 0, 68, 0.3), 0 0 20px rgba(255, 0, 68, 0.1);
+  --cyber-glow-purple: 0 0 10px rgba(255, 26, 26, 0.3), 0 0 20px rgba(255, 26, 26, 0.1);
 }
 
 /* 全局样式 */

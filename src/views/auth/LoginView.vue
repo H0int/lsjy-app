@@ -17,7 +17,7 @@
       <div class="logo-section">
         <div class="logo-ring">
           <div class="logo-ring-inner">
-            <div class="logo-text">罗</div>
+            <img src="/company-logo.jpg" alt="罗圣纪元" class="logo-img" />
           </div>
           <div class="logo-ring-glow"></div>
         </div>
@@ -207,8 +207,8 @@ async function handleLogin() {
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(0, 240, 255, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 240, 255, 0.04) 1px, transparent 1px);
+    linear-gradient(rgba(255, 50, 50, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 50, 50, 0.04) 1px, transparent 1px);
   background-size: 50px 50px;
   animation: gridMove 20s linear infinite;
 }
@@ -220,15 +220,15 @@ async function handleLogin() {
   position: absolute;
   inset: 0;
   background-image:
-    radial-gradient(circle at 25% 25%, rgba(124, 58, 237, 0.06) 0%, transparent 50%),
-    radial-gradient(circle at 75% 75%, rgba(0, 240, 255, 0.06) 0%, transparent 50%),
-    radial-gradient(circle at 50% 50%, rgba(255, 0, 255, 0.03) 0%, transparent 60%);
+    radial-gradient(circle at 25% 25%, rgba(200, 0, 50, 0.06) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, rgba(255, 50, 50, 0.06) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(255, 100, 0, 0.03) 0%, transparent 60%);
 }
 .scan-line {
   position: absolute;
   top: 0; left: 0;
   width: 100%; height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.3), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 50, 50, 0.3), transparent);
   animation: scanDown 4s ease-in-out infinite;
 }
 @keyframes scanDown {
@@ -256,9 +256,9 @@ async function handleLogin() {
   filter: blur(60px);
   animation: orbFloat 12s ease-in-out infinite;
 }
-.orb-1 { width: 300px; height: 300px; background: rgba(0, 240, 255, 0.08); top: 10%; left: 10%; }
-.orb-2 { width: 250px; height: 250px; background: rgba(124, 58, 237, 0.08); bottom: 10%; right: 10%; animation-delay: -4s; }
-.orb-3 { width: 200px; height: 200px; background: rgba(255, 0, 255, 0.05); top: 50%; left: 50%; animation-delay: -8s; }
+.orb-1 { width: 300px; height: 300px; background: rgba(255, 50, 50, 0.08); top: 10%; left: 10%; }
+.orb-2 { width: 250px; height: 250px; background: rgba(200, 0, 50, 0.08); bottom: 10%; right: 10%; animation-delay: -4s; }
+.orb-3 { width: 200px; height: 200px; background: rgba(255, 100, 0, 0.05); top: 50%; left: 50%; animation-delay: -8s; }
 @keyframes orbFloat {
   0%, 100% { transform: translate(0, 0) scale(1); }
   33% { transform: translate(30px, -20px) scale(1.1); }
@@ -286,8 +286,8 @@ async function handleLogin() {
   width: 100%; height: 100%;
   border-radius: 50%;
   overflow: hidden;
-  border: 2px solid rgba(0, 240, 255, 0.4);
-  box-shadow: 0 0 20px rgba(0, 240, 255, 0.2), 0 0 40px rgba(0, 240, 255, 0.1);
+  border: 2px solid rgba(255, 50, 50, 0.4);
+  box-shadow: 0 0 20px rgba(255, 50, 50, 0.2), 0 0 40px rgba(255, 50, 50, 0.1);
   animation: logoPulse 3s ease-in-out infinite;
   position: relative;
   z-index: 1;
@@ -304,27 +304,20 @@ async function handleLogin() {
 }
 @keyframes logoSpin { to { transform: rotate(360deg); } }
 @keyframes logoPulse {
-  0%, 100% { box-shadow: 0 0 20px rgba(0, 240, 255, 0.2), 0 0 40px rgba(0, 240, 255, 0.1); }
-  50% { box-shadow: 0 0 30px rgba(0, 240, 255, 0.3), 0 0 60px rgba(0, 240, 255, 0.15); }
+  0%, 100% { box-shadow: 0 0 20px rgba(255, 50, 50, 0.2), 0 0 40px rgba(255, 50, 50, 0.1); }
+  50% { box-shadow: 0 0 30px rgba(255, 50, 50, 0.3), 0 0 60px rgba(255, 50, 50, 0.15); }
 }
-.logo-text {
+.logo-img {
   width: 100%;
   height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 42px;
-  font-weight: 900;
-  background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple), var(--cyber-magenta));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  object-fit: cover;
+  border-radius: 50%;
 }
 .logo-ring-glow {
   position: absolute;
   inset: -10px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(0, 240, 255, 0.1) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(255, 50, 50, 0.1) 0%, transparent 70%);
   animation: glowPulse 3s ease-in-out infinite;
 }
 @keyframes glowPulse {
@@ -379,7 +372,7 @@ async function handleLogin() {
   padding: 28px;
   background: rgba(18, 18, 31, 0.9);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(0, 240, 255, 0.1);
+  border: 1px solid rgba(255, 50, 50, 0.1);
   border-radius: 16px;
   position: relative;
   overflow: hidden;
@@ -396,7 +389,7 @@ async function handleLogin() {
   position: absolute;
   top: 0; left: -100%;
   width: 50%; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.02), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 50, 50, 0.02), transparent);
   animation: panelShine 6s ease-in-out infinite;
 }
 @keyframes panelShine {
@@ -410,7 +403,7 @@ async function handleLogin() {
   justify-content: space-between;
   margin-bottom: 24px;
   padding-bottom: 12px;
-  border-bottom: 1px solid rgba(0, 240, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 50, 50, 0.1);
 }
 .panel-icon { color: var(--cyber-cyan); font-size: 16px; }
 .panel-title {
@@ -479,10 +472,10 @@ async function handleLogin() {
 .cyber-btn-primary {
   background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple));
   color: #000;
-  box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+  box-shadow: 0 0 20px rgba(255, 50, 50, 0.3);
 }
 .cyber-btn-primary:hover:not(:disabled) {
-  box-shadow: 0 0 30px rgba(0, 240, 255, 0.5), 0 0 60px rgba(0, 240, 255, 0.2);
+  box-shadow: 0 0 30px rgba(255, 50, 50, 0.5), 0 0 60px rgba(255, 50, 50, 0.2);
   transform: translateY(-2px);
 }
 .cyber-btn-primary:active:not(:disabled) { transform: translateY(0); }
@@ -504,7 +497,7 @@ async function handleLogin() {
   text-align: center;
   margin-top: 20px;
   padding-top: 16px;
-  border-top: 1px solid rgba(0, 240, 255, 0.08);
+  border-top: 1px solid rgba(255, 50, 50, 0.08);
 }
 .link-text { font-size: 13px; color: var(--cyber-text-dim); margin-right: 8px; }
 .cyber-link {
@@ -515,19 +508,19 @@ async function handleLogin() {
 }
 .cyber-link:hover {
   color: #fff;
-  text-shadow: 0 0 10px rgba(0, 240, 255, 0.6);
+  text-shadow: 0 0 10px rgba(255, 50, 50, 0.6);
 }
 :deep(.el-input__wrapper) {
-  background-color: rgba(0, 240, 255, 0.03) !important;
+  background-color: rgba(255, 50, 50, 0.03) !important;
   box-shadow: 0 0 0 1px rgba(26, 26, 46, 0.8) inset !important;
   border-radius: 10px !important;
   transition: all 0.3s ease !important;
 }
 :deep(.el-input__wrapper:hover) {
-  box-shadow: 0 0 0 1px rgba(0, 240, 255, 0.3) inset !important;
+  box-shadow: 0 0 0 1px rgba(255, 50, 50, 0.3) inset !important;
 }
 :deep(.el-input__wrapper.is-focus) {
-  box-shadow: 0 0 0 1px var(--cyber-cyan) inset, 0 0 15px rgba(0, 240, 255, 0.15) !important;
+  box-shadow: 0 0 0 1px var(--cyber-cyan) inset, 0 0 15px rgba(255, 50, 50, 0.15) !important;
 }
 :deep(.el-input__inner) { color: var(--cyber-text) !important; font-size: 14px !important; }
 :deep(.el-input__inner::placeholder) { color: rgba(136, 136, 170, 0.5) !important; }
@@ -548,18 +541,18 @@ async function handleLogin() {
 }
 .remember-checkbox {
   width: 18px; height: 18px;
-  border: 1px solid rgba(0, 240, 255, 0.3);
+  border: 1px solid rgba(255, 50, 50, 0.3);
   border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
-  background: rgba(0, 240, 255, 0.03);
+  background: rgba(255, 50, 50, 0.03);
 }
 .remember-checkbox.checked {
   background: var(--cyber-cyan);
   border-color: var(--cyber-cyan);
-  box-shadow: 0 0 8px rgba(0, 240, 255, 0.3);
+  box-shadow: 0 0 8px rgba(255, 50, 50, 0.3);
 }
 .check-mark {
   color: #000;
