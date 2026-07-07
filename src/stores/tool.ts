@@ -22,7 +22,7 @@ export const useToolStore = defineStore('tool', () => {
   async function fetchTools(params?: { categoryId?: number; subCategory?: string; toolType?: string; page?: number; pageSize?: number }) {
     loading.value = true
     try {
-      const res = await toolApi.getTools({ page: 1, pageSize: 205, ...params })
+      const res = await toolApi.getTools({ page: 1, pageSize: 500, ...params })
       tools.value = res.data.items
       total.value = res.data.total
     } finally {

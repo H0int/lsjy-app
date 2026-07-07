@@ -131,7 +131,12 @@ const popularTags = ['热门', '免费']
 const totalCount = computed(() => toolStore.total)
 
 const categoryList = computed(() => {
-  const countByCategory = (id: number) => toolStore.tools.filter(t => Number(t.categoryId) === Number(id)).length
+  const countByCategory = (id: number) => {
+    // 图片生成(id=9)和视频生成(id=10)按toolType计数
+    if (id === 9) return toolStore.tools.filter(t => t.toolType === 'image').length
+    if (id === 10) return toolStore.tools.filter(t => t.toolType === 'video').length
+    return toolStore.tools.filter(t => Number(t.categoryId) === Number(id)).length
+  }
   const cats = [
     { id: null, label: '全部工具', icon: '📦', count: totalCount.value },
     ...toolStore.categories.map(c => ({ id: c.id, label: c.name, icon: c.icon || '📁', count: countByCategory(c.id) }))
@@ -146,6 +151,19 @@ const subCategories = computed(() => {
 
 const filteredTools = computed(() => {
   let list = toolStore.tools
+  // 按分类筛选
+  if (currentCategoryId.value) {
+    const catId = currentCategoryId.value
+    // 图片生成(id=9)和视频生成(id=10)按toolType筛选
+    if (catId === 9) {
+      list = list.filter(t => t.toolType === 'image')
+    } else if (catId === 10) {
+      list = list.filter(t => t.toolType === 'video')
+    } else {
+      list = list.filter(t => Number(t.categoryId) === Number(catId))
+    }
+  }
+  // 搜索筛选
   if (searchQuery.value) {
     const q = searchQuery.value.toLowerCase()
     list = list.filter(t =>

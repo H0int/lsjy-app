@@ -819,6 +819,63 @@ const extraAiTools = [
   { id: 203, name: '合同条款审阅助手', icon: '📑', toolType: 'text', categoryId: 4, status: 'active', subCategory: '合规法务', coinCost: 3, usageCount: 176 },
   { id: 204, name: '财务报表解读师', icon: '📈', toolType: 'analysis', categoryId: 4, status: 'active', subCategory: '财务分析', coinCost: 3, usageCount: 241 },
   { id: 205, name: '商业计划书打磨师', icon: '🚀', toolType: 'text', categoryId: 4, status: 'active', subCategory: '商业策划', coinCost: 3, usageCount: 219 },
+  { id: 206, name: '二次元头像生成器', icon: '🖼️', toolType: 'image', categoryId: 9, status: 'active', subCategory: 'AI绘画', coinCost: 10, usageCount: 306 },
+  { id: 207, name: '中国风水墨画师', icon: '🖌️', toolType: 'image', categoryId: 9, status: 'active', subCategory: 'AI绘画', coinCost: 10, usageCount: 307 },
+  { id: 208, name: '电商主图设计师', icon: '📦', toolType: 'image', categoryId: 9, status: 'active', subCategory: '商品设计', coinCost: 10, usageCount: 308 },
+  { id: 209, name: '社交媒体封面生成', icon: '📱', toolType: 'image', categoryId: 9, status: 'active', subCategory: '视觉设计', coinCost: 10, usageCount: 309 },
+  { id: 210, name: '表情包制作大师', icon: '😀', toolType: 'image', categoryId: 9, status: 'active', subCategory: 'AI绘画', coinCost: 8, usageCount: 310 },
+  { id: 211, name: '婚礼请柬设计师', icon: '💒', toolType: 'image', categoryId: 9, status: 'active', subCategory: '平面设计', coinCost: 10, usageCount: 311 },
+  { id: 212, name: '美食摄影风格生成', icon: '🍔', toolType: 'image', categoryId: 9, status: 'active', subCategory: '摄影风格', coinCost: 10, usageCount: 312 },
+  { id: 213, name: '建筑效果图渲染师', icon: '🏗️', toolType: 'image', categoryId: 9, status: 'active', subCategory: 'AI绘画', coinCost: 10, usageCount: 313 },
+  { id: 214, name: '儿童绘本插画师', icon: '📖', toolType: 'image', categoryId: 9, status: 'active', subCategory: '插画创作', coinCost: 10, usageCount: 314 },
+  { id: 215, name: '品牌VI视觉生成器', icon: '🏷️', toolType: 'image', categoryId: 9, status: 'active', subCategory: '品牌设计', coinCost: 10, usageCount: 315 },
+  { id: 216, name: '节日海报生成器', icon: '🎉', toolType: 'image', categoryId: 9, status: 'active', subCategory: '海报设计', coinCost: 10, usageCount: 316 },
+  { id: 217, name: '证件照换底大师', icon: '👤', toolType: 'image', categoryId: 9, status: 'active', subCategory: '照片处理', coinCost: 10, usageCount: 317 },
+  { id: 218, name: '产品包装设计师', icon: '🎁', toolType: 'image', categoryId: 9, status: 'active', subCategory: '包装设计', coinCost: 10, usageCount: 318 },
+  { id: 219, name: '纹身设计生成器', icon: '💀', toolType: 'image', categoryId: 9, status: 'active', subCategory: '艺术创作', coinCost: 10, usageCount: 319 },
+  { id: 220, name: '风景壁纸生成器', icon: '🌄', toolType: 'image', categoryId: 9, status: 'active', subCategory: '壁纸创作', coinCost: 8, usageCount: 320 },
+  { id: 221, name: '漫画分镜生成器', icon: '📽️', toolType: 'image', categoryId: 9, status: 'active', subCategory: '漫画创作', coinCost: 10, usageCount: 321 },
+  { id: 222, name: '微信表情包设计师', icon: '😘', toolType: 'image', categoryId: 9, status: 'active', subCategory: '表情设计', coinCost: 8, usageCount: 322 },
+  { id: 223, name: '房产效果图生成', icon: '🏠', toolType: 'image', categoryId: 9, status: 'active', subCategory: '建筑渲染', coinCost: 10, usageCount: 323 },
+  { id: 224, name: '人像写真风格迁移', icon: '📷', toolType: 'image', categoryId: 9, status: 'active', subCategory: '风格迁移', coinCost: 10, usageCount: 324 },
+  { id: 225, name: '3D图标生成器', icon: '💎', toolType: 'image', categoryId: 9, status: 'active', subCategory: '3D设计', coinCost: 10, usageCount: 325 },
+  { id: 226, name: 'UI设计灵感生成', icon: '🎯', toolType: 'image', categoryId: 9, status: 'active', subCategory: '界面设计', coinCost: 10, usageCount: 326 },
+  { id: 227, name: '手写字体生成器', icon: '✏️', toolType: 'image', categoryId: 9, status: 'active', subCategory: '字体设计', coinCost: 8, usageCount: 327 },
+  { id: 228, name: '古风插画创作师', icon: '🏮', toolType: 'image', categoryId: 9, status: 'active', subCategory: '古风创作', coinCost: 10, usageCount: 328 },
+  { id: 229, name: '游戏角色原画师', icon: '🎮', toolType: 'image', categoryId: 9, status: 'active', subCategory: '游戏美术', coinCost: 10, usageCount: 329 },
+  { id: 230, name: 'AI换装造型设计师', icon: '👗', toolType: 'image', categoryId: 9, status: 'active', subCategory: '时尚设计', coinCost: 10, usageCount: 330 },
+  { id: 231, name: '产品展示短视频生成', icon: '🎬', toolType: 'video', categoryId: 10, status: 'active', subCategory: '商业视频', coinCost: 20, usageCount: 331 },
+  { id: 232, name: '美食制作教程生成', icon: '🍳', toolType: 'video', categoryId: 10, status: 'active', subCategory: '教学视频', coinCost: 15, usageCount: 332 },
+  { id: 233, name: '旅行Vlog自动生成', icon: '✈️', toolType: 'video', categoryId: 10, status: 'active', subCategory: '旅行视频', coinCost: 20, usageCount: 333 },
+  { id: 234, name: '房产楼盘宣传片', icon: '🏢', toolType: 'video', categoryId: 10, status: 'active', subCategory: '商业视频', coinCost: 20, usageCount: 334 },
+  { id: 235, name: '婚礼纪念视频生成', icon: '💒', toolType: 'video', categoryId: 10, status: 'active', subCategory: '纪念视频', coinCost: 20, usageCount: 335 },
+  { id: 236, name: '知识科普短视频', icon: '🔬', toolType: 'video', categoryId: 10, status: 'active', subCategory: '科普视频', coinCost: 15, usageCount: 336 },
+  { id: 237, name: '健身教学视频生成', icon: '💪', toolType: 'video', categoryId: 10, status: 'active', subCategory: '健身视频', coinCost: 15, usageCount: 337 },
+  { id: 238, name: '宠物趣味视频生成', icon: '🐱', toolType: 'video', categoryId: 10, status: 'active', subCategory: '宠物视频', coinCost: 15, usageCount: 338 },
+  { id: 239, name: '汽车评测视频生成', icon: '🚗', toolType: 'video', categoryId: 10, status: 'active', subCategory: '汽车视频', coinCost: 20, usageCount: 339 },
+  { id: 240, name: '穿搭分享视频生成', icon: '👗', toolType: 'video', categoryId: 10, status: 'active', subCategory: '时尚视频', coinCost: 15, usageCount: 340 },
+  { id: 241, name: '音乐MV风格视频', icon: '🎵', toolType: 'video', categoryId: 10, status: 'active', subCategory: '音乐视频', coinCost: 20, usageCount: 341 },
+  { id: 242, name: '搞笑段子视频生成', icon: '😂', toolType: 'video', categoryId: 10, status: 'active', subCategory: '娱乐视频', coinCost: 15, usageCount: 342 },
+  { id: 243, name: '历史故事动画视频', icon: '📜', toolType: 'video', categoryId: 10, status: 'active', subCategory: '历史动画', coinCost: 15, usageCount: 343 },
+  { id: 244, name: '育儿知识短视频', icon: '👶', toolType: 'video', categoryId: 10, status: 'active', subCategory: '育儿视频', coinCost: 15, usageCount: 344 },
+  { id: 245, name: '科技产品开箱视频', icon: '📱', toolType: 'video', categoryId: 10, status: 'active', subCategory: '科技视频', coinCost: 20, usageCount: 345 },
+  { id: 246, name: '家居装修效果视频', icon: '🏡', toolType: 'video', categoryId: 10, status: 'active', subCategory: '家居视频', coinCost: 20, usageCount: 346 },
+  { id: 247, name: '美妆教程视频生成', icon: '💄', toolType: 'video', categoryId: 10, status: 'active', subCategory: '美妆视频', coinCost: 15, usageCount: 347 },
+  { id: 248, name: '运动精彩集锦生成', icon: '⚽', toolType: 'video', categoryId: 10, status: 'active', subCategory: '体育视频', coinCost: 15, usageCount: 348 },
+  { id: 249, name: '校园招生宣传片', icon: '🎓', toolType: 'video', categoryId: 10, status: 'active', subCategory: '教育视频', coinCost: 15, usageCount: 349 },
+  { id: 250, name: '农产品推广短视频', icon: '🌾', toolType: 'video', categoryId: 10, status: 'active', subCategory: '农业视频', coinCost: 15, usageCount: 350 },
+  { id: 251, name: '手工DIY教程视频', icon: '🧶', toolType: 'video', categoryId: 10, status: 'active', subCategory: '手工视频', coinCost: 15, usageCount: 351 },
+  { id: 252, name: '户外探险视频生成', icon: '🏕️', toolType: 'video', categoryId: 10, status: 'active', subCategory: '户外视频', coinCost: 20, usageCount: 352 },
+  { id: 253, name: '书法艺术展示视频', icon: '✒️', toolType: 'video', categoryId: 10, status: 'active', subCategory: '艺术视频', coinCost: 15, usageCount: 353 },
+  { id: 254, name: '节日祝福视频生成', icon: '🧧', toolType: 'video', categoryId: 10, status: 'active', subCategory: '祝福视频', coinCost: 10, usageCount: 354 },
+  { id: 255, name: '创业故事记录视频', icon: '🚀', toolType: 'video', categoryId: 10, status: 'active', subCategory: '商业视频', coinCost: 20, usageCount: 355 },
+  { id: 256, name: '餐厅美食推广视频', icon: '🍽️', toolType: 'video', categoryId: 10, status: 'active', subCategory: '餐饮视频', coinCost: 15, usageCount: 356 },
+  { id: 257, name: '穿搭搭配视频生成', icon: '👔', toolType: 'video', categoryId: 10, status: 'active', subCategory: '时尚视频', coinCost: 15, usageCount: 357 },
+  { id: 258, name: '电竞高光集锦生成', icon: '🕹️', toolType: 'video', categoryId: 10, status: 'active', subCategory: '游戏视频', coinCost: 15, usageCount: 358 },
+  { id: 259, name: '瑜伽冥想教学视频', icon: '🧘', toolType: 'video', categoryId: 10, status: 'active', subCategory: '健身视频', coinCost: 15, usageCount: 359 },
+  { id: 260, name: '读书分享视频生成', icon: '📚', toolType: 'video', categoryId: 10, status: 'active', subCategory: '知识视频', coinCost: 10, usageCount: 360 },
+  { id: 261, name: '情感语录视频生成', icon: '💝', toolType: 'video', categoryId: 10, status: 'active', subCategory: '情感视频', coinCost: 10, usageCount: 361 },
+  { id: 262, name: '城市航拍视频生成', icon: '🌆', toolType: 'video', categoryId: 10, status: 'active', subCategory: '航拍视频', coinCost: 20, usageCount: 362 },
 ];
 
 const toolDomainProfiles = [
@@ -4158,15 +4215,19 @@ app.get('/api/v1/admin/model-config', authCheck, (req, res) => {
   res.json({ code: 0, message: 'success', data: { providers, models: getAiModelGroups(), syncedFrom: 'frontend-agent-models' } });
 });
 
-// AI工具分类
+// AI工具分类（6大业务分类 + 图片生成 + 视频生成）
 app.get('/api/v1/ai/categories', (req, res) => {
   res.json({
     code: 0, message: 'success',
     data: [
-      { id: 1, name: '文本创作', icon: '📝', description: '文案、文章、翻译' },
-      { id: 2, name: '图片生成', icon: '🎨', description: 'AI绘画、设计' },
-      { id: 3, name: '数据分析', icon: '📊', description: '数据解读、报告' },
-      { id: 4, name: '智能对话', icon: '🤖', description: 'AI助手、问答' },
+      { id: 1, name: '内容创作', icon: '📝', description: '文案撰写、视频脚本、直播运营' },
+      { id: 4, name: 'AI智能', icon: '🤖', description: 'AI助手、对话问答、编程开发' },
+      { id: 7, name: '电商运营', icon: '🛒', description: '商品运营、店铺管理、直播带货' },
+      { id: 8, name: '教育培训', icon: '📚', description: '课程规划、学习方法、考试辅导' },
+      { id: 5, name: '宠物服务', icon: '🐾', description: '宠物养护、训练指导、宠物用品' },
+      { id: 6, name: '校园助手', icon: '🎓', description: '伯雅校园、学业辅导、校园生活' },
+      { id: 9, name: '图片生成', icon: '🎨', description: 'AI绘画、海报设计、Logo创作', filterType: 'image' },
+      { id: 10, name: '视频生成', icon: '🎬', description: 'AI视频生成、动画制作', filterType: 'video' },
     ],
   });
 });
@@ -4174,8 +4235,8 @@ app.get('/api/v1/ai/categories', (req, res) => {
 // AI工具列表
 app.get('/api/v1/ai/tools', (req, res) => {
   const { page, pageSize, status } = req.query;
-  // 工具中心只返回 205 个 AI 工具；AI员工由 /api/v1/agents 单独提供。
-  const categoryMap = { 1: '内容创作', 4: 'AI智能', 5: '宠物服务', 6: '校园助手', 7: '电商运营', 8: '教育培训' };
+  // 工具中心只返回 260+ 个 AI 工具；AI员工由 /api/v1/agents 单独提供。
+  const categoryMap = { 1: '内容创作', 4: 'AI智能', 5: '宠物服务', 6: '校园助手', 7: '电商运营', 8: '教育培训', 9: '图片生成', 10: '视频生成' };
   let list = aiToolsStore.map(t => ({ ...withRealUsage(t), category: categoryMap[t.categoryId] || '其他' }));
   if (status) list = list.filter(t => t.status === status);
   res.json({ code: 0, message: 'success', data: paginate(list, page, pageSize) });
