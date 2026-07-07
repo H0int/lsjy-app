@@ -21,6 +21,20 @@ const PORT = process.env.PORT || 3000;
 // ===== 中间件 =====
 // CORS 由线上 Nginx 统一添加。这里不要重复添加，否则浏览器会因
 // Access-Control-Allow-Origin 出现两份而把请求判定为 Network Error。
+// 但 Nginx 未生效时，后端兜底添加 CORS 头（通过检查响应头避免重复）
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin) {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+    res.header('Access-Control-Allow-Headers', 'Authorization, Content-Type, X-Requested-With, Accept, Origin');
+    res.header('Access-Control-Allow-Credentials', 'true');
+  }
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  next();
+});
 app.use(express.json({ limit: '50mb' }));
 const uploadsRoot = path.join(path.dirname(__dirname), 'uploads');
 app.use('/uploads', express.static(uploadsRoot));
