@@ -4162,7 +4162,8 @@ app.get('/api/v1/ai/categories', (req, res) => {
 app.get('/api/v1/ai/tools', (req, res) => {
   const { page, pageSize, status } = req.query;
   // 工具中心只返回 205 个 AI 工具；AI员工由 /api/v1/agents 单独提供。
-  let list = aiToolsStore.map(withRealUsage);
+  const categoryMap = { 1: '内容创作', 4: 'AI智能', 5: '宠物服务', 6: '校园助手', 7: '电商运营', 8: '教育培训' };
+  let list = aiToolsStore.map(t => ({ ...withRealUsage(t), category: categoryMap[t.categoryId] || '其他' }));
   if (status) list = list.filter(t => t.status === status);
   res.json({ code: 0, message: 'success', data: paginate(list, page, pageSize) });
 });
