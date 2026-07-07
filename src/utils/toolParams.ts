@@ -425,12 +425,125 @@ export const toolParamMap: Record<string, ToolParamGroup[]> = {
   ],
 }
 
+// SubCategory 别名映射表 - 将不同的 subCategory 名称映射到已有的参数配置
+const subCategoryAliasMap: Record<string, string> = {
+  // 视频类
+  'AI视频': '视频生成',
+  '视频脚本': '视频生成',
+  // 音频类
+  'AI音频': '对话聊天',
+  // 图片类
+  'AI绘画': 'AI绘画',
+  '视觉设计': 'AI绘画',
+  // 文案类
+  '文案撰写': '文案撰写',
+  '内容策划': '文案撰写',
+  '内容创作': '文案撰写',
+  // 直播类
+  '直播运营': '直播运营',
+  // 宠物类
+  '养宠指导': '养宠指导',
+  '宠物健康': '养宠指导',
+  '宠物喂养': '养宠指导',
+  '宠物训练': '养宠指导',
+  '宠物用品': '养宠指导',
+  '行为纠正': '养宠指导',
+  '术后护理': '养宠指导',
+  '宠物商业': '养宠指导',
+  '宠物内容': '养宠指导',
+  '品种科普': '养宠指导',
+  '行为训练': '养宠指导',
+  '营养饮食': '养宠指导',
+  '美容护理': '养宠指导',
+  '繁育指导': '养宠指导',
+  // 校园类
+  '校园生活': '校园生活',
+  '校园活动': '校园生活',
+  '社团运营': '校园生活',
+  '校园安全': '校园生活',
+  '职业启蒙': '校园生活',
+  '校园公文': '校园生活',
+  '班级管理': '校园生活',
+  '心理支持': '校园生活',
+  '学业辅导': '校园生活',
+  '求职就业': '校园生活',
+  '考试备考': '校园生活',
+  '考研升学': '校园生活',
+  '奖学金助': '校园生活',
+  '心理成长': '校园生活',
+  // 电商类
+  '商品运营': '商品运营',
+  '营销推广': '商品运营',
+  '客服服务': '商品运营',
+  '店铺管理': '商品运营',
+  '供应链': '商品运营',
+  '跨境电商': '商品运营',
+  '本地生活': '商品运营',
+  '门店引流': '商品运营',
+  '私域成交': '商品运营',
+  '客服售后': '商品运营',
+  '商品优化': '商品运营',
+  // 教育类
+  '学习方法': '学习方法',
+  '学科辅导': '学习方法',
+  '语言学习': '学习方法',
+  '素质教育': '学习方法',
+  '职业教育': '学习方法',
+  '教学方案': '学习方法',
+  // AI类
+  '对话聊天': '对话聊天',
+  '数据分析': '数据分析',
+  '编程开发': '编程开发',
+  '效率办公': '编程开发',
+  '效率自动化': '编程开发',
+  // 运营类
+  '账号运营': '账号运营',
+  '数据复盘': '数据分析',
+  '变现指导': '账号运营',
+  // 其他
+  '医疗咨询': '对话聊天',
+  '知识库': '对话聊天',
+  '合规法务': '对话聊天',
+  '财务分析': '数据分析',
+  '商业策划': '文案撰写',
+}
+
+// 通用参数配置 - 用于没有特定配置的 subCategory
+const genericParams: ToolParamGroup[] = [
+  {
+    title: '生成配置',
+    params: [
+      { key: 'outputLength', label: '输出长度', type: 'select', defaultValue: 'medium', options: [
+        { label: '简短', value: 'short' },
+        { label: '适中', value: 'medium' },
+        { label: '详细', value: 'long' },
+      ]},
+      { key: 'tone', label: '语气风格', type: 'select', defaultValue: 'professional', options: [
+        { label: '专业正式', value: 'professional' },
+        { label: '活泼轻松', value: 'casual' },
+        { label: '幽默搞笑', value: 'humorous' },
+        { label: '温暖治愈', value: 'warm' },
+      ]},
+    ],
+  },
+]
+
 // 获取工具参数配置
 export function getToolParams(subCategory: string): ToolParamGroup[] {
-  return toolParamMap[subCategory] || []
+  // 直接匹配
+  if (toolParamMap[subCategory]) {
+    return toolParamMap[subCategory]
+  }
+  // 别名映射匹配
+  const mappedKey = subCategoryAliasMap[subCategory]
+  if (mappedKey && toolParamMap[mappedKey]) {
+    return toolParamMap[mappedKey]
+  }
+  // 返回通用配置
+  return genericParams
 }
 
 // 是否有参数配置
 export function hasToolParams(subCategory: string): boolean {
-  return !!toolParamMap[subCategory]
+  return true // 所有工具都有参数（至少通用配置）
 }
