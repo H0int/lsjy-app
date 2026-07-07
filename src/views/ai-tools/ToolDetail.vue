@@ -92,22 +92,17 @@
               class="w-full" />
           </div>
 
-          <!-- 视频工具：时长选择器 -->
-          <div v-if="isVideoTool">
-            <label class="cyber-input-label">视频时长</label>
-            <div class="flex flex-wrap gap-3">
-              <button v-for="d in durationOptions" :key="d.value"
-                @click="selectedDuration = d.value"
-                class="cyber-duration-btn"
-                :class="{ active: selectedDuration === d.value }"
-                :disabled="generating">
-                {{ d.label }}
-                <span v-if="d.cost > 1" class="ml-1 text-xs opacity-70">({{ d.cost }}倍)</span>
-              </button>
+          <!-- 图片处理工具：上传区域 -->
+          <div v-if="isImageProcessing">
+            <label class="cyber-input-label">上传图片</label>
+            <div class="cyber-upload-zone" @click="$refs.fileInput?.click()">
+              <input ref="fileInput" type="file" accept="image/*" style="display:none" @change="handleFileUpload" />
+              <div class="cyber-upload-inner">
+                <span class="upload-icon">📤</span>
+                <span class="upload-text">点击上传图片</span>
+                <span class="upload-hint">支持 JPG、PNG、WEBP 格式</span>
+              </div>
             </div>
-            <p v-if="selectedDuration > 15" class="cyber-warn-text">
-              ⚡ 超过15秒将自动分段生成并拼接，生成时间较长
-            </p>
           </div>
 
           <!-- 生成按钮 -->
@@ -121,6 +116,25 @@
               <span class="cyber-btn-shine"></span>
               <span class="cyber-btn-content">{{ generating ? progressText : '✨ 开始生成' }}</span>
             </button>
+          </div>
+        </div>
+
+        <!-- 图片结果展示 -->
+        <div v-if="isImageTool && imageUrls.length > 0" class="cyber-result-section">
+          <div class="cyber-result-head">
+            <h3 class="cyber-card-title"><span class="title-bar"></span>生成结果</h3>
+            <div class="flex gap-2">
+              <button class="cyber-action-pill cyber-pill-green" @click="downloadImage(imageUrls[0])">📥 下载图片</button>
+              <button class="cyber-action-pill" @click="imageUrls = []">🗑️ 清除</button>
+            </div>
+          </div>
+          <div class="cyber-image-grid">
+            <div v-for="(url, idx) in imageUrls" :key="idx" class="cyber-image-card">
+              <img :src="url" class="cyber-image" loading="lazy" @click="downloadImage(url)" />
+              <div class="cyber-image-overlay">
+                <span class="cyber-image-idx">{{ idx + 1 }}/{{ imageUrls.length }}</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -141,7 +155,7 @@
         </div>
 
         <!-- 文本结果展示 -->
-        <div v-if="!isVideoTool && result" class="cyber-result-section">
+        <div v-if="!isVideoTool && !isImageTool && result" class="cyber-result-section">
           <div class="cyber-result-head">
             <h3 class="cyber-card-title"><span class="title-bar"></span>生成结果</h3>
             <div class="flex gap-2">
@@ -178,11 +192,20 @@ const selectedDuration = ref(5)
 const progressText = ref('生成中...')
 
 const isVideoTool = computed(() => tool.value?.toolType === 'video')
+const isImageTool = computed(() => tool.value?.toolType === 'image')
+const isImageProcessing = computed(() => tool.value?.inputType === 'image')
+
+// 图片生成结果
+const imageUrls = ref<string[]>([])
 
 // 工具参数配置
 const paramValues = ref<Record<string, any>>({})
 const toolParamGroups = computed(() => {
   if (!tool.value?.subCategory) return []
+  // 视频工具使用 "视频生成" 参数组
+  if (isVideoTool.value) {
+    return getToolParams('视频生成')
+  }
   return getToolParams(tool.value.subCategory)
 })
 const hasParams = computed(() => toolParamGroups.value.length > 0)
@@ -209,8 +232,10 @@ const durationOptions = [
 const effectiveCost = computed(() => {
   if (!tool.value) return 0
   if (isVideoTool.value) {
-    const opt = durationOptions.find(d => d.value === selectedDuration.value)
-    return (tool.value.coinCost || 1) * (opt?.cost || 1)
+    const dur = paramValues.value.videoDuration || '5s'
+    const seconds = parseInt(dur)
+    const costMult = seconds <= 15 ? 1 : seconds <= 30 ? 2 : 4
+    return (tool.value.coinCost || 1) * costMult
   }
   return tool.value.coinCost || 0
 })
@@ -218,6 +243,10 @@ const effectiveCost = computed(() => {
 const inputPlaceholder = computed(() => {
   if (!tool.value) return ''
   if (isVideoTool.value) return '描述你想要生成的视频画面，越详细效果越好...'
+  if (isImageTool.value) {
+    if (isImageProcessing.value) return '请上传或输入图片URL...'
+    return '描述你想要生成的图片内容，越详细效果越好...'
+  }
   switch (tool.value.inputType) {
     case 'image': return '请上传或输入图片URL...'
     case 'file': return '请输入文件内容或URL...'
@@ -234,18 +263,23 @@ async function handleGenerate() {
   generating.value = true
   result.value = ''
   videoUrl.value = ''
+  imageUrls.value = []
 
   try {
     if (isVideoTool.value) {
-      const segments = Math.ceil(selectedDuration.value / 15)
+      const durStr = paramValues.value.videoDuration || '5s'
+      const seconds = parseInt(durStr)
+      const segments = Math.ceil(seconds / 15)
       if (segments > 1) {
         progressText.value = `生成中(共${segments}段)...`
       }
 
       const res = await toolApi.generateVideo(Number(route.params.id), {
         prompt: inputContent.value,
-        duration: selectedDuration.value,
-        resolution: '720P',
+        duration: seconds,
+        resolution: paramValues.value.resolution || '720p',
+        style: paramValues.value.videoStyle || 'cinematic',
+        aspectRatio: paramValues.value.aspectRatio || '16:9',
       })
 
       const url = res.data?.videoUrl || res.data?.outputText || ''
@@ -257,9 +291,22 @@ async function handleGenerate() {
         }
       }
       ElMessage.success('视频生成完成！')
+    } else if (isImageTool.value) {
+      const res = await toolApi.callTool(Number(route.params.id), { text: inputContent.value, params: paramValues.value })
+      const urls = res.data?.urls || res.data?.imageUrls || []
+      const singleUrl = res.data?.imageUrl || res.data?.outputUrl || ''
+      if (urls.length > 0) {
+        imageUrls.value = urls
+      } else if (singleUrl) {
+        imageUrls.value = [singleUrl]
+      }
+      if (imageUrls.value.length === 0) {
+        result.value = res.data?.outputText || '生成完成，暂无图片输出'
+      }
+      ElMessage.success(imageUrls.value.length > 0 ? `生成 ${imageUrls.value.length} 张图片！` : '生成完成！')
     } else {
       const res = await toolApi.callTool(Number(route.params.id), { text: inputContent.value, params: paramValues.value })
-      result.value = res.data?.outputText || '生成完成，暂无详细输出'
+      result.value = res.data?.outputText || res.data?.content || '生成完成，暂无详细输出'
       ElMessage.success('生成完成！')
     }
   } catch (e: any) {
@@ -273,6 +320,27 @@ async function handleGenerate() {
 function copyResult() {
   navigator.clipboard.writeText(result.value)
   ElMessage.success('已复制到剪贴板')
+}
+
+function downloadImage(url: string) {
+  const a = document.createElement('a')
+  a.href = url
+  a.target = '_blank'
+  a.download = 'generated-image.png'
+  a.click()
+}
+
+async function handleFileUpload(e: Event) {
+  const target = e.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) return
+  // 简单实现：读取为 base64 放入 inputContent
+  const reader = new FileReader()
+  reader.onload = () => {
+    inputContent.value = String(reader.result)
+    ElMessage.success('图片已上传')
+  }
+  reader.readAsDataURL(file)
 }
 
 onMounted(async () => {
@@ -528,6 +596,71 @@ onMounted(async () => {
   white-space: pre-wrap;
   font-family: 'JetBrains Mono', monospace;
 }
+
+/* 图片结果展示 */
+.cyber-image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+@media (max-width: 480px) {
+  .cyber-image-grid { grid-template-columns: 1fr 1fr; }
+}
+.cyber-image-card {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(0,240,255,0.15);
+  background: #000;
+  aspect-ratio: 1;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.cyber-image-card:hover {
+  border-color: var(--cyber-cyan);
+  box-shadow: 0 0 20px rgba(0,240,255,0.2);
+  transform: translateY(-2px);
+}
+.cyber-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.cyber-image-overlay {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 8px 12px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.7));
+}
+.cyber-image-idx {
+  font-size: 11px;
+  color: var(--cyber-cyan);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* 图片上传区域 */
+.cyber-upload-zone {
+  border: 2px dashed rgba(0,240,255,0.2);
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  background: rgba(0,240,255,0.02);
+}
+.cyber-upload-zone:hover {
+  border-color: var(--cyber-cyan);
+  background: rgba(0,240,255,0.05);
+}
+.cyber-upload-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.upload-icon { font-size: 28px; }
+.upload-text { font-size: 13px; color: var(--cyber-text); font-weight: 600; }
+.upload-hint { font-size: 11px; color: var(--cyber-text-dim); }
 
 /* Element Plus 输入框覆盖 */
 :deep(.el-textarea__inner) {

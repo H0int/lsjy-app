@@ -374,6 +374,55 @@ export const toolParamMap: Record<string, ToolParamGroup[]> = {
       ],
     },
   ],
+
+  // 视频生成
+  '视频生成': [
+    {
+      title: '视频配置',
+      params: [
+        { key: 'videoDuration', label: '视频时长', type: 'select', defaultValue: '5s', options: [
+          { label: '5秒', value: '5s' },
+          { label: '10秒', value: '10s' },
+          { label: '15秒', value: '15s' },
+          { label: '30秒', value: '30s' },
+          { label: '60秒', value: '60s' },
+        ]},
+        { key: 'videoStyle', label: '视频风格', type: 'select', defaultValue: 'cinematic', options: [
+          { label: '电影感', value: 'cinematic' },
+          { label: '动漫风格', value: 'anime' },
+          { label: '写实风格', value: 'realistic' },
+          { label: '赛博朋克', value: 'cyberpunk' },
+          { label: '梦幻唯美', value: 'dreamy' },
+          { label: '复古怀旧', value: 'retro' },
+        ]},
+        { key: 'aspectRatio', label: '画面比例', type: 'select', defaultValue: '16:9', options: [
+          { label: '16:9 横屏', value: '16:9' },
+          { label: '9:16 竖屏', value: '9:16' },
+          { label: '1:1 方形', value: '1:1' },
+          { label: '4:3 横屏', value: '4:3' },
+        ]},
+        { key: 'resolution', label: '分辨率', type: 'select', defaultValue: '720p', options: [
+          { label: '720P', value: '720p' },
+          { label: '1080P', value: '1080p' },
+          { label: '2K', value: '2k' },
+        ]},
+        { key: 'cameraMotion', label: '镜头运动', type: 'select', defaultValue: 'static', options: [
+          { label: '固定镜头', value: 'static' },
+          { label: '推镜头', value: 'push' },
+          { label: '拉镜头', value: 'pull' },
+          { label: '环绕镜头', value: 'orbit' },
+          { label: '跟随镜头', value: 'follow' },
+        ]},
+        { key: 'sceneType', label: '场景类型', type: 'select', defaultValue: 'indoor', options: [
+          { label: '室内场景', value: 'indoor' },
+          { label: '室外场景', value: 'outdoor' },
+          { label: '自然风光', value: 'nature' },
+          { label: '城市街景', value: 'city' },
+          { label: '科幻场景', value: 'scifi' },
+        ]},
+      ],
+    },
+  ],
 }
 
 // 获取工具参数配置
