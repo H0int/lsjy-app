@@ -37,12 +37,9 @@ export default defineConfig({
         },
         chunkFileNames: 'assets/js/[name]-[hash].js',
         entryFileNames: 'assets/js/[name]-[hash].js',
-        assetFileNames: 'assets/[ext]/[name]-[hash].[ext]'
+        assetFileNames: 'assets/[ext]/[name]-[hash].[ext]',
+        hashCharacters: 'base36',
       }
     }
-  },
-  // 强制哈希变化，防止缓存
-  define: {
-    __BUILD_TIME__: JSON.stringify(Date.now())
   }
 })
