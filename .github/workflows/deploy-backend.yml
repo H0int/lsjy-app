@@ -158,11 +158,8 @@ jobs:
 
             # 重启所有pm2进程
             echo "重启后端服务..."
-            if pm2 describe lsjy-express >/dev/null 2>&1; then
-              pm2 restart lsjy-express --update-env
-            else
-              pm2 start "$EXPRESS_SERVER" --name lsjy-express --update-env
-            fi
+            pm2 delete lsjy-express >/dev/null 2>&1 || true
+            pm2 start "$EXPRESS_SERVER" --name lsjy-express --update-env
             pm2 save || true
             sleep 8
 

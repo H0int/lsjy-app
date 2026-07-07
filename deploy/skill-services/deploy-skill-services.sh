@@ -64,9 +64,8 @@ fi
 
 echo "确保 Nginx 中存在 Matomo 路径代理..."
 if [ -f "/tmp/deploy/ecs-live-config/nginx-lsjy-live.conf" ]; then
-  cp /tmp/deploy/ecs-live-config/nginx-lsjy-live.conf /etc/nginx/conf.d/default.conf
   cp /tmp/deploy/ecs-live-config/nginx-lsjy-live.conf /etc/nginx/conf.d/lsjy.conf
-  echo "已同步线上 Nginx 配置到 default.conf 和 lsjy.conf"
+  echo "已同步线上 Nginx 配置到 lsjy.conf"
 fi
 
 MATOMO_BLOCK='
