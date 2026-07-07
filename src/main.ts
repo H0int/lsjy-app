@@ -11,5 +11,6 @@ const app = createApp(App)
 app.use(ElementPlus)
 app.use(router)
 app.use(pinia)
+app.config.globalProperties.$BUILD = __BUILD_TIME__
 document.documentElement.classList.add('dark')
 app.mount('#app')
