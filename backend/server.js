@@ -4689,7 +4689,7 @@ function saveRechargeOrders(orders) {
 
 // 创建充值订单（待支付）
 app.post('/api/v1/payment/coin/recharge', authCheck, (req, res) => {
-  const { packageId, paymentMethod } = req.body;
+  const { packageId, paymentMethod, payMethod, note } = req.body;
   const pkg = getFrontendCoinPackages().find(p => Number(p.id) === Number(packageId));
   if (!pkg) return res.status(404).json({ code: 404, message: '套餐不存在', data: null });
   
@@ -4701,10 +4701,11 @@ app.post('/api/v1/payment/coin/recharge', authCheck, (req, res) => {
     packageId: pkg.id,
     coinAmount: pkg.coinAmount,
     price: pkg.price,
-    paymentMethod: paymentMethod || 'wechat', // wechat/alipay/qq
+    paymentMethod: paymentMethod || payMethod || 'wechat', // wechat/alipay/qq
     screenshotUrl: '',
     status: 'pending_payment', // pending_payment, pending_review, approved, rejected
-    remark: '',
+    remark: note || '',
+    note: note || '',
     createdAt: new Date().toISOString(),
     reviewedAt: null,
     reviewedBy: null,

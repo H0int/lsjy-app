@@ -373,9 +373,9 @@ const vipPlans = [
 
 // 真实支付二维码
 const qrUrls: Record<string, string> = {
-  wechat: 'https://lsjyapp.cn/wechat-qr.png',
-  alipay: 'https://lsjyapp.cn/alipay-qr.jpg',
-  qq: 'https://lsjyapp.cn/qq-qr.png',
+  wechat: '/payment/wechat.png',
+  alipay: '/payment/alipay.jpg',
+  qq: '/payment/qq.png',
 }
 
 const payMethodLabels: Record<string, string> = {
@@ -423,22 +423,13 @@ function handleFileChange(e: Event) {
 
 async function uploadScreenshot(): Promise<string> {
   if (!screenshotFile.value) return ''
-  const formData = new FormData()
-  formData.append('file', screenshotFile.value)
-  try {
-    const res = await fetch('https://api.lsjyapp.cn/upload', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
-      },
-      body: formData,
-    })
-    const data = await res.json()
-    return data.url || data.data?.url || ''
-  } catch (err) {
-    console.error('Upload failed:', err)
-    return ''
-  }
+  if (screenshotPreview.value) return screenshotPreview.value
+  return await new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = ev => resolve(String(ev.target?.result || ''))
+    reader.onerror = () => reject(new Error('支付截图读取失败'))
+    reader.readAsDataURL(screenshotFile.value as File)
+  })
 }
 
 function copyInviteCode() {
@@ -503,13 +494,19 @@ async function submitOrder() {
   submitting.value = true
   try {
     const screenshotUrl = await uploadScreenshot()
-    await paymentApi.recharge(selectedPkg.value.id, {
+    if (!screenshotUrl) {
+      ElMessage.warning('支付截图读取失败，请重新上传')
+      return
+    }
+    const orderRes = await paymentApi.recharge(selectedPkg.value.id, {
       payMethod: payMethod.value,
       note: orderNote.value,
-      screenshotUrl: screenshotUrl,
     } as any)
+    const order = (orderRes.data as any)?.order || (orderRes.data as any)?.paymentTransaction
+    if (!order?.id) throw new Error('充值订单创建失败')
+    await paymentApi.submitScreenshot(order.id, screenshotUrl)
 
-    ElMessage.success('订单已提交，等待管理员确认后自动充值')
+    ElMessage.success('支付凭证已提交，等待后台确认后到账')
     orderSubmitted.value = true
 
     try {

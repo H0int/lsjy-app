@@ -97,6 +97,9 @@ export const paymentApi = {
     if (useMock) return mockApi.recharge(packageId) as any
     return service.post('/payment/coin/recharge', { packageId, ...extra }).then(r => r.data)
   },
+  submitScreenshot(orderId: number, screenshotUrl: string): Promise<ApiResponse<{ order: PaymentTransaction }>> {
+    return service.post('/payment/coin/submit-screenshot', { orderId, screenshotUrl }).then(r => r.data)
+  },
   getTransactions(params?: { type?: string; page?: number; pageSize?: number }): Promise<ApiResponse<PageResult<CoinTransaction>>> {
     if (useMock) return mockApi.getTransactions(params) as any
     return service.get('/payment/coin/transactions', { params }).then(r => r.data)
@@ -128,10 +131,10 @@ export const adminApi = {
     return service.get('/payment/orders', { params }).then(r => r.data)
   },
   approveOrder(id: number): Promise<ApiResponse<{ message: string }>> {
-    return service.put(`/payment/orders/${id}/approve`).then(r => r.data)
+    return service.post(`/payment/coin/approve/${id}`, { action: 'approve' }).then(r => r.data)
   },
   rejectOrder(id: number, reason?: string): Promise<ApiResponse<{ message: string }>> {
-    return service.put(`/payment/orders/${id}/reject`, { reason }).then(r => r.data)
+    return service.post(`/payment/coin/approve/${id}`, { action: 'reject', remark: reason }).then(r => r.data)
   },
   getLogs(params?: { module?: string; page?: number; pageSize?: number }): Promise<ApiResponse<PageResult<any>>> {
     return service.get('/system/logs', { params }).then(r => r.data)
