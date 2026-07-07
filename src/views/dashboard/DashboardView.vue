@@ -173,7 +173,8 @@
         <div
           v-for="(notice, idx) in notices"
           :key="idx"
-          class="cyber-notice-item flex items-start gap-3 p-3 rounded-lg"
+          class="cyber-notice-item flex items-start gap-3 p-3 rounded-lg cursor-pointer"
+          @click="openNotice(notice)"
         >
           <div class="w-2 h-2 rounded-full mt-1.5 flex-shrink-0" :class="notice.isNew ? 'bg-red-500' : 'bg-gray-500'"></div>
           <div class="flex-1 min-w-0">
@@ -181,9 +182,36 @@
             <div class="text-xs mt-1" style="color: var(--cyber-text-dim);">{{ notice.date }}</div>
           </div>
           <span v-if="notice.isNew" class="cyber-new-badge text-xs px-2 py-0.5 rounded">NEW</span>
+          <span class="text-xs" style="color: var(--cyber-cyan);">查看 →</span>
         </div>
       </div>
     </div>
+
+    <!-- 公告详情弹窗 -->
+    <Teleport to="body">
+      <div
+        v-if="showNoticeModal && activeNotice"
+        class="fixed inset-0 z-50 flex items-center justify-center"
+        style="background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);"
+        @click.self="showNoticeModal = false"
+      >
+        <div class="cyber-notice-modal rounded-2xl p-6 max-w-md w-full mx-4">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="cyber-modal-title">📢 公告详情</h3>
+            <button
+              class="cyber-modal-close-btn"
+              @click="showNoticeModal = false"
+            >✕</button>
+          </div>
+          <div class="cyber-notice-detail">
+            <div class="notice-detail-title">{{ activeNotice.title }}</div>
+            <div class="notice-detail-date">{{ activeNotice.date }}</div>
+            <div class="notice-detail-content">{{ activeNotice.content }}</div>
+          </div>
+          <button class="cyber-notice-close" @click="showNoticeModal = false">知道了</button>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -224,11 +252,39 @@ const hotTools = ref<any[]>([])
 
 // 公告
 const notices = ref([
-  { title: '🎉 罗圣纪元SaaS平台正式上线，205个AI工具全面开放', date: '2026-07-07', isNew: true },
-  { title: '🔧 AI绘画功能升级，支持8种风格、4种尺寸选择', date: '2026-07-06', isNew: true },
-  { title: '📹 视频生成功能上线，支持电影感、动漫等6种风格', date: '2026-07-05', isNew: false },
-  { title: '💬 加入官方技术交流群，获取最新动态和技术支持', date: '2026-07-04', isNew: false },
+  {
+    title: '🎉 罗圣纪元SaaS平台正式上线，205个AI工具全面开放',
+    date: '2026-07-07',
+    isNew: true,
+    content: '罗圣纪元SaaS平台已于2026年7月7日正式上线！平台集成205个AI工具，涵盖内容创作、AI智能、宠物服务、校园助手、电商运营、教育培训六大领域。所有用户均可免费体验部分工具，开通会员更可解锁全部功能。如有问题请联系客服：188-9000-0368。'
+  },
+  {
+    title: '🔧 AI绘画功能升级，支持8种风格、4种尺寸选择',
+    date: '2026-07-06',
+    isNew: true,
+    content: 'AI绘画功能已完成全面升级！现在支持以下8种风格：写实风格、动漫风格、油画风格、水彩风格、赛博朋克、像素风格、3D渲染、素描风格。同时支持4种尺寸选择：512×512、768×1024、1024×1024、1024×1536。更新你的创意，让AI为你绘制独一无二的图片！'
+  },
+  {
+    title: '📹 视频生成功能上线，支持电影感、动漫等6种风格',
+    date: '2026-07-05',
+    isNew: false,
+    content: '全新视频生成功能正式上线！只需输入文案描述，AI即可为你生成创意视频。支持6种风格：电影感、动漫风格、写实风格、赛博朋克、梦幻唯美、复古怀旧。同时支持多种画面比例和镜头运动效果。每个视频消耗圣力不等，会员用户享受8折优惠。'
+  },
+  {
+    title: '💬 加入官方技术交流群，获取最新动态和技术支持',
+    date: '2026-07-04',
+    isNew: false,
+    content: '欢迎加入罗圣纪元官方技术交流群！在这里你可以：获取平台最新功能更新、与开发者直接交流反馈、学习AI工具使用技巧、结识志同道合的创作者。扫码或搜索群号即可加入，群内不定期发放圣力福利！'
+  },
 ])
+
+const activeNotice = ref<any>(null)
+const showNoticeModal = ref(false)
+
+function openNotice(notice: any) {
+  activeNotice.value = notice
+  showNoticeModal.value = true
+}
 
 function getMemberLabel() {
   const roles = authStore.user?.roles || []
@@ -422,4 +478,73 @@ onMounted(() => {
   color: #ef4444;
   border: 1px solid rgba(239, 68, 68, 0.2);
 }
+
+/* 公告弹窗 */
+.cyber-notice-modal {
+  background: linear-gradient(135deg, #0d0d2b, #1a0a3a);
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  position: relative;
+}
+.cyber-notice-modal::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--cyber-cyan), transparent);
+}
+.cyber-modal-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--cyber-text);
+  font-family: 'JetBrains Mono', monospace;
+}
+.cyber-modal-close-btn {
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--cyber-text-dim);
+  background: rgba(255,255,255,0.05);
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.cyber-modal-close-btn:hover {
+  color: var(--cyber-text);
+  background: rgba(255,255,255,0.1);
+}
+.cyber-notice-detail { margin: 16px 0; }
+.notice-detail-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--cyber-text);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+.notice-detail-date {
+  font-size: 12px;
+  color: var(--cyber-text-dim);
+  margin-bottom: 12px;
+}
+.notice-detail-content {
+  font-size: 14px;
+  color: var(--cyber-text-dim);
+  line-height: 1.8;
+  padding: 16px;
+  background: rgba(0, 240, 255, 0.03);
+  border: 1px solid rgba(0, 240, 255, 0.08);
+  border-radius: 12px;
+}
+.cyber-notice-close {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple));
+  border: none;
+  border-radius: 10px;
+  color: #000;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.cyber-notice-close:hover { opacity: 0.9; }
 </style>
