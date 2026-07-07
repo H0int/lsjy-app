@@ -23,9 +23,12 @@
           <h2 class="cyber-user-name">{{ authStore.user?.nickname }}</h2>
           <p class="cyber-user-handle">@{{ authStore.user?.username }}</p>
 
-          <!-- 罗总专属标签 -->
-          <span class="cyber-role-badge role-boss">
+          <!-- 角色标签 -->
+          <span v-if="isBoss" class="cyber-role-badge role-boss">
             <span class="badge-icon">💎</span> 罗总专属
+          </span>
+          <span v-else-if="isVip" class="cyber-role-badge role-vip">
+            <span class="badge-icon">👑</span> {{ vipLabel }}
           </span>
 
           <div class="cyber-info-list">
@@ -41,7 +44,7 @@
             </div>
             <div class="cyber-info-row">
               <span class="cyber-info-label">🏷️ 用户类型</span>
-              <span class="cyber-info-value cyber-cyan">创始人版本</span>
+              <span class="cyber-info-value cyber-cyan">{{ getUserTypeLabel() }}</span>
             </div>
           </div>
 
@@ -234,6 +237,31 @@ const avatarUrl = ref('')
 const avatarInput = ref<HTMLInputElement>()
 
 const isBoss = computed(() => authStore.user?.username === 'KF02V9')
+
+const isVip = computed(() => {
+  const roles = authStore.user?.roles || []
+  const hasVipRole = Array.isArray(roles) && roles.some((role: any) => {
+    const value = typeof role === 'string' ? role : role?.code || role?.name
+    return value === 'vip' || value === 'VIP'
+  })
+  return hasVipRole || (authStore.user?.vipLevel && authStore.user.vipLevel > 0)
+})
+
+const vipLabel = computed(() => {
+  if (authStore.user?.vipLevel && authStore.user.vipLevel > 0) {
+    return `VIP${authStore.user.vipLevel}`
+  }
+  return 'VIP会员'
+})
+
+function getUserTypeLabel() {
+  if (isBoss.value) return '创始人版本'
+  if (isVip.value) return vipLabel.value
+  const type = authStore.user?.userType
+  if (type === 'enterprise') return '企业版'
+  if (type === 'merchant') return '商户版'
+  return '个人版'
+}
 
 const profileForm = reactive({
   nickname: '',
@@ -475,6 +503,13 @@ async function changePassword() {
 @keyframes bossGlow {
   from { box-shadow: 0 0 15px rgba(255,184,0,0.15); }
   to { box-shadow: 0 0 25px rgba(255,184,0,0.3); }
+}
+.role-vip {
+  color: var(--cyber-magenta);
+  border-color: rgba(255,0,229,0.4);
+  background: rgba(255,0,229,0.08);
+  text-shadow: 0 0 8px rgba(255,0,229,0.4);
+  box-shadow: 0 0 15px rgba(255,0,229,0.1);
 }
 .badge-icon {
   font-size: 12px;
