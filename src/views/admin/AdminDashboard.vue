@@ -1,5 +1,7 @@
 <template>
   <div>
+    <!-- debug visible marker -->
+    <div style="background:#00f0ff;color:#000;padding:8px 16px;font-weight:bold;margin-bottom:16px;">数据看板已加载</div>
     <!-- 实时数据概览 -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       <div v-for="stat in realtimeStats" :key="stat.label" class="bg-white dark:bg-dark-100 rounded-xl p-5 shadow-sm relative overflow-hidden">

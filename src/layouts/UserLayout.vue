@@ -117,8 +117,7 @@ function isActive(path: string) {
 }
 
 function goAdmin() {
-  // 使用同源hash路由，共享localStorage的token（admin.lsjyapp.cn域名隔离导致token不共享）
-  window.location.hash = '/admin/dashboard'
+  router.push('/admin/dashboard')
 }
 
 function handleLogout() {
