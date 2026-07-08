@@ -175,6 +175,33 @@ export const adminApi = {
   getAgents(): Promise<ApiResponse<any>> {
     return service.get('/agents').then(r => r.data)
   },
+  getAdminAgents(): Promise<ApiResponse<any>> {
+    return service.get('/admin/agents').then(r => r.data)
+  },
+  updateAgentStatus(id: string, status: string): Promise<ApiResponse<any>> {
+    return service.put(`/admin/agents/${id}/status`, { status }).then(r => r.data)
+  },
+  getModelConfigs(): Promise<ApiResponse<any[]>> {
+    return service.get('/admin/model-configs').then(r => r.data)
+  },
+  createModelConfig(data: any): Promise<ApiResponse<any>> {
+    return service.post('/admin/model-configs', data).then(r => r.data)
+  },
+  updateModelConfig(id: number, data: any): Promise<ApiResponse<any>> {
+    return service.put(`/admin/model-configs/${id}`, data).then(r => r.data)
+  },
+  deleteModelConfig(id: number): Promise<ApiResponse<any>> {
+    return service.delete(`/admin/model-configs/${id}`).then(r => r.data)
+  },
+  getKnowledgeBase(): Promise<ApiResponse<any>> {
+    return service.get('/knowledge').then(r => r.data)
+  },
+  createKnowledge(data: any): Promise<ApiResponse<any>> {
+    return service.post('/knowledge', data).then(r => r.data)
+  },
+  deleteKnowledge(id: number): Promise<ApiResponse<any>> {
+    return service.delete(`/knowledge/${id}`).then(r => r.data)
+  },
   getUserTags(): Promise<ApiResponse<any[]>> {
     return service.get('/admin/user-tags').then(r => r.data)
   },

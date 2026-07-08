@@ -7960,6 +7960,54 @@ app.get('/api/v1/admin/locations', authCheck, (req, res) => {
   }});
 });
 
+
+// ===== 模型配置管理 =====
+const MODEL_CONFIG_FILE = path.join(__dirname, 'data', 'model_configs.json');
+function loadModelConfigs() {
+  try { return JSON.parse(fs.readFileSync(MODEL_CONFIG_FILE, 'utf8')); }
+  catch(e) {
+    return [
+      { id: 1, name: 'DeepSeek-V3', provider: 'deepseek', model: 'deepseek-chat', temperature: 0.7, maxTokens: 4096, coinCost: 5, status: 'active', description: '通用对话模型' },
+      { id: 2, name: 'DeepSeek-R1', provider: 'deepseek', model: 'deepseek-reasoner', temperature: 0.7, maxTokens: 4096, coinCost: 10, status: 'active', description: '推理模型' },
+      { id: 3, name: 'GPT-4o', provider: 'openai', model: 'gpt-4o', temperature: 0.7, maxTokens: 4096, coinCost: 20, status: 'inactive', description: 'OpenAI 多模态模型' },
+      { id: 4, name: 'Claude 3.5', provider: 'anthropic', model: 'claude-3-5-sonnet', temperature: 0.7, maxTokens: 4096, coinCost: 18, status: 'inactive', description: 'Anthropic 对话模型' },
+    ];
+  }
+}
+function saveModelConfigs(list) {
+  fs.writeFileSync(MODEL_CONFIG_FILE, JSON.stringify(list, null, 2));
+}
+
+app.get('/api/v1/admin/model-configs', authCheck, (req, res) => {
+  res.json({ code: 0, message: 'success', data: loadModelConfigs() });
+});
+app.post('/api/v1/admin/model-configs', authCheck, (req, res) => {
+  const list = loadModelConfigs();
+  const item = {
+    id: Date.now(),
+    ...req.body,
+    status: req.body.status || 'active',
+    createdAt: new Date().toISOString(),
+  };
+  list.push(item);
+  saveModelConfigs(list);
+  res.json({ code: 0, message: 'success', data: item });
+});
+app.put('/api/v1/admin/model-configs/:id', authCheck, (req, res) => {
+  const list = loadModelConfigs();
+  const idx = list.findIndex(item => String(item.id) === String(req.params.id));
+  if (idx === -1) return res.status(404).json({ code: 404, message: '模型不存在' });
+  Object.assign(list[idx], req.body);
+  saveModelConfigs(list);
+  res.json({ code: 0, message: 'success', data: list[idx] });
+});
+app.delete('/api/v1/admin/model-configs/:id', authCheck, (req, res) => {
+  let list = loadModelConfigs();
+  list = list.filter(item => String(item.id) !== String(req.params.id));
+  saveModelConfigs(list);
+  res.json({ code: 0, message: 'success' });
+});
+
 // AI Agent管理
 app.get('/api/v1/admin/agents', authCheck, (req, res) => {
   const todayStart = getTodayStart();
