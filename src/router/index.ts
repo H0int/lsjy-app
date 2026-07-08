@@ -2,6 +2,7 @@ import { createRouter, createWebHashHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import { getToken } from '@/utils'
 import { useAuthStore } from '@/stores/auth'
+import AdminDashboard from '@/views/admin/AdminDashboard.vue'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -37,7 +38,7 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAdmin: true },
     children: [
       // 概览
-      { path: 'dashboard', name: 'AdminDashboard', component: () => import('@/views/admin/AdminDashboard.vue'), meta: { title: '数据看板' } },
+      { path: 'dashboard', name: 'AdminDashboard', component: AdminDashboard, meta: { title: '数据看板' } },
       { path: 'realtime', name: 'RealtimeMonitor', component: () => import('@/views/admin/analytics/RealtimeMonitor.vue'), meta: { title: '实时监控' } },
       // 数据中心
       { path: 'traffic', name: 'TrafficAnalysis', component: () => import('@/views/admin/analytics/TrafficAnalysis.vue'), meta: { title: '流量分析' } },
