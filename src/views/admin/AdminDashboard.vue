@@ -289,7 +289,7 @@ function initCharts() {
     const chart = echarts.init(modulePieRef.value)
     chart.setOption({
       tooltip: { trigger: 'item', formatter: '{b}: {c}人 ({d}%)' },
-      series: [{ type: 'pie', radius: ['40%', '70%'], data: moduleData.map(m => ({ name: m.name, value: m.users, itemStyle: { color: m.color } })), label: { color: textColor, fontSize: 11 }, emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.2)' } } }]
+      series: [{ type: 'pie', radius: ['40%', '70%'], data: moduleData.value.map(m => ({ name: m.name, value: m.users, itemStyle: { color: m.color } })), label: { color: textColor, fontSize: 11 }, emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.2)' } } }]
     })
     charts.push(chart)
   }
@@ -299,7 +299,7 @@ function initCharts() {
     const chart = echarts.init(revenuePieRef.value)
     chart.setOption({
       tooltip: { trigger: 'item', formatter: '{b}: ¥{c} ({d}%)' },
-      series: [{ type: 'pie', radius: ['40%', '70%'], data: moduleData.map(m => ({ name: m.name, value: m.revenue, itemStyle: { color: m.color } })), label: { color: textColor, fontSize: 11 }, emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.2)' } } }]
+      series: [{ type: 'pie', radius: ['40%', '70%'], data: moduleData.value.map(m => ({ name: m.name, value: m.revenue, itemStyle: { color: m.color } })), label: { color: textColor, fontSize: 11 }, emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.2)' } } }]
     })
     charts.push(chart)
   }
@@ -311,8 +311,8 @@ function initCharts() {
       tooltip: { trigger: 'axis' },
       grid: { top: 10, right: 10, bottom: 30, left: 80 },
       xAxis: { type: 'value', axisLabel: { color: textColor, fontSize: 11 }, splitLine: { lineStyle: { color: '#f3f4f6' } } },
-      yAxis: { type: 'category', data: moduleData.map(m => m.name).reverse(), axisLabel: { color: textColor, fontSize: 11 } },
-      series: [{ type: 'bar', data: moduleData.map(m => m.users).reverse(), itemStyle: { color: (_: any, i: any) => moduleData[moduleData.length - 1 - i.dataIndex].color, borderRadius: [0, 4, 4, 0] }, barWidth: 16 }]
+      yAxis: { type: 'category', data: moduleData.value.map(m => m.name).reverse(), axisLabel: { color: textColor, fontSize: 11 } },
+      series: [{ type: 'bar', data: moduleData.value.map(m => m.users).reverse(), itemStyle: { color: (_: any, i: any) => moduleData.value[moduleData.value.length - 1 - i.dataIndex].color, borderRadius: [0, 4, 4, 0] }, barWidth: 16 }]
     })
     charts.push(chart)
   }
