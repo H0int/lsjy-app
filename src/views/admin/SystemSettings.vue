@@ -36,7 +36,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { service } from '@/api/request'
+import service from '@/api/request'
 
 const loading = ref(false)
 const form = reactive<any>({

@@ -30,7 +30,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { service } from '@/api/request'
+import service from '@/api/request'
 import { formatDate } from '@/utils'
 
 const loading = ref(false)
