@@ -4438,11 +4438,9 @@ app.post('/api/v1/payment/admin/coins/adjust', authCheck, (req, res) => {
     return res.status(400).json({ code: 400, message: '充值圣点必须大于0', data: null });
   }
 
-  const usersFile = path.join(__dirname, 'data', 'users.json');
-  let users = [];
-  try { users = JSON.parse(fs.readFileSync(usersFile, 'utf8')); } catch (e) { users = [...usersStore]; }
-  let user = users.find(u => Number(u.id) === targetUserId);
-  if (!user) user = usersStore.find(u => Number(u.id) === targetUserId);
+  const found = findCurrentUserFileFirst(targetUserId);
+  const users = found.users || [];
+  let user = found.user;
   if (!user) {
     return res.status(404).json({ code: 404, message: '用户不存在', data: null });
   }
@@ -4451,11 +4449,13 @@ app.post('/api/v1/payment/admin/coins/adjust', authCheck, (req, res) => {
   user.coins = before + amount;
   user.totalRecharge = Number(user.totalRecharge || 0) + amount;
 
-  try {
-    fs.mkdirSync(path.dirname(usersFile), { recursive: true });
-    fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
-  } catch (e) {
-    // 内存模式忽略写盘失败
+  if (found.source === 'file') {
+    const idx = users.findIndex(u => Number(u.id) === targetUserId);
+    if (idx >= 0) users[idx] = { ...users[idx], coins: user.coins, totalRecharge: user.totalRecharge };
+    saveFileUsers(users);
+  } else {
+    const idx = usersStore.findIndex(u => Number(u.id) === targetUserId);
+    if (idx >= 0) usersStore[idx] = { ...usersStore[idx], coins: user.coins, totalRecharge: user.totalRecharge };
   }
 
   coinTransactionsStore.unshift({
@@ -4467,6 +4467,7 @@ app.post('/api/v1/payment/admin/coins/adjust', authCheck, (req, res) => {
     description: remark,
     createdAt: new Date().toISOString(),
   });
+  saveCoinTransactionsStore();
 
   res.json({
     code: 0,
@@ -4475,6 +4476,58 @@ app.post('/api/v1/payment/admin/coins/adjust', authCheck, (req, res) => {
       account: { userId: targetUserId, balance: user.coins, totalRecharge: user.totalRecharge },
       message: '充值成功',
     },
+  });
+});
+
+app.post('/api/v1/payment/admin/coins/set-balance', authCheck, (req, res) => {
+  const targetUserId = Number(req.body?.userId);
+  const balance = Number(req.body?.balance);
+  const remark = req.body?.remark || `后台强制设置圣力余额为 ${balance}`;
+  if (!targetUserId || targetUserId <= 0) {
+    return res.status(400).json({ code: 400, message: '请选择要处理的用户', data: null });
+  }
+  if (!Number.isFinite(balance) || balance < 0) {
+    return res.status(400).json({ code: 400, message: '圣力余额不能小于0', data: null });
+  }
+
+  const found = findCurrentUserFileFirst(targetUserId);
+  const users = found.users || [];
+  const user = found.user;
+  if (!user) {
+    return res.status(404).json({ code: 404, message: '用户不存在，已阻止异常圣力操作', data: null });
+  }
+  if (user.unlimited || user.userType === 'founder') {
+    return res.status(400).json({ code: 400, message: '创始人/无限圣力账号不能通过该接口清零', data: null });
+  }
+
+  const before = Number(user.coins || 0);
+  if (found.source === 'file') {
+    const idx = users.findIndex(u => Number(u.id) === targetUserId);
+    if (idx < 0) return res.status(404).json({ code: 404, message: '用户文件记录不存在', data: null });
+    users[idx].coins = balance;
+    saveFileUsers(users);
+  } else {
+    const idx = usersStore.findIndex(u => Number(u.id) === targetUserId);
+    if (idx < 0) return res.status(404).json({ code: 404, message: '用户记录不存在', data: null });
+    usersStore[idx].coins = balance;
+  }
+
+  coinTransactionsStore.unshift({
+    id: Date.now(),
+    userId: targetUserId,
+    type: 'admin_set_balance',
+    amount: balance - before,
+    balance,
+    description: remark,
+    operator: req.user?.username || 'admin',
+    createdAt: new Date().toISOString(),
+  });
+  saveCoinTransactionsStore();
+
+  res.json({
+    code: 0,
+    message: '圣力余额已更新',
+    data: { account: { userId: targetUserId, balance, before }, delta: balance - before },
   });
 });
 
@@ -4876,7 +4929,8 @@ app.post('/api/v1/payment/coin/approve/:orderId', authCheck, (req, res) => {
         }
       } else {
         log(`[支付] 警告：用户 userId=${order.userId} 在 users.json 中未找到`);
-        // 仍然标记为 approved，但记录警告
+        trackPaymentFailure(order.userId, order.username, order.orderNo, order.price, order.paymentMethod, 'USER_NOT_FOUND', '审核时用户不存在');
+        return res.status(404).json({ code: 404, message: '用户不存在，已阻止发放圣力', data: null });
       }
     } else {
       // users.json 读取失败，使用内存 coinsStore 作为备用
@@ -4890,6 +4944,9 @@ app.post('/api/v1/payment/coin/approve/:orderId', authCheck, (req, res) => {
         }
         coinsAdded = true;
         log(`[支付] (内存) 用户 ${memUser.username} 圣力 +${order.coinAmount} (${previousCoins} → ${memUser.coins})`);
+      } else {
+        trackPaymentFailure(order.userId, order.username, order.orderNo, order.price, order.paymentMethod, 'USER_NOT_FOUND', '审核时内存用户不存在');
+        return res.status(404).json({ code: 404, message: '用户不存在，已阻止发放圣力', data: null });
       }
     }
 
