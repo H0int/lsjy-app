@@ -4394,7 +4394,7 @@ AdminAPI.loadRechargeApps = function() {
   var xhr = new XMLHttpRequest();
   xhr.open('GET', apiBase.replace('/api/v1','') + '/api/v1/payment/coin/orders?pageSize=100', true);
   xhr.setRequestHeader('Content-Type', 'application/json');
-  var token = sessionStorage.getItem('lsjy_jwt') || (Store.getToken ? Store.getToken() : '');
+  var token = localStorage.getItem('admin_token') || sessionStorage.getItem('lsjy_jwt') || (Store.getToken ? Store.getToken() : '');
   if (token) xhr.setRequestHeader('Authorization', 'Bearer ' + token);
   xhr.onload = function() {
     if (xhr.status === 200) {
@@ -4456,7 +4456,7 @@ AdminAPI.approveRechargeApp = function(id) {
   var xhr = new XMLHttpRequest();
   xhr.open('POST', apiBase.replace('/api/v1','') + '/api/v1/payment/coin/approve/' + id, true);
   xhr.setRequestHeader('Content-Type', 'application/json');
-  var token = sessionStorage.getItem('lsjy_jwt') || '';
+  var token = localStorage.getItem('admin_token') || sessionStorage.getItem('lsjy_jwt') || '';
   if (token) xhr.setRequestHeader('Authorization', 'Bearer ' + token);
   xhr.onload = function() {
     if (xhr.status === 200) { toast('已通过', 'success'); AdminAPI.loadRechargeApps(); }
@@ -4473,7 +4473,7 @@ AdminAPI.rejectRechargeApp = function(id) {
   var xhr = new XMLHttpRequest();
   xhr.open('POST', apiBase.replace('/api/v1','') + '/api/v1/payment/coin/approve/' + id, true);
   xhr.setRequestHeader('Content-Type', 'application/json');
-  var token = sessionStorage.getItem('lsjy_jwt') || '';
+  var token = localStorage.getItem('admin_token') || sessionStorage.getItem('lsjy_jwt') || '';
   if (token) xhr.setRequestHeader('Authorization', 'Bearer ' + token);
   xhr.onload = function() {
     if (xhr.status === 200) { toast('已拒绝', 'success'); AdminAPI.loadRechargeApps(); }
@@ -4495,7 +4495,7 @@ AdminAPI.loadVisitors = function() {
   var xhr = new XMLHttpRequest();
   xhr.open('GET', apiBase + '/visitors?pageSize=200', true);
   xhr.setRequestHeader('Content-Type', 'application/json');
-  var token = sessionStorage.getItem('lsjy_jwt') || '';
+  var token = localStorage.getItem('admin_token') || sessionStorage.getItem('lsjy_jwt') || '';
   if (token) xhr.setRequestHeader('Authorization', 'Bearer ' + token);
   xhr.onload = function() {
     if (xhr.status === 200) {
@@ -4569,7 +4569,7 @@ function safeFetch(url, options, timeout) {
     xhr.open(options && options.method ? options.method : 'GET', url, true);
     xhr.timeout = timeout;
     xhr.setRequestHeader('Content-Type', 'application/json');
-    var token = sessionStorage.getItem('lsjy_jwt') || '';
+    var token = localStorage.getItem('admin_token') || sessionStorage.getItem('lsjy_jwt') || '';
     if (token) xhr.setRequestHeader('Authorization', 'Bearer ' + token);
     if (options && options.headers) {
       for (var k in options.headers) { xhr.setRequestHeader(k, options.headers[k]); }
