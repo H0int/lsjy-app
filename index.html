@@ -11,6 +11,15 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>罗圣纪元 SaaS平台</title>
+<script>
+  (function() {
+    var p = window.location.pathname;
+    var h = window.location.hash;
+    if (p !== '/' && p !== '/index.html' && p !== '/404.html') {
+      window.location.replace('/' + h);
+    }
+  })();
+</script>
 </head>
 <body>
   <div id="app"></div>
