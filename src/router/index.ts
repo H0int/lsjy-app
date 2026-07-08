@@ -65,6 +65,8 @@ const routes: RouteRecordRaw[] = [
       { path: 'settings', name: 'AdminSettings', component: () => import('@/views/admin/SystemSettings.vue'), meta: { title: '系统配置' } },
       { path: 'oplog', name: 'OperationLog', component: () => import('@/views/admin/system/OperationLog.vue'), meta: { title: '操作日志' } },
       { path: 'login-history', name: 'LoginHistory', component: () => import('@/views/admin/security/LoginHistory.vue'), meta: { title: '登录记录' } },
+      { path: 'api-monitor', name: 'APIMonitor', component: () => import('@/views/admin/APIMonitor.vue'), meta: { title: 'API监控' } },
+      { path: 'data-backup', name: 'DataBackup', component: () => import('@/views/admin/DataBackup.vue'), meta: { title: '数据备份' } },
     ]
   }
 ]
