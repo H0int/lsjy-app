@@ -114,7 +114,10 @@ const menuGroups=[
   {label:'系统管理',icon:'⚙️',items:[
     {path:'/admin/settings',label:'系统配置',icon:'⚙️'},
     {path:'/admin/oplog',label:'操作日志',icon:'📋'},
-    {path:'/admin/login-history',label:'登录记录',icon:'🔐'}
+    {path:'/admin/login-history',label:'登录记录',icon:'🔐'},
+    {path:'/admin/api-monitor',label:'API监控',icon:'📊'},
+    {path:'/admin/data-backup',label:'数据备份',icon:'💾'},
+    {path:'/',label:'返回前台',icon:'🏠'}
   ]},
 ]
 const expanded=reactive<Record<string,boolean>>({})
