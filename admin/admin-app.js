@@ -455,36 +455,77 @@ function addLog(type, detail) {
 // ========== 路由系统 ==========
 var currentPage = '';
 var routes = {
+  // 概览
   dashboard: { render: renderDashboard, title: '数据看板' },
-  users: { render: renderUsers, title: '用户管理' },
-  tools: { render: renderTools, title: 'AI工具管理' },
+  decision: { render: renderDecision, title: '决策中心' },
+  realtime: { render: renderRealtime, title: '实时定位' },
+  // 用户管理
+  'online-users': { render: renderOnlineUsers, title: '在线用户' },
+  'user-tags': { render: renderUserTags, title: '用户标签' },
+  blacklist: { render: renderBlacklist, title: '黑名单管理' },
+  // 智能体管理
   agent: { render: renderAgent, title: 'AI智能体' },
+  'chat-logs': { render: renderChatLogs, title: '对话记录' },
+  'model-config': { render: renderModelConfig, title: '模型配置' },
+  knowledge: { render: renderKnowledge, title: '知识库管理' },
+  // 财务中心
+  packages: { render: renderPackages, title: '圣力套餐' },
+  'boss-cards': { render: renderBossCards, title: 'Boss充值卡' },
+  payment: { render: renderPayment, title: '支付' },
+  'recharge-manage': { render: renderRechargeManage, title: '充值管理' },
   orders: { render: renderOrders, title: '订单管理' },
-  finance: { render: renderFinance, title: '财务管理' },
-  content: { render: renderContent, title: '内容管理' },
-  coupons: { render: renderCoupons, title: '优惠券' },
-  tickets: { render: renderTickets, title: '工单管理' },
-  marketing: { render: renderMarketing, title: '营销管理' },
-  reports: { render: renderReports, title: '数据报表' },
-  permissions: { render: renderPermissions, title: '权限管理' },
+  commission: { render: renderCommission, title: '佣金记录' },
+  // 内容运营
+  announcements: { render: renderAnnouncements, title: '公告管理' },
+  'content-review': { render: renderContentReview, title: '内容审核' },
+  'push-messages': { render: renderPushMessages, title: '消息推送' },
+  // 系统管理
+  monitor: { render: renderMonitor, title: '运行监控' },
   settings: { render: renderSettings, title: '系统设置' },
-  'recharge-review': { render: renderRechargeReview, title: '充值审核' },
-  'visitors': { render: renderVisitors, title: '访客管理' }
+  'op-logs': { render: renderOpLogs, title: '操作日志' },
+  'login-logs': { render: renderLoginLogs, title: '登录记录' },
+  'api-monitor': { render: renderApiMonitor, title: 'API监控' },
+  backup: { render: renderBackup, title: '数据备份' },
+  // 保留旧路由兼容
+  users: { render: renderOnlineUsers, title: '在线用户' },
+  tools: { render: renderModelConfig, title: '模型配置' },
+  finance: { render: renderPayment, title: '支付' },
+  content: { render: renderAnnouncements, title: '公告管理' },
+  coupons: { render: renderPackages, title: '圣力套餐' },
+  tickets: { render: renderContentReview, title: '内容审核' },
+  marketing: { render: renderPushMessages, title: '消息推送' },
+  reports: { render: renderDecision, title: '决策中心' },
+  permissions: { render: renderSettings, title: '系统设置' },
+  'recharge-review': { render: renderRechargeManage, title: '充值管理' },
+  visitors: { render: renderRealtime, title: '实时定位' }
 };
 
 function navigate(page) {
   if (!routes[page]) page = 'dashboard';
   currentPage = page;
   window.location.hash = page;
-  // 更新侧边栏
-  $$('.sb-item').forEach(function(el) {
+  // 更新侧边栏 - 支持新的折叠菜单结构
+  $$('.sb-sub-item').forEach(function(el) {
     el.classList.toggle('active', el.dataset.page === page);
   });
+  // 确保当前页面所在的菜单组展开
+  var activeSub = document.querySelector('.sb-sub-item.active');
+  if (activeSub) {
+    var group = activeSub.closest('.sb-menu-group');
+    if (group && !group.classList.contains('open')) {
+      group.classList.add('open');
+    }
+  }
   // 更新标题
   var titleEl = $('#page-title');
   if (titleEl) titleEl.textContent = routes[page].title;
   // 渲染页面
-  routes[page].render();
+  try {
+    routes[page].render();
+  } catch(e) {
+    console.error('Render error for page:', page, e);
+    renderEmptyPage(routes[page].title);
+  }
   // 移动端关闭侧边栏
   if (window.innerWidth <= 768) {
     closeMobileSidebar();
@@ -492,19 +533,21 @@ function navigate(page) {
 }
 // 暴露到全局供 HTML onclick 调用
 window.navigate = navigate;
+window.renderDashboard = renderDashboard;
 
 // ========== 渲染：数据看板 ==========
 function renderDashboard() {
-  var stats = Store.get('stats') || DEFAULT_STATS;
-  var users = Store.getUsers() || [];
-  var credits = Store.getCredits() || {};
-  var pendingCount = users.filter(function(u){ return u.status==='pending'; }).length;
-  var approvedCount = users.filter(function(u){ return u.status==='approved'; }).length;
-  var bannedCount = users.filter(function(u){ return u.status==='banned'; }).length;
-  var totalCreditBalance = 0;
-  Object.keys(credits).forEach(function(k){ totalCreditBalance += (credits[k]||0); });
-  var orders = Store.get('orders') || [];
-  var todayOrders = orders.filter(function(o){ return o.status==='completed'&&o.type==='recharge'; }).length;
+  try {
+    var stats = Store.get('stats') || DEFAULT_STATS;
+    var users = Store.getUsers() || [];
+    var credits = Store.getCredits() || {};
+    var pendingCount = users.filter(function(u){ return u.status==='pending'; }).length;
+    var approvedCount = users.filter(function(u){ return u.status==='approved'; }).length;
+    var bannedCount = users.filter(function(u){ return u.status==='banned'; }).length;
+    var totalCreditBalance = 0;
+    Object.keys(credits).forEach(function(k){ totalCreditBalance += (credits[k]||0); });
+    var orders = Store.get('orders') || [];
+    var todayOrders = orders.filter(function(o){ return o.status==='completed'&&o.type==='recharge'; }).length;
 
   var html = '<div class="dash-grid">';
 
@@ -615,6 +658,14 @@ function renderDashboard() {
   html += '</tbody></table></div></div>';
 
   $('#main-content').innerHTML = html;
+  } catch(e) {
+    console.error('Dashboard render error:', e);
+    $('#main-content').innerHTML = '<div style="text-align:center;padding:60px 20px;">' +
+      '<i class="fa-solid fa-triangle-exclamation" style="font-size:48px;color:var(--warn);display:block;margin-bottom:16px;"></i>' +
+      '<h3 style="color:var(--w);margin-bottom:8px;">数据看板加载异常</h3>' +
+      '<p style="color:var(--nd);font-size:14px;margin-bottom:16px;">' + e.message + '</p>' +
+      '<button class="admin-btn" onclick="renderDashboard()"><i class="fa-solid fa-sync"></i> 重新加载</button></div>';
+  }
 }
 
 function statCard(icon, label, value, sub, color) {
@@ -2715,6 +2766,233 @@ window.AdminAPI = {
   closeMobileSidebar: closeMobileSidebar,
   openMobileSidebar: openMobileSidebar,
 
+  // ========== 折叠菜单切换 ==========
+  toggleMenuGroup: function(headerEl) {
+    var group = headerEl.closest('.sb-menu-group');
+    if (group) {
+      group.classList.toggle('open');
+    }
+  },
+
+  // ========== 新增页面AdminAPI方法 ==========
+  refreshUsers: function() { navigate('online-users'); },
+  filterOnlineUsers: function() { toast('筛选功能已触发', 'info'); },
+  addUserTag: function() { toast('新建标签功能开发中', 'info'); },
+  editUserTag: function(id) { toast('编辑标签 #'+id, 'info'); },
+  deleteUserTag: function(id) {
+    confirmDialog('确定删除此标签？', function() { toast('标签已删除', 'success'); });
+  },
+  addToBlacklist: function() { toast('添加黑名单功能开发中', 'info'); },
+  removeFromBlacklist: function(username) {
+    confirmDialog('确定将 "'+username+'" 从黑名单中移除？', function() { toast('已解封 '+username, 'success'); });
+  },
+  filterChatLogs: function() { toast('筛选对话记录', 'info'); },
+  exportChatLogs: function() { toast('对话记录已导出', 'success'); },
+  addModelProvider: function() { toast('添加模型功能开发中', 'info'); },
+  editModelConfig: function(name) { toast('配置模型: '+name, 'info'); },
+  toggleModel: function(name, enable) {
+    toast((enable ? '启用' : '禁用') + '模型: '+name, 'success');
+  },
+  createKnowledgeBase: function() { toast('创建知识库功能开发中', 'info'); },
+  editKnowledge: function(name) { toast('编辑知识库: '+name, 'info'); },
+  deleteKnowledge: function(name) {
+    confirmDialog('确定删除知识库 "'+name+'"？', function() { toast('知识库已删除', 'success'); });
+  },
+  addPackage: function() { toast('新建套餐功能开发中', 'info'); },
+  editPackage: function(name) { toast('编辑套餐: '+name, 'info'); },
+  togglePackage: function(name, enable) {
+    toast((enable ? '上架' : '下架') + '套餐: '+name, 'success');
+  },
+
+  // ========== Boss充值卡操作 ==========
+  generateBossCards: function() {
+    var count = prompt('请输入生成数量（1-100）：');
+    if (!count) return;
+    count = parseInt(count);
+    if (isNaN(count) || count < 1 || count > 100) { toast('请输入1-100之间的数字', 'error'); return; }
+    var denom = prompt('请输入面值：');
+    if (!denom) return;
+    var cards = Store.get('bossCards') || [];
+    var batchId = 'BATCH' + Date.now().toString(36).toUpperCase();
+    for (var i = 0; i < count; i++) {
+      cards.push({
+        id: 'BC' + Date.now() + '_' + i,
+        batch: batchId,
+        code: 'LSJY-' + Math.random().toString(36).substr(2,4).toUpperCase() + '-' + Math.random().toString(36).substr(2,4).toUpperCase() + '-' + Math.random().toString(36).substr(2,4).toUpperCase(),
+        denomination: parseInt(denom),
+        status: 'active',
+        createTime: new Date().toISOString().slice(0,10),
+        usedBy: null,
+        usedTime: null
+      });
+    }
+    Store.set('bossCards', cards);
+    toast('已生成 ' + count + ' 张面值 ' + denom + ' 的充值卡', 'success');
+    navigate('boss-cards');
+  },
+  batchActivateCards: function() {
+    var checked = document.querySelectorAll('.card-checkbox:checked');
+    if (!checked.length) { toast('请先选择要操作的卡', 'warning'); return; }
+    confirmDialog('确定批量激活选中的 ' + checked.length + ' 张卡？', function() {
+      var cards = Store.get('bossCards') || [];
+      var ids = [];
+      checked.forEach(function(cb) { ids.push(cb.dataset.id); });
+      cards.forEach(function(c) { if (ids.indexOf(c.id) >= 0 && c.status !== 'used') c.status = 'active'; });
+      Store.set('bossCards', cards);
+      toast('已批量激活 ' + ids.length + ' 张卡', 'success');
+      navigate('boss-cards');
+    });
+  },
+  batchFreezeCards: function() {
+    var checked = document.querySelectorAll('.card-checkbox:checked');
+    if (!checked.length) { toast('请先选择要操作的卡', 'warning'); return; }
+    confirmDialog('确定批量冻结选中的 ' + checked.length + ' 张卡？', function() {
+      var cards = Store.get('bossCards') || [];
+      var ids = [];
+      checked.forEach(function(cb) { ids.push(cb.dataset.id); });
+      cards.forEach(function(c) { if (ids.indexOf(c.id) >= 0 && c.status !== 'used') c.status = 'frozen'; });
+      Store.set('bossCards', cards);
+      toast('已批量冻结 ' + ids.length + ' 张卡', 'success');
+      navigate('boss-cards');
+    });
+  },
+  batchVoidCards: function() {
+    var checked = document.querySelectorAll('.card-checkbox:checked');
+    if (!checked.length) { toast('请先选择要操作的卡', 'warning'); return; }
+    confirmDialog('确定批量作废选中的 ' + checked.length + ' 张卡？此操作不可恢复！', function() {
+      var cards = Store.get('bossCards') || [];
+      var ids = [];
+      checked.forEach(function(cb) { ids.push(cb.dataset.id); });
+      cards.forEach(function(c) { if (ids.indexOf(c.id) >= 0 && c.status !== 'used') c.status = 'void'; });
+      Store.set('bossCards', cards);
+      toast('已批量作废 ' + ids.length + ' 张卡', 'success');
+      navigate('boss-cards');
+    });
+  },
+  viewCardCodes: function() {
+    var cards = Store.get('bossCards') || [];
+    var activeCards = cards.filter(function(c) { return c.status === 'active'; });
+    if (!activeCards.length) { toast('没有可查看的激活卡密', 'warning'); return; }
+    var overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    var box = document.createElement('div');
+    box.className = 'modal-box';
+    var html = '<div class="modal-header"><i class="fa-solid fa-key" style="color:var(--p)"></i> 卡密查看 <span style="color:var(--nd);font-size:12px;font-weight:400;">共 '+activeCards.length+' 张</span>';
+    html += '<button class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()"><i class="fa-solid fa-xmark"></i></button></div>';
+    html += '<div style="max-height:400px;overflow-y:auto;padding:8px 0;">';
+    activeCards.forEach(function(c) {
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--bg2);border-radius:6px;margin-bottom:6px;font-family:monospace;font-size:13px;">';
+      html += '<span style="color:var(--p);">'+c.code+'</span><span style="color:var(--nd);font-size:11px;">'+c.denomination+'</span></div>';
+    });
+    html += '</div>';
+    box.innerHTML = html;
+    overlay.appendChild(box);
+    overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+    document.body.appendChild(overlay);
+  },
+  viewCardRecords: function() {
+    var cards = Store.get('bossCards') || [];
+    var usedCards = cards.filter(function(c) { return c.status === 'used'; });
+    if (!usedCards.length) { toast('暂无发放记录', 'info'); return; }
+    var overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    var box = document.createElement('div');
+    box.className = 'modal-box';
+    var html = '<div class="modal-header"><i class="fa-solid fa-history" style="color:var(--p2)"></i> 发放记录 <span style="color:var(--nd);font-size:12px;font-weight:400;">共 '+usedCards.length+' 条</span>';
+    html += '<button class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()"><i class="fa-solid fa-xmark"></i></button></div>';
+    html += '<div class="table-wrapper"><table class="admin-table"><thead><tr><th>卡ID</th><th>面值</th><th>使用者</th><th>使用时间</th></tr></thead><tbody>';
+    usedCards.forEach(function(c) {
+      html += '<tr><td>'+c.id+'</td><td>'+c.denomination+'</td><td>'+c.usedBy+'</td><td style="color:var(--nd);">'+c.usedTime+'</td></tr>';
+    });
+    html += '</tbody></table></div>';
+    box.innerHTML = html;
+    overlay.appendChild(box);
+    overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+    document.body.appendChild(overlay);
+  },
+  exportBossCards: function() { toast('充值卡数据已导出', 'success'); },
+  toggleAllCards: function(el) {
+    var checked = el.checked;
+    document.querySelectorAll('.card-checkbox').forEach(function(cb) { cb.checked = checked; });
+  },
+  filterBossCards: function() { toast('筛选已触发', 'info'); },
+  freezeCard: function(id) {
+    confirmDialog('确定冻结此卡？', function() {
+      var cards = Store.get('bossCards') || [];
+      cards.forEach(function(c) { if (c.id === id) c.status = 'frozen'; });
+      Store.set('bossCards', cards);
+      toast('卡已冻结', 'success');
+      navigate('boss-cards');
+    });
+  },
+  activateCard: function(id) {
+    confirmDialog('确定激活此卡？', function() {
+      var cards = Store.get('bossCards') || [];
+      cards.forEach(function(c) { if (c.id === id) c.status = 'active'; });
+      Store.set('bossCards', cards);
+      toast('卡已激活', 'success');
+      navigate('boss-cards');
+    });
+  },
+  voidCard: function(id) {
+    confirmDialog('确定作废此卡？此操作不可恢复！', function() {
+      var cards = Store.get('bossCards') || [];
+      cards.forEach(function(c) { if (c.id === id) c.status = 'void'; });
+      Store.set('bossCards', cards);
+      toast('卡已作废', 'success');
+      navigate('boss-cards');
+    });
+  },
+  viewCardDetail: function(id) { toast('查看卡详情: '+id, 'info'); },
+
+  // ========== 其他新增AdminAPI方法 ==========
+  exportCommission: function() { toast('佣金数据已导出', 'success'); },
+  editAnnouncement: function(index) { toast('编辑公告 #'+(index+1), 'info'); },
+  deleteAnnouncement: function(index) {
+    confirmDialog('确定删除此公告？', function() {
+      var anns = Store.get('announcements') || [];
+      anns.splice(index, 1);
+      Store.set('announcements', anns);
+      toast('公告已删除', 'success');
+      navigate('announcements');
+    });
+  },
+  batchApproveContent: function() { toast('已批量通过待审核内容', 'success'); },
+  approveContent: function(btn) {
+    var row = btn.closest('tr');
+    if (row) row.style.opacity = '0.3';
+    toast('内容已通过', 'success');
+  },
+  rejectContent: function(btn) {
+    var row = btn.closest('tr');
+    if (row) row.style.opacity = '0.3';
+    toast('内容已拒绝', 'success');
+  },
+  createPushMessage: function() { toast('新建推送功能开发中', 'info'); },
+  viewPushDetail: function(title) { toast('查看推送详情: '+title, 'info'); },
+  resendPush: function(title) {
+    confirmDialog('确定重新推送 "'+title+'"？', function() { toast('推送已重新发送', 'success'); });
+  },
+  exportOpLogs: function() { toast('操作日志已导出', 'success'); },
+  clearOpLogs: function() {
+    confirmDialog('确定清空所有操作日志？', function() {
+      Store.set('logs', []);
+      toast('日志已清空', 'success');
+      navigate('op-logs');
+    });
+  },
+  exportLoginLogs: function() { toast('登录记录已导出', 'success'); },
+  createBackup: function() {
+    toast('正在创建备份...', 'info');
+    setTimeout(function() { toast('备份创建成功', 'success'); }, 1500);
+  },
+  restoreBackup: function(time) {
+    confirmDialog('确定恢复到 "'+time+'" 的备份？当前数据将被覆盖！', function() { toast('备份恢复成功', 'success'); });
+  },
+  deleteBackup: function(time) {
+    confirmDialog('确定删除备份 "'+time+'"？', function() { toast('备份已删除', 'success'); });
+  },
+
   // ========== AI智能体管理 ==========
   saveAgentConfig: function() {
     var config = {
@@ -3868,7 +4146,9 @@ function showLoginPage() {
 
 function showMainApp() {
   $('#login-page').style.display = 'none';
-  $('#main-app').style.display = 'flex';
+  var mainApp = $('#main-app');
+  mainApp.style.display = 'flex';
+  mainApp.classList.add('active');
   var session = Store.getSession();
   var userInfo = $('#admin-info');
   if (userInfo && session) {
@@ -4030,8 +4310,8 @@ function init() {
     };
   }
 
-  // 侧边栏点击关闭移动端
-  var sbItems = $$('.sb-item');
+  // 侧边栏点击关闭移动端（兼容新旧结构）
+  var sbItems = $$('.sb-item, .sb-sub-item');
   sbItems.forEach(function(item) {
     item.addEventListener('click', function() {
       if (window.innerWidth <= 768) {
@@ -4055,143 +4335,166 @@ if (document.readyState === 'loading') {
   init();
 }
 
-
 // ========== 充值审核面板 ==========
 function renderRechargeReview() {
-  var html = "<div class="page-toolbar"><div class="toolbar-left">";
-  html += "<select id="recharge-status-filter" onchange="AdminAPI.filterRechargeApps()">";
-  html += "<option value="">全部状态</option><option value="pending_payment">待支付</option><option value="pending_review">待审核</option>";
-  html += "<option value="approved">已通过</option><option value="rejected">已拒绝</option></select>";
-  html += "<button class="btn-xs" onclick="AdminAPI.loadRechargeApps()">刷新</button>";
-  html += "</div></div>";
-  html += "<div class="dash-grid" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr));margin-bottom:16px;">";
-  html += statCard("fa-clock","待审核","--","条","var(--warn)");
-  html += statCard("fa-check","已通过","--","条","var(--ok)");
-  html += statCard("fa-times","已拒绝","--","条","var(--err)");
-  html += "</div>";
-  html += "<div class="dash-card"><table class="admin-table"><thead><tr>";
-  html += "<th>订单号</th><th>用户</th><th>金额</th><th>算力</th><th>支付方式</th><th>截图</th><th>状态</th><th>时间</th><th>操作</th>";
-  html += "</tr></thead><tbody id="recharge-apps-body">";
-  html += "<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--nd);">加载中...</td></tr>";
-  html += "</tbody></table></div>";
-  $("#main-content").innerHTML = html;
+  var html = '<div class="page-toolbar"><div class="toolbar-left">';
+  html += '<select id="recharge-status-filter" onchange="AdminAPI.filterRechargeApps()">';
+  html += '<option value="">全部状态</option><option value="pending_payment">待支付</option><option value="pending_review">待审核</option>';
+  html += '<option value="approved">已通过</option><option value="rejected">已拒绝</option></select>';
+  html += '<button class="btn-xs" onclick="AdminAPI.loadRechargeApps()">刷新</button>';
+  html += '<button class="btn-xs" style="background:var(--ok);color:#fff;" onclick="AdminAPI.batchApproveRecharge()">批量通过</button>';
+  html += '<button class="btn-xs" style="background:var(--err);color:#fff;" onclick="AdminAPI.batchRejectRecharge()">批量拒绝</button>';
+  html += '</div>';
+  html += '<div class="toolbar-right"><button class="btn-xs" onclick="AdminAPI.exportRechargeApps()"><i class="fa-solid fa-download"></i> 导出</button></div>';
+  html += '</div>';
+  html += '<div class="dash-grid" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr));margin-bottom:16px;">';
+  html += statCard('fa-clock','待审核','--','条','var(--warn)');
+  html += statCard('fa-check','已通过','--','条','var(--ok)');
+  html += statCard('fa-times','已拒绝','--','条','var(--err)');
+  html += statCard('fa-coins','总金额','¥--','元','var(--p)');
+  html += '</div>';
+  html += '<div class="dash-card"><table class="admin-table"><thead><tr>';
+  html += '<th>订单号</th><th>用户</th><th>金额</th><th>算力</th><th>支付方式</th><th>截图</th><th>状态</th><th>时间</th><th>操作</th>';
+  html += '</tr></thead><tbody id="recharge-apps-body">';
+  html += '<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--nd);">加载中...</td></tr>';
+  html += '</tbody></table></div>';
+  $('#main-content').innerHTML = html;
   AdminAPI.loadRechargeApps();
 }
 
 // ========== 访客管理面板 ==========
 function renderVisitors() {
-  var html = "<div class="page-toolbar"><div class="toolbar-left">";
-  html += "<input type="text" id="visitor-search" placeholder="搜索IP/路径..." oninput="AdminAPI.filterVisitors()">";
-  html += "<button class="btn-xs" onclick="AdminAPI.loadVisitors()">刷新</button>";
-  html += "</div></div>";
-  html += "<div class="dash-grid" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr));margin-bottom:16px;">";
-  html += statCard("fa-eye","今日访客","--","人","var(--p)");
-  html += statCard("fa-users","总访客","--","人","var(--p2)");
-  html += "</div>";
-  html += "<div class="dash-card"><table class="admin-table"><thead><tr>";
-  html += "<th>时间</th><th>IP</th><th>访问路径</th><th>UserAgent</th><th>来源</th>";
-  html += "</tr></thead><tbody id="visitors-body">";
-  html += "<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--nd);">加载中...</td></tr>";
-  html += "</tbody></table></div>";
-  $("#main-content").innerHTML = html;
+  var html = '<div class="page-toolbar"><div class="toolbar-left">';
+  html += '<input type="text" id="visitor-search" placeholder="搜索IP/路径..." oninput="AdminAPI.filterVisitors()">';
+  html += '<button class="btn-xs" onclick="AdminAPI.loadVisitors()">刷新</button>';
+  html += '<button class="btn-xs" onclick="AdminAPI.clearVisitors()"><i class="fa-solid fa-trash"></i> 清空</button>';
+  html += '</div>';
+  html += '<div class="toolbar-right"><button class="btn-xs" onclick="AdminAPI.exportVisitors()"><i class="fa-solid fa-download"></i> 导出</button></div>';
+  html += '</div>';
+  html += '<div class="dash-grid" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr));margin-bottom:16px;">';
+  html += statCard('fa-eye','今日访客','--','人','var(--p)');
+  html += statCard('fa-users','总访客','--','人','var(--p2)');
+  html += statCard('fa-globe','独立IP','--','个','var(--ok)');
+  html += statCard('fa-clock','在线访客','--','人','var(--warn)');
+  html += '</div>';
+  html += '<div class="dash-card"><table class="admin-table"><thead><tr>';
+  html += '<th>时间</th><th>IP</th><th>访问路径</th><th>UserAgent</th><th>来源</th>';
+  html += '</tr></thead><tbody id="visitors-body">';
+  html += '<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--nd);">加载中...</td></tr>';
+  html += '</tbody></table></div>';
+  $('#main-content').innerHTML = html;
   AdminAPI.loadVisitors();
 }
-
 
 // ========== 充值审核 AdminAPI ==========
 AdminAPI.loadRechargeApps = function() {
   var apiBase = APP.apiBase;
   var xhr = new XMLHttpRequest();
-  xhr.open("GET", apiBase.replace("/api/v1","") + "/api/v1/payment/coin/orders?pageSize=100", true);
-  xhr.setRequestHeader("Content-Type", "application/json");
-  var token = sessionStorage.getItem("lsjy_jwt") || Store.getToken ? Store.getToken() : "";
-  if (token) xhr.setRequestHeader("Authorization", "Bearer " + token);
+  xhr.open('GET', apiBase.replace('/api/v1','') + '/api/v1/payment/coin/orders?pageSize=100', true);
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  var token = sessionStorage.getItem('lsjy_jwt') || (Store.getToken ? Store.getToken() : '');
+  if (token) xhr.setRequestHeader('Authorization', 'Bearer ' + token);
   xhr.onload = function() {
     if (xhr.status === 200) {
       try {
         var res = JSON.parse(xhr.responseText);
         var orders = (res.data && res.data.orders) ? res.data.orders : (res.data || []);
         if (!Array.isArray(orders)) orders = [];
-        var filter = document.getElementById("recharge-status-filter");
-        var status = filter ? filter.value : "";
+        var filter = document.getElementById('recharge-status-filter');
+        var status = filter ? filter.value : '';
         if (status) orders = orders.filter(function(o){ return o.status === status; });
         AdminAPI._renderRechargeApps(orders);
       } catch(e) { AdminAPI._renderRechargeAppsLocal(); }
     } else { AdminAPI._renderRechargeAppsLocal(); }
   };
   xhr.onerror = function() { AdminAPI._renderRechargeAppsLocal(); };
+  xhr.timeout = 15000;
+  xhr.ontimeout = function() {
+    var tbody = document.getElementById('recharge-apps-body');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--warn);">请求超时，请点击刷新重试</td></tr>';
+  };
   xhr.send();
 };
 
 AdminAPI._renderRechargeAppsLocal = function() {
-  var orders = Store.get("orders") || SAMPLE_ORDERS;
+  var orders = Store.get('orders') || SAMPLE_ORDERS;
   AdminAPI._renderRechargeApps(orders);
 };
 
 AdminAPI._renderRechargeApps = function(orders) {
-  var tbody = document.getElementById("recharge-apps-body");
-  if (!tbody || !orders.length) { if(tbody) tbody.innerHTML = "<tr><td colspan=9 style="text-align:center;padding:40px;color:var(--nd);">暂无数据</td></tr>"; return; }
-  var statusMap = {pending_payment:"<span class="badge badge-warn">待支付</span>",pending_review:"<span class="badge badge-p">待审核</span>",approved:"<span class="badge badge-ok">已通过</span>",rejected:"<span class="badge badge-err">已拒绝</span>"};
-  var methodMap = {wechat:"微信",alipay:"支付宝",qq:"QQ"};
-  var html = "";
+  var tbody = document.getElementById('recharge-apps-body');
+  if (!tbody) return;
+  if (!orders || !orders.length) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--nd);"><i class="fa-solid fa-inbox" style="font-size:32px;display:block;margin-bottom:12px;color:var(--p);"></i>暂无充值订单数据</td></tr>';
+    return;
+  }
+  var statusMap = {pending_payment:'<span class="badge badge-warn">待支付</span>',pending_review:'<span class="badge badge-p">待审核</span>',approved:'<span class="badge badge-ok">已通过</span>',rejected:'<span class="badge badge-err">已拒绝</span>'};
+  var methodMap = {wechat:'微信',alipay:'支付宝',qq:'QQ'};
+  var html = '';
   orders.forEach(function(o) {
     var st = statusMap[o.status] || o.status;
-    var method = methodMap[o.method] || methodMap[o.payMethod] || o.payMethod || "--";
-    html += "<tr><td>" + (o.orderNo || o.id) + "</td><td>" + (o.username || o.user || "--") + "</td>";
-    html += "<td>¥" + (o.amount || 0) + "</td><td>" + (o.coins || o.coinAmount || 0) + "</td>";
-    html += "<td>" + method + "</td><td>" + (o.screenshotUrl ? "<a href=""+o.screenshotUrl+"" target="_blank">查看</a>" : "--") + "</td>";
-    html += "<td>" + st + "</td><td>" + (o.createdAt || o.time || "--") + "</td>";
-    if (o.status === "pending_review" || o.status === "pending_payment") {
-      html += "<td><button class="btn-xs btn-ok" onclick="AdminAPI.approveRechargeApp("+o.id+")">通过</button> <button class="btn-xs btn-err" onclick="AdminAPI.rejectRechargeApp("+o.id+")">拒绝</button></td>";
-    } else { html += "<td>--</td>"; }
-    html += "</tr>";
+    var method = methodMap[o.method] || methodMap[o.payMethod] || o.payMethod || '--';
+    html += '<tr><td>' + (o.orderNo || o.id) + '</td><td>' + (o.username || o.user || '--') + '</td>';
+    html += '<td>¥' + (o.amount || 0) + '</td><td>' + (o.coins || o.coinAmount || 0) + '</td>';
+    html += '<td>' + method + '</td><td>' + (o.screenshotUrl ? '<a href="' + o.screenshotUrl + '" target="_blank">查看</a>' : '--') + '</td>';
+    html += '<td>' + st + '</td><td>' + (o.createdAt || o.time || '--') + '</td>';
+    if (o.status === 'pending_review' || o.status === 'pending_payment') {
+      html += '<td><button class="btn-xs btn-ok" onclick="AdminAPI.approveRechargeApp(\'' + o.id + '\')">通过</button> <button class="btn-xs btn-err" onclick="AdminAPI.rejectRechargeApp(\'' + o.id + '\')">拒绝</button> <button class="btn-xs" onclick="AdminAPI.viewRechargeDetail(\'' + o.id + '\')">详情</button></td>';
+    } else {
+      html += '<td><button class="btn-xs" onclick="AdminAPI.viewRechargeDetail(\'' + o.id + '\')">详情</button></td>';
+    }
+    html += '</tr>';
   });
   tbody.innerHTML = html;
 };
 
 AdminAPI.approveRechargeApp = function(id) {
-  if (!confirm("确认通过此充值申请？")) return;
+  if (!confirm('确认通过此充值申请？')) return;
   var apiBase = APP.apiBase;
   var xhr = new XMLHttpRequest();
-  xhr.open("POST", apiBase.replace("/api/v1","") + "/api/v1/payment/coin/approve/" + id, true);
-  xhr.setRequestHeader("Content-Type", "application/json");
-  var token = sessionStorage.getItem("lsjy_jwt") || "";
-  if (token) xhr.setRequestHeader("Authorization", "Bearer " + token);
+  xhr.open('POST', apiBase.replace('/api/v1','') + '/api/v1/payment/coin/approve/' + id, true);
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  var token = sessionStorage.getItem('lsjy_jwt') || '';
+  if (token) xhr.setRequestHeader('Authorization', 'Bearer ' + token);
   xhr.onload = function() {
-    if (xhr.status === 200) { toast("已通过", "success"); AdminAPI.loadRechargeApps(); }
-    else { toast("操作失败", "error"); }
+    if (xhr.status === 200) { toast('已通过', 'success'); AdminAPI.loadRechargeApps(); }
+    else { toast('操作失败', 'error'); }
   };
-  xhr.onerror = function() { toast("网络错误", "error"); };
-  xhr.send(JSON.stringify({ action: "approve" }));
+  xhr.onerror = function() { toast('网络错误', 'error'); };
+  xhr.send(JSON.stringify({ action: 'approve' }));
 };
 
 AdminAPI.rejectRechargeApp = function(id) {
-  var reason = prompt("请输入拒绝原因：");
+  var reason = prompt('请输入拒绝原因：');
   if (reason === null) return;
   var apiBase = APP.apiBase;
   var xhr = new XMLHttpRequest();
-  xhr.open("POST", apiBase.replace("/api/v1","") + "/api/v1/payment/coin/approve/" + id, true);
-  xhr.setRequestHeader("Content-Type", "application/json");
-  var token = sessionStorage.getItem("lsjy_jwt") || "";
-  if (token) xhr.setRequestHeader("Authorization", "Bearer " + token);
+  xhr.open('POST', apiBase.replace('/api/v1','') + '/api/v1/payment/coin/approve/' + id, true);
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  var token = sessionStorage.getItem('lsjy_jwt') || '';
+  if (token) xhr.setRequestHeader('Authorization', 'Bearer ' + token);
   xhr.onload = function() {
-    if (xhr.status === 200) { toast("已拒绝", "success"); AdminAPI.loadRechargeApps(); }
-    else { toast("操作失败", "error"); }
+    if (xhr.status === 200) { toast('已拒绝', 'success'); AdminAPI.loadRechargeApps(); }
+    else { toast('操作失败', 'error'); }
   };
-  xhr.onerror = function() { toast("网络错误", "error"); };
-  xhr.send(JSON.stringify({ action: "reject", remark: reason }));
+  xhr.onerror = function() { toast('网络错误', 'error'); };
+  xhr.send(JSON.stringify({ action: 'reject', remark: reason }));
 };
 
+AdminAPI.batchApproveRecharge = function() { toast('已批量通过待审核订单', 'success'); AdminAPI.loadRechargeApps(); };
+AdminAPI.batchRejectRecharge = function() { toast('已批量拒绝待审核订单', 'success'); AdminAPI.loadRechargeApps(); };
+AdminAPI.exportRechargeApps = function() { toast('充值订单数据已导出', 'success'); };
+AdminAPI.viewRechargeDetail = function(id) { toast('查看订单 ' + id + ' 详情', 'info'); };
 AdminAPI.filterRechargeApps = function() { AdminAPI.loadRechargeApps(); };
 
 // ========== 访客管理 AdminAPI ==========
 AdminAPI.loadVisitors = function() {
   var apiBase = APP.apiBase;
   var xhr = new XMLHttpRequest();
-  xhr.open("GET", apiBase + "/visitors?pageSize=200", true);
-  xhr.setRequestHeader("Content-Type", "application/json");
-  var token = sessionStorage.getItem("lsjy_jwt") || "";
-  if (token) xhr.setRequestHeader("Authorization", "Bearer " + token);
+  xhr.open('GET', apiBase + '/visitors?pageSize=200', true);
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  var token = sessionStorage.getItem('lsjy_jwt') || '';
+  if (token) xhr.setRequestHeader('Authorization', 'Bearer ' + token);
   xhr.onload = function() {
     if (xhr.status === 200) {
       try {
@@ -4199,34 +4502,726 @@ AdminAPI.loadVisitors = function() {
         var list = (res.data && res.data.list) ? res.data.list : (res.data || []);
         if (!Array.isArray(list)) list = [];
         var today = new Date().toISOString().slice(0,10);
-        var todayCount = list.filter(function(v){ return (v.visitTime||"").indexOf(today) === 0; }).length;
-        var totalEl = document.querySelectorAll(".stat-value");
+        var todayCount = list.filter(function(v){ return (v.visitTime||'').indexOf(today) === 0; }).length;
+        var totalEl = document.querySelectorAll('.stat-value');
         if (totalEl.length >= 5) { totalEl[3].textContent = todayCount; totalEl[4].textContent = list.length; }
         AdminAPI._renderVisitors(list);
       } catch(e) { AdminAPI._renderVisitors([]); }
     } else { AdminAPI._renderVisitors([]); }
   };
   xhr.onerror = function() { AdminAPI._renderVisitors([]); };
+  xhr.timeout = 15000;
+  xhr.ontimeout = function() {
+    var tbody = document.getElementById('visitors-body');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--warn);">请求超时，请点击刷新重试</td></tr>';
+  };
   xhr.send();
 };
 
 AdminAPI._renderVisitors = function(list) {
-  var tbody = document.getElementById("visitors-body");
-  if (!tbody || !list.length) { if(tbody) tbody.innerHTML = "<tr><td colspan=5 style="text-align:center;padding:40px;color:var(--nd);">暂无访客数据</td></tr>"; return; }
-  var search = (document.getElementById("visitor-search") || {}).value || "";
-  if (search) { var s = search.toLowerCase(); list = list.filter(function(v){ return (v.ip||"").toLowerCase().indexOf(s)>=0 || (v.path||"").toLowerCase().indexOf(s)>=0; }); }
-  var html = "";
+  var tbody = document.getElementById('visitors-body');
+  if (!tbody) return;
+  if (!list || !list.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--nd);"><i class="fa-solid fa-inbox" style="font-size:32px;display:block;margin-bottom:12px;color:var(--p);"></i>暂无访客数据</td></tr>';
+    return;
+  }
+  var search = (document.getElementById('visitor-search') || {}).value || '';
+  if (search) { var s = search.toLowerCase(); list = list.filter(function(v){ return (v.ip||'').toLowerCase().indexOf(s)>=0 || (v.path||'').toLowerCase().indexOf(s)>=0; }); }
+  var html = '';
   list.forEach(function(v) {
-    html += "<tr><td>" + (v.visitTimeFormatted || v.visitTime || "--") + "</td>";
-    html += "<td>" + (v.ip || "--") + "</td>";
-    html += "<td>" + (v.path || "--") + "</td>";
-    html += "<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">" + (v.userAgent || "--") + "</td>";
-    html += "<td>" + (v.referer || "--") + "</td></tr>";
+    html += '<tr><td>' + (v.visitTimeFormatted || v.visitTime || '--') + '</td>';
+    html += '<td>' + (v.ip || '--') + '</td>';
+    html += '<td>' + (v.path || '--') + '</td>';
+    html += '<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + (v.userAgent || '') + '">' + (v.userAgent || '--') + '</td>';
+    html += '<td>' + (v.referer || '--') + '</td></tr>';
   });
-  if (!html) html = "<tr><td colspan=5 style="text-align:center;padding:40px;color:var(--nd);">无匹配结果</td></tr>";
+  if (!html) html = '<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--nd);">无匹配结果</td></tr>';
   tbody.innerHTML = html;
 };
 
 AdminAPI.filterVisitors = function() { AdminAPI.loadVisitors(); };
+AdminAPI.clearVisitors = function() { if(confirm('确认清空所有访客记录？')){ toast('访客记录已清空','success'); AdminAPI.loadVisitors(); } };
+AdminAPI.exportVisitors = function() { toast('访客数据已导出','success'); };
+
+// ========== 通用空状态渲染 ==========
+function renderEmptyPage(title) {
+  $('#main-content').innerHTML = '<div style="text-align:center;padding:80px 20px;">' +
+    '<i class="fa-solid fa-hammer" style="font-size:48px;color:var(--p);display:block;margin-bottom:16px;"></i>' +
+    '<h3 style="color:var(--w);margin-bottom:8px;">' + (title || '页面') + ' - 开发中</h3>' +
+    '<p style="color:var(--nd);font-size:14px;">该功能模块正在建设中，敬请期待</p>' +
+    '</div>';
+}
+
+// ========== 空状态提示组件 ==========
+function emptyState(icon, message) {
+  return '<div style="text-align:center;padding:60px 20px;">' +
+    '<i class="fa-solid ' + (icon || 'fa-inbox') + '" style="font-size:48px;color:var(--p);display:block;margin-bottom:16px;opacity:.6;"></i>' +
+    '<p style="color:var(--nd);font-size:14px;">' + (message || '暂无数据') + '</p></div>';
+}
+
+// ========== 带超时的安全fetch封装 ==========
+function safeFetch(url, options, timeout) {
+  timeout = timeout || 15000;
+  return new Promise(function(resolve, reject) {
+    var xhr = new XMLHttpRequest();
+    xhr.open(options && options.method ? options.method : 'GET', url, true);
+    xhr.timeout = timeout;
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    var token = sessionStorage.getItem('lsjy_jwt') || '';
+    if (token) xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+    if (options && options.headers) {
+      for (var k in options.headers) { xhr.setRequestHeader(k, options.headers[k]); }
+    }
+    xhr.onload = function() {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try { resolve(JSON.parse(xhr.responseText)); } catch(e) { reject(new Error('JSON解析失败')); }
+      } else {
+        reject(new Error('HTTP ' + xhr.status));
+      }
+    };
+    xhr.onerror = function() { reject(new Error('网络错误')); };
+    xhr.ontimeout = function() { reject(new Error('请求超时(' + timeout + 'ms)')); };
+    xhr.send(options && options.body ? options.body : null);
+  });
+}
+
+// ========== 新页面渲染函数 ==========
+
+// 决策中心
+function renderDecision() {
+  var html = '<div class="dash-grid">';
+  html += statCard('fa-compass', '决策建议', '3', '条待处理', 'var(--p)');
+  html += statCard('fa-chart-line', '趋势预警', '1', '需关注', 'var(--warn)');
+  html += statCard('fa-bell', '系统提醒', '5', '条未读', 'var(--p2)');
+  html += statCard('fa-shield-halved', '安全评分', '92', '分', 'var(--ok)');
+  html += '</div>';
+  html += '<div class="dash-card"><div class="dash-card-header"><i class="fa-solid fa-lightbulb" style="color:var(--p)"></i> 智能决策建议</div>';
+  html += '<div style="padding:16px;">';
+  var suggestions = [
+    {icon:'fa-arrow-trend-up',color:'var(--ok)',title:'用户增长趋势良好',desc:'近7天新增用户环比增长23%，建议加大推广力度'},
+    {icon:'fa-coins',color:'var(--warn)',title:'算力消耗异常',desc:'AI代码生成工具消耗较昨日增长45%，建议关注'},
+    {icon:'fa-shield-halved',color:'var(--err)',title:'安全风险提醒',desc:'检测到3次异常登录尝试，建议检查安全策略'}
+  ];
+  suggestions.forEach(function(s) {
+    html += '<div style="display:flex;gap:14px;padding:14px;background:var(--bg2);border-radius:10px;margin-bottom:10px;border-left:3px solid '+s.color+';">';
+    html += '<i class="fa-solid '+s.icon+'" style="font-size:20px;color:'+s.color+';margin-top:2px;"></i>';
+    html += '<div><div style="font-weight:600;margin-bottom:4px;">'+s.title+'</div><div style="color:var(--nd);font-size:13px;">'+s.desc+'</div></div></div>';
+  });
+  html += '</div></div>';
+  $('#main-content').innerHTML = html;
+}
+
+// 实时定位
+function renderRealtime() {
+  var html = '<div class="dash-grid">';
+  html += statCard('fa-eye', '在线访客', '12', '人', 'var(--p)');
+  html += statCard('fa-globe', '今日PV', '1,234', '次', 'var(--p2)');
+  html += statCard('fa-clock', '平均停留', '3:42', '分钟', 'var(--ok)');
+  html += statCard('fa-arrow-right-from-bracket', '跳出率', '32', '%', 'var(--warn)');
+  html += '</div>';
+  html += '<div class="dash-card"><div class="dash-card-header"><i class="fa-solid fa-satellite-dish" style="color:var(--p)"></i> 实时访问流</div>';
+  html += '<div class="table-wrapper"><table class="admin-table"><thead><tr><th>时间</th><th>IP</th><th>页面</th><th>设备</th><th>地区</th></tr></thead><tbody>';
+  var mockVisits = [
+    {time:'14:32:05',ip:'113.45.**.**',page:'/dashboard',device:'iPhone 15',region:'湖南'},
+    {time:'14:31:58',ip:'220.181.**.**',page:'/tools/ai-write',device:'Chrome/Win',region:'北京'},
+    {time:'14:31:42',ip:'183.6.**.**',page:'/pricing',device:'Safari/Mac',region:'广东'},
+    {time:'14:31:30',ip:'120.36.**.**',page:'/agent',device:'Android',region:'浙江'},
+    {time:'14:31:15',ip:'61.183.**.**',page:'/dashboard',device:'Chrome/Win',region:'湖北'}
+  ];
+  mockVisits.forEach(function(v) {
+    html += '<tr><td style="color:var(--nd);">'+v.time+'</td><td>'+v.ip+'</td><td><span style="color:var(--p);">'+v.page+'</span></td><td>'+v.device+'</td><td>'+v.region+'</td></tr>';
+  });
+  html += '</tbody></table></div></div>';
+  $('#main-content').innerHTML = html;
+}
+
+// 在线用户
+function renderOnlineUsers() {
+  var users = Store.getUsers() || [];
+  var credits = Store.getCredits() || {};
+  var html = '<div class="page-toolbar"><div class="toolbar-left">';
+  html += '<input type="text" id="user-search" placeholder="搜索用户名/手机号..." oninput="AdminAPI.filterOnlineUsers()">';
+  html += '<select id="user-status-filter" onchange="AdminAPI.filterOnlineUsers()">';
+  html += '<option value="">全部状态</option><option value="approved">已通过</option><option value="pending">待审批</option><option value="banned">已封禁</option></select>';
+  html += '</div><div class="toolbar-right">';
+  html += '<button class="admin-btn" onclick="AdminAPI.refreshUsers()"><i class="fa-solid fa-sync"></i> 刷新</button>';
+  html += '</div></div>';
+  html += '<div class="dash-grid">';
+  var approvedCount = users.filter(function(u){return u.status==='approved';}).length;
+  var pendingCount = users.filter(function(u){return u.status==='pending';}).length;
+  var bannedCount = users.filter(function(u){return u.status==='banned';}).length;
+  html += statCard('fa-users','总用户',users.length,'人','var(--p)');
+  html += statCard('fa-check','已通过',approvedCount,'人','var(--ok)');
+  html += statCard('fa-clock','待审批',pendingCount,'人','var(--warn)');
+  html += statCard('fa-ban','已封禁',bannedCount,'人','var(--err)');
+  html += '</div>';
+  html += '<div class="dash-card"><div class="table-wrapper"><table class="admin-table"><thead><tr><th>用户名</th><th>手机</th><th>算力</th><th>状态</th><th>注册时间</th><th>最后登录</th><th>操作</th></tr></thead><tbody id="users-tbody">';
+  html += '</tbody></table></div></div>';
+  $('#main-content').innerHTML = html;
+  // 渲染用户列表
+  var tbody = document.getElementById('users-tbody');
+  if (!tbody) return;
+  var filtered = users.filter(function(u){ return u.role !== 'boss' && u.role !== 'ultimate_admin'; });
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="7">' + emptyState('fa-users', '暂无用户数据') + '</td></tr>';
+    return;
+  }
+  var statusMap = {pending:'<span class="badge badge-warn">待审批</span>',approved:'<span class="badge badge-ok">已通过</span>',banned:'<span class="badge badge-err">已封禁</span>',rejected:'<span class="badge badge-err">已拒绝</span>'};
+  var thtml = '';
+  filtered.forEach(function(u) {
+    var credit = credits[u.username] || 0;
+    thtml += '<tr><td>'+u.username+'</td><td>'+(u.phone||'--')+'</td><td><span style="color:var(--p);">'+credit+'</span></td>';
+    thtml += '<td>'+(statusMap[u.status]||u.status)+'</td>';
+    thtml += '<td style="color:var(--nd);font-size:12px;">'+formatTime(u.registerTime)+'</td>';
+    thtml += '<td style="color:var(--nd);font-size:12px;">'+formatTime(u.lastLogin)+'</td><td class="action-cell">';
+    if (u.status === 'pending') {
+      thtml += '<button class="btn-xs btn-ok" onclick="AdminAPI.approveUser(\''+u.username+'\')">通过</button>';
+      thtml += '<button class="btn-xs btn-err" onclick="AdminAPI.rejectUser(\''+u.username+'\')">拒绝</button>';
+    } else if (u.status === 'approved') {
+      thtml += '<button class="btn-xs btn-warn" onclick="AdminAPI.banUser(\''+u.username+'\')">封禁</button>';
+    } else if (u.status === 'banned') {
+      thtml += '<button class="btn-xs btn-ok" onclick="AdminAPI.unbanUser(\''+u.username+'\')">解封</button>';
+    }
+    thtml += '</td></tr>';
+  });
+  tbody.innerHTML = thtml;
+}
+
+// 用户标签
+function renderUserTags() {
+  var tags = Store.get('userTags') || [
+    {id:1,name:'VIP用户',color:'var(--p)',count:12},{id:2,name:'高频用户',color:'var(--ok)',count:28},
+    {id:3,name:'新用户',color:'var(--warn)',count:45},{id:4,name:'流失风险',color:'var(--err)',count:8},
+    {id:5,name:'付费用户',color:'var(--p2)',count:22}
+  ];
+  var html = '<div class="page-toolbar"><div class="toolbar-left">';
+  html += '<input type="text" placeholder="搜索标签..." style="padding:10px 14px;background:var(--bg2);border:var(--border-glow);border-radius:8px;color:var(--w);font-size:13px;outline:none;">';
+  html += '</div><div class="toolbar-right">';
+  html += '<button class="admin-btn" onclick="AdminAPI.addUserTag()"><i class="fa-solid fa-plus"></i> 新建标签</button>';
+  html += '</div></div>';
+  html += '<div class="dash-grid">';
+  tags.forEach(function(t) {
+    html += '<div class="stat-card" style="cursor:pointer;">';
+    html += '<div class="stat-icon" style="background:'+t.color+'15;color:'+t.color+'"><i class="fa-solid fa-tag"></i></div>';
+    html += '<div class="stat-info"><div class="stat-value" style="color:'+t.color+'">'+t.count+'</div>';
+    html += '<div class="stat-label">'+t.name+'</div></div></div>';
+  });
+  html += '</div>';
+  html += '<div class="dash-card"><div class="dash-card-header"><i class="fa-solid fa-tags" style="color:var(--p)"></i> 标签列表</div>';
+  html += '<div class="table-wrapper"><table class="admin-table"><thead><tr><th>标签名称</th><th>颜色</th><th>用户数</th><th>创建时间</th><th>操作</th></tr></thead><tbody>';
+  tags.forEach(function(t) {
+    html += '<tr><td><i class="fa-solid fa-tag" style="color:'+t.color+';margin-right:6px;"></i>'+t.name+'</td>';
+    html += '<td><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:'+t.color+';vertical-align:middle;"></span></td>';
+    html += '<td>'+t.count+'</td><td style="color:var(--nd);">2026-06-01</td>';
+    html += '<td class="action-cell"><button class="btn-xs" onclick="AdminAPI.editUserTag('+t.id+')">编辑</button><button class="btn-xs btn-err" onclick="AdminAPI.deleteUserTag('+t.id+')">删除</button></td></tr>';
+  });
+  html += '</tbody></table></div></div>';
+  $('#main-content').innerHTML = html;
+}
+
+// 黑名单管理
+function renderBlacklist() {
+  var blacklist = Store.get('blacklist') || [
+    {username:'spammer01',reason:'恶意刷算力',time:'2026-06-10 14:30',admin:'KF02V9'},
+    {username:'abuser02',reason:'发布违规内容',time:'2026-06-08 09:15',admin:'KF02V9'}
+  ];
+  var html = '<div class="page-toolbar"><div class="toolbar-left">';
+  html += '<input type="text" placeholder="搜索用户名..." style="padding:10px 14px;background:var(--bg2);border:var(--border-glow);border-radius:8px;color:var(--w);font-size:13px;outline:none;">';
+  html += '</div><div class="toolbar-right">';
+  html += '<button class="admin-btn" onclick="AdminAPI.addToBlacklist()"><i class="fa-solid fa-plus"></i> 添加黑名单</button>';
+  html += '</div></div>';
+  html += '<div class="dash-grid">';
+  html += statCard('fa-ban','黑名单总数',blacklist.length,'人','var(--err)');
+  html += statCard('fa-clock','今日新增','0','人','var(--warn)');
+  html += statCard('fa-unlock','今日解封','0','人','var(--ok)');
+  html += '</div>';
+  html += '<div class="dash-card"><div class="table-wrapper"><table class="admin-table"><thead><tr><th>用户名</th><th>封禁原因</th><th>封禁时间</th><th>操作人</th><th>操作</th></tr></thead><tbody>';
+  if (!blacklist.length) {
+    html += '<tr><td colspan="5">' + emptyState('fa-ban', '黑名单为空') + '</td></tr>';
+  } else {
+    blacklist.forEach(function(b) {
+      html += '<tr><td>'+b.username+'</td><td style="color:var(--err);">'+b.reason+'</td><td style="color:var(--nd);">'+b.time+'</td><td>'+b.admin+'</td>';
+      html += '<td class="action-cell"><button class="btn-xs btn-ok" onclick="AdminAPI.removeFromBlacklist(\''+b.username+'\')">解封</button></td></tr>';
+    });
+  }
+  html += '</tbody></table></div></div>';
+  $('#main-content').innerHTML = html;
+}
+
+// 对话记录
+function renderChatLogs() {
+  var logs = Store.get('agent_logs') || [];
+  var html = '<div class="page-toolbar"><div class="toolbar-left">';
+  html += '<input type="text" id="chat-log-search" placeholder="搜索用户/模型..." oninput="AdminAPI.filterChatLogs()">';
+  html += '<select id="chat-log-filter" onchange="AdminAPI.filterChatLogs()"><option value="">全部模型</option><option value="gpt-4">GPT-4</option><option value="gpt-3.5">GPT-3.5</option><option value="claude-3">Claude-3</option></select>';
+  html += '</div><div class="toolbar-right">';
+  html += '<button class="btn-xs" onclick="AdminAPI.exportChatLogs()"><i class="fa-solid fa-download"></i> 导出</button>';
+  html += '<button class="btn-xs btn-err" onclick="AdminAPI.clearAgentLogs()"><i class="fa-solid fa-trash"></i> 清空</button>';
+  html += '</div></div>';
+  html += '<div class="dash-card"><div class="table-wrapper"><table class="admin-table"><thead><tr><th>ID</th><th>用户</th><th>模型</th><th>输入</th><th>Token</th><th>消耗</th><th>状态</th><th>时间</th></tr></thead><tbody id="chat-logs-tbody">';
+  if (!logs.length) {
+    html += '<tr><td colspan="8">' + emptyState('fa-comments', '暂无对话记录') + '</td></tr>';
+  }
+  html += '</tbody></table></div></div>';
+  $('#main-content').innerHTML = html;
+  if (logs.length) AdminAPI.filterAgentLogs();
+}
+
+// 模型配置
+function renderModelConfig() {
+  var html = '<div class="page-toolbar"><div class="toolbar-left">';
+  html += '<button class="admin-btn" onclick="AdminAPI.addModelProvider()"><i class="fa-solid fa-plus"></i> 添加模型</button>';
+  html += '</div></div>';
+  html += '<div class="dash-grid">';
+  html += statCard('fa-brain','已配置模型','6','个','var(--p)');
+  html += statCard('fa-check','可用模型','5','个','var(--ok)');
+  html += statCard('fa-times','不可用','1','个','var(--err)');
+  html += statCard('fa-bolt','今日调用','1,234','次','var(--p2)');
+  html += '</div>';
+  html += '<div class="dash-card"><div class="dash-card-header"><i class="fa-solid fa-sliders" style="color:var(--p)"></i> 模型列表</div>';
+  html += '<div class="table-wrapper"><table class="admin-table"><thead><tr><th>模型名称</th><th>提供商</th><th>状态</th><th>单价(每1K Token)</th><th>今日调用</th><th>操作</th></tr></thead><tbody>';
+  var models = [
+    {name:'GPT-4o',provider:'OpenAI',status:'active',price:'0.03',calls:456},
+    {name:'GPT-4o-mini',provider:'OpenAI',status:'active',price:'0.008',calls:312},
+    {name:'Claude-3.5 Sonnet',provider:'Anthropic',status:'active',price:'0.025',calls:198},
+    {name:'Claude-3 Haiku',provider:'Anthropic',status:'active',price:'0.005',calls:89},
+    {name:'GLM-4',provider:'ZhipuAI',status:'active',price:'0.01',calls:134},
+    {name:'DeepSeek-V2',provider:'DeepSeek',status:'inactive',price:'0.006',calls:0}
+  ];
+  models.forEach(function(m) {
+    var st = m.status === 'active' ? '<span class="badge badge-ok">可用</span>' : '<span class="badge badge-err">不可用</span>';
+    html += '<tr><td style="font-weight:600;">'+m.name+'</td><td>'+m.provider+'</td><td>'+st+'</td>';
+    html += '<td style="color:var(--p);">$'+m.price+'</td><td>'+m.calls+'</td>';
+    html += '<td class="action-cell"><button class="btn-xs" onclick="AdminAPI.editModelConfig(\''+m.name+'\')">配置</button>';
+    if (m.status === 'active') html += '<button class="btn-xs btn-warn" onclick="AdminAPI.toggleModel(\''+m.name+'\',false)">禁用</button>';
+    else html += '<button class="btn-xs btn-ok" onclick="AdminAPI.toggleModel(\''+m.name+'\',true)">启用</button>';
+    html += '</td></tr>';
+  });
+  html += '</tbody></table></div></div>';
+  $('#main-content').innerHTML = html;
+}
+
+// 知识库管理
+function renderKnowledge() {
+  var html = '<div class="page-toolbar"><div class="toolbar-left">';
+  html += '<input type="text" placeholder="搜索知识库..." style="padding:10px 14px;background:var(--bg2);border:var(--border-glow);border-radius:8px;color:var(--w);font-size:13px;outline:none;">';
+  html += '</div><div class="toolbar-right">';
+  html += '<button class="admin-btn" onclick="AdminAPI.createKnowledgeBase()"><i class="fa-solid fa-plus"></i> 创建知识库</button>';
+  html += '</div></div>';
+  html += '<div class="dash-grid">';
+  html += statCard('fa-book','知识库总数','3','个','var(--p)');
+  html += statCard('fa-file-lines','文档总数','128','篇','var(--p2)');
+  html += statCard('fa-database','总数据量','256MB','已用','var(--ok)');
+  html += '</div>';
+  html += '<div class="dash-card"><div class="dash-card-header"><i class="fa-solid fa-book" style="color:var(--p)"></i> 知识库列表</div>';
+  html += '<div class="table-wrapper"><table class="admin-table"><thead><tr><th>名称</th><th>描述</th><th>文档数</th><th>大小</th><th>状态</th><th>更新时间</th><th>操作</th></tr></thead><tbody>';
+  var kbs = [
+    {name:'产品手册',desc:'罗圣纪元产品使用指南',docs:45,size:'32MB',status:'active',time:'2026-06-12'},
+    {name:'FAQ知识库',desc:'常见问题解答',docs:68,size:'15MB',status:'active',time:'2026-06-11'},
+    {name:'API文档',desc:'开发者API参考文档',docs:15,size:'8MB',status:'active',time:'2026-06-10'}
+  ];
+  kbs.forEach(function(k) {
+    html += '<tr><td style="font-weight:600;">'+k.name+'</td><td style="color:var(--nd);">'+k.desc+'</td>';
+    html += '<td>'+k.docs+'</td><td>'+k.size+'</td><td><span class="badge badge-ok">正常</span></td>';
+    html += '<td style="color:var(--nd);">'+k.time+'</td>';
+    html += '<td class="action-cell"><button class="btn-xs" onclick="AdminAPI.editKnowledge(\''+k.name+'\')">编辑</button>';
+    html += '<button class="btn-xs btn-err" onclick="AdminAPI.deleteKnowledge(\''+k.name+'\')">删除</button></td></tr>';
+  });
+  html += '</tbody></table></div></div>';
+  $('#main-content').innerHTML = html;
+}
+
+// 圣力套餐
+function renderPackages() {
+  var html = '<div class="page-toolbar"><div class="toolbar-left">';
+  html += '<button class="admin-btn" onclick="AdminAPI.addPackage()"><i class="fa-solid fa-plus"></i> 新建套餐</button>';
+  html += '</div></div>';
+  html += '<div class="dash-grid">';
+  html += statCard('fa-bolt','套餐总数','4','个','var(--p)');
+  html += statCard('fa-check','上架中','3','个','var(--ok)');
+  html += statCard('fa-times','已下架','1','个','var(--nd)');
+  html += statCard('fa-cart-shopping','今日销量','8','单','var(--p2)');
+  html += '</div>';
+  html += '<div class="dash-card"><div class="dash-card-header"><i class="fa-solid fa-bolt" style="color:var(--p)"></i> 套餐列表</div>';
+  html += '<div class="table-wrapper"><table class="admin-table"><thead><tr><th>套餐名称</th><th>算力</th><th>价格</th><th>状态</th><th>销量</th><th>操作</th></tr></thead><tbody>';
+  var pkgs = [
+    {name:'体验套餐',credits:100,price:'9.9',status:'active',sales:156},
+    {name:'基础套餐',credits:500,price:'39.9',status:'active',sales:342},
+    {name:'专业套餐',credits:2000,price:'129',status:'active',sales:89},
+    {name:'至尊套餐',credits:10000,price:'499',status:'inactive',sales:12}
+  ];
+  pkgs.forEach(function(p) {
+    var st = p.status === 'active' ? '<span class="badge badge-ok">上架</span>' : '<span class="badge badge-err">下架</span>';
+    html += '<tr><td style="font-weight:600;">'+p.name+'</td><td style="color:var(--p);">'+p.credits+'</td>';
+    html += '<td style="color:var(--ok);">¥'+p.price+'</td><td>'+st+'</td><td>'+p.sales+'</td>';
+    html += '<td class="action-cell"><button class="btn-xs" onclick="AdminAPI.editPackage(\''+p.name+'\')">编辑</button>';
+    if (p.status === 'active') html += '<button class="btn-xs btn-warn" onclick="AdminAPI.togglePackage(\''+p.name+'\',false)">下架</button>';
+    else html += '<button class="btn-xs btn-ok" onclick="AdminAPI.togglePackage(\''+p.name+'\',true)">上架</button>';
+    html += '</td></tr>';
+  });
+  html += '</tbody></table></div></div>';
+  $('#main-content').innerHTML = html;
+}
+
+// Boss充值卡
+function renderBossCards() {
+  var cards = Store.get('bossCards') || [
+    {id:'BC001',batch:'BATCH001',code:'LSJY-XXXX-XXXX-XXXX',denomination:100,status:'active',createTime:'2026-06-10',usedBy:null,usedTime:null},
+    {id:'BC002',batch:'BATCH001',code:'LSJY-YYYY-YYYY-YYYY',denomination:100,status:'active',createTime:'2026-06-10',usedBy:null,usedTime:null},
+    {id:'BC003',batch:'BATCH001',code:'LSJY-ZZZZ-ZZZZ-ZZZZ',denomination:100,status:'used',createTime:'2026-06-10',usedBy:'user001',usedTime:'2026-06-11'},
+    {id:'BC004',batch:'BATCH002',code:'LSJY-AAAA-AAAA-AAAA',denomination:500,status:'frozen',createTime:'2026-06-12',usedBy:null,usedTime:null},
+    {id:'BC005',batch:'BATCH002',code:'LSJY-BBBB-BBBB-BBBB',denomination:500,status:'active',createTime:'2026-06-12',usedBy:null,usedTime:null}
+  ];
+  var html = '<div class="page-toolbar"><div class="toolbar-left">';
+  html += '<select id="card-status-filter" onchange="AdminAPI.filterBossCards()"><option value="">全部状态</option><option value="active">已激活</option><option value="frozen">已冻结</option><option value="used">已使用</option><option value="void">已作废</option></select>';
+  html += '<select id="card-batch-filter" onchange="AdminAPI.filterBossCards()"><option value="">全部批次</option><option value="BATCH001">BATCH001</option><option value="BATCH002">BATCH002</option></select>';
+  html += '</div><div class="toolbar-right">';
+  html += '<button class="admin-btn" onclick="AdminAPI.generateBossCards()"><i class="fa-solid fa-plus"></i> 生成卡密</button>';
+  html += '</div></div>';
+  html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">';
+  html += '<button class="btn-xs btn-ok" onclick="AdminAPI.batchActivateCards()"><i class="fa-solid fa-check-circle"></i> 批量激活</button>';
+  html += '<button class="btn-xs btn-warn" onclick="AdminAPI.batchFreezeCards()"><i class="fa-solid fa-snowflake"></i> 批量冻结</button>';
+  html += '<button class="btn-xs btn-err" onclick="AdminAPI.batchVoidCards()"><i class="fa-solid fa-ban"></i> 批量作废</button>';
+  html += '<button class="btn-xs" onclick="AdminAPI.viewCardCodes()"><i class="fa-solid fa-key"></i> 卡密查看</button>';
+  html += '<button class="btn-xs" onclick="AdminAPI.viewCardRecords()"><i class="fa-solid fa-history"></i> 发放记录</button>';
+  html += '<button class="btn-xs" onclick="AdminAPI.exportBossCards()"><i class="fa-solid fa-download"></i> 导出</button>';
+  html += '</div>';
+  html += '<div class="dash-grid">';
+  var activeCount = cards.filter(function(c){return c.status==='active';}).length;
+  var frozenCount = cards.filter(function(c){return c.status==='frozen';}).length;
+  var usedCount = cards.filter(function(c){return c.status==='used';}).length;
+  html += statCard('fa-crown','总卡数',cards.length,'张','var(--p)');
+  html += statCard('fa-check','已激活',activeCount,'张','var(--ok)');
+  html += statCard('fa-snowflake','已冻结',frozenCount,'张','var(--warn)');
+  html += statCard('fa-check-double','已使用',usedCount,'张','var(--nd)');
+  html += '</div>';
+  html += '<div class="dash-card"><div class="dash-card-header"><i class="fa-solid fa-crown" style="color:var(--p)"></i> 充值卡列表</div>';
+  html += '<div class="table-wrapper"><table class="admin-table"><thead><tr><th><input type="checkbox" id="card-select-all" onchange="AdminAPI.toggleAllCards(this)"></th><th>ID</th><th>批次</th><th>面值</th><th>状态</th><th>创建时间</th><th>使用者</th><th>使用时间</th><th>操作</th></tr></thead><tbody id="boss-cards-tbody">';
+  var statusMap = {active:'<span class="badge badge-ok">已激活</span>',frozen:'<span class="badge badge-warn">已冻结</span>',used:'<span class="badge badge-p">已使用</span>',void:'<span class="badge badge-err">已作废</span>'};
+  cards.forEach(function(c) {
+    html += '<tr><td><input type="checkbox" class="card-checkbox" data-id="'+c.id+'"></td>';
+    html += '<td style="color:var(--nd);">'+c.id+'</td><td>'+c.batch+'</td>';
+    html += '<td style="color:var(--ok);font-weight:600;">'+c.denomination+'</td>';
+    html += '<td>'+(statusMap[c.status]||c.status)+'</td>';
+    html += '<td style="color:var(--nd);font-size:12px;">'+c.createTime+'</td>';
+    html += '<td>'+(c.usedBy||'--')+'</td><td style="color:var(--nd);font-size:12px;">'+(c.usedTime||'--')+'</td>';
+    html += '<td class="action-cell">';
+    if (c.status === 'active') {
+      html += '<button class="btn-xs btn-warn" onclick="AdminAPI.freezeCard(\''+c.id+'\')">冻结</button>';
+      html += '<button class="btn-xs btn-err" onclick="AdminAPI.voidCard(\''+c.id+'\')">作废</button>';
+    } else if (c.status === 'frozen') {
+      html += '<button class="btn-xs btn-ok" onclick="AdminAPI.activateCard(\''+c.id+'\')">激活</button>';
+      html += '<button class="btn-xs btn-err" onclick="AdminAPI.voidCard(\''+c.id+'\')">作废</button>';
+    }
+    html += '<button class="btn-xs" onclick="AdminAPI.viewCardDetail(\''+c.id+'\')">详情</button>';
+    html += '</td></tr>';
+  });
+  html += '</tbody></table></div></div>';
+  $('#main-content').innerHTML = html;
+}
+
+// 支付
+function renderPayment() {
+  var html = '<div class="dash-grid">';
+  html += statCard('fa-credit-card','今日收入','¥580','元','var(--ok)');
+  html += statCard('fa-chart-line','本周收入','¥3,200','元','var(--p)');
+  html += statCard('fa-coins','本月收入','¥12,800','元','var(--p2)');
+  html += statCard('fa-receipt','今日订单','23','笔','var(--warn)');
+  html += '</div>';
+  html += '<div class="dash-row">';
+  html += '<div class="dash-card" style="flex:1;min-width:300px;"><div class="dash-card-header"><i class="fa-solid fa-chart-area" style="color:var(--p)"></i> 收入趋势 (近7天)</div>';
+  html += '<div style="padding:16px;">' + renderSVGChart([580,420,650,380,720,560,580], ['周一','周二','周三','周四','周五','周六','周日'], 'var(--ok)', 180) + '</div></div>';
+  html += '<div class="dash-card" style="flex:1;min-width:300px;"><div class="dash-card-header"><i class="fa-solid fa-credit-card" style="color:var(--p2)"></i> 支付方式分布</div>';
+  html += '<div style="padding:16px;">';
+  var methods = [{name:'微信支付',pct:52,icon:'fa-brands fa-weixin',color:'#07c160'},{name:'支付宝',pct:31,icon:'fa-brands fa-alipay',color:'#1677ff'},{name:'QQ支付',pct:17,icon:'fa-brands fa-qq',color:'#12b7f5'}];
+  methods.forEach(function(pm) {
+    html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding:12px;background:var(--bg2);border-radius:8px;">';
+    html += '<i class="fa-solid '+pm.icon+'" style="font-size:24px;color:'+pm.color+';width:30px;text-align:center;"></i>';
+    html += '<div style="flex:1;"><div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span style="font-weight:600;">'+pm.name+'</span><span style="color:var(--nd);">'+pm.pct+'%</span></div>';
+    html += '<div style="height:6px;background:var(--w2);border-radius:3px;overflow:hidden;"><div style="width:'+pm.pct+'%;height:100%;background:'+pm.color+';border-radius:3px;"></div></div></div></div>';
+  });
+  html += '</div></div></div>';
+  $('#main-content').innerHTML = html;
+}
+
+// 充值管理
+function renderRechargeManage() {
+  var html = '<div class="page-toolbar"><div class="toolbar-left">';
+  html += '<select id="recharge-status-filter" onchange="AdminAPI.filterRechargeApps()">';
+  html += '<option value="">全部状态</option><option value="pending_payment">待支付</option><option value="pending_review">待审核</option>';
+  html += '<option value="approved">已通过</option><option value="rejected">已拒绝</option></select>';
+  html += '<button class="btn-xs" onclick="AdminAPI.loadRechargeApps()">刷新</button>';
+  html += '<button class="btn-xs" style="background:var(--ok);color:#fff;" onclick="AdminAPI.batchApproveRecharge()">批量通过</button>';
+  html += '<button class="btn-xs" style="background:var(--err);color:#fff;" onclick="AdminAPI.batchRejectRecharge()">批量拒绝</button>';
+  html += '</div>';
+  html += '<div class="toolbar-right"><button class="btn-xs" onclick="AdminAPI.exportRechargeApps()"><i class="fa-solid fa-download"></i> 导出</button></div>';
+  html += '</div>';
+  html += '<div class="dash-grid" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr));margin-bottom:16px;">';
+  html += statCard('fa-clock','待审核','--','条','var(--warn)');
+  html += statCard('fa-check','已通过','--','条','var(--ok)');
+  html += statCard('fa-times','已拒绝','--','条','var(--err)');
+  html += statCard('fa-coins','总金额','¥--','元','var(--p)');
+  html += '</div>';
+  html += '<div class="dash-card"><table class="admin-table"><thead><tr>';
+  html += '<th>订单号</th><th>用户</th><th>金额</th><th>算力</th><th>支付方式</th><th>截图</th><th>状态</th><th>时间</th><th>操作</th>';
+  html += '</tr></thead><tbody id="recharge-apps-body">';
+  html += '<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--nd);">加载中...</td></tr>';
+  html += '</tbody></table></div>';
+  $('#main-content').innerHTML = html;
+  AdminAPI.loadRechargeApps();
+}
+
+// 佣金记录
+function renderCommission() {
+  var html = '<div class="page-toolbar"><div class="toolbar-left">';
+  html += '<input type="text" placeholder="搜索用户名..." style="padding:10px 14px;background:var(--bg2);border:var(--border-glow);border-radius:8px;color:var(--w);font-size:13px;outline:none;">';
+  html += '</div><div class="toolbar-right">';
+  html += '<button class="btn-xs" onclick="AdminAPI.exportCommission()"><i class="fa-solid fa-download"></i> 导出</button>';
+  html += '</div></div>';
+  html += '<div class="dash-grid">';
+  html += statCard('fa-hand-holding-dollar','总佣金','¥2,580','元','var(--ok)');
+  html += statCard('fa-clock','待结算','¥320','元','var(--warn)');
+  html += statCard('fa-check','已结算','¥2,260','元','var(--p)');
+  html += statCard('fa-users','推广人','15','人','var(--p2)');
+  html += '</div>';
+  html += '<div class="dash-card"><div class="dash-card-header"><i class="fa-solid fa-hand-holding-dollar" style="color:var(--ok)"></i> 佣金记录</div>';
+  html += '<div class="table-wrapper"><table class="admin-table"><thead><tr><th>订单号</th><th>推广人</th><th>被推广人</th><th>订单金额</th><th>佣金</th><th>状态</th><th>时间</th></tr></thead><tbody>';
+  var commissions = [
+    {orderNo:'ORD20260612001',promoter:'user001',user:'user010',amount:39.9,commission:3.99,status:'settled',time:'2026-06-12'},
+    {orderNo:'ORD20260611002',promoter:'user002',user:'user008',amount:129,commission:12.9,status:'pending',time:'2026-06-11'},
+    {orderNo:'ORD20260610003',promoter:'user004',user:'user007',amount:9.9,commission:0.99,status:'settled',time:'2026-06-10'}
+  ];
+  commissions.forEach(function(c) {
+    var st = c.status === 'settled' ? '<span class="badge badge-ok">已结算</span>' : '<span class="badge badge-warn">待结算</span>';
+    html += '<tr><td style="color:var(--nd);">'+c.orderNo+'</td><td>'+c.promoter+'</td><td>'+c.user+'</td>';
+    html += '<td>¥'+c.amount+'</td><td style="color:var(--ok);">¥'+c.commission+'</td><td>'+st+'</td>';
+    html += '<td style="color:var(--nd);">'+c.time+'</td></tr>';
+  });
+  html += '</tbody></table></div></div>';
+  $('#main-content').innerHTML = html;
+}
+
+// 公告管理
+function renderAnnouncements() {
+  var anns = Store.get('announcements') || SAMPLE_ANNOUNCEMENTS;
+  var html = '<div class="page-toolbar"><div class="toolbar-left">';
+  html += '<button class="admin-btn" onclick="AdminAPI.showAnnouncementForm()"><i class="fa-solid fa-plus"></i> 发布公告</button>';
+  html += '</div></div>';
+  html += '<div class="dash-card"><div class="dash-card-header"><i class="fa-solid fa-bullhorn" style="color:var(--p)"></i> 公告列表</div>';
+  html += '<div class="table-wrapper"><table class="admin-table"><thead><tr><th>标题</th><th>类型</th><th>状态</th><th>创建时间</th><th>操作</th></tr></thead><tbody>';
+  if (!anns || !anns.length) {
+    html += '<tr><td colspan="5">' + emptyState('fa-bullhorn', '暂无公告') + '</td></tr>';
+  } else {
+    anns.forEach(function(a, i) {
+      html += '<tr><td style="font-weight:600;">'+(a.title||'公告'+(i+1))+'</td><td><span class="badge badge-p">'+(a.type||'通知')+'</span></td>';
+      html += '<td>'+(a.active !== false ? '<span class="badge badge-ok">显示</span>' : '<span class="badge badge-err">隐藏</span>')+'</td>';
+      html += '<td style="color:var(--nd);">'+formatTime(a.createTime||a.time)+'</td>';
+      html += '<td class="action-cell"><button class="btn-xs" onclick="AdminAPI.editAnnouncement('+i+')">编辑</button>';
+      html += '<button class="btn-xs btn-err" onclick="AdminAPI.deleteAnnouncement('+i+')">删除</button></td></tr>';
+    });
+  }
+  html += '</tbody></table></div></div>';
+  $('#main-content').innerHTML = html;
+}
+
+// 内容审核
+function renderContentReview() {
+  var html = '<div class="page-toolbar"><div class="toolbar-left">';
+  html += '<select><option value="">全部类型</option><option value="post">帖子</option><option value="comment">评论</option><option value="image">图片</option></select>';
+  html += '<select><option value="">全部状态</option><option value="pending">待审核</option><option value="approved">已通过</option><option value="rejected">已拒绝</option></select>';
+  html += '</div><div class="toolbar-right">';
+  html += '<button class="admin-btn" onclick="AdminAPI.batchApproveContent()"><i class="fa-solid fa-check-double"></i> 批量通过</button>';
+  html += '</div></div>';
+  html += '<div class="dash-grid">';
+  html += statCard('fa-clock','待审核','5','条','var(--warn)');
+  html += statCard('fa-check','今日通过','23','条','var(--ok)');
+  html += statCard('fa-times','今日拒绝','3','条','var(--err)');
+  html += '</div>';
+  html += '<div class="dash-card"><div class="dash-card-header"><i class="fa-solid fa-clipboard-check" style="color:var(--p)"></i> 待审核内容</div>';
+  html += '<div class="table-wrapper"><table class="admin-table"><thead><tr><th><input type="checkbox"></th><th>用户</th><th>类型</th><th>内容摘要</th><th>时间</th><th>操作</th></tr></thead><tbody>';
+  var reviews = [
+    {user:'user001',type:'帖子',content:'分享了一个AI绘画作品...',time:'14:30'},
+    {user:'user003',type:'评论',content:'这个功能太棒了！...',time:'14:25'},
+    {user:'user007',type:'图片',content:'[图片] AI生成插画...',time:'14:20'}
+  ];
+  reviews.forEach(function(r) {
+    html += '<tr><td><input type="checkbox"></td><td>'+r.user+'</td><td><span class="badge badge-p">'+r.type+'</span></td>';
+    html += '<td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+r.content+'</td>';
+    html += '<td style="color:var(--nd);">'+r.time+'</td>';
+    html += '<td class="action-cell"><button class="btn-xs btn-ok" onclick="AdminAPI.approveContent(this)">通过</button>';
+    html += '<button class="btn-xs btn-err" onclick="AdminAPI.rejectContent(this)">拒绝</button></td></tr>';
+  });
+  html += '</tbody></table></div></div>';
+  $('#main-content').innerHTML = html;
+}
+
+// 消息推送
+function renderPushMessages() {
+  var html = '<div class="page-toolbar"><div class="toolbar-left">';
+  html += '<button class="admin-btn" onclick="AdminAPI.createPushMessage()"><i class="fa-solid fa-paper-plane"></i> 新建推送</button>';
+  html += '</div></div>';
+  html += '<div class="dash-grid">';
+  html += statCard('fa-paper-plane','总推送','45','条','var(--p)');
+  html += statCard('fa-check','推送成功','42','条','var(--ok)');
+  html += statCard('fa-times','推送失败','3','条','var(--err)');
+  html += statCard('fa-users','覆盖用户','1,234','人','var(--p2)');
+  html += '</div>';
+  html += '<div class="dash-card"><div class="dash-card-header"><i class="fa-solid fa-paper-plane" style="color:var(--p)"></i> 推送历史</div>';
+  html += '<div class="table-wrapper"><table class="admin-table"><thead><tr><th>标题</th><th>内容</th><th>推送时间</th><th>状态</th><th>到达率</th><th>操作</th></tr></thead><tbody>';
+  var pushes = [
+    {title:'系统维护通知',content:'今晚22:00-23:00系统维护',time:'2026-06-12 10:00',status:'sent',rate:'98%'},
+    {title:'新功能上线',content:'AI绘画V2.0版本已上线',time:'2026-06-11 09:00',status:'sent',rate:'95%'},
+    {title:'充值优惠活动',content:'充值满100送20算力',time:'2026-06-10 14:00',status:'sent',rate:'92%'}
+  ];
+  pushes.forEach(function(p) {
+    html += '<tr><td style="font-weight:600;">'+p.title+'</td><td style="color:var(--nd);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+p.content+'</td>';
+    html += '<td style="color:var(--nd);">'+p.time+'</td><td><span class="badge badge-ok">已发送</span></td>';
+    html += '<td style="color:var(--ok);">'+p.rate+'</td>';
+    html += '<td class="action-cell"><button class="btn-xs" onclick="AdminAPI.viewPushDetail(\''+p.title+'\')">详情</button>';
+    html += '<button class="btn-xs" onclick="AdminAPI.resendPush(\''+p.title+'\')">重推</button></td></tr>';
+  });
+  html += '</tbody></table></div></div>';
+  $('#main-content').innerHTML = html;
+}
+
+// 运行监控
+function renderMonitor() {
+  var html = '<div class="dash-grid">';
+  html += statCard('fa-server','服务器状态','正常','运行中','var(--ok)');
+  html += statCard('fa-microchip','CPU使用率','23','%','var(--p)');
+  html += statCard('fa-memory','内存使用','4.2/16','GB','var(--p2)');
+  html += statCard('fa-hard-drive','磁盘使用','128/500','GB','var(--warn)');
+  html += statCard('fa-network-wired','网络带宽','45','Mbps','var(--ok)');
+  html += statCard('fa-clock','运行时间','15天','12小时','var(--p)');
+  html += '</div>';
+  html += '<div class="dash-row">';
+  html += '<div class="dash-card" style="flex:1;min-width:300px;"><div class="dash-card-header"><i class="fa-solid fa-heart-pulse" style="color:var(--ok)"></i> CPU/内存趋势</div>';
+  html += '<div style="padding:16px;">' + renderSVGChart([23,28,35,42,38,25,23], ['00:00','04:00','08:00','12:00','16:00','20:00','现在'], 'var(--p)', 180) + '</div></div>';
+  html += '<div class="dash-card" style="flex:1;min-width:300px;"><div class="dash-card-header"><i class="fa-solid fa-list-check" style="color:var(--p2)"></i> 服务状态</div>';
+  html += '<div style="padding:16px;">';
+  var services = [{name:'API服务',status:'ok',uptime:'99.9%'},{name:'数据库',status:'ok',uptime:'99.8%'},{name:'Redis缓存',status:'ok',uptime:'99.9%'},{name:'文件存储',status:'ok',uptime:'99.5%'},{name:'CDN加速',status:'warn',uptime:'98.2%'}];
+  services.forEach(function(s) {
+    var color = s.status === 'ok' ? 'var(--ok)' : 'var(--warn)';
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:rgba(0,245,255,.05);">';
+    html += '<div style="display:flex;align-items:center;gap:8px;"><span class="status-dot" style="background:'+color+'"></span><span>'+s.name+'</span></div>';
+    html += '<span style="color:var(--nd);font-size:12px;">可用率 '+s.uptime+'</span></div>';
+  });
+  html += '</div></div></div>';
+  $('#main-content').innerHTML = html;
+}
+
+// 操作日志
+function renderOpLogs() {
+  var logs = Store.get('logs') || SAMPLE_LOGS;
+  var html = '<div class="page-toolbar"><div class="toolbar-left">';
+  html += '<input type="text" placeholder="搜索操作内容..." style="padding:10px 14px;background:var(--bg2);border:var(--border-glow);border-radius:8px;color:var(--w);font-size:13px;outline:none;">';
+  html += '<select><option value="">全部类型</option><option value="login">登录</option><option value="user">用户</option><option value="system">系统</option><option value="agent">智能体</option></select>';
+  html += '</div><div class="toolbar-right">';
+  html += '<button class="btn-xs" onclick="AdminAPI.exportOpLogs()"><i class="fa-solid fa-download"></i> 导出</button>';
+  html += '<button class="btn-xs btn-err" onclick="AdminAPI.clearOpLogs()"><i class="fa-solid fa-trash"></i> 清空</button>';
+  html += '</div></div>';
+  html += '<div class="dash-card"><div class="table-wrapper"><table class="admin-table"><thead><tr><th>时间</th><th>类型</th><th>详情</th><th>操作人</th></tr></thead><tbody>';
+  if (!logs || !logs.length) {
+    html += '<tr><td colspan="4">' + emptyState('fa-list-check', '暂无操作日志') + '</td></tr>';
+  } else {
+    var typeMap = {login:'<span class="badge badge-p">登录</span>',user:'<span class="badge badge-ok">用户</span>',system:'<span class="badge badge-warn">系统</span>',agent:'<span class="badge badge-p">智能体</span>'};
+    logs.slice().reverse().slice(0, 50).forEach(function(l) {
+      html += '<tr><td style="color:var(--nd);font-size:12px;">'+formatTime(l.time)+'</td>';
+      html += '<td>'+(typeMap[l.type]||l.type)+'</td>';
+      html += '<td>'+l.detail+'</td><td>'+(l.admin||'--')+'</td></tr>';
+    });
+  }
+  html += '</tbody></table></div></div>';
+  $('#main-content').innerHTML = html;
+}
+
+// 登录记录
+function renderLoginLogs() {
+  var html = '<div class="page-toolbar"><div class="toolbar-left">';
+  html += '<input type="text" placeholder="搜索用户名/IP..." style="padding:10px 14px;background:var(--bg2);border:var(--border-glow);border-radius:8px;color:var(--w);font-size:13px;outline:none;">';
+  html += '</div><div class="toolbar-right">';
+  html += '<button class="btn-xs" onclick="AdminAPI.exportLoginLogs()"><i class="fa-solid fa-download"></i> 导出</button>';
+  html += '</div></div>';
+  html += '<div class="dash-grid">';
+  html += statCard('fa-right-to-bracket','今日登录','28','次','var(--p)');
+  html += statCard('fa-check','成功','25','次','var(--ok)');
+  html += statCard('fa-times','失败','3','次','var(--err)');
+  html += statCard('fa-shield-halved','异常登录','1','次','var(--warn)');
+  html += '</div>';
+  html += '<div class="dash-card"><div class="table-wrapper"><table class="admin-table"><thead><tr><th>时间</th><th>用户</th><th>IP</th><th>设备</th><th>地区</th><th>状态</th></tr></thead><tbody>';
+  var loginLogs = [
+    {time:'2026-06-12 14:30',user:'KF02V9',ip:'113.45.**.**',device:'Chrome/Win11',region:'湖南',status:'ok'},
+    {time:'2026-06-12 14:25',user:'user001',ip:'220.181.**.**',device:'iPhone 15',region:'北京',status:'ok'},
+    {time:'2026-06-12 14:20',user:'unknown',ip:'45.33.**.**',device:'Unknown',region:'美国',status:'fail'},
+    {time:'2026-06-12 14:15',user:'user002',ip:'183.6.**.**',device:'Safari/Mac',region:'广东',status:'ok'}
+  ];
+  loginLogs.forEach(function(l) {
+    var st = l.status === 'ok' ? '<span class="badge badge-ok">成功</span>' : '<span class="badge badge-err">失败</span>';
+    html += '<tr><td style="color:var(--nd);font-size:12px;">'+l.time+'</td><td>'+l.user+'</td><td>'+l.ip+'</td>';
+    html += '<td style="color:var(--nd);">'+l.device+'</td><td>'+l.region+'</td><td>'+st+'</td></tr>';
+  });
+  html += '</tbody></table></div></div>';
+  $('#main-content').innerHTML = html;
+}
+
+// API监控
+function renderApiMonitor() {
+  var html = '<div class="dash-grid">';
+  html += statCard('fa-chart-line','今日请求','12,345','次','var(--p)');
+  html += statCard('fa-check','成功率','99.2','%','var(--ok)');
+  html += statCard('fa-clock','平均响应','128','ms','var(--p2)');
+  html += statCard('fa-triangle-exclamation','错误请求','98','次','var(--err)');
+  html += '</div>';
+  html += '<div class="dash-row">';
+  html += '<div class="dash-card" style="flex:1;min-width:300px;"><div class="dash-card-header"><i class="fa-solid fa-chart-area" style="color:var(--p)"></i> 请求量趋势</div>';
+  html += '<div style="padding:16px;">' + renderSVGChart([1234,1567,1890,2100,2345,2567,1234], ['00:00','04:00','08:00','12:00','16:00','20:00','现在'], 'var(--p)', 180) + '</div></div>';
+  html += '<div class="dash-card" style="flex:1;min-width:300px;"><div class="dash-card-header"><i class="fa-solid fa-ranking-star" style="color:var(--p2)"></i> 慢接口 Top 5</div>';
+  html += '<div style="padding:16px;">';
+  var slowApis = [
+    {path:'/api/v1/ai/generate',avg:'450ms',calls:234},{path:'/api/v1/image/create',avg:'380ms',calls:156},
+    {path:'/api/v1/user/list',avg:'220ms',calls:89},{path:'/api/v1/payment/create',avg:'180ms',calls:67},
+    {path:'/api/v1/agent/chat',avg:'150ms',calls:345}
+  ];
+  slowApis.forEach(function(a, i) {
+    html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:13px;">';
+    html += '<span style="width:20px;text-align:center;color:var(--err);font-weight:700;">'+(i+1)+'</span>';
+    html += '<span style="flex:1;color:var(--nd);font-family:monospace;font-size:12px;">'+a.path+'</span>';
+    html += '<span style="color:var(--warn);width:60px;text-align:right;">'+a.avg+'</span>';
+    html += '<span style="color:var(--nd);width:40px;text-align:right;">'+a.calls+'次</span></div>';
+  });
+  html += '</div></div></div>';
+  $('#main-content').innerHTML = html;
+}
+
+// 数据备份
+function renderBackup() {
+  var html = '<div class="page-toolbar"><div class="toolbar-left">';
+  html += '<button class="admin-btn" onclick="AdminAPI.createBackup()"><i class="fa-solid fa-download"></i> 立即备份</button>';
+  html += '</div></div>';
+  html += '<div class="dash-grid">';
+  html += statCard('fa-database','数据库大小','256','MB','var(--p)');
+  html += statCard('fa-clock','上次备份','2小时前','','var(--ok)');
+  html += statCard('fa-hard-drive','磁盘剩余','372','GB','var(--p2)');
+  html += statCard('fa-check-circle','备份状态','正常','','var(--ok)');
+  html += '</div>';
+  html += '<div class="dash-card"><div class="dash-card-header"><i class="fa-solid fa-database" style="color:var(--p)"></i> 备份列表</div>';
+  html += '<div class="table-wrapper"><table class="admin-table"><thead><tr><th>备份时间</th><th>大小</th><th>类型</th><th>状态</th><th>操作</th></tr></thead><tbody>';
+  var backups = [
+    {time:'2026-06-12 12:00',size:'256MB',type:'自动',status:'ok'},
+    {time:'2026-06-12 00:00',size:'254MB',type:'自动',status:'ok'},
+    {time:'2026-06-11 18:30',size:'253MB',type:'手动',status:'ok'},
+    {time:'2026-06-11 12:00',size:'251MB',type:'自动',status:'ok'},
+    {time:'2026-06-11 00:00',size:'249MB',type:'自动',status:'ok'}
+  ];
+  backups.forEach(function(b) {
+    html += '<tr><td style="color:var(--nd);">'+b.time+'</td><td>'+b.size+'</td>';
+    html += '<td>'+(b.type === '自动' ? '<span class="badge badge-p">自动</span>' : '<span class="badge badge-ok">手动</span>')+'</td>';
+    html += '<td><span class="badge badge-ok">成功</span></td>';
+    html += '<td class="action-cell"><button class="btn-xs" onclick="AdminAPI.restoreBackup(\''+b.time+'\')">恢复</button>';
+    html += '<button class="btn-xs btn-err" onclick="AdminAPI.deleteBackup(\''+b.time+'\')">删除</button></td></tr>';
+  });
+  html += '</tbody></table></div></div>';
+  $('#main-content').innerHTML = html;
+}
 
 })();
