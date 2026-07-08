@@ -145,6 +145,9 @@ export const adminApi = {
   getChatHistory(params?: { keyword?: string; agent?: string; startDate?: string; endDate?: string; page?: number; pageSize?: number }): Promise<ApiResponse<any>> {
     return service.get('/admin/chat-history', { params, timeout: 30000 }).then(r => r.data)
   },
+  rechargeUser(userId: number, amount: number): Promise<ApiResponse<any>> {
+    return service.post('/admin/users/recharge', { userId, amount, description: '管理员后台充值' }).then(r => r.data)
+  },
   getRoles(): Promise<ApiResponse<any[]>> {
     return service.get('/roles').then(r => r.data)
   },

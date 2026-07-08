@@ -8,15 +8,15 @@
       style="scrollbar-width:thin;scrollbar-color:#00f0ff40 transparent;">
       <div class="h-16 flex items-center px-5 gap-3" style="border-bottom:1px solid #00f0ff30;">
         <div class="w-9 h-9 rounded-lg flex items-center justify-center text-white font-bold" style="background:linear-gradient(135deg,#00f0ff,#b700ff);">罗</div>
-        <div><div class="font-bold text-sm cyber-glow-text" style="color:#00f0ff;">罗圣纪元</div><div class="text-xs" style="color:#ff2d95;">COMMAND CENTER</div></div>
+        <div><div class="font-bold text-sm cyber-glow-text" style="color:#00f0ff;">罗圣纪元</div><div class="text-xs" style="color:#00f0ff;">COMMAND CENTER</div></div>
         <button v-if="isMobile" @click="sidebarOpen=false" class="ml-auto p-2" style="color:#00f0ff;">✕</button>
       </div>
       <nav class="mt-2 px-2 pb-20">
         <div v-for="group in menuGroups" :key="group.label" class="mb-1">
-          <div class="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-all" style="color:#ff2d95;" @click="toggleGroup(group.label)">
+          <div class="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-all" style="color:#00f0ff;" @click="toggleGroup(group.label)">
             <span class="text-xs">{{group.icon}}</span>
             <span class="text-xs tracking-wider font-bold flex-1">{{group.label}}</span>
-            <span class="text-xs" :style="expanded[group.label]?'color:#ff2d95;':'color:#505080;'">{{group.items.length}}</span>
+            <span class="text-xs" :style="expanded[group.label]?'color:#00f0ff;':'color:#505080;'">{{group.items.length}}</span>
             <span class="text-xs transition-transform" :style="'color:#505080;'+(expanded[group.label]?'transform:rotate(90deg);':'')">▶</span>
           </div>
           <div v-show="expanded[group.label]" class="ml-2 pl-2" style="border-left:1px solid #00f0ff15;">
@@ -48,10 +48,10 @@
             <span>● MEM {{sysStats.mem}}G</span>
             <span style="color:#00f0ff;">● ONLINE {{sysStats.online}}</span>
           </div>
-          <router-link to="/coin" class="px-3 py-1 rounded text-xs font-bold" style="background:linear-gradient(135deg,#ff2d95,#b700ff);color:#fff;">充值</router-link>
+          <router-link to="/coin" class="px-3 py-1 rounded text-xs font-bold" style="background:linear-gradient(135deg,#00f0ff,#0ea5e9);color:#fff;">充值</router-link>
           <el-dropdown trigger="click">
             <div class="flex items-center gap-2 cursor-pointer">
-              <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold" style="background:linear-gradient(135deg,#ff2d95,#b700ff);">管</div>
+              <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold" style="background:linear-gradient(135deg,#00f0ff,#0ea5e9);">管</div>
               <span class="text-sm hidden sm:block" style="color:#e0e0ff;">{{authStore.nickname}}</span>
             </div>
             <template #dropdown><el-dropdown-menu><el-dropdown-item @click="$router.push('/dashboard')">返回前台</el-dropdown-item><el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item></el-dropdown-menu></template>

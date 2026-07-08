@@ -517,11 +517,23 @@ const openSourceSkillStore = [
   { id: 'autogen', phase: '三期企业能力', name: 'AutoGen 多智能体流水线', category: '批量创作', repo: 'microsoft/autogen', entry: '/video-pipeline', status: 'active_adapter', adapter: '多步骤创作编排', coinCost: 15, riskLevel: 'high', description: '已以内置多步骤编排方式接入短视频流水线；完整 AutoGen 服务需独立任务队列。', conflicts: ['限流执行', '不阻塞主 API'] },
 ];
 
-const coinTransactionsStore = [
-  { id: 1, userId: 1, type: 'recharge', amount: 50000, balance: 99999, description: '充值50000币', createdAt: '2026-06-01T00:00:00Z' },
-  { id: 2, userId: 1, type: 'consume', amount: -100, balance: 99899, description: '使用AI工具消耗', createdAt: '2026-06-10T00:00:00Z' },
-  { id: 3, userId: 2, type: 'recharge', amount: 500, balance: 500, description: '首次充值', createdAt: '2026-06-12T00:00:00Z' },
-];
+const COIN_TRANSACTIONS_FILE = path.join(__dirname, 'data', 'coin_transactions.json');
+function loadCoinTransactionsStore() {
+  try { return JSON.parse(fs.readFileSync(COIN_TRANSACTIONS_FILE, 'utf8')); }
+  catch(e) {
+    return [
+      { id: 1, userId: 1, type: 'recharge', amount: 50000, balance: 99999, description: '充值50000币', createdAt: '2026-06-01T00:00:00Z' },
+      { id: 2, userId: 1, type: 'consume', amount: -100, balance: 99899, description: '使用AI工具消耗', createdAt: '2026-06-10T00:00:00Z' },
+      { id: 3, userId: 2, type: 'recharge', amount: 500, balance: 500, description: '首次充值', createdAt: '2026-06-12T00:00:00Z' },
+    ];
+  }
+}
+function saveCoinTransactionsStore() {
+  try { fs.writeFileSync(COIN_TRANSACTIONS_FILE, JSON.stringify(coinTransactionsStore, null, 2)); }
+  catch(e) { log(`[支付] 写入 coin_transactions.json 失败: ${e.message}`); }
+}
+let coinTransactionsStore = loadCoinTransactionsStore();
+if (!Array.isArray(coinTransactionsStore)) coinTransactionsStore = [];
 
 const paymentOrdersStore = [
   { id: 1, orderNo: 'LSJY20260601001', userId: 1, amount: 129.9, coins: 2000, status: 'completed', payMethod: 'wechat', createdAt: '2026-06-01T10:00:00Z' },
@@ -553,10 +565,22 @@ function saveReferralsStore() {
 
 loadReferralsStore();
 
-const aiHistoryStore = [
-  { id: 1, userId: 1, toolId: 1, toolName: '罗圣AI智能体', input: '你好', output: '你好！我是罗圣AI智能体...', model: 'coze', tokens: 120, createdAt: '2026-06-14T09:00:00Z' },
-  { id: 2, userId: 1, toolId: 2, toolName: '文案创作', input: '帮我写一段产品介绍', output: '这是一个划时代的产品...', model: 'deepseek', tokens: 350, createdAt: '2026-06-14T09:30:00Z' },
-];
+const AI_HISTORY_FILE = path.join(__dirname, 'data', 'ai_history.json');
+function loadAiHistoryStore() {
+  try { return JSON.parse(fs.readFileSync(AI_HISTORY_FILE, 'utf8')); }
+  catch(e) {
+    return [
+      { id: 1, userId: 1, toolId: 1, toolName: '罗圣AI智能体', input: '你好', output: '你好！我是罗圣AI智能体...', model: 'coze', tokens: 120, createdAt: '2026-06-14T09:00:00Z' },
+      { id: 2, userId: 1, toolId: 2, toolName: '文案创作', input: '帮我写一段产品介绍', output: '这是一个划时代的产品...', model: 'deepseek', tokens: 350, createdAt: '2026-06-14T09:30:00Z' },
+    ];
+  }
+}
+function saveAiHistoryStore() {
+  try { fs.writeFileSync(AI_HISTORY_FILE, JSON.stringify(aiHistoryStore, null, 2)); }
+  catch(e) { log(`[AI] 写入 ai_history.json 失败: ${e.message}`); }
+}
+let aiHistoryStore = loadAiHistoryStore();
+if (!Array.isArray(aiHistoryStore)) aiHistoryStore = [];
 
 function isRealAiHistory(record) {
   return record?.source === 'live-generation' || record?.source === 'live-chat' || Number(record?.id) > 100;
@@ -615,6 +639,7 @@ function addAiHistoryRecord(record) {
     ...record,
   };
   aiHistoryStore.unshift(finalRecord);
+  saveAiHistoryStore();
   return finalRecord;
 }
 
@@ -4888,6 +4913,7 @@ app.post('/api/v1/payment/coin/approve/:orderId', authCheck, (req, res) => {
       createdAt: new Date().toISOString(),
     };
     coinTransactionsStore.unshift(txRecord);
+  saveCoinTransactionsStore();
 
     saveRechargeOrders(orders);
     const latestUser = findCurrentUserFileFirst(order.userId).user;
@@ -4918,6 +4944,59 @@ app.get('/api/v1/payment/coin/my-orders', authCheck, (req, res) => {
   const userId = req.user?.id || 1;
   const myOrders = orders.filter(o => o.userId === userId).map(normalizeCoinOrder);
   res.json({ code: 0, message: 'success', data: { items: myOrders, total: myOrders.length } });
+});
+
+// 管理员直接给用户充值圣力（无需订单）
+app.post('/api/v1/admin/users/recharge', authCheck, (req, res) => {
+  const { userId, amount, description = '管理员充值' } = req.body;
+  const coins = Number(amount);
+  if (!userId || isNaN(coins) || coins <= 0) {
+    return res.status(400).json({ code: 400, message: 'userId 和正整数 amount 必填', data: null });
+  }
+  const targetId = Number(userId);
+
+  const usersFile = path.join(__dirname, 'data', 'users.json');
+  let users = [];
+  try {
+    users = JSON.parse(fs.readFileSync(usersFile, 'utf8'));
+  } catch (e) {
+    return res.status(500).json({ code: 500, message: '读取用户数据失败', data: null });
+  }
+
+  const user = users.find(u => Number(u.id) === targetId);
+  if (!user) {
+    return res.status(404).json({ code: 404, message: '用户不存在', data: null });
+  }
+
+  const previousCoins = user.coins || 0;
+  user.coins = previousCoins + coins;
+
+  try {
+    fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
+  } catch (e) {
+    return res.status(500).json({ code: 500, message: '写入用户数据失败', data: null });
+  }
+
+  // 记录交易流水
+  const txRecord = {
+    id: Date.now(),
+    userId: targetId,
+    type: 'recharge',
+    amount: coins,
+    balance: user.coins,
+    description,
+    operator: req.user?.username || 'admin',
+    createdAt: new Date().toISOString(),
+  };
+  coinTransactionsStore.unshift(txRecord);
+  saveCoinTransactionsStore();
+
+  log(`[充值] 管理员 ${req.user?.username || 'admin'} 给用户 ${user.username || targetId} 充值 ${coins} 圣力 (${previousCoins} → ${user.coins})`);
+  res.json({
+    code: 0,
+    message: `已成功为用户 ${user.username || targetId} 充值 ${coins} 圣力`,
+    data: { userId: targetId, username: user.username || '', previousCoins, currentCoins: user.coins, amount: coins }
+  });
 });
 
 function getLegacyPaymentOrders() {
@@ -5046,6 +5125,7 @@ app.post('/api/v1/payment/coin/recharge-legacy', authCheck, (req, res) => {
     createdAt: new Date().toISOString(),
   };
   coinTransactionsStore.unshift(newTx);
+  saveCoinTransactionsStore();
   res.json({
     code: 0, message: 'success',
     data: { orderNo, amount: amount || 0, payMethod: payMethod || 'wechat', status: 'pending', createdAt: newTx.createdAt },

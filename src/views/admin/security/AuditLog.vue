@@ -4,6 +4,6 @@ import {ref,computed} from 'vue'
 const search=ref(''),level=ref('')
 const types=['用户登录失败','API调用异常','权限变更','配置修改','数据导出','批量操作','新设备登录','敏感操作','Token过期','系统警告','安全扫描','自动备份']
 const users=['admin','KF02V9','user_001','user_002','system','bot_ai']
-const logs=ref(Array.from({length:80},(_,i)=>{const d=new Date(Date.now()-Math.random()*6048e5);const lv=['info','warn','error'][Math.floor(Math.random()*3)];const c:Record<string,string>={info:'#00f0ff',warn:'#ffe600',error:'#ff2d95'};return {id:i,title:types[Math.floor(Math.random()*types.length)],detail:users[Math.floor(Math.random()*users.length)]+' @ 192.168.'+Math.floor(Math.random()*255)+'.'+Math.floor(Math.random()*255),time:d.toLocaleString('zh-CN'),level:lv,lc:c[lv]}}))
+const logs=ref(Array.from({length:80},(_,i)=>{const d=new Date(Date.now()-Math.random()*6048e5);const lv=['info','warn','error'][Math.floor(Math.random()*3)];const c:Record<string,string>={info:'#00f0ff',warn:'#ffe600',error:'#00f0ff'};return {id:i,title:types[Math.floor(Math.random()*types.length)],detail:users[Math.floor(Math.random()*users.length)]+' @ 192.168.'+Math.floor(Math.random()*255)+'.'+Math.floor(Math.random()*255),time:d.toLocaleString('zh-CN'),level:lv,lc:c[lv]}}))
 const filtered=computed(()=>logs.value.filter(l=>(!level.value||l.level===level.value)&&(!search.value||l.title.includes(search.value)||l.detail.includes(search.value))))
 </script>

@@ -1,11 +1,11 @@
 <template><div class="space-y-4"><div class="cyber-card rounded-xl p-6"><h2 class="text-xl font-bold mb-4" style="color:#00f0ff">📊 访客统计</h2><p class="text-xs mb-4" style="color:#a0a0cc">访客趋势与来源分析</p><div class="grid grid-cols-2 md:grid-cols-4 gap-4"><div class="rounded-xl p-4" style="background:#0d0d1a;border:1px solid #00f0ff30"><div class="text-xs" style="color:#a0a0cc">今日访客</div><div class="text-2xl font-bold mt-1" style="color:#00f0ff">{{m.val}}</div><div class="text-xs mt-1" style="color:#00ff88">328人</div></div>
-<div class="rounded-xl p-4" style="background:#0d0d1a;border:1px solid #ff2d9530"><div class="text-xs" style="color:#a0a0cc">本周访客</div><div class="text-2xl font-bold mt-1" style="color:#ff2d95">{{m.val}}</div><div class="text-xs mt-1" style="color:#00ff88">1856人</div></div>
+<div class="rounded-xl p-4" style="background:#0d0d1a;border:1px solid #00f0ff30"><div class="text-xs" style="color:#a0a0cc">本周访客</div><div class="text-2xl font-bold mt-1" style="color:#00f0ff">{{m.val}}</div><div class="text-xs mt-1" style="color:#00ff88">1856人</div></div>
 <div class="rounded-xl p-4" style="background:#0d0d1a;border:1px solid #b700ff30"><div class="text-xs" style="color:#a0a0cc">本月访客</div><div class="text-2xl font-bold mt-1" style="color:#b700ff">{{m.val}}</div><div class="text-xs mt-1" style="color:#00ff88">8432人</div></div>
 <div class="rounded-xl p-4" style="background:#0d0d1a;border:1px solid #ffe60030"><div class="text-xs" style="color:#a0a0cc">转化率</div><div class="text-2xl font-bold mt-1" style="color:#ffe600">{{m.val}}</div><div class="text-xs mt-1" style="color:#00ff88">12.3%</div></div>
-</div></div><div class="cyber-card rounded-xl p-6"><h3 class="text-sm font-bold mb-2" style="color:#ff2d95">趋势图</h3><div class="flex items-end gap-1 h-40"><div v-for="(v,i) in cd" :key="i" class="flex-1 rounded-t" :style="{height:v+'%',background:'linear-gradient(180deg,#00f0ff,#b700ff)',minWidth:'6px'}"></div></div></div></div></template>
+</div></div><div class="cyber-card rounded-xl p-6"><h3 class="text-sm font-bold mb-2" style="color:#00f0ff">趋势图</h3><div class="flex items-end gap-1 h-40"><div v-for="(v,i) in cd" :key="i" class="flex-1 rounded-t" :style="{height:v+'%',background:'linear-gradient(180deg,#00f0ff,#b700ff)',minWidth:'6px'}"></div></div></div></div></template>
 <script setup lang="ts">
 import {ref} from 'vue'
-const m:any=[{label:'今日访客',val:'328人',color:'#00f0ff'}, {label:'本周访客',val:'1856人',color:'#ff2d95'}, {label:'本月访客',val:'8432人',color:'#b700ff'}, {label:'转化率',val:'12.3%',color:'#ffe600'}]
+const m:any=[{label:'今日访客',val:'328人',color:'#00f0ff'}, {label:'本周访客',val:'1856人',color:'#00f0ff'}, {label:'本月访客',val:'8432人',color:'#b700ff'}, {label:'转化率',val:'12.3%',color:'#ffe600'}]
 const cd=ref(Array(30).fill(0).map(()=>Math.floor(Math.random()*80+10)))
 const lp=cd.value.map((v,i)=>i*10+','+(100-v)).join(' ')
 </script>

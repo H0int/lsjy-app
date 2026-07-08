@@ -46,9 +46,10 @@
           <span class="text-xs text-gray-400">{{ row.lastLoginAt ? formatDate(row.lastLoginAt) : '从未' }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="150" fixed="right">
+      <el-table-column label="操作" width="200" fixed="right">
         <template #default="{ row }">
           <el-button size="small" link type="primary">编辑</el-button>
+          <el-button size="small" link type="warning" @click="openRecharge(row)">充值</el-button>
           <el-button size="small" link :type="row.status === 'active' ? 'danger' : 'success'"
             @click="handleStatusChange(row)">
             {{ row.status === 'active' ? '冻结' : '解冻' }}
@@ -61,6 +62,18 @@
       <el-pagination layout="total, prev, pager, next" :total="total" :page-size="pageSize"
         @current-change="handlePageChange" />
     </div>
+
+    <el-dialog v-model="rechargeVisible" title="用户充值" width="400px">
+      <div class="space-y-4">
+        <div>用户：{{ rechargeTarget?.nickname }}（@{{ rechargeTarget?.username }}）</div>
+        <div>当前圣力：{{ rechargeTarget?.coins || 0 }}</div>
+        <el-input-number v-model="rechargeAmount" :min="1" :max="1000000" controls-position="right" class="w-full" />
+      </div>
+      <template #footer>
+        <el-button @click="rechargeVisible = false">取消</el-button>
+        <el-button type="primary" @click="confirmRecharge">确认充值</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -120,6 +133,32 @@ async function handleStatusChange(user: User) {
     ElMessage.success('操作成功')
     fetchUsers()
   } catch { /* cancelled */ }
+}
+
+const rechargeVisible = ref(false)
+const rechargeTarget = ref<User | null>(null)
+const rechargeAmount = ref(100)
+
+function openRecharge(user: User) {
+  rechargeTarget.value = user
+  rechargeAmount.value = 100
+  rechargeVisible.value = true
+}
+
+async function confirmRecharge() {
+  if (!rechargeTarget.value || !rechargeAmount.value) return
+  try {
+    const res = await adminApi.rechargeUser(rechargeTarget.value.id, rechargeAmount.value)
+    if (res.code === 0) {
+      ElMessage.success(res.message || '充值成功')
+      rechargeVisible.value = false
+      fetchUsers()
+    } else {
+      ElMessage.error(res.message || '充值失败')
+    }
+  } catch (e: any) {
+    ElMessage.error(e.message || '充值失败')
+  }
 }
 
 onMounted(() => fetchUsers())
