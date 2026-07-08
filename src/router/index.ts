@@ -119,9 +119,9 @@ router.beforeEach((to, _from, next) => {
   }
   if (to.matched.some(r => r.meta.requiresAdmin)) {
     if (!token) return next('/login')
-    // 只有 KF02V9 可以访问管理后台
+    // 仅罗总/管理员账号可访问管理后台
     const authStore = useAuthStore()
-    if (authStore.user?.username !== 'KF02V9') {
+    if (!authStore.isBossAccount) {
       return next('/dashboard')
     }
     return next()
