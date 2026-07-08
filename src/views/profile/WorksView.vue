@@ -2,10 +2,20 @@
   <div class="max-w-6xl mx-auto px-4 py-6 cyber-works">
     <div class="works-head">
       <div>
-        <h1 class="works-title">🎨 我的作品</h1>
-        <p class="works-sub">图文库 / 视频库会自动同步 AI 工具生成结果</p>
+        <h1 class="works-title">🎨 {{ activeTab === 'works' ? '我的作品' : '已用工具' }}</h1>
+        <p class="works-sub">{{ activeTab === 'works' ? '图文库 / 视频库会自动同步 AI 工具生成结果' : '最近使用过的 AI 工具记录' }}</p>
       </div>
-      <button class="works-refresh" :disabled="loading" @click="loadWorks">刷新作品库</button>
+      <button class="works-refresh" :disabled="loading" @click="loadWorks">刷新</button>
+    </div>
+
+    <div class="works-tabs">
+      <button
+        v-for="tab in tabs"
+        :key="tab.key"
+        class="works-tab"
+        :class="{ active: activeTab === tab.key }"
+        @click="switchTab(tab.key)"
+      >{{ tab.label }}</button>
     </div>
 
     <div v-if="loading" class="works-loading">
@@ -13,14 +23,14 @@
       <span>正在加载作品库...</span>
     </div>
 
-    <div v-else-if="works.length === 0" class="works-empty">
+    <div v-else-if="filteredWorks.length === 0" class="works-empty">
       <div class="empty-icon">🗂️</div>
-      <p>暂无作品</p>
-      <router-link to="/tools" class="works-refresh">去 AI 工具生成</router-link>
+      <p>{{ activeTab === 'works' ? '暂无作品' : '暂无已用工具记录' }}</p>
+      <router-link to="/tools" class="works-refresh">去 AI 工具体验</router-link>
     </div>
 
     <div v-else class="works-grid">
-      <article v-for="work in works" :key="work.id" class="work-card">
+      <article v-for="work in filteredWorks" :key="work.id" class="work-card">
         <div class="work-preview">
           <img v-if="isImageWork(work) && firstUrl(work)" :src="firstUrl(work)" alt="AI生成图片" />
           <video v-else-if="isVideoWork(work) && firstUrl(work)" :src="firstUrl(work)" controls />
@@ -52,13 +62,36 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, ref } from 'vue'
+import { onMounted, onBeforeUnmount, ref, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { toolApi } from '@/api'
+
+const route = useRoute()
+const router = useRouter()
 
 const works = ref<any[]>([])
 const loading = ref(false)
 let timer: number | null = null
+
+const tabs = [
+  { key: 'works', label: '生成作品' },
+  { key: 'tools', label: '已用工具' }
+]
+
+const activeTab = ref<string>((route.query.tab as string) || 'works')
+
+const filteredWorks = computed(() => {
+  if (activeTab.value === 'tools') {
+    return works.value.filter(w => w.type === 'tool-call' || w.toolCallId || (!isImageWork(w) && !isVideoWork(w) && !w.outputUrl && !w.outputUrls))
+  }
+  return works.value.filter(w => isImageWork(w) || isVideoWork(w) || w.outputUrl || w.outputUrls || w.outputText)
+})
+
+function switchTab(tab: string) {
+  activeTab.value = tab
+  router.replace({ path: '/profile/works', query: { tab } })
+}
 
 function firstUrl(work: any) {
   return work.outputUrl || work.outputUrls?.[0] || ''
@@ -136,7 +169,10 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .cyber-works { color: var(--cyber-text); }
-.works-head { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 20px; }
+.works-head { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 16px; }
+.works-tabs { display: flex; gap: 12px; margin-bottom: 20px; }
+.works-tab { border: 1px solid rgba(0,240,255,.2); background: rgba(0,240,255,.05); color: var(--cyber-text-dim); padding: 8px 18px; border-radius: 10px; cursor: pointer; font-size: 14px; transition: .2s; }
+.works-tab.active { border-color: var(--cyber-cyan); color: var(--cyber-cyan); background: rgba(0,240,255,.12); box-shadow: 0 0 12px rgba(0,240,255,.2); }
 .works-title { font-size: 24px; font-weight: 800; color: var(--cyber-cyan); text-shadow: 0 0 10px rgba(0,240,255,.35); }
 .works-sub { color: var(--cyber-text-dim); font-size: 13px; margin-top: 4px; }
 .works-refresh, .work-link { border: 1px solid rgba(0,240,255,.28); color: var(--cyber-cyan); background: rgba(0,240,255,.06); padding: 8px 14px; border-radius: 10px; font-size: 13px; cursor: pointer; text-decoration: none; }

@@ -229,8 +229,8 @@ const showGroupQr = ref(false)
 // 统计卡片 - 带跳转路径
 const statCards = ref([
   { icon: '⚡', label: '圣力余额', value: '0', path: '/profile/wallet' },
-  { icon: '🛠️', label: '已用工具', value: '0', path: '/tools' },
-  { icon: '📄', label: '生成作品', value: '0', path: '/tools' },
+  { icon: '🛠️', label: '已用工具', value: '0', path: '/profile/works?tab=tools' },
+  { icon: '📄', label: '生成作品', value: '0', path: '/profile/works?tab=works' },
   { icon: '🎯', label: '会员等级', value: '普通', path: '/profile' },
 ])
 
