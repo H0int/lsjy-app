@@ -4392,24 +4392,23 @@ function renderVisitors() {
 AdminAPI.loadRechargeApps = function() {
   var apiBase = APP.apiBase;
   var xhr = new XMLHttpRequest();
-  xhr.open('GET', apiBase.replace('/api/v1','') + '/api/v1/payment/coin/orders?pageSize=100', true);
+  var url = apiBase.replace('/api/v1','') + '/api/v1/payment/coin/orders?pageSize=100';
+  xhr.open('GET', url, true);
   xhr.setRequestHeader('Content-Type', 'application/json');
   var token = localStorage.getItem('admin_token') || sessionStorage.getItem('lsjy_jwt') || (Store.getToken ? Store.getToken() : '');
   if (token) xhr.setRequestHeader('Authorization', 'Bearer ' + token);
   xhr.onload = function() {
-    if (xhr.status === 200) {
-      try {
-        var res = JSON.parse(xhr.responseText);
-        var orders = (res.data && res.data.orders) ? res.data.orders : (res.data && res.data.items) ? res.data.items : (res.data || []);
-        if (!Array.isArray(orders)) orders = [];
-        var filter = document.getElementById('recharge-status-filter');
-        var status = filter ? filter.value : '';
-        if (status) orders = orders.filter(function(o){ return o.status === status; });
-        AdminAPI._renderRechargeApps(orders);
-      } catch(e) { AdminAPI._renderRechargeAppsLocal(); }
-    } else { AdminAPI._renderRechargeAppsLocal(); }
+    try {
+      var res = JSON.parse(xhr.responseText);
+      var orders = (res.data && res.data.orders) ? res.data.orders : (res.data && res.data.items) ? res.data.items : (res.data || []);
+      if (!Array.isArray(orders)) orders = [];
+      var filter = document.getElementById('recharge-status-filter');
+      var status = filter ? filter.value : '';
+      if (status) orders = orders.filter(function(o){ return o.status === status; });
+      AdminAPI._renderRechargeApps(orders);
+    } catch(e) { console.error('loadRechargeApps error:', e); AdminAPI._renderRechargeAppsLocal(); }
   };
-  xhr.onerror = function() { AdminAPI._renderRechargeAppsLocal(); };
+  xhr.onerror = function() { console.error('loadRechargeApps network error'); AdminAPI._renderRechargeAppsLocal(); };
   xhr.timeout = 15000;
   xhr.ontimeout = function() {
     var tbody = document.getElementById('recharge-apps-body');
