@@ -138,20 +138,45 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { adminApi } from '@/api'
+import { ElMessage } from 'element-plus'
 
-// ===== 实时数据 =====
-const realtimeStats = ref([
-  { icon: '👥', label: '在线用户', value: '3,256', change: 12.5, bgClass: 'bg-blue-500', iconBg: 'bg-blue-100' },
-  { icon: '📝', label: '今日注册', value: '234', change: 8.3, bgClass: 'bg-green-500', iconBg: 'bg-green-100' },
-  { icon: '💰', label: '今日营收', value: '¥18,900', change: 15.2, bgClass: 'bg-amber-500', iconBg: 'bg-amber-100' },
-  { icon: '⚡', label: '圣点消耗', value: '45,600', change: -3.1, bgClass: 'bg-purple-500', iconBg: 'bg-purple-100' },
-])
+// ===== 真实看板数据 =====
+const dashboardLoading = ref(false)
+const dashboardData = ref<any>(null)
+
+function formatValue(val: number | string, prefix = ''): string {
+  const n = Number(val) || 0
+  if (n >= 10000) return prefix + (n / 10000).toFixed(1) + 'w'
+  if (n >= 1000) return prefix + (n / 1000).toFixed(1) + 'k'
+  return prefix + n.toLocaleString('zh-CN')
+}
+
+const realtimeStats = computed(() => {
+  const d = dashboardData.value
+  if (!d) return []
+  const changeMap: Record<string, number> = {
+    '在线用户': d.onlineUsersChange || 0,
+    '今日注册': d.todayRegistrationsChange || 0,
+    '今日营收': d.todayRevenueChange || 0,
+    '圣点消耗': d.energyConsumptionChange || 0,
+  }
+  const list = d.realtimeStats || []
+  return list.map((item: any, idx: number) => {
+    const isRevenue = item.label === '今日营收'
+    return {
+      icon: ['👥', '📝', '💰', '⚡'][idx] || '📊',
+      label: item.label,
+      value: isRevenue ? formatValue(item.value, '¥') : formatValue(item.value),
+      change: changeMap[item.label] || 0,
+      bgClass: item.color ? `bg-[${item.color}]` : 'bg-blue-500',
+      iconBg: ['bg-blue-100', 'bg-green-100', 'bg-amber-100', 'bg-purple-100'][idx] || 'bg-gray-100',
+    }
+  })
+})
 
 // ===== 预警 =====
-const alerts = ref([
-  { type: 'warning' as const, metric: 'API错误率', value: '2.3%', threshold: '<2%', message: 'AI工具调用接口错误率偏高' },
-  { type: 'danger' as const, metric: '支付失败率', value: '5.1%', threshold: '<3%', message: '微信支付通道异常，请关注' },
-])
+const alerts = computed(() => dashboardData.value?.alerts || [])
 
 function alertClass(type: string) {
   return { warning: 'bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 border border-amber-200 dark:border-amber-800', danger: 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800', info: 'bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 border border-blue-200 dark:border-blue-800' }[type] || ''
@@ -161,65 +186,42 @@ function alertClass(type: string) {
 const trendRange = ref('7d')
 const revenueRange = ref('7d')
 
-const trendData = {
-  '7d': {
-    dates: ['07-12', '07-13', '07-14', '07-15', '07-16', '07-17', '07-18'],
-    newUsers: [145, 278, 312, 187, 256, 198, 234],
-    activeUsers: [4890, 5950, 6100, 5210, 5890, 5430, 5620],
-    revenue: [12300, 22100, 25600, 15200, 21300, 16500, 18900],
-  },
-  '30d': {
-    dates: Array.from({ length: 30 }, (_, i) => `06-${String(i + 19 > 30 ? i - 11 : i + 19).padStart(2, '0')}`),
-    newUsers: Array.from({ length: 30 }, () => Math.floor(Math.random() * 200 + 100)),
-    activeUsers: Array.from({ length: 30 }, () => Math.floor(Math.random() * 2000 + 4000)),
-    revenue: Array.from({ length: 30 }, () => Math.floor(Math.random() * 15000 + 10000)),
-  }
+const defaultTrend = {
+  dates: ['07-12', '07-13', '07-14', '07-15', '07-16', '07-17', '07-18'],
+  newUsers: [0, 0, 0, 0, 0, 0, 0],
+  activeUsers: [0, 0, 0, 0, 0, 0, 0],
+  revenue: [0, 0, 0, 0, 0, 0, 0],
 }
 
+const trendData = computed(() => {
+  const d = dashboardData.value?.trend
+  if (!d || !d.dates || d.dates.length === 0) return { '7d': defaultTrend, '30d': defaultTrend }
+  return {
+    '7d': d,
+    '30d': d,
+  }
+})
+
 // ===== 模块数据 =====
-const moduleData = [
-  { name: 'AI工具', users: 12500, revenue: 156000, color: '#6366f1' },
-  { name: '自媒体', users: 8200, revenue: 89000, color: '#8b5cf6' },
-  { name: '电商', users: 6800, revenue: 234000, color: '#f59e0b' },
-  { name: '教育', users: 5400, revenue: 125000, color: '#10b981' },
-  { name: '宠物', users: 3200, revenue: 45000, color: '#ef4444' },
-  { name: '伯雅校园', users: 4100, revenue: 67000, color: '#3b82f6' },
+const defaultModules = [
+  { name: 'AI工具', users: 0, revenue: 0, color: '#6366f1' },
+  { name: '自媒体', users: 0, revenue: 0, color: '#8b5cf6' },
+  { name: '电商', users: 0, revenue: 0, color: '#f59e0b' },
+  { name: '教育', users: 0, revenue: 0, color: '#10b981' },
+  { name: '宠物', users: 0, revenue: 0, color: '#ef4444' },
+  { name: '伯雅校园', users: 0, revenue: 0, color: '#3b82f6' },
 ]
+const moduleData = computed(() => dashboardData.value?.modules || defaultModules)
 
 // ===== 排行榜 =====
-const toolRanking = [
-  { name: 'AI智能写作助手', count: 28560 }, { name: 'AI国画生成器', count: 22340 },
-  { name: 'AI视频脚本生成', count: 18900 }, { name: 'AI代码补全', count: 16780 },
-  { name: 'AI数据分析', count: 14500 }, { name: 'AI翻译大师', count: 12300 },
-  { name: 'AI PPT生成', count: 10890 }, { name: 'AI客服机器人', count: 9650 },
-  { name: 'AI音乐创作', count: 8420 }, { name: 'AILogo设计', count: 7210 },
-]
-const productRanking = [
-  { name: '手工陶瓷茶杯套装', revenue: 45600 }, { name: '有机绿茶礼盒', revenue: 38900 },
-  { name: '智能台灯Pro', revenue: 34200 }, { name: '纯棉四件套', revenue: 28700 },
-  { name: '蓝牙耳机X1', revenue: 25400 }, { name: '手冲咖啡套装', revenue: 22100 },
-  { name: '真丝围巾', revenue: 19800 }, { name: '竹制收纳盒', revenue: 17500 },
-  { name: '植物精油套装', revenue: 15200 }, { name: '文创笔记本', revenue: 12900 },
-]
-const courseRanking = [
-  { name: 'Python从入门到精通', students: 3456 }, { name: '电商运营实战课', students: 2890 },
-  { name: 'AI绘画零基础教程', students: 2560 }, { name: '短视频剪辑大师', students: 2340 },
-  { name: '自媒体写作变现', students: 2100 }, { name: '前端开发全栈', students: 1890 },
-  { name: '宠物养护指南', students: 1650 }, { name: '英语口语突破', students: 1420 },
-  { name: '数据分析入门', students: 1230 }, { name: '创业基础课', students: 980 },
-]
+const toolRanking = computed(() => dashboardData.value?.topTools || [])
+const productRanking = computed(() => dashboardData.value?.topProducts || [])
+const courseRanking = computed(() => dashboardData.value?.topCourses || [])
 
 const maxToolCount = computed(() => Math.max(...toolRanking.map(r => r.count)))
 
 // ===== 日志 =====
-const recentLogs = [
-  { id: 1, type: 'user', module: '用户管理', action: '冻结异常用户 user_1234', operator: '管理员', time: '14:30' },
-  { id: 2, type: 'order', module: '订单管理', action: '处理退款申请 TK20250718003', operator: '客服小王', time: '14:15' },
-  { id: 3, type: 'tool', module: '工具管理', action: '上线新工具 "AI思维导图"', operator: '管理员', time: '13:50' },
-  { id: 4, type: 'content', module: '内容审核', action: '审核通过课程内容 5 条', operator: '审核员小李', time: '13:20' },
-  { id: 5, type: 'system', module: '系统', action: '自动备份完成，数据量 2.3GB', operator: '系统', time: '12:00' },
-  { id: 6, type: 'order', module: '订单管理', action: '异常支付告警 - 微信支付通道', operator: '系统', time: '11:45' },
-]
+const recentLogs = computed(() => dashboardData.value?.recentLogs || [])
 
 function logTypeClass(type: string) {
   return { user: 'bg-blue-100 text-blue-700', order: 'bg-amber-100 text-amber-700', tool: 'bg-purple-100 text-purple-700', content: 'bg-green-100 text-green-700', system: 'bg-gray-100 text-gray-600' }[type] || ''
@@ -254,7 +256,7 @@ function initCharts() {
   // 用户增长曲线
   if (userChartRef.value) {
     const chart = echarts.init(userChartRef.value)
-    const d = trendData[trendRange.value as keyof typeof trendData]
+    const d = trendData.value[trendRange.value as keyof typeof trendData.value]
     chart.setOption({
       tooltip: { trigger: 'axis' },
       grid: { top: 20, right: 20, bottom: 30, left: 50 },
@@ -271,7 +273,7 @@ function initCharts() {
   // 营收趋势
   if (revenueChartRef.value) {
     const chart = echarts.init(revenueChartRef.value)
-    const d = trendData[revenueRange.value as keyof typeof trendData]
+    const d = trendData.value[revenueRange.value as keyof typeof trendData.value]
     chart.setOption({
       tooltip: { trigger: 'axis', formatter: '{b}<br/>营收: ¥{c}' },
       grid: { top: 20, right: 20, bottom: 30, left: 60 },
@@ -326,6 +328,24 @@ function renderFallbackCharts() {
 
 function resizeCharts() { charts.forEach(c => c?.resize()) }
 
+async function loadDashboard() {
+  dashboardLoading.value = true
+  try {
+    const res = await adminApi.getDashboard()
+    if (res.code === 0 && res.data) {
+      dashboardData.value = res.data
+      await nextTick()
+      initCharts()
+    } else {
+      ElMessage.error(res.message || '加载看板数据失败')
+    }
+  } catch (e: any) {
+    ElMessage.error(e?.message || '加载看板数据失败')
+  } finally {
+    dashboardLoading.value = false
+  }
+}
+
 onMounted(async () => {
   // 尝试动态加载 ECharts
   if (!(window as any).echarts) {
@@ -339,8 +359,7 @@ onMounted(async () => {
       })
     } catch { /* ECharts 不可用，使用降级 */ }
   }
-  await nextTick()
-  initCharts()
+  await loadDashboard()
   window.addEventListener('resize', resizeCharts)
 })
 

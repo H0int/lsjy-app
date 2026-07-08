@@ -139,6 +139,9 @@ export const adminApi = {
   getLogs(params?: { module?: string; page?: number; pageSize?: number }): Promise<ApiResponse<PageResult<any>>> {
     return service.get('/system/logs', { params }).then(r => r.data)
   },
+  getDashboard(): Promise<ApiResponse<any>> {
+    return service.get('/admin/dashboard').then(r => r.data)
+  },
   getRoles(): Promise<ApiResponse<any[]>> {
     return service.get('/roles').then(r => r.data)
   },

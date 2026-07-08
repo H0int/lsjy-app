@@ -5914,6 +5914,23 @@ app.get('/api/v1/admin/dashboard', authCheck, (req, res) => {
     .sort((a, b) => b.revenue - a.revenue)
     .slice(0, 10);
 
+  // ===== Top10 热门课程 =====
+  const courseSales = {};
+  allOrders.filter(o => {
+    const name = (o.productName || o.goodsName || o.source || '').toLowerCase();
+    const type = (o.type || o.category || '').toLowerCase();
+    return name.includes('课程') || name.includes('教程') || name.includes('课') || type.includes('course') || type.includes('education');
+  }).forEach(o => {
+    const name = o.productName || o.goodsName || o.source || '未知课程';
+    if (!courseSales[name]) courseSales[name] = { name, students: 0, revenue: 0 };
+    courseSales[name].students += o.quantity || 1;
+    courseSales[name].revenue += o.amount || 0;
+  });
+  const topCourses = Object.values(courseSales)
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, 10)
+    .map(c => ({ name: c.name, students: c.students }));
+
   // ===== 其他指标 =====
   const openTickets = ticketsStore.filter(t => t.status === 'open').length;
   const knowledgeCount = readJSON(path.join(dataDir, 'knowledge_base.json'), []).length;
@@ -5970,6 +5987,7 @@ app.get('/api/v1/admin/dashboard', authCheck, (req, res) => {
     // 排行榜
     topTools,
     topProducts,
+    topCourses,
     // 百分比变化（与昨日对比）
     onlineUsersChange: yOnline > 0 ? parseFloat(((onlineUsers / yOnline - 1) * 100).toFixed(1)) : 0,
     todayRegistrationsChange: yReg > 0 ? parseFloat(((todayRegistrations / yReg - 1) * 100).toFixed(1)) : (todayRegistrations > 0 ? 100 : 0),
