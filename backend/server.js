@@ -4501,15 +4501,29 @@ app.post('/api/v1/payment/admin/coins/set-balance', authCheck, (req, res) => {
   }
 
   const before = Number(user.coins || 0);
+  const clearBenefits = req.body?.clearBenefits !== false && balance === 0;
+  const applyZeroState = target => {
+    target.coins = balance;
+    if (clearBenefits) {
+      target.totalRecharge = 0;
+      target.unlimited = false;
+      target.subscriptionTier = '';
+      target.subscriptionName = '';
+      target.subscriptionDailyCoins = 0;
+      target.subscriptionExpiresAt = null;
+      target.lastDailyGrantAt = null;
+    }
+    return target;
+  };
   if (found.source === 'file') {
     const idx = users.findIndex(u => Number(u.id) === targetUserId);
     if (idx < 0) return res.status(404).json({ code: 404, message: '用户文件记录不存在', data: null });
-    users[idx].coins = balance;
+    applyZeroState(users[idx]);
     saveFileUsers(users);
   } else {
     const idx = usersStore.findIndex(u => Number(u.id) === targetUserId);
     if (idx < 0) return res.status(404).json({ code: 404, message: '用户记录不存在', data: null });
-    usersStore[idx].coins = balance;
+    applyZeroState(usersStore[idx]);
   }
 
   coinTransactionsStore.unshift({
@@ -4527,7 +4541,7 @@ app.post('/api/v1/payment/admin/coins/set-balance', authCheck, (req, res) => {
   res.json({
     code: 0,
     message: '圣力余额已更新',
-    data: { account: { userId: targetUserId, balance, before }, delta: balance - before },
+    data: { account: { userId: targetUserId, balance, before, clearBenefits }, delta: balance - before },
   });
 });
 
