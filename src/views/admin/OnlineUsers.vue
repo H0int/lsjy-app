@@ -19,7 +19,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { service } from '@/api/request'
+import { adminApi } from '@/api'
 import { formatDate } from '@/utils'
 
 const loading = ref(false)
@@ -28,7 +28,7 @@ const list = ref<any[]>([])
 async function loadData() {
   loading.value = true
   try {
-    const res = await service.get('/admin/online-users')
+    const res = await adminApi.getOnlineUsers()
     list.value = res.data?.data?.list || res.data?.list || []
   } catch (e: any) {
     ElMessage.error(e.message || '加载失败')

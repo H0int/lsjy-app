@@ -21,7 +21,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { service } from '@/api/request'
+import { adminApi } from '@/api'
 
 const loading = ref(false)
 const list = ref<any[]>([])
@@ -29,7 +29,7 @@ const list = ref<any[]>([])
 async function loadData() {
   loading.value = true
   try {
-    const res = await service.get('/agents')
+    const res = await adminApi.getAgents()
     list.value = res.data?.data || res.data || []
   } catch (e: any) {
     ElMessage.error(e.message || '加载失败')

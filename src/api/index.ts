@@ -163,6 +163,18 @@ export const adminApi = {
   getRechargeOrders(params?: { page?: number; pageSize?: number; status?: string }): Promise<ApiResponse<any>> {
     return service.get('/payment/coin/orders', { params }).then(r => r.data)
   },
+  approveOrder(orderId: number): Promise<ApiResponse<any>> {
+    return service.post(`/payment/coin/approve/${orderId}`).then(r => r.data)
+  },
+  rejectOrder(orderId: number, reason?: string): Promise<ApiResponse<any>> {
+    return service.post(`/payment/coin/reject/${orderId}`, { reason }).then(r => r.data)
+  },
+  getOnlineUsers(): Promise<ApiResponse<any>> {
+    return service.get('/admin/online-users').then(r => r.data)
+  },
+  getAgents(): Promise<ApiResponse<any>> {
+    return service.get('/agents').then(r => r.data)
+  },
   getRoles(): Promise<ApiResponse<any[]>> {
     return service.get('/roles').then(r => r.data)
   },
