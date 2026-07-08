@@ -175,6 +175,27 @@ export const adminApi = {
   getAgents(): Promise<ApiResponse<any>> {
     return service.get('/agents').then(r => r.data)
   },
+  getUserTags(): Promise<ApiResponse<any[]>> {
+    return service.get('/admin/user-tags').then(r => r.data)
+  },
+  createUserTag(data: any): Promise<ApiResponse<any>> {
+    return service.post('/admin/user-tags', data).then(r => r.data)
+  },
+  updateUserTag(id: string, data: any): Promise<ApiResponse<any>> {
+    return service.put(`/admin/user-tags/${id}`, data).then(r => r.data)
+  },
+  deleteUserTag(id: string): Promise<ApiResponse<any>> {
+    return service.delete(`/admin/user-tags/${id}`).then(r => r.data)
+  },
+  getBlacklist(): Promise<ApiResponse<any[]>> {
+    return service.get('/admin/blacklist').then(r => r.data)
+  },
+  createBlacklist(data: any): Promise<ApiResponse<any>> {
+    return service.post('/admin/blacklist', data).then(r => r.data)
+  },
+  deleteBlacklist(id: string): Promise<ApiResponse<any>> {
+    return service.delete(`/admin/blacklist/${id}`).then(r => r.data)
+  },
   getRoles(): Promise<ApiResponse<any[]>> {
     return service.get('/roles').then(r => r.data)
   },

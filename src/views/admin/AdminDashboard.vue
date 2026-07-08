@@ -140,7 +140,6 @@
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { adminApi } from '@/api'
 import { ElMessage } from 'element-plus'
-import * as echarts from 'echarts'
 
 // ===== 真实看板数据 =====
 const dashboardLoading = ref(false)
@@ -263,7 +262,7 @@ function emptyGraphic(text: string = '暂无数据') {
 }
 
 function initCharts() {
-  // echarts 已作为 npm 依赖打包导入
+  const echarts = (window as any).echarts
   if (!echarts) {
     renderFallbackCharts()
     return
@@ -378,6 +377,19 @@ async function loadDashboard() {
 }
 
 onMounted(async () => {
+  // 异步加载 ECharts CDN，带 3 秒超时，不影响数据加载
+  if (!(window as any).echarts) {
+    Promise.race([
+      new Promise<void>((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = 'https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js'
+        script.onload = () => resolve()
+        script.onerror = () => reject()
+        document.head.appendChild(script)
+      }),
+      new Promise<void>((_, reject) => setTimeout(reject, 3000))
+    ]).catch(() => { /* 图表降级 */ })
+  }
   await loadDashboard()
   window.addEventListener('resize', resizeCharts)
 })

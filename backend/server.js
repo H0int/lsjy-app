@@ -5936,6 +5936,73 @@ app.get('/api/v1/admin/system-stats', authCheck, (req, res) => {
   });
 });
 
+
+// ===== 用户标签管理 =====
+const USER_TAGS_FILE = path.join(__dirname, 'data', 'user_tags.json');
+function loadUserTags() {
+  try { return JSON.parse(fs.readFileSync(USER_TAGS_FILE, 'utf8')); }
+  catch(e) { return []; }
+}
+function saveUserTags(list) {
+  fs.writeFileSync(USER_TAGS_FILE, JSON.stringify(list, null, 2));
+}
+
+app.get('/api/v1/admin/user-tags', authCheck, (req, res) => {
+  res.json({ code: 0, message: 'success', data: loadUserTags() });
+});
+app.post('/api/v1/admin/user-tags', authCheck, (req, res) => {
+  const { name, color = '#00f0ff', description = '' } = req.body || {};
+  if (!name) return res.status(400).json({ code: 400, message: '标签名称不能为空' });
+  const list = loadUserTags();
+  const tag = { id: Date.now().toString(36), name, color, description, createdAt: new Date().toISOString() };
+  list.push(tag);
+  saveUserTags(list);
+  res.json({ code: 0, message: 'success', data: tag });
+});
+app.put('/api/v1/admin/user-tags/:id', authCheck, (req, res) => {
+  const list = loadUserTags();
+  const idx = list.findIndex(t => t.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ code: 404, message: '标签不存在' });
+  Object.assign(list[idx], req.body || {});
+  saveUserTags(list);
+  res.json({ code: 0, message: 'success', data: list[idx] });
+});
+app.delete('/api/v1/admin/user-tags/:id', authCheck, (req, res) => {
+  let list = loadUserTags();
+  list = list.filter(t => t.id !== req.params.id);
+  saveUserTags(list);
+  res.json({ code: 0, message: 'success' });
+});
+
+// ===== 黑名单管理 =====
+const BLACKLIST_FILE = path.join(__dirname, 'data', 'blacklist.json');
+function loadBlacklist() {
+  try { return JSON.parse(fs.readFileSync(BLACKLIST_FILE, 'utf8')); }
+  catch(e) { return []; }
+}
+function saveBlacklist(list) {
+  fs.writeFileSync(BLACKLIST_FILE, JSON.stringify(list, null, 2));
+}
+
+app.get('/api/v1/admin/blacklist', authCheck, (req, res) => {
+  res.json({ code: 0, message: 'success', data: loadBlacklist() });
+});
+app.post('/api/v1/admin/blacklist', authCheck, (req, res) => {
+  const { username, ip, reason = '' } = req.body || {};
+  if (!username && !ip) return res.status(400).json({ code: 400, message: '用户名或IP至少填一个' });
+  const list = loadBlacklist();
+  const item = { id: Date.now().toString(36), username: username || '', ip: ip || '', reason, operator: req.user?.username || 'admin', createdAt: new Date().toISOString() };
+  list.unshift(item);
+  saveBlacklist(list);
+  res.json({ code: 0, message: 'success', data: item });
+});
+app.delete('/api/v1/admin/blacklist/:id', authCheck, (req, res) => {
+  let list = loadBlacklist();
+  list = list.filter(item => item.id !== req.params.id);
+  saveBlacklist(list);
+  res.json({ code: 0, message: 'success' });
+});
+
 // ===== 管理看板（综合数据 - 全部从真实数据文件读取） =====
 function readJSON(filePath, fallback) { try { return JSON.parse(fs.readFileSync(filePath, 'utf8')); } catch(e) { return fallback; } }
 
