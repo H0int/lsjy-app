@@ -187,6 +187,12 @@ export const adminApi = {
   getCommissions(): Promise<ApiResponse<any>> {
     return service.get('/admin/commissions').then(r => r.data)
   },
+  getOperationLogs(params?: any): Promise<ApiResponse<any>> {
+    return service.get('/admin/system-logs', { params }).then(r => r.data)
+  },
+  getLoginHistory(params?: any): Promise<ApiResponse<any>> {
+    return service.get('/admin/login-history', { params }).then(r => r.data)
+  },
   approveOrder(orderId: number): Promise<ApiResponse<any>> {
     return service.post(`/payment/coin/approve/${orderId}`).then(r => r.data)
   },

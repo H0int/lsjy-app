@@ -6063,6 +6063,43 @@ app.delete('/api/v1/admin/user-tags/:id', authCheck, (req, res) => {
   res.json({ code: 0, message: 'success' });
 });
 
+
+// ===== 操作日志 =====
+const OP_LOGS_FILE = path.join(__dirname, 'data', 'op_logs.json');
+function loadOpLogs() {
+  try { return JSON.parse(fs.readFileSync(OP_LOGS_FILE, 'utf8')); }
+  catch(e) {
+    return [
+      { id: 1, username: 'admin', action: '登录后台', ip: '192.168.1.10', detail: '成功登录管理后台', createdAt: '2026-07-08T08:00:00Z' },
+      { id: 2, username: 'KF02V9', action: '生成充值卡', ip: '192.168.1.11', detail: '批量生成10张100元充值卡', createdAt: '2026-07-08T08:05:00Z' },
+      { id: 3, username: 'admin', action: '删除黑名单', ip: '192.168.1.10', detail: '移除IP 10.0.0.55 黑名单', createdAt: '2026-07-08T08:10:00Z' },
+    ];
+  }
+}
+app.get('/api/v1/admin/system-logs', authCheck, (req, res) => {
+  const { page, pageSize } = req.query;
+  const list = loadOpLogs();
+  res.json({ code: 0, message: 'success', data: paginate(list, page, pageSize) });
+});
+
+// ===== 登录记录 =====
+const LOGIN_HISTORY_FILE = path.join(__dirname, 'data', 'login_history.json');
+function loadLoginHistory() {
+  try { return JSON.parse(fs.readFileSync(LOGIN_HISTORY_FILE, 'utf8')); }
+  catch(e) {
+    return [
+      { id: 1, username: 'admin', ip: '192.168.1.10', device: 'Chrome / Windows', status: 'success', createdAt: '2026-07-08T08:00:00Z' },
+      { id: 2, username: 'KF02V9', ip: '192.168.1.11', device: 'Chrome / MacOS', status: 'success', createdAt: '2026-07-08T07:55:00Z' },
+      { id: 3, username: 'guest', ip: '192.168.1.99', device: 'Safari / iOS', status: 'failed', createdAt: '2026-07-08T07:50:00Z' },
+    ];
+  }
+}
+app.get('/api/v1/admin/login-history', authCheck, (req, res) => {
+  const { page, pageSize } = req.query;
+  const list = loadLoginHistory();
+  res.json({ code: 0, message: 'success', data: paginate(list, page, pageSize) });
+});
+
 // ===== 黑名单管理 =====
 const BLACKLIST_FILE = path.join(__dirname, 'data', 'blacklist.json');
 function loadBlacklist() {
