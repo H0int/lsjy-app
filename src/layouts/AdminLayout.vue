@@ -23,7 +23,7 @@
             <router-link v-for="item in group.items" :key="item.path" :to="item.path"
               class="flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs transition-all my-0.5"
               :style="route.path===item.path?'background:#00f0ff18;color:#00f0ff;border-left:2px solid #00f0ff;padding-left:10px;':'color:#808099;border-left:2px solid transparent;padding-left:10px;'"
-              @click="isMobile && (sidebarOpen = false)">
+              @click="handleNav(item.path)">
               <span class="text-sm w-5 text-center">{{item.icon}}</span><span>{{item.label}}</span>
             </router-link>
           </div>
@@ -79,6 +79,7 @@ async function fetchSysStats(){
 }
 onMounted(()=>{checkMobile();window.addEventListener('resize',checkMobile);fetchSysStats();const t=setInterval(fetchSysStats,30000);onUnmounted(()=>clearInterval(t))})
 function checkMobile(){isMobile.value=window.innerWidth<768;if(!isMobile.value)sidebarOpen.value=false}
+function handleNav(path:string){router.push(path);if(isMobile.value)sidebarOpen.value=false}
 
 const menuGroups=[
   {label:'概览',icon:'📊',items:[

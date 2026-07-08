@@ -7969,8 +7969,22 @@ function loadModelConfigs() {
     return [
       { id: 1, name: 'DeepSeek-V3', provider: 'deepseek', model: 'deepseek-chat', temperature: 0.7, maxTokens: 4096, coinCost: 5, status: 'active', description: '通用对话模型' },
       { id: 2, name: 'DeepSeek-R1', provider: 'deepseek', model: 'deepseek-reasoner', temperature: 0.7, maxTokens: 4096, coinCost: 10, status: 'active', description: '推理模型' },
-      { id: 3, name: 'GPT-4o', provider: 'openai', model: 'gpt-4o', temperature: 0.7, maxTokens: 4096, coinCost: 20, status: 'inactive', description: 'OpenAI 多模态模型' },
-      { id: 4, name: 'Claude 3.5', provider: 'anthropic', model: 'claude-3-5-sonnet', temperature: 0.7, maxTokens: 4096, coinCost: 18, status: 'inactive', description: 'Anthropic 对话模型' },
+      { id: 3, name: 'DeepSeek-V2.5', provider: 'deepseek', model: 'deepseek-chat-v2.5', temperature: 0.7, maxTokens: 8192, coinCost: 4, status: 'active', description: 'DeepSeek 上一代对话模型' },
+      { id: 4, name: 'GPT-4o', provider: 'openai', model: 'gpt-4o', temperature: 0.7, maxTokens: 4096, coinCost: 20, status: 'inactive', description: 'OpenAI 多模态模型' },
+      { id: 5, name: 'GPT-4o-mini', provider: 'openai', model: 'gpt-4o-mini', temperature: 0.7, maxTokens: 4096, coinCost: 8, status: 'active', description: 'OpenAI 轻量模型' },
+      { id: 6, name: 'Claude 3.5 Sonnet', provider: 'anthropic', model: 'claude-3-5-sonnet', temperature: 0.7, maxTokens: 4096, coinCost: 18, status: 'inactive', description: 'Anthropic 对话模型' },
+      { id: 7, name: 'Claude 3 Haiku', provider: 'anthropic', model: 'claude-3-haiku', temperature: 0.7, maxTokens: 4096, coinCost: 10, status: 'active', description: 'Anthropic 轻量模型' },
+      { id: 8, name: '豆包-Pro', provider: 'doubao', model: 'doubao-pro-4k', temperature: 0.7, maxTokens: 4096, coinCost: 3, status: 'active', description: '字节豆包专业版' },
+      { id: 9, name: '豆包-Lite', provider: 'doubao', model: 'doubao-lite-4k', temperature: 0.7, maxTokens: 4096, coinCost: 1, status: 'active', description: '字节豆包轻量版' },
+      { id: 10, name: 'Kimi-K1', provider: 'moonshot', model: 'kimi-k1', temperature: 0.7, maxTokens: 8192, coinCost: 6, status: 'active', description: '月之暗面推理模型' },
+      { id: 11, name: 'Kimi-Moonshot', provider: 'moonshot', model: 'moonshot-v1-8k', temperature: 0.7, maxTokens: 8192, coinCost: 5, status: 'active', description: '月之暗面对话模型' },
+      { id: 12, name: '通义千问-Max', provider: 'qwen', model: 'qwen-max', temperature: 0.7, maxTokens: 4096, coinCost: 4, status: 'active', description: '阿里通义千问旗舰版' },
+      { id: 13, name: '通义千问-Turbo', provider: 'qwen', model: 'qwen-turbo', temperature: 0.7, maxTokens: 4096, coinCost: 2, status: 'active', description: '阿里通义千问轻量版' },
+      { id: 14, name: '文心一言-4', provider: 'wenxin', model: 'ernie-4.0', temperature: 0.7, maxTokens: 4096, coinCost: 5, status: 'active', description: '百度文心一言' },
+      { id: 15, name: '星火大模型', provider: 'spark', model: 'spark-v3.5', temperature: 0.7, maxTokens: 4096, coinCost: 4, status: 'active', description: '讯飞星火' },
+      { id: 16, name: 'Gemini-Pro', provider: 'google', model: 'gemini-pro', temperature: 0.7, maxTokens: 4096, coinCost: 15, status: 'inactive', description: 'Google Gemini' },
+      { id: 17, name: 'Llama-3-70B', provider: 'meta', model: 'llama-3-70b', temperature: 0.7, maxTokens: 4096, coinCost: 12, status: 'inactive', description: 'Meta 开源大模型' },
+      { id: 18, name: 'Stable-Diffusion-XL', provider: 'stability', model: 'sd-xl', temperature: 0.7, maxTokens: 1024, coinCost: 25, status: 'active', description: 'Stability AI 图像模型' },
     ];
   }
 }
