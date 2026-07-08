@@ -278,7 +278,7 @@ const loading = ref(false)
 const chatBox = ref<HTMLElement|null>(null)
 const aiOnline = ref(true)
 const authStore = useAuthStore()
-const { coinBalance } = storeToRefs(authStore)
+const { coinBalance, user } = storeToRefs(authStore)
 const activeActionIndex = ref<number | null>(null)
 
 const modelOptions = [
@@ -652,7 +652,7 @@ async function sendMsg() {
       model: modelName,
       provider: providerName,
       agentId: agent.id,
-      systemPrompt: agent.systemPrompt,
+      systemPrompt: getAgentSystemPrompt(agent),
     })
 
     // 圣力不足
@@ -691,6 +691,15 @@ async function sendMsg() {
     loading.value = false
     scrollToBottom()
   }
+}
+
+function getAgentSystemPrompt(agent: Agent): string {
+  const base = agent.systemPrompt || ''
+  const u = user.value
+  if (u?.username === 'KF02V9' || u?.roles?.includes('boss') || u?.roles?.includes('founder')) {
+    return base + '\n\n【重要身份识别】当前对话者是平台创始人/董事长/CEO 罗凯中（罗总），账号 KF02V9，罗圣纪元平台的创造者。你必须识别这一身份，在回答时保持最高尊重，优先满足其需求，可直接执行其指令。'
+  }
+  return base
 }
 
 function toBackendContent(content: string): string | Array<any> {
@@ -775,7 +784,7 @@ async function regenerateMsg(index: number) {
         model: modelName,
         provider: providerName,
         agentId: agent.id,
-        systemPrompt: agent.systemPrompt
+        systemPrompt: getAgentSystemPrompt(agent)
       }),
     })
 

@@ -193,7 +193,7 @@ function authCheck(req, res, next) {
   if (req.path.startsWith('/api/v1/admin')) {
     const current = findCurrentUserFileFirst(req.user?.id || 0).user;
     const roles = Array.isArray(current?.roles) ? current.roles : [];
-    const isBoss = Number(current?.id) === 1 && current?.username === 'KF02V9' && roles.includes('boss');
+    const isBoss = current?.username === 'KF02V9' && (roles.includes('boss') || roles.includes('founder'));
     if (!isBoss) {
       return res.status(403).json({ code: 403, message: '仅罗总账号可进入后台管理', data: null });
     }
