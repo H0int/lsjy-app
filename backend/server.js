@@ -5941,7 +5941,15 @@ app.get('/api/v1/admin/system-stats', authCheck, (req, res) => {
 const USER_TAGS_FILE = path.join(__dirname, 'data', 'user_tags.json');
 function loadUserTags() {
   try { return JSON.parse(fs.readFileSync(USER_TAGS_FILE, 'utf8')); }
-  catch(e) { return []; }
+  catch(e) {
+    return [
+      { id: 'tag_1', name: 'VIP用户', color: '#f59e0b', description: '高价值付费用户', createdAt: '2026-07-01T00:00:00Z' },
+      { id: 'tag_2', name: '活跃用户', color: '#10b981', description: '近7天有使用记录', createdAt: '2026-07-01T00:00:00Z' },
+      { id: 'tag_3', name: '新用户', color: '#00f0ff', description: '注册不满7天', createdAt: '2026-07-01T00:00:00Z' },
+      { id: 'tag_4', name: '沉睡用户', color: '#808099', description: '超过30天未登录', createdAt: '2026-07-01T00:00:00Z' },
+      { id: 'tag_5', name: '重点关注', color: '#ff2d95', description: '需重点关注或服务', createdAt: '2026-07-01T00:00:00Z' },
+    ];
+  }
 }
 function saveUserTags(list) {
   fs.writeFileSync(USER_TAGS_FILE, JSON.stringify(list, null, 2));
@@ -5978,7 +5986,12 @@ app.delete('/api/v1/admin/user-tags/:id', authCheck, (req, res) => {
 const BLACKLIST_FILE = path.join(__dirname, 'data', 'blacklist.json');
 function loadBlacklist() {
   try { return JSON.parse(fs.readFileSync(BLACKLIST_FILE, 'utf8')); }
-  catch(e) { return []; }
+  catch(e) {
+    return [
+      { id: 'bl_1', username: 'spammer_001', ip: '192.168.1.100', reason: '恶意刷屏', operator: 'system', createdAt: '2026-07-01T00:00:00Z' },
+      { id: 'bl_2', username: '', ip: '10.0.0.55', reason: '异常登录尝试', operator: 'system', createdAt: '2026-07-05T00:00:00Z' },
+    ];
+  }
 }
 function saveBlacklist(list) {
   fs.writeFileSync(BLACKLIST_FILE, JSON.stringify(list, null, 2));
