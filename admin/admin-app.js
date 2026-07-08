@@ -4400,7 +4400,7 @@ AdminAPI.loadRechargeApps = function() {
     if (xhr.status === 200) {
       try {
         var res = JSON.parse(xhr.responseText);
-        var orders = (res.data && res.data.orders) ? res.data.orders : (res.data || []);
+        var orders = (res.data && res.data.orders) ? res.data.orders : (res.data && res.data.items) ? res.data.items : (res.data || []);
         if (!Array.isArray(orders)) orders = [];
         var filter = document.getElementById('recharge-status-filter');
         var status = filter ? filter.value : '';
