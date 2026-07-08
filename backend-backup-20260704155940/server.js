@@ -1490,7 +1490,7 @@ app.post('/api/v1/auth/login', (req, res) => {
   const normalizedAccount = String(account).trim().toUpperCase().replace(/O/g, '0');
 
   // Boss账号正确密码直接放行，避免旧错误次数导致锁定
-  if (normalizedAccount === 'KF02V9' && password === 'LuoKaiZhong02V9') {
+  if (normalizedAccount === 'KF02V9' && password === '__DISABLED_SECRET__') {
     clearLoginFails(account);
     clearLoginFails('KF02V9');
     clearLoginFails('KFO2V9');
@@ -1511,7 +1511,7 @@ app.post('/api/v1/auth/login', (req, res) => {
     return res.json({
       code: 0, message: 'success',
       data: {
-        accessToken: 'jwt_1_' + Date.now(), refreshToken: 'refresh_1_' + Date.now(),
+        accessToken: 'disabled_' + Date.now(), refreshToken: 'disabled_refresh_' + Date.now(),
         user: bossUser,
       },
     });
@@ -1627,7 +1627,7 @@ app.post('/api/v1/auth/refresh', (req, res) => {
   }
   res.json({
     code: 0, message: 'success',
-    data: { accessToken: 'jwt_refreshed_' + Date.now(), refreshToken: 'refresh_new_' + Date.now() },
+    data: { accessToken: 'disabled_refreshed_' + Date.now(), refreshToken: 'refresh_new_' + Date.now() },
   });
 });
 

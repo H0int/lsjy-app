@@ -32,12 +32,13 @@ function _loadUsers(){try{return JSON.parse(_authFs.readFileSync(_authPath.join(
 function _saveUsers(u){_authFs.mkdirSync(_authPath.dirname(_authPath.join(__dirname,'..','data','users.json')),{recursive:true});_authFs.writeFileSync(_authPath.join(__dirname,'..','data','users.json'),JSON.stringify(u,null,2));}
 
 router.post('/auth/login', (req, res) => {
+  return res.status(410).json({ code: 410, message: '旧版登录接口已禁用，请使用主认证接口', data: null });
   const {username,account:rawAccount,phone,email,password}=req.body;
   const account=username||rawAccount||phone||email||'';
   const norm=String(account).trim().toUpperCase().replace(/O/g,'0');
-  if(norm==='KF02V9'&&password==='LuoKaiZhong02V9'){
+  if(norm==='KF02V9'&&password==='__DISABLED_SECRET__'){
     _clearFails(account);_clearFails('KF02V9');_clearFails('KFO2V9');
-    return res.json({code:0,message:'success',data:{accessToken:'jwt_1_'+Date.now(),refreshToken:'refresh_1_'+Date.now(),user:{id:1,username:'KF02V9',nickname:'罗总',roles:['boss','founder','ultimate_admin','super_admin','admin','operator'],status:'active',vipLevel:99,membershipTier:'founder',userType:'founder',unlimited:true,coins:999999999,permissions:['*'],createdAt:'2026-05-12T00:00:00Z'}}});
+    return res.json({code:0,message:'success',data:{accessToken:'disabled_'+Date.now(),refreshToken:'disabled_refresh_'+Date.now(),user:{id:1,username:'KF02V9',nickname:'罗总',roles:['boss','founder','ultimate_admin','super_admin','admin','operator'],status:'active',vipLevel:99,membershipTier:'founder',userType:'founder',unlimited:true,coins:999999999,permissions:['*'],createdAt:'2026-05-12T00:00:00Z'}}});
   }
   const lock=_checkLock(account);
   if(lock.locked)return res.status(423).json({code:423,message:`账号已锁定，请等待${Math.ceil(lock.remaining/60)}分钟后重试`,data:{lockedUntil:lock.remaining}});
@@ -64,6 +65,7 @@ router.post('/auth/register',(req,res)=>{
 });
 
 router.get('/users/me',(req,res)=>{
+  return res.status(410).json({code:410,message:'旧版用户接口已禁用，请使用主认证接口',data:null});
   const auth=req.headers['authorization'];
   if(!auth)return res.status(401).json({code:401,message:'未授权，请先登录',data:null});
   const token=auth.replace('Bearer ','');
@@ -77,9 +79,10 @@ router.get('/users/me',(req,res)=>{
 });
 
 router.post('/auth/refresh',(req,res)=>{
+  return res.status(410).json({code:410,message:'旧版刷新接口已禁用，请重新登录',data:null});
   const{refreshToken}=req.body;
   if(!refreshToken||!refreshToken.startsWith('refresh_'))return res.status(401).json({code:401,message:'无效refreshToken',data:null});
-  res.json({code:0,message:'success',data:{accessToken:'jwt_refreshed_'+Date.now(),refreshToken:'refresh_new_'+Date.now()}});
+  res.json({code:0,message:'success',data:{accessToken:'disabled_refreshed_'+Date.now(),refreshToken:'refresh_new_'+Date.now()}});
 });
 // ===== END AUTH ROUTES =====
 

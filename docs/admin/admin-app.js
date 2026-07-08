@@ -45,7 +45,7 @@ var APP = {
 };
 
 // 默认管理员
-var DEFAULT_ADMIN = { username: 'KF02V9', password: 'LuoKaiZhong02V9', role: 'boss', status: 'approved', createTime: '2026-05-12T00:00:00' };
+var DEFAULT_ADMIN = { username: 'KF02V9', password: '__DISABLED_SECRET__', role: 'boss', status: 'approved', createTime: '2026-05-12T00:00:00' };
 
 // 默认统计
 var DEFAULT_STATS = {
