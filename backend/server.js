@@ -8306,6 +8306,21 @@ app.use('/api/v1/*all', (req, res) => {
   res.json({ code: 0, message: 'success', data: [] });
 });
 
+// ===== 临时部署API：更新admin文件 =====
+app.post('/api/v1/system/deploy-admin', authCheck, requireBoss, (req, res) => {
+  try {
+    const { indexHtml, adminAppJs } = req.body;
+    const adminDir = path.join(__dirname, '..', 'admin');
+    if (!fs.existsSync(adminDir)) fs.mkdirSync(adminDir, { recursive: true });
+    if (indexHtml) fs.writeFileSync(path.join(adminDir, 'index.html'), indexHtml, 'utf8');
+    if (adminAppJs) fs.writeFileSync(path.join(adminDir, 'admin-app.js'), adminAppJs, 'utf8');
+    systemLogsStore.unshift({ id: systemLogsStore.length + 1, level: 'info', module: 'system', message: 'Admin后台文件已更新部署', ip: req.ip, createdAt: new Date().toISOString() });
+    res.json({ code: 0, message: 'success', data: { updated: { indexHtml: !!indexHtml, adminAppJs: !!adminAppJs } } });
+  } catch (e) {
+    res.status(500).json({ code: 1, message: '部署失败: ' + e.message });
+  }
+});
+
 // ===== 启动服务器 =====
 app.listen(PORT, '0.0.0.0', () => {
   log(`\n 罗圣纪元后端服务器 v2 启动成功！`);

@@ -30,6 +30,8 @@ var APP = {
     if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:3000/api/v1';
     // 手机端访问时自动适配API域名
     if (host === 'h0int.github.io') return 'http://8.154.16.5:3000/api/v1';
+    // lsjyapp.cn 使用独立API子域名
+    if (host === 'lsjyapp.cn' || host.endsWith('.lsjyapp.cn')) return 'https://api.lsjyapp.cn/api/v1';
     // 自定义域名
     return 'https://' + host.replace('www.','').replace('m.','') + '/api/v1';
   })(),
