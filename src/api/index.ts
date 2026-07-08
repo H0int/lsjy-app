@@ -140,7 +140,7 @@ export const adminApi = {
     return service.get('/system/logs', { params }).then(r => r.data)
   },
   getDashboard(): Promise<ApiResponse<any>> {
-    return service.get('/admin/dashboard').then(r => r.data)
+    return service.get('/admin/dashboard', { timeout: 60000 }).then(r => r.data)
   },
   getRoles(): Promise<ApiResponse<any[]>> {
     return service.get('/roles').then(r => r.data)
