@@ -67,6 +67,7 @@ import {computed,ref,reactive,onMounted,onUnmounted} from 'vue'
 import {useRoute,useRouter} from 'vue-router'
 import {useAuthStore} from '@/stores/auth'
 import {useAppStore} from '@/stores/app'
+import {getToken} from '@/utils'
 const route=useRoute(),router=useRouter(),authStore=useAuthStore(),appStore=useAppStore()
 const sidebarOpen=ref(false),isMobile=ref(false)
 const sysStats=reactive({cpu:0,mem:0,online:0})
@@ -121,7 +122,7 @@ const menuGroups=[
   ]},
 ]
 const expanded=reactive<Record<string,boolean>>({})
-menuGroups.forEach((g,i)=>{expanded[g.label]=i<5})
+menuGroups.forEach((g)=>{expanded[g.label]=true})
 function toggleGroup(label:string){expanded[label]=!expanded[label]}
 const allItems=menuGroups.flatMap(g=>g.items)
 const currentTitle=computed(()=>{const i=allItems.find(x=>route.path===x.path);return i?.label||'管理后台'})
