@@ -243,6 +243,25 @@ const moduleBarRef = ref<HTMLElement>()
 
 let charts: any[] = []
 
+function isAllZero(arr: number[]): boolean {
+  return !arr || arr.length === 0 || arr.every(v => v === 0)
+}
+
+function emptyGraphic(text: string = '暂无数据') {
+  return {
+    type: 'text',
+    left: 'center',
+    top: 'center',
+    style: {
+      text,
+      fill: '#9ca3af',
+      fontSize: 14,
+      fontWeight: 'bold',
+    },
+    z: 100,
+  }
+}
+
 function initCharts() {
   // echarts 已作为 npm 依赖打包导入
   if (!echarts) {
@@ -256,12 +275,14 @@ function initCharts() {
   if (userChartRef.value) {
     const chart = echarts.init(userChartRef.value)
     const d = trendData.value[trendRange.value as keyof typeof trendData.value]
+    const empty = isAllZero(d.newUsers) && isAllZero(d.activeUsers)
     chart.setOption({
       tooltip: { trigger: 'axis' },
       grid: { top: 20, right: 20, bottom: 30, left: 50 },
       xAxis: { type: 'category', data: d.dates, axisLabel: { color: textColor, fontSize: 11 }, axisLine: { lineStyle: { color: '#e5e7eb' } } },
       yAxis: { type: 'value', axisLabel: { color: textColor, fontSize: 11 }, splitLine: { lineStyle: { color: '#f3f4f6' } } },
-      series: [
+      graphic: empty ? emptyGraphic() : undefined,
+      series: empty ? [] : [
         { name: '新增用户', type: 'line', smooth: true, data: d.newUsers, areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(99,102,241,0.3)' }, { offset: 1, color: 'rgba(99,102,241,0.02)' }] } }, lineStyle: { color: '#6366f1' }, itemStyle: { color: '#6366f1' } },
         { name: '活跃用户', type: 'line', smooth: true, data: d.activeUsers.map(v => v / 10), areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(16,185,129,0.3)' }, { offset: 1, color: 'rgba(16,185,129,0.02)' }] } }, lineStyle: { color: '#10b981' }, itemStyle: { color: '#10b981' } },
       ]
@@ -273,12 +294,14 @@ function initCharts() {
   if (revenueChartRef.value) {
     const chart = echarts.init(revenueChartRef.value)
     const d = trendData.value[revenueRange.value as keyof typeof trendData.value]
+    const empty = isAllZero(d.revenue)
     chart.setOption({
       tooltip: { trigger: 'axis', formatter: '{b}<br/>营收: ¥{c}' },
       grid: { top: 20, right: 20, bottom: 30, left: 60 },
       xAxis: { type: 'category', data: d.dates, axisLabel: { color: textColor, fontSize: 11 }, axisLine: { lineStyle: { color: '#e5e7eb' } } },
       yAxis: { type: 'value', axisLabel: { color: textColor, fontSize: 11, formatter: (v: number) => v >= 1000 ? (v / 1000) + 'k' : v }, splitLine: { lineStyle: { color: '#f3f4f6' } } },
-      series: [{ name: '营收', type: 'bar', data: d.revenue, itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: '#f59e0b' }, { offset: 1, color: '#fbbf24' }] }, borderRadius: [4, 4, 0, 0] } }]
+      graphic: empty ? emptyGraphic() : undefined,
+      series: empty ? [] : [{ name: '营收', type: 'bar', data: d.revenue, itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: '#f59e0b' }, { offset: 1, color: '#fbbf24' }] }, borderRadius: [4, 4, 0, 0] } }]
     })
     charts.push(chart)
   }
@@ -286,9 +309,12 @@ function initCharts() {
   // 模块用户分布饼图
   if (modulePieRef.value) {
     const chart = echarts.init(modulePieRef.value)
+    const data = moduleData.value.map(m => ({ name: m.name, value: m.users, itemStyle: { color: m.color } }))
+    const empty = data.every(item => item.value === 0)
     chart.setOption({
       tooltip: { trigger: 'item', formatter: '{b}: {c}人 ({d}%)' },
-      series: [{ type: 'pie', radius: ['40%', '70%'], data: moduleData.value.map(m => ({ name: m.name, value: m.users, itemStyle: { color: m.color } })), label: { color: textColor, fontSize: 11 }, emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.2)' } } }]
+      graphic: empty ? emptyGraphic() : undefined,
+      series: empty ? [] : [{ type: 'pie', radius: ['40%', '70%'], data, label: { color: textColor, fontSize: 11 }, emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.2)' } } }]
     })
     charts.push(chart)
   }
@@ -296,9 +322,12 @@ function initCharts() {
   // 营收贡献饼图
   if (revenuePieRef.value) {
     const chart = echarts.init(revenuePieRef.value)
+    const data = moduleData.value.map(m => ({ name: m.name, value: m.revenue, itemStyle: { color: m.color } }))
+    const empty = data.every(item => item.value === 0)
     chart.setOption({
       tooltip: { trigger: 'item', formatter: '{b}: ¥{c} ({d}%)' },
-      series: [{ type: 'pie', radius: ['40%', '70%'], data: moduleData.value.map(m => ({ name: m.name, value: m.revenue, itemStyle: { color: m.color } })), label: { color: textColor, fontSize: 11 }, emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.2)' } } }]
+      graphic: empty ? emptyGraphic() : undefined,
+      series: empty ? [] : [{ type: 'pie', radius: ['40%', '70%'], data, label: { color: textColor, fontSize: 11 }, emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.2)' } } }]
     })
     charts.push(chart)
   }
@@ -306,12 +335,15 @@ function initCharts() {
   // 模块使用量柱状图
   if (moduleBarRef.value) {
     const chart = echarts.init(moduleBarRef.value)
+    const barData = moduleData.value.map(m => m.users).reverse()
+    const empty = isAllZero(barData)
     chart.setOption({
       tooltip: { trigger: 'axis' },
       grid: { top: 10, right: 10, bottom: 30, left: 80 },
       xAxis: { type: 'value', axisLabel: { color: textColor, fontSize: 11 }, splitLine: { lineStyle: { color: '#f3f4f6' } } },
       yAxis: { type: 'category', data: moduleData.value.map(m => m.name).reverse(), axisLabel: { color: textColor, fontSize: 11 } },
-      series: [{ type: 'bar', data: moduleData.value.map(m => m.users).reverse(), itemStyle: { color: (_: any, i: any) => moduleData.value[moduleData.value.length - 1 - i.dataIndex].color, borderRadius: [0, 4, 4, 0] }, barWidth: 16 }]
+      graphic: empty ? emptyGraphic() : undefined,
+      series: empty ? [] : [{ type: 'bar', data: barData, itemStyle: { color: (_: any, i: any) => moduleData.value[moduleData.value.length - 1 - i.dataIndex].color, borderRadius: [0, 4, 4, 0] }, barWidth: 16 }]
     })
     charts.push(chart)
   }
