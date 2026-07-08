@@ -5937,6 +5937,87 @@ app.get('/api/v1/admin/system-stats', authCheck, (req, res) => {
 });
 
 
+
+// ===== Boss充值卡管理 =====
+const BOSS_CARDS_FILE = path.join(__dirname, 'data', 'boss_cards.json');
+function loadBossCards() {
+  try { return JSON.parse(fs.readFileSync(BOSS_CARDS_FILE, 'utf8')); }
+  catch(e) {
+    return [
+      { id: 1, code: 'BOSS-100-ABCDEF', amount: 100, status: 'unused', usedBy: '', usedAt: null, createdAt: '2026-07-01T00:00:00Z' },
+      { id: 2, code: 'BOSS-500-GHIJKL', amount: 500, status: 'unused', usedBy: '', usedAt: null, createdAt: '2026-07-01T00:00:00Z' },
+      { id: 3, code: 'BOSS-1000-MNOPQR', amount: 1000, status: 'used', usedBy: 'KF02V9', usedAt: '2026-07-05T12:00:00Z', createdAt: '2026-07-01T00:00:00Z' },
+    ];
+  }
+}
+function saveBossCards(list) { fs.writeFileSync(BOSS_CARDS_FILE, JSON.stringify(list, null, 2)); }
+
+app.get('/api/v1/admin/boss-cards', authCheck, (req, res) => {
+  const { status } = req.query;
+  let list = loadBossCards();
+  if (status) list = list.filter(c => c.status === status);
+  res.json({ code: 0, message: 'success', data: { items: list, total: list.length } });
+});
+app.post('/api/v1/admin/boss-cards', authCheck, (req, res) => {
+  const { amount = 100, count = 1 } = req.body || {};
+  const list = loadBossCards();
+  const created = [];
+  for (let i = 0; i < count; i++) {
+    const code = 'BOSS-' + amount + '-' + Math.random().toString(36).slice(2, 10).toUpperCase();
+    const card = { id: Date.now() + i, code, amount: Number(amount), status: 'unused', usedBy: '', usedAt: null, createdAt: new Date().toISOString() };
+    list.unshift(card);
+    created.push(card);
+  }
+  saveBossCards(list);
+  res.json({ code: 0, message: 'success', data: { items: created, total: created.length } });
+});
+app.delete('/api/v1/admin/boss-cards/:id', authCheck, (req, res) => {
+  let list = loadBossCards();
+  list = list.filter(c => String(c.id) !== String(req.params.id));
+  saveBossCards(list);
+  res.json({ code: 0, message: 'success' });
+});
+
+// ===== 支付渠道管理 =====
+const PAYMENT_CHANNELS_FILE = path.join(__dirname, 'data', 'payment_channels.json');
+function loadPaymentChannels() {
+  try { return JSON.parse(fs.readFileSync(PAYMENT_CHANNELS_FILE, 'utf8')); }
+  catch(e) {
+    return [
+      { id: 1, name: '微信支付', channel: 'wechat', icon: '💬', status: 'active', feeRate: 0.6, description: '微信支付（个人码/商户号）' },
+      { id: 2, name: '支付宝', channel: 'alipay', icon: '💰', status: 'active', feeRate: 0.6, description: '支付宝扫码/转账' },
+      { id: 3, name: '银行卡', channel: 'bank', icon: '💳', status: 'inactive', feeRate: 0.0, description: '银行对公转账' },
+      { id: 4, name: 'QQ钱包', channel: 'qq', icon: '🐧', status: 'inactive', feeRate: 0.6, description: 'QQ钱包支付' },
+    ];
+  }
+}
+function savePaymentChannels(list) { fs.writeFileSync(PAYMENT_CHANNELS_FILE, JSON.stringify(list, null, 2)); }
+
+app.get('/api/v1/admin/payment-channels', authCheck, (req, res) => {
+  res.json({ code: 0, message: 'success', data: loadPaymentChannels() });
+});
+app.post('/api/v1/admin/payment-channels', authCheck, (req, res) => {
+  const list = loadPaymentChannels();
+  const item = { id: Date.now(), ...req.body, status: req.body.status || 'active' };
+  list.push(item);
+  savePaymentChannels(list);
+  res.json({ code: 0, message: 'success', data: item });
+});
+app.put('/api/v1/admin/payment-channels/:id', authCheck, (req, res) => {
+  const list = loadPaymentChannels();
+  const idx = list.findIndex(c => String(c.id) === String(req.params.id));
+  if (idx === -1) return res.status(404).json({ code: 404, message: '渠道不存在' });
+  Object.assign(list[idx], req.body);
+  savePaymentChannels(list);
+  res.json({ code: 0, message: 'success', data: list[idx] });
+});
+app.delete('/api/v1/admin/payment-channels/:id', authCheck, (req, res) => {
+  let list = loadPaymentChannels();
+  list = list.filter(c => String(c.id) !== String(req.params.id));
+  savePaymentChannels(list);
+  res.json({ code: 0, message: 'success' });
+});
+
 // ===== 用户标签管理 =====
 const USER_TAGS_FILE = path.join(__dirname, 'data', 'user_tags.json');
 function loadUserTags() {

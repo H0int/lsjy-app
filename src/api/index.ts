@@ -163,6 +163,30 @@ export const adminApi = {
   getRechargeOrders(params?: { page?: number; pageSize?: number; status?: string }): Promise<ApiResponse<any>> {
     return service.get('/payment/coin/orders', { params }).then(r => r.data)
   },
+  getBossCards(params?: { status?: string }): Promise<ApiResponse<any>> {
+    return service.get('/admin/boss-cards', { params }).then(r => r.data)
+  },
+  createBossCards(data: { amount: number; count: number }): Promise<ApiResponse<any>> {
+    return service.post('/admin/boss-cards', data).then(r => r.data)
+  },
+  deleteBossCard(id: number): Promise<ApiResponse<any>> {
+    return service.delete(`/admin/boss-cards/${id}`).then(r => r.data)
+  },
+  getPaymentChannels(): Promise<ApiResponse<any[]>> {
+    return service.get('/admin/payment-channels').then(r => r.data)
+  },
+  createPaymentChannel(data: any): Promise<ApiResponse<any>> {
+    return service.post('/admin/payment-channels', data).then(r => r.data)
+  },
+  updatePaymentChannel(id: number, data: any): Promise<ApiResponse<any>> {
+    return service.put(`/admin/payment-channels/${id}`, data).then(r => r.data)
+  },
+  deletePaymentChannel(id: number): Promise<ApiResponse<any>> {
+    return service.delete(`/admin/payment-channels/${id}`).then(r => r.data)
+  },
+  getCommissions(): Promise<ApiResponse<any>> {
+    return service.get('/admin/commissions').then(r => r.data)
+  },
   approveOrder(orderId: number): Promise<ApiResponse<any>> {
     return service.post(`/payment/coin/approve/${orderId}`).then(r => r.data)
   },

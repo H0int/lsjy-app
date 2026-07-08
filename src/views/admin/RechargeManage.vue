@@ -7,9 +7,12 @@
         <el-option label="已拒绝" value="rejected" />
       </el-select>
       <el-button type="primary" @click="loadData">查询</el-button>
+      <el-button @click="exportData">导出</el-button>
+      <el-button type="danger" @click="batchApprove" :disabled="!selected.length">批量通过</el-button>
     </div>
     <div class="cyber-card p-4">
-      <el-table :data="list" stripe v-loading="loading">
+      <el-table :data="list" stripe v-loading="loading" empty-text="暂无充值订单" @selection-change="handleSelectionChange">
+        <el-table-column type="selection" width="55" />
         <el-table-column prop="id" label="订单ID" width="80" />
         <el-table-column prop="username" label="用户" width="120" />
         <el-table-column prop="packageName" label="套餐" />
@@ -17,7 +20,7 @@
         <el-table-column prop="coins" label="圣力" width="90" />
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
-            <el-tag :type="statusType(row.status)">{{ statusLabel(row.status) }}</el-tag>
+            <el-tag :type="statusType(row.status)" effect="dark" round>{{ statusLabel(row.status) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="createdAt" label="时间" width="160">
@@ -45,6 +48,7 @@ import { formatDate } from '@/utils'
 
 const loading = ref(false)
 const list = ref<any[]>([])
+const selected = ref<any[]>([])
 const statusFilter = ref('')
 const page = ref(1)
 const pageSize = 20
@@ -70,23 +74,46 @@ async function loadData() {
   }
 }
 
+function handleSelectionChange(rows: any[]) { selected.value = rows }
+
 async function approve(row: any) {
   try {
     await adminApi.approveOrder(row.id)
     ElMessage.success('已通过')
     loadData()
-  } catch (e: any) {
-    ElMessage.error(e.message || '操作失败')
-  }
+  } catch (e: any) { ElMessage.error(e.message || '操作失败') }
+}
+
+async function batchApprove() {
+  try {
+    await ElMessageBox.confirm(`确认批量通过 ${selected.value.length} 个订单？`)
+    for (const row of selected.value) {
+      if (row.status === 'pending_payment') await adminApi.approveOrder(row.id)
+    }
+    ElMessage.success('批量通过完成')
+    loadData()
+  } catch { /* cancelled */ }
 }
 
 async function reject(row: any) {
   try {
-    await ElMessageBox.prompt('请输入拒绝原因', '拒绝充值', { confirmButtonText: '确认', cancelButtonText: '取消' })
+    await ElMessageBox.prompt('请输入拒绝原因', '拒绝充值')
       .then(({ value }) => adminApi.rejectOrder(row.id, value))
     ElMessage.success('已拒绝')
     loadData()
   } catch { /* cancelled */ }
+}
+
+function exportData() {
+  const csv = [
+    ['订单ID','用户','套餐','金额','圣力','状态','时间'].join(','),
+    ...list.value.map(r => [r.id, r.username, r.packageName, r.amount, r.coins, statusLabel(r.status), formatDate(r.createdAt)].join(','))
+  ].join('\n')
+  const blob = new Blob(['\ufeff'+csv], { type: 'text/csv;charset=utf-8;' })
+  const link = document.createElement('a')
+  link.href = URL.createObjectURL(blob)
+  link.download = `recharge-orders-${new Date().toISOString().slice(0,10)}.csv`
+  link.click()
 }
 
 onMounted(loadData)
