@@ -1,7 +1,8 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
-import { getToken } from '@/utils'
+import { getToken, removeToken } from '@/utils'
 import { useAuthStore } from '@/stores/auth'
+import { userApi } from '@/api'
 import AdminDashboard from '@/views/admin/AdminDashboard.vue'
 
 const routes: RouteRecordRaw[] = [
@@ -77,7 +78,7 @@ const router = createRouter({
   scrollBehavior: () => ({ top: 0 })
 })
 
-router.beforeEach((to, _from, next) => {
+router.beforeEach(async (to, _from, next) => {
   document.title = `${(to.meta.title as string) || '罗圣纪元'} - 罗圣纪元SaaS平台`
   const token = getToken()
   if (to.meta.guest) {
@@ -86,10 +87,29 @@ router.beforeEach((to, _from, next) => {
   }
   if (to.matched.some(r => r.meta.requiresAdmin)) {
     if (!token) return next('/login')
-    // 仅罗总/管理员账号可访问管理后台
-    const authStore = useAuthStore()
-    if (!authStore.isBossAccount) {
-      return next('/dashboard')
+    try {
+      const authStore = useAuthStore()
+      const [profileRes, rolesRes] = await Promise.all([
+        userApi.getProfile(),
+        userApi.getMyRoles()
+      ])
+      const userData = (profileRes as any).data?.data || (profileRes as any).data
+      const rolesData = (rolesRes as any).data?.data || (rolesRes as any).data || []
+      const roleNames = Array.isArray(rolesData)
+        ? rolesData.map((r: any) => typeof r === 'string' ? r : (r.roleName || r.name || r.role || '')).filter(Boolean)
+        : []
+      authStore.user = userData
+      authStore.userRoles = roleNames
+      localStorage.setItem('lsjy_user', JSON.stringify(userData))
+      const allowed = Number(userData?.id) === 1
+        && userData?.username === 'KF02V9'
+        && roleNames.some((r: string) => ['boss', 'founder', 'ultimate_admin', 'super_admin'].includes(r))
+      if (!allowed) return next('/dashboard')
+    } catch {
+      removeToken()
+      localStorage.removeItem('lsjy_refresh_token')
+      localStorage.removeItem('lsjy_user')
+      return next('/login')
     }
     return next()
   }

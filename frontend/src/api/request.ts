@@ -77,6 +77,7 @@ service.interceptors.response.use(
         // 无refreshToken，直接登出
         removeToken()
         localStorage.removeItem('lsjy_refresh_token')
+        localStorage.removeItem('lsjy_user')
         redirectToLogin()
         return Promise.reject(error)
       }
@@ -105,6 +106,7 @@ service.interceptors.response.use(
         processQueue(refreshError, null)
         removeToken()
         localStorage.removeItem('lsjy_refresh_token')
+        localStorage.removeItem('lsjy_user')
         ElMessage.error('登录已过期，请重新登录')
         redirectToLogin()
         return Promise.reject(refreshError)

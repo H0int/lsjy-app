@@ -55,22 +55,18 @@ service.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config
 
-    // 本地认证Token跳过401处理（本地token以lsjy_开头且包含_token_）
-    const curToken = localStorage.getItem('lsjy_token')
-    const isLocalToken = curToken && curToken.startsWith('lsjy_') && curToken.includes('_token_')
-
     // 网络错误处理
     const isNetErr = !error.response || error.code === 'ERR_NETWORK' || error.message === 'Network Error'
     if (isNetErr) {
       const isLoginReq = originalRequest.url?.includes('/auth/login')
-      if (!isLoginReq && !isLocalToken) {
+      if (!isLoginReq) {
         ElMessage.warning('网络连接异常，部分功能可能受限')
       }
       return Promise.reject(error)
     }
 
-    // 401处理：尝试Token刷新（本地Token跳过）
-    if (error.response?.status === 401 && !originalRequest._retry && !isLocalToken) {
+    // 401处理：尝试Token刷新
+    if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject })
@@ -84,8 +80,7 @@ service.interceptors.response.use(
       isRefreshing = true
 
       const refreshToken = localStorage.getItem('lsjy_refresh_token')
-      // 本地refresh token或无refresh token时直接跳转登录
-      if (!refreshToken || refreshToken.startsWith('lsjy_local_') || refreshToken === 'lsjy_no_refresh_token') {
+      if (!refreshToken || refreshToken === 'lsjy_no_refresh_token') {
         removeToken()
         localStorage.removeItem('lsjy_refresh_token')
         localStorage.removeItem('lsjy_user')

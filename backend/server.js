@@ -10,6 +10,7 @@ const https = require('https');
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const { execFile } = require('child_process');
 
 // 加载环境变量
@@ -168,31 +169,86 @@ function normalizeIncomingMessages(messages, fallbackMessage = '') {
   }).filter(m => extractTextContent(m.content).trim() || contentHasImage(m.content));
 }
 
-// 简单auth验证
+const authSecretFile = path.join(__dirname, 'data', 'auth_secret.txt');
+function getAuthSecret() {
+  if (process.env.JWT_SECRET && process.env.JWT_SECRET.length >= 32) return process.env.JWT_SECRET;
+  try {
+    if (fs.existsSync(authSecretFile)) {
+      const saved = fs.readFileSync(authSecretFile, 'utf8').trim();
+      if (saved.length >= 32) return saved;
+    }
+    fs.mkdirSync(path.dirname(authSecretFile), { recursive: true });
+    const secret = crypto.randomBytes(48).toString('hex');
+    fs.writeFileSync(authSecretFile, secret, { mode: 0o600 });
+    return secret;
+  } catch {
+    return crypto.createHash('sha256').update(`lsjy-runtime-${process.pid}-${Date.now()}`).digest('hex');
+  }
+}
+
+const AUTH_SECRET = getAuthSecret();
+const ACCESS_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const REFRESH_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+
+function base64url(input) {
+  return Buffer.from(input).toString('base64url');
+}
+
+function signPayload(payload) {
+  return crypto.createHmac('sha256', AUTH_SECRET).update(payload).digest('base64url');
+}
+
+function issueAuthToken(user, type = 'access') {
+  const now = Date.now();
+  const ttl = type === 'refresh' ? REFRESH_TOKEN_TTL_MS : ACCESS_TOKEN_TTL_MS;
+  const payload = base64url(JSON.stringify({
+    sub: Number(user.id),
+    username: user.username || '',
+    type,
+    iat: now,
+    exp: now + ttl,
+    nonce: crypto.randomBytes(8).toString('hex'),
+  }));
+  return `lsjy.${payload}.${signPayload(payload)}`;
+}
+
+function verifyAuthToken(token, expectedType = 'access') {
+  if (!token || typeof token !== 'string') return null;
+  const parts = token.split('.');
+  if (parts.length !== 3 || parts[0] !== 'lsjy') return null;
+  const [, payload, sig] = parts;
+  const expectedSig = signPayload(payload);
+  const sigBuf = Buffer.from(sig);
+  const expectedBuf = Buffer.from(expectedSig);
+  if (sigBuf.length !== expectedBuf.length || !crypto.timingSafeEqual(sigBuf, expectedBuf)) return null;
+  let data;
+  try { data = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')); } catch { return null; }
+  if (data.type !== expectedType) return null;
+  if (!data.sub || !data.exp || Date.now() > Number(data.exp)) return null;
+  const found = findCurrentUserFileFirst(Number(data.sub));
+  if (!found.user || found.user.status === 'disabled' || found.user.status === 'banned') return null;
+  return { id: Number(data.sub), username: found.user.username || data.username || '', user: found.user };
+}
+
+function issueTokenPair(user) {
+  return {
+    accessToken: issueAuthToken(user, 'access'),
+    refreshToken: issueAuthToken(user, 'refresh'),
+  };
+}
+
+// 登录鉴权：只接受服务端签名token，拒绝旧版可伪造token
 function authCheck(req, res, next) {
   const auth = req.headers['authorization'];
   if (!auth) {
     return res.status(401).json({ code: 401, message: '未授权，请先登录', data: null });
   }
-  // 从token中提取用户ID (token格式: jwt_<userId>_<timestamp>)
   const token = auth.replace('Bearer ', '');
-  if (token.startsWith('jwt_')) {
-    const parts = token.split('_');
-    if (parts.length >= 2) {
-      // 兼容旧boss token: jwt_boss_token_<ts> → 视为userId=1
-      if (parts[1] === 'boss') {
-        req.user = { id: 1 };
-      } else {
-        const userId = parseInt(parts[1]);
-        if (!isNaN(userId)) {
-          req.user = { id: userId };
-        }
-      }
-    }
-  } else if (token.includes('luozong') && token.includes('kf02v9')) {
-    // 兼容前端本地罗总永久token
-    req.user = { id: 1, username: 'KF02V9' };
+  const verified = verifyAuthToken(token, 'access');
+  if (!verified) {
+    return res.status(401).json({ code: 401, message: '登录已过期或凭证无效，请重新登录', data: null });
   }
+  req.user = { id: verified.id, username: verified.username };
   if (req.path.startsWith('/api/v1/admin')) {
     const current = findCurrentUserFileFirst(req.user?.id || 0).user;
     const roles = Array.isArray(current?.roles) ? current.roles : [];
@@ -3252,10 +3308,11 @@ app.post('/api/v1/auth/login', (req, res) => {
       permissions: ['*'],
       createdAt: '2026-05-12T00:00:00Z',
     });
+    const tokens = issueTokenPair(bossUser);
     return res.json({
       code: 0, message: 'success',
       data: {
-        accessToken: 'jwt_1_' + Date.now(), refreshToken: 'refresh_1_' + Date.now(),
+        ...tokens,
         user: bossUser,
       },
     });
@@ -3278,10 +3335,11 @@ app.post('/api/v1/auth/login', (req, res) => {
 
   if (user && (user.status === 'approved' || user.status === 'active')) {
     clearLoginFails(account);
+    const tokens = issueTokenPair(user);
     return res.json({
       code: 0, message: 'success',
       data: {
-        accessToken: 'jwt_' + user.id + '_' + Date.now(), refreshToken: 'refresh_' + user.id + '_' + Date.now(),
+        ...tokens,
         user: { id: user.id, username: user.username, nickname: user.nickname, roles: user.roles || ['normal'], status: 'active' },
       },
     });
@@ -3345,14 +3403,12 @@ app.post('/api/v1/auth/register', (req, res) => {
   if (!usersStore.some(u => Number(u.id) === Number(newUser.id))) {
     usersStore.push(newUser);
   }
-  const accessToken = 'jwt_' + newUser.id + '_' + Date.now();
-  const refreshToken = 'refresh_' + newUser.id + '_' + Date.now();
+  const tokens = issueTokenPair(newUser);
   res.json({
     code: 0,
     message: '注册成功',
     data: {
-      accessToken,
-      refreshToken,
+      ...tokens,
       user: {
         id: newUser.id,
         username: newUser.username,
@@ -3371,9 +3427,14 @@ app.post('/api/v1/auth/refresh', (req, res) => {
   if (!refreshToken) {
     return res.status(400).json({ code: 400, message: '缺少refreshToken', data: null });
   }
+  const verified = verifyAuthToken(refreshToken, 'refresh');
+  if (!verified) {
+    return res.status(401).json({ code: 401, message: '刷新凭证无效，请重新登录', data: null });
+  }
+  const tokens = issueTokenPair(verified.user);
   res.json({
     code: 0, message: 'success',
-    data: { accessToken: 'jwt_refreshed_' + Date.now(), refreshToken: 'refresh_new_' + Date.now() },
+    data: tokens,
   });
 });
 

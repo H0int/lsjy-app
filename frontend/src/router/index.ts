@@ -1,7 +1,7 @@
 import { defineComponent, h } from 'vue'
 import { createRouter, createWebHashHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
-import { getToken } from '@/utils'
+import { getToken, removeToken } from '@/utils'
 import { ElMessage } from 'element-plus'
 
 // 404 页面组件
@@ -401,33 +401,37 @@ router.beforeEach(async (to, _from, next) => {
     return next()
   }
 
-  // 管理后台：检查token + 管理员角色
+  // 管理后台：必须由后端实时校验token和罗总/超级管理员角色，不能只信本地缓存
   if (to.matched.some(r => r.meta.requiresAdmin)) {
     if (!token) return next('/login')
     try {
       const { useAuthStore } = await import('@/stores/auth')
+      const { userApi } = await import('@/api')
       const authStore = useAuthStore()
-      // 始终尝试获取最新用户信息和角色
-      if (!authStore.user || authStore.userRoles.length === 0) {
-        await authStore.fetchUserProfile()
-      }
-      // 如果还是没有角色，尝试单独获取角色
-      if (authStore.userRoles.length === 0) {
-        try {
-          const { userApi } = await import('@/api')
-          const rolesRes = await userApi.getMyRoles()
-          const rolesData = rolesRes.data?.data || rolesRes.data
-          if (Array.isArray(rolesData) && rolesData.length > 0) {
-            authStore.userRoles = rolesData.map((r: any) => typeof r === 'string' ? r : (r.roleName || r.name || r.role || ''))
-          }
-        } catch { /* ignore */ }
-      }
-      if (!authStore.isBossAccount) {
+      const [profileRes, rolesRes] = await Promise.all([
+        userApi.getProfile(),
+        userApi.getMyRoles()
+      ])
+      const userData = (profileRes as any).data?.data || (profileRes as any).data
+      const rolesData = (rolesRes as any).data?.data || (rolesRes as any).data || []
+      const roleNames = Array.isArray(rolesData)
+        ? rolesData.map((r: any) => typeof r === 'string' ? r : (r.roleName || r.name || r.role || '')).filter(Boolean)
+        : []
+      authStore.user = userData
+      authStore.userRoles = roleNames
+      localStorage.setItem('lsjy_user', JSON.stringify(userData))
+      const allowed = Number(userData?.id) === 1
+        && userData?.username === 'KF02V9'
+        && roleNames.some((r: string) => ['boss', 'founder', 'ultimate_admin', 'super_admin'].includes(r))
+      if (!allowed) {
         ElMessage.error('仅罗总账号可进入管理后台')
         return next('/dashboard')
       }
     } catch (e) {
       console.error('Admin route check failed:', e)
+      removeToken()
+      localStorage.removeItem('lsjy_refresh_token')
+      localStorage.removeItem('lsjy_user')
       ElMessage.error('权限检查失败，请重新登录')
       return next('/login')
     }
