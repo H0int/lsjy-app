@@ -209,6 +209,22 @@ function authCheck(req, res, next) {
   next();
 }
 
+function requireBoss(req, res, next) {
+  const current = findCurrentUserFileFirst(req.user?.id || 0).user;
+  const roles = Array.isArray(current?.roles) ? current.roles : [];
+  const isBoss = current?.username === 'KF02V9'
+    || Number(current?.id) === 1
+    || roles.includes('boss')
+    || roles.includes('founder')
+    || roles.includes('ultimate_admin')
+    || roles.includes('super_admin');
+  if (!isBoss) {
+    return res.status(403).json({ code: 403, message: '仅罗总账号可执行财务审核操作', data: null });
+  }
+  req.user.username = current?.username || req.user.username;
+  next();
+}
+
 // 圣力扣费（返回 { ok, balance, cost }）
 // 支持无限算力用户（unlimited: true）
 function deductCoins(userId, cost) {
@@ -4427,7 +4443,7 @@ app.get('/api/v1/payment/coin/balance', authCheck, (req, res) => {
   res.json({ code: 0, message: 'success', data: { balance, frozenAmount: 0, totalRecharge, unlimited: user?.unlimited || false } });
 });
 
-app.post('/api/v1/payment/admin/coins/adjust', authCheck, (req, res) => {
+app.post('/api/v1/payment/admin/coins/adjust', authCheck, requireBoss, (req, res) => {
   const targetUserId = Number(req.body?.userId);
   const amount = Number(req.body?.amount);
   const remark = req.body?.remark || `Boss后台手动充值 ${amount} 圣点`;
@@ -4479,7 +4495,7 @@ app.post('/api/v1/payment/admin/coins/adjust', authCheck, (req, res) => {
   });
 });
 
-app.post('/api/v1/payment/admin/coins/set-balance', authCheck, (req, res) => {
+app.post('/api/v1/payment/admin/coins/set-balance', authCheck, requireBoss, (req, res) => {
   const targetUserId = Number(req.body?.userId);
   const balance = Number(req.body?.balance);
   const remark = req.body?.remark || `后台强制设置圣力余额为 ${balance}`;
@@ -4891,7 +4907,7 @@ app.get('/api/v1/payment/coin/orders', (req, res) => {
 });
 
 // 审批充值订单（管理员 - 需要鉴权）— 带错误恢复和日志
-app.post('/api/v1/payment/coin/approve/:orderId', authCheck, (req, res) => {
+app.post('/api/v1/payment/coin/approve/:orderId', authCheck, requireBoss, (req, res) => {
   const orderId = parseInt(req.params.orderId);
   const { action, remark } = req.body; // action: approve/reject
 
@@ -5226,7 +5242,7 @@ app.get('/api/v1/payment/orders', authCheck, (req, res) => {
 });
 
 // 确认订单
-app.put('/api/v1/payment/orders/:id/confirm', authCheck, (req, res) => {
+app.put('/api/v1/payment/orders/:id/confirm', authCheck, requireBoss, (req, res) => {
   const orderId = Number(req.params.id);
   const rechargeOrders = getRechargeOrders();
   const rechargeOrder = rechargeOrders.find(o => Number(o.id) === orderId);
