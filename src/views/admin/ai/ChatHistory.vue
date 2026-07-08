@@ -1,19 +1,152 @@
-<template><div class="space-y-4"><div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"><h2 class="text-xl font-bold" style="color:#00f0ff">💬 对话记录</h2><div class="flex gap-2 flex-wrap"><input v-model="search" placeholder="搜索..." class="px-3 py-1.5 rounded-lg text-sm" style="background:#0d0d1a;border:1px solid #00f0ff30;color:#e0e0ff;outline:none"/><button @click="refresh" class="px-3 py-1.5 rounded-lg text-sm" style="background:#00f0ff20;color:#00f0ff;border:1px solid #00f0ff40">刷新</button><button @click="showAdd=!showAdd" class="px-3 py-1.5 rounded-lg text-sm" style="background:#ff2d9520;color:#ff2d95;border:1px solid #ff2d9540">+新增</button></div></div><div v-if="showAdd" class="cyber-card rounded-xl p-4"><h3 class="text-sm font-bold mb-3" style="color:#ff2d95">新增记录</h3><div class="grid grid-cols-2 md:grid-cols-5 gap-3"><input v-model="newRow['user']" placeholder="用户" class="px-3 py-2 rounded-lg text-sm" style="background:#0d0d1a;border:1px solid #00f0ff30;color:#e0e0ff;outline:none"/><input v-model="newRow['model']" placeholder="模型" class="px-3 py-2 rounded-lg text-sm" style="background:#0d0d1a;border:1px solid #00f0ff30;color:#e0e0ff;outline:none"/><input v-model="newRow['msg_count']" placeholder="消息数" class="px-3 py-2 rounded-lg text-sm" style="background:#0d0d1a;border:1px solid #00f0ff30;color:#e0e0ff;outline:none"/><input v-model="newRow['tokens']" placeholder="Token消耗" class="px-3 py-2 rounded-lg text-sm" style="background:#0d0d1a;border:1px solid #00f0ff30;color:#e0e0ff;outline:none"/><input v-model="newRow['time']" placeholder="时间" class="px-3 py-2 rounded-lg text-sm" style="background:#0d0d1a;border:1px solid #00f0ff30;color:#e0e0ff;outline:none"/></div><button @click="addRow" class="mt-3 px-4 py-2 rounded-lg text-sm" style="background:linear-gradient(135deg,#00f0ff,#b700ff);color:#fff">确认添加</button></div><div class="cyber-card rounded-xl overflow-hidden"><div class="overflow-x-auto"><table class="w-full"><thead><tr style="background:#0d0d1a"><th class="px-3 py-3 text-left text-xs font-medium" style="color:#ff2d95">用户</th><th class="px-3 py-3 text-left text-xs font-medium" style="color:#ff2d95">模型</th><th class="px-3 py-3 text-left text-xs font-medium" style="color:#ff2d95">消息数</th><th class="px-3 py-3 text-left text-xs font-medium" style="color:#ff2d95">Token消耗</th><th class="px-3 py-3 text-left text-xs font-medium" style="color:#ff2d95">时间</th><th class="px-3 py-3 text-left text-xs" style="color:#ff2d95">操作</th></tr></thead><tbody><tr v-for="row in paged" :key="row._id" class="border-t hover:bg-white/5" style="border-color:#00f0ff10"><td class="px-3 py-3 text-sm whitespace-nowrap" style="color:#e0e0ff">{{ row["user"] }}</td><td class="px-3 py-3 text-sm whitespace-nowrap" style="color:#e0e0ff">{{ row["model"] }}</td><td class="px-3 py-3 text-sm whitespace-nowrap" style="color:#e0e0ff">{{ row["msg_count"] }}</td><td class="px-3 py-3 text-sm whitespace-nowrap" style="color:#e0e0ff">{{ row["tokens"] }}</td><td class="px-3 py-3 text-sm whitespace-nowrap" style="color:#e0e0ff">{{ row["time"] }}</td><td class="px-3 py-3 text-sm whitespace-nowrap"><button @click="editRow(row)" class="mr-2 text-xs px-2 py-1 rounded" style="color:#00f0ff;background:#00f0ff15">编辑</button><button @click="delRow(row._id)" class="text-xs px-2 py-1 rounded" style="color:#ff2d95;background:#ff2d9515">删除</button></td></tr></tbody></table></div><div class="flex items-center justify-between px-4 py-3 border-t" style="border-color:#00f0ff10"><span class="text-xs" style="color:#a0a0cc">共 {{ filtered.length }} 条</span><div class="flex gap-1"><button v-for="p in totalPages" :key="p" @click="page=p" class="px-2 py-1 rounded text-xs" :style="page===p?'background:#00f0ff;color:#0d0d1a':'color:#a0a0cc;background:#00f0ff10'">{{ p }}</button></div></div></div></div></template>
+<template>
+  <div>
+    <!-- 筛选栏 -->
+    <div class="cyber-card p-4 mb-4">
+      <div class="flex flex-wrap items-center gap-3">
+        <el-input v-model="filter.keyword" placeholder="搜索对话内容" clearable style="width: 220px;" />
+        <el-select v-model="filter.agent" placeholder="智能体筛选" clearable style="width: 160px;">
+          <el-option v-for="a in agentOptions" :key="a.value" :label="a.label" :value="a.value" />
+        </el-select>
+        <el-date-picker v-model="filter.dateRange" type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD" style="width: 260px;" />
+        <el-button type="primary" @click="loadData">查询</el-button>
+        <el-button @click="resetFilter">重置</el-button>
+        <el-button class="ml-auto" @click="exportData">导出</el-button>
+      </div>
+    </div>
+
+    <!-- 表格 -->
+    <div class="cyber-card p-4">
+      <el-table :data="list" stripe style="width: 100%;" v-loading="loading">
+        <el-table-column prop="createdAt" label="时间" width="160">
+          <template #default="{ row }">
+            {{ formatTime(row.createdAt) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="username" label="用户" width="120" />
+        <el-table-column prop="agentName" label="智能体" width="140" />
+        <el-table-column prop="question" label="用户提问" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="answer" label="AI回复" min-width="240" show-overflow-tooltip />
+        <el-table-column prop="tokens" label="Tokens" width="90" />
+        <el-table-column prop="latency" label="延迟" width="100">
+          <template #default="{ row }">
+            {{ row.latency }}ms
+          </template>
+        </el-table-column>
+        <el-table-column prop="rating" label="评分" width="100">
+          <template #default="{ row }">
+            <span v-if="row.rating" style="color:#f59e0b;">{{ '★'.repeat(row.rating) }}</span>
+            <span v-else style="color:#808099;">-</span>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <div class="flex justify-end mt-4">
+        <el-pagination v-model:current-page="pagination.page" v-model:page-size="pagination.pageSize" :total="pagination.total" layout="total, prev, pager, next" @current-change="loadData" />
+      </div>
+    </div>
+  </div>
+</template>
+
 <script setup lang="ts">
-import {ref,computed} from 'vue'
-const search=ref(''),showAdd=ref(false),page=ref(1),perPage=10
-const newRow=ref<Record<string,string>>({ 'user':'', 'model':'', 'msg_count':'', 'tokens':'', 'time':'' })
-const names=["张三","李四","王五","赵六","钱七","孙八","周九","吴十","郑一","冯二","陈明","林华","黄磊","杨洋","刘洋","马超","许嵩","韩雪","曹操","魏征"]
-function rid(){return Math.random().toString(36).slice(2,10)}
-function rd(){const d=new Date(Date.now()-Math.random()*2592e6);return d.toLocaleDateString('zh-CN')+' '+d.toTimeString().slice(0,5)}
-function rip(){return [1,2,3,4].map(()=>Math.floor(Math.random()*223+1)).join('.')}
-function gen(){return Array.from({length:35},(_,i)=>({_id:rid(),'user':names[i%20], 'model':'示例'+(i+1), 'msg_count':String(Math.floor(Math.random()*10000)), 'tokens':String(Math.floor(Math.random()*10000)), 'time':rd()}))}
-const rows=ref<any[]>(gen())
-const filtered=computed(()=>{const s=search.value.toLowerCase();return s?rows.value.filter(r=>Object.values(r).some(v=>String(v).toLowerCase().includes(s))):rows.value})
-const totalPages=computed(()=>Math.max(1,Math.ceil(filtered.value.length/perPage)))
-const paged=computed(()=>filtered.value.slice((page.value-1)*perPage,page.value*perPage))
-function refresh(){rows.value=gen()}
-function addRow(){const v=newRow.value;if(Object.values(v).some(x=>x)){rows.value.unshift({_id:rid(),...v});Object.keys(v).forEach(k=>v[k]='');showAdd.value=false}}
-function editRow(r:any){alert('编辑: '+JSON.stringify(r))}
-function delRow(id:string){rows.value=rows.value.filter(r=>r._id!==id)}
+import { ref, reactive, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import { adminApi } from '@/api'
+
+interface ChatRecord {
+  id: string
+  createdAt: string
+  username: string
+  agentName: string
+  question: string
+  answer: string
+  tokens: number
+  latency: number
+  rating: number
+}
+
+const loading = ref(false)
+const list = ref<ChatRecord[]>([])
+const agentOptions = ref<{ label: string; value: string }[]>([])
+const filter = reactive({
+  keyword: '',
+  agent: '',
+  dateRange: [] as string[],
+})
+const pagination = reactive({
+  page: 1,
+  pageSize: 20,
+  total: 0,
+})
+
+function formatTime(iso: string) {
+  if (!iso) return '-'
+  const d = new Date(iso)
+  return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`
+}
+
+async function loadData() {
+  loading.value = true
+  try {
+    const params: any = {
+      keyword: filter.keyword,
+      agent: filter.agent,
+      page: pagination.page,
+      pageSize: pagination.pageSize,
+    }
+    if (filter.dateRange && filter.dateRange.length === 2) {
+      params.startDate = filter.dateRange[0]
+      params.endDate = filter.dateRange[1]
+    }
+    const res = await adminApi.getChatHistory(params)
+    if (res.code === 0 && res.data) {
+      list.value = res.data.list || []
+      pagination.total = res.data.total || 0
+      // 提取智能体选项
+      const map = new Map<string, string>()
+      list.value.forEach(r => {
+        if (r.agentName && !map.has(r.agentName)) map.set(r.agentName, r.agentName)
+      })
+      agentOptions.value = Array.from(map.entries()).map(([k, v]) => ({ label: k, value: v }))
+    } else {
+      ElMessage.error(res.message || '加载失败')
+    }
+  } catch (e: any) {
+    ElMessage.error(e.message || '加载失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+function resetFilter() {
+  filter.keyword = ''
+  filter.agent = ''
+  filter.dateRange = []
+  pagination.page = 1
+  loadData()
+}
+
+function exportData() {
+  const csv = [
+    ['时间', '用户', '智能体', '用户提问', 'AI回复', 'Tokens', '延迟(ms)', '评分'].join(','),
+    ...list.value.map(r => [
+      formatTime(r.createdAt),
+      r.username,
+      r.agentName,
+      `"${String(r.question).replace(/"/g, '""')}"`,
+      `"${String(r.answer).replace(/"/g, '""')}"`,
+      r.tokens,
+      r.latency,
+      r.rating,
+    ].join(','))
+  ].join('\n')
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' })
+  const link = document.createElement('a')
+  link.href = URL.createObjectURL(blob)
+  link.download = `chat-history-${new Date().toISOString().slice(0, 10)}.csv`
+  link.click()
+}
+
+onMounted(() => {
+  loadData()
+})
 </script>

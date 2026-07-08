@@ -604,6 +604,7 @@ function compressImageForVision(file: File): Promise<string> {
 
 // ========== 核心：AI对话 ==========
 async function sendMsg() {
+  const startTime = Date.now()
   const text = input.value.trim()
   const file = pendingFile.value
   if ((!text && !file) || loading.value || !selectedAgent.value) return
@@ -677,11 +678,14 @@ async function sendMsg() {
       coinBalance.value = result.data.balance
     }
 
+    const answerText = result.data.content || result.data.reply || '⚠️ 未返回内容'
     msgs.value.push({
       role: 'assistant',
-      content: result.data.content || result.data.reply || '⚠️ 未返回内容',
+      content: answerText,
       coinCost: result.data.coinCost || agent.coinCost
     })
+    // 同步对话记录到后端
+    saveChatHistory(agent, userContent, answerText, Date.now() - startTime)
   } catch (e: any) {
     msgs.value.push({
       role: 'assistant',
@@ -700,6 +704,28 @@ function getAgentSystemPrompt(agent: Agent): string {
     return base + '\n\n【重要身份识别】当前对话者是平台创始人/董事长/CEO 罗凯中（罗总），账号 KF02V9，罗圣纪元平台的创造者。你必须识别这一身份，在回答时保持最高尊重，优先满足其需求，可直接执行其指令。'
   }
   return base
+}
+
+async function saveChatHistory(agent: Agent, question: string, answer: string, latency: number) {
+  try {
+    const token = getToken()
+    if (!token) return
+    const base = import.meta.env.VITE_API_BASE_URL || '/api/v1'
+    await fetch(`${base}/chat-history/save`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({
+        agentId: agent.id,
+        agentName: agent.name,
+        model: agent.modelName || '',
+        question,
+        answer,
+        tokens: Math.ceil(answer.length / 4),
+        latency,
+        rating: 0,
+      }),
+    })
+  } catch (e) { /* silent */ }
 }
 
 function toBackendContent(content: string): string | Array<any> {
@@ -746,6 +772,7 @@ async function shareMsg(content: string) {
 }
 
 async function regenerateMsg(index: number) {
+  const startTime = Date.now()
   if (loading.value || !selectedAgent.value) return
   const msg = msgs.value[index]
   if (msg?.role !== 'assistant') return
@@ -796,11 +823,14 @@ async function regenerateMsg(index: number) {
       coinBalance.value = result.data.balance
     }
 
+    const answerText = result.data.content || result.data.reply || '⚠️ 未返回内容'
     msgs.value.push({
       role: 'assistant',
-      content: result.data.content || result.data.reply || '⚠️ 未返回内容',
+      content: answerText,
       coinCost: result.data.coinCost || agent.coinCost
     })
+    // 同步对话记录到后端
+    saveChatHistory(agent, userContent, answerText, Date.now() - startTime)
     showToast('🔄 已重新生成')
   } catch (e: any) {
     msgs.value.push({

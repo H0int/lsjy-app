@@ -1,0 +1,7 @@
+<template>
+  <div class="cyber-card p-5">
+    <h2 class="text-lg font-bold mb-4" style="color:#00f0ff;">决策中心</h2>
+    <p style="color:#808099;">平台核心决策指标与建议将在后续版本开放。</p>
+  </div>
+</template>
+<script setup lang="ts"></script>

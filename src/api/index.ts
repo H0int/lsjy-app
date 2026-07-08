@@ -142,6 +142,9 @@ export const adminApi = {
   getDashboard(): Promise<ApiResponse<any>> {
     return service.get('/admin/dashboard', { timeout: 60000 }).then(r => r.data)
   },
+  getChatHistory(params?: { keyword?: string; agent?: string; startDate?: string; endDate?: string; page?: number; pageSize?: number }): Promise<ApiResponse<any>> {
+    return service.get('/admin/chat-history', { params, timeout: 30000 }).then(r => r.data)
+  },
   getRoles(): Promise<ApiResponse<any[]>> {
     return service.get('/roles').then(r => r.data)
   },

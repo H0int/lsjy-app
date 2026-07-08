@@ -42,7 +42,13 @@
           <button v-else @click="appStore.toggleSidebar()" class="p-2 text-xl" style="color:#00f0ff;">☰</button>
           <h1 class="text-base font-bold cyber-glow-text" style="color:#00f0ff;">{{currentTitle}}</h1>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-4">
+          <div class="hidden md:flex items-center gap-3 text-xs" style="color:#808099;">
+            <span>● CPU {{sysStats.cpu}}%</span>
+            <span>● MEM {{sysStats.mem}}G</span>
+            <span style="color:#00f0ff;">● ONLINE {{sysStats.online}}</span>
+          </div>
+          <router-link to="/coin" class="px-3 py-1 rounded text-xs font-bold" style="background:linear-gradient(135deg,#ff2d95,#b700ff);color:#fff;">充值</router-link>
           <el-dropdown trigger="click">
             <div class="flex items-center gap-2 cursor-pointer">
               <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold" style="background:linear-gradient(135deg,#ff2d95,#b700ff);">管</div>
@@ -63,84 +69,41 @@ import {useAuthStore} from '@/stores/auth'
 import {useAppStore} from '@/stores/app'
 const route=useRoute(),router=useRouter(),authStore=useAuthStore(),appStore=useAppStore()
 const sidebarOpen=ref(false),isMobile=ref(false)
+const sysStats=reactive({cpu:0,mem:0,online:0})
+async function fetchSysStats(){
+  try{
+    const base = import.meta.env.VITE_API_BASE_URL || '/api/v1'
+    const r=await fetch(`${base}/admin/system-stats`, { headers: { 'Authorization': `Bearer ${getToken()}` } })
+    if(r.ok){const d=await r.json();Object.assign(sysStats,d.data||d)}
+  }catch(e){}
+}
+onMounted(()=>{checkMobile();window.addEventListener('resize',checkMobile);fetchSysStats();const t=setInterval(fetchSysStats,30000);onUnmounted(()=>clearInterval(t))})
 function checkMobile(){isMobile.value=window.innerWidth<768;if(!isMobile.value)sidebarOpen.value=false}
-onMounted(()=>{checkMobile();window.addEventListener('resize',checkMobile)})
-onUnmounted(()=>window.removeEventListener('resize',checkMobile))
+
 const menuGroups=[
   {label:'概览',icon:'📊',items:[
     {path:'/admin/dashboard',label:'数据看板',icon:'📊'},
-    {path:'/admin/realtime',label:'实时监控',icon:'🔴'}
-  ]},
-  {label:'数据中心',icon:'📈',items:[
-    {path:'/admin/traffic',label:'流量分析',icon:'🚦'},
-    {path:'/admin/bi',label:'商业智能',icon:'🧠'},
-    {path:'/admin/performance',label:'性能监控',icon:'⚡'},
-    {path:'/admin/reports',label:'数据报表',icon:'📈'}
+    {path:'/admin/decision',label:'决策中心',icon:'🧭'},
+    {path:'/admin/realtime',label:'实时定位',icon:'🕐'}
   ]},
   {label:'用户管理',icon:'👥',items:[
-    {path:'/admin/users',label:'用户管理',icon:'👥'},
-    {path:'/admin/registration-audit',label:'注册审核',icon:'📋'},
-    {path:'/admin/vip',label:'VIP管理',icon:'💎'},
-    {path:'/admin/user-behavior',label:'用户行为',icon:'👁️'},
-    {path:'/admin/feedback',label:'反馈管理',icon:'💬'},
-    {path:'/admin/account-security',label:'账号安全',icon:'🔒'}
+    {path:'/admin/online-users',label:'在线用户',icon:'🟢'},
+    {path:'/admin/user-tags',label:'用户标签',icon:'🏷️'},
+    {path:'/admin/blacklist',label:'黑名单管理',icon:'🚫'}
   ]},
-  {label:'内容运营',icon:'📝',items:[
-    {path:'/admin/content-moderation',label:'内容审核',icon:'📝'},
-    {path:'/admin/announcements',label:'公告管理',icon:'📢'},
-    {path:'/admin/knowledge',label:'知识库',icon:'📚'},
-    {path:'/admin/media',label:'媒体库',icon:'🖼️'},
-    {path:'/admin/push',label:'消息推送',icon:'📨'},
-    {path:'/admin/faq',label:'FAQ管理',icon:'❓'}
+  {label:'智能体管理',icon:'🤖',items:[
+    {path:'/admin/ai-agents',label:'AI智能体',icon:'🤖'},
+    {path:'/admin/chat-history',label:'对话记录',icon:'💬'},
+    {path:'/admin/model-config',label:'模型配置',icon:'⚙️'},
+    {path:'/admin/knowledge',label:'知识库管理',icon:'📚'}
   ]},
-  {label:'AI管理',icon:'🤖',items:[
-    {path:'/admin/tools',label:'工具管理',icon:'🔧'},
-    {path:'/admin/model-monitor',label:'模型监控',icon:'🤖'},
-    {path:'/admin/token-usage',label:'Token用量',icon:'🪙'},
-    {path:'/admin/prompts',label:'提示词模板',icon:'📝'},
-    {path:'/admin/training-data',label:'训练数据',icon:'🏋️'},
-    {path:'/admin/chat-history',label:'对话记录',icon:'💬'}
-  ]},
-  {label:'商业变现',icon:'💰',items:[
+  {label:'财务中心',icon:'💰',items:[
+    {path:'/admin/coin-packages',label:'圣力套餐',icon:'⚡'},
+    {path:'/admin/boss-cards',label:'Boss充值卡',icon:'👑'},
+    {path:'/admin/payment',label:'支付',icon:'💳'},
+    {path:'/admin/recharge',label:'充值管理',icon:'💎'},
     {path:'/admin/orders',label:'订单管理',icon:'📦'},
-    {path:'/admin/payment-approval',label:'支付审核',icon:''},
-    {path:'/admin/transactions',label:'交易记录',icon:'💳'},
-    {path:'/admin/refunds',label:'退款处理',icon:'↩️'},
-    {path:'/admin/payment',label:'支付渠道',icon:'💰'},
-    {path:'/admin/invoices',label:'发票管理',icon:'🧾'},
-    {path:'/admin/pricing',label:'定价管理',icon:'💲'}
-  ]},
-  {label:'营销增长',icon:'📈',items:[
-    {path:'/admin/coupons',label:'优惠券',icon:'🎫'},
-    {path:'/admin/campaigns',label:'活动管理',icon:'🎯'},
-    {path:'/admin/referral',label:'推荐追踪',icon:'🔗'},
-    {path:'/admin/affiliate',label:'分销管理',icon:'🤝'},
-    {path:'/admin/points-mall',label:'积分商城',icon:'🎁'}
-  ]},
-  {label:'客服支持',icon:'🎧',items:[
-    {path:'/admin/tickets',label:'工单管理',icon:'🎧'},
-    {path:'/admin/automation',label:'自动化规则',icon:'🤖'},
-    {path:'/admin/live-chat',label:'在线聊天',icon:'💬'}
-  ]},
-  {label:'访客中心',icon:'🚪',items:[
-    {path:'/admin/visitors',label:'访客中心',icon:'🚪'},
-    {path:'/admin/checkin',label:'签到记录',icon:'✅'},
-    {path:'/admin/clock',label:'实时定位',icon:'🕐'},
-    {path:'/admin/visitor-stats',label:'访客统计',icon:'📊'}
-  ]},
-  {label:'系统管理',icon:'⚙️',items:[
-    {path:'/admin/settings',label:'系统配置',icon:'⚙️'},
-    {path:'/admin/oplog',label:'操作日志',icon:'📋'},
-    {path:'/admin/scheduler',label:'定时任务',icon:'⏰'},
-    {path:'/admin/api-keys',label:'API密钥',icon:'🔑'},
-    {path:'/admin/backup',label:'备份恢复',icon:'💾'},
-    {path:'/admin/sysinfo',label:'系统信息',icon:'🖥️'}
-  ]},
-  {label:'安全中心',icon:'🛡️',items:[
-    {path:'/admin/audit',label:'安全审计',icon:'🛡️'},
-    {path:'/admin/login-history',label:'登录记录',icon:'🔐'},
-    {path:'/admin/ip-blacklist',label:'IP黑名单',icon:'🚫'},
-    {path:'/admin/permissions',label:'权限管理',icon:'🔑'}
+    {path:'/admin/commission',label:'佣金记录',icon:'💵'}
   ]},
 ]
 const expanded=reactive<Record<string,boolean>>({})

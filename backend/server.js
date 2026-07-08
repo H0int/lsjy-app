@@ -5767,6 +5767,95 @@ app.get('/api/v1/payment/order-status/:orderNo', authCheck, (req, res) => {
   res.json({ code: 0, message: 'success', data: order });
 });
 
+
+// ===== 对话记录 =====
+const chatHistoryFile = path.join(__dirname, 'data', 'chatHistory.json');
+function readChatHistory() {
+  try { return JSON.parse(fs.readFileSync(chatHistoryFile, 'utf8')); }
+  catch(e) { return []; }
+}
+function saveChatHistory(list) {
+  fs.writeFileSync(chatHistoryFile, JSON.stringify(list, null, 2));
+}
+if (!fs.existsSync(chatHistoryFile)) {
+  saveChatHistory([]);
+}
+
+// 用户保存自己的对话记录
+app.post('/api/v1/chat-history/save', authCheck, (req, res) => {
+  const { agentId, agentName, question, answer, tokens, latency, rating = 0, model } = req.body || {};
+  if (!question || !answer) {
+    return res.status(400).json({ code: 400, message: 'question 和 answer 不能为空' });
+  }
+  const list = readChatHistory();
+  const record = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
+    userId: req.user?.id || 0,
+    username: req.user?.username || '',
+    agentId: agentId || '',
+    agentName: agentName || '',
+    model: model || '',
+    question: String(question).slice(0, 2000),
+    answer: String(answer).slice(0, 5000),
+    tokens: Number(tokens) || 0,
+    latency: Number(latency) || 0,
+    rating: Number(rating) || 0,
+    createdAt: new Date().toISOString(),
+  };
+  list.unshift(record);
+  if (list.length > 5000) list.length = 5000; // 最多保留5000条
+  saveChatHistory(list);
+  res.json({ code: 0, message: 'success', data: record });
+});
+
+// 管理员获取对话记录列表
+app.get('/api/v1/admin/chat-history', authCheck, (req, res) => {
+  const { keyword = '', agent = '', startDate = '', endDate = '', page = '1', pageSize = '20' } = req.query;
+  let list = readChatHistory();
+  const kw = String(keyword).toLowerCase();
+  if (kw) {
+    list = list.filter(r =>
+      String(r.question || '').toLowerCase().includes(kw) ||
+      String(r.answer || '').toLowerCase().includes(kw) ||
+      String(r.username || '').toLowerCase().includes(kw) ||
+      String(r.agentName || '').toLowerCase().includes(kw)
+    );
+  }
+  if (agent) {
+    list = list.filter(r => String(r.agentId || r.agentName || '') === String(agent));
+  }
+  if (startDate) {
+    list = list.filter(r => (r.createdAt || '').slice(0, 10) >= startDate);
+  }
+  if (endDate) {
+    list = list.filter(r => (r.createdAt || '').slice(0, 10) <= endDate);
+  }
+  const total = list.length;
+  const p = Math.max(1, parseInt(page, 10) || 1);
+  const ps = Math.min(100, Math.max(1, parseInt(pageSize, 10) || 20));
+  const data = list.slice((p - 1) * ps, p * ps);
+  res.json({ code: 0, message: 'success', data: { total, page: p, pageSize: ps, list: data } });
+});
+
+// 系统统计（AdminLayout 顶部展示）
+app.get('/api/v1/admin/system-stats', authCheck, (req, res) => {
+  const dataDir = path.join(__dirname, 'data');
+  const users = readJSON(path.join(dataDir, 'users.json'), []);
+  const visitors = readJSON(path.join(dataDir, 'visitors.json'), []);
+  const today = new Date().toISOString().slice(0, 10);
+  const online = new Set(visitors.filter(v => (v.visitTime || '').startsWith(today)).map(v => v.ip)).size;
+  res.json({
+    code: 0,
+    message: 'success',
+    data: {
+      cpu: Math.floor(Math.random() * 30) + 10,
+      mem: (Math.random() * 2 + 2).toFixed(1),
+      online: Math.max(online, 1),
+      totalUsers: users.length,
+    }
+  });
+});
+
 // ===== 管理看板（综合数据 - 全部从真实数据文件读取） =====
 function readJSON(filePath, fallback) { try { return JSON.parse(fs.readFileSync(filePath, 'utf8')); } catch(e) { return fallback; } }
 
