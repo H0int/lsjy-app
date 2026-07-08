@@ -60,7 +60,7 @@ export const toolApi = {
   },
   callTool(id: number | string, input: { text?: string; params?: Record<string, any>; files?: string[] }): Promise<ApiResponse<AiCallRecord>> {
     if (useMock) return mockApi.callTool(id, input) as any
-    return service.post(`/ai/tools/${id}/call`, input).then(r => r.data)
+    return service.post(`/ai/tools/${id}/call`, input, { timeout: 60000 }).then(r => r.data)
   },
   generateImage(id: number | string, params: { prompt: string; width?: number; height?: number; size?: string; style?: string; count?: number; quality?: string }): Promise<ApiResponse<any>> {
     return service.post(`/ai/tools/${id}/generate`, params, { timeout: 180000 }).then(r => r.data)
