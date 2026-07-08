@@ -140,6 +140,7 @@
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { adminApi } from '@/api'
 import { ElMessage } from 'element-plus'
+import * as echarts from 'echarts'
 
 // ===== 真实看板数据 =====
 const dashboardLoading = ref(false)
@@ -243,10 +244,8 @@ const moduleBarRef = ref<HTMLElement>()
 let charts: any[] = []
 
 function initCharts() {
-  // 检查 echarts 是否可用
-  const echarts = (window as any).echarts
+  // echarts 已作为 npm 依赖打包导入
   if (!echarts) {
-    // 降级为纯 CSS 展示
     renderFallbackCharts()
     return
   }
@@ -347,18 +346,6 @@ async function loadDashboard() {
 }
 
 onMounted(async () => {
-  // 尝试动态加载 ECharts
-  if (!(window as any).echarts) {
-    try {
-      await new Promise<void>((resolve, reject) => {
-        const script = document.createElement('script')
-        script.src = 'https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js'
-        script.onload = () => resolve()
-        script.onerror = () => reject()
-        document.head.appendChild(script)
-      })
-    } catch { /* ECharts 不可用，使用降级 */ }
-  }
   await loadDashboard()
   window.addEventListener('resize', resizeCharts)
 })
