@@ -1,7 +1,10 @@
 <template>
   <div>
-    <!-- debug visible marker -->
-    <div style="background:#00f0ff;color:#000;padding:8px 16px;font-weight:bold;margin-bottom:16px;">数据看板已加载</div>
+    <div v-if="loadError" class="mb-4 p-4 rounded" style="background:#ff2d9520;border:1px solid #ff2d95;color:#ff2d95;">
+      <div class="font-bold">后端服务异常</div>
+      <div class="text-sm mt-1">请稍后刷新，或联系管理员重启后端服务。</div>
+      <el-button size="small" class="mt-2" @click="loadDashboard">重试</el-button>
+    </div>
     <!-- 实时数据概览 -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       <div v-for="stat in realtimeStats" :key="stat.label" class="bg-white dark:bg-dark-100 rounded-xl p-5 shadow-sm relative overflow-hidden">
