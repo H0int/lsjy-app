@@ -210,6 +210,9 @@ body::after{
 #main-app{
   display:none;height:100vh;width:100vw;
 }
+#main-app.active{
+  display:flex;
+}
 
 /* ===== SIDEBAR ===== */
 #sidebar{
@@ -228,11 +231,19 @@ body::after{
 }
 #sidebar.collapsed{width:68px;}
 #sidebar.collapsed .sb-brand span,
-#sidebar.collapsed .sb-group,
-#sidebar.collapsed .sb-item span,
-#sidebar.collapsed .sb-footer{display:none;}
-#sidebar.collapsed .sb-item{justify-content:center;padding:12px 0;}
-#sidebar.collapsed .sb-item i{margin:0;font-size:20px;}
+  #sidebar.collapsed .sb-group,
+  #sidebar.collapsed .sb-item span,
+  #sidebar.collapsed .sb-item i,
+  #sidebar.collapsed .sb-menu-header .menu-label,
+  #sidebar.collapsed .sb-menu-header .menu-arrow,
+  #sidebar.collapsed .sb-menu-header .menu-badge,
+  #sidebar.collapsed .sb-sub-item span,
+  #sidebar.collapsed .sb-sub-item i,
+  #sidebar.collapsed .sb-footer{display:none;}
+  #sidebar.collapsed .sb-item{justify-content:center;padding:12px 0;}
+  #sidebar.collapsed .sb-item i{margin:0;font-size:20px;}
+  #sidebar.collapsed .sb-menu-header{justify-content:center;padding:12px 0;}
+  #sidebar.collapsed .sb-menu-header .menu-icon{margin:0;font-size:18px;}
 
 .sb-brand{
   padding:16px 18px;border-bottom:var(--border-glow);
@@ -288,6 +299,70 @@ body::after{
   font-size:10px;color:var(--nd);text-align:center;
   letter-spacing:.5px;flex-shrink:0;
 }
+
+/* ===== SIDEBAR COLLAPSIBLE MENU ===== */
+.sb-menu-group{margin:2px 10px;border-radius:10px;overflow:hidden;}
+.sb-menu-header{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 14px;cursor:pointer;transition:all .25s;
+  color:var(--nd);font-size:13px;font-weight:600;
+  border-radius:10px;user-select:none;
+}
+.sb-menu-header:hover{background:var(--sidebar-active);color:var(--w);}
+.sb-menu-header .menu-icon{width:20px;text-align:center;font-size:14px;flex-shrink:0;}
+.sb-menu-header .menu-label{flex:1;white-space:nowrap;}
+.sb-menu-header .menu-arrow{
+  font-size:10px;transition:transform .3s;color:var(--nd);
+  width:16px;text-align:center;flex-shrink:0;
+}
+.sb-menu-header .menu-badge{
+  background:var(--p);color:#000;font-size:10px;font-weight:700;
+  padding:1px 6px;border-radius:8px;min-width:18px;text-align:center;
+  flex-shrink:0;
+}
+.sb-menu-group.open .sb-menu-header .menu-arrow{transform:rotate(90deg);}
+.sb-menu-group.open .sb-menu-header{color:var(--p);}
+.sb-menu-items{
+  max-height:0;overflow:hidden;transition:max-height .35s ease;
+}
+.sb-menu-group.open .sb-menu-items{max-height:500px;}
+.sb-sub-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 14px 9px 44px;margin:1px 0;cursor:pointer;
+  transition:all .25s;color:var(--nd);font-size:13px;
+  border-radius:8px;white-space:nowrap;position:relative;
+}
+.sb-sub-item:hover{background:var(--sidebar-active);color:var(--w);}
+.sb-sub-item.active{
+  background:var(--sidebar-active);color:var(--p);font-weight:600;
+}
+.sb-sub-item.active::before{
+  content:'';position:absolute;left:0;top:20%;bottom:20%;width:3px;
+  background:var(--p);border-radius:0 3px 3px 0;
+  box-shadow:var(--glow-p);
+}
+.sb-sub-item i{width:16px;text-align:center;font-size:13px;flex-shrink:0;}
+.sb-sub-item .sub-label{flex:1;}
+.sb-sub-item .sub-badge{
+  font-size:10px;color:var(--p);background:var(--ps);
+  padding:1px 6px;border-radius:8px;
+}
+/* Collapsed sidebar: hide sub-items and badges */
+#sidebar.collapsed .sb-menu-items{max-height:0 !important;}
+#sidebar.collapsed .sb-menu-header .menu-label,
+#sidebar.collapsed .sb-menu-header .menu-arrow,
+#sidebar.collapsed .sb-menu-header .menu-badge,
+#sidebar.collapsed .sb-footer{display:none;}
+#sidebar.collapsed .sb-menu-header{justify-content:center;padding:12px 0;}
+#sidebar.collapsed .sb-menu-header .menu-icon{margin:0;font-size:18px;}
+/* Footer link */
+.sb-footer-link{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 18px;cursor:pointer;transition:all .25s;
+  color:var(--nd);font-size:13px;
+}
+.sb-footer-link:hover{color:var(--p);}
+.sb-footer-link i{width:20px;text-align:center;font-size:14px;}
 
 /* ===== SIDEBAR BACKDROP (Mobile) ===== */
 .sidebar-backdrop{
@@ -813,60 +888,158 @@ body::after{
       <span>LUOSHENG</span>
     </div>
     <nav class="sb-nav">
-      <div class="sb-group">概览</div>
-      <div class="sb-item active" data-page="dashboard" onclick="navigate('dashboard')">
-        <i class="fa-solid fa-chart-pie"></i><span>数据看板</span>
+      <!-- 概览 -->
+      <div class="sb-menu-group open" data-group="overview">
+        <div class="sb-menu-header" onclick="AdminAPI.toggleMenuGroup(this)">
+          <i class="fa-solid fa-gauge-high menu-icon"></i>
+          <span class="menu-label">概览</span>
+          <span class="menu-badge">3</span>
+          <i class="fa-solid fa-chevron-right menu-arrow"></i>
+        </div>
+        <div class="sb-menu-items">
+          <div class="sb-sub-item active" data-page="dashboard" onclick="navigate('dashboard')">
+            <i class="fa-solid fa-chart-pie"></i><span class="sub-label">数据看板</span>
+          </div>
+          <div class="sb-sub-item" data-page="decision" onclick="navigate('decision')">
+            <i class="fa-solid fa-compass"></i><span class="sub-label">决策中心</span>
+          </div>
+          <div class="sb-sub-item" data-page="realtime" onclick="navigate('realtime')">
+            <i class="fa-solid fa-location-dot"></i><span class="sub-label">实时定位</span>
+          </div>
+        </div>
       </div>
 
-      <div class="sb-group">管理</div>
-      <div class="sb-item" data-page="users" onclick="navigate('users')">
-        <i class="fa-solid fa-users"></i><span>用户管理</span>
-      </div>
-      <div class="sb-item" data-page="tools" onclick="navigate('tools')">
-        <i class="fa-solid fa-wand-magic-sparkles"></i><span>AI工具管理</span>
-      </div>
-      <div class="sb-item" data-page="agent" onclick="navigate('agent')">
-        <i class="fa-solid fa-robot"></i><span>AI智能体</span>
-      </div>
-      <div class="sb-item" data-page="orders" onclick="navigate('orders')">
-        <i class="fa-solid fa-receipt"></i><span>订单管理</span>
-      </div>
-      <div class="sb-item" data-page="recharge-review" onclick="navigate('recharge-review')">
-        <i class="fa-solid fa-clipboard-check"></i><span>充值审核</span>
-      </div>
-      <div class="sb-item" data-page="finance" onclick="navigate('finance')">
-        <i class="fa-solid fa-coins"></i><span>财务管理</span>
-      </div>
-      <div class="sb-item" data-page="content" onclick="navigate('content')">
-        <i class="fa-solid fa-newspaper"></i><span>内容管理</span>
+      <!-- 用户管理 -->
+      <div class="sb-menu-group" data-group="users">
+        <div class="sb-menu-header" onclick="AdminAPI.toggleMenuGroup(this)">
+          <i class="fa-solid fa-users menu-icon"></i>
+          <span class="menu-label">用户管理</span>
+          <span class="menu-badge">3</span>
+          <i class="fa-solid fa-chevron-right menu-arrow"></i>
+        </div>
+        <div class="sb-menu-items">
+          <div class="sb-sub-item" data-page="online-users" onclick="navigate('online-users')">
+            <i class="fa-solid fa-circle" style="color:var(--ok);font-size:8px;"></i><span class="sub-label">在线用户</span>
+          </div>
+          <div class="sb-sub-item" data-page="user-tags" onclick="navigate('user-tags')">
+            <i class="fa-solid fa-tags"></i><span class="sub-label">用户标签</span>
+          </div>
+          <div class="sb-sub-item" data-page="blacklist" onclick="navigate('blacklist')">
+            <i class="fa-solid fa-ban"></i><span class="sub-label">黑名单管理</span>
+          </div>
+        </div>
       </div>
 
-      <div class="sb-group">运营</div>
-      <div class="sb-item" data-page="coupons" onclick="navigate('coupons')">
-        <i class="fa-solid fa-ticket"></i><span>优惠券</span>
-      </div>
-      <div class="sb-item" data-page="tickets" onclick="navigate('tickets')">
-        <i class="fa-solid fa-headset"></i><span>工单管理</span>
-      </div>
-      <div class="sb-item" data-page="marketing" onclick="navigate('marketing')">
-        <i class="fa-solid fa-bullhorn"></i><span>营销管理</span>
-      </div>
-      <div class="sb-item" data-page="reports" onclick="navigate('reports')">
-        <i class="fa-solid fa-chart-line"></i><span>数据报表</span>
-      </div>
-      <div class="sb-item" data-page="visitors" onclick="navigate('visitors')">
-        <i class="fa-solid fa-eye"></i><span>访客管理</span>
+      <!-- 智能体管理 -->
+      <div class="sb-menu-group" data-group="agent">
+        <div class="sb-menu-header" onclick="AdminAPI.toggleMenuGroup(this)">
+          <i class="fa-solid fa-robot menu-icon"></i>
+          <span class="menu-label">智能体管理</span>
+          <span class="menu-badge">4</span>
+          <i class="fa-solid fa-chevron-right menu-arrow"></i>
+        </div>
+        <div class="sb-menu-items">
+          <div class="sb-sub-item" data-page="agent" onclick="navigate('agent')">
+            <i class="fa-solid fa-brain"></i><span class="sub-label">AI智能体</span>
+          </div>
+          <div class="sb-sub-item" data-page="chat-logs" onclick="navigate('chat-logs')">
+            <i class="fa-solid fa-comments"></i><span class="sub-label">对话记录</span>
+          </div>
+          <div class="sb-sub-item" data-page="model-config" onclick="navigate('model-config')">
+            <i class="fa-solid fa-sliders"></i><span class="sub-label">模型配置</span>
+          </div>
+          <div class="sb-sub-item" data-page="knowledge" onclick="navigate('knowledge')">
+            <i class="fa-solid fa-book"></i><span class="sub-label">知识库管理</span>
+          </div>
+        </div>
       </div>
 
-      <div class="sb-group">系统</div>
-      <div class="sb-item" data-page="permissions" onclick="navigate('permissions')">
-        <i class="fa-solid fa-user-shield"></i><span>权限管理</span>
+      <!-- 财务中心 -->
+      <div class="sb-menu-group" data-group="finance">
+        <div class="sb-menu-header" onclick="AdminAPI.toggleMenuGroup(this)">
+          <i class="fa-solid fa-coins menu-icon"></i>
+          <span class="menu-label">财务中心</span>
+          <span class="menu-badge">6</span>
+          <i class="fa-solid fa-chevron-right menu-arrow"></i>
+        </div>
+        <div class="sb-menu-items">
+          <div class="sb-sub-item" data-page="packages" onclick="navigate('packages')">
+            <i class="fa-solid fa-bolt"></i><span class="sub-label">圣力套餐</span>
+          </div>
+          <div class="sb-sub-item" data-page="boss-cards" onclick="navigate('boss-cards')">
+            <i class="fa-solid fa-crown"></i><span class="sub-label">Boss充值卡</span>
+          </div>
+          <div class="sb-sub-item" data-page="payment" onclick="navigate('payment')">
+            <i class="fa-solid fa-credit-card"></i><span class="sub-label">支付</span>
+          </div>
+          <div class="sb-sub-item" data-page="recharge-manage" onclick="navigate('recharge-manage')">
+            <i class="fa-solid fa-gem"></i><span class="sub-label">充值管理</span>
+          </div>
+          <div class="sb-sub-item" data-page="orders" onclick="navigate('orders')">
+            <i class="fa-solid fa-receipt"></i><span class="sub-label">订单管理</span>
+          </div>
+          <div class="sb-sub-item" data-page="commission" onclick="navigate('commission')">
+            <i class="fa-solid fa-hand-holding-dollar"></i><span class="sub-label">佣金记录</span>
+          </div>
+        </div>
       </div>
-      <div class="sb-item" data-page="settings" onclick="navigate('settings')">
-        <i class="fa-solid fa-gear"></i><span>系统设置</span>
+
+      <!-- 内容运营 -->
+      <div class="sb-menu-group" data-group="content">
+        <div class="sb-menu-header" onclick="AdminAPI.toggleMenuGroup(this)">
+          <i class="fa-solid fa-newspaper menu-icon"></i>
+          <span class="menu-label">内容运营</span>
+          <span class="menu-badge">3</span>
+          <i class="fa-solid fa-chevron-right menu-arrow"></i>
+        </div>
+        <div class="sb-menu-items">
+          <div class="sb-sub-item" data-page="announcements" onclick="navigate('announcements')">
+            <i class="fa-solid fa-bullhorn"></i><span class="sub-label">公告管理</span>
+          </div>
+          <div class="sb-sub-item" data-page="content-review" onclick="navigate('content-review')">
+            <i class="fa-solid fa-clipboard-check"></i><span class="sub-label">内容审核</span>
+          </div>
+          <div class="sb-sub-item" data-page="push-messages" onclick="navigate('push-messages')">
+            <i class="fa-solid fa-paper-plane"></i><span class="sub-label">消息推送</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 系统管理 -->
+      <div class="sb-menu-group" data-group="system">
+        <div class="sb-menu-header" onclick="AdminAPI.toggleMenuGroup(this)">
+          <i class="fa-solid fa-gear menu-icon"></i>
+          <span class="menu-label">系统管理</span>
+          <span class="menu-badge">6</span>
+          <i class="fa-solid fa-chevron-right menu-arrow"></i>
+        </div>
+        <div class="sb-menu-items">
+          <div class="sb-sub-item" data-page="monitor" onclick="navigate('monitor')">
+            <i class="fa-solid fa-heart-pulse"></i><span class="sub-label">运行监控</span>
+          </div>
+          <div class="sb-sub-item" data-page="settings" onclick="navigate('settings')">
+            <i class="fa-solid fa-gear"></i><span class="sub-label">系统设置</span>
+          </div>
+          <div class="sb-sub-item" data-page="op-logs" onclick="navigate('op-logs')">
+            <i class="fa-solid fa-list-check"></i><span class="sub-label">操作日志</span>
+          </div>
+          <div class="sb-sub-item" data-page="login-logs" onclick="navigate('login-logs')">
+            <i class="fa-solid fa-right-to-bracket"></i><span class="sub-label">登录记录</span>
+          </div>
+          <div class="sb-sub-item" data-page="api-monitor" onclick="navigate('api-monitor')">
+            <i class="fa-solid fa-chart-line"></i><span class="sub-label">API监控</span>
+          </div>
+          <div class="sb-sub-item" data-page="backup" onclick="navigate('backup')">
+            <i class="fa-solid fa-database"></i><span class="sub-label">数据备份</span>
+          </div>
+        </div>
       </div>
     </nav>
-    <div class="sb-footer">LUOSHENG SYSTEM V8.0</div>
+    <div class="sb-footer">
+      <div class="sb-footer-link" onclick="window.open('https://h0int.github.io/lsjy-app/','_blank')">
+        <i class="fa-solid fa-arrow-left"></i><span>返回前台</span>
+      </div>
+    </div>
   </aside>
 
   <!-- CONTENT AREA -->
