@@ -4431,14 +4431,19 @@ AdminAPI._renderRechargeApps = function(orders) {
   }
   var statusMap = {pending_payment:'<span class="badge badge-warn">待支付</span>',pending_review:'<span class="badge badge-p">待审核</span>',approved:'<span class="badge badge-ok">已通过</span>',rejected:'<span class="badge badge-err">已拒绝</span>'};
   var methodMap = {wechat:'微信',alipay:'支付宝',qq:'QQ'};
+  function fmtDate(d) { if (!d) return '--'; try { var dt = new Date(d); if (isNaN(dt.getTime())) return d; return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0')+' '+String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0'); } catch(e) { return d; } }
   var html = '';
   orders.forEach(function(o) {
     var st = statusMap[o.status] || o.status;
-    var method = methodMap[o.method] || methodMap[o.payMethod] || o.payMethod || '--';
-    html += '<tr><td>' + (o.orderNo || o.id) + '</td><td>' + (o.username || o.user || '--') + '</td>';
-    html += '<td>¥' + (o.amount || 0) + '</td><td>' + (o.coins || o.coinAmount || 0) + '</td>';
-    html += '<td>' + method + '</td><td>' + (o.screenshotUrl ? '<a href="' + o.screenshotUrl + '" target="_blank">查看</a>' : '--') + '</td>';
-    html += '<td>' + st + '</td><td>' + (o.createdAt || o.time || '--') + '</td>';
+    var method = methodMap[o.method] || methodMap[o.payMethod] || methodMap[o.paymentMethod] || o.paymentMethod || o.payMethod || '--';
+    var amount = o.amount || o.price || 0;
+    var coins = o.coins || o.coinAmount || 0;
+    var user = o.username || o.user || '--';
+    if (user === 'unknown') user = '用户#' + (o.userId || o.id || '--');
+    html += '<tr><td style="color:var(--p);font-size:12px;font-family:monospace;">' + (o.orderNo || o.id) + '</td><td>' + user + '</td>';
+    html += '<td style="font-weight:600;color:var(--ok);">¥' + amount + '</td><td>' + coins + '</td>';
+    html += '<td>' + method + '</td><td>' + (o.screenshotUrl ? '<a href="' + o.screenshotUrl + '" target="_blank" style="color:var(--p);">查看</a>' : '--') + '</td>';
+    html += '<td>' + st + '</td><td style="color:var(--nd);font-size:12px;">' + fmtDate(o.createdAt || o.time) + '</td>';
     if (o.status === 'pending_review' || o.status === 'pending_payment') {
       html += '<td><button class="btn-xs btn-ok" onclick="AdminAPI.approveRechargeApp(\'' + o.id + '\')">通过</button> <button class="btn-xs btn-err" onclick="AdminAPI.rejectRechargeApp(\'' + o.id + '\')">拒绝</button> <button class="btn-xs" onclick="AdminAPI.viewRechargeDetail(\'' + o.id + '\')">详情</button></td>';
     } else {
@@ -4447,6 +4452,13 @@ AdminAPI._renderRechargeApps = function(orders) {
     html += '</tr>';
   });
   tbody.innerHTML = html;
+  // 更新统计卡片
+  var pendingCount = orders.filter(function(o){return o.status==='pending_review'||o.status==='pending_payment'}).length;
+  var approvedCount = orders.filter(function(o){return o.status==='approved'}).length;
+  var rejectedCount = orders.filter(function(o){return o.status==='rejected'}).length;
+  var totalAmount = orders.reduce(function(s,o){return s+(o.amount||o.price||0)},0);
+  var statEls = document.querySelectorAll('.stat-value');
+  if (statEls.length >= 4) { statEls[0].textContent = pendingCount; statEls[1].textContent = approvedCount; statEls[2].textContent = rejectedCount; statEls[3].textContent = '¥' + totalAmount.toFixed(2); }
 };
 
 AdminAPI.approveRechargeApp = function(id) {
