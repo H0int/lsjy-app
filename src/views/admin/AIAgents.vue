@@ -84,7 +84,7 @@ async function loadData() {
   loading.value = true
   try {
     const res = await adminApi.getAdminAgents()
-    list.value = res.data?.list || res.data || []
+    list.value = res.data?.list || res.data?.items || res.data || []
   } catch (e: any) { ElMessage.error(e.message || '加载失败') }
   finally { loading.value = false }
 }
