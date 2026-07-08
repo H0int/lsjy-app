@@ -148,6 +148,21 @@ export const adminApi = {
   rechargeUser(userId: number, amount: number): Promise<ApiResponse<any>> {
     return service.post('/admin/users/recharge', { userId, amount, description: '管理员后台充值' }).then(r => r.data)
   },
+  getCoinPackages(): Promise<ApiResponse<any[]>> {
+    return service.get('/admin/coin-packages').then(r => r.data)
+  },
+  createCoinPackage(data: any): Promise<ApiResponse<any>> {
+    return service.post('/admin/coin-packages', data).then(r => r.data)
+  },
+  updateCoinPackage(id: number, data: any): Promise<ApiResponse<any>> {
+    return service.put(`/admin/coin-packages/${id}`, data).then(r => r.data)
+  },
+  deleteCoinPackage(id: number): Promise<ApiResponse<any>> {
+    return service.delete(`/admin/coin-packages/${id}`).then(r => r.data)
+  },
+  getRechargeOrders(params?: { page?: number; pageSize?: number; status?: string }): Promise<ApiResponse<any>> {
+    return service.get('/payment/coin/orders', { params }).then(r => r.data)
+  },
   getRoles(): Promise<ApiResponse<any[]>> {
     return service.get('/roles').then(r => r.data)
   },

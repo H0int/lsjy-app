@@ -105,9 +105,19 @@ const menuGroups=[
     {path:'/admin/orders',label:'订单管理',icon:'📦'},
     {path:'/admin/commission',label:'佣金记录',icon:'💵'}
   ]},
+  {label:'内容运营',icon:'📝',items:[
+    {path:'/admin/announcements',label:'公告管理',icon:'📢'},
+    {path:'/admin/content-moderation',label:'内容审核',icon:'📝'},
+    {path:'/admin/push',label:'消息推送',icon:'📨'}
+  ]},
+  {label:'系统管理',icon:'⚙️',items:[
+    {path:'/admin/settings',label:'系统配置',icon:'⚙️'},
+    {path:'/admin/oplog',label:'操作日志',icon:'📋'},
+    {path:'/admin/login-history',label:'登录记录',icon:'🔐'}
+  ]},
 ]
 const expanded=reactive<Record<string,boolean>>({})
-menuGroups.forEach((g,i)=>{expanded[g.label]=i<3})
+menuGroups.forEach((g,i)=>{expanded[g.label]=i<5})
 function toggleGroup(label:string){expanded[label]=!expanded[label]}
 const allItems=menuGroups.flatMap(g=>g.items)
 const currentTitle=computed(()=>{const i=allItems.find(x=>route.path===x.path);return i?.label||'管理后台'})

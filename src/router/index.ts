@@ -57,6 +57,14 @@ const routes: RouteRecordRaw[] = [
       { path: 'recharge', name: 'RechargeManage', component: () => import('@/views/admin/RechargeManage.vue'), meta: { title: '充值管理' } },
       { path: 'orders', name: 'AdminOrders', component: () => import('@/views/admin/OrderManagement.vue'), meta: { title: '订单管理' } },
       { path: 'commission', name: 'CommissionRecords', component: () => import('@/views/admin/CommissionRecords.vue'), meta: { title: '佣金记录' } },
+      // 内容运营
+      { path: 'announcements', name: 'AdminAnnouncements', component: () => import('@/views/admin/AnnouncementManagement.vue'), meta: { title: '公告管理' } },
+      { path: 'content-moderation', name: 'AdminContentModeration', component: () => import('@/views/admin/ContentModeration.vue'), meta: { title: '内容审核' } },
+      { path: 'push', name: 'PushNotification', component: () => import('@/views/admin/content/PushNotification.vue'), meta: { title: '消息推送' } },
+      // 系统管理
+      { path: 'settings', name: 'AdminSettings', component: () => import('@/views/admin/SystemSettings.vue'), meta: { title: '系统配置' } },
+      { path: 'oplog', name: 'OperationLog', component: () => import('@/views/admin/system/OperationLog.vue'), meta: { title: '操作日志' } },
+      { path: 'login-history', name: 'LoginHistory', component: () => import('@/views/admin/security/LoginHistory.vue'), meta: { title: '登录记录' } },
     ]
   }
 ]

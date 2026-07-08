@@ -7304,18 +7304,30 @@ const contentLibraryStore = [
 ];
 
 // ===== 圣力套餐数据 =====
-const coinPackagesStore = [
-  { id: 1, name: '体验包', coins: 10, coinAmount: 10, price: 1, originalPrice: 1, bonusCoins: 0, status: 'active', isRecommended: 0, sortOrder: 1, salesCount: 0 },
-  { id: 2, name: '入门包', coins: 100, coinAmount: 100, price: 9.9, originalPrice: 10, bonusCoins: 10, status: 'active', isRecommended: 0, sortOrder: 2, salesCount: 0 },
-  { id: 3, name: '标准包', coins: 300, coinAmount: 300, price: 24.9, originalPrice: 30, bonusCoins: 30, status: 'active', isRecommended: 0, sortOrder: 3, salesCount: 0 },
-  { id: 4, name: '进阶包', coins: 500, coinAmount: 500, price: 39.9, originalPrice: 50, bonusCoins: 100, status: 'active', isRecommended: 1, sortOrder: 4, salesCount: 0 },
-  { id: 5, name: '专业包', coins: 1000, coinAmount: 1000, price: 69.9, originalPrice: 100, bonusCoins: 200, status: 'active', isRecommended: 0, sortOrder: 5, salesCount: 0 },
-  { id: 6, name: '企业包', coins: 2000, coinAmount: 2000, price: 129.9, originalPrice: 200, bonusCoins: 500, status: 'active', isRecommended: 0, sortOrder: 6, salesCount: 0 },
-  { id: 7, name: '旗舰包', coins: 5000, coinAmount: 5000, price: 299.9, originalPrice: 500, bonusCoins: 1500, status: 'active', isRecommended: 0, sortOrder: 7, salesCount: 0 },
-  { id: 8, name: '至尊包', coins: 10000, coinAmount: 10000, price: 549.9, originalPrice: 1000, bonusCoins: 3500, status: 'active', isRecommended: 0, sortOrder: 8, salesCount: 0 },
-  { id: 9, name: '豪华包', coins: 25000, coinAmount: 25000, price: 1299.9, originalPrice: 2500, bonusCoins: 10000, status: 'active', isRecommended: 0, sortOrder: 9, salesCount: 0 },
-  { id: 10, name: '王者包', coins: 50000, coinAmount: 50000, price: 1999.9, originalPrice: 5000, bonusCoins: 25000, status: 'active', isRecommended: 0, sortOrder: 10, salesCount: 0 },
-];
+const COIN_PACKAGES_FILE = path.join(__dirname, 'data', 'coin_packages.json');
+function loadCoinPackagesStore() {
+  try { return JSON.parse(fs.readFileSync(COIN_PACKAGES_FILE, 'utf8')); }
+  catch(e) {
+    return [
+      { id: 1, name: '体验包', coins: 10, coinAmount: 10, price: 1, originalPrice: 1, bonusCoins: 0, status: 'active', isRecommended: 0, sortOrder: 1, salesCount: 0 },
+      { id: 2, name: '入门包', coins: 100, coinAmount: 100, price: 9.9, originalPrice: 10, bonusCoins: 10, status: 'active', isRecommended: 0, sortOrder: 2, salesCount: 0 },
+      { id: 3, name: '标准包', coins: 300, coinAmount: 300, price: 24.9, originalPrice: 30, bonusCoins: 30, status: 'active', isRecommended: 0, sortOrder: 3, salesCount: 0 },
+      { id: 4, name: '进阶包', coins: 500, coinAmount: 500, price: 39.9, originalPrice: 50, bonusCoins: 100, status: 'active', isRecommended: 1, sortOrder: 4, salesCount: 0 },
+      { id: 5, name: '专业包', coins: 1000, coinAmount: 1000, price: 69.9, originalPrice: 100, bonusCoins: 200, status: 'active', isRecommended: 0, sortOrder: 5, salesCount: 0 },
+      { id: 6, name: '企业包', coins: 2000, coinAmount: 2000, price: 129.9, originalPrice: 200, bonusCoins: 500, status: 'active', isRecommended: 0, sortOrder: 6, salesCount: 0 },
+      { id: 7, name: '旗舰包', coins: 5000, coinAmount: 5000, price: 299.9, originalPrice: 500, bonusCoins: 1500, status: 'active', isRecommended: 0, sortOrder: 7, salesCount: 0 },
+      { id: 8, name: '至尊包', coins: 10000, coinAmount: 10000, price: 549.9, originalPrice: 1000, bonusCoins: 3500, status: 'active', isRecommended: 0, sortOrder: 8, salesCount: 0 },
+      { id: 9, name: '豪华包', coins: 25000, coinAmount: 25000, price: 1299.9, originalPrice: 2500, bonusCoins: 10000, status: 'active', isRecommended: 0, sortOrder: 9, salesCount: 0 },
+      { id: 10, name: '王者包', coins: 50000, coinAmount: 50000, price: 1999.9, originalPrice: 5000, bonusCoins: 25000, status: 'active', isRecommended: 0, sortOrder: 10, salesCount: 0 },
+    ];
+  }
+}
+function saveCoinPackagesStore() {
+  try { fs.writeFileSync(COIN_PACKAGES_FILE, JSON.stringify(coinPackagesStore, null, 2)); }
+  catch(e) { log(`[支付] 写入 coin_packages.json 失败: ${e.message}`); }
+}
+let coinPackagesStore = loadCoinPackagesStore();
+if (!Array.isArray(coinPackagesStore)) coinPackagesStore = [];
 
 function parseCoinNumber(value, fallback = 0) {
   if (typeof value === 'number') return Number.isFinite(value) ? value : fallback;
@@ -7839,6 +7851,7 @@ app.post('/api/v1/admin/coin-packages', authCheck, (req, res) => {
     salesCount: 0,
   });
   coinPackagesStore.push(item);
+  saveCoinPackagesStore();
   res.json({ code: 0, message: 'success', data: item });
 });
 app.put('/api/v1/admin/coin-packages/:id', authCheck, (req, res) => {
@@ -7855,6 +7868,7 @@ app.put('/api/v1/admin/coin-packages/:id', authCheck, (req, res) => {
 app.delete('/api/v1/admin/coin-packages/:id', authCheck, (req, res) => {
   const idx = coinPackagesStore.findIndex(p => p.id === Number(req.params.id));
   if (idx >= 0) coinPackagesStore.splice(idx, 1);
+  saveCoinPackagesStore();
   res.json({ code: 0, message: 'success' });
 });
 
