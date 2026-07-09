@@ -460,15 +460,13 @@ async function requestAgentChat(agent: Agent, payload: Record<string, any>) {
     'Authorization': `Bearer ${authToken.value}`,
     'Content-Type': 'application/json',
   }
+  // 优先使用 /ai/tools/:id/chat（Express后端，稳定可用）
+  // /agent/chat 线上可能被其他服务拦截，不再优先使用
   const endpoints = [
-    `${API_BASE}/agent/chat`,
     `${API_BASE}/ai/tools/${agent.id}/chat`,
+    `${API_BASE}/agent/chat`,
   ]
   let lastError: Error | null = null
-
-  // 调试日志
-  console.log('[requestAgentChat] payload:', JSON.stringify(payload).substring(0, 500))
-  console.log('[requestAgentChat] token exists:', !!authToken.value)
 
   for (const endpoint of endpoints) {
     try {
@@ -481,6 +479,17 @@ async function requestAgentChat(agent: Agent, payload: Record<string, any>) {
       if (res.status === 404 || res.status === 405) {
         lastError = new Error(`API ${res.status}`)
         continue
+      }
+      // 即使HTTP 200，如果响应体中code非0也视为失败，尝试下一个端点
+      if (res.ok) {
+        const clone = res.clone()
+        try {
+          const body = await clone.json()
+          if (body && typeof body === 'object' && 'code' in body && body.code !== 0) {
+            lastError = new Error(body.message || `服务错误(${body.code})`)
+            continue
+          }
+        } catch { /* 非JSON响应，直接返回 */ }
       }
       return res
     } catch (err: any) {
@@ -496,12 +505,15 @@ function formatChatError(err: any): string {
   if (msg.includes('502') || msg.includes('503') || msg.includes('504')) return 'AI服务暂时不可用，请稍后重试'
   if (msg.includes('timeout') || msg.includes('aborted')) return 'AI服务响应超时，请稍后重试'
   if (msg.includes('Failed to fetch') || msg.includes('Network')) return '网络连接异常，请检查网络或稍后重试'
+  if (msg.includes('message required') || msg.includes('请输入消息')) return '消息发送失败，请重新输入后发送'
+  if (msg.includes('parse error')) return 'AI服务解析异常，请稍后重试'
   return msg
 }
 
 async function checkAgentConnection() {
   try {
-    const res = await fetch(`${API_BASE}/health?t=${Date.now()}`, {
+    // 使用 /ai/tools 作为健康检查（/health 线上不可用）
+    const res = await fetch(`${API_BASE}/ai/tools?t=${Date.now()}`, {
       signal: AbortSignal.timeout(6000),
       cache: 'no-store',
     })
