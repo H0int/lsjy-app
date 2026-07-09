@@ -3393,7 +3393,7 @@ app.post('/api/v1/auth/login', (req, res) => {
 app.post('/api/v1/payment/admin/coins/set-balance', authCheck, requireBoss, (req, res) => {
   const targetUserId = Number(req.body?.userId);
   const balance = Number(req.body?.balance);
-  const remark = req.body?.remark || 后台强制设置圣力余额为 ${balance}`;
+  const remark = req.body?.remark || `后台强制设置圣力余额为 ${balance}`;
   if (!targetUserId || targetUserId <= 0) {
     return res.status(400).json({ code: 400, message: '请选择要处理的用户', data: null });
   }
