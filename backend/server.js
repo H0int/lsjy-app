@@ -42,8 +42,8 @@ const CONFIG = {
   DOUBAO_MODEL: process.env.DOUBAO_MODEL || 'doubao-1-5-pro-32k-250115',
   DOUBAO_VISION_MODEL: process.env.DOUBAO_VISION_MODEL || 'doubao-1-5-vision-pro-32k-250115',
 
-  // 即梦（字节跳动 AI 绘画）
-  JIMENG_API_KEY: process.env.JIMENG_API_KEY || "",
+  // 即梦（字节跳动 AI 绘画）- 同时兼容 ARK_API_KEY（部署脚本写入的变量名）
+  JIMENG_API_KEY: process.env.JIMENG_API_KEY || process.env.ARK_API_KEY || "",
   JIMENG_BASE_URL: process.env.JIMENG_BASE_URL || 'https://ark.cn-beijing.volces.com/api/v3',
   JIMENG_MODEL: process.env.JIMENG_MODEL || 'doubao-seedream-5-0-260128',
 
