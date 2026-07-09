@@ -225,12 +225,36 @@ const imageUrls = ref<string[]>([])
 // 工具参数配置
 const paramValues = ref<Record<string, any>>({})
 const toolParamGroups = computed(() => {
-  if (!tool.value?.subCategory) return []
-  // 视频工具使用 "视频生成" 参数组
-  if (isVideoTool.value) {
-    return getToolParams('视频生成')
+  // 视频工具
+  if (isVideoTool.value) return getToolParams('视频生成')
+  // 图片工具
+  if (isImageTool.value) return getToolParams('AI绘画')
+
+  // 有 subCategory 时优先使用
+  if (tool.value?.subCategory) {
+    return getToolParams(tool.value.subCategory)
   }
-  return getToolParams(tool.value.subCategory)
+
+  // 根据 categoryId 匹配参数（兼容线上33个细分类别ID）
+  const catId = Number(tool.value?.categoryId)
+  if ([1, 20].includes(catId)) return getToolParams('文案撰写')       // 文本创作/内容创作
+  if ([2].includes(catId)) return getToolParams('AI绘画')             // 图片生成
+  if ([3, 13].includes(catId)) return getToolParams('数据分析')       // 数据分析
+  if ([4].includes(catId)) return getToolParams('对话聊天')           // 智能对话
+  if ([5].includes(catId)) return getToolParams('对话聊天')           // 音频处理
+  if ([6].includes(catId)) return getToolParams('视频生成')           // 视频制作
+  if ([7].includes(catId)) return getToolParams('编程开发')           // 代码开发
+  if ([8].includes(catId)) return getToolParams('效率自动化')         // 效率办公
+  if ([9, 10, 11, 12, 14].includes(catId)) return getToolParams('商品运营') // 电商
+  if ([15, 16, 17, 18, 19].includes(catId)) return getToolParams('学习方法') // 教育
+  if ([21].includes(catId)) return getToolParams('视频脚本')          // 短视频
+  if ([22].includes(catId)) return getToolParams('直播运营')          // 直播运营
+  if ([23].includes(catId)) return getToolParams('账号运营')          // 账号运营
+  if ([24, 25, 26, 27, 28].includes(catId)) return getToolParams('养宠指导')  // 宠物
+  if ([29, 30, 31, 32, 33].includes(catId)) return getToolParams('校园生活')  // 校园
+
+  // 兜底：通用参数（始终有参数面板）
+  return getToolParams('对话聊天')
 })
 const hasParams = computed(() => toolParamGroups.value.length > 0)
 

@@ -180,20 +180,32 @@ const subCategoryIconMap: Record<string, string> = {
   心理支持: '🌱',
 }
 
+// 6大业务板块 + 图片/视频生成（前端硬编码，不依赖后端categories接口）
+const SIX_PLATES = [
+  { id: 1, label: '内容创作', icon: '📝' },
+  { id: 4, label: 'AI智能', icon: '🤖' },
+  { id: 7, label: '电商运营', icon: '🛒' },
+  { id: 8, label: '教育培训', icon: '📚' },
+  { id: 5, label: '宠物服务', icon: '🐾' },
+  { id: 6, label: '校园助手', icon: '🎓' },
+  { id: 9, label: '图片生成', icon: '🎨' },
+  { id: 10, label: '视频生成', icon: '🎬' },
+]
+
 const totalCount = computed(() => toolStore.total)
 
 const categoryList = computed(() => {
-  const countByCategory = (id: number) => {
+  const countByCategory = (id: number | null) => {
+    if (id === null) return totalCount.value
     // 图片生成(id=9)和视频生成(id=10)按toolType计数
     if (id === 9) return toolStore.tools.filter(t => t.toolType === 'image').length
     if (id === 10) return toolStore.tools.filter(t => t.toolType === 'video').length
     return toolStore.tools.filter(t => Number(t.categoryId) === Number(id)).length
   }
-  const cats = [
-    { id: null, label: '全部工具', icon: '📦', count: totalCount.value },
-    ...toolStore.categories.map(c => ({ id: c.id, label: c.name, icon: c.icon || '📁', count: countByCategory(c.id) }))
+  return [
+    { id: null, label: '全部工具', icon: '📦', count: countByCategory(null) },
+    ...SIX_PLATES.map(c => ({ ...c, count: countByCategory(c.id) }))
   ]
-  return cats
 })
 
 function toolsByCategory(catId: number) {
