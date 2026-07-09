@@ -226,7 +226,97 @@ express.get(apiPrefix + "/reports/overview", (req, res) => {
 logger.log("Express middleware routes registered for missing endpoints");
 logger.log("CORS middleware enabled for lsjyapp.cn cross-origin requests");
 
-    const port = configService.get("PORT", 3000);
+    // ===== Boss圣力管理接口 =====
+// POST /api/v1/payment/admin/coins/set-balance - 设置用户圣力余额
+express.post(apiPrefix + "/payment/admin/coins/set-balance", (req, res) => {
+  try {
+    const targetUserId = Number(req.body?.userId);
+    const balance = Number(req.body?.balance);
+    const remark = req.body?.remark || ("Boss设置圣力余额为 " + balance);
+
+    if (!targetUserId || targetUserId <= 0) {
+      return res.status(400).json({ code: 400, message: "请选择要处理的用户", data: null });
+    }
+    if (!Number.isFinite(balance) || balance < 0) {
+      return res.status(400).json({ code: 400, message: "圣力余额不能小于0", data: null });
+    }
+
+    const uFile = path.join(__dirname, "data", "users.json");
+    let users = [];
+    if (fs.existsSync(uFile)) {
+      users = JSON.parse(fs.readFileSync(uFile, "utf8"));
+    }
+
+    const user = users.find(u => Number(u.id) === targetUserId);
+    if (!user) {
+      return res.status(404).json({ code: 404, message: "用户不存在", data: null });
+    }
+
+    const before = Number(user.coins || 0);
+    user.coins = balance;
+    user.totalRecharge = Number(user.totalRecharge || 0) + Math.max(0, balance - before);
+
+    fs.writeFileSync(uFile, JSON.stringify(users, null, 2), "utf8");
+
+    console.log("[Boss圣力] userId=" + targetUserId + " " + before + " -> " + balance + " by " + (req.body?.operator || "admin"));
+    res.json({
+      code: 0,
+      message: "圣力余额已更新",
+      data: { account: { userId: targetUserId, balance: balance, before: before }, delta: balance - before }
+    });
+  } catch(e) {
+    console.error("[Boss圣力] Error:", e.message);
+    res.status(500).json({ code: 500, message: "服务器错误: " + e.message, data: null });
+  }
+});
+
+// POST /api/v1/payment/admin/coins/adjust - 调整用户圣力（增量）
+express.post(apiPrefix + "/payment/admin/coins/adjust", (req, res) => {
+  try {
+    const targetUserId = Number(req.body?.userId);
+    const amount = Number(req.body?.amount);
+    const remark = req.body?.remark || ("Boss充值 " + amount + " 圣力");
+
+    if (!targetUserId || targetUserId <= 0) {
+      return res.status(400).json({ code: 400, message: "请选择要充值的用户", data: null });
+    }
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return res.status(400).json({ code: 400, message: "充值金额必须大于0", data: null });
+    }
+
+    const uFile = path.join(__dirname, "data", "users.json");
+    let users = [];
+    if (fs.existsSync(uFile)) {
+      users = JSON.parse(fs.readFileSync(uFile, "utf8"));
+    }
+
+    const user = users.find(u => Number(u.id) === targetUserId);
+    if (!user) {
+      return res.status(404).json({ code: 404, message: "用户不存在", data: null });
+    }
+
+    const before = Number(user.coins || 0);
+    user.coins = before + amount;
+    user.totalRecharge = Number(user.totalRecharge || 0) + amount;
+
+    fs.writeFileSync(uFile, JSON.stringify(users, null, 2), "utf8");
+
+    console.log("[Boss充值] userId=" + targetUserId + " +" + amount + " (" + before + " -> " + user.coins + ")");
+    res.json({
+      code: 0,
+      message: "充值成功",
+      data: { account: { userId: targetUserId, balance: user.coins, totalRecharge: user.totalRecharge } }
+    });
+  } catch(e) {
+    console.error("[Boss充值] Error:", e.message);
+    res.status(500).json({ code: 500, message: "服务器错误: " + e.message, data: null });
+  }
+});
+
+logger.log("Boss圣力管理接口已注册 (set-balance, adjust)");
+
+
+const port = configService.get("PORT", 3000);
     await app.listen(port);
     logger.log("Application running on: http://localhost:" + port);
 }
