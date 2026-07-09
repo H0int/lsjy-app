@@ -37,23 +37,23 @@ const CONFIG = {
   AI_PROVIDER: process.env.AI_PROVIDER || 'doubao',
 
   // 豆包（字节跳动火山引擎）
-  DOUBAO_API_KEY: process.env.DOUBAO_API_KEY || "ark-3c2a939f-9aec-4930-946e-29a97d476611-e6c69",
+  DOUBAO_API_KEY: process.env.DOUBAO_API_KEY || "",
   DOUBAO_BASE_URL: process.env.DOUBAO_BASE_URL || 'https://ark.cn-beijing.volces.com/api/v3',
   DOUBAO_MODEL: process.env.DOUBAO_MODEL || 'doubao-1-5-pro-32k-250115',
   DOUBAO_VISION_MODEL: process.env.DOUBAO_VISION_MODEL || 'doubao-1-5-vision-pro-32k-250115',
 
   // 即梦（字节跳动 AI 绘画）
-  JIMENG_API_KEY: process.env.JIMENG_API_KEY || "ark-3c2a939f-9aec-4930-946e-29a97d476611-e6c69",
+  JIMENG_API_KEY: process.env.JIMENG_API_KEY || "",
   JIMENG_BASE_URL: process.env.JIMENG_BASE_URL || 'https://ark.cn-beijing.volces.com/api/v3',
   JIMENG_MODEL: process.env.JIMENG_MODEL || 'doubao-seedream-5-0-260128',
 
   // DeepSeek
-  DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY || 'sk-4f60d83ebf904321b99000888baf313c',
+  DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY || '',
   DEEPSEEK_BASE_URL: process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com/v1',
   DEEPSEEK_MODEL: process.env.DEEPSEEK_MODEL || 'deepseek-chat',
 
   // 通义千问（阿里云）
-  TONGYI_API_KEY: process.env.TONGYI_API_KEY || 'sk-c4212c9d7e4644e6825d796f6365668e',
+  TONGYI_API_KEY: process.env.TONGYI_API_KEY || '',
   TONGYI_BASE_URL: process.env.TONGYI_BASE_URL || 'https://dashscope.aliyuncs.com/compatible-mode/v1',
   TONGYI_MODEL: process.env.TONGYI_MODEL || 'qwen-plus',
 
@@ -89,7 +89,7 @@ const CONFIG = {
   KLING_MODEL: process.env.KLING_MODEL || 'kling-v1',
 
   // 通义万相视频生成（阿里云）
-  TONGYI_VIDEO_API_KEY: process.env.TONGYI_API_KEY || 'sk-c4212c9d7e4644e6825d796f6365668e',
+  TONGYI_VIDEO_API_KEY: process.env.TONGYI_API_KEY || '',
   TONGYI_VIDEO_BASE_URL: process.env.TONGYI_VIDEO_BASE_URL || 'https://dashscope.aliyuncs.com/api/v1',
 
   // 图片/视频生成配置
@@ -3288,7 +3288,7 @@ function sha256Text(value) {
 }
 
 function verifyBossPassword(password) {
-  const configuredHash = process.env.BOSS_PASSWORD_SHA256 || 'fbcad7f2eff8da9cabc3e144a57315108656023ee86434971f6df41414a98263';
+  const configuredHash = process.env.BOSS_PASSWORD_SHA256 || '';
   return sha256Text(password) === configuredHash;
 }
 
