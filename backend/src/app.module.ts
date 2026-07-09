@@ -48,7 +48,7 @@ import { AdminExtrasController } from './admin-extras.controller';
         password: configService.get<string>('DB_PASSWORD', ''),
         database: configService.get<string>('DB_DATABASE', 'lsjy_saas'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: configService.get<string>('NODE_ENV') !== 'production',
+        synchronize: false, // 生产环境强制禁止自动同步表结构
         charset: 'utf8mb4',
         logging: configService.get<string>('NODE_ENV') === 'development',
         extra: {

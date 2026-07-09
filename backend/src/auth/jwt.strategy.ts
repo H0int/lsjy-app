@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
-import { AuthService } from './auth.service';
+import { AuthService, isTokenBlacklisted } from './auth.service';
 
 export interface JwtPayload {
   sub: number;
@@ -20,16 +20,25 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     private readonly configService: ConfigService,
     private readonly authService: AuthService,
   ) {
+    const secret = configService.get<string>('JWT_SECRET') || configService.get<string>('app.jwt.secret');
+    if (!secret) {
+      throw new Error('JWT_SECRET 环境变量未配置，服务无法启动。请在 .env 中设置 JWT_SECRET。');
+    }
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: configService.get<string>('JWT_SECRET') || configService.get<string>('app.jwt.secret') || 'default_secret_change_me',
+      secretOrKey: secret,
     });
   }
 
   async validate(payload: JwtPayload) {
     if (payload.type !== 'access') {
       throw new UnauthorizedException('Invalid token type');
+    }
+
+    // Check token blacklist (logout)
+    if (payload.jti && isTokenBlacklisted(payload.jti)) {
+      throw new UnauthorizedException('Token已失效，请重新登录');
     }
 
     const user = await this.authService.validateUser(payload.sub);

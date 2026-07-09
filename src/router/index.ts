@@ -101,10 +101,16 @@ router.beforeEach(async (to, _from, next) => {
       authStore.user = userData
       authStore.userRoles = roleNames
       localStorage.setItem('lsjy_user', JSON.stringify(userData))
-      const allowed = Number(userData?.id) === 1
-        && userData?.username === 'KF02V9'
-        && roleNames.some((r: string) => ['boss', 'founder', 'ultimate_admin', 'super_admin'].includes(r))
-      if (!allowed) return next('/dashboard')
+      // 纯后端 JWT 鉴权：由后端控制角色，前端只校验角色名
+      const isAdmin = roleNames.some((r: string) =>
+        ['boss', 'founder', 'ultimate_admin', 'super_admin', 'admin'].includes(r)
+      )
+      if (!isAdmin) {
+        removeToken()
+        localStorage.removeItem('lsjy_refresh_token')
+        localStorage.removeItem('lsjy_user')
+        return next('/dashboard')
+      }
     } catch {
       removeToken()
       localStorage.removeItem('lsjy_refresh_token')

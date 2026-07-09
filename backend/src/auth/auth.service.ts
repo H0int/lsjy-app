@@ -13,6 +13,22 @@ import { LoginLog } from '../database/entities/login-log.entity';
 import { CoinAccount } from '../database/entities/coin-account.entity';
 import { RegisterDto, LoginDto, ChangePasswordDto } from './dto/auth.dto';
 
+// Token blacklist (in-memory; migrate to Redis in production)
+const tokenBlacklist = new Set<string>();
+// Periodic cleanup: remove entries older than 24h
+setInterval(() => {
+  // In production with Redis, use TTL. For in-memory, clear periodically.
+  if (tokenBlacklist.size > 10000) tokenBlacklist.clear();
+}, 3600000);
+
+export function isTokenBlacklisted(jti: string): boolean {
+  return tokenBlacklist.has(jti);
+}
+
+export function addToBlacklist(jti: string): void {
+  tokenBlacklist.add(jti);
+}
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -126,12 +142,6 @@ export class AuthService {
     if (!isPasswordValid) {
       await this.logFailedLogin(user.id, 'password', ip || '', '密码错误');
       throw new UnauthorizedException('用户名或密码错误');
-    }
-
-    // Auto-upgrade KF02V9 to founder tier
-    if (user.username === 'KF02V9' && user.membershipTier !== 'founder') {
-      user.membershipTier = 'founder';
-      await this.userRepo.save(user);
     }
 
     // Log successful login

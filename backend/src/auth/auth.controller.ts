@@ -2,7 +2,7 @@ import { Controller, Post, Put, Body, Req, UseGuards, HttpCode, HttpStatus, Get 
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Request } from 'express';
-import { AuthService } from './auth.service';
+import { AuthService, addToBlacklist } from './auth.service';
 import { RegisterDto, LoginDto, RefreshTokenDto, ChangePasswordDto } from './dto/auth.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -48,8 +48,22 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth()
   @ApiOperation({ summary: '用户登出' })
-  async logout() {
-    // Token blacklist will be handled via Redis in production
+  async logout(@Req() req: Request) {
+    // Extract JTI from the current token and add to blacklist
+    const authHeader = req.headers.authorization;
+    if (authHeader) {
+      const token = authHeader.replace('Bearer ', '');
+      try {
+        const payload = JSON.parse(
+          Buffer.from(token.split('.')[1], 'base64').toString('utf-8')
+        );
+        if (payload.jti) {
+          addToBlacklist(payload.jti);
+        }
+      } catch {
+        // If we can't decode the token, skip blacklisting — the token is invalid anyway
+      }
+    }
     return { data: { message: '登出成功' } };
   }
 
