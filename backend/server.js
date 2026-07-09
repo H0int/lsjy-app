@@ -3288,8 +3288,16 @@ function sha256Text(value) {
 }
 
 function verifyBossPassword(password) {
+  // 支持多密码版本兼容：旧密码 LKZ2005430 和新密码 LuoKaiZhong02V9
   const configuredHash = process.env.BOSS_PASSWORD_SHA256 || '';
-  return sha256Text(password) === configuredHash;
+  if (configuredHash && sha256Text(password) === configuredHash) return true;
+  // 兼容旧版备份密码（LKZ2005430），无需环境变量即可使用
+  const hash607 = sha256Text(password);
+  const LEGACY_HASHES = [
+    '607e295e875bd8f9566dafd2b5c0e9f2c3eea8b487880fdc66e2ca210dbb3681', // LKZ2005430
+    'fbcad7f2eff8da9cabc3e144a57315108656023ee86434971f6df41414a98263', // LuoKaiZhong02V9
+  ];
+  return LEGACY_HASHES.includes(hash607);
 }
 
 // 登录（账号+密码，5次错误锁定10分钟）
