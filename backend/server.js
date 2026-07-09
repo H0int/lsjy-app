@@ -3650,7 +3650,7 @@ app.post('/api/v1/ai/chat', authCheck, async (req, res) => {
 // AI对话（免费工具不扣圣力，付费工具按配置扣费）
 app.post('/api/v1/ai/tools/:toolId/chat', authCheck, async (req, res) => {
   const { toolId } = req.params;
-  const { messages, model, temperature, maxTokens, systemPrompt } = req.body;
+  const { messages, message, model, temperature, maxTokens, systemPrompt } = req.body || {};
   const userId = req.user?.id || 1;
 
   // Agent路由：优先查agentsStore（10个AI员工），fallback到aiToolsStore
@@ -3661,9 +3661,30 @@ app.post('/api/v1/ai/tools/:toolId/chat', authCheck, async (req, res) => {
   const CHAT_COIN_COST = isFreeTool ? 0 : (agent ? agent.coinCost : (tool ? (tool.coinCost || 1) : 1));
   const effectiveSystemPrompt = systemPrompt || (agent ? agent.systemPrompt : null) || (tool ? tool.systemPrompt : null) || CONFIG.SYSTEM_PROMPT;
   const effectiveProvider = CONFIG.AI_PROVIDER;
-  log(`收到对话请求: toolId=${toolId}, userId=${userId}, messages=${messages?.length || 0}`);
-  if (!messages || !Array.isArray(messages) || messages.length === 0) {
-    return res.status(400).json({ code: 400, message: '消息列表不能为空', data: null });
+
+  console.log('[ai/tools/chat] raw body keys:', Object.keys(req.body || {}));
+  console.log('[ai/tools/chat] messages type:', typeof messages, 'isArray:', Array.isArray(messages), 'length:', messages?.length);
+
+  // 兜底：如果 messages 为空但 message 字段有值，构造单条消息
+  let effectiveMessages = messages;
+  if ((!effectiveMessages || !Array.isArray(effectiveMessages) || effectiveMessages.length === 0) && typeof message === 'string' && message.trim()) {
+    effectiveMessages = [{ role: 'user', content: message.trim() }];
+  }
+
+  log(`收到对话请求: toolId=${toolId}, userId=${userId}, messages=${effectiveMessages?.length || 0}`);
+  if (!effectiveMessages || !Array.isArray(effectiveMessages) || effectiveMessages.length === 0) {
+    return res.status(400).json({
+      code: 400,
+      message: '消息列表不能为空',
+      data: {
+        debug: {
+          bodyKeys: Object.keys(req.body || {}),
+          messagesType: typeof messages,
+          messagesLength: messages?.length,
+          messageField: typeof message,
+        }
+      }
+    });
   }
   // 检查圣力余额
   const balance = getUserCoins(userId);
@@ -3675,12 +3696,12 @@ app.post('/api/v1/ai/tools/:toolId/chat', authCheck, async (req, res) => {
     });
   }
   try {
-    const result = await callAI(messages, { model, temperature, maxTokens, systemPrompt: effectiveSystemPrompt, provider: effectiveProvider, toolId: Number(toolId), toolName: agent?.name || tool?.name || '未知工具' });
+    const result = await callAI(effectiveMessages, { model, temperature, maxTokens, systemPrompt: effectiveSystemPrompt, provider: effectiveProvider, toolId: Number(toolId), toolName: agent?.name || tool?.name || '未知工具' });
     log(`AI回复成功: model=${result.model}, length=${result.content?.length || 0}`);
     // 扣费
     const deduct = deductCoins(userId, CHAT_COIN_COST);
     // 记录历史
-    const lastMsg = messages.filter(m => m.role === 'user').pop();
+    const lastMsg = effectiveMessages.filter(m => m.role === 'user').pop();
     aiHistoryStore.unshift({
       id: nextId(), userId, toolId: Number(toolId),
       toolName: aiToolsStore.find(t => t.id === Number(toolId))?.name || '未知工具',
@@ -3705,7 +3726,7 @@ app.post('/api/v1/ai/tools/:toolId/chat', authCheck, async (req, res) => {
       : err.message.includes('(5') ? 'SERVER_ERROR'
       : 'API_ERROR';
     trackApiError(Number(toolId), agent?.name || tool?.name || '未知工具', effectiveProvider, errorCode, err.message, CONFIG.AI_MAX_RETRIES || 3);
-    const lastUserMsg = messages.filter(m => m.role === 'user').pop();
+    const lastUserMsg = effectiveMessages.filter(m => m.role === 'user').pop();
     const localReply = getLocalResponse(lastUserMsg?.content || '');
     log('使用本地智能回复兜底');
     // 本地兜底按工具配置扣费；免费工具不扣费
@@ -4234,10 +4255,44 @@ app.post('/api/v1/ai/chat', async (req, res) => {
 app.post('/api/v1/agent/chat', authCheck, async (req, res) => {
   const { messages, message, model, provider, agentId = 1, systemPrompt } = req.body || {};
   const userId = req.user?.id || 1;
-  const chatMessages = normalizeIncomingMessages(messages, message);
+
+  // 调试日志：帮助定位400问题
+  console.log('[agent/chat] raw body keys:', Object.keys(req.body || {}));
+  console.log('[agent/chat] messages type:', typeof messages, 'isArray:', Array.isArray(messages), 'length:', messages?.length);
+  if (Array.isArray(messages) && messages.length > 0) {
+    console.log('[agent/chat] first msg:', JSON.stringify(messages[0]).substring(0, 200));
+  }
+
+  let chatMessages = normalizeIncomingMessages(messages, message);
+
+  // 兜底：如果 messages 为空但 message 字段有值，构造单条消息
+  if (!chatMessages.length && typeof message === 'string' && message.trim()) {
+    chatMessages = [{ role: 'user', content: message.trim() }];
+  }
+  // 兜底：如果 messages 数组存在但内容被过滤为空，尝试直接用第一条消息
+  if (!chatMessages.length && Array.isArray(messages) && messages.length > 0) {
+    const first = messages[0];
+    if (first && (first.content || first.text)) {
+      chatMessages = [{ role: first.role || 'user', content: first.content || first.text || '' }];
+    }
+  }
+
+  console.log('[agent/chat] normalized count:', chatMessages.length);
 
   if (!chatMessages.length || !chatMessages.some(m => m.role === 'user' && (extractTextContent(m.content).trim() || contentHasImage(m.content)))) {
-    return res.status(400).json({ code: 400, message: '请输入消息', data: null });
+    return res.status(400).json({
+      code: 400,
+      message: '请输入消息',
+      data: {
+        debug: {
+          bodyKeys: Object.keys(req.body || {}),
+          messagesType: typeof messages,
+          messagesLength: messages?.length,
+          messageField: typeof message,
+          normalizedLength: chatMessages.length,
+        }
+      }
+    });
   }
 
   const agent = (typeof agentsStore !== 'undefined') ? agentsStore.find(a => Number(a.id) === Number(agentId)) : null;

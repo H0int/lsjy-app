@@ -466,6 +466,10 @@ async function requestAgentChat(agent: Agent, payload: Record<string, any>) {
   ]
   let lastError: Error | null = null
 
+  // 调试日志
+  console.log('[requestAgentChat] payload:', JSON.stringify(payload).substring(0, 500))
+  console.log('[requestAgentChat] token exists:', !!authToken.value)
+
   for (const endpoint of endpoints) {
     try {
       const res = await fetch(endpoint, {
@@ -669,7 +673,16 @@ async function sendMsg() {
       return
     }
 
-    if (!res.ok) throw new Error(`API ${res.status}`)
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '')
+      let errMsg = `API ${res.status}`
+      try {
+        const errData = JSON.parse(errText)
+        if (errData.message) errMsg = errData.message
+        if (errData.data?.debug) console.error('[agent/chat] 400 debug:', errData.data.debug)
+      } catch { /* 非JSON响应 */ }
+      throw new Error(errMsg)
+    }
 
     const result = await res.json()
     if (result.code !== 0) throw new Error(result.message || '服务错误')
