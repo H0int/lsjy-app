@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 罗圣纪元 SaaS 后端服务器 v2
  * Express.js + AI API 集成
  * 支持 Coze / DeepSeek / 豆包 / 即梦 / 通义千问 / 腾讯元宝
@@ -3388,6 +3388,43 @@ app.post('/api/v1/auth/login', (req, res) => {
   });
 });
 
+
+// ===== Boss圣力管理接口 =====
+app.post('/api/v1/payment/admin/coins/set-balance', authCheck, requireBoss, (req, res) => {
+  const targetUserId = Number(req.body?.userId);
+  const balance = Number(req.body?.balance);
+  const remark = req.body?.remark || 后台强制设置圣力余额为 ${balance}`;
+  if (!targetUserId || targetUserId <= 0) {
+    return res.status(400).json({ code: 400, message: '请选择要处理的用户', data: null });
+  }
+  if (!Number.isFinite(balance) || balance < 0) {
+    return res.status(400).json({ code: 400, message: '圣力余额不能小于0', data: null });
+  }
+  const found = findCurrentUserFileFirst(targetUserId);
+  const users = found.users || [];
+  const user = found.user;
+  if (!user) {
+    return res.status(404).json({ code: 404, message: '用户不存在', data: null });
+  }
+  const before = Number(user.coins || 0);
+  user.coins = balance;
+  user.totalRecharge = Number(user.totalRecharge || 0) + Math.max(0, balance - before);
+  if (found.source === 'file') {
+    const idx = users.findIndex(u => Number(u.id) === targetUserId);
+    if (idx >= 0) { users[idx] = { ...users[idx], coins: user.coins, totalRecharge: user.totalRecharge }; }
+    saveFileUsers(users);
+  } else {
+    const idx = usersStore.findIndex(u => Number(u.id) === targetUserId);
+    if (idx >= 0) { usersStore[idx] = { ...usersStore[idx], coins: user.coins, totalRecharge: user.totalRecharge }; }
+  }
+  coinTransactionsStore.unshift({
+    id: Date.now(), userId: targetUserId, type: 'admin_set_balance',
+    amount: balance - before, balance, description: remark,
+    operator: req.user?.username || 'admin', createdAt: new Date().toISOString(),
+  });
+  saveCoinTransactionsStore();
+  res.json({ code: 0, message: '圣力余额已更新', data: { account: { userId: targetUserId, balance, before }, delta: balance - before } });
+});
 // 注册
 app.post('/api/v1/auth/register', (req, res) => {
   const { password, nickname, email, phone } = req.body;
