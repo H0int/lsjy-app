@@ -156,10 +156,17 @@ jobs:
             . /etc/profile.d/lsjy-ai-models.sh
             set +a
 
-            # 重启所有pm2进程
-            echo "重启后端服务..."
+            # 重启NestJS后端（主服务，端口3000）
+            if [ -n "$NEST_MAIN" ] && [ -f "$NEST_MAIN" ]; then
+              echo "重启NestJS后端: $NEST_MAIN"
+              pm2 restart lsjy-backend --update-env || true
+              sleep 5
+            fi
+
+            # 重启Express后端（备用服务，需使用不同端口避免冲突）
             pm2 delete lsjy-express >/dev/null 2>&1 || true
-            pm2 start "$EXPRESS_SERVER" --name lsjy-express --update-env
+            # Express使用3001端口避免与NestJS 3000冲突
+            pm2 start "$EXPRESS_SERVER" --name lsjy-express --update-env -- --port=3001 || true
             pm2 save || true
             sleep 8
 
@@ -174,6 +181,13 @@ jobs:
             echo ""
             echo "Agents数量(从API): $AGENTS_COUNT"
             echo "Tools数量(从API): $TOOLS_COUNT"
+
+            # 验证NestJS主服务是否正常（agents由NestJS提供）
+            HEALTH=$(curl -s http://localhost:3000/api/v1/health 2>/dev/null)
+            echo "Health check: $HEALTH"
+            echo ""
+            echo "注意: Express运行在3001端口，NestJS运行在3000端口"
+            echo "如需验证充值接口: curl -X POST http://localhost:3000/api/v1/payment/admin/coins/set-balance ..."
 
             if echo "$AGENTS_COUNT" | grep -q "1[89][0-9]"; then
               echo "✅ 180个AI员工部署成功!"
