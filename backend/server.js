@@ -3291,13 +3291,16 @@ function verifyBossPassword(password) {
   // 支持多密码版本兼容：旧密码 LKZ2005430 和新密码 LuoKaiZhong02V9
   const configuredHash = process.env.BOSS_PASSWORD_SHA256 || '';
   if (configuredHash && sha256Text(password) === configuredHash) return true;
-  // 兼容旧版备份密码（LKZ2005430），无需环境变量即可使用
-  const hash607 = sha256Text(password);
+  // 兼容旧版备份密码，无需环境变量即可使用
+  const hash = sha256Text(password);
+  console.log('[verifyBossPassword] passwordHash:', hash.substring(0, 16) + '...');
   const LEGACY_HASHES = [
     '607e295e875bd8f9566dafd2b5c0e9f2c3eea8b487880fdc66e2ca210dbb3681', // LKZ2005430
     'fbcad7f2eff8da9cabc3e144a57315108656023ee86434971f6df41414a98263', // LuoKaiZhong02V9
   ];
-  return LEGACY_HASHES.includes(hash607);
+  const match = LEGACY_HASHES.includes(hash);
+  console.log('[verifyBossPassword] legacyMatch:', match);
+  return match;
 }
 
 // 登录（账号+密码，5次错误锁定10分钟）
@@ -3306,8 +3309,11 @@ app.post('/api/v1/auth/login', (req, res) => {
   const account = username || rawAccount || phone || email || '';
   const normalizedAccount = String(account).trim().toUpperCase().replace(/O/g, '0');
 
+  console.log(`[login] account=${account}, normalizedAccount=${normalizedAccount}, passwordLength=${(password || '').length}`);
+
   // Boss账号正确密码直接放行，避免旧错误次数导致锁定；密码只做哈希校验，不在代码中保存明文
   if (normalizedAccount === 'KF02V9' && verifyBossPassword(password)) {
+    console.log('[login] Boss password verified OK, clearing login fails');
     clearLoginFails(account);
     clearLoginFails('KF02V9');
     clearLoginFails('KFO2V9');
