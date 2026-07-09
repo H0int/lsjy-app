@@ -68,15 +68,15 @@
         <div class="cyber-tool-head">
           <span class="cyber-tool-icon">{{ tool.icon }}</span>
           <div class="flex gap-1">
-            <span v-if="tool.isFree" class="cyber-badge cyber-badge-green">免费</span>
+            <span v-if="tool.isFree && tool.toolType !== 'image' && tool.toolType !== 'video'" class="cyber-badge cyber-badge-green">免费</span>
             <span class="cyber-badge cyber-badge-cyan">{{ toolTypeLabel(tool.toolType) }}</span>
           </div>
         </div>
         <h3 class="cyber-tool-name">{{ tool.name }}</h3>
         <p class="cyber-tool-desc">{{ tool.description }}</p>
         <div class="cyber-tool-foot">
-          <span class="cyber-cost" :class="tool.isFree ? 'cyber-cost-free' : 'cyber-cost-paid'">
-            {{ tool.isFree ? '免费使用' : `${tool.coinCost} 圣点/次` }}
+          <span class="cyber-cost" :class="(tool.isFree && tool.toolType !== 'image' && tool.toolType !== 'video') ? 'cyber-cost-free' : 'cyber-cost-paid'">
+            {{ (tool.isFree && tool.toolType !== 'image' && tool.toolType !== 'video') ? '免费使用' : `${tool.coinCost} 圣点/次` }}
           </span>
           <span class="cyber-use-count">{{ formatUseCount(tool.usageCount) }}次使用</span>
         </div>
@@ -97,8 +97,8 @@
           <p class="cyber-tool-desc truncate mt-1">{{ tool.description }}</p>
         </div>
         <div class="cyber-list-right">
-          <div class="cyber-cost" :class="tool.isFree ? 'cyber-cost-free' : 'cyber-cost-paid'">
-            {{ tool.isFree ? '免费' : `${tool.coinCost} 圣点` }}
+          <div class="cyber-cost" :class="(tool.isFree && tool.toolType !== 'image' && tool.toolType !== 'video') ? 'cyber-cost-free' : 'cyber-cost-paid'">
+            {{ (tool.isFree && tool.toolType !== 'image' && tool.toolType !== 'video') ? '免费' : `${tool.coinCost} 圣点` }}
           </div>
           <div class="cyber-use-count">{{ formatUseCount(tool.usageCount) }}次使用</div>
         </div>

@@ -718,7 +718,7 @@ function addAiHistoryRecord(record) {
 const aiToolsStore = [
   { id: 1, name: '罗圣AI智能体', icon: '🤖', toolType: 'text', categoryId: 4, status: 'active', description: '全能AI助手，支持多轮对话、问答、咨询', isFree: true, systemPrompt: "你是\"罗圣AI智能体\"，由祁阳市罗圣纪元互联网科技有限责任公司开发。全能型AI助手，能回答各类问题。创始人是罗凯中。回复准确、专业、友好。", usageCount: 1256, coinCost: 1, subCategory: '对话聊天' , isHot: true},
   { id: 2, name: '文案创作大师', icon: '✍️', toolType: 'text', categoryId: 1, status: 'active', description: '营销文案、宣传稿、社交媒体内容创作', isFree: true, systemPrompt: "你是专业营销文案创作大师，擅长撰写营销文案、宣传稿、广告语。输出有创意、有感染力、能转化。", usageCount: 890, coinCost: 2, subCategory: '文案撰写' , isHot: true},
-  { id: 3, name: 'AI绘画师', icon: '🎨', toolType: 'image', categoryId: 4, status: 'active', description: 'AI图片生成、设计辅助', isFree: true, systemPrompt: "你是AI绘画提示词专家，能根据用户描述生成高质量绘画提示词。", usageCount: 432, coinCost: 50, subCategory: 'AI绘画' , isHot: true},
+  { id: 3, name: 'AI绘画师', icon: '🎨', toolType: 'image', categoryId: 4, status: 'active', description: 'AI图片生成、设计辅助', isFree: false, systemPrompt: "你是AI绘画提示词专家，能根据用户描述生成高质量绘画提示词。", usageCount: 432, coinCost: 50, subCategory: 'AI绘画' , isHot: true},
   { id: 4, name: '数据分析师', icon: '📊', toolType: 'analysis', categoryId: 4, status: 'active', description: '数据分析、商业洞察、趋势预测', isFree: true, systemPrompt: "你是资深数据分析师，擅长商业数据分析、市场洞察。回复有数据支撑，逻辑清晰。", usageCount: 210, coinCost: 3, subCategory: '数据分析' , isHot: true},
   { id: 5, name: '代码工程师', icon: '💻', toolType: 'text', categoryId: 4, status: 'active', description: '代码生成、调试、技术方案设计', isFree: true, systemPrompt: "你是资深全栈工程师，精通前后端开发、数据库设计。代码有注释，方案可落地。", usageCount: 156, coinCost: 3, subCategory: '编程开发' , isHot: true},
   { id: 6, name: '自媒体运营官', icon: '📱', toolType: 'text', categoryId: 1, status: 'active', description: '自媒体内容策划、运营策略、涨粉技巧', isFree: true, systemPrompt: "你是资深自媒体运营专家，精通抖音/小红书/公众号/B站运营。回复实操、有案例。", usageCount: 345, coinCost: 2, subCategory: '账号运营' , isHot: true},
@@ -2450,7 +2450,7 @@ async function generateImageWithAI(prompt, options = {}) {
   }
 }
 
-// 即梦 AI 绘画
+// 即梦 AI 绘画（火山引擎 ARK Seedream）
 async function callJimengImageAPI(prompt, options = {}) {
   const apiKey = CONFIG.JIMENG_API_KEY;
   if (!apiKey) throw new Error('即梦 API Key 未配置，请在 .env 中配置 JIMENG_API_KEY');
@@ -2458,43 +2458,50 @@ async function callJimengImageAPI(prompt, options = {}) {
   const baseUrl = CONFIG.JIMENG_BASE_URL;
   const model = CONFIG.JIMENG_MODEL;
 
-  // 即梦 API 调用（参考官方文档）
   // 短提示词自动增强 - 提升生成质量
   let enhancedPrompt = prompt;
   if (prompt.length < 20) {
     enhancedPrompt = prompt + '，高质量，高清细节，专业摄影，8K分辨率，精细纹理';
   }
 
-  const aspectRatio = options.width / options.height;
+  // 火山引擎 ARK Seedream API 使用 "2K"/"4K" 格式或像素值
+  // 推荐使用 "2K" 格式，更稳定可靠
   const quality = options.quality || 'standard';
-  let sizeStr = '2048x2048';
-  if (quality === 'ultra') {
-    sizeStr = aspectRatio > 1.3 ? '3840x2160' : aspectRatio < 0.77 ? '2160x3840' : '3072x3072';
-  } else if (quality === 'master') {
-    sizeStr = aspectRatio > 1.3 ? '4096x2304' : aspectRatio < 0.77 ? '2304x4096' : '4096x4096';
-  } else if (quality === 'hd') {
-    sizeStr = aspectRatio > 1.3 ? '2560x1440' : aspectRatio < 0.77 ? '1440x2560' : '2048x2048';
-  } else {
-    sizeStr = aspectRatio > 1.3 ? '1920x1080' : aspectRatio < 0.77 ? '1080x1920' : '2048x2048';
-  }
+  const sizeStr = quality === 'ultra' ? '4K' : '2K';
 
-  const res = await httpsRequest(`${baseUrl}/images/generations`, {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }
-  }, {
+  // 构建请求体 - 严格按照火山引擎 ARK 官方文档格式
+  const reqBody = {
     model,
     prompt: enhancedPrompt,
     size: sizeStr,
-    n: options.count || 1
-  });
+    response_format: 'url',
+    watermark: false,
+  };
 
-  if (res.status !== 200) throw new Error(`即梦 API 调用失败 (${res.status}): ${JSON.stringify(res.data)}`);
+  log(`[图片生成] 调用 ARK API: model=${model}, size=${sizeStr}, prompt=${enhancedPrompt.slice(0, 80)}...`);
+
+  const res = await httpsRequest(`${baseUrl}/images/generations`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    timeout: 120000,
+  }, reqBody);
+
+  if (res.status !== 200) {
+    const errDetail = typeof res.data === 'object' ? JSON.stringify(res.data) : String(res.data);
+    log(`[图片生成] ARK API 返回错误: status=${res.status}, body=${errDetail.substring(0, 500)}`);
+    throw new Error(`即梦 API 调用失败 (${res.status}): ${errDetail.substring(0, 300)}`);
+  }
 
   // 解析返回的图片 URL
-  const urls = (res.data.data || []).map(item => item.url || item.b64_json).filter(Boolean);
-  if (urls.length === 0) throw new Error('即梦 API 未返回图片');
+  const dataArr = (res.data.data || []);
+  const urls = dataArr.map(item => item.url || item.b64_json).filter(Boolean);
+  if (urls.length === 0) {
+    log(`[图片生成] ARK API 未返回图片: ${JSON.stringify(res.data).substring(0, 500)}`);
+    throw new Error('即梦 API 未返回图片');
+  }
 
-  return { urls, model: 'jimeng-v2', prompt, width: options.width, height: options.height, quality };
+  log(`[图片生成] 成功生成 ${urls.length} 张图片`);
+  return { urls, model, prompt, width: options.width, height: options.height, quality };
 }
 
 // DALL-E 图片生成已移除（OpenAI未配置）
