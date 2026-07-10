@@ -1,0 +1,227 @@
+<template>
+  <div class="max-w-7xl mx-auto px-4 py-6">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-bold" style="color: var(--cyber-cyan); font-family: 'JetBrains Mono', monospace; text-shadow: 0 0 10px var(--cyber-cyan), 0 0 20px rgba(0,240,255,0.25);">
+          ⭐ 我的收藏
+        </h1>
+        <p class="mt-1" style="color: var(--cyber-text-dim); font-size: 13px;">收藏的AI工具，快速访问常用功能</p>
+      </div>
+      <el-button v-if="favorites.length > 0" @click="goToTools" size="default"
+        style="border-color: rgba(0,240,255,0.4); color: var(--cyber-cyan); background: rgba(0,240,255,0.05);">
+        🤖 探索更多工具
+      </el-button>
+    </div>
+
+    <!-- 加载状态 -->
+    <div v-if="loading" class="flex justify-center py-20">
+      <div class="cyber-spinner"></div>
+    </div>
+
+    <!-- 收藏列表 -->
+    <div v-else-if="favorites.length > 0" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div v-for="fav in favorites" :key="fav.id" class="cyber-fav-card group">
+        <div class="cyber-fav-head">
+          <span class="cyber-fav-icon">{{ fav.toolIcon || '🤖' }}</span>
+          <button @click.stop="removeFavorite(fav.toolId)" class="cyber-fav-remove" title="取消收藏">
+            ★
+          </button>
+        </div>
+        <h3 class="cyber-fav-name">{{ fav.toolName || '未知工具' }}</h3>
+        <p class="cyber-fav-desc">{{ fav.toolDescription || '' }}</p>
+        <div class="cyber-fav-foot">
+          <span class="cyber-fav-cost" :class="fav.isFree ? 'free' : 'paid'">
+            {{ fav.isFree ? '免费使用' : `${fav.coinCost} 圣点/次` }}
+          </span>
+          <router-link :to="`/tools/${fav.toolId}`" class="cyber-fav-use-btn" @click.stop>
+            立即使用 →
+          </router-link>
+        </div>
+        <div class="cyber-fav-time">收藏于 {{ formatTime(fav.favoritedAt) }}</div>
+      </div>
+    </div>
+
+    <!-- 空状态 -->
+    <div v-else class="cyber-empty-state">
+      <div class="cyber-empty-icon">⭐</div>
+      <p class="cyber-empty-title">暂无收藏工具</p>
+      <p class="cyber-empty-desc">在AI工具中心点击工具卡片左上角的 ★ 图标即可收藏</p>
+      <el-button @click="goToTools" type="primary" size="large"
+        style="margin-top: 20px; background: linear-gradient(135deg, rgba(0,240,255,0.2), rgba(124,58,237,0.2)); border-color: var(--cyber-cyan); color: var(--cyber-cyan);">
+        🤖 去发现工具
+      </el-button>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { toolApi } from '@/api'
+import { ElMessage } from 'element-plus'
+
+const router = useRouter()
+const favorites = ref<any[]>([])
+const loading = ref(false)
+
+async function fetchFavorites() {
+  loading.value = true
+  try {
+    const res = await toolApi.getFavorites() as any
+    favorites.value = res?.data?.data?.items || res?.data?.items || []
+  } catch (e: any) {
+    console.error('获取收藏失败:', e)
+  } finally {
+    loading.value = false
+  }
+}
+
+async function removeFavorite(toolId: number) {
+  try {
+    await toolApi.toggleFavorite(toolId)
+    favorites.value = favorites.value.filter(f => f.toolId !== toolId)
+    ElMessage.success('已取消收藏')
+  } catch (e: any) {
+    ElMessage.error('操作失败')
+  }
+}
+
+function goToTools() {
+  router.push('/tools')
+}
+
+function formatTime(t: string): string {
+  if (!t) return ''
+  const d = new Date(t)
+  const now = new Date()
+  const diff = now.getTime() - d.getTime()
+  if (diff < 60000) return '刚刚'
+  if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前'
+  if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前'
+  if (diff < 604800000) return Math.floor(diff / 86400000) + '天前'
+  return d.toLocaleDateString('zh-CN')
+}
+
+onMounted(() => {
+  fetchFavorites()
+})
+</script>
+
+<style scoped>
+.cyber-spinner {
+  width: 36px; height: 36px;
+  border: 3px solid rgba(0,240,255,0.15);
+  border-top-color: var(--cyber-cyan);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  box-shadow: 0 0 12px rgba(0,240,255,0.3);
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.cyber-fav-card {
+  background: linear-gradient(135deg, #0d0d2b, #1a0a3a);
+  border: 1px solid rgba(0,240,255,0.12);
+  border-radius: 14px;
+  padding: 18px;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+.cyber-fav-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--cyber-cyan), transparent);
+  opacity: 0.5;
+}
+.cyber-fav-card:hover {
+  border-color: rgba(0,240,255,0.4);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(0,240,255,0.12);
+}
+.cyber-fav-head {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  margin-bottom: 10px;
+}
+.cyber-fav-icon { font-size: 30px; }
+.cyber-fav-remove {
+  font-size: 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--cyber-amber);
+  opacity: 0.6;
+  transition: all 0.2s;
+  padding: 2px 4px;
+  line-height: 1;
+}
+.cyber-fav-remove:hover { opacity: 1; transform: scale(1.2); }
+.cyber-fav-name {
+  font-size: 15px; font-weight: 700;
+  color: var(--cyber-text);
+  margin-bottom: 4px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.cyber-fav-desc {
+  font-size: 12px;
+  color: var(--cyber-text-dim);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  height: 36px;
+}
+.cyber-fav-foot {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(0,240,255,0.08);
+}
+.cyber-fav-cost { font-size: 13px; font-weight: 600; }
+.cyber-fav-cost.free { color: var(--cyber-green); text-shadow: 0 0 6px rgba(0,255,136,0.3); }
+.cyber-fav-cost.paid { color: var(--cyber-amber); text-shadow: 0 0 6px rgba(255,184,0,0.3); }
+.cyber-fav-use-btn {
+  font-size: 12px;
+  color: var(--cyber-cyan);
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+.cyber-fav-use-btn:hover { text-shadow: 0 0 8px rgba(0,240,255,0.5); }
+.cyber-fav-time {
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--cyber-text-dim);
+  opacity: 0.6;
+}
+
+.cyber-empty-state {
+  text-align: center;
+  padding: 80px 20px;
+}
+.cyber-empty-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  filter: drop-shadow(0 0 12px rgba(0,240,255,0.4));
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.1); opacity: 1; }
+}
+.cyber-empty-title {
+  font-size: 18px;
+  color: var(--cyber-text);
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+.cyber-empty-desc {
+  font-size: 13px;
+  color: var(--cyber-text-dim);
+  max-width: 360px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+</style>
