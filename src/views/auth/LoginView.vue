@@ -63,6 +63,7 @@
               </span>
               <span class="remember-text">记住账号密码</span>
             </label>
+            <span class="forgot-link" @click="showForgotPwd = true">找回密码</span>
           </div>
           <el-form-item>
             <button type="submit" class="cyber-btn cyber-btn-primary cyber-btn-large" :disabled="isLoading">
@@ -83,6 +84,55 @@
         </div>
       </div>
     </div>
+
+    <!-- 找回密码弹窗 -->
+    <Teleport to="body">
+      <div
+        v-if="showForgotPwd"
+        class="fixed inset-0 z-50 flex items-center justify-center"
+        style="background: rgba(0,0,0,0.75); backdrop-filter: blur(6px);"
+        @click.self="showForgotPwd = false"
+      >
+        <div class="forgot-modal">
+          <div class="forgot-modal-header">
+            <span class="forgot-modal-icon">&#128274;</span>
+            <span class="forgot-modal-title">找回密码</span>
+            <button class="forgot-modal-close" @click="showForgotPwd = false">&#10005;</button>
+          </div>
+          <div class="forgot-modal-body">
+            <p class="forgot-desc">请通过以下方式联系客服找回密码：</p>
+            <div class="forgot-methods">
+              <div class="forgot-method-item">
+                <div class="method-icon">&#128222;</div>
+                <div class="method-info">
+                  <div class="method-label">客服电话</div>
+                  <div class="method-value">188-9000-0368</div>
+                </div>
+              </div>
+              <div class="forgot-method-item">
+                <div class="method-icon">&#128172;</div>
+                <div class="method-info">
+                  <div class="method-label">官方技术交流群</div>
+                  <div class="method-value">联系群内管理员</div>
+                </div>
+              </div>
+              <div class="forgot-method-item">
+                <div class="method-icon">&#9993;</div>
+                <div class="method-info">
+                  <div class="method-label">邮箱</div>
+                  <div class="method-value">3196542376@qq.com</div>
+                </div>
+              </div>
+            </div>
+            <div class="forgot-tip">
+              <span class="tip-icon">&#9888;</span>
+              联系客服时请提供注册账号信息以便核实身份
+            </div>
+          </div>
+          <button class="forgot-modal-btn" @click="showForgotPwd = false">我知道了</button>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -98,6 +148,7 @@ const authStore = useAuthStore()
 
 const formRef = ref<FormInstance>()
 const rememberMe = ref(false)
+const showForgotPwd = ref(false)
 const failCount = ref(0)
 const REMEMBER_KEY = 'lsjy_remember'
 
@@ -533,7 +584,8 @@ async function handleLogin() {
 :deep(.el-form-item) { margin-bottom: 0 !important; }
 .remember-row {
   display: flex;
-  justify-content: flex-start;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 18px;
   margin-top: -4px;
 }
@@ -598,4 +650,145 @@ async function handleLogin() {
   .cyber-subtitle { font-size: 10px; letter-spacing: 2px; }
   .logo-ring { width: 80px; height: 80px; }
 }
+
+/* 找回密码链接 */
+.forgot-link {
+  color: var(--cyber-cyan, #00d4ff);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+  opacity: 0.8;
+}
+.forgot-link:hover {
+  opacity: 1;
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
+}
+
+/* 找回密码弹窗 */
+.forgot-modal {
+  width: 380px;
+  max-width: 90vw;
+  background: linear-gradient(135deg, #0d0d2b, #1a0a3a);
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 0 40px rgba(0, 240, 255, 0.1), 0 20px 60px rgba(0, 0, 0, 0.6);
+  animation: forgotSlideUp 0.3s ease;
+}
+@keyframes forgotSlideUp {
+  from { opacity: 0; transform: translateY(20px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.forgot-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 22px;
+  border-bottom: 1px solid rgba(0, 240, 255, 0.1);
+}
+.forgot-modal-icon {
+  font-size: 22px;
+}
+.forgot-modal-title {
+  flex: 1;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  font-family: 'JetBrains Mono', monospace;
+}
+.forgot-modal-close {
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  color: rgba(255,255,255,0.4);
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+.forgot-modal-close:hover {
+  color: #fff;
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(0, 240, 255, 0.3);
+}
+.forgot-modal-body {
+  padding: 22px;
+}
+.forgot-desc {
+  font-size: 13px;
+  color: rgba(255,255,255,0.6);
+  margin-bottom: 16px;
+  line-height: 1.6;
+}
+.forgot-methods {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.forgot-method-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: rgba(0, 240, 255, 0.04);
+  border: 1px solid rgba(0, 240, 255, 0.1);
+  border-radius: 12px;
+  transition: all 0.2s;
+}
+.forgot-method-item:hover {
+  border-color: rgba(0, 240, 255, 0.25);
+  background: rgba(0, 240, 255, 0.07);
+}
+.method-icon {
+  font-size: 26px;
+  flex-shrink: 0;
+}
+.method-info {
+  flex: 1;
+}
+.method-label {
+  font-size: 12px;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 2px;
+}
+.method-value {
+  font-size: 14px;
+  color: var(--cyber-cyan, #00d4ff);
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+}
+.forgot-tip {
+  margin-top: 16px;
+  padding: 10px 14px;
+  background: rgba(255, 165, 0, 0.08);
+  border: 1px solid rgba(255, 165, 0, 0.15);
+  border-radius: 10px;
+  font-size: 12px;
+  color: rgba(255, 165, 0, 0.85);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1.5;
+}
+.tip-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.forgot-modal-btn {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, var(--cyber-cyan, #00d4ff), var(--cyber-purple, #a855f7));
+  border: none;
+  border-radius: 0 0 0 0;
+  color: #000;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 1px;
+}
+.forgot-modal-btn:hover { opacity: 0.9; }
 </style>
