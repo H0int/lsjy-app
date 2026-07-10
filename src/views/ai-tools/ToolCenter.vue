@@ -122,46 +122,39 @@ import { ref, computed, onMounted } from 'vue'
 import { useToolStore } from '@/stores/tool'
 import type { Tool } from '@/types'
 import { toolTypeMap } from '@/utils'
-import { toolApi } from '@/api'
-import { ElMessage } from 'element-plus'
 
-// 收藏状态
-const favoriteToolIds = ref<Set<number>>(new Set())
 
-// 切换收藏
-async function toggleFavorite(toolId: number, e: Event) {
-  e.preventDefault()
-  e.stopPropagation()
+// 收藏功能 - 使用 localStorage
+const FAVORITES_KEY = 'lsjy_favorites'
+
+function getFavorites(): number[] {
   try {
-    const res = await toolApi.toggleFavorite(toolId) as any
-    const isFav = res?.data?.data?.isFavorited ?? res?.data?.isFavorited
-    if (isFav) {
-      favoriteToolIds.value.add(toolId)
-      ElMessage.success('已收藏')
-    } else {
-      favoriteToolIds.value.delete(toolId)
-      ElMessage.info('已取消收藏')
-    }
-  } catch (e) {
-    ElMessage.error('操作失败')
+    const data = localStorage.getItem(FAVORITES_KEY)
+    return data ? JSON.parse(data) : []
+  } catch {
+    return []
   }
 }
 
-// 检查收藏状态
-async function checkFavoriteStatus() {
-  try {
-    const ids = toolStore.tools.map(t => t.id).filter(Boolean)
-    if (ids.length === 0) return
-    const res = await toolApi.checkFavorites(ids) as any
-    const data = res?.data?.data ?? res?.data ?? {}
-    const newSet = new Set<number>()
-    Object.entries(data).forEach(([id, val]) => {
-      if (val) newSet.add(Number(id))
-    })
-    favoriteToolIds.value = newSet
-  } catch (e) {
-    // 静默失败
+function saveFavorites(ids: number[]) {
+  localStorage.setItem(FAVORITES_KEY, JSON.stringify(ids))
+}
+
+const favoriteToolIds = ref<Set<number>>(new Set(getFavorites()))
+
+function toggleFavorite(toolId: number, e: Event) {
+  e.preventDefault()
+  e.stopPropagation()
+  const favs = getFavorites()
+  const idx = favs.indexOf(toolId)
+  if (idx >= 0) {
+    favs.splice(idx, 1)
+    favoriteToolIds.value.delete(toolId)
+  } else {
+    favs.push(toolId)
+    favoriteToolIds.value.add(toolId)
   }
+  saveFavorites(favs)
 }
 
 const toolStore = useToolStore()
