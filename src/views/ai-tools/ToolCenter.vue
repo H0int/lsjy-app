@@ -62,6 +62,9 @@
     <div v-if="!toolStore.loading && viewMode === 'grid'" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
       <router-link v-for="tool in filteredTools" :key="tool.id" :to="`/tools/${tool.id}`"
         class="cyber-tool-card group">
+        <button @click="toggleFavorite(tool.id, $event)" class="cyber-fav-btn" :class="{ active: favoriteToolIds.has(tool.id) }" title="收藏">
+          ★
+        </button>
         <div class="cyber-tool-tags">
           <span v-for="tag in tool.tags?.slice(0, 2)" :key="tag" class="cyber-tool-tag">{{ tag }}</span>
         </div>
