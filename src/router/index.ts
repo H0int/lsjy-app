@@ -30,7 +30,9 @@ const routes: RouteRecordRaw[] = [
       { path: 'profile', name: 'Profile', component: () => import('@/views/profile/ProfileView.vue'), meta: { title: '个人中心', icon: '👤' } },
       { path: 'profile/works', name: 'Works', component: () => import('@/views/profile/WorksView.vue'), meta: { title: '我的作品', icon: '🎨' } },
       { path: 'profile/wallet', name: 'Wallet', component: () => import('@/views/profile/WalletView.vue'), meta: { title: '圣力中心', icon: '💰' } },
-      { path: 'profile/favorites', name: 'Favorites', component: () => import('@/views/profile/FavoritesView.vue'), meta: { title: '收藏工具', icon: '⭐' } }
+      { path: 'profile/favorites', name: 'Favorites', component: () => import('@/views/profile/FavoritesView.vue'), meta: { title: '收藏工具', icon: '⭐' } },
+      { path: 'profile/creation-history', name: 'CreationHistory', component: () => import('@/views/profile/CreationHistory.vue'), meta: { title: '创作记录', icon: '📝' } },
+      { path: 'profile/help', name: 'HelpCenter', component: () => import('@/views/profile/HelpCenter.vue'), meta: { title: '帮助中心', icon: '❓' } }
     ]
   },
   {
