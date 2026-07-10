@@ -81,15 +81,6 @@ export const toolApi = {
   getQuota(toolId: number): Promise<ApiResponse<{ used: number; limit: number; date: string }>> {
     return service.get(`/ai/quota/${toolId}`).then(r => r.data)
   },
-  getFavorites(): Promise<ApiResponse<any>> {
-    return service.get('/ai/favorites').then(r => r.data)
-  },
-  toggleFavorite(toolId: number): Promise<ApiResponse<{ isFavorited: boolean }>> {
-    return service.post(`/ai/tools/${toolId}/favorite`).then(r => r.data)
-  },
-  checkFavorites(toolIds: number[]): Promise<ApiResponse<Record<number, boolean>>> {
-    return service.get('/ai/favorites/check', { params: { toolIds: toolIds.join(',') } }).then(r => r.data)
-  },
 }
 
 // ===== 支付API =====
