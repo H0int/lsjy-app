@@ -7,37 +7,31 @@
         </h1>
         <p class="mt-1" style="color: var(--cyber-text-dim); font-size: 13px;">收藏的AI工具，快速访问常用功能</p>
       </div>
-      <el-button v-if="favorites.length > 0" @click="goToTools" size="default"
+      <el-button v-if="favoriteTools.length > 0" @click="goToTools" size="default"
         style="border-color: rgba(0,240,255,0.4); color: var(--cyber-cyan); background: rgba(0,240,255,0.05);">
         🤖 探索更多工具
       </el-button>
     </div>
 
-    <!-- 加载状态 -->
-    <div v-if="loading" class="flex justify-center py-20">
-      <div class="cyber-spinner"></div>
-    </div>
-
     <!-- 收藏列表 -->
-    <div v-else-if="favorites.length > 0" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-      <div v-for="fav in favorites" :key="fav.id" class="cyber-fav-card group">
+    <div v-if="favoriteTools.length > 0" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div v-for="tool in favoriteTools" :key="tool.id" class="cyber-fav-card group">
         <div class="cyber-fav-head">
-          <span class="cyber-fav-icon">{{ fav.toolIcon || '🤖' }}</span>
-          <button @click.stop="removeFavorite(fav.toolId)" class="cyber-fav-remove" title="取消收藏">
+          <span class="cyber-fav-icon">{{ tool.icon || '🤖' }}</span>
+          <button @click.stop="removeFavorite(tool.id)" class="cyber-fav-remove" title="取消收藏">
             ★
           </button>
         </div>
-        <h3 class="cyber-fav-name">{{ fav.toolName || '未知工具' }}</h3>
-        <p class="cyber-fav-desc">{{ fav.toolDescription || '' }}</p>
+        <h3 class="cyber-fav-name">{{ tool.name || '未知工具' }}</h3>
+        <p class="cyber-fav-desc">{{ tool.description || '' }}</p>
         <div class="cyber-fav-foot">
-          <span class="cyber-fav-cost" :class="fav.isFree ? 'free' : 'paid'">
-            {{ fav.isFree ? '免费使用' : `${fav.coinCost} 圣点/次` }}
+          <span class="cyber-fav-cost" :class="tool.isFree ? 'free' : 'paid'">
+            {{ tool.isFree ? '免费使用' : `${tool.coinCost} 圣点/次` }}
           </span>
-          <router-link :to="`/tools/${fav.toolId}`" class="cyber-fav-use-btn" @click.stop>
+          <router-link :to="`/tools/${tool.id}`" class="cyber-fav-use-btn" @click.stop>
             立即使用 →
           </router-link>
         </div>
-        <div class="cyber-fav-time">收藏于 {{ formatTime(fav.favoritedAt) }}</div>
       </div>
     </div>
 
@@ -55,34 +49,35 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { toolApi } from '@/api'
-import { ElMessage } from 'element-plus'
+import { useToolStore } from '@/stores/tool'
 
 const router = useRouter()
-const favorites = ref<any[]>([])
-const loading = ref(false)
+const toolStore = useToolStore()
 
-async function fetchFavorites() {
-  loading.value = true
+const FAVORITES_KEY = 'lsjy_favorites'
+
+function getFavoriteIds(): number[] {
   try {
-    const res = await toolApi.getFavorites() as any
-    favorites.value = res?.data?.data?.items || res?.data?.items || []
-  } catch (e: any) {
-    console.error('获取收藏失败:', e)
-  } finally {
-    loading.value = false
+    const data = localStorage.getItem(FAVORITES_KEY)
+    return data ? JSON.parse(data) : []
+  } catch {
+    return []
   }
 }
 
-async function removeFavorite(toolId: number) {
-  try {
-    await toolApi.toggleFavorite(toolId)
-    favorites.value = favorites.value.filter(f => f.toolId !== toolId)
-    ElMessage.success('已取消收藏')
-  } catch (e: any) {
-    ElMessage.error('操作失败')
+const favoriteTools = computed(() => {
+  const ids = getFavoriteIds()
+  return toolStore.tools.filter(t => ids.includes(t.id))
+})
+
+function removeFavorite(toolId: number) {
+  const ids = getFavoriteIds()
+  const idx = ids.indexOf(toolId)
+  if (idx >= 0) {
+    ids.splice(idx, 1)
+    localStorage.setItem(FAVORITES_KEY, JSON.stringify(ids))
   }
 }
 
@@ -90,34 +85,15 @@ function goToTools() {
   router.push('/tools')
 }
 
-function formatTime(t: string): string {
-  if (!t) return ''
-  const d = new Date(t)
-  const now = new Date()
-  const diff = now.getTime() - d.getTime()
-  if (diff < 60000) return '刚刚'
-  if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前'
-  if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前'
-  if (diff < 604800000) return Math.floor(diff / 86400000) + '天前'
-  return d.toLocaleDateString('zh-CN')
-}
-
 onMounted(() => {
-  fetchFavorites()
+  if (toolStore.tools.length === 0) {
+    toolStore.fetchCategories()
+    toolStore.fetchTools()
+  }
 })
 </script>
 
 <style scoped>
-.cyber-spinner {
-  width: 36px; height: 36px;
-  border: 3px solid rgba(0,240,255,0.15);
-  border-top-color: var(--cyber-cyan);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  box-shadow: 0 0 12px rgba(0,240,255,0.3);
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
 .cyber-fav-card {
   background: linear-gradient(135deg, #0d0d2b, #1a0a3a);
   border: 1px solid rgba(0,240,255,0.12);
@@ -190,12 +166,6 @@ onMounted(() => {
   transition: all 0.2s;
 }
 .cyber-fav-use-btn:hover { text-shadow: 0 0 8px rgba(0,240,255,0.5); }
-.cyber-fav-time {
-  margin-top: 8px;
-  font-size: 11px;
-  color: var(--cyber-text-dim);
-  opacity: 0.6;
-}
 
 .cyber-empty-state {
   text-align: center;
