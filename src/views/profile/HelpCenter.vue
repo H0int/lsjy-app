@@ -42,15 +42,32 @@
           <div class="text-sm font-medium">客服电话</div>
           <div class="text-xs" style="color: var(--cyber-cyan);">188-9000-0368</div>
         </div>
-        <div class="cyber-contact-item">
+        <div class="cyber-contact-item cyber-contact-clickable" @click="showQrcode = true">
           <div class="text-2xl mb-1">💬</div>
           <div class="text-sm font-medium">技术交流群</div>
-          <div class="text-xs" style="color: var(--cyber-cyan);">扫码加入官方群</div>
+          <div class="text-xs" style="color: var(--cyber-cyan);">点击查看群二维码</div>
         </div>
         <div class="cyber-contact-item">
           <div class="text-2xl mb-1">📧</div>
           <div class="text-sm font-medium">意见反馈</div>
-          <div class="text-xs" style="color: var(--cyber-cyan);">support@lsjyapp.cn</div>
+          <div class="text-xs" style="color: var(--cyber-cyan);">3196542376@qq.com</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 二维码弹窗 -->
+    <div v-if="showQrcode" class="cyber-modal-overlay" @click.self="showQrcode = false">
+      <div class="cyber-modal-card">
+        <div class="cyber-modal-header">
+          <span>💬 技术交流群</span>
+          <button class="cyber-modal-close" @click="showQrcode = false">✕</button>
+        </div>
+        <div class="cyber-modal-body">
+          <p class="text-sm mb-3" style="color: var(--cyber-text-dim);">罗圣纪元AIGC-Agent技术核心班</p>
+          <div class="cyber-qrcode-wrapper">
+            <img src="/qrcode-group.jpg" alt="技术交流群二维码" class="cyber-qrcode-img" />
+          </div>
+          <p class="text-xs mt-3" style="color: var(--cyber-text-dim);">用微信或企业微信扫码加入</p>
         </div>
       </div>
     </div>
@@ -62,6 +79,7 @@ import { ref, computed } from 'vue'
 
 const activeCategory = ref('all')
 const expandedFaqs = ref<Set<number>>(new Set())
+const showQrcode = ref(false)
 
 const categories = [
   { label: '全部', value: 'all', icon: '📦' },
@@ -170,5 +188,92 @@ function toggleFaq(id: number) {
   border: 1px solid rgba(0,240,255,0.08);
   border-radius: 10px;
   color: var(--cyber-text);
+}
+.cyber-contact-clickable {
+  cursor: pointer;
+  transition: all 0.25s;
+}
+.cyber-contact-clickable:hover {
+  border-color: rgba(0,240,255,0.3);
+  background: rgba(0,240,255,0.08);
+  box-shadow: 0 0 12px rgba(0,240,255,0.1);
+  transform: translateY(-2px);
+}
+
+/* 二维码弹窗 */
+.cyber-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(6px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.25s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.cyber-modal-card {
+  background: linear-gradient(135deg, #0d0d2b, #1a0a3a);
+  border: 1px solid rgba(0,240,255,0.2);
+  border-radius: 16px;
+  width: 340px;
+  max-width: 90vw;
+  overflow: hidden;
+  box-shadow: 0 0 30px rgba(0,240,255,0.1), 0 20px 60px rgba(0,0,0,0.5);
+  animation: slideUp 0.3s ease;
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.cyber-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(0,240,255,0.1);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--cyber-text);
+}
+.cyber-modal-close {
+  background: none;
+  border: 1px solid rgba(0,240,255,0.15);
+  border-radius: 6px;
+  color: var(--cyber-text-dim);
+  cursor: pointer;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+.cyber-modal-close:hover {
+  border-color: rgba(0,240,255,0.4);
+  color: var(--cyber-cyan);
+  background: rgba(0,240,255,0.08);
+}
+.cyber-modal-body {
+  padding: 20px;
+  text-align: center;
+}
+.cyber-qrcode-wrapper {
+  background: #fff;
+  border-radius: 12px;
+  padding: 12px;
+  display: inline-block;
+  box-shadow: 0 0 15px rgba(0,240,255,0.08);
+}
+.cyber-qrcode-img {
+  width: 220px;
+  height: 220px;
+  object-fit: contain;
+  border-radius: 4px;
 }
 </style>
