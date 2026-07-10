@@ -375,6 +375,78 @@ express.use("/" + apiPrefix + "/ai/tools", favRouter);
 
 logger.log("收藏功能接口已注册 (favorites, tools/:id/favorite, favorites/check)");
 
+    // 收藏功能 - 使用 NestJS app.use() 注册在 NestJS 路由之前
+    var favToolsRouter = require("express").Router();
+    favToolsRouter.post("/:id/favorite", function(req, res) {
+      try {
+        var userId = parseUserIdFromReq(req);
+        if (!userId) {
+          return res.status(401).json({ code: 401, message: "请先登录", data: null });
+        }
+        var toolId = Number(req.params.id);
+        if (!toolId) {
+          return res.status(400).json({ code: 400, message: "无效的工具ID", data: null });
+        }
+        var allFavs = loadFavorites();
+        var existIdx = allFavs.findIndex(function(f) { return String(f.userId) === String(userId) && Number(f.toolId) === toolId; });
+        var isFavorited = false;
+        if (existIdx >= 0) {
+          allFavs.splice(existIdx, 1);
+          isFavorited = false;
+        } else {
+          var toolName = "", toolIcon = "🤖", toolDescription = "", toolType = "", isFree = true, coinCost = 0, categoryId = null;
+          var toolsFile = path.join(__dirname, "data", "tools.json");
+          if (fs.existsSync(toolsFile)) {
+            var tools = JSON.parse(fs.readFileSync(toolsFile, "utf8"));
+            var tool = tools.find(function(t) { return Number(t.id) === toolId; });
+            if (tool) {
+              toolName = tool.name || "";
+              toolIcon = tool.icon || "🤖";
+              toolDescription = tool.description || "";
+              toolType = tool.toolType || "";
+              isFree = tool.isFree !== undefined ? tool.isFree : true;
+              coinCost = tool.coinCost || 0;
+              categoryId = tool.categoryId || null;
+            }
+          }
+          allFavs.push({
+            id: Date.now(), userId: Number(userId), toolId: toolId,
+            toolName: toolName, toolIcon: toolIcon, toolDescription: toolDescription,
+            toolType: toolType, isFree: isFree, coinCost: coinCost, categoryId: categoryId,
+            favoritedAt: new Date().toISOString(),
+          });
+          isFavorited = true;
+        }
+        saveFavorites(allFavs);
+        console.log("[Favorite] userId=" + userId + " toolId=" + toolId + " -> " + (isFavorited ? "收藏" : "取消收藏"));
+        res.json({ code: 0, message: "success", data: { isFavorited: isFavorited } });
+      } catch(e) {
+        res.status(500).json({ code: 500, message: "服务器错误", data: null });
+      }
+    });
+    app.use("/" + apiPrefix + "/ai/tools", favToolsRouter);
+
+    var favCheckRouter = require("express").Router();
+    favCheckRouter.get("/check", function(req, res) {
+      try {
+        var userId = parseUserIdFromReq(req);
+        if (!userId) {
+          return res.json({ code: 0, message: "success", data: {} });
+        }
+        var toolIds = (req.query.toolIds || "").split(",").map(Number).filter(Boolean);
+        var allFavs = loadFavorites();
+        var userFavToolIds = new Set(
+          allFavs.filter(function(f) { return String(f.userId) === String(userId); }).map(function(f) { return Number(f.toolId); })
+        );
+        var result = {};
+        toolIds.forEach(function(id) { result[id] = userFavToolIds.has(id); });
+        res.json({ code: 0, message: "success", data: result });
+      } catch(e) {
+        res.status(500).json({ code: 500, message: "服务器错误", data: null });
+      }
+    });
+    app.use("/" + apiPrefix + "/ai/favorites", favCheckRouter);
+
     const port = configService.get("PORT", 3000);
     await app.listen(port);
     logger.log("Application running on: http://localhost:" + port);
