@@ -342,8 +342,7 @@ function handleQuickAction(item: any) {
       router.push('/profile/works')
       break
     case 'favorites':
-      router.push('/tools')
-      ElMessage.info('收藏工具功能开发中')
+      router.push('/profile/favorites')
       break
     case 'contact':
       showContact.value = true
