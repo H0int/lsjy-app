@@ -240,8 +240,8 @@ const quickLinks = [
   { name: 'AI工具', icon: '🛠️', path: '/tools' },
   { name: '个人中心', icon: '👤', path: '/profile' },
   { name: '圣力中心', icon: '💰', path: '/profile/wallet' },
-  { name: '创作记录', icon: '📝', path: '/tools' },
-  { name: '帮助中心', icon: '❓', path: '/chat' },
+  { name: '创作记录', icon: '📝', path: '/profile/creation-history' },
+  { name: '帮助中心', icon: '❓', path: '/profile/help' },
 ]
 
 // 最近使用（从localStorage读取）
@@ -310,19 +310,66 @@ async function loadRealTimeData() {
   // 会员等级
   statCards.value[3].value = getMemberLabel()
 
-  // 从 localStorage 读取已用工具和生成作品
-  const usedTools = JSON.parse(localStorage.getItem('lsjy_used_tools') || '[]')
-  const generatedWorks = JSON.parse(localStorage.getItem('lsjy_generated_works') || '[]')
-  statCards.value[1].value = String(usedTools.length)
+  // 最近使用 - 从 localStorage 读取（多来源合并）
+  const usedTools: any[] = JSON.parse(localStorage.getItem('lsjy_used_tools') || '[]')
+  const generatedWorks: any[] = JSON.parse(localStorage.getItem('lsjy_generated_works') || '[]')
+
+  // 合并去重：以 toolId 为主键
+  const toolMap = new Map<number, any>()
+  for (const u of usedTools) {
+    toolMap.set(Number(u.id), { id: Number(u.id), name: u.name, icon: u.icon || '🤖', time: u.time, category: u.category || 'AI工具' })
+  }
+  for (const w of generatedWorks) {
+    const wid = Number(w.toolId || w.id)
+    if (wid && !toolMap.has(wid)) {
+      toolMap.set(wid, { id: wid, name: w.toolName || '未知工具', icon: '🤖', time: w.createdAt ? new Date(w.createdAt).toLocaleString('zh-CN') : '', category: 'AI工具' })
+    }
+  }
+
+  // 按时间倒序排列
+  const allUsed = Array.from(toolMap.values()).sort((a, b) => {
+    const ta = a.time ? new Date(a.time.replace(/\//g, '-')).getTime() : 0
+    const tb = b.time ? new Date(b.time.replace(/\//g, '-')).getTime() : 0
+    return tb - ta
+  })
+  recentTools.value = allUsed.slice(0, 8)
+
+  // 统计已用工具数
+  statCards.value[1].value = String(toolMap.size)
   statCards.value[2].value = String(generatedWorks.length)
 
-  // 最近使用
-  recentTools.value = usedTools.slice(0, 5).reverse()
+  // 尝试从API获取更多使用记录来补充 localStorage
+  try {
+    const res = await toolApi.getHistory({ page: 1, pageSize: 20 }) as any
+    const historyItems = res?.data?.data?.items || res?.data?.items || []
+    if (historyItems.length > 0) {
+      // 从API历史记录中提取工具使用信息
+      for (const h of historyItems) {
+        const hid = Number(h.toolId)
+        if (hid && !toolMap.has(hid)) {
+          const toolName = h.toolName || '未知工具'
+          const toolIcon = h.toolIcon || '🤖'
+          const timeStr = h.createdAt ? new Date(h.createdAt).toLocaleString('zh-CN') : ''
+          toolMap.set(hid, { id: hid, name: toolName, icon: toolIcon, time: timeStr, category: 'AI工具' })
+        }
+      }
+      // 重新排序
+      const merged = Array.from(toolMap.values()).sort((a, b) => {
+        const ta = a.time ? new Date(a.time.replace(/\//g, '-')).getTime() : 0
+        const tb = b.time ? new Date(b.time.replace(/\//g, '-')).getTime() : 0
+        return tb - ta
+      })
+      recentTools.value = merged.slice(0, 8)
+      statCards.value[1].value = String(toolMap.size)
+    }
+  } catch (e) {
+    // API 调用失败，使用 localStorage 数据即可
+  }
 
   // 加载热门工具
   try {
-    const res = await toolApi.getToolList(1, 8)
-    const items = res.data?.items || []
+    const res = await toolApi.getTools({ page: 1, pageSize: 8 }) as any
+    const items = res?.data?.data?.items || res?.data?.items || []
     hotTools.value = items.slice(0, 4).map((t: any) => ({
       id: t.id,
       name: t.name,
@@ -332,7 +379,6 @@ async function loadRealTimeData() {
       cost: t.coinCost || 1,
     }))
   } catch (e) {
-    // 使用默认数据
     hotTools.value = [
       { id: 1, name: 'AI文生图', icon: '🎨', desc: '根据描述生成精美图片', category: 'AI绘画', cost: 2 },
       { id: 2, name: 'AI文案助手', icon: '✍️', desc: '一键生成营销文案', category: '内容创作', cost: 1 },
