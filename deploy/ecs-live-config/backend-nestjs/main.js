@@ -226,97 +226,198 @@ express.get(apiPrefix + "/reports/overview", (req, res) => {
 logger.log("Express middleware routes registered for missing endpoints");
 logger.log("CORS middleware enabled for lsjyapp.cn cross-origin requests");
 
-    // ===== Boss圣力管理接口 =====
-// POST /api/v1/payment/admin/coins/set-balance - 设置用户圣力余额
-express.post(apiPrefix + "/payment/admin/coins/set-balance", (req, res) => {
+// ===== 收藏功能 =====
+// 收藏数据存储在 data/favorites.json
+const FAVORITES_FILE = path.join(__dirname, "data", "favorites.json");
+
+function loadFavorites() {
   try {
-    const targetUserId = Number(req.body?.userId);
-    const balance = Number(req.body?.balance);
-    const remark = req.body?.remark || ("Boss设置圣力余额为 " + balance);
-
-    if (!targetUserId || targetUserId <= 0) {
-      return res.status(400).json({ code: 400, message: "请选择要处理的用户", data: null });
+    if (fs.existsSync(FAVORITES_FILE)) {
+      return JSON.parse(fs.readFileSync(FAVORITES_FILE, "utf8"));
     }
-    if (!Number.isFinite(balance) || balance < 0) {
-      return res.status(400).json({ code: 400, message: "圣力余额不能小于0", data: null });
-    }
+  } catch(e) {}
+  return [];
+}
 
-    const uFile = path.join(__dirname, "data", "users.json");
-    let users = [];
-    if (fs.existsSync(uFile)) {
-      users = JSON.parse(fs.readFileSync(uFile, "utf8"));
-    }
-
-    const user = users.find(u => Number(u.id) === targetUserId);
-    if (!user) {
-      return res.status(404).json({ code: 404, message: "用户不存在", data: null });
-    }
-
-    const before = Number(user.coins || 0);
-    user.coins = balance;
-    user.totalRecharge = Number(user.totalRecharge || 0) + Math.max(0, balance - before);
-
-    fs.writeFileSync(uFile, JSON.stringify(users, null, 2), "utf8");
-
-    console.log("[Boss圣力] userId=" + targetUserId + " " + before + " -> " + balance + " by " + (req.body?.operator || "admin"));
-    res.json({
-      code: 0,
-      message: "圣力余额已更新",
-      data: { account: { userId: targetUserId, balance: balance, before: before }, delta: balance - before }
-    });
+function saveFavorites(favs) {
+  try {
+    fs.writeFileSync(FAVORITES_FILE, JSON.stringify(favs, null, 2), "utf8");
   } catch(e) {
-    console.error("[Boss圣力] Error:", e.message);
-    res.status(500).json({ code: 500, message: "服务器错误: " + e.message, data: null });
+    console.error("[Favorites] 保存失败:", e.message);
+  }
+}
+
+// GET /api/v1/ai/favorites - 获取收藏的工具列表
+express.get(apiPrefix + "/ai/favorites", (req, res) => {
+  try {
+    // 从 Authorization header 获取 userId（格式: lsjy.xxx 或 Bearer lsjy.xxx）
+    let userId = null;
+    const authHeader = req.headers.authorization || "";
+    const token = authHeader.replace("Bearer ", "").replace("jwt_", "");
+    if (token.startsWith("lsjy.")) {
+      try {
+        const parts = token.split(".");
+        if (parts.length === 3) {
+          const payload = JSON.parse(Buffer.from(parts[1], "base64").toString());
+          userId = payload.sub || payload.userId || payload.id;
+        }
+      } catch(e) {}
+    } else if (token && !token.includes(".")) {
+      userId = token;
+    }
+
+    const allFavs = loadFavorites();
+    let userFavs = allFavs;
+    if (userId) {
+      userFavs = allFavs.filter(f => String(f.userId) === String(userId));
+    }
+
+    // 读取工具数据以补充信息
+    let tools = [];
+    const toolsFile = path.join(__dirname, "data", "tools.json");
+    if (fs.existsSync(toolsFile)) {
+      tools = JSON.parse(fs.readFileSync(toolsFile, "utf8"));
+    }
+
+    // 补充工具详细信息
+    const enriched = userFavs.map(fav => {
+      const tool = tools.find(t => Number(t.id) === Number(fav.toolId));
+      return {
+        ...fav,
+        toolName: fav.toolName || (tool ? tool.name : "未知工具"),
+        toolIcon: fav.toolIcon || (tool ? tool.icon : "🤖"),
+        toolDescription: fav.toolDescription || (tool ? tool.description : ""),
+        toolType: fav.toolType || (tool ? tool.toolType : ""),
+        isFree: fav.isFree !== undefined ? fav.isFree : (tool ? tool.isFree : true),
+        coinCost: fav.coinCost !== undefined ? fav.coinCost : (tool ? tool.coinCost : 0),
+        categoryId: fav.categoryId || (tool ? tool.categoryId : null),
+      };
+    });
+
+    enriched.sort((a, b) => new Date(b.favoritedAt).getTime() - new Date(a.favoritedAt).getTime());
+    res.json({ code: 0, message: "success", data: { items: enriched, total: enriched.length } });
+  } catch(e) {
+    res.status(500).json({ code: 500, message: "服务器错误", data: null });
   }
 });
 
-// POST /api/v1/payment/admin/coins/adjust - 调整用户圣力（增量）
-express.post(apiPrefix + "/payment/admin/coins/adjust", (req, res) => {
+// POST /api/v1/ai/tools/:id/favorite - 收藏/取消收藏工具
+express.post(apiPrefix + "/ai/tools/:id/favorite", (req, res) => {
   try {
-    const targetUserId = Number(req.body?.userId);
-    const amount = Number(req.body?.amount);
-    const remark = req.body?.remark || ("Boss充值 " + amount + " 圣力");
-
-    if (!targetUserId || targetUserId <= 0) {
-      return res.status(400).json({ code: 400, message: "请选择要充值的用户", data: null });
-    }
-    if (!Number.isFinite(amount) || amount <= 0) {
-      return res.status(400).json({ code: 400, message: "充值金额必须大于0", data: null });
-    }
-
-    const uFile = path.join(__dirname, "data", "users.json");
-    let users = [];
-    if (fs.existsSync(uFile)) {
-      users = JSON.parse(fs.readFileSync(uFile, "utf8"));
+    let userId = null;
+    const authHeader = req.headers.authorization || "";
+    const token = authHeader.replace("Bearer ", "").replace("jwt_", "");
+    if (token.startsWith("lsjy.")) {
+      try {
+        const parts = token.split(".");
+        if (parts.length === 3) {
+          const payload = JSON.parse(Buffer.from(parts[1], "base64").toString());
+          userId = payload.sub || payload.userId || payload.id;
+        }
+      } catch(e) {}
+    } else if (token && !token.includes(".")) {
+      userId = token;
     }
 
-    const user = users.find(u => Number(u.id) === targetUserId);
-    if (!user) {
-      return res.status(404).json({ code: 404, message: "用户不存在", data: null });
+    if (!userId) {
+      return res.status(401).json({ code: 401, message: "请先登录", data: null });
     }
 
-    const before = Number(user.coins || 0);
-    user.coins = before + amount;
-    user.totalRecharge = Number(user.totalRecharge || 0) + amount;
+    const toolId = Number(req.params.id);
+    if (!toolId) {
+      return res.status(400).json({ code: 400, message: "无效的工具ID", data: null });
+    }
 
-    fs.writeFileSync(uFile, JSON.stringify(users, null, 2), "utf8");
+    const allFavs = loadFavorites();
+    const existIdx = allFavs.findIndex(f => String(f.userId) === String(userId) && Number(f.toolId) === toolId);
 
-    console.log("[Boss充值] userId=" + targetUserId + " +" + amount + " (" + before + " -> " + user.coins + ")");
-    res.json({
-      code: 0,
-      message: "充值成功",
-      data: { account: { userId: targetUserId, balance: user.coins, totalRecharge: user.totalRecharge } }
-    });
+    let isFavorited = false;
+    if (existIdx >= 0) {
+      // 取消收藏
+      allFavs.splice(existIdx, 1);
+      isFavorited = false;
+    } else {
+      // 添加收藏
+      let toolName = "";
+      let toolIcon = "🤖";
+      let toolDescription = "";
+      let toolType = "";
+      let isFree = true;
+      let coinCost = 0;
+      let categoryId = null;
+
+      const toolsFile = path.join(__dirname, "data", "tools.json");
+      if (fs.existsSync(toolsFile)) {
+        const tools = JSON.parse(fs.readFileSync(toolsFile, "utf8"));
+        const tool = tools.find(t => Number(t.id) === toolId);
+        if (tool) {
+          toolName = tool.name || "";
+          toolIcon = tool.icon || "🤖";
+          toolDescription = tool.description || "";
+          toolType = tool.toolType || "";
+          isFree = tool.isFree !== undefined ? tool.isFree : true;
+          coinCost = tool.coinCost || 0;
+          categoryId = tool.categoryId || null;
+        }
+      }
+
+      allFavs.push({
+        id: Date.now(),
+        userId: Number(userId),
+        toolId: toolId,
+        toolName, toolIcon, toolDescription, toolType, isFree, coinCost, categoryId,
+        favoritedAt: new Date().toISOString(),
+      });
+      isFavorited = true;
+    }
+
+    saveFavorites(allFavs);
+    console.log("[Favorite] userId=" + userId + " toolId=" + toolId + " -> " + (isFavorited ? "收藏" : "取消收藏"));
+    res.json({ code: 0, message: "success", data: { isFavorited: isFavorited } });
   } catch(e) {
-    console.error("[Boss充值] Error:", e.message);
-    res.status(500).json({ code: 500, message: "服务器错误: " + e.message, data: null });
+    res.status(500).json({ code: 500, message: "服务器错误", data: null });
   }
 });
 
-logger.log("Boss圣力管理接口已注册 (set-balance, adjust)");
+// GET /api/v1/ai/favorites/check - 批量检查工具是否已收藏
+express.get(apiPrefix + "/ai/favorites/check", (req, res) => {
+  try {
+    let userId = null;
+    const authHeader = req.headers.authorization || "";
+    const token = authHeader.replace("Bearer ", "").replace("jwt_", "");
+    if (token.startsWith("lsjy.")) {
+      try {
+        const parts = token.split(".");
+        if (parts.length === 3) {
+          const payload = JSON.parse(Buffer.from(parts[1], "base64").toString());
+          userId = payload.sub || payload.userId || payload.id;
+        }
+      } catch(e) {}
+    } else if (token && !token.includes(".")) {
+      userId = token;
+    }
 
+    if (!userId) {
+      return res.json({ code: 0, message: "success", data: {} });
+    }
 
-const port = configService.get("PORT", 3000);
+    const toolIds = (req.query.toolIds || "").split(",").map(Number).filter(Boolean);
+    const allFavs = loadFavorites();
+    const userFavToolIds = new Set(
+      allFavs.filter(f => String(f.userId) === String(userId)).map(f => Number(f.toolId))
+    );
+
+    const result = {};
+    toolIds.forEach(id => { result[id] = userFavToolIds.has(id); });
+    res.json({ code: 0, message: "success", data: result });
+  } catch(e) {
+    res.status(500).json({ code: 500, message: "服务器错误", data: null });
+  }
+});
+
+logger.log("收藏功能接口已注册 (favorites, tools/:id/favorite, favorites/check)");
+
+    const port = configService.get("PORT", 3000);
     await app.listen(port);
     logger.log("Application running on: http://localhost:" + port);
 }
