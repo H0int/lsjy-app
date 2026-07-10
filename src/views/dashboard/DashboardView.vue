@@ -112,12 +112,21 @@
 
       <!-- 最近使用 -->
       <div class="cyber-module-card rounded-xl p-5">
-        <h3 class="cyber-module-title">
-          <span class="title-bar"></span>最近使用
-        </h3>
+        <div class="flex items-center justify-between">
+          <h3 class="cyber-module-title m-0">
+            <span class="title-bar"></span>最近使用
+          </h3>
+          <button
+            v-if="recentTools.length > 3"
+            class="cyber-text-link text-xs flex items-center gap-1"
+            @click="recentExpanded = !recentExpanded"
+          >
+            {{ recentExpanded ? '收起 ↑' : `展开全部 (${recentTools.length}) ↓` }}
+          </button>
+        </div>
         <div class="mt-4 space-y-3">
           <div
-            v-for="(item, idx) in recentTools"
+            v-for="(item, idx) in (recentExpanded ? recentTools : recentTools.slice(0, 3))"
             :key="idx"
             class="cyber-recent-item flex items-center gap-3 p-3 rounded-lg cursor-pointer"
             @click="router.push(`/tools/${item.id}`)"
@@ -165,7 +174,7 @@
     </div>
 
     <!-- 系统公告 -->
-    <div class="cyber-module-card rounded-xl p-5">
+    <div id="notices" class="cyber-module-card rounded-xl p-5">
       <h3 class="cyber-module-title">
         <span class="title-bar"></span>系统公告
       </h3>
@@ -225,6 +234,7 @@ import { ElMessage } from 'element-plus'
 const router = useRouter()
 const authStore = useAuthStore()
 const showGroupQr = ref(false)
+const recentExpanded = ref(false)
 
 // 统计卡片 - 带跳转路径
 const statCards = ref([
@@ -242,6 +252,9 @@ const quickLinks = [
   { name: '圣力中心', icon: '💰', path: '/profile/wallet' },
   { name: '创作记录', icon: '📝', path: '/profile/creation-history' },
   { name: '帮助中心', icon: '❓', path: '/profile/help' },
+  { name: '收藏工具', icon: '⭐', path: '/profile/favorites' },
+  { name: '会员中心', icon: '👑', path: '/profile/wallet' },
+  { name: '系统公告', icon: '📢', path: '/dashboard#notices' },
 ]
 
 // 最近使用（从localStorage读取）
