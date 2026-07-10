@@ -68,15 +68,15 @@
         <div class="cyber-tool-head">
           <span class="cyber-tool-icon">{{ tool.icon }}</span>
           <div class="flex gap-1">
-            <span v-if="tool.isFree && tool.toolType !== 'image' && tool.toolType !== 'video'" class="cyber-badge cyber-badge-green">免费</span>
+            <span v-if="tool.isFree" class="cyber-badge cyber-badge-green">免费</span>
             <span class="cyber-badge cyber-badge-cyan">{{ toolTypeLabel(tool.toolType) }}</span>
           </div>
         </div>
         <h3 class="cyber-tool-name">{{ tool.name }}</h3>
         <p class="cyber-tool-desc">{{ tool.description }}</p>
         <div class="cyber-tool-foot">
-          <span class="cyber-cost" :class="(tool.isFree && tool.toolType !== 'image' && tool.toolType !== 'video') ? 'cyber-cost-free' : 'cyber-cost-paid'">
-            {{ (tool.isFree && tool.toolType !== 'image' && tool.toolType !== 'video') ? '免费使用' : `${tool.coinCost} 圣点/次` }}
+          <span class="cyber-cost" :class="tool.isFree ? 'cyber-cost-free' : 'cyber-cost-paid'">
+            {{ tool.isFree ? '免费使用' : `${tool.coinCost} 圣点/次` }}
           </span>
           <span class="cyber-use-count">{{ formatUseCount(tool.usageCount) }}次使用</span>
         </div>
@@ -87,6 +87,9 @@
     <div v-else-if="!toolStore.loading" class="space-y-3">
       <router-link v-for="tool in filteredTools" :key="tool.id" :to="`/tools/${tool.id}`"
         class="cyber-tool-list-row">
+        <button @click="toggleFavorite(tool.id, $event)" class="cyber-fav-btn-list" :class="{ active: favoriteToolIds.has(tool.id) }" title="收藏">
+          ★
+        </button>
         <span class="cyber-tool-icon">{{ tool.icon }}</span>
         <div class="cyber-list-info">
           <div class="flex items-center gap-2 flex-wrap">
@@ -97,8 +100,8 @@
           <p class="cyber-tool-desc truncate mt-1">{{ tool.description }}</p>
         </div>
         <div class="cyber-list-right">
-          <div class="cyber-cost" :class="(tool.isFree && tool.toolType !== 'image' && tool.toolType !== 'video') ? 'cyber-cost-free' : 'cyber-cost-paid'">
-            {{ (tool.isFree && tool.toolType !== 'image' && tool.toolType !== 'video') ? '免费' : `${tool.coinCost} 圣点` }}
+          <div class="cyber-cost" :class="tool.isFree ? 'cyber-cost-free' : 'cyber-cost-paid'">
+            {{ tool.isFree ? '免费' : `${tool.coinCost} 圣点` }}
           </div>
           <div class="cyber-use-count">{{ formatUseCount(tool.usageCount) }}次使用</div>
         </div>
@@ -119,6 +122,47 @@ import { ref, computed, onMounted } from 'vue'
 import { useToolStore } from '@/stores/tool'
 import type { Tool } from '@/types'
 import { toolTypeMap } from '@/utils'
+import { toolApi } from '@/api'
+import { ElMessage } from 'element-plus'
+
+// 收藏状态
+const favoriteToolIds = ref<Set<number>>(new Set())
+
+// 切换收藏
+async function toggleFavorite(toolId: number, e: Event) {
+  e.preventDefault()
+  e.stopPropagation()
+  try {
+    const res = await toolApi.toggleFavorite(toolId) as any
+    const isFav = res?.data?.data?.isFavorited ?? res?.data?.isFavorited
+    if (isFav) {
+      favoriteToolIds.value.add(toolId)
+      ElMessage.success('已收藏')
+    } else {
+      favoriteToolIds.value.delete(toolId)
+      ElMessage.info('已取消收藏')
+    }
+  } catch (e) {
+    ElMessage.error('操作失败')
+  }
+}
+
+// 检查收藏状态
+async function checkFavoriteStatus() {
+  try {
+    const ids = toolStore.tools.map(t => t.id).filter(Boolean)
+    if (ids.length === 0) return
+    const res = await toolApi.checkFavorites(ids) as any
+    const data = res?.data?.data ?? res?.data ?? {}
+    const newSet = new Set<number>()
+    Object.entries(data).forEach(([id, val]) => {
+      if (val) newSet.add(Number(id))
+    })
+    favoriteToolIds.value = newSet
+  } catch (e) {
+    // 静默失败
+  }
+}
 
 const toolStore = useToolStore()
 const searchQuery = ref('')
@@ -180,32 +224,20 @@ const subCategoryIconMap: Record<string, string> = {
   心理支持: '🌱',
 }
 
-// 6大业务板块 + 图片/视频生成（前端硬编码，不依赖后端categories接口）
-const SIX_PLATES = [
-  { id: 1, label: '内容创作', icon: '📝' },
-  { id: 4, label: 'AI智能', icon: '🤖' },
-  { id: 7, label: '电商运营', icon: '🛒' },
-  { id: 8, label: '教育培训', icon: '📚' },
-  { id: 5, label: '宠物服务', icon: '🐾' },
-  { id: 6, label: '校园助手', icon: '🎓' },
-  { id: 9, label: '图片生成', icon: '🎨' },
-  { id: 10, label: '视频生成', icon: '🎬' },
-]
-
 const totalCount = computed(() => toolStore.total)
 
 const categoryList = computed(() => {
-  const countByCategory = (id: number | null) => {
-    if (id === null) return totalCount.value
+  const countByCategory = (id: number) => {
     // 图片生成(id=9)和视频生成(id=10)按toolType计数
     if (id === 9) return toolStore.tools.filter(t => t.toolType === 'image').length
     if (id === 10) return toolStore.tools.filter(t => t.toolType === 'video').length
     return toolStore.tools.filter(t => Number(t.categoryId) === Number(id)).length
   }
-  return [
-    { id: null, label: '全部工具', icon: '📦', count: countByCategory(null) },
-    ...SIX_PLATES.map(c => ({ ...c, count: countByCategory(c.id) }))
+  const cats = [
+    { id: null, label: '全部工具', icon: '📦', count: totalCount.value },
+    ...toolStore.categories.map(c => ({ id: c.id, label: c.name, icon: c.icon || '📁', count: countByCategory(c.id) }))
   ]
+  return cats
 })
 
 function toolsByCategory(catId: number) {
@@ -511,4 +543,57 @@ onMounted(() => {
 :deep(.el-input__inner) { color: var(--cyber-text) !important; }
 :deep(.el-input__inner::placeholder) { color: var(--cyber-text-dim) !important; }
 :deep(.el-input__prefix .el-icon) { color: var(--cyber-cyan) !important; }
+
+/* 收藏按钮 - 网格视图 */
+.cyber-fav-btn {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 10;
+  font-size: 18px;
+  background: rgba(0,0,0,0.4);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  color: rgba(255,255,255,0.3);
+  cursor: pointer;
+  padding: 4px 6px;
+  line-height: 1;
+  transition: all 0.25s;
+  backdrop-filter: blur(4px);
+}
+.cyber-fav-btn:hover {
+  color: var(--cyber-amber);
+  border-color: rgba(255,184,0,0.4);
+  background: rgba(255,184,0,0.1);
+  transform: scale(1.15);
+}
+.cyber-fav-btn.active {
+  color: var(--cyber-amber);
+  border-color: rgba(255,184,0,0.5);
+  background: rgba(255,184,0,0.15);
+  text-shadow: 0 0 8px rgba(255,184,0,0.5);
+}
+
+/* 收藏按钮 - 列表视图 */
+.cyber-fav-btn-list {
+  font-size: 16px;
+  background: none;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  color: rgba(255,255,255,0.3);
+  cursor: pointer;
+  padding: 4px 6px;
+  line-height: 1;
+  transition: all 0.25s;
+  flex-shrink: 0;
+}
+.cyber-fav-btn-list:hover {
+  color: var(--cyber-amber);
+  border-color: rgba(255,184,0,0.4);
+}
+.cyber-fav-btn-list.active {
+  color: var(--cyber-amber);
+  border-color: rgba(255,184,0,0.5);
+  text-shadow: 0 0 8px rgba(255,184,0,0.5);
+}
 </style>
