@@ -247,171 +247,132 @@ function saveFavorites(favs) {
   }
 }
 
-// GET /api/v1/ai/favorites - 获取收藏的工具列表
-express.get(apiPrefix + "/ai/favorites", (req, res) => {
-  try {
-    // 从 Authorization header 获取 userId（格式: lsjy.xxx 或 Bearer lsjy.xxx）
-    let userId = null;
-    const authHeader = req.headers.authorization || "";
-    const token = authHeader.replace("Bearer ", "").replace("jwt_", "");
-    if (token.startsWith("lsjy.")) {
-      try {
-        const parts = token.split(".");
-        if (parts.length === 3) {
-          const payload = JSON.parse(Buffer.from(parts[1], "base64").toString());
-          userId = payload.sub || payload.userId || payload.id;
-        }
-      } catch(e) {}
-    } else if (token && !token.includes(".")) {
-      userId = token;
+function parseUserIdFromReq(req) {
+  let userId = null;
+  const authHeader = req.headers.authorization || "";
+  const token = authHeader.replace("Bearer ", "").replace("jwt_", "");
+  if (token.startsWith("lsjy.")) {
+    try {
+      const parts = token.split(".");
+      if (parts.length === 3) {
+        const payload = JSON.parse(Buffer.from(parts[1], "base64").toString());
+        userId = payload.sub || payload.userId || payload.id;
+      }
+    } catch(e) {}
+  } else if (token && !token.includes(".")) {
+    userId = token;
+  }
+  return userId;
+}
+
+// 使用 express.use() middleware 在 NestJS 管道之前拦截收藏路由
+express.use("/" + apiPrefix + "/ai/favorites", (req, res, next) => {
+  if (req.method === "GET" && !req.query.toolIds) {
+    // GET /api/v1/ai/favorites - 获取收藏列表
+    try {
+      const userId = parseUserIdFromReq(req);
+      const allFavs = loadFavorites();
+      let userFavs = allFavs;
+      if (userId) {
+        userFavs = allFavs.filter(f => String(f.userId) === String(userId));
+      }
+      let tools = [];
+      const toolsFile = path.join(__dirname, "data", "tools.json");
+      if (fs.existsSync(toolsFile)) {
+        tools = JSON.parse(fs.readFileSync(toolsFile, "utf8"));
+      }
+      const enriched = userFavs.map(function(fav) {
+        const tool = tools.find(function(t) { return Number(t.id) === Number(fav.toolId); });
+        return Object.assign({}, fav, {
+          toolName: fav.toolName || (tool ? tool.name : "未知工具"),
+          toolIcon: fav.toolIcon || (tool ? tool.icon : "🤖"),
+          toolDescription: fav.toolDescription || (tool ? tool.description : ""),
+          toolType: fav.toolType || (tool ? tool.toolType : ""),
+          isFree: fav.isFree !== undefined ? fav.isFree : (tool ? tool.isFree : true),
+          coinCost: fav.coinCost !== undefined ? fav.coinCost : (tool ? tool.coinCost : 0),
+          categoryId: fav.categoryId || (tool ? tool.categoryId : null),
+        });
+      });
+      enriched.sort(function(a, b) { return new Date(b.favoritedAt).getTime() - new Date(a.favoritedAt).getTime(); });
+      res.json({ code: 0, message: "success", data: { items: enriched, total: enriched.length } });
+    } catch(e) {
+      res.status(500).json({ code: 500, message: "服务器错误", data: null });
     }
-
-    const allFavs = loadFavorites();
-    let userFavs = allFavs;
-    if (userId) {
-      userFavs = allFavs.filter(f => String(f.userId) === String(userId));
+  } else if (req.method === "GET" && req.query.toolIds) {
+    // GET /api/v1/ai/favorites/check?toolIds=1,2,3
+    try {
+      const userId = parseUserIdFromReq(req);
+      if (!userId) {
+        return res.json({ code: 0, message: "success", data: {} });
+      }
+      const toolIds = (req.query.toolIds || "").split(",").map(Number).filter(Boolean);
+      const allFavs = loadFavorites();
+      const userFavToolIds = new Set(
+        allFavs.filter(function(f) { return String(f.userId) === String(userId); }).map(function(f) { return Number(f.toolId); })
+      );
+      const result = {};
+      toolIds.forEach(function(id) { result[id] = userFavToolIds.has(id); });
+      res.json({ code: 0, message: "success", data: result });
+    } catch(e) {
+      res.status(500).json({ code: 500, message: "服务器错误", data: null });
     }
-
-    // 读取工具数据以补充信息
-    let tools = [];
-    const toolsFile = path.join(__dirname, "data", "tools.json");
-    if (fs.existsSync(toolsFile)) {
-      tools = JSON.parse(fs.readFileSync(toolsFile, "utf8"));
-    }
-
-    // 补充工具详细信息
-    const enriched = userFavs.map(fav => {
-      const tool = tools.find(t => Number(t.id) === Number(fav.toolId));
-      return {
-        ...fav,
-        toolName: fav.toolName || (tool ? tool.name : "未知工具"),
-        toolIcon: fav.toolIcon || (tool ? tool.icon : "🤖"),
-        toolDescription: fav.toolDescription || (tool ? tool.description : ""),
-        toolType: fav.toolType || (tool ? tool.toolType : ""),
-        isFree: fav.isFree !== undefined ? fav.isFree : (tool ? tool.isFree : true),
-        coinCost: fav.coinCost !== undefined ? fav.coinCost : (tool ? tool.coinCost : 0),
-        categoryId: fav.categoryId || (tool ? tool.categoryId : null),
-      };
-    });
-
-    enriched.sort((a, b) => new Date(b.favoritedAt).getTime() - new Date(a.favoritedAt).getTime());
-    res.json({ code: 0, message: "success", data: { items: enriched, total: enriched.length } });
-  } catch(e) {
-    res.status(500).json({ code: 500, message: "服务器错误", data: null });
+  } else {
+    next();
   }
 });
 
 // POST /api/v1/ai/tools/:id/favorite - 收藏/取消收藏工具
-express.post(apiPrefix + "/ai/tools/:id/favorite", (req, res) => {
-  try {
-    let userId = null;
-    const authHeader = req.headers.authorization || "";
-    const token = authHeader.replace("Bearer ", "").replace("jwt_", "");
-    if (token.startsWith("lsjy.")) {
-      try {
-        const parts = token.split(".");
-        if (parts.length === 3) {
-          const payload = JSON.parse(Buffer.from(parts[1], "base64").toString());
-          userId = payload.sub || payload.userId || payload.id;
-        }
-      } catch(e) {}
-    } else if (token && !token.includes(".")) {
-      userId = token;
-    }
-
-    if (!userId) {
-      return res.status(401).json({ code: 401, message: "请先登录", data: null });
-    }
-
-    const toolId = Number(req.params.id);
-    if (!toolId) {
-      return res.status(400).json({ code: 400, message: "无效的工具ID", data: null });
-    }
-
-    const allFavs = loadFavorites();
-    const existIdx = allFavs.findIndex(f => String(f.userId) === String(userId) && Number(f.toolId) === toolId);
-
-    let isFavorited = false;
-    if (existIdx >= 0) {
-      // 取消收藏
-      allFavs.splice(existIdx, 1);
-      isFavorited = false;
-    } else {
-      // 添加收藏
-      let toolName = "";
-      let toolIcon = "🤖";
-      let toolDescription = "";
-      let toolType = "";
-      let isFree = true;
-      let coinCost = 0;
-      let categoryId = null;
-
-      const toolsFile = path.join(__dirname, "data", "tools.json");
-      if (fs.existsSync(toolsFile)) {
-        const tools = JSON.parse(fs.readFileSync(toolsFile, "utf8"));
-        const tool = tools.find(t => Number(t.id) === toolId);
-        if (tool) {
-          toolName = tool.name || "";
-          toolIcon = tool.icon || "🤖";
-          toolDescription = tool.description || "";
-          toolType = tool.toolType || "";
-          isFree = tool.isFree !== undefined ? tool.isFree : true;
-          coinCost = tool.coinCost || 0;
-          categoryId = tool.categoryId || null;
-        }
+express.use("/" + apiPrefix + "/ai/tools", (req, res, next) => {
+  if (req.method === "POST" && req.params && req.params.id && req.path.match(/\/favorite$/)) {
+    try {
+      const userId = parseUserIdFromReq(req);
+      if (!userId) {
+        return res.status(401).json({ code: 401, message: "请先登录", data: null });
       }
-
-      allFavs.push({
-        id: Date.now(),
-        userId: Number(userId),
-        toolId: toolId,
-        toolName, toolIcon, toolDescription, toolType, isFree, coinCost, categoryId,
-        favoritedAt: new Date().toISOString(),
-      });
-      isFavorited = true;
-    }
-
-    saveFavorites(allFavs);
-    console.log("[Favorite] userId=" + userId + " toolId=" + toolId + " -> " + (isFavorited ? "收藏" : "取消收藏"));
-    res.json({ code: 0, message: "success", data: { isFavorited: isFavorited } });
-  } catch(e) {
-    res.status(500).json({ code: 500, message: "服务器错误", data: null });
-  }
-});
-
-// GET /api/v1/ai/favorites/check - 批量检查工具是否已收藏
-express.get(apiPrefix + "/ai/favorites/check", (req, res) => {
-  try {
-    let userId = null;
-    const authHeader = req.headers.authorization || "";
-    const token = authHeader.replace("Bearer ", "").replace("jwt_", "");
-    if (token.startsWith("lsjy.")) {
-      try {
-        const parts = token.split(".");
-        if (parts.length === 3) {
-          const payload = JSON.parse(Buffer.from(parts[1], "base64").toString());
-          userId = payload.sub || payload.userId || payload.id;
+      const toolId = Number(req.params.id);
+      if (!toolId) {
+        return res.status(400).json({ code: 400, message: "无效的工具ID", data: null });
+      }
+      const allFavs = loadFavorites();
+      const existIdx = allFavs.findIndex(function(f) { return String(f.userId) === String(userId) && Number(f.toolId) === toolId; });
+      var isFavorited = false;
+      if (existIdx >= 0) {
+        allFavs.splice(existIdx, 1);
+        isFavorited = false;
+      } else {
+        var toolName = "", toolIcon = "🤖", toolDescription = "", toolType = "", isFree = true, coinCost = 0, categoryId = null;
+        var toolsFile = path.join(__dirname, "data", "tools.json");
+        if (fs.existsSync(toolsFile)) {
+          var tools = JSON.parse(fs.readFileSync(toolsFile, "utf8"));
+          var tool = tools.find(function(t) { return Number(t.id) === toolId; });
+          if (tool) {
+            toolName = tool.name || "";
+            toolIcon = tool.icon || "🤖";
+            toolDescription = tool.description || "";
+            toolType = tool.toolType || "";
+            isFree = tool.isFree !== undefined ? tool.isFree : true;
+            coinCost = tool.coinCost || 0;
+            categoryId = tool.categoryId || null;
+          }
         }
-      } catch(e) {}
-    } else if (token && !token.includes(".")) {
-      userId = token;
+        allFavs.push({
+          id: Date.now(),
+          userId: Number(userId),
+          toolId: toolId,
+          toolName: toolName, toolIcon: toolIcon, toolDescription: toolDescription,
+          toolType: toolType, isFree: isFree, coinCost: coinCost, categoryId: categoryId,
+          favoritedAt: new Date().toISOString(),
+        });
+        isFavorited = true;
+      }
+      saveFavorites(allFavs);
+      console.log("[Favorite] userId=" + userId + " toolId=" + toolId + " -> " + (isFavorited ? "收藏" : "取消收藏"));
+      res.json({ code: 0, message: "success", data: { isFavorited: isFavorited } });
+    } catch(e) {
+      res.status(500).json({ code: 500, message: "服务器错误", data: null });
     }
-
-    if (!userId) {
-      return res.json({ code: 0, message: "success", data: {} });
-    }
-
-    const toolIds = (req.query.toolIds || "").split(",").map(Number).filter(Boolean);
-    const allFavs = loadFavorites();
-    const userFavToolIds = new Set(
-      allFavs.filter(f => String(f.userId) === String(userId)).map(f => Number(f.toolId))
-    );
-
-    const result = {};
-    toolIds.forEach(id => { result[id] = userFavToolIds.has(id); });
-    res.json({ code: 0, message: "success", data: result });
-  } catch(e) {
-    res.status(500).json({ code: 500, message: "服务器错误", data: null });
+  } else {
+    next();
   }
 });
 
