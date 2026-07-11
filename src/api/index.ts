@@ -110,19 +110,19 @@ export const paymentApi = {
   },
   // 佣金查询
   getCommission(): Promise<ApiResponse<{ total: number; available: number; pending: number; paid: number }>> {
-    return service.get('/user/commission').then(r => r.data)
+    return service.get('/payment/commission/me').then(r => r.data)
   },
   // 提交提现申请
   submitWithdraw(data: { method: string; account: string; accountName: string; amount: number }): Promise<ApiResponse<any>> {
-    return service.post('/user/withdraw', data).then(r => r.data)
+    return service.post('/payment/withdraw/apply', data).then(r => r.data)
   },
   // 获取提现记录
   getWithdrawals(params?: { page?: number; pageSize?: number }): Promise<ApiResponse<PageResult<any>>> {
-    return service.get('/user/withdrawals', { params }).then(r => r.data)
+    return service.get('/payment/coin/transactions', { params }).then(r => r.data)
   },
   // 卡密兑换
-  redeemCard(data: { code: string }): Promise<ApiResponse<{ denomination: number; code: string }>> {
-    return service.post('/ai/favorites/redeem', data).then(r => r.data)
+  redeemCard(data: { code: string }): Promise<ApiResponse<{ amount: number; code: string }>> {
+    return service.post('/payment/boss-card/redeem', data).then(r => r.data)
   }
 }
 
