@@ -4971,7 +4971,12 @@ function renderBossCards() {
     html += '<td style="color:var(--ok);font-weight:600;">'+c.denomination+'</td>';
     html += '<td>'+(statusMap[c.status]||c.status)+'</td>';
     html += '<td style="color:var(--nd);font-size:12px;">'+c.createTime+'</td>';
-    html += '<td>'+(c.usedBy||'--')+'</td><td style="color:var(--nd);font-size:12px;">'+(c.usedTime||'--')+'</td>';
+    var ut = c.usedTime;
+    if (ut && ut !== 'null' && ut !== 'undefined' && !/^1970/.test(ut)) {
+      html += '<td>'+(c.usedBy||'--')+'</td><td style="color:var(--nd);font-size:12px;">'+ut+'</td>';
+    } else {
+      html += '<td>'+(c.usedBy||'--')+'</td><td style="color:var(--nd);font-size:12px;">--</td>';
+    }
     html += '<td class="action-cell">';
     if (c.status === 'active') {
       html += '<button class="btn-xs btn-warn" onclick="AdminAPI.freezeCard(\''+c.id+'\')">冻结</button>';
