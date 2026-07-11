@@ -491,9 +491,9 @@ async function bootstrap() {
         }
     });
 
-    app.use("/" + apiPrefix + "/payment", commissionRouter);
+    app.use("/" + apiPrefix + "/user", commissionRouter);
     logger.log("佣金查询与提现接口已注册 (commission, withdraw, withdrawals)");
-    logger.log("卡密兑换接口已注册 (payment/redeem)");
+    logger.log("卡密兑换接口已注册 (user/redeem)");
 
     // ===== Boss卡密管理路由 =====
     const bossCardRouter = require("express").Router();
