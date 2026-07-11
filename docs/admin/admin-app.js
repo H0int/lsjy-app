@@ -2930,6 +2930,42 @@ window.AdminAPI = {
     document.body.appendChild(overlay);
   },
   exportBossCards: function() { toast('充值卡数据已导出', 'success'); },
+  syncCardsToDb: function() {
+    var cards = Store.get('bossCards') || [];
+    var activeCards = cards.filter(function(c) { return c.status === 'active'; });
+    if (!activeCards.length) { toast('没有需要同步的激活卡密', 'warning'); return; }
+    
+    confirmDialog('确定将 ' + activeCards.length + ' 张激活卡密同步到数据库？', function() {
+      var token = localStorage.getItem('lsjy_token') || localStorage.getItem('admin_token');
+      if (!token) { toast('未找到登录Token', 'error'); return; }
+      
+      // 按面值分组批量生成
+      var groups = {};
+      activeCards.forEach(function(c) {
+        var key = c.denomination;
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(c.code);
+      });
+      
+      var totalSynced = 0;
+      var promises = Object.keys(groups).map(function(denom) {
+        var codes = groups[denom];
+        return fetch('/api/v1/admin/boss-cards/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ count: codes.length, denomination: parseInt(denom), prefix: 'LSJY' })
+        }).then(function(r) { return r.json() }).then(function(d) {
+          if (d.code === 0) totalSynced += d.data.count;
+        });
+      });
+      
+      Promise.all(promises).then(function() {
+        toast('已同步 ' + totalSynced + ' 张卡密到数据库（注意：同步会生成新卡密，原卡密需使用新生成的）', 'success');
+      }).catch(function(e) {
+        toast('同步失败: ' + e.message, 'error');
+      });
+    });
+  },
   toggleAllCards: function(el) {
     var checked = el.checked;
     document.querySelectorAll('.card-checkbox').forEach(function(cb) { cb.checked = checked; });
@@ -4915,6 +4951,7 @@ function renderBossCards() {
   html += '<button class="btn-xs" onclick="AdminAPI.viewCardCodes()"><i class="fa-solid fa-key"></i> 卡密查看</button>';
   html += '<button class="btn-xs" onclick="AdminAPI.viewCardRecords()"><i class="fa-solid fa-history"></i> 发放记录</button>';
   html += '<button class="btn-xs" onclick="AdminAPI.exportBossCards()"><i class="fa-solid fa-download"></i> 导出</button>';
+  html += '<button onclick="AdminAPI.syncCardsToDb()" class="btn btn-sm" style="background:rgba(0,255,136,0.15);color:#00ff88;border:1px solid rgba(0,255,136,0.3);">🔄 同步到数据库</button>';
   html += '</div>';
   html += '<div class="dash-grid">';
   var activeCount = cards.filter(function(c){return c.status==='active';}).length;
