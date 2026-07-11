@@ -6248,6 +6248,54 @@ app.delete('/api/v1/admin/boss-cards/:id', authCheck, (req, res) => {
   res.json({ code: 0, message: 'success' });
 });
 
+// ===== 用户卡密兑换 =====
+app.post('/api/v1/payment/redeem', authCheck, (req, res) => {
+  try {
+    const { code } = req.body || {};
+    if (!code || typeof code !== 'string') {
+      return res.status(400).json({ code: 400, message: '请输入卡密', data: null });
+    }
+    const cardCode = code.trim().toUpperCase();
+    if (cardCode.length < 8) {
+      return res.status(400).json({ code: 400, message: '卡密格式不正确', data: null });
+    }
+
+    const cards = loadBossCards();
+    const cardIndex = cards.findIndex(c => c.code && c.code.toUpperCase() === cardCode);
+    if (cardIndex === -1) {
+      return res.status(404).json({ code: 404, message: '卡密不存在，请检查后重试', data: null });
+    }
+    const card = cards[cardIndex];
+    if (card.status === 'used') {
+      return res.status(400).json({ code: 400, message: '该卡密已被使用', data: null });
+    }
+    if (card.status === 'frozen' || card.status === 'void') {
+      return res.status(400).json({ code: 400, message: '该卡密已失效', data: null });
+    }
+
+    // 标记卡密已使用
+    cards[cardIndex].status = 'used';
+    cards[cardIndex].usedBy = req.currentUser?.username || String(req.currentUser?.id || '');
+    cards[cardIndex].usedAt = new Date().toISOString();
+    saveBossCards(cards);
+
+    // 增加用户余额
+    const userId = req.currentUser?.id;
+    const username = req.currentUser?.username || '';
+    const result = addCoinsToUser(userId, card.amount, '卡密兑换: ' + cardCode);
+
+    console.log('[Redeem] user=' + username + ' code=' + cardCode + ' amount=' + card.amount + ' balance=' + result.balance);
+    res.json({
+      code: 0,
+      message: '兑换成功',
+      data: { denomination: card.amount, code: cardCode, balance: result.balance }
+    });
+  } catch (err) {
+    console.error('[Redeem] error:', err);
+    res.status(500).json({ code: 500, message: '兑换失败，请稍后重试', data: null });
+  }
+});
+
 // ===== 支付渠道管理 =====
 const PAYMENT_CHANNELS_FILE = path.join(__dirname, 'data', 'payment_channels.json');
 function loadPaymentChannels() {
