@@ -6248,6 +6248,39 @@ app.delete('/api/v1/admin/boss-cards/:id', authCheck, (req, res) => {
   res.json({ code: 0, message: 'success' });
 });
 
+// ===== 用户端卡密核销 =====
+app.post('/api/v1/payment/boss-card/redeem', authCheck, (req, res) => {
+  try {
+    const { code } = req.body;
+    if (!code || typeof code !== 'string') {
+      return res.status(400).json({ success: false, message: '请输入卡密' });
+    }
+    const trimmedCode = code.trim().toUpperCase();
+    const cards = loadBossCards();
+    const cardIndex = cards.findIndex(c => c.code.toUpperCase() === trimmedCode && c.status === 'unused');
+    if (cardIndex === -1) {
+      return res.status(400).json({ success: false, message: '卡密无效、已使用或已冻结' });
+    }
+    const card = cards[cardIndex];
+    // 标记为已使用
+    cards[cardIndex].status = 'used';
+    cards[cardIndex].usedBy = req.user.username || req.user.userId;
+    cards[cardIndex].usedAt = new Date().toISOString();
+    saveBossCards(cards);
+    // 给用户增加圣力
+    const users = loadFileUsers();
+    const user = users.find(u => u.id === req.user.id || u.username === req.user.username);
+    if (user) {
+      user.coins = (user.coins || 0) + card.amount;
+      saveFileUsers(users);
+    }
+    res.json({ success: true, message: '兑换成功', data: { amount: card.amount, code: card.code } });
+  } catch (err) {
+    console.error('Boss card redeem error:', err);
+    res.status(500).json({ success: false, message: '兑换失败，请稍后重试' });
+  }
+});
+
 // ===== 支付渠道管理 =====
 const PAYMENT_CHANNELS_FILE = path.join(__dirname, 'data', 'payment_channels.json');
 function loadPaymentChannels() {
