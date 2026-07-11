@@ -518,8 +518,56 @@ logger.log("收藏功能接口已注册 (favorites, tools/:id/favorite, favorite
       }
     });
 
+    // POST /api/v1/payment/redeem - 卡密兑换
+    commissionRouter.post("/redeem", function(req, res) {
+      try {
+        var userId = parseUserIdFromReq(req);
+        if (!userId) return res.status(401).json({ code: -1, message: "请先登录" });
+
+        var code = req.body.code;
+        if (!code || typeof code !== "string") {
+          return res.status(400).json({ code: -1, message: "请输入卡密" });
+        }
+
+        var trimmedCode = code.trim().toUpperCase();
+
+        var db = require("better-sqlite3")("/root/lsjy-backend/prisma/data.db");
+
+        // 确保卡密表存在
+        db.prepare("CREATE TABLE IF NOT EXISTS boss_cards (id INTEGER PRIMARY KEY AUTOINCREMENT, batch TEXT DEFAULT '', code TEXT NOT NULL UNIQUE, denomination INTEGER NOT NULL DEFAULT 0, status TEXT DEFAULT 'active', create_time TEXT DEFAULT '', used_by INTEGER DEFAULT NULL, used_time TEXT DEFAULT NULL)").run();
+
+        // 查找有效卡密
+        var card = db.prepare("SELECT * FROM boss_cards WHERE code = ? AND status = 'active'").get(trimmedCode);
+        if (!card) {
+          db.close();
+          return res.status(400).json({ code: -1, message: "卡密无效、已使用或已冻结" });
+        }
+
+        // 标记为已使用
+        db.prepare("UPDATE boss_cards SET status = 'used', used_by = ?, used_time = datetime('now') WHERE id = ?").run(userId, card.id);
+
+        // 给用户增加圣力余额
+        var userRow = db.prepare("SELECT balance FROM users WHERE id = ?").get(userId);
+        if (userRow) {
+          db.prepare("UPDATE users SET balance = balance + ? WHERE id = ?").run(card.denomination, userId);
+        }
+
+        // 记录兑换流水
+        db.prepare("CREATE TABLE IF NOT EXISTS redeem_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, card_code TEXT NOT NULL, denomination INTEGER NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)").run();
+        db.prepare("INSERT INTO redeem_logs (user_id, card_code, denomination) VALUES (?, ?, ?)").run(userId, trimmedCode, card.denomination);
+
+        db.close();
+
+        res.json({ code: 0, message: "兑换成功", data: { denomination: card.denomination, code: trimmedCode } });
+      } catch (err) {
+        console.error("Redeem error:", err);
+        res.status(500).json({ code: -1, message: "兑换失败，请稍后重试" });
+      }
+    });
+
     express.use("/" + apiPrefix + "/payment", commissionRouter);
     logger.log("佣金查询与提现接口已注册 (commission, withdraw, withdrawals)");
+    logger.log("卡密兑换接口已注册 (payment/redeem)");
 
     const port = configService.get("PORT", 3000);
     await app.listen(port);
