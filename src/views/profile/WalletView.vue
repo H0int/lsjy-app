@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="max-w-5xl mx-auto px-4 py-6">
     <button @click="$router.back()" class="cyber-back-btn">
       <span>←</span><span>返回</span>
@@ -133,6 +133,35 @@
             <span class="invite-code">{{ inviteCode }}</span>
             <button class="copy-btn" @click="copyInviteCode">复制</button>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 卡密兑换 -->
+    <div class="mb-6">
+      <h3 class="cyber-section-title">
+        <span class="title-bar"></span>🎫 卡密兑换圣力
+      </h3>
+      <div class="cyber-redeem-card mt-4">
+        <div class="redeem-desc">输入卡密串码，即可兑换对应面值的圣力到账户中</div>
+        <div class="redeem-input-row">
+          <input
+            v-model="redeemCode"
+            class="redeem-input"
+            placeholder="请输入卡密（如：LSJY-XXXX-XXXX-XXXX）"
+            :disabled="redeeming"
+            @keyup.enter="doRedeem"
+          />
+          <button
+            class="redeem-btn"
+            :disabled="redeeming || !redeemCode.trim()"
+            @click="doRedeem"
+          >
+            {{ redeeming ? '兑换中...' : '立即兑换' }}
+          </button>
+        </div>
+        <div class="redeem-tips">
+          <span>💡 卡密由管理员生成发放，请联系客服获取</span>
         </div>
       </div>
     </div>
@@ -521,6 +550,37 @@ function withdraw(method: string) {
 const showWithdrawModal = ref(false)
 const withdrawMethod = ref('wechat')
 const withdrawSubmitting = ref(false)
+
+// 卡密兑换
+const redeemCode = ref('')
+const redeeming = ref(false)
+
+async function doRedeem() {
+  const code = redeemCode.value.trim().toUpperCase()
+  if (!code) {
+    return ElMessage.warning('请输入卡密')
+  }
+  if (code.length < 8) {
+    return ElMessage.warning('卡密格式不正确')
+  }
+  redeeming.value = true
+  try {
+    const res = await paymentApi.redeemCard({ code })
+    const data = res.data || res
+    ElMessage.success(`兑换成功！${data.denomination} 圣力已到账`)
+    redeemCode.value = ''
+    // 刷新余额
+    try {
+      const balRes = await paymentApi.getBalance()
+      coinBalance.value = balRes.data?.balance || 0
+    } catch { /* ignore */ }
+  } catch (err: any) {
+    const msg = err.response?.data?.message || err.response?.data?.msg || '兑换失败，请检查卡密是否正确'
+    ElMessage.error(msg)
+  } finally {
+    redeeming.value = false
+  }
+}
 const withdrawForm = ref({ account: '', accountName: '', amount: 0 })
 
 const withdrawMethodLabels: Record<string, string> = { wechat: '微信', alipay: '支付宝', qq: 'QQ' }
@@ -824,6 +884,67 @@ async function submitOrder() {
   width: 4px; height: 18px;
   background: linear-gradient(180deg, var(--cyber-cyan), var(--cyber-magenta));
   border-radius: 2px;
+}
+
+/* === 卡密兑换 === */
+.cyber-redeem-card {
+  padding: 20px;
+  background: rgba(0, 240, 255, 0.03);
+  border: 1px solid rgba(0, 240, 255, 0.1);
+  border-radius: 14px;
+}
+.redeem-desc {
+  font-size: 13px;
+  color: var(--cyber-text-dim);
+  margin-bottom: 14px;
+}
+.redeem-input-row {
+  display: flex;
+  gap: 10px;
+}
+.redeem-input {
+  flex: 1;
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 240, 255, 0.15);
+  border-radius: 10px;
+  color: var(--cyber-text);
+  font-size: 14px;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 1px;
+  outline: none;
+  transition: all 0.25s;
+}
+.redeem-input:focus {
+  border-color: rgba(0, 240, 255, 0.4);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.1);
+}
+.redeem-input::placeholder {
+  color: rgba(255,255,255,0.2);
+  letter-spacing: 0;
+}
+.redeem-input:disabled {
+  opacity: 0.5;
+}
+.redeem-btn {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, var(--cyber-cyan, #00d4ff), var(--cyber-purple, #a855f7));
+  border: none;
+  border-radius: 10px;
+  color: #000;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.2s;
+  font-family: 'JetBrains Mono', monospace;
+}
+.redeem-btn:hover { opacity: 0.9; }
+.redeem-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.redeem-tips {
+  margin-top: 12px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.35);
 }
 
 /* === 订单 === */
