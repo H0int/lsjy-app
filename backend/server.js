@@ -17,6 +17,9 @@ const { execFile } = require('child_process');
 require('dotenv').config();
 
 const app = express();
+// 支持 --port=3001 命令行参数（PM2启动时传递）
+const portArg = process.argv.find(a => a.startsWith('--port='));
+if (portArg) process.env.PORT = portArg.split('=')[1];
 const PORT = process.env.PORT || 3000;
 
 // ===== 中间件 =====
