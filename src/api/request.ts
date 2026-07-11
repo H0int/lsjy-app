@@ -121,7 +121,9 @@ service.interceptors.response.use(
 
     // 非401错误：登录请求由登录页处理，避免重复弹窗
     const isLoginReq = originalRequest.url?.includes('/auth/login')
-    if (!isLoginReq) {
+    // 404静默处理：功能可能尚未部署，不打扰用户，由业务代码自行处理
+    const is404 = error.response?.status === 404
+    if (!isLoginReq && !is404) {
       // 兼容Express后端error字段和NestJS message字段
       const msg = error.response?.data?.error || error.response?.data?.message || error.message || '请求失败'
       ElMessage.error(msg)
