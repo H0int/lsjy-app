@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="max-w-5xl mx-auto px-4 py-6">
     <button @click="$router.back()" class="cyber-back-btn">
       <span>←</span><span>返回</span>
@@ -296,6 +296,77 @@
         </div>
       </div>
     </Teleport>
+
+    <!-- 提现弹窗 -->
+    <Teleport to="body">
+      <div
+        v-if="showWithdrawModal"
+        class="fixed inset-0 z-50 flex items-center justify-center"
+        style="background: rgba(0,0,0,0.75); backdrop-filter: blur(6px);"
+        @click.self="showWithdrawModal = false"
+      >
+        <div class="withdraw-modal">
+          <div class="withdraw-modal-header">
+            <span>{{ withdrawMethodIcons[withdrawMethod] }} {{ withdrawMethodLabels[withdrawMethod] }}提现</span>
+            <button class="withdraw-modal-close" @click="showWithdrawModal = false">&#10005;</button>
+          </div>
+          <div class="withdraw-modal-body">
+            <div class="withdraw-balance-info">
+              <span class="withdraw-balance-label">可提现金额</span>
+              <span class="withdraw-balance-value">¥{{ commission.available.toFixed(2) }}</span>
+            </div>
+            <div class="withdraw-form-group">
+              <label class="withdraw-form-label">收款人姓名</label>
+              <input
+                v-model="withdrawForm.accountName"
+                class="withdraw-input"
+                placeholder="请输入真实姓名"
+                :disabled="withdrawSubmitting"
+              />
+            </div>
+            <div class="withdraw-form-group">
+              <label class="withdraw-form-label">{{ withdrawMethodLabels[withdrawMethod] }}账号</label>
+              <input
+                v-model="withdrawForm.account"
+                class="withdraw-input"
+                :placeholder="withdrawAccountPlaceholder[withdrawMethod]"
+                :disabled="withdrawSubmitting"
+              />
+            </div>
+            <div class="withdraw-form-group">
+              <label class="withdraw-form-label">提现金额（元）</label>
+              <div class="withdraw-amount-row">
+                <input
+                  v-model.number="withdrawForm.amount"
+                  type="number"
+                  class="withdraw-input"
+                  placeholder="请输入提现金额"
+                  min="0"
+                  :max="commission.available"
+                  :disabled="withdrawSubmitting"
+                />
+                <button
+                  class="withdraw-all-btn"
+                  @click="withdrawForm.amount = commission.available"
+                  :disabled="withdrawSubmitting"
+                >全部提现</button>
+              </div>
+            </div>
+            <div class="withdraw-tips">
+              <p>&#9888; 请确保收款信息准确，提现审核通过后将打款至对应账号</p>
+              <p>&#9888; 最低提现金额为 ¥1.00，审核时间一般为 1-3 个工作日</p>
+            </div>
+          </div>
+          <button
+            class="withdraw-submit-btn"
+            :disabled="withdrawSubmitting"
+            @click="submitWithdraw"
+          >
+            {{ withdrawSubmitting ? '提交中...' : '确认提现' }}
+          </button>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -325,12 +396,12 @@ const screenshotPreview = ref<string>('')
 const fileInput = ref<HTMLInputElement | null>(null)
 const userOrders = ref<PaymentTransaction[]>([])
 
-// 佣金数据
+// 佣金数据（从API获取，初始为0）
 const commission = ref({
-  total: 622.45,
-  available: 419.97,
+  total: 0,
+  available: 0,
   pending: 0,
-  paid: 202.48,
+  paid: 0,
 })
 
 // 邀请数据
@@ -441,7 +512,64 @@ function withdraw(method: string) {
   if (commission.value.available <= 0) {
     return ElMessage.warning('暂无可提现金额')
   }
-  ElMessage.info(`${payMethodLabels[method]}提现申请已提交，等待审核`)
+  withdrawMethod.value = method
+  withdrawForm.value = { account: '', accountName: '', amount: 0 }
+  withdrawSubmitting.value = false
+  showWithdrawModal.value = true
+}
+
+const showWithdrawModal = ref(false)
+const withdrawMethod = ref('wechat')
+const withdrawSubmitting = ref(false)
+const withdrawForm = ref({ account: '', accountName: '', amount: 0 })
+
+const withdrawMethodLabels: Record<string, string> = { wechat: '微信', alipay: '支付宝', qq: 'QQ' }
+const withdrawMethodIcons: Record<string, string> = { wechat: '💚', alipay: '💙', qq: '🐧' }
+const withdrawAccountPlaceholder: Record<string, string> = {
+  wechat: '请输入微信号',
+  alipay: '请输入支付宝账号',
+  qq: '请输入QQ号',
+}
+
+async function submitWithdraw() {
+  if (!withdrawForm.value.account.trim()) {
+    return ElMessage.warning(`请输入${withdrawMethodLabels[withdrawMethod.value]}账号`)
+  }
+  if (!withdrawForm.value.accountName.trim()) {
+    return ElMessage.warning('请输入收款人姓名')
+  }
+  if (withdrawForm.value.amount <= 0 || withdrawForm.value.amount > commission.value.available) {
+    return ElMessage.warning(`提现金额需在 0 ~ ${commission.value.available.toFixed(2)} 之间`)
+  }
+
+  withdrawSubmitting.value = true
+  try {
+    await paymentApi.submitWithdraw({
+      method: withdrawMethod.value,
+      account: withdrawForm.value.account.trim(),
+      accountName: withdrawForm.value.accountName.trim(),
+      amount: withdrawForm.value.amount,
+    })
+    ElMessage.success('提现申请已提交，等待审核处理')
+    showWithdrawModal.value = false
+    // 刷新佣金数据
+    try {
+      const commRes = await paymentApi.getCommission()
+      const commData = commRes.data
+      if (commData) {
+        commission.value = {
+          total: Number(commData.total) || 0,
+          available: Number(commData.available) || 0,
+          pending: Number(commData.pending) || 0,
+          paid: Number(commData.paid) || 0,
+        }
+      }
+    } catch { /* ignore */ }
+  } catch (err: any) {
+    ElMessage.error(err.response?.data?.message || '提现申请失败，请稍后重试')
+  } finally {
+    withdrawSubmitting.value = false
+  }
 }
 
 function openVip(plan: any) {
@@ -473,6 +601,28 @@ onMounted(async () => {
   // 从 localStorage 读取邀请数据
   const savedInvites = localStorage.getItem('lsjy_invite_count')
   if (savedInvites) inviteCount.value = parseInt(savedInvites)
+
+  // 加载佣金数据
+  try {
+    const commRes = await paymentApi.getCommission()
+    const commData = commRes.data
+    if (commData) {
+      commission.value = {
+        total: Number(commData.total) || 0,
+        available: Number(commData.available) || 0,
+        pending: Number(commData.pending) || 0,
+        paid: Number(commData.paid) || 0,
+      }
+    }
+  } catch {
+    // API不可用时从localStorage读取缓存
+    const savedComm = localStorage.getItem('lsjy_commission')
+    if (savedComm) {
+      try {
+        commission.value = JSON.parse(savedComm)
+      } catch { /* ignore */ }
+    }
+  }
 })
 
 function selectPackage(pkg: RechargePackage) {
@@ -1103,4 +1253,154 @@ async function submitOrder() {
   color: #000; font-size: 12px; font-weight: 600;
   cursor: pointer;
 }
+
+/* 提现弹窗 */
+.withdraw-modal {
+  width: 420px;
+  max-width: 92vw;
+  background: linear-gradient(135deg, #0d0d2b, #1a0a3a);
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 0 40px rgba(0, 240, 255, 0.1), 0 20px 60px rgba(0, 0, 0, 0.6);
+  animation: withdrawSlideUp 0.3s ease;
+}
+@keyframes withdrawSlideUp {
+  from { opacity: 0; transform: translateY(20px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.withdraw-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px;
+  border-bottom: 1px solid rgba(0, 240, 255, 0.1);
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  font-family: 'JetBrains Mono', monospace;
+}
+.withdraw-modal-close {
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  color: rgba(255,255,255,0.4);
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+.withdraw-modal-close:hover {
+  color: #fff;
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(0, 240, 255, 0.3);
+}
+.withdraw-modal-body {
+  padding: 22px;
+}
+.withdraw-balance-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  background: rgba(0, 255, 136, 0.06);
+  border: 1px solid rgba(0, 255, 136, 0.15);
+  border-radius: 12px;
+  margin-bottom: 18px;
+}
+.withdraw-balance-label {
+  font-size: 13px;
+  color: rgba(255,255,255,0.6);
+}
+.withdraw-balance-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #00ff88;
+  font-family: 'JetBrains Mono', monospace;
+}
+.withdraw-form-group {
+  margin-bottom: 14px;
+}
+.withdraw-form-label {
+  display: block;
+  font-size: 12px;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 6px;
+}
+.withdraw-input {
+  width: 100%;
+  padding: 12px 14px;
+  background: rgba(0, 240, 255, 0.04);
+  border: 1px solid rgba(0, 240, 255, 0.12);
+  border-radius: 10px;
+  color: #fff;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+.withdraw-input:focus {
+  border-color: rgba(0, 240, 255, 0.4);
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.1);
+}
+.withdraw-input::placeholder {
+  color: rgba(255,255,255,0.25);
+}
+.withdraw-input:disabled {
+  opacity: 0.5;
+}
+.withdraw-amount-row {
+  display: flex;
+  gap: 10px;
+}
+.withdraw-amount-row .withdraw-input {
+  flex: 1;
+}
+.withdraw-all-btn {
+  padding: 12px 16px;
+  background: rgba(0, 240, 255, 0.1);
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  border-radius: 10px;
+  color: var(--cyber-cyan, #00d4ff);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.withdraw-all-btn:hover {
+  background: rgba(0, 240, 255, 0.15);
+  border-color: rgba(0, 240, 255, 0.35);
+}
+.withdraw-all-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.withdraw-tips {
+  margin-top: 14px;
+  padding: 10px 14px;
+  background: rgba(255, 165, 0, 0.06);
+  border: 1px solid rgba(255, 165, 0, 0.12);
+  border-radius: 10px;
+  font-size: 11px;
+  color: rgba(255, 165, 0, 0.8);
+  line-height: 1.8;
+}
+.withdraw-submit-btn {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, var(--cyber-cyan, #00d4ff), var(--cyber-purple, #a855f7));
+  border: none;
+  color: #000;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 1px;
+}
+.withdraw-submit-btn:hover { opacity: 0.9; }
+.withdraw-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 </style>
+
