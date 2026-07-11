@@ -247,7 +247,25 @@ function authCheck(req, res, next) {
     return res.status(401).json({ code: 401, message: '未授权，请先登录', data: null });
   }
   const token = auth.replace('Bearer ', '');
-  const verified = verifyAuthToken(token, 'access');
+  let verified = verifyAuthToken(token, 'access');
+  // 兼容NestJS JWT token（前端登录走NestJS）
+  if (!verified && token.includes('.')) {
+    try {
+      const jwtParts = token.split('.');
+      if (jwtParts.length === 3) {
+        const jwtSecret = process.env.JWT_SECRET || 'default_secret_change_me';
+        const [headerB64, payloadB64, sigB64] = jwtParts;
+        const payload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString());
+        if (payload.type === 'access' && payload.sub) {
+          const expectedSig = crypto.createHmac('sha256', jwtSecret).update(headerB64 + '.' + payloadB64).digest('base64url');
+          if (sigB64 === expectedSig && payload.exp * 1000 > Date.now()) {
+            const found = findCurrentUserFileFirst(Number(payload.sub));
+            if (found.user) verified = { id: Number(payload.sub), username: found.user.username || payload.username || '' };
+          }
+        }
+      }
+    } catch (e) { /* JWT验证失败，继续返回401 */ }
+  }
   if (!verified) {
     return res.status(401).json({ code: 401, message: '登录已过期或凭证无效，请重新登录', data: null });
   }
