@@ -524,7 +524,7 @@ async function bootstrap() {
     });
 
     app.use("/" + apiPrefix + "/user", commissionRouter);
-    logger.log("佣金查询与提现接口已注册 (commission, withdraw, withdrawals)");
+    logger.log("Commission, withdraw, withdrawals, redeem routes registered on /user");
     logger.log("卡密兑换接口已注册 (user/redeem)");
 
     // ===== Boss卡密管理路由 =====
