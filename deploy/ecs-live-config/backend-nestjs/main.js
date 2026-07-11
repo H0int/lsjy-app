@@ -447,6 +447,80 @@ logger.log("收藏功能接口已注册 (favorites, tools/:id/favorite, favorite
     });
     app.use("/" + apiPrefix + "/ai/favorites", favCheckRouter);
 
+    // ===== 佣金查询与提现功能 =====
+    var commissionRouter = require("express").Router();
+
+    // GET /api/v1/payment/commission - 佣金查询
+    commissionRouter.get("/commission", function(req, res) {
+      try {
+        var userId = parseUserIdFromReq(req) || 0;
+        var db = require("better-sqlite3")("/root/lsjy-backend/prisma/data.db");
+        var totalRow = db.prepare("SELECT COALESCE(SUM(amount), 0) as total FROM commissions WHERE user_id = ?").get(userId);
+        var pendingRow = db.prepare("SELECT COALESCE(SUM(amount), 0) as pending FROM commission_withdrawals WHERE user_id = ? AND status = 'pending'").get(userId);
+        var paidRow = db.prepare("SELECT COALESCE(SUM(amount), 0) as paid FROM commission_withdrawals WHERE user_id = ? AND status = 'paid'").get(userId);
+        var total = Number(totalRow && totalRow.total) || 0;
+        var pending = Number(pendingRow && pendingRow.pending) || 0;
+        var paid = Number(paidRow && paidRow.paid) || 0;
+        var available = Math.max(0, total - pending - paid);
+        db.close();
+        res.json({ code: 0, message: "success", data: { total: total, available: available, pending: pending, paid: paid } });
+      } catch (err) {
+        console.error("Commission query error:", err);
+        res.json({ code: 0, message: "success", data: { total: 0, available: 0, pending: 0, paid: 0 } });
+      }
+    });
+
+    // POST /api/v1/payment/withdraw - 提交提现申请
+    commissionRouter.post("/withdraw", function(req, res) {
+      try {
+        var userId = parseUserIdFromReq(req) || 0;
+        var method = req.body.method;
+        var account = req.body.account;
+        var accountName = req.body.accountName;
+        var amount = Number(req.body.amount);
+        if (!method || !account || !accountName || !amount || amount < 1) {
+          return res.status(400).json({ code: 400, message: "请填写完整的提现信息", data: null });
+        }
+        var db = require("better-sqlite3")("/root/lsjy-backend/prisma/data.db");
+        db.prepare("CREATE TABLE IF NOT EXISTS commission_withdrawals (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, method TEXT NOT NULL, account TEXT NOT NULL, account_name TEXT NOT NULL, amount REAL NOT NULL, status TEXT DEFAULT 'pending', created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)").run();
+        var totalRow = db.prepare("SELECT COALESCE(SUM(amount), 0) as total FROM commissions WHERE user_id = ?").get(userId);
+        var pendingRow = db.prepare("SELECT COALESCE(SUM(amount), 0) as pending FROM commission_withdrawals WHERE user_id = ? AND status = 'pending'").get(userId);
+        var paidRow = db.prepare("SELECT COALESCE(SUM(amount), 0) as paid FROM commission_withdrawals WHERE user_id = ? AND status = 'paid'").get(userId);
+        var total = Number(totalRow && totalRow.total) || 0;
+        var pending = Number(pendingRow && pendingRow.pending) || 0;
+        var paid = Number(paidRow && paidRow.paid) || 0;
+        var available = Math.max(0, total - pending - paid);
+        if (amount > available) {
+          db.close();
+          return res.status(400).json({ code: 400, message: "提现金额超过可提现余额", data: null });
+        }
+        db.prepare("INSERT INTO commission_withdrawals (user_id, method, account, account_name, amount) VALUES (?, ?, ?, ?, ?)").run(userId, method, account, accountName, amount);
+        db.close();
+        res.json({ code: 0, message: "提现申请已提交", data: { message: "提现申请已提交" } });
+      } catch (err) {
+        console.error("Withdraw submit error:", err);
+        res.status(500).json({ code: 500, message: "提现申请失败", data: null });
+      }
+    });
+
+    // GET /api/v1/payment/withdrawals - 获取提现记录
+    commissionRouter.get("/withdrawals", function(req, res) {
+      try {
+        var userId = parseUserIdFromReq(req) || 0;
+        var db = require("better-sqlite3")("/root/lsjy-backend/prisma/data.db");
+        db.prepare("CREATE TABLE IF NOT EXISTS commission_withdrawals (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, method TEXT NOT NULL, account TEXT NOT NULL, account_name TEXT NOT NULL, amount REAL NOT NULL, status TEXT DEFAULT 'pending', created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)").run();
+        var records = db.prepare("SELECT * FROM commission_withdrawals WHERE user_id = ? ORDER BY created_at DESC LIMIT 20").all(userId);
+        db.close();
+        res.json({ code: 0, message: "success", data: { items: records, total: records.length } });
+      } catch (err) {
+        console.error("Withdrawals query error:", err);
+        res.json({ code: 0, message: "success", data: { items: [], total: 0 } });
+      }
+    });
+
+    express.use("/" + apiPrefix + "/payment", commissionRouter);
+    logger.log("佣金查询与提现接口已注册 (commission, withdraw, withdrawals)");
+
     const port = configService.get("PORT", 3000);
     await app.listen(port);
     logger.log("Application running on: http://localhost:" + port);
