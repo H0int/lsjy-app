@@ -1,4 +1,4 @@
-﻿import service from './request'
+import service from './request'
 import { mockApi } from './mock'
 import type {
   ApiResponse, User, Tool, CoinTransaction, CoinAccount,
@@ -119,6 +119,10 @@ export const paymentApi = {
   // 获取提现记录
   getWithdrawals(params?: { page?: number; pageSize?: number }): Promise<ApiResponse<PageResult<any>>> {
     return service.get('/payment/withdrawals', { params }).then(r => r.data)
+  },
+  // 卡密兑换
+  redeemCard(data: { code: string }): Promise<ApiResponse<{ denomination: number; code: string }>> {
+    return service.post('/payment/redeem', data).then(r => r.data)
   }
 }
 
