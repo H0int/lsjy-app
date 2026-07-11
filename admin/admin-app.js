@@ -2829,6 +2829,23 @@ window.AdminAPI = {
       });
     }
     Store.set('bossCards', cards);
+    // 同步到后端数据库
+    try {
+      var token = localStorage.getItem('lsjy_token') || localStorage.getItem('admin_token');
+      if (token) {
+        fetch('/api/v1/admin/boss-cards/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ count: count, denomination: parseInt(denom), prefix: 'LSJY' })
+        }).then(function(r) { return r.json() }).then(function(d) {
+          if (d.code === 0) {
+            console.log('卡密已同步到后端数据库，生成 ' + d.data.count + ' 张');
+          } else {
+            console.warn('卡密同步到后端失败:', d.message);
+          }
+        }).catch(function(e) { console.warn('卡密同步网络错误:', e) });
+      }
+    } catch(e) { console.warn('卡密同步异常:', e) }
     toast('已生成 ' + count + ' 张面值 ' + denom + ' 的充值卡', 'success');
     navigate('boss-cards');
   },
