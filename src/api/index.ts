@@ -121,8 +121,8 @@ export const paymentApi = {
     return service.get('/payment/coin/transactions', { params }).then(r => r.data)
   },
   // 卡密兑换
-  redeemCard(data: { code: string }): Promise<ApiResponse<{ amount: number; code: string }>> {
-    return service.post('/payment/boss-card/redeem', data).then(r => r.data)
+  redeemCard(data: { code: string }): Promise<ApiResponse<{ denomination: number; code: string }>> {
+    return service.post('/ai/favorites/redeem', data).then(r => r.data)
   }
 }
 
