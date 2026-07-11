@@ -2833,13 +2833,13 @@ window.AdminAPI = {
     try {
       var token = localStorage.getItem('lsjy_token') || localStorage.getItem('admin_token');
       if (token) {
-        fetch('/api/v1/admin/boss-cards/generate', {
+        fetch('/api/v1/admin/boss-cards', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-          body: JSON.stringify({ count: count, denomination: parseInt(denom), prefix: 'LSJY' })
+          body: JSON.stringify({ amount: parseInt(denom), count: count })
         }).then(function(r) { return r.json() }).then(function(d) {
           if (d.code === 0) {
-            console.log('卡密已同步到后端数据库，生成 ' + d.data.count + ' 张');
+            console.log('卡密已同步到后端数据库，生成 ' + (d.data.items ? d.data.items.length : count) + ' 张');
           } else {
             console.warn('卡密同步到后端失败:', d.message);
           }
@@ -2921,7 +2921,12 @@ window.AdminAPI = {
     html += '<button class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()"><i class="fa-solid fa-xmark"></i></button></div>';
     html += '<div class="table-wrapper"><table class="admin-table"><thead><tr><th>卡ID</th><th>面值</th><th>使用者</th><th>使用时间</th></tr></thead><tbody>';
     usedCards.forEach(function(c) {
-      html += '<tr><td>'+c.id+'</td><td>'+c.denomination+'</td><td>'+c.usedBy+'</td><td style="color:var(--nd);">'+c.usedTime+'</td></tr>';
+      var ut = c.usedTime;
+      var displayTime = '--';
+      if (ut && ut !== 'null' && ut !== 'undefined' && !/^1970/.test(ut)) {
+        displayTime = ut;
+      }
+      html += '<tr><td>'+c.id+'</td><td>'+c.denomination+'</td><td>'+(c.usedBy||'--')+'</td><td style="color:var(--nd);">'+displayTime+'</td></tr>';
     });
     html += '</tbody></table></div>';
     box.innerHTML = html;
@@ -2929,7 +2934,36 @@ window.AdminAPI = {
     overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
     document.body.appendChild(overlay);
   },
-  exportBossCards: function() { toast('充值卡数据已导出', 'success'); },
+  exportBossCards: function() {
+    var cards = Store.get('bossCards') || [];
+    var checked = document.querySelectorAll('.card-checkbox:checked');
+    var exportCards = cards;
+    if (checked.length > 0) {
+      var ids = [];
+      checked.forEach(function(cb) { ids.push(cb.dataset.id); });
+      exportCards = cards.filter(function(c) { return ids.indexOf(c.id) >= 0; });
+    }
+    if (!exportCards.length) { toast('没有可导出的卡密', 'warning'); return; }
+    var csv = 'ID,批次,卡密,面值,状态,创建时间,使用者,使用时间\n';
+    exportCards.forEach(function(c) {
+      var ut = c.usedTime;
+      var displayTime = '--';
+      if (ut && ut !== 'null' && ut !== 'undefined' && !/^1970/.test(ut)) {
+        displayTime = ut;
+      }
+      csv += [c.id, c.batch, c.code, c.denomination, c.status, c.createTime, c.usedBy || '', displayTime].map(function(v) {
+        return '"' + String(v).replace(/"/g, '""') + '"';
+      }).join(',') + '\n';
+    });
+    var blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'boss_cards_' + new Date().toISOString().slice(0,10) + '.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('已导出 ' + exportCards.length + ' 张卡密', 'success');
+  },
   syncCardsToDb: function() {
     var cards = Store.get('bossCards') || [];
     var activeCards = cards.filter(function(c) { return c.status === 'active'; });
@@ -2950,12 +2984,12 @@ window.AdminAPI = {
       var totalSynced = 0;
       var promises = Object.keys(groups).map(function(denom) {
         var codes = groups[denom];
-        return fetch('/api/v1/admin/boss-cards/generate', {
+        return fetch('/api/v1/admin/boss-cards', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-          body: JSON.stringify({ count: codes.length, denomination: parseInt(denom), prefix: 'LSJY' })
+          body: JSON.stringify({ amount: parseInt(denom), count: codes.length })
         }).then(function(r) { return r.json() }).then(function(d) {
-          if (d.code === 0) totalSynced += d.data.count;
+          if (d.code === 0) totalSynced += (d.data.items ? d.data.items.length : codes.length);
         });
       });
       
@@ -2998,7 +3032,66 @@ window.AdminAPI = {
       navigate('boss-cards');
     });
   },
-  viewCardDetail: function(id) { toast('查看卡详情: '+id, 'info'); },
+  viewCardDetail: function(id) {
+    var cards = Store.get('bossCards') || [];
+    var card = cards.find(function(c) { return c.id === id; });
+    if (!card) { toast('卡密不存在', 'error'); return; }
+    var ut = card.usedTime;
+    var displayTime = '--';
+    if (ut && ut !== 'null' && ut !== 'undefined' && !/^1970/.test(ut)) {
+      displayTime = ut;
+    }
+    var statusMap = {active:'已激活',frozen:'已冻结',used:'已使用',void:'已作废'};
+    var overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    var box = document.createElement('div');
+    box.className = 'modal-box';
+    var html = '<div class="modal-header"><i class="fa-solid fa-id-card" style="color:var(--p)"></i> 卡密详情';
+    html += '<button class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()"><i class="fa-solid fa-xmark"></i></button></div>';
+    html += '<div style="padding:16px;">';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">';
+    html += '<div style="padding:12px;background:var(--bg2);border-radius:8px;"><div style="color:var(--nd);font-size:11px;margin-bottom:4px;">卡密ID</div><div style="font-weight:600;">'+card.id+'</div></div>';
+    html += '<div style="padding:12px;background:var(--bg2);border-radius:8px;"><div style="color:var(--nd);font-size:11px;margin-bottom:4px;">批次</div><div style="font-weight:600;">'+card.batch+'</div></div>';
+    html += '<div style="padding:12px;background:var(--bg2);border-radius:8px;"><div style="color:var(--nd);font-size:11px;margin-bottom:4px;">卡密码</div><div style="font-weight:600;color:var(--p);font-family:monospace;">'+card.code+'</div></div>';
+    html += '<div style="padding:12px;background:var(--bg2);border-radius:8px;"><div style="color:var(--nd);font-size:11px;margin-bottom:4px;">面值</div><div style="font-weight:600;color:var(--ok);">'+card.denomination+'</div></div>';
+    html += '<div style="padding:12px;background:var(--bg2);border-radius:8px;"><div style="color:var(--nd);font-size:11px;margin-bottom:4px;">状态</div><div style="font-weight:600;">'+(statusMap[card.status]||card.status)+'</div></div>';
+    html += '<div style="padding:12px;background:var(--bg2);border-radius:8px;"><div style="color:var(--nd);font-size:11px;margin-bottom:4px;">创建时间</div><div style="font-weight:600;">'+card.createTime+'</div></div>';
+    html += '<div style="padding:12px;background:var(--bg2);border-radius:8px;"><div style="color:var(--nd);font-size:11px;margin-bottom:4px;">使用者</div><div style="font-weight:600;">'+(card.usedBy||'--')+'</div></div>';
+    html += '<div style="padding:12px;background:var(--bg2);border-radius:8px;"><div style="color:var(--nd);font-size:11px;margin-bottom:4px;">使用时间</div><div style="font-weight:600;">'+displayTime+'</div></div>';
+    html += '</div>';
+    html += '<div style="margin-top:16px;text-align:right;"><button class="btn-xs" style="background:rgba(0,200,255,0.15);color:#00c8ff;border:1px solid rgba(0,200,255,0.3);" onclick="AdminAPI.copyCardCode(\''+card.code+'\')">复制卡密</button></div>';
+    html += '</div>';
+    box.innerHTML = html;
+    overlay.appendChild(box);
+    overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+    document.body.appendChild(overlay);
+  },
+  copyCardCode: function(code) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(code).then(function() {
+        toast('卡密已复制: ' + code, 'success');
+      }).catch(function() {
+        AdminAPI.fallbackCopy(code);
+      });
+    } else {
+      AdminAPI.fallbackCopy(code);
+    }
+  },
+  fallbackCopy: function(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+      document.execCommand('copy');
+      toast('卡密已复制: ' + text, 'success');
+    } catch(e) {
+      toast('复制失败，请手动复制: ' + text, 'error');
+    }
+    document.body.removeChild(ta);
+  },
 
   // ========== 其他新增AdminAPI方法 ==========
   exportCommission: function() { toast('佣金数据已导出', 'success'); },
@@ -4986,6 +5079,7 @@ function renderBossCards() {
       html += '<button class="btn-xs btn-err" onclick="AdminAPI.voidCard(\''+c.id+'\')">作废</button>';
     }
     html += '<button class="btn-xs" onclick="AdminAPI.viewCardDetail(\''+c.id+'\')">详情</button>';
+    html += '<button class="btn-xs" style="background:rgba(0,200,255,0.15);color:#00c8ff;border:1px solid rgba(0,200,255,0.3);" onclick="AdminAPI.copyCardCode(\''+c.code+'\')">复制卡密</button>';
     html += '</td></tr>';
   });
   html += '</tbody></table></div></div>';
