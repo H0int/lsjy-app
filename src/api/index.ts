@@ -1,4 +1,4 @@
-import service from './request'
+﻿import service from './request'
 import { mockApi } from './mock'
 import type {
   ApiResponse, User, Tool, CoinTransaction, CoinAccount,
@@ -107,6 +107,18 @@ export const paymentApi = {
   getOrders(params?: { page?: number; pageSize?: number; status?: string }): Promise<ApiResponse<PageResult<PaymentTransaction>>> {
     if (useMock) return mockApi.getPaymentOrders() as any
     return service.get('/payment/orders', { params }).then(r => r.data)
+  },
+  // 佣金查询
+  getCommission(): Promise<ApiResponse<{ total: number; available: number; pending: number; paid: number }>> {
+    return service.get('/payment/commission').then(r => r.data)
+  },
+  // 提交提现申请
+  submitWithdraw(data: { method: string; account: string; accountName: string; amount: number }): Promise<ApiResponse<any>> {
+    return service.post('/payment/withdraw', data).then(r => r.data)
+  },
+  // 获取提现记录
+  getWithdrawals(params?: { page?: number; pageSize?: number }): Promise<ApiResponse<PageResult<any>>> {
+    return service.get('/payment/withdrawals', { params }).then(r => r.data)
   }
 }
 
@@ -270,3 +282,4 @@ export const visitorApi = {
     return service.get('/visitors/list', { params }).then(r => r.data)
   }
 }
+
