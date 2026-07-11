@@ -569,8 +569,106 @@ logger.log("收藏功能接口已注册 (favorites, tools/:id/favorite, favorite
     logger.log("佣金查询与提现接口已注册 (commission, withdraw, withdrawals)");
     logger.log("卡密兑换接口已注册 (payment/redeem)");
 
+    // ===== Boss卡密管理路由 =====
+    const bossCardRouter = require("express").Router();
+
+    // 生成卡密
+    bossCardRouter.post("/generate", function(req, res) {
+      try {
+        var userId = parseUserIdFromReq(req);
+        if (!userId) return res.status(401).json({ code: -1, message: "请先登录" });
+
+        var count = req.body.count;
+        var denomination = req.body.denomination;
+        var prefix = req.body.prefix;
+        var cnt = Math.min(Math.max(parseInt(count) || 1, 1), 100);
+        var denom = parseInt(denomination) || 0;
+        if (denom <= 0) return res.status(400).json({ code: -1, message: "面值必须大于0" });
+
+        var pfx = (prefix || "LSJY").toUpperCase();
+        var db = require("better-sqlite3")("/root/lsjy-backend/prisma/data.db");
+
+        db.prepare("CREATE TABLE IF NOT EXISTS boss_cards (id INTEGER PRIMARY KEY AUTOINCREMENT, batch TEXT DEFAULT '', code TEXT NOT NULL UNIQUE, denomination INTEGER NOT NULL DEFAULT 0, status TEXT DEFAULT 'active', create_time TEXT DEFAULT '', used_by INTEGER DEFAULT NULL, used_time TEXT DEFAULT NULL)").run();
+
+        var batchId = "BATCH-" + Date.now().toString(36).toUpperCase();
+        var codes = [];
+
+        for (var i = 0; i < cnt; i++) {
+          var code;
+          var attempts = 0;
+          do {
+            if (pfx === "BOSS") {
+              code = "BOSS-" + denom + "-" + Math.random().toString(36).substr(2, 8).toUpperCase();
+            } else {
+              code = pfx + "-" + Math.random().toString(36).substr(2, 4).toUpperCase() + "-" + Math.random().toString(36).substr(2, 4).toUpperCase() + "-" + Math.random().toString(36).substr(2, 4).toUpperCase();
+            }
+            attempts++;
+          } while (db.prepare("SELECT id FROM boss_cards WHERE code = ?").get(code) && attempts < 10);
+
+          if (attempts >= 10) continue;
+
+          db.prepare("INSERT INTO boss_cards (batch, code, denomination, status, create_time) VALUES (?, ?, ?, ?, ?)").run(batchId, code, denom, "active", new Date().toISOString().slice(0, 10));
+          codes.push(code);
+        }
+
+        db.close();
+        res.json({ code: 0, message: "已生成 " + codes.length + " 张卡密", data: { batch: batchId, codes: codes, count: codes.length, denomination: denom } });
+      } catch (err) {
+        console.error("Boss card generate error:", err);
+        res.status(500).json({ code: -1, message: "生成失败" });
+      }
+    });
+
+    // 查询卡密列表
+    bossCardRouter.get("/list", function(req, res) {
+      try {
+        var userId = parseUserIdFromReq(req);
+        if (!userId) return res.status(401).json({ code: -1, message: "请先登录" });
+
+        var status = req.query.status;
+        var db = require("better-sqlite3")("/root/lsjy-backend/prisma/data.db");
+
+        db.prepare("CREATE TABLE IF NOT EXISTS boss_cards (id INTEGER PRIMARY KEY AUTOINCREMENT, batch TEXT DEFAULT '', code TEXT NOT NULL UNIQUE, denomination INTEGER NOT NULL DEFAULT 0, status TEXT DEFAULT 'active', create_time TEXT DEFAULT '', used_by INTEGER DEFAULT NULL, used_time TEXT DEFAULT NULL)").run();
+
+        var sql = "SELECT * FROM boss_cards";
+        var params = [];
+        if (status && status !== "all") {
+          sql += " WHERE status = ?";
+          params.push(status);
+        }
+        sql += " ORDER BY id DESC LIMIT 200";
+
+        var cards = db.prepare(sql).all.apply(db.prepare(sql), params);
+        db.close();
+        res.json({ code: 0, data: { items: cards, total: cards.length } });
+      } catch (err) {
+        console.error("Boss card list error:", err);
+        res.status(500).json({ code: -1, message: "查询失败" });
+      }
+    });
+
+    // 删除卡密
+    bossCardRouter.delete("/:id", function(req, res) {
+      try {
+        var userId = parseUserIdFromReq(req);
+        if (!userId) return res.status(401).json({ code: -1, message: "请先登录" });
+
+        var db = require("better-sqlite3")("/root/lsjy-backend/prisma/data.db");
+        db.prepare("DELETE FROM boss_cards WHERE id = ? AND status != 'used'").run(req.params.id);
+        db.close();
+        res.json({ code: 0, message: "已删除" });
+      } catch (err) {
+        console.error("Boss card delete error:", err);
+        res.status(500).json({ code: -1, message: "删除失败" });
+      }
+    });
+
+    express.use("/" + apiPrefix + "/admin/boss-cards", bossCardRouter);
+    logger.log("Boss卡密管理接口已注册 (admin/boss-cards: generate, list, delete)");
+
     const port = configService.get("PORT", 3000);
     await app.listen(port);
     logger.log("Application running on: http://localhost:" + port);
 }
 bootstrap();
+
