@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 罗圣纪元 SaaS 后端服务器 v2
  * Express.js + AI API 集成
  * 支持 Coze / DeepSeek / 豆包 / 即梦 / 通义千问 / 腾讯元宝
@@ -6282,7 +6282,7 @@ app.post('/api/v1/payment/redeem', authCheck, (req, res) => {
     // 增加用户余额
     const userId = req.currentUser?.id;
     const username = req.currentUser?.username || '';
-    const result = addCoinsToUser(userId, card.amount, '卡密兑换: ' + cardCode);
+    const result = creditUserCoins(userId, card.amount, '卡密兑换: ' + cardCode);
 
     console.log('[Redeem] user=' + username + ' code=' + cardCode + ' amount=' + card.amount + ' balance=' + result.balance);
     res.json({
