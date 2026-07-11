@@ -575,8 +575,12 @@ async function doRedeem() {
       coinBalance.value = balRes.data?.balance || 0
     } catch { /* ignore */ }
   } catch (err: any) {
-    const msg = err.response?.data?.message || err.response?.data?.msg || '兑换失败，请检查卡密是否正确'
-    ElMessage.error(msg)
+    if (err.response?.status === 404) {
+      ElMessage.warning('卡密兑换服务正在升级中，请稍后再试或联系客服')
+    } else {
+      const msg = err.response?.data?.message || err.response?.data?.msg || '兑换失败，请检查卡密是否正确'
+      ElMessage.error(msg)
+    }
   } finally {
     redeeming.value = false
   }
