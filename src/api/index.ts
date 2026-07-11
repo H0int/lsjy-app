@@ -122,7 +122,7 @@ export const paymentApi = {
   },
   // 卡密兑换
   redeemCard(data: { code: string }): Promise<ApiResponse<{ denomination: number; code: string }>> {
-    return service.post('/ai/favorites/redeem', data).then(r => r.data)
+    return service.post('/user/redeem', data).then(r => r.data)
   }
 }
 
