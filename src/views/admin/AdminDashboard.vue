@@ -148,6 +148,7 @@ import { ElMessage } from 'element-plus'
 
 // ===== 真实看板数据 =====
 const dashboardLoading = ref(false)
+const loadError = ref(false)
 const dashboardData = ref<any>(null)
 
 function formatValue(val: number | string, prefix = ''): string {
@@ -365,6 +366,7 @@ function resizeCharts() { charts.forEach(c => c?.resize()) }
 
 async function loadDashboard() {
   dashboardLoading.value = true
+  loadError.value = false
   try {
     const res = await adminApi.getDashboard()
     if (res.code === 0 && res.data) {
@@ -375,6 +377,7 @@ async function loadDashboard() {
       ElMessage.error(res.message || '加载看板数据失败')
     }
   } catch (e: any) {
+    loadError.value = true
     ElMessage.error(e?.message || '加载看板数据失败')
   } finally {
     dashboardLoading.value = false
