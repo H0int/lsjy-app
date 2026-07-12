@@ -2485,15 +2485,14 @@ async function callJimengImageAPI(prompt, options = {}) {
     enhancedPrompt = prompt + '，高质量';
   }
 
-  // 使用像素值控制尺寸（Seedream 5.0 Lite 不支持 1K/2K 简写，仅支持 WIDTHxHEIGHT 或 2k/3k/4k）
-  // standard: 1024x1024（快），hd: 1280x720（横屏快），ultra: 2k
+  // Seedream 5.0/5.0 Lite 要求最小像素 3,686,400（约1920x1920）
+  // standard: 2048x2048（最小合规尺寸，速度快），hd: 2560x1440，ultra: 4k
   const quality = options.quality || 'standard';
-  let sizeStr = '2k';
+  let sizeStr = '4k';
   if (quality === 'standard') {
-    // 使用最小像素（1:1 正方形，速度快）
-    sizeStr = '1024x1024';
+    sizeStr = '2048x2048';
   } else if (quality === 'hd') {
-    sizeStr = '1280x720';
+    sizeStr = '2560x1440';
   }
   // ultra 保持 2k
 
