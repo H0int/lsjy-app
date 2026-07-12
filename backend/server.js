@@ -48,7 +48,7 @@ const CONFIG = {
   // 即梦（字节跳动 AI 绘画）- 同时兼容 ARK_API_KEY（部署脚本写入的变量名）
   JIMENG_API_KEY: process.env.JIMENG_API_KEY || process.env.ARK_API_KEY || "",
   JIMENG_BASE_URL: process.env.JIMENG_BASE_URL || 'https://ark.cn-beijing.volces.com/api/v3',
-  JIMENG_MODEL: process.env.JIMENG_MODEL || 'doubao-seedream-5-0-260128',
+  JIMENG_MODEL: process.env.JIMENG_MODEL || 'doubao-seedream-5-0-lite-260128',
 
   // DeepSeek
   DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY || '',
@@ -2479,16 +2479,16 @@ async function callJimengImageAPI(prompt, options = {}) {
   const baseUrl = CONFIG.JIMENG_BASE_URL;
   const model = CONFIG.JIMENG_MODEL;
 
-  // 短提示词自动增强 - 提升生成质量
+  // 短提示词自动增强（精简版，减少Token处理时间）
   let enhancedPrompt = prompt;
-  if (prompt.length < 20) {
-    enhancedPrompt = prompt + '，高质量，高清细节，专业摄影，8K分辨率，精细纹理';
+  if (prompt.length < 10) {
+    enhancedPrompt = prompt + '，高质量';
   }
 
-  // 火山引擎 ARK Seedream API 使用 "2K"/"4K" 格式或像素值
-  // 推荐使用 "2K" 格式，更稳定可靠
+  // 使用 1K 尺寸（最快），ultra 才用 2K
+  // 1K 生成速度约 5-10 秒，2K 约 15-25 秒，4K 约 30-60 秒
   const quality = options.quality || 'standard';
-  const sizeStr = quality === 'ultra' ? '4K' : '2K';
+  const sizeStr = quality === 'ultra' ? '2K' : '1K';
 
   // 构建请求体 - 严格按照火山引擎 ARK 官方文档格式
   const reqBody = {
@@ -2497,6 +2497,8 @@ async function callJimengImageAPI(prompt, options = {}) {
     size: sizeStr,
     response_format: 'url',
     watermark: false,
+    // 关闭组图功能，仅生成单张（更快）
+    sequential_image_generation: 'disabled',
   };
 
   log(`[图片生成] 调用 ARK API: model=${model}, size=${sizeStr}, prompt=${enhancedPrompt.slice(0, 80)}...`);
@@ -2504,7 +2506,7 @@ async function callJimengImageAPI(prompt, options = {}) {
   const res = await httpsRequest(`${baseUrl}/images/generations`, {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-    timeout: 120000,
+    timeout: 60000,
   }, reqBody);
 
   if (res.status !== 200) {
@@ -4035,8 +4037,8 @@ app.post('/api/v1/ai/tools/:id/generate', authCheck, async (req, res) => {
     });
   }
 
-  // 带重试的图片生成（最多重试 CONFIG.AI_MAX_RETRIES 次）
-  const imgMaxRetries = CONFIG.AI_MAX_RETRIES || 3;
+  // 带重试的图片生成（最多重试1次，减少用户等待时间）
+  const imgMaxRetries = 1;
   let imgResult = null;
   let imgLastErr = null;
   for (let attempt = 0; attempt <= imgMaxRetries; attempt++) {
