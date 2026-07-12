@@ -4063,12 +4063,13 @@ app.post('/api/v1/ai/tools/:id/generate', authCheck, async (req, res) => {
   }
 
   if (!imgResult) {
-    log(`[图片生成] 全部 ${imgMaxRetries + 1} 次尝试均失败: ${imgLastErr?.message}`);
-    // 不扣费，返回友好错误（不返回500，避免前端误判为服务器崩溃）
+    const errDetail = imgLastErr?.message || '未知错误';
+    log(`[图片生成] 全部 ${imgMaxRetries + 1} 次尝试均失败: ${errDetail}`);
+    // 不扣费，返回友好错误（包含详细原因，便于排查）
     return res.status(200).json({
       code: 5001,
-      message: `图片生成暂时不可用，请稍后重试。（已尝试 ${imgMaxRetries + 1} 次）`,
-      data: { retryHint: true },
+      message: `图片生成失败：${errDetail}（已尝试 ${imgMaxRetries + 1} 次）`,
+      data: { retryHint: true, errorDetail: errDetail },
     });
   }
 
