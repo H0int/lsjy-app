@@ -48,7 +48,7 @@ const CONFIG = {
   // 即梦（字节跳动 AI 绘画）- 同时兼容 ARK_API_KEY（部署脚本写入的变量名）
   JIMENG_API_KEY: process.env.JIMENG_API_KEY || process.env.ARK_API_KEY || "",
   JIMENG_BASE_URL: process.env.JIMENG_BASE_URL || 'https://ark.cn-beijing.volces.com/api/v3',
-  JIMENG_MODEL: process.env.JIMENG_MODEL || 'doubao-seedream-5-0-lite-260128',
+  JIMENG_MODEL: process.env.JIMENG_MODEL || 'doubao-seedream-4-0-250828',
 
   // DeepSeek
   DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY || '',
@@ -2485,14 +2485,14 @@ async function callJimengImageAPI(prompt, options = {}) {
     enhancedPrompt = prompt + '，高质量';
   }
 
-  // Seedream 5.0/5.0 Lite 要求最小像素 3,686,400（约1920x1920）
-  // standard: 2048x2048（最小合规尺寸，速度快），hd: 2560x1440，ultra: 4k
+  // Seedream 4.0 支持 1K 尺寸（1024x1024），生成速度快
+  // standard: 1K（最快），hd: 2K，ultra: 4K
   const quality = options.quality || 'standard';
-  let sizeStr = '4k';
+  let sizeStr = '4K';
   if (quality === 'standard') {
-    sizeStr = '2048x2048';
+    sizeStr = '1K';
   } else if (quality === 'hd') {
-    sizeStr = '2560x1440';
+    sizeStr = '2K';
   }
   // ultra 保持 2k
 
