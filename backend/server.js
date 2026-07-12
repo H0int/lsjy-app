@@ -6305,14 +6305,30 @@ app.post('/api/v1/payment/redeem', authCheck, (req, res) => {
 
     // 标记卡密已使用
     cards[cardIndex].status = 'used';
-    cards[cardIndex].usedBy = req.currentUser?.username || String(req.currentUser?.id || '');
+    cards[cardIndex].usedBy = req.user?.username || String(req.user?.id || '');
     cards[cardIndex].usedAt = new Date().toISOString();
     saveBossCards(cards);
 
     // 增加用户余额
-    const userId = req.currentUser?.id;
-    const username = req.currentUser?.username || '';
+    const userId = req.user?.id;
+    const username = req.user?.username || '';
+    if (!userId) {
+      // 回滚卡密状态
+      cards[cardIndex].status = 'active';
+      cards[cardIndex].usedBy = undefined;
+      cards[cardIndex].usedAt = undefined;
+      saveBossCards(cards);
+      return res.status(401).json({ code: 401, message: '用户身份无效，请重新登录', data: null });
+    }
     const result = creditUserCoins(userId, card.amount, '卡密兑换: ' + cardCode);
+    if (!result.ok) {
+      // 回滚卡密状态
+      cards[cardIndex].status = 'active';
+      cards[cardIndex].usedBy = undefined;
+      cards[cardIndex].usedAt = undefined;
+      saveBossCards(cards);
+      return res.status(500).json({ code: 500, message: '充值失败：' + (result.error || '未知错误'), data: null });
+    }
 
     console.log('[Redeem] user=' + username + ' code=' + cardCode + ' amount=' + card.amount + ' balance=' + result.balance);
     res.json({
