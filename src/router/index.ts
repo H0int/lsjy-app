@@ -3,8 +3,6 @@ import type { RouteRecordRaw } from 'vue-router'
 import { getToken, removeToken } from '@/utils'
 import { useAuthStore } from '@/stores/auth'
 import { userApi } from '@/api'
-import AdminDashboard from '@/views/admin/AdminDashboard.vue'
-
 const routes: RouteRecordRaw[] = [
   {
     path: '/login',
@@ -42,7 +40,7 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAdmin: true },
     children: [
       // 概览
-      { path: 'dashboard', name: 'AdminDashboard', component: AdminDashboard, meta: { title: '数据看板' } },
+      { path: 'dashboard', name: 'AdminDashboard', component: () => import('@/views/admin/AdminDashboard.vue'), meta: { title: '数据看板' } },
       { path: 'decision', name: 'DecisionCenter', component: () => import('@/views/admin/DecisionCenter.vue'), meta: { title: '决策中心' } },
       { path: 'realtime', name: 'RealtimeMonitor', component: () => import('@/views/admin/analytics/RealtimeMonitor.vue'), meta: { title: '实时定位' } },
       // 用户管理

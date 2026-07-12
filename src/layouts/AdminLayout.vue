@@ -58,7 +58,7 @@
           </el-dropdown>
         </div>
       </header>
-      <main class="p-4"><router-view v-slot="{Component}"><transition name="fade" mode="out-in"><component :is="Component"/></transition></router-view></main>
+      <main class="p-4"><router-view /></main>
     </div>
   </div>
 </template>
