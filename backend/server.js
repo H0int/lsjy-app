@@ -2485,10 +2485,17 @@ async function callJimengImageAPI(prompt, options = {}) {
     enhancedPrompt = prompt + '，高质量';
   }
 
-  // 使用 1K 尺寸（最快），ultra 才用 2K
-  // 1K 生成速度约 5-10 秒，2K 约 15-25 秒，4K 约 30-60 秒
+  // 使用像素值控制尺寸（Seedream 5.0 Lite 不支持 1K/2K 简写，仅支持 WIDTHxHEIGHT 或 2k/3k/4k）
+  // standard: 1024x1024（快），hd: 1280x720（横屏快），ultra: 2k
   const quality = options.quality || 'standard';
-  const sizeStr = quality === 'ultra' ? '2K' : '1K';
+  let sizeStr = '2k';
+  if (quality === 'standard') {
+    // 使用最小像素（1:1 正方形，速度快）
+    sizeStr = '1024x1024';
+  } else if (quality === 'hd') {
+    sizeStr = '1280x720';
+  }
+  // ultra 保持 2k
 
   // 构建请求体 - 严格按照火山引擎 ARK 官方文档格式
   const reqBody = {
