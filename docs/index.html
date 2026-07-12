@@ -12,11 +12,24 @@
   <meta http-equiv="Expires" content="0" />
   <title>罗圣纪元 SaaS平台</title>
 <script>
+  // 强制检查版本更新，解决微信浏览器缓存问题
   (function() {
     var p = window.location.pathname;
     var h = window.location.hash;
     if (p !== '/' && p !== '/index.html' && p !== '/404.html') {
       window.location.replace('/' + h);
+    }
+    // 检查版本，如果版本不匹配则强制刷新
+    var CURRENT_VERSION = '2026071301';
+    var storedVersion = localStorage.getItem('app_version');
+    if (storedVersion !== CURRENT_VERSION) {
+      localStorage.setItem('app_version', CURRENT_VERSION);
+      // 清除所有缓存
+      if ('caches' in window) {
+        caches.keys().then(function(names) {
+          names.forEach(function(name) { caches.delete(name); });
+        });
+      }
     }
   })();
 </script>
