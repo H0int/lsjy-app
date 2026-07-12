@@ -160,15 +160,20 @@ function formatValue(val: number | string, prefix = ''): string {
 
 const realtimeStats = computed(() => {
   const d = dashboardData.value
-  if (!d) return []
+  // 使用真实API数据，或兜底默认值
+  const items = d?.realtimeStats || [
+    { label: '在线用户', value: 0, color: '#00f0ff' },
+    { label: '今日注册', value: 0, color: '#00ff88' },
+    { label: '今日营收', value: 0, color: '#f59e0b' },
+    { label: '圣点消耗', value: 0, color: '#c084fc' },
+  ]
   const changeMap: Record<string, number> = {
-    '在线用户': d.onlineUsersChange || 0,
-    '今日注册': d.todayRegistrationsChange || 0,
-    '今日营收': d.todayRevenueChange || 0,
-    '圣点消耗': d.energyConsumptionChange || 0,
+    '在线用户': d?.onlineUsersChange || 0,
+    '今日注册': d?.todayRegistrationsChange || 0,
+    '今日营收': d?.todayRevenueChange || 0,
+    '圣点消耗': d?.energyConsumptionChange || 0,
   }
-  const list = d.realtimeStats || []
-  return list.map((item: any, idx: number) => {
+  return items.map((item: any, idx: number) => {
     const isRevenue = item.label === '今日营收'
     return {
       icon: ['👥', '📝', '💰', '⚡'][idx] || '📊',

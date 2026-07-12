@@ -48,7 +48,7 @@
             <span>● MEM {{sysStats.mem}}G</span>
             <span style="color:#00f0ff;">● ONLINE {{sysStats.online}}</span>
           </div>
-          <router-link to="/coin" class="px-3 py-1 rounded text-xs font-bold" style="background:linear-gradient(135deg,#00f0ff,#0ea5e9);color:#fff;">充值</router-link>
+          <router-link to="/admin/boss-cards" class="px-3 py-1 rounded text-xs font-bold" style="background:linear-gradient(135deg,#00f0ff,#0ea5e9);color:#fff;">充值管理</router-link>
           <el-dropdown trigger="click">
             <div class="flex items-center gap-2 cursor-pointer">
               <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold" style="background:linear-gradient(135deg,#00f0ff,#0ea5e9);">管</div>
@@ -117,8 +117,7 @@ const menuGroups=[
     {path:'/admin/oplog',label:'操作日志',icon:'📋'},
     {path:'/admin/login-history',label:'登录记录',icon:'🔐'},
     {path:'/admin/api-monitor',label:'API监控',icon:'📊'},
-    {path:'/admin/data-backup',label:'数据备份',icon:'💾'},
-    {path:'/',label:'返回前台',icon:'🏠'}
+    {path:'/admin/data-backup',label:'数据备份',icon:'💾'}
   ]},
 ]
 const expanded=reactive<Record<string,boolean>>({})
