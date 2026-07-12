@@ -1,5 +1,6 @@
 <template>
   <div>
+    <div style="padding:8px 0;color:#00f0ff;font-size:14px;">ADMIN DASHBOARD V2 - 数据看板已加载</div>
     <div v-if="loadError" class="mb-4 p-4 rounded" style="background:#ff2d9520;border:1px solid #ff2d95;color:#ff2d95;">
       <div class="font-bold">后端服务异常</div>
       <div class="text-sm mt-1">请稍后刷新，或联系管理员重启后端服务。</div>
