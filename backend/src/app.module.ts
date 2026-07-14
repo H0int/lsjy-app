@@ -26,6 +26,7 @@ import { ReportsModule } from './reports/reports.module';
 import { VisitorsModule } from './visitors/visitors.module';
 import { AgentDispatchModule } from './modules/agent-dispatch/agent-dispatch.module';
 import { AdminExtrasController } from './admin-extras.controller';
+import { SkillsModule } from './skills/skills.module';
 
 @Module({
   imports: [
@@ -81,6 +82,7 @@ import { AdminExtrasController } from './admin-extras.controller';
     ReportsModule,
     VisitorsModule,
     AgentDispatchModule,
+    SkillsModule,
   ],
   controllers: [AdminExtrasController],
   providers: [

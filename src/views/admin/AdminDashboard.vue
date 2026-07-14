@@ -127,6 +127,24 @@
       </div>
     </div>
 
+    <!-- 开源技能状态 -->
+    <div class="bg-white dark:bg-dark-100 rounded-xl p-5 shadow-sm mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-bold text-gray-900 dark:text-white">🔧 开源AI技能状态</h3>
+        <el-button size="small" @click="loadSkillsStatus" :loading="skillsLoading">刷新</el-button>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div v-for="skill in skillsStatus" :key="skill.name" class="border rounded-lg p-4" :class="skill.available ? 'border-green-200 bg-green-50 dark:bg-green-900/10' : 'border-red-200 bg-red-50 dark:bg-red-900/10'">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-xl">{{ skill.name === 'crawl4ai' ? '🕷️' : skill.name === 'whisper' ? '🎙️' : '💻' }}</span>
+            <span class="font-bold text-sm">{{ skill.displayName }}</span>
+            <span class="text-xs px-2 py-0.5 rounded-full" :class="skill.available ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'">{{ skill.available ? '运行中' : '未就绪' }}</span>
+          </div>
+          <p class="text-xs text-gray-500 dark:text-gray-400">{{ skill.description }}</p>
+        </div>
+      </div>
+    </div>
+
     <!-- 系统日志 -->
     <div class="bg-white dark:bg-dark-100 rounded-xl p-5 shadow-sm">
       <h3 class="font-bold text-gray-900 dark:text-white mb-4">📋 最近操作日志</h3>
@@ -144,7 +162,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
-import { adminApi } from '@/api'
+import { adminApi, skillsApi } from '@/api'
 import { ElMessage } from 'element-plus'
 
 // ===== 真实看板数据 =====
@@ -370,6 +388,28 @@ function renderFallbackCharts() {
 
 function resizeCharts() { charts.forEach(c => c?.resize()) }
 
+// ===== 开源技能状态 =====
+const skillsStatus = ref<any[]>([
+  { name: 'crawl4ai', displayName: 'AI网页爬虫', available: false, description: '输入URL自动爬取网页内容，输出LLM友好的Markdown' },
+  { name: 'whisper', displayName: 'AI语音识别', available: false, description: '语音转文字，支持99+语言' },
+  { name: 'tabby', displayName: 'AI编程助手', available: false, description: '代码智能补全，支持VSCode/JetBrains插件接入' },
+])
+const skillsLoading = ref(false)
+
+async function loadSkillsStatus() {
+  skillsLoading.value = true
+  try {
+    const res = await skillsApi.getStatus()
+    if (res.code === 0 && Array.isArray(res.data)) {
+      skillsStatus.value = res.data
+    }
+  } catch (e: any) {
+    // 静默失败，保持默认状态
+  } finally {
+    skillsLoading.value = false
+  }
+}
+
 async function loadDashboard() {
   dashboardLoading.value = true
   loadError.value = false
@@ -405,6 +445,7 @@ onMounted(async () => {
     ]).catch(() => { /* 图表降级 */ })
   }
   await loadDashboard()
+  await loadSkillsStatus()
   window.addEventListener('resize', resizeCharts)
 })
 

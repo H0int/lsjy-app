@@ -274,6 +274,22 @@ export const adminApi = {
   }
 }
 
+// ===== 开源技能API =====
+export const skillsApi = {
+  getStatus(): Promise<ApiResponse<any[]>> {
+    return service.get('/skills/status').then(r => r.data)
+  },
+  crawl(url: string, outputFormat?: string): Promise<ApiResponse<any>> {
+    return service.post('/skills/crawl', { url, outputFormat }).then(r => r.data)
+  },
+  transcribe(audioUrl: string, language?: string): Promise<ApiResponse<any>> {
+    return service.post('/skills/whisper/transcribe', { audioUrl, language }).then(r => r.data)
+  },
+  codeCompletion(code: string, language?: string): Promise<ApiResponse<any>> {
+    return service.post('/skills/tabby/completions', { code, language }).then(r => r.data)
+  },
+}
+
 // ===== 访客中心API =====
 export const visitorApi = {
   checkin(page?: string, referer?: string): Promise<ApiResponse<any>> {
