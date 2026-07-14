@@ -96,10 +96,11 @@ jobs:
             cd /tmp
             tar -xzf lsjy-cors-fix.tar.gz
 
-            # 更新NestJS main.js
-            if [ -n "$NEST_MAIN" ] && [ -f "/tmp/deploy/ecs-live-config/backend-nestjs/main.js" ]; then
-              echo "更新NestJS main.js -> $NEST_MAIN"
-              cp /tmp/deploy/ecs-live-config/backend-nestjs/main.js "$NEST_MAIN"
+            # 更新NestJS完整dist目录（包含所有编译后的模块）
+            if [ -n "$NEST_MAIN" ] && [ -d "/tmp/backend/dist" ]; then
+              echo "更新NestJS完整dist目录 -> $NEST_DIR"
+              mkdir -p "$NEST_DIR"
+              rsync -a --delete /tmp/backend/dist/ "$NEST_DIR/"
             fi
 
             # 更新Express server.js (包含180个AI员工数据)
