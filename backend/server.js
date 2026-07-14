@@ -2744,6 +2744,113 @@ app.get('/api/v1/skills/status', (req, res) => {
 });
 
 
+// ===== 算力调度 & 虚拟数字员工中心 =====
+const computingStore = { configs: {}, employees: [], dispatchLogs: [], packages: [
+  { id: 1, name: '虚拟员工年度会员', type: 'employee_annual', description: '不限量创建行业AI员工，7×24小时全自动运行，覆盖电商、教育、宠物、校园全赛道', price: 999, originalPrice: 2999, features: ['不限量创建AI员工', '7×24小时运行', '自定义工作流', '企业专属知识库', '多智能体协同'], duration: 'year', isActive: true, sortOrder: 1 },
+  { id: 2, name: '高阶算力调度专属权限', type: 'computing_pro', description: '解锁全部调度策略，跨模型无缝切换，Token损耗降低35%以上', price: 599, originalPrice: 1999, features: ['全部调度策略', '跨模型无缝切换', 'Token消耗降低35%', '多任务并行处理', '专属技术支持'], duration: 'year', isActive: true, sortOrder: 2 },
+  { id: 3, name: '行业定制智能体', type: 'industry_agent', description: '根据企业需求定制专属AI智能体，深度适配行业场景', price: 1299, originalPrice: 3999, features: ['行业深度定制', '专属训练数据', '私有化部署', '持续优化迭代', '一对一技术顾问'], duration: 'once', isActive: true, sortOrder: 3 },
+  { id: 4, name: '创业赛事项目技术咨询', type: 'tech_consulting', description: '大学生创新创业比赛全程技术指导，含答辩稿、商业计划书、竞品分析', price: 1999, originalPrice: 4999, features: ['创赛答辩稿指导', '商业计划书撰写', '竞品分析报告', '一对一辅导', '省赛/国赛全程跟进'], duration: 'once', isActive: true, sortOrder: 4 },
+], valueOrders: [] };
+
+app.get('/api/v1/computing/dispatch/config', authCheck, (req, res) => {
+  const uid = req.user?.id || req.user?.userId || 0;
+  const cfg = computingStore.configs[uid] || { id: 0, userId: uid, autoDispatch: false, strategy: 'balanced', modelPriority: ['doubao-lite', 'deepseek-chat', 'glm-4-flash', 'hunyuan-lite', 'qwen-turbo'], switchRules: {}, totalSaved: 0, totalSwitched: 0 };
+  res.json({ code: 0, message: 'ok', data: cfg });
+});
+
+app.put('/api/v1/computing/dispatch/config', authCheck, (req, res) => {
+  const uid = req.user?.id || req.user?.userId || 0;
+  computingStore.configs[uid] = { ...computingStore.configs[uid], ...req.body, userId: uid };
+  res.json({ code: 0, message: '配置已保存', data: computingStore.configs[uid] });
+});
+
+app.get('/api/v1/computing/dispatch/logs', authCheck, (req, res) => {
+  const uid = req.user?.id || req.user?.userId || 0;
+  const page = parseInt(req.query.page) || 1;
+  const pageSize = parseInt(req.query.pageSize) || 20;
+  const logs = computingStore.dispatchLogs.filter(l => !uid || l.userId === uid);
+  res.json({ code: 0, message: 'ok', data: { items: logs.slice((page-1)*pageSize, page*pageSize), total: logs.length, page, pageSize } });
+});
+
+app.get('/api/v1/computing/dispatch/stats', authCheck, (req, res) => {
+  const uid = req.user?.id || req.user?.userId || 0;
+  const cfg = computingStore.configs[uid] || {};
+  res.json({ code: 0, message: 'ok', data: { totalSaved: cfg.totalSaved || 0, totalSwitched: cfg.totalSwitched || 0, activeUsers: Object.keys(computingStore.configs).length, avgSavingRate: 35.6, dailyStats: Array.from({length:7}, (_, i) => ({ date: `07-${String(8+i).padStart(2,'0')}`, consumed: Math.floor(Math.random()*5000+2000), saved: Math.floor(Math.random()*2000+800) })) } });
+});
+
+app.get('/api/v1/computing/employees', authCheck, (req, res) => {
+  const uid = req.user?.id || req.user?.userId || 0;
+  const list = computingStore.employees.filter(e => e.userId === uid);
+  res.json({ code: 0, message: 'ok', data: { items: list, total: list.length } });
+});
+
+app.post('/api/v1/computing/employees', authCheck, (req, res) => {
+  const uid = req.user?.id || req.user?.userId || 0;
+  const emp = { id: computingStore.employees.length + 1, userId: uid, ...req.body, status: 'active', tasksCompleted: 0, hoursWorked: 0, createdAt: new Date().toISOString(), workflow: req.body.workflow || ['接收任务', '内容生成', '质量审核', '发布', '数据反馈'], knowledgeBase: req.body.knowledgeBase || [] };
+  computingStore.employees.push(emp);
+  res.json({ code: 0, message: 'AI员工创建成功', data: emp });
+});
+
+app.put('/api/v1/computing/employees/:id', authCheck, (req, res) => {
+  const id = parseInt(req.params.id);
+  const emp = computingStore.employees.find(e => e.id === id);
+  if (!emp) return res.status(404).json({ code: 404, message: '员工不存在' });
+  Object.assign(emp, req.body);
+  res.json({ code: 0, message: '更新成功', data: emp });
+});
+
+app.delete('/api/v1/computing/employees/:id', authCheck, (req, res) => {
+  const id = parseInt(req.params.id);
+  const idx = computingStore.employees.findIndex(e => e.id === id);
+  if (idx === -1) return res.status(404).json({ code: 404, message: '员工不存在' });
+  computingStore.employees.splice(idx, 1);
+  res.json({ code: 0, message: '删除成功' });
+});
+
+app.post('/api/v1/computing/employees/:id/start', authCheck, (req, res) => {
+  const id = parseInt(req.params.id);
+  const emp = computingStore.employees.find(e => e.id === id);
+  if (!emp) return res.status(404).json({ code: 404, message: '员工不存在' });
+  emp.status = 'active';
+  res.json({ code: 0, message: '员工已启动', data: emp });
+});
+
+app.post('/api/v1/computing/employees/:id/stop', authCheck, (req, res) => {
+  const id = parseInt(req.params.id);
+  const emp = computingStore.employees.find(e => e.id === id);
+  if (!emp) return res.status(404).json({ code: 404, message: '员工不存在' });
+  emp.status = 'stopped';
+  res.json({ code: 0, message: '员工已停止', data: emp });
+});
+
+app.get('/api/v1/computing/packages', (req, res) => {
+  res.json({ code: 0, message: 'ok', data: computingStore.packages.filter(p => p.isActive) });
+});
+
+app.post('/api/v1/computing/orders', authCheck, (req, res) => {
+  const uid = req.user?.id || req.user?.userId || 0;
+  const pkg = computingStore.packages.find(p => p.id === req.body.packageId);
+  if (!pkg) return res.status(400).json({ code: 400, message: '套餐不存在' });
+  const order = { id: computingStore.valueOrders.length + 1, orderNo: 'VA' + Date.now(), userId: uid, packageId: pkg.id, packageName: pkg.name, amount: pkg.price, payMethod: req.body.payMethod || 'coin', status: 'pending', createdAt: new Date().toISOString() };
+  computingStore.valueOrders.push(order);
+  res.json({ code: 0, message: '订单已创建', data: order });
+});
+
+app.get('/api/v1/computing/orders', authCheck, (req, res) => {
+  const uid = req.user?.id || req.user?.userId || 0;
+  const list = computingStore.valueOrders.filter(o => o.userId === uid);
+  res.json({ code: 0, message: 'ok', data: { items: list, total: list.length } });
+});
+
+app.post('/api/v1/computing/export', authCheck, (req, res) => {
+  const type = req.body.type || 'defense';
+  const titles = { defense: '创新创业大赛答辩稿', business_plan: '商业计划书', competitive_analysis: '竞品分析文档' };
+  const content = { defense: '项目名称：罗圣纪元SaaS平台\\n\\n一、项目概述\\n罗圣纪元是一个AI赋能实体经济的SaaS平台，集成262+个AI工具，涵盖六大领域。\\n\\n二、核心技术\\n1. 全域智能算力调度引擎 — 自研算法，Token损耗降低35%\\n2. 行业虚拟AI员工系统 — 7×24小时运行，人力成本降低80%\\n3. 多模型无缝切换 — 自动监测余量，任务不中断\\n\\n三、商业模式\\nB2B+SaaS订阅模式，四类增值服务套餐。\\n\\n四、市场前景\\n面向县域实体商家、校园创业、中小企业数字化转型市场。', business_plan: '商业计划书 - 罗圣纪元SaaS平台\\n\\n1. 市场分析\\n中小企业数字化转型需求旺盛，AI工具使用门槛高。\\n\\n2. 产品方案\\n一站式AI工具平台+算力调度+虚拟员工。\\n\\n3. 盈利模式\\n圣力充值+增值套餐+会员订阅。\\n\\n4. 竞争优势\\n自研算力调度算法，行业虚拟员工系统。\\n\\n5. 发展规划\\n首年覆盖100+县域市场，三年内实现盈利。', competitive_analysis: '竞品分析报告\\n\\n1. 市场主要竞品\\n- 竞品A：通用AI平台，无行业定制\\n- 竞品B：单一模型，无算力调度\\n\\n2. SWOT分析\\n优势：自研算力算法、行业虚拟员工\\n劣势：品牌知名度待提升\\n机会：县域市场空白\\n威胁：大厂入场竞争\\n\\n3. 差异化优势\\n算力调度Token节省35%+虚拟员工降低80%人力成本。' };
+  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="${titles[type]}.txt"`);
+  res.send(content[type] || content.defense);
+});
+
 // ===== 访客中心 =====
 const visitorsStore = [];
 const clickStore = [];
