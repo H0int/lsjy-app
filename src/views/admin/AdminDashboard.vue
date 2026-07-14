@@ -431,17 +431,17 @@ async function loadDashboard() {
 }
 
 onMounted(async () => {
-  // 异步加载 ECharts CDN，带 3 秒超时，不影响数据加载
+  // 异步加载 ECharts CDN，带 10 秒超时，不影响数据加载
   if (!(window as any).echarts) {
     Promise.race([
       new Promise<void>((resolve, reject) => {
         const script = document.createElement('script')
-        script.src = 'https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js'
+        script.src = 'https://cdn.bootcdn.net/ajax/libs/echarts/5.5.0/echarts.min.js'
         script.onload = () => resolve()
         script.onerror = () => reject()
         document.head.appendChild(script)
       }),
-      new Promise<void>((_, reject) => setTimeout(reject, 3000))
+      new Promise<void>((_, reject) => setTimeout(reject, 10000))
     ]).catch(() => { /* 图表降级 */ })
   }
   await loadDashboard()

@@ -360,6 +360,7 @@ const skillsList = ref([
 ])
 
 async function loadSkillsStatus() {
+  // 优先通过后端API获取（含认证）；失败则直接探测Nginx代理的健康端点
   try {
     const res = await skillsApi.getStatus()
     if (res.code === 0 && Array.isArray(res.data)) {
@@ -371,8 +372,33 @@ async function loadSkillsStatus() {
           found.description = s.description
         }
       }
+      return
     }
-  } catch { /* 静默失败 */ }
+  } catch { /* 后端API不可用，降级到直接探测 */ }
+
+  // 降级：直接探测各服务的Nginx代理路径
+  const probes = [
+    { name: 'crawl4ai', path: '/api/v1/skills/crawl/' },
+    { name: 'whisper', path: '/api/v1/skills/whisper/' },
+    { name: 'tabby', path: '/api/v1/skills/tabby/' },
+  ]
+  const results = await Promise.allSettled(
+    probes.map(async (p) => {
+      try {
+        const ctrl = new AbortController()
+        const timeout = setTimeout(() => ctrl.abort(), 3000)
+        const r = await fetch(p.path, { method: 'OPTIONS', signal: ctrl.signal })
+        clearTimeout(timeout)
+        return { name: p.name, available: r.ok || r.status === 405 || r.status === 404 }
+      } catch { return { name: p.name, available: false } }
+    })
+  )
+  for (const r of results) {
+    if (r.status === 'fulfilled') {
+      const found = skillsList.value.find(x => x.name === r.value.name)
+      if (found) found.available = r.value.available
+    }
+  }
 }
 
 function openSkill(skill: any) {

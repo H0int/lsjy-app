@@ -11,7 +11,7 @@
         <div><div class="font-bold text-sm cyber-glow-text" style="color:#00f0ff;">罗圣纪元</div><div class="text-xs" style="color:#00f0ff;">COMMAND CENTER</div></div>
         <button v-if="isMobile" @click="sidebarOpen=false" class="ml-auto p-2" style="color:#00f0ff;">✕</button>
       </div>
-      <nav class="mt-2 px-2 pb-20">
+      <nav class="mt-2 px-2 pb-24">
         <div v-for="group in menuGroups" :key="group.label" class="mb-1">
           <div class="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-all" style="color:#00f0ff;" @click="toggleGroup(group.label)">
             <span class="text-xs">{{group.icon}}</span>
@@ -36,7 +36,7 @@
       </div>
     </aside>
     <div class="transition-all duration-300" :class="isMobile?'ml-0':(appStore.sidebarCollapsed?'ml-0':'ml-64')">
-      <header class="h-16 flex items-center justify-between px-4 sticky top-0 z-30" style="background:#0d0d1aee;backdrop-filter:blur(10px);border-bottom:1px solid #00f0ff30;">
+      <header class="h-16 flex items-center justify-between px-4 sticky top-0 z-50" style="background:#0d0d1aee;backdrop-filter:blur(10px);border-bottom:1px solid #00f0ff30;">
         <div class="flex items-center gap-3">
           <button v-if="isMobile" @click="sidebarOpen=!sidebarOpen" class="p-2 text-xl" style="color:#00f0ff;">☰</button>
           <button v-else @click="appStore.toggleSidebar()" class="p-2 text-xl" style="color:#00f0ff;">☰</button>
