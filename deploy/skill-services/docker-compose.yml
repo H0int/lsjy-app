@@ -96,6 +96,28 @@ services:
     networks:
       - lsjy_skill_net
 
+  # ===== 新增：Tabby — AI编程助手（CPU可跑） =====
+  # GitHub: TabbyML/tabby ⭐32K
+  # 功能：代码补全、代码解释，支持VSCode/JetBrains插件
+  # API端口：8080（内部），映射到 127.0.0.1:8089
+  lsjy-tabby:
+    image: tabbyml/tabby:latest
+    container_name: lsjy-tabby
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8089:8080"
+    environment:
+      TABBY_ROOT: /data
+    volumes:
+      - lsjy_tabby_data:/data
+    command: >
+      serve
+      --model ${TABBY_MODEL:-TabbyML/StarCoder-1B}
+      --device cpu
+      --parallelism ${TABBY_PARALLELISM:-1}
+    networks:
+      - lsjy_skill_net
+
 networks:
   lsjy_skill_net:
     name: lsjy_skill_net
@@ -106,3 +128,4 @@ volumes:
   lsjy_chroma_data:
   lsjy_crawl4ai_data:
   lsjy_whisper_models:
+  lsjy_tabby_data:

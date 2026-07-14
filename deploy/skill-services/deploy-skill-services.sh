@@ -133,6 +133,21 @@ WHISPER_BLOCK='
     }
 '
 
+TABBY_BLOCK='
+    # LSJY Tabby managed block
+    location ^~ /api/v1/skills/tabby/ {
+        proxy_pass http://127.0.0.1:8089/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 60s;
+        proxy_send_timeout 60s;
+        client_max_body_size 10m;
+    }
+'
+
 for conf in /etc/nginx/conf.d/*.conf; do
   [ -f "$conf" ] || continue
   MODIFIED=0
@@ -194,6 +209,25 @@ PY
     MODIFIED=1
   fi
 
+  # 注入 Tabby 代理
+  if grep -q "server_name .*api\.lsjyapp\.cn\|server_name .*lsjyapp\.cn" "$conf" && ! grep -q "LSJY Tabby managed block" "$conf"; then
+    python3 - "$conf" "$TABBY_BLOCK" <<'PY'
+from pathlib import Path
+import sys
+p = Path(sys.argv[1])
+s = p.read_text()
+block = sys.argv[2]
+marker = "    location /api/v1/"
+if marker in s:
+    s = s.replace(marker, block + "\n" + marker, 1)
+else:
+    s = s.replace("    location / {", block + "\n    location / {", 1)
+p.write_text(s)
+PY
+    echo "已注入 Tabby 代理：$conf"
+    MODIFIED=1
+  fi
+
   if [ "$MODIFIED" = "1" ]; then
     nginx -t && nginx -s reload || true
   fi
@@ -209,6 +243,8 @@ MATOMO_DB_PASSWORD=lsjy_matomo_2026
 CRAWL4AI_API_TOKEN=lsjy_crawl4ai_2026_secret
 WHISPER_ENGINE=faster_whisper
 WHISPER_MODEL=base
+TABBY_MODEL=TabbyML/StarCoder-1B
+TABBY_PARALLELISM=1
 EOF
   chmod 600 .env
 fi
@@ -225,6 +261,7 @@ if ! $COMPOSE pull 2>&1; then
     sed -i "s#image: chromadb/chroma:latest#image: ${prefix%/library}/chromadb/chroma:latest#g" docker-compose.yml
     sed -i "s#image: unclecode/crawl4ai:latest#image: ${prefix}/unclecode/crawl4ai:latest#g" docker-compose.yml
     sed -i "s#image: onerahmet/openai-whisper-asr-webservice:latest#image: ${prefix}/onerahmet/openai-whisper-asr-webservice:latest#g" docker-compose.yml
+    sed -i "s#image: tabbyml/tabby:latest#image: ${prefix}/tabbyml/tabby:latest#g" docker-compose.yml
     if $COMPOSE pull 2>&1; then
       break
     fi
@@ -282,6 +319,19 @@ for i in $(seq 1 30); do
   sleep 5
 done
 [ "$WHISPER_OK" != "1" ] && echo "⚠️ 未就绪（模型下载可能需要更长时间）"
+
+# Tabby
+echo -n "Tabby编程助手: "
+TABBY_OK=0
+for i in $(seq 1 30); do
+  if curl -fsS --max-time 5 http://127.0.0.1:8089/ >/dev/null 2>&1; then
+    echo "✅ 已启动 (127.0.0.1:8089)"
+    TABBY_OK=1
+    break
+  fi
+  sleep 5
+done
+[ "$TABBY_OK" != "1" ] && echo "⚠️ 未就绪（模型下载可能需要更长时间）"
 
 echo ""
 echo "所有容器状态："
