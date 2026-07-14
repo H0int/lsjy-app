@@ -41,6 +41,31 @@
       </button>
     </div>
 
+    <!-- 开源AI技能区 -->
+    <div class="mb-6">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="text-lg">🔧</span>
+        <h2 class="text-lg font-bold cyber-glow-text" style="color: var(--cyber-cyan);">开源AI技能</h2>
+        <span class="text-xs text-gray-400">Docker独立部署 · 永久免费</span>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div v-for="skill in skillsList" :key="skill.name" class="cyber-skill-card" :class="{ 'opacity-60': !skill.available }" @click="skill.available && openSkill(skill)">
+          <div class="flex items-center gap-3 mb-2">
+            <span class="text-2xl">{{ skill.icon }}</span>
+            <div>
+              <h3 class="font-bold text-sm">{{ skill.displayName }}</h3>
+              <span class="text-xs px-1.5 py-0.5 rounded" :class="skill.available ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'">{{ skill.available ? '运行中' : '未就绪' }}</span>
+            </div>
+          </div>
+          <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{{ skill.description }}</p>
+          <div class="mt-2 flex gap-2">
+            <el-tag size="small" type="success">免费</el-tag>
+            <el-tag size="small" type="info">{{ skill.tag }}</el-tag>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 加载状态 -->
     <div v-if="toolStore.loading" class="flex justify-center py-20">
       <div class="cyber-spinner"></div>
@@ -324,9 +349,46 @@ function resetFilters() {
   currentTag.value = ''
 }
 
+// ===== 开源技能 =====
+import { skillsApi } from '@/api'
+import { ElMessage } from 'element-plus'
+
+const skillsList = ref([
+  { name: 'crawl4ai', displayName: 'AI网页爬虫', icon: '🕷️', available: false, description: '输入URL自动爬取网页内容，输出LLM友好的Markdown格式', tag: '数据采集' },
+  { name: 'whisper', displayName: 'AI语音识别', icon: '🎙️', available: false, description: '语音转文字，支持中文、英文、日文等99+语言', tag: '语音处理' },
+  { name: 'tabby', displayName: 'AI编程助手', icon: '💻', available: false, description: '代码智能补全与解释，支持VSCode/JetBrains插件', tag: '代码开发' },
+])
+
+async function loadSkillsStatus() {
+  try {
+    const res = await skillsApi.getStatus()
+    if (res.code === 0 && Array.isArray(res.data)) {
+      for (const s of res.data) {
+        const found = skillsList.value.find(x => x.name === s.name)
+        if (found) {
+          found.available = s.available
+          found.displayName = s.displayName
+          found.description = s.description
+        }
+      }
+    }
+  } catch { /* 静默失败 */ }
+}
+
+function openSkill(skill: any) {
+  if (skill.name === 'crawl4ai') {
+    ElMessage.info('网页爬虫功能开发中，请通过API调用')
+  } else if (skill.name === 'whisper') {
+    ElMessage.info('语音识别功能开发中，请通过API调用')
+  } else if (skill.name === 'tabby') {
+    ElMessage.info('编程助手功能开发中，请通过API调用')
+  }
+}
+
 onMounted(() => {
   toolStore.fetchCategories()
   toolStore.fetchTools()
+  loadSkillsStatus()
 })
 </script>
 
@@ -591,5 +653,20 @@ onMounted(() => {
   color: var(--cyber-amber);
   border-color: rgba(255,184,0,0.5);
   text-shadow: 0 0 8px rgba(255,184,0,0.5);
+}
+
+/* 开源技能卡片 */
+.cyber-skill-card {
+  background: linear-gradient(135deg, #0d0d2b, #1a0a3a);
+  border: 1px solid rgba(0,240,255,0.12);
+  border-radius: 14px;
+  padding: 16px;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+.cyber-skill-card:hover {
+  border-color: rgba(0,240,255,0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,240,255,0.1);
 }
 </style>
