@@ -2713,7 +2713,33 @@ app.get('/api/v1', (req, res) => {
   res.json({
     name: '罗圣纪元 API', version: '2.0.0', status: 'running',
     timestamp: new Date().toISOString(),
-    endpoints: ['/api/v1/health', '/api/v1/ai/tools/:id/chat', '/api/v1/ai/providers', '/api/v1/auth/login', '/api/v1/auth/register'],
+    endpoints: ['/api/v1/health', '/api/v1/ai/tools/:id/chat', '/api/v1/ai/providers', '/api/v1/auth/login', '/api/v1/auth/register', '/api/v1/skills/status'],
+  });
+});
+
+// ===== 开源AI技能状态 =====
+app.get('/api/v1/skills/status', (req, res) => {
+  const http = require('http');
+  const skills = [
+    { name: 'crawl4ai', displayName: 'AI网页爬虫', endpoint: 'http://127.0.0.1:11235', description: '输入URL自动爬取网页内容，输出LLM友好的Markdown' },
+    { name: 'whisper', displayName: 'AI语音识别', endpoint: 'http://127.0.0.1:9000', description: '语音转文字，支持99+语言，包括中文、英文、日文等' },
+    { name: 'tabby', displayName: 'AI编程助手', endpoint: 'http://127.0.0.1:8089', description: '代码智能补全，支持VSCode/JetBrains插件接入' },
+  ];
+  const results = [];
+  let pending = skills.length;
+  if (pending === 0) return res.json({ code: 0, message: 'ok', data: [] });
+  skills.forEach(skill => {
+    const req = http.get(skill.endpoint + '/', { timeout: 3000 }, (r) => {
+      results.push({ ...skill, available: r.statusCode < 500 });
+      if (--pending === 0) res.json({ code: 0, message: 'ok', data: results });
+    }).on('error', () => {
+      results.push({ ...skill, available: false });
+      if (--pending === 0) res.json({ code: 0, message: 'ok', data: results });
+    }).on('timeout', () => {
+      req.destroy();
+      results.push({ ...skill, available: false });
+      if (--pending === 0) res.json({ code: 0, message: 'ok', data: results });
+    });
   });
 });
 
