@@ -25,9 +25,9 @@ jobs:
 
       - name: Deploy to ECS
         run: |
-          # 打包需要部署的文件: NestJS main.js + Express server.js + Nginx配置
+          # 打包需要部署的文件: NestJS dist目录 + Express server.js + Nginx配置
           tar -czf /tmp/lsjy-cors-fix.tar.gz \
-            deploy/ecs-live-config/backend-nestjs/main.js \
+            backend/dist \
             deploy/ecs-live-config/nginx-lsjy-live.conf \
             deploy/skill-services/docker-compose.yml \
             deploy/skill-services/deploy-skill-services.sh \
@@ -151,6 +151,17 @@ jobs:
               printf '%s\n' "export BAILIAN_API_KEY='${{ secrets.BAILIAN_API_KEY }}'"
               printf '%s\n' "export ZHIPU_API_KEY='${{ secrets.ZHIPU_API_KEY }}'"
               printf '%s\n' "export BAIDU_API_KEY='${{ secrets.BAIDU_API_KEY }}'"
+              printf '%s\n' "export HUNYUAN_API_KEY='${{ secrets.HUNYUAN_API_KEY }}'"
+              printf '%s\n' "export DOUBAO_API_KEY='${{ secrets.DOUBAO_API_KEY }}'"
+              printf '%s\n' "export DEEPSEEK_API_KEY='${{ secrets.DEEPSEEK_API_KEY }}'"
+              printf '%s\n' "export TONGYI_API_KEY='${{ secrets.TONGYI_API_KEY }}'"
+              printf '%s\n' "export KIMI_API_KEY='${{ secrets.KIMI_API_KEY }}'"
+              printf '%s\n' "export JIMENG_API_KEY='${{ secrets.JIMENG_API_KEY }}'"
+              printf '%s\n' "export OPENAI_API_KEY='${{ secrets.OPENAI_API_KEY }}'"
+              printf '%s\n' "export VOLCENGINE_API_KEY='${{ secrets.VOLCENGINE_API_KEY }}'"
+              printf '%s\n' "export MODELSCOPE_API_KEY='${{ secrets.MODELSCOPE_API_KEY }}'"
+              printf '%s\n' "export LONGXIA_API_KEY='${{ secrets.LONGXIA_API_KEY }}'"
+              printf '%s\n' "export YUANBAO_API_KEY='${{ secrets.YUANBAO_API_KEY }}'"
             } > /etc/profile.d/lsjy-ai-models.sh
             chmod 600 /etc/profile.d/lsjy-ai-models.sh
             set -a

@@ -13,7 +13,7 @@ export const AIConfig = registerAs('ai', () => ({
   doubao: {
     apiKey: process.env.DOUBAO_API_KEY || '',
     baseUrl: process.env.DOUBAO_BASE_URL || 'https://ark.cn-beijing.volces.com/api/v3',
-    defaultModel: process.env.DOUBAO_MODEL || 'doubao-pro-32k',
+    defaultModel: process.env.DOUBAO_MODEL || 'doubao-1-5-lite-32k-250115',
   },
 
   // 即梦（字节跳动AI绘画）
@@ -65,6 +65,13 @@ export const AIConfig = registerAs('ai', () => ({
     defaultModel: process.env.ZHIPU_MODEL || 'glm-4-flash',
   },
 
+  // 腾讯混元（OpenAI兼容，永久免费 hunyuan-lite）
+  hunyuan: {
+    apiKey: process.env.HUNYUAN_API_KEY || '',
+    baseUrl: process.env.HUNYUAN_BASE_URL || 'https://api.hunyuan.cloud.tencent.com/v1',
+    defaultModel: process.env.HUNYUAN_MODEL || 'hunyuan-lite',
+  },
+
   // 阿里云百炼（OpenAI兼容）
   bailian: {
     apiKey: process.env.BAILIAN_API_KEY || '',
@@ -101,31 +108,34 @@ export const AIConfig = registerAs('ai', () => ({
   },
 
   // 智能路由配置
+  // 排序原则：免费优先 → 低价 → 中等 → 贵价兜底
   routing: {
-    'text-generation': ['deepseek', 'siliconflow', 'kimi', 'zhipu', 'bailian', 'volcengine', 'longxia', 'modelscope', 'doubao', 'tongyi', 'openai', 'yuanbao'],
-    'image-generation': ['jimeng', 'openai'],
-    'code-generation': ['deepseek', 'siliconflow', 'kimi', 'zhipu', 'bailian', 'volcengine', 'longxia', 'modelscope', 'openai', 'doubao', 'tongyi'],
-    'text-analysis': ['deepseek', 'siliconflow', 'kimi', 'zhipu', 'bailian', 'volcengine', 'longxia', 'modelscope', 'tongyi', 'doubao', 'openai', 'yuanbao'],
-    'multimodal': ['openai'],
+    'text-generation': ['zhipu', 'hunyuan', 'bailian', 'doubao', 'volcengine', 'siliconflow', 'deepseek', 'kimi', 'modelscope', 'tongyi', 'longxia', 'yuanbao'],
+    'image-generation': ['jimeng'],
+    'code-generation': ['zhipu', 'hunyuan', 'bailian', 'doubao', 'volcengine', 'siliconflow', 'deepseek', 'kimi', 'modelscope', 'tongyi', 'longxia'],
+    'text-analysis': ['zhipu', 'hunyuan', 'bailian', 'doubao', 'volcengine', 'siliconflow', 'deepseek', 'kimi', 'modelscope', 'tongyi', 'longxia', 'yuanbao'],
+    'multimodal': ['bailian', 'zhipu', 'volcengine'],
   },
 
   // 计费配置（圣力/token 换算）
   pricing: {
     // 每千token对应的圣力数
     coinsPerKToken: {
+      'glm-4-flash': { input: 0, output: 0 },
+      'hunyuan-lite': { input: 0, output: 0 },
       'doubao-pro-32k': { input: 0.8, output: 2.0 },
       'doubao-pro-128k': { input: 1.0, output: 2.5 },
+      'doubao-1-5-lite-32k-250115': { input: 0.3, output: 0.6 },
       'doubao-lite-32k': { input: 0.3, output: 0.6 },
-      'gpt-4': { input: 20, output: 60 },
-      'gpt-4-turbo': { input: 10, output: 30 },
-      'gpt-4o': { input: 5, output: 15 },
-      'gpt-3.5-turbo': { input: 0.5, output: 1.5 },
       'qwen-turbo': { input: 0.3, output: 0.6 },
       'qwen-plus': { input: 0.8, output: 2.0 },
       'qwen-max': { input: 2.0, output: 6.0 },
       'deepseek-chat': { input: 0.14, output: 0.28 },
       'deepseek-reasoner': { input: 0.55, output: 2.19 },
+      'deepseek-ai/DeepSeek-V3': { input: 0.5, output: 1.5 },
+      'moonshot-v1-8k': { input: 0.5, output: 1.5 },
       'hy3-preview': { input: 0.5, output: 1.5 },
+      'hunyuan-turbos-latest': { input: 0.5, output: 1.5 },
     },
     // 图像生成固定价格（圣力/张）
     imageFixedPrice: {

@@ -13,19 +13,19 @@ import { TongyiProvider } from './tongyi.provider';
 import { OpenAICompatibleProvider } from './openai-compatible.provider';
 
 /** 任务类型 → Provider优先级映射
- * 排序原则：从便宜到中等，免费/低价模型优先，昂贵的放最后兜底
+ * 排序原则：免费优先 → 低价 → 中等 → 贵价兜底
  * 价格参考（元/百万Token输入，缓存未命中）：
- *   zhipu(GLM-4-Flash)=免费, bailian(qwen-turbo)=0.3, doubao(Lite)=0.3~0.6,
- *   siliconflow(DeepSeek-V3)=1.75, kimi(moonshot-v1-8k)=2, deepseek=3,
- *   modelscope≈官方, tongyi≈2~5, volcengine(Lite)=0.3~0.6,
- *   longxia(gpt-4o-mini)≈1, openai(gpt-4o)=最贵
+ *   zhipu(GLM-4-Flash)=免费, hunyuan(hunyuan-lite)=免费,
+ *   bailian(qwen-turbo)=0.3, doubao/volcengine(Lite)=0.3~0.6,
+ *   siliconflow(DeepSeek-V3)=1.75, deepseek=1, kimi(moonshot-v1-8k)=2,
+ *   modelscope≈官方, tongyi≈2~5, longxia(gpt-4o-mini)≈1
  */
 const DEFAULT_ROUTING: Record<string, string[]> = {
-  'text-generation': ['zhipu', 'bailian', 'doubao', 'siliconflow', 'kimi', 'deepseek', 'modelscope', 'tongyi', 'volcengine', 'longxia', 'openai'],
-  'image-generation': ['jimeng', 'openai'],
-  'code-generation': ['zhipu', 'bailian', 'doubao', 'siliconflow', 'kimi', 'deepseek', 'modelscope', 'tongyi', 'volcengine', 'longxia', 'openai'],
-  'text-analysis': ['zhipu', 'bailian', 'doubao', 'siliconflow', 'kimi', 'deepseek', 'modelscope', 'tongyi', 'volcengine', 'longxia', 'openai'],
-  'multimodal': ['openai'],
+  'text-generation': ['zhipu', 'hunyuan', 'bailian', 'doubao', 'volcengine', 'siliconflow', 'deepseek', 'kimi', 'modelscope', 'tongyi', 'longxia'],
+  'image-generation': ['jimeng'],
+  'code-generation': ['zhipu', 'hunyuan', 'bailian', 'doubao', 'volcengine', 'siliconflow', 'deepseek', 'kimi', 'modelscope', 'tongyi', 'longxia'],
+  'text-analysis': ['zhipu', 'hunyuan', 'bailian', 'doubao', 'volcengine', 'siliconflow', 'deepseek', 'kimi', 'modelscope', 'tongyi', 'longxia'],
+  'multimodal': ['bailian', 'zhipu', 'volcengine'],
 };
 
 @Injectable()
@@ -118,6 +118,19 @@ export class AIProviderManager implements OnModuleInit {
         apiKey: this.configService.get<string>('ZHIPU_API_KEY'),
         baseUrl: this.configService.get<string>('ZHIPU_BASE_URL', 'https://open.bigmodel.cn/api/paas/v4'),
         defaultModel: this.configService.get<string>('ZHIPU_MODEL', 'glm-4-flash'),
+      },
+      {
+        instance: new OpenAICompatibleProvider({
+          name: 'hunyuan',
+          displayName: '腾讯混元',
+          models: [
+            { id: 'hunyuan-lite', name: 'Hunyuan Lite', capabilities: ['text'], supportStream: true },
+            { id: 'hunyuan-turbos-latest', name: 'Hunyuan TurboS', capabilities: ['text'], supportStream: true },
+          ],
+        }),
+        apiKey: this.configService.get<string>('HUNYUAN_API_KEY'),
+        baseUrl: this.configService.get<string>('HUNYUAN_BASE_URL', 'https://api.hunyuan.cloud.tencent.com/v1'),
+        defaultModel: this.configService.get<string>('HUNYUAN_MODEL', 'hunyuan-lite'),
       },
       {
         instance: new OpenAICompatibleProvider({
