@@ -35,7 +35,7 @@ async function bootstrap() {
   });
 
   // 显式处理OPTIONS预检请求，确保CORS头正确返回
-  app.use((req, res, next) => {
+  app.use((req: any, res: any, next: any) => {
     if (req.method === 'OPTIONS') {
       res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
       res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');

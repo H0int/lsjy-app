@@ -1,9 +1,11 @@
-import { All, Body, Controller, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { All, Body, Controller, Get, Inject, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
+import { ReportsService } from './reports/reports.service';
 
 @UseGuards(JwtAuthGuard)
 @Controller()
 export class AdminExtrasController {
+  constructor(@Inject(ReportsService) private readonly reportsService: ReportsService) {}
   private userTags: any[] = [];
   private blacklist: any[] = [];
   private sensitiveWords: any[] = [];
@@ -57,43 +59,15 @@ export class AdminExtrasController {
   }
 
   @Get('admin/dashboard')
-  dashboard() {
-    return {
-      code: 0,
-      data: {
-        activeUsers: 0,
-        onlineUsers: 0,
-        todayRegistrations: 0,
-        totalRevenue: 0,
-        todayRevenue: 0,
-        todayAIUsage: 0,
-        apiErrorRate: 0,
-        paymentFailureRate: 0,
-        realtimeStats: [
-          { label: '在线用户', value: 0 },
-          { label: '今日注册', value: 0 },
-          { label: '今日营收', value: 0 },
-          { label: '圣力消耗', value: 0 },
-        ],
-        trend: { dates: [], newUsers: [], revenue: [] },
-        modules: [
-          { name: 'AI工具', users: 0, revenue: 0 },
-          { name: '自媒体', users: 0, revenue: 0 },
-          { name: '电商', users: 0, revenue: 0 },
-          { name: '教育', users: 0, revenue: 0 },
-          { name: '宠物', users: 0, revenue: 0 },
-          { name: '伯雅校园', users: 0, revenue: 0 },
-        ],
-        topTools: [],
-        topProducts: [],
-        recentLogs: [],
-      },
-    };
+  async dashboard() {
+    const data = await this.reportsService.getAdminDashboard();
+    return { code: 0, data };
   }
 
   @Get('admin/online-users')
-  onlineUsers() {
-    return { code: 0, data: { items: [], list: [], total: 0 } };
+  async onlineUsers() {
+    const data = await this.reportsService.getOnlineUsers();
+    return { code: 0, data };
   }
 
   @Get('admin/locations')

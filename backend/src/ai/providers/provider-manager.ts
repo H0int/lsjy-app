@@ -51,7 +51,7 @@ export class AIProviderManager implements OnModuleInit {
         instance: new DoubaoProvider(),
         apiKey: this.configService.get<string>('DOUBAO_API_KEY'),
         baseUrl: this.configService.get<string>('DOUBAO_BASE_URL', 'https://ark.cn-beijing.volces.com/api/v3'),
-        defaultModel: this.configService.get<string>('DOUBAO_MODEL', 'doubao-pro-32k'),
+        defaultModel: this.configService.get<string>('DOUBAO_MODEL', 'doubao-1-5-lite-32k-250115'),
       },
       {
         instance: new JimengProvider(),

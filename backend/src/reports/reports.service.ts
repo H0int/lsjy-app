@@ -357,4 +357,27 @@ export class ReportsService {
     await this.paymentTxRepo.update(id, { status: 'pending' });
     return { id, status: 'pending' };
   }
+
+  async getOnlineUsers() {
+    const threeDaysAgo = new Date();
+    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+
+    const onlineUsers = await this.userRepo
+      .createQueryBuilder('user')
+      .where('user.updatedAt >= :date', { date: threeDaysAgo })
+      .select(['user.id', 'user.username', 'user.nickname', 'user.updatedAt', 'user.status'])
+      .orderBy('user.updatedAt', 'DESC')
+      .limit(50)
+      .getMany();
+
+    const mapped = onlineUsers.map(u => ({
+      userId: u.id,
+      username: u.username,
+      nickname: u.nickname,
+      lastActive: u.updatedAt,
+      status: u.status,
+    }));
+
+    return { items: mapped, list: mapped, total: mapped.length };
+  }
 }
