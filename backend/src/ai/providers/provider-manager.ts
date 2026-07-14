@@ -12,12 +12,19 @@ import { OpenAIProvider } from './openai.provider';
 import { TongyiProvider } from './tongyi.provider';
 import { OpenAICompatibleProvider } from './openai-compatible.provider';
 
-/** 任务类型 → Provider优先级映射 */
+/** 任务类型 → Provider优先级映射
+ * 排序原则：从便宜到中等，免费/低价模型优先，昂贵的放最后兜底
+ * 价格参考（元/百万Token输入，缓存未命中）：
+ *   zhipu(GLM-4-Flash)=免费, bailian(qwen-turbo)=0.3, doubao(Lite)=0.3~0.6,
+ *   siliconflow(DeepSeek-V3)=1.75, kimi(moonshot-v1-8k)=2, deepseek=3,
+ *   modelscope≈官方, tongyi≈2~5, volcengine(Lite)=0.3~0.6,
+ *   longxia(gpt-4o-mini)≈1, openai(gpt-4o)=最贵
+ */
 const DEFAULT_ROUTING: Record<string, string[]> = {
-  'text-generation': ['deepseek', 'siliconflow', 'kimi', 'zhipu', 'bailian', 'volcengine', 'longxia', 'modelscope', 'doubao', 'tongyi', 'openai'],
+  'text-generation': ['zhipu', 'bailian', 'doubao', 'siliconflow', 'kimi', 'deepseek', 'modelscope', 'tongyi', 'volcengine', 'longxia', 'openai'],
   'image-generation': ['jimeng', 'openai'],
-  'code-generation': ['deepseek', 'siliconflow', 'kimi', 'zhipu', 'bailian', 'volcengine', 'longxia', 'modelscope', 'openai', 'doubao', 'tongyi'],
-  'text-analysis': ['deepseek', 'siliconflow', 'kimi', 'zhipu', 'bailian', 'volcengine', 'longxia', 'modelscope', 'tongyi', 'doubao', 'openai'],
+  'code-generation': ['zhipu', 'bailian', 'doubao', 'siliconflow', 'kimi', 'deepseek', 'modelscope', 'tongyi', 'volcengine', 'longxia', 'openai'],
+  'text-analysis': ['zhipu', 'bailian', 'doubao', 'siliconflow', 'kimi', 'deepseek', 'modelscope', 'tongyi', 'volcengine', 'longxia', 'openai'],
   'multimodal': ['openai'],
 };
 
