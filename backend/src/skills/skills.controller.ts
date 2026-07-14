@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, UseGuards, Req, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Req, HttpCode, HttpStatus, BadRequestException } from '@nestjs/common';
 import { SkillsService } from './skills.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 
@@ -21,6 +21,13 @@ export class SkillsController {
     const userId = req.user?.id || req.user?.userId || 0;
     const startTime = Date.now();
     try {
+      // 扣除200圣力
+      const hasEnough = await this.skillsService.checkCoins(userId);
+      if (!hasEnough) {
+        throw new BadRequestException('圣力不足，使用技能需要消耗200圣力');
+      }
+      await this.skillsService.deductCoins(userId, 'crawl4ai');
+
       const result = await this.skillsService.crawl(body.url, {
         outputFormat: body.outputFormat,
         excludeImages: body.excludeImages,
@@ -40,6 +47,13 @@ export class SkillsController {
     const userId = req.user?.id || req.user?.userId || 0;
     const startTime = Date.now();
     try {
+      // 扣除200圣力
+      const hasEnough = await this.skillsService.checkCoins(userId);
+      if (!hasEnough) {
+        throw new BadRequestException('圣力不足，使用技能需要消耗200圣力');
+      }
+      await this.skillsService.deductCoins(userId, 'whisper');
+
       const result = await this.skillsService.transcribe(body.audioUrl, body.language);
       await this.skillsService.recordCall(userId, 'whisper', body, result.data, result.durationMs, 'completed');
       return { code: 0, message: 'ok', data: result.data };
@@ -56,6 +70,13 @@ export class SkillsController {
     const userId = req.user?.id || req.user?.userId || 0;
     const startTime = Date.now();
     try {
+      // 扣除200圣力
+      const hasEnough = await this.skillsService.checkCoins(userId);
+      if (!hasEnough) {
+        throw new BadRequestException('圣力不足，使用技能需要消耗200圣力');
+      }
+      await this.skillsService.deductCoins(userId, 'tabby');
+
       const result = await this.skillsService.codeCompletion(body.code, body.language);
       await this.skillsService.recordCall(userId, 'tabby', body, result.data, result.durationMs, 'completed');
       return { code: 0, message: 'ok', data: result.data };

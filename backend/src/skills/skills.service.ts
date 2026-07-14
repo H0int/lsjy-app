@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AiCallRecord } from '../database/entities/ai-call-record.entity';
 import { ConfigService } from '@nestjs/config';
+import { CoinConsumptionService } from '../payment/coin-consumption.service';
 
 export interface SkillStatus {
   name: string;
@@ -12,6 +13,9 @@ export interface SkillStatus {
   description: string;
 }
 
+/** 每次调用技能消耗的圣力 */
+const SKILL_COST = 200;
+
 @Injectable()
 export class SkillsService {
   private readonly logger = new Logger(SkillsService.name);
@@ -20,7 +24,24 @@ export class SkillsService {
     @InjectRepository(AiCallRecord)
     private readonly callRecordRepo: Repository<AiCallRecord>,
     private readonly configService: ConfigService,
+    private readonly coinConsumptionService: CoinConsumptionService,
   ) {}
+
+  /** 扣除圣力 */
+  async deductCoins(userId: number, skillName: string): Promise<{ success: boolean; balanceAfter: number }> {
+    return this.coinConsumptionService.consume(
+      userId,
+      SKILL_COST,
+      'skill_' + skillName,
+      undefined,
+      `使用${skillName}技能`,
+    );
+  }
+
+  /** 检查圣力是否足够 */
+  async checkCoins(userId: number): Promise<boolean> {
+    return this.coinConsumptionService.checkBalance(userId, SKILL_COST);
+  }
 
   /** Crawl4AI: 网页爬取 */
   async crawl(url: string, params?: { outputFormat?: string; excludeImages?: boolean }): Promise<any> {

@@ -156,7 +156,7 @@ export const adminApi = {
     return service.get('/system/logs', { params }).then(r => r.data)
   },
   getDashboard(): Promise<ApiResponse<any>> {
-    return service.get('/admin/dashboard', { timeout: 60000 }).then(r => r.data)
+    return service.get('/admin/dashboard', { timeout: 60000 }) as Promise<ApiResponse<any>>
   },
   getChatHistory(params?: { keyword?: string; agent?: string; startDate?: string; endDate?: string; page?: number; pageSize?: number }): Promise<ApiResponse<any>> {
     return service.get('/admin/chat-history', { params, timeout: 30000 }).then(r => r.data)
@@ -277,16 +277,16 @@ export const adminApi = {
 // ===== 开源技能API =====
 export const skillsApi = {
   getStatus(): Promise<ApiResponse<any[]>> {
-    return service.get('/skills/status').then(r => r.data)
+    return service.get('/skills/status') as Promise<ApiResponse<any[]>>
   },
   crawl(url: string, outputFormat?: string): Promise<ApiResponse<any>> {
-    return service.post('/skills/crawl', { url, outputFormat }).then(r => r.data)
+    return service.post('/skills/crawl', { url, outputFormat }) as Promise<ApiResponse<any>>
   },
   transcribe(audioUrl: string, language?: string): Promise<ApiResponse<any>> {
-    return service.post('/skills/whisper/transcribe', { audioUrl, language }).then(r => r.data)
+    return service.post('/skills/whisper/transcribe', { audioUrl, language }) as Promise<ApiResponse<any>>
   },
   codeCompletion(code: string, language?: string): Promise<ApiResponse<any>> {
-    return service.post('/skills/tabby/completions', { code, language }).then(r => r.data)
+    return service.post('/skills/tabby/completions', { code, language }) as Promise<ApiResponse<any>>
   },
 }
 
