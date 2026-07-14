@@ -8,12 +8,12 @@
     </div>
     <!-- 实时数据概览 -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-      <div v-for="stat in realtimeStats" :key="stat.label" class="bg-white dark:bg-dark-100 rounded-xl p-5 shadow-sm relative overflow-hidden">
+      <div v-for="stat in realtimeStats" :key="stat.label" class="rounded-xl p-5 shadow-sm relative overflow-hidden" style="background:#1a1a2eee;border:1px solid #00f0ff15;">
         <div class="absolute top-0 right-0 w-20 h-20 rounded-full opacity-10 -mr-6 -mt-6" :class="stat.bgClass"></div>
         <div class="flex items-center justify-between relative">
           <div>
-            <p class="text-sm text-gray-500 dark:text-gray-400">{{ stat.label }}</p>
-            <p class="text-3xl font-bold text-gray-900 dark:text-white mt-1">{{ stat.value }}</p>
+            <p class="text-sm" style="color:#808099;">{{ stat.label }}</p>
+            <p class="text-3xl font-bold mt-1" style="color:#e0e0ff;">{{ stat.value }}</p>
             <p class="text-xs mt-1" :class="stat.change >= 0 ? 'text-green-500' : 'text-red-500'">
               {{ stat.change >= 0 ? '↑' : '↓' }} {{ Math.abs(stat.change) }}% 较昨日
             </p>
@@ -38,9 +38,9 @@
     <!-- 趋势图表 -->
     <div class="grid lg:grid-cols-2 gap-6 mb-6">
       <!-- 用户增长曲线 -->
-      <div class="bg-white dark:bg-dark-100 rounded-xl p-5 shadow-sm">
+      <div class="rounded-xl p-5 shadow-sm" style="background:#1a1a2eee;border:1px solid #00f0ff15;">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="font-bold text-gray-900 dark:text-white">📈 用户增长趋势</h3>
+          <h3 class="font-bold" style="color:#e0e0ff;">📈 用户增长趋势</h3>
           <div class="flex gap-1">
             <button v-for="r in ['7d','30d']" :key="r" @click="trendRange = r" class="px-3 py-1 rounded text-xs" :class="trendRange === r ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-dark-300 text-gray-500'">{{ r === '7d' ? '近7天' : '近30天' }}</button>
           </div>
@@ -48,9 +48,9 @@
         <div ref="userChartRef" class="h-64"></div>
       </div>
       <!-- 营收趋势 -->
-      <div class="bg-white dark:bg-dark-100 rounded-xl p-5 shadow-sm">
+      <div class="rounded-xl p-5 shadow-sm" style="background:#1a1a2eee;border:1px solid #00f0ff15;">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="font-bold text-gray-900 dark:text-white">💰 营收趋势</h3>
+          <h3 class="font-bold" style="color:#e0e0ff;">💰 营收趋势</h3>
           <div class="flex gap-1">
             <button v-for="r in ['7d','30d']" :key="r" @click="revenueRange = r" class="px-3 py-1 rounded text-xs" :class="revenueRange === r ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-dark-300 text-gray-500'">{{ r === '7d' ? '近7天' : '近30天' }}</button>
           </div>
@@ -62,18 +62,18 @@
     <!-- 模块分布 & 热门排行 -->
     <div class="grid lg:grid-cols-3 gap-6 mb-6">
       <!-- 六大模块用户分布 -->
-      <div class="bg-white dark:bg-dark-100 rounded-xl p-5 shadow-sm">
-        <h3 class="font-bold text-gray-900 dark:text-white mb-4">🧩 模块用户分布</h3>
+      <div class="rounded-xl p-5 shadow-sm" style="background:#1a1a2eee;border:1px solid #00f0ff15;">
+        <h3 class="font-bold" style="color:#e0e0ff; mb-4">🧩 模块用户分布</h3>
         <div ref="modulePieRef" class="h-56"></div>
       </div>
       <!-- 营收贡献饼图 -->
-      <div class="bg-white dark:bg-dark-100 rounded-xl p-5 shadow-sm">
-        <h3 class="font-bold text-gray-900 dark:text-white mb-4">💎 营收贡献分布</h3>
+      <div class="rounded-xl p-5 shadow-sm" style="background:#1a1a2eee;border:1px solid #00f0ff15;">
+        <h3 class="font-bold" style="color:#e0e0ff; mb-4">💎 营收贡献分布</h3>
         <div ref="revenuePieRef" class="h-56"></div>
       </div>
       <!-- 各模块使用量对比 -->
-      <div class="bg-white dark:bg-dark-100 rounded-xl p-5 shadow-sm">
-        <h3 class="font-bold text-gray-900 dark:text-white mb-4">📊 模块使用量对比</h3>
+      <div class="rounded-xl p-5 shadow-sm" style="background:#1a1a2eee;border:1px solid #00f0ff15;">
+        <h3 class="font-bold" style="color:#e0e0ff; mb-4">📊 模块使用量对比</h3>
         <div ref="moduleBarRef" class="h-56"></div>
       </div>
     </div>
@@ -81,8 +81,8 @@
     <!-- 热门排行 -->
     <div class="grid lg:grid-cols-3 gap-6 mb-6">
       <!-- Top10 AI工具 -->
-      <div class="bg-white dark:bg-dark-100 rounded-xl p-5 shadow-sm">
-        <h3 class="font-bold text-gray-900 dark:text-white mb-4">🤖 Top10 AI工具</h3>
+      <div class="rounded-xl p-5 shadow-sm" style="background:#1a1a2eee;border:1px solid #00f0ff15;">
+        <h3 class="font-bold" style="color:#e0e0ff; mb-4">🤖 Top10 AI工具</h3>
         <div class="space-y-2">
           <div v-for="(item, index) in toolRanking" :key="item.name" class="flex items-center gap-3">
             <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
@@ -98,8 +98,8 @@
         </div>
       </div>
       <!-- Top10 热销商品 -->
-      <div class="bg-white dark:bg-dark-100 rounded-xl p-5 shadow-sm">
-        <h3 class="font-bold text-gray-900 dark:text-white mb-4">🛒 Top10 热销商品</h3>
+      <div class="rounded-xl p-5 shadow-sm" style="background:#1a1a2eee;border:1px solid #00f0ff15;">
+        <h3 class="font-bold" style="color:#e0e0ff; mb-4">🛒 Top10 热销商品</h3>
         <div class="space-y-2">
           <div v-for="(item, index) in productRanking" :key="item.name" class="flex items-center gap-3">
             <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
@@ -112,8 +112,8 @@
         </div>
       </div>
       <!-- Top10 热门课程 -->
-      <div class="bg-white dark:bg-dark-100 rounded-xl p-5 shadow-sm">
-        <h3 class="font-bold text-gray-900 dark:text-white mb-4">📚 Top10 热门课程</h3>
+      <div class="rounded-xl p-5 shadow-sm" style="background:#1a1a2eee;border:1px solid #00f0ff15;">
+        <h3 class="font-bold" style="color:#e0e0ff; mb-4">📚 Top10 热门课程</h3>
         <div class="space-y-2">
           <div v-for="(item, index) in courseRanking" :key="item.name" class="flex items-center gap-3">
             <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
@@ -128,9 +128,9 @@
     </div>
 
     <!-- 开源技能状态 -->
-    <div class="bg-white dark:bg-dark-100 rounded-xl p-5 shadow-sm mb-6">
+    <div class="rounded-xl p-5 shadow-sm mb-6" style="background:#1a1a2eee;border:1px solid #00f0ff15;">
       <div class="flex items-center justify-between mb-4">
-        <h3 class="font-bold text-gray-900 dark:text-white">🔧 开源AI技能状态</h3>
+        <h3 class="font-bold" style="color:#e0e0ff;">🔧 开源AI技能状态</h3>
         <el-button size="small" @click="loadSkillsStatus" :loading="skillsLoading">刷新</el-button>
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -146,8 +146,8 @@
     </div>
 
     <!-- 系统日志 -->
-    <div class="bg-white dark:bg-dark-100 rounded-xl p-5 shadow-sm">
-      <h3 class="font-bold text-gray-900 dark:text-white mb-4">📋 最近操作日志</h3>
+    <div class="rounded-xl p-5 shadow-sm" style="background:#1a1a2eee;border:1px solid #00f0ff15;">
+      <h3 class="font-bold" style="color:#e0e0ff; mb-4">📋 最近操作日志</h3>
       <div class="space-y-2">
         <div v-for="log in recentLogs" :key="log.id" class="flex items-center gap-3 py-2 border-b border-gray-50 dark:border-gray-700 last:border-0">
           <span class="px-2 py-0.5 rounded text-xs font-medium" :class="logTypeClass(log.type)">{{ log.module }}</span>

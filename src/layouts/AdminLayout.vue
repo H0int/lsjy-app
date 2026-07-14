@@ -121,7 +121,10 @@ const menuGroups=[
   ]},
 ]
 const expanded=reactive<Record<string,boolean>>({})
-menuGroups.forEach((g)=>{expanded[g.label]=true})
+// 默认展开当前路由所在的菜单组，其他折叠
+menuGroups.forEach((g)=>{
+  expanded[g.label]=g.items.some(item=>route.path===item.path)
+})
 function toggleGroup(label:string){expanded[label]=!expanded[label]}
 const allItems=menuGroups.flatMap(g=>g.items)
 const currentTitle=computed(()=>{const i=allItems.find(x=>route.path===x.path);return i?.label||'管理后台'})
