@@ -123,7 +123,7 @@ export class ComputingController {
     return { code: 0, message: 'ok', data };
   }
 
-  // ======================== 增值套餐 ========================
+  // ======================== 增值套餐（用户端） ========================
 
   @Get('packages')
   @ApiOperation({ summary: '获取增值套餐列表' })
@@ -163,5 +163,103 @@ export class ComputingController {
   async generateExportData(@CurrentUser('id') userId: number, @Body() body: any) {
     const data = await this.computingService.generateExportData(userId, body?.employeeId);
     return { code: 0, message: 'ok', data };
+  }
+
+  // ====================== 管理后台API ======================
+
+  // --- 套餐管理 ---
+  @Get('admin/packages')
+  @ApiOperation({ summary: '管理后台：获取全部套餐' })
+  async adminGetPackages() {
+    const data = await this.computingService.adminGetPackages();
+    return { code: 0, message: 'ok', data };
+  }
+
+  @Post('admin/packages')
+  @ApiOperation({ summary: '管理后台：创建套餐' })
+  async adminCreatePackage(@Body() body: any) {
+    const data = await this.computingService.adminCreatePackage(body);
+    return { code: 0, message: '套餐已创建', data };
+  }
+
+  @Put('admin/packages/:id')
+  @ApiOperation({ summary: '管理后台：更新套餐' })
+  async adminUpdatePackage(@Param('id') id: number, @Body() body: any) {
+    const data = await this.computingService.adminUpdatePackage(+id, body);
+    return { code: 0, message: '套餐已更新', data };
+  }
+
+  @Delete('admin/packages/:id')
+  @ApiOperation({ summary: '管理后台：删除套餐' })
+  async adminDeletePackage(@Param('id') id: number) {
+    await this.computingService.adminDeletePackage(+id);
+    return { code: 0, message: '套餐已删除' };
+  }
+
+  // --- 订单管理 ---
+  @Get('admin/orders')
+  @ApiOperation({ summary: '管理后台：获取全部订单' })
+  @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'pageSize', required: false })
+  @ApiQuery({ name: 'status', required: false })
+  async adminGetOrders(
+    @Query('page') page = 1,
+    @Query('pageSize') pageSize = 20,
+    @Query('status') status?: string,
+  ) {
+    const data = await this.computingService.adminGetOrders(+page, +pageSize, status);
+    return { code: 0, message: 'ok', data };
+  }
+
+  @Put('admin/orders/:id')
+  @ApiOperation({ summary: '管理后台：更新订单状态' })
+  async adminUpdateOrder(@Param('id') id: number, @Body() body: any) {
+    const data = await this.computingService.adminUpdateOrder(+id, body);
+    return { code: 0, message: '订单已更新', data };
+  }
+
+  // --- 虚拟员工管理（全平台） ---
+  @Get('admin/employees')
+  @ApiOperation({ summary: '管理后台：获取全部虚拟员工' })
+  @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'pageSize', required: false })
+  @ApiQuery({ name: 'industry', required: false })
+  @ApiQuery({ name: 'status', required: false })
+  async adminGetEmployees(
+    @Query('page') page = 1,
+    @Query('pageSize') pageSize = 20,
+    @Query('industry') industry?: string,
+    @Query('status') status?: string,
+  ) {
+    const data = await this.computingService.adminGetEmployees(+page, +pageSize, industry, status);
+    return { code: 0, message: 'ok', data };
+  }
+
+  // --- 调度日志（全平台） ---
+  @Get('admin/logs')
+  @ApiOperation({ summary: '管理后台：获取全部调度日志' })
+  @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'pageSize', required: false })
+  async adminGetLogs(
+    @Query('page') page = 1,
+    @Query('pageSize') pageSize = 20,
+  ) {
+    const data = await this.computingService.adminGetLogs(+page, +pageSize);
+    return { code: 0, message: 'ok', data };
+  }
+
+  // --- 全局调度配置 ---
+  @Get('admin/config')
+  @ApiOperation({ summary: '管理后台：获取全局调度配置' })
+  async adminGetConfig() {
+    const data = await this.computingService.adminGetConfig();
+    return { code: 0, message: 'ok', data };
+  }
+
+  @Put('admin/config')
+  @ApiOperation({ summary: '管理后台：更新全局调度配置' })
+  async adminUpdateConfig(@Body() body: any) {
+    const data = await this.computingService.adminUpdateConfig(body);
+    return { code: 0, message: '全局配置已保存', data };
   }
 }

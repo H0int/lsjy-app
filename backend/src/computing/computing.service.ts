@@ -301,4 +301,93 @@ export class ComputingService {
 
     return exportData;
   }
+
+  // ====================== 管理后台方法 ======================
+
+  async adminGetPackages() {
+    return await this.packageRepo.find({ order: { sortOrder: 'ASC' } });
+  }
+
+  async adminCreatePackage(body: any) {
+    const pkg = this.packageRepo.create({
+      name: body.name,
+      type: body.type || 'custom',
+      description: body.description || body.name,
+      price: Number(body.price) || 0,
+      originalPrice: Number(body.originalPrice) || 0,
+      features: body.features || [],
+      duration: body.duration || 'year',
+      isActive: body.isActive !== false,
+      sortOrder: body.sortOrder || 99,
+    });
+    return await this.packageRepo.save(pkg);
+  }
+
+  async adminUpdatePackage(id: number, body: any) {
+    const pkg = await this.packageRepo.findOne({ where: { id } });
+    if (!pkg) throw new NotFoundException('套餐不存在');
+    const allowed = ['name', 'description', 'price', 'originalPrice', 'features', 'duration', 'isActive', 'sortOrder'];
+    for (const key of allowed) {
+      if (body[key] !== undefined) {
+        if (key === 'price' || key === 'originalPrice') pkg[key] = Number(body[key]);
+        else if (key === 'sortOrder') pkg[key] = Number(body[key]);
+        else if (key === 'isActive') pkg[key] = Boolean(body[key]);
+        else pkg[key] = body[key];
+      }
+    }
+    return await this.packageRepo.save(pkg);
+  }
+
+  async adminDeletePackage(id: number) {
+    const pkg = await this.packageRepo.findOne({ where: { id } });
+    if (!pkg) throw new NotFoundException('套餐不存在');
+    await this.packageRepo.remove(pkg);
+  }
+
+  async adminGetOrders(page: number, pageSize: number, status?: string) {
+    const where: any = {};
+    if (status) where.status = status;
+    const [items, total] = await this.orderRepo.findAndCount({
+      where, order: { createdAt: 'DESC' },
+      skip: (page - 1) * pageSize, take: pageSize,
+    });
+    return { items, total, page, pageSize };
+  }
+
+  async adminUpdateOrder(id: number, body: any) {
+    const order = await this.orderRepo.findOne({ where: { id } });
+    if (!order) throw new NotFoundException('订单不存在');
+    if (body.status === 'paid') { order.status = 'paid'; order.paidAt = new Date(); }
+    else if (body.status) order.status = body.status;
+    return await this.orderRepo.save(order);
+  }
+
+  async adminGetEmployees(page: number, pageSize: number, industry?: string, status?: string) {
+    const where: any = {};
+    if (industry) where.industry = industry;
+    if (status) where.status = status;
+    const [items, total] = await this.employeeRepo.findAndCount({
+      where, order: { createdAt: 'DESC' },
+      skip: (page - 1) * pageSize, take: pageSize,
+    });
+    return { items, total, page, pageSize };
+  }
+
+  async adminGetLogs(page: number, pageSize: number) {
+    const [items, total] = await this.logRepo.findAndCount({
+      order: { createdAt: 'DESC' },
+      skip: (page - 1) * pageSize, take: pageSize,
+    });
+    return { items, total, page, pageSize };
+  }
+
+  async adminGetConfig() {
+    // 全局配置暂存内存，后续可迁移到数据库
+    return { enabled: true, defaultStrategy: 'balanced' };
+  }
+
+  async adminUpdateConfig(body: any) {
+    // 全局配置暂存内存，后续可迁移到数据库
+    return { ...body, updatedAt: new Date().toISOString() };
+  }
 }
