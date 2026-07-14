@@ -76,6 +76,26 @@ services:
     networks:
       - lsjy_skill_net
 
+  # ===== 新增：Whisper — AI语音识别（CPU可跑） =====
+  # GitHub: openai/whisper ⭐93K
+  # 功能：语音转文字，支持99+语言
+  # API端口：9000（内部），映射到 127.0.0.1:9000
+  lsjy-whisper:
+    image: onerahmet/openai-whisper-asr-webservice:latest
+    container_name: lsjy-whisper
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:9000:9000"
+    environment:
+      ASR_ENGINE: ${WHISPER_ENGINE:-faster_whisper}
+      ASR_MODEL: ${WHISPER_MODEL:-base}
+      ASR_DEVICE: cpu
+      MODEL_IDLE_TIMEOUT: "300"
+    volumes:
+      - lsjy_whisper_models:/root/.cache
+    networks:
+      - lsjy_skill_net
+
 networks:
   lsjy_skill_net:
     name: lsjy_skill_net
@@ -85,3 +105,4 @@ volumes:
   lsjy_matomo_app:
   lsjy_chroma_data:
   lsjy_crawl4ai_data:
+  lsjy_whisper_models:
