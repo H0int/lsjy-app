@@ -73,6 +73,26 @@
       </div>
     </Teleport>
 
+    <!-- 算力调度&虚拟数字员工中心 入口卡片 -->
+    <div
+      class="rounded-xl p-5 mb-6 cursor-pointer transition-all hover:-translate-y-1"
+      style="background: linear-gradient(135deg, rgba(0,240,255,0.08), rgba(183,0,255,0.08)); border: 1px solid rgba(0,240,255,0.25);"
+      @click="router.push('/computing')"
+    >
+      <div class="flex items-center gap-4">
+        <div class="w-14 h-14 rounded-xl flex items-center justify-center text-3xl flex-shrink-0" style="background: linear-gradient(135deg, #00f0ff, #b700ff); box-shadow: 0 0 20px rgba(0,240,255,0.3);">
+          ⚡
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="font-bold text-lg" style="color: var(--cyber-text);">算力调度 & 行业虚拟数字员工中心</div>
+          <div class="text-xs mt-1" style="color: var(--cyber-text-dim);">自研算力分配算法，一键生成行业AI虚拟员工，降低AI使用成本、缩减企业人力开支，创业、省赛备赛均可使用。</div>
+        </div>
+        <div class="px-5 py-2.5 rounded-lg text-sm font-bold text-white flex-shrink-0" style="background: linear-gradient(135deg, #00f0ff, #b700ff); box-shadow: 0 0 15px rgba(0,240,255,0.3);">
+          立即进入 →
+        </div>
+      </div>
+    </div>
+
     <!-- 统计卡片 -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
       <div

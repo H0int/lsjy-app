@@ -99,6 +99,12 @@ const menuGroups=[
     {path:'/admin/model-config',label:'模型配置',icon:'⚙️'},
     {path:'/admin/knowledge',label:'知识库管理',icon:'📚'}
   ]},
+  {label:'算力&虚拟员工',icon:'⚡',items:[
+    {path:'/admin/computing-manage',label:'算力调度管理',icon:'⚡'},
+    {path:'/admin/employees-manage',label:'虚拟员工管理',icon:'🤖'},
+    {path:'/admin/value-packages',label:'增值套餐管理',icon:'💎'},
+    {path:'/admin/value-orders',label:'增值订单管理',icon:'📦'}
+  ]},
   {label:'财务中心',icon:'💰',items:[
     {path:'/admin/coin-packages',label:'圣力套餐',icon:'⚡'},
     {path:'/admin/boss-cards',label:'Boss充值卡',icon:'👑'},

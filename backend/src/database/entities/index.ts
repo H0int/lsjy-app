@@ -53,3 +53,6 @@ export { SecondhandItem } from './secondhand-item.entity';
 export { SystemConfig } from './system-config.entity';
 export { OperationLog } from './operation-log.entity';
 export { Notification } from './notification.entity';
+
+// Computing & Virtual Employee
+export { ComputingDispatchConfig, VirtualEmployee, ComputingDispatchLog, ValueAddedPackage, ValueAddedOrder } from './computing-entity';

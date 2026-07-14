@@ -30,7 +30,8 @@ const routes: RouteRecordRaw[] = [
       { path: 'profile/wallet', name: 'Wallet', component: () => import('@/views/profile/WalletView.vue'), meta: { title: '圣力中心', icon: '💰' } },
       { path: 'profile/favorites', name: 'Favorites', component: () => import('@/views/profile/FavoritesView.vue'), meta: { title: '收藏工具', icon: '⭐' } },
       { path: 'profile/creation-history', name: 'CreationHistory', component: () => import('@/views/profile/CreationHistory.vue'), meta: { title: '创作记录', icon: '📝' } },
-      { path: 'profile/help', name: 'HelpCenter', component: () => import('@/views/profile/HelpCenter.vue'), meta: { title: '帮助中心', icon: '❓' } }
+      { path: 'profile/help', name: 'HelpCenter', component: () => import('@/views/profile/HelpCenter.vue'), meta: { title: '帮助中心', icon: '❓' } },
+      { path: 'computing', name: 'ComputingCenter', component: () => import('@/views/computing/ComputingCenter.vue'), meta: { title: '算力调度&虚拟员工中心', icon: '⚡' } }
     ]
   },
   {
@@ -43,6 +44,11 @@ const routes: RouteRecordRaw[] = [
       { path: 'dashboard', name: 'AdminDashboard', component: () => import('@/views/admin/AdminDashboard.vue'), meta: { title: '数据看板' } },
       { path: 'decision', name: 'DecisionCenter', component: () => import('@/views/admin/DecisionCenter.vue'), meta: { title: '决策中心' } },
       { path: 'realtime', name: 'RealtimeMonitor', component: () => import('@/views/admin/analytics/RealtimeMonitor.vue'), meta: { title: '实时定位' } },
+      // 算力调度 & 虚拟数字员工中心
+      { path: 'computing-manage', name: 'ComputingManage', component: () => import('@/views/admin/ComputingManage.vue'), meta: { title: '算力调度管理' } },
+      { path: 'employees-manage', name: 'EmployeesManage', component: () => import('@/views/admin/EmployeesManage.vue'), meta: { title: '虚拟员工管理' } },
+      { path: 'value-packages', name: 'ValuePackages', component: () => import('@/views/admin/ValuePackages.vue'), meta: { title: '增值套餐管理' } },
+      { path: 'value-orders', name: 'ValueOrders', component: () => import('@/views/admin/ValueOrders.vue'), meta: { title: '增值订单管理' } },
       // 用户管理
       { path: 'online-users', name: 'OnlineUsers', component: () => import('@/views/admin/OnlineUsers.vue'), meta: { title: '在线用户' } },
       { path: 'user-tags', name: 'UserTags', component: () => import('@/views/admin/UserTags.vue'), meta: { title: '用户标签' } },

@@ -1,0 +1,167 @@
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { ComputingService } from './computing.service';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+
+@ApiTags('算力调度与虚拟数字员工')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
+@Controller('computing')
+export class ComputingController {
+  constructor(private readonly computingService: ComputingService) {}
+
+  // ======================== 算力调度配置 ========================
+
+  @Get('dispatch/config')
+  @ApiOperation({ summary: '获取算力调度配置' })
+  async getDispatchConfig(@CurrentUser('id') userId: number) {
+    const data = await this.computingService.getDispatchConfig(userId);
+    return { code: 0, message: 'ok', data };
+  }
+
+  @Put('dispatch/config')
+  @ApiOperation({ summary: '更新算力调度配置' })
+  async updateDispatchConfig(@CurrentUser('id') userId: number, @Body() body: any) {
+    const data = await this.computingService.updateDispatchConfig(userId, body);
+    return { code: 0, message: 'ok', data };
+  }
+
+  // ======================== 调度日志 ========================
+
+  @Get('dispatch/logs')
+  @ApiOperation({ summary: '获取调度日志' })
+  @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'pageSize', required: false })
+  async getDispatchLogs(
+    @CurrentUser('id') userId: number,
+    @Query('page') page = 1,
+    @Query('pageSize') pageSize = 20,
+  ) {
+    const data = await this.computingService.getDispatchLogs(userId, +page, +pageSize);
+    return { code: 0, message: 'ok', data };
+  }
+
+  // ======================== 调度统计 ========================
+
+  @Get('dispatch/stats')
+  @ApiOperation({ summary: '获取调度统计' })
+  async getDispatchStats(@CurrentUser('id') userId: number) {
+    const data = await this.computingService.getDispatchStats(userId);
+    return { code: 0, message: 'ok', data };
+  }
+
+  // ======================== 手动切换模型 ========================
+
+  @Post('dispatch/switch')
+  @ApiOperation({ summary: '手动触发模型切换（测试用）' })
+  async manualSwitch(@CurrentUser('id') userId: number, @Body() body: any) {
+    const data = await this.computingService.manualSwitch(userId, body);
+    return { code: 0, message: 'ok', data };
+  }
+
+  // ======================== 虚拟员工列表 ========================
+
+  @Get('employees')
+  @ApiOperation({ summary: '获取虚拟员工列表' })
+  async getEmployees(@CurrentUser('id') userId: number) {
+    const data = await this.computingService.getEmployees(userId);
+    return { code: 0, message: 'ok', data };
+  }
+
+  // ======================== 创建虚拟员工 ========================
+
+  @Post('employees')
+  @ApiOperation({ summary: '创建虚拟员工' })
+  async createEmployee(@CurrentUser('id') userId: number, @Body() body: any) {
+    const data = await this.computingService.createEmployee(userId, body);
+    return { code: 0, message: 'ok', data };
+  }
+
+  // ======================== 虚拟员工详情 ========================
+
+  @Get('employees/:id')
+  @ApiOperation({ summary: '获取虚拟员工详情' })
+  async getEmployeeDetail(@CurrentUser('id') userId: number, @Param('id') id: number) {
+    const data = await this.computingService.getEmployeeDetail(+id, userId);
+    return { code: 0, message: 'ok', data };
+  }
+
+  // ======================== 更新虚拟员工 ========================
+
+  @Put('employees/:id')
+  @ApiOperation({ summary: '更新虚拟员工' })
+  async updateEmployee(@CurrentUser('id') userId: number, @Param('id') id: number, @Body() body: any) {
+    const data = await this.computingService.updateEmployee(+id, userId, body);
+    return { code: 0, message: 'ok', data };
+  }
+
+  // ======================== 删除虚拟员工 ========================
+
+  @Delete('employees/:id')
+  @ApiOperation({ summary: '删除虚拟员工' })
+  async deleteEmployee(@CurrentUser('id') userId: number, @Param('id') id: number) {
+    const data = await this.computingService.deleteEmployee(+id, userId);
+    return { code: 0, message: 'ok', data };
+  }
+
+  // ======================== 启动虚拟员工 ========================
+
+  @Post('employees/:id/start')
+  @ApiOperation({ summary: '启动虚拟员工' })
+  async startEmployee(@CurrentUser('id') userId: number, @Param('id') id: number) {
+    const data = await this.computingService.startEmployee(+id, userId);
+    return { code: 0, message: 'ok', data };
+  }
+
+  // ======================== 停止虚拟员工 ========================
+
+  @Post('employees/:id/stop')
+  @ApiOperation({ summary: '停止虚拟员工' })
+  async stopEmployee(@CurrentUser('id') userId: number, @Param('id') id: number) {
+    const data = await this.computingService.stopEmployee(+id, userId);
+    return { code: 0, message: 'ok', data };
+  }
+
+  // ======================== 增值套餐 ========================
+
+  @Get('packages')
+  @ApiOperation({ summary: '获取增值套餐列表' })
+  async getPackages() {
+    const data = await this.computingService.getPackages();
+    return { code: 0, message: 'ok', data };
+  }
+
+  // ======================== 创建订单 ========================
+
+  @Post('orders')
+  @ApiOperation({ summary: '创建增值订单' })
+  async createOrder(@CurrentUser('id') userId: number, @Body() body: any) {
+    const data = await this.computingService.createOrder(userId, body);
+    return { code: 0, message: 'ok', data };
+  }
+
+  // ======================== 获取订单列表 ========================
+
+  @Get('orders')
+  @ApiOperation({ summary: '获取订单列表' })
+  @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'pageSize', required: false })
+  async getOrders(
+    @CurrentUser('id') userId: number,
+    @Query('page') page = 1,
+    @Query('pageSize') pageSize = 20,
+  ) {
+    const data = await this.computingService.getOrders(userId, +page, +pageSize);
+    return { code: 0, message: 'ok', data };
+  }
+
+  // ======================== 一键导出 ========================
+
+  @Post('export')
+  @ApiOperation({ summary: '一键导出数据（创赛答辩稿、商业计划书、竞品分析）' })
+  async generateExportData(@CurrentUser('id') userId: number, @Body() body: any) {
+    const data = await this.computingService.generateExportData(userId, body?.employeeId);
+    return { code: 0, message: 'ok', data };
+  }
+}
