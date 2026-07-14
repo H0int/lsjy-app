@@ -235,26 +235,17 @@ const mockOrders = (() => {
 async function loadOrders() {
   orderLoading.value = true
   try {
-    const res = await computingApi.getOrders({
+    const res = await computingApi.adminGetOrders({
       page: orderPagination.page,
       pageSize: orderPagination.pageSize,
       status: filterStatus.value || undefined,
     })
     const data = res.data || {}
-    orderTableData.value = data.items || data.list || []
+    orderTableData.value = data.items || []
     orderPagination.total = data.total || 0
-  } catch {
-    // 使用模拟数据
-    let filtered = [...mockOrders]
-    if (filterStatus.value) filtered = filtered.filter(o => o.status === filterStatus.value)
-    if (filterKeyword.value) filtered = filtered.filter(o => o.orderNo.includes(filterKeyword.value) || o.userName.includes(filterKeyword.value))
-    if (filterDateRange.value && filterDateRange.value[0]) {
-      const [start, end] = filterDateRange.value
-      filtered = filtered.filter(o => o.createdAt >= start && o.createdAt.slice(0, 10) <= end)
-    }
-    orderPagination.total = filtered.length
-    const pageStart = (orderPagination.page - 1) * orderPagination.pageSize
-    orderTableData.value = filtered.slice(pageStart, pageStart + orderPagination.pageSize)
+  } catch (e: any) {
+    ElMessage.error(e.message || '加载订单失败')
+    orderTableData.value = []
   } finally {
     orderLoading.value = false
   }
@@ -286,53 +277,40 @@ function viewDetail(row: any) {
 async function confirmPay(row: any) {
   try {
     await ElMessageBox.confirm(`确认手动确认订单「${row.orderNo}」已付款？金额：¥${row.amount}`)
-    row.status = 'paid'
-    row.paidAt = new Date().toISOString().replace('T', ' ').slice(0, 19)
-    try {
-      await computingApi.createOrder({ action: 'confirm_pay', orderId: row.id })
-    } catch { /* 模拟操作 */ }
+    await computingApi.adminUpdateOrder(row.id, { status: 'paid' })
     ElMessage.success('已确认付款')
+    loadOrders()
     updateStats()
-  } catch {
-    // cancelled
-  }
+  } catch { /* cancelled */ }
 }
 
 async function cancelOrder(row: any) {
   try {
     await ElMessageBox.confirm(`确认取消订单「${row.orderNo}」？`)
-    row.status = 'cancelled'
-    try {
-      await computingApi.createOrder({ action: 'cancel_order', orderId: row.id })
-    } catch { /* 模拟操作 */ }
+    await computingApi.adminUpdateOrder(row.id, { status: 'cancelled' })
     ElMessage.success('订单已取消')
+    loadOrders()
     updateStats()
-  } catch {
-    // cancelled
-  }
+  } catch { /* cancelled */ }
 }
 
 async function refundOrder(row: any) {
   try {
     await ElMessageBox.confirm(`确认对订单「${row.orderNo}」进行退款？金额：¥${row.amount}。退款后不可撤销。`, '退款确认', { type: 'warning' })
-    row.status = 'refunded'
-    try {
-      await computingApi.createOrder({ action: 'refund_order', orderId: row.id })
-    } catch { /* 模拟操作 */ }
+    await computingApi.adminUpdateOrder(row.id, { status: 'refunded' })
     ElMessage.success('退款成功')
+    loadOrders()
     updateStats()
-  } catch {
-    // cancelled
-  }
+  } catch { /* cancelled */ }
 }
 
-// ===== 统计更新 =====
+// ===== 统计更新（从真实数据计算） =====
 function updateStats() {
-  const source = mockOrders
+  const source = orderTableData.value
   statsData.totalOrders = source.length
-  statsData.paidOrders = source.filter(o => o.status === 'paid').length
-  statsData.totalRevenue = source.filter(o => o.status === 'paid').reduce((sum, o) => sum + o.amount, 0).toFixed(1)
-  statsData.pendingOrders = source.filter(o => o.status === 'pending' || o.status === 'processing').length
+  statsData.paidOrders = source.filter((o: any) => o.status === 'paid').length
+  statsData.totalRevenue = source.filter((o: any) => o.status === 'paid').reduce((sum: number, o: any) => sum + Number(o.amount), 0).toFixed(1)
+  statsData.pendingOrders = source.filter((o: any) => o.status === 'pending').length
 }
 
 // ===== 统一加载 =====

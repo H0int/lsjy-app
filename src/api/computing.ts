@@ -49,7 +49,7 @@ export const computingApi = {
     return service.post(`/computing/employees/${id}/stop`).then(r => r.data)
   },
 
-  // --- 增值服务 ---
+  // --- 增值服务（用户端） ---
   getPackages(): Promise<ApiResponse<any[]>> {
     return service.get('/computing/packages').then(r => r.data)
   },
@@ -63,7 +63,54 @@ export const computingApi = {
   },
 
   // --- 导出 ---
-  exportData(params: { type: 'defense' | 'business_plan' | 'competitive_analysis' }): Promise<ApiResponse<any>> {
+  exportData(params: { type: 'defense' | 'business_plan' | 'competitive_analysis' }): Promise<any> {
     return service.post('/computing/export', params, { responseType: 'blob' }).then(r => r.data)
-  }
+  },
+
+  // ===== 管理后台API =====
+
+  // 套餐管理
+  adminGetPackages(): Promise<ApiResponse<any[]>> {
+    return service.get('/computing/admin/packages').then(r => r.data)
+  },
+
+  adminCreatePackage(data: any): Promise<ApiResponse<any>> {
+    return service.post('/computing/admin/packages', data).then(r => r.data)
+  },
+
+  adminUpdatePackage(id: number, data: any): Promise<ApiResponse<any>> {
+    return service.put(`/computing/admin/packages/${id}`, data).then(r => r.data)
+  },
+
+  adminDeletePackage(id: number): Promise<ApiResponse<any>> {
+    return service.delete(`/computing/admin/packages/${id}`).then(r => r.data)
+  },
+
+  // 订单管理
+  adminGetOrders(params?: { page?: number; pageSize?: number; status?: string }): Promise<ApiResponse<PageResult<any>>> {
+    return service.get('/computing/admin/orders', { params }).then(r => r.data)
+  },
+
+  adminUpdateOrder(id: number, data: any): Promise<ApiResponse<any>> {
+    return service.put(`/computing/admin/orders/${id}`, data).then(r => r.data)
+  },
+
+  // 虚拟员工管理（全部）
+  adminGetEmployees(params?: { page?: number; pageSize?: number; industry?: string; status?: string }): Promise<ApiResponse<PageResult<any>>> {
+    return service.get('/computing/admin/employees', { params }).then(r => r.data)
+  },
+
+  // 调度日志（全部）
+  adminGetLogs(params?: { page?: number; pageSize?: number }): Promise<ApiResponse<PageResult<any>>> {
+    return service.get('/computing/admin/logs', { params }).then(r => r.data)
+  },
+
+  // 全局调度配置
+  adminGetConfig(): Promise<ApiResponse<any>> {
+    return service.get('/computing/admin/config').then(r => r.data)
+  },
+
+  adminUpdateConfig(data: any): Promise<ApiResponse<any>> {
+    return service.put('/computing/admin/config', data).then(r => r.data)
+  },
 }

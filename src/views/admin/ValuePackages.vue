@@ -29,8 +29,8 @@
               <el-tag size="small" :type="pkg.type === 'monthly' ? '' : 'warning'">
                 {{ pkg.type === 'monthly' ? '月度' : pkg.type === 'yearly' ? '年度' : pkg.type === 'onetime' ? '一次性' : pkg.type }}
               </el-tag>
-              <el-tag size="small" :type="pkg.status === 'active' ? 'success' : 'info'">
-                {{ pkg.status === 'active' ? '上架' : '下架' }}
+              <el-tag size="small" :type="pkg.isActive ? 'success' : 'info'">
+                {{ pkg.isActive ? '上架' : '下架' }}
               </el-tag>
             </div>
           </div>
@@ -56,8 +56,8 @@
         <!-- 操作 -->
         <div class="flex gap-2 pt-4" style="border-top:1px solid #00f0ff15;">
           <el-button size="small" type="primary" plain @click="openDialog(pkg)">编辑</el-button>
-          <el-button size="small" :type="pkg.status === 'active' ? 'warning' : 'success'" plain @click="toggleStatus(pkg)">
-            {{ pkg.status === 'active' ? '下架' : '上架' }}
+          <el-button size="small" :type="pkg.isActive ? 'warning' : 'success'" plain @click="toggleStatus(pkg)">
+            {{ pkg.isActive ? '下架' : '上架' }}
           </el-button>
           <el-button size="small" type="danger" plain @click="handleDelete(pkg)">删除</el-button>
         </div>
@@ -159,15 +159,18 @@ const mockPackages = [
   },
 ]
 
-// ===== 加载 =====
+// ===== 加载（从管理API获取全部套餐，包含上架/下架状态） =====
 async function loadPackages() {
   loading.value = true
   loadError.value = false
   try {
-    const res = await computingApi.getPackages()
-    packageList.value = res.data || []
-  } catch {
-    packageList.value = [...mockPackages]
+    const res = await computingApi.adminGetPackages()
+    const data = res.data || []
+    packageList.value = Array.isArray(data) ? data : []
+  } catch (e: any) {
+    loadError.value = true
+    ElMessage.error(e.message || '加载套餐失败')
+    packageList.value = []
   } finally {
     loading.value = false
   }
@@ -178,6 +181,7 @@ function openDialog(pkg?: any) {
   if (pkg) {
     Object.assign(form, JSON.parse(JSON.stringify(pkg)))
     form.features = [...(pkg.features || [])]
+    form.status = pkg.isActive ? 'active' : 'inactive'
   } else {
     Object.assign(form, {
       id: null, name: '', type: 'monthly', price: 0, originalPrice: 0,
@@ -195,10 +199,20 @@ async function submitForm() {
     return
   }
   try {
+    const payload = {
+      name: form.name,
+      type: form.type,
+      description: form.name,
+      price: form.price,
+      originalPrice: form.originalPrice,
+      features: form.features,
+      duration: form.type === 'yearly' ? 'year' : 'once',
+      isActive: form.status === 'active',
+    }
     if (form.id) {
-      await computingApi.createOrder({ action: 'update_package', data: form })
+      await computingApi.adminUpdatePackage(form.id, payload)
     } else {
-      await computingApi.createOrder({ action: 'create_package', data: form })
+      await computingApi.adminCreatePackage(payload)
     }
     ElMessage.success('保存成功')
     dialogVisible.value = false
@@ -208,30 +222,29 @@ async function submitForm() {
   }
 }
 
-// ===== 上架/下架 =====
+// ===== 上架/下架（调真实API） =====
 async function toggleStatus(pkg: any) {
-  const action = pkg.status === 'active' ? '下架' : '上架'
+  const newActive = !pkg.isActive
+  const action = newActive ? '上架' : '下架'
   try {
     await ElMessageBox.confirm(`确认${action}套餐「${pkg.name}」？`)
-    pkg.status = pkg.status === 'active' ? 'inactive' : 'active'
-    // 尝试调API
-    try {
-      await computingApi.createOrder({ action: 'toggle_package_status', packageId: pkg.id, status: pkg.status })
-    } catch { /* 模拟操作 */ }
+    await computingApi.adminUpdatePackage(pkg.id, { isActive: newActive })
     ElMessage.success(`${action}成功`)
+    loadPackages()
   } catch {
-    // cancelled
+    // cancelled or error
   }
 }
 
-// ===== 删除 =====
+// ===== 删除（调真实API） =====
 async function handleDelete(pkg: any) {
   try {
     await ElMessageBox.confirm(`确认删除套餐「${pkg.name}」？此操作不可恢复。`)
-    packageList.value = packageList.value.filter(p => p.id !== pkg.id)
+    await computingApi.adminDeletePackage(pkg.id)
     ElMessage.success('删除成功')
+    loadPackages()
   } catch {
-    // cancelled
+    // cancelled or error
   }
 }
 

@@ -231,23 +231,18 @@ const mockEmployees = (() => {
 async function loadEmployees() {
   employeeLoading.value = true
   try {
-    const res = await computingApi.getEmployees({
+    const res = await computingApi.adminGetEmployees({
       page: employeePagination.page,
       pageSize: employeePagination.pageSize,
+      industry: filterIndustry.value || undefined,
       status: filterStatus.value || undefined,
     })
     const data = res.data || {}
-    employeeTableData.value = data.items || data.list || []
+    employeeTableData.value = data.items || []
     employeePagination.total = data.total || 0
-  } catch {
-    // 使用模拟数据
-    let filtered = [...mockEmployees]
-    if (filterIndustry.value) filtered = filtered.filter(e => e.industry === filterIndustry.value)
-    if (filterStatus.value) filtered = filtered.filter(e => e.status === filterStatus.value)
-    if (filterKeyword.value) filtered = filtered.filter(e => e.name.includes(filterKeyword.value) || e.userName.includes(filterKeyword.value))
-    employeePagination.total = filtered.length
-    const start = (employeePagination.page - 1) * employeePagination.pageSize
-    employeeTableData.value = filtered.slice(start, start + employeePagination.pageSize)
+  } catch (e: any) {
+    ElMessage.error(e.message || '加载员工数据失败')
+    employeeTableData.value = []
   } finally {
     employeeLoading.value = false
   }
@@ -267,13 +262,11 @@ const maxUserEmployees = computed(() => Math.max(...userStats.value.map(u => u.e
 
 function calcUserStats() {
   const map = new Map<string, { userName: string; industry: string; employeeCount: number }>()
-  const source = employeeTableData.value.length > 0 ? [...mockEmployees] : mockEmployees
-  source.forEach(e => {
-    if (!filterKeyword.value || e.userName.includes(filterKeyword.value)) {
-      const entry = map.get(e.userName) || { userName: e.userName, industry: e.industry, employeeCount: 0 }
-      entry.employeeCount++
-      map.set(e.userName, entry)
-    }
+  employeeTableData.value.forEach((e: any) => {
+    const name = e.name || '未知'
+    const entry = map.get(name) || { userName: name, industry: e.industry || '', employeeCount: 0 }
+    entry.employeeCount++
+    map.set(name, entry)
   })
   userStats.value = Array.from(map.values()).sort((a, b) => b.employeeCount - a.employeeCount).slice(0, 10)
 }
@@ -311,10 +304,11 @@ async function deleteEmployee(row: any) {
 
 // ===== 统计加载 =====
 function updateStats() {
-  statsData.totalEmployees = mockEmployees.length
-  statsData.runningEmployees = mockEmployees.filter(e => e.status === 'running').length
-  statsData.totalTasks = mockEmployees.reduce((sum, e) => sum + e.completedTasks, 0)
-  statsData.totalHours = Math.floor(mockEmployees.reduce((sum, e) => sum + e.workHours, 0))
+  const source = employeeTableData.value
+  statsData.totalEmployees = source.length
+  statsData.runningEmployees = source.filter((e: any) => e.status === 'active').length
+  statsData.totalTasks = source.reduce((sum: number, e: any) => sum + (e.tasksCompleted || 0), 0)
+  statsData.totalHours = source.reduce((sum: number, e: any) => sum + (e.hoursWorked || 0), 0)
 }
 
 // ===== 统一加载 =====

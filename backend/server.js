@@ -2851,6 +2851,91 @@ app.post('/api/v1/computing/export', authCheck, (req, res) => {
   res.send(content[type] || content.defense);
 });
 
+// ===== 管理后台：套餐CRUD =====
+app.get('/api/v1/computing/admin/packages', authCheck, (req, res) => {
+  res.json({ code: 0, message: 'ok', data: computingStore.packages });
+});
+
+app.post('/api/v1/computing/admin/packages', authCheck, (req, res) => {
+  const pkg = { id: computingStore.packages.length + 1, name: req.body.name, type: req.body.type || 'custom', description: req.body.description || '', price: Number(req.body.price) || 0, originalPrice: Number(req.body.originalPrice) || 0, features: req.body.features || [], duration: req.body.duration || 'year', isActive: true, sortOrder: Number(req.body.sortOrder) || computingStore.packages.length + 1, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+  computingStore.packages.push(pkg);
+  res.json({ code: 0, message: '套餐已创建', data: pkg });
+});
+
+app.put('/api/v1/computing/admin/packages/:id', authCheck, (req, res) => {
+  const id = parseInt(req.params.id);
+  const pkg = computingStore.packages.find(p => p.id === id);
+  if (!pkg) return res.status(404).json({ code: 404, message: '套餐不存在' });
+  if (req.body.name !== undefined) pkg.name = req.body.name;
+  if (req.body.description !== undefined) pkg.description = req.body.description;
+  if (req.body.price !== undefined) pkg.price = Number(req.body.price);
+  if (req.body.originalPrice !== undefined) pkg.originalPrice = Number(req.body.originalPrice);
+  if (req.body.features !== undefined) pkg.features = req.body.features;
+  if (req.body.duration !== undefined) pkg.duration = req.body.duration;
+  if (req.body.sortOrder !== undefined) pkg.sortOrder = Number(req.body.sortOrder);
+  if (req.body.isActive !== undefined) pkg.isActive = Boolean(req.body.isActive);
+  pkg.updatedAt = new Date().toISOString();
+  res.json({ code: 0, message: '套餐已更新', data: pkg });
+});
+
+app.delete('/api/v1/computing/admin/packages/:id', authCheck, (req, res) => {
+  const id = parseInt(req.params.id);
+  const idx = computingStore.packages.findIndex(p => p.id === id);
+  if (idx === -1) return res.status(404).json({ code: 404, message: '套餐不存在' });
+  computingStore.packages.splice(idx, 1);
+  res.json({ code: 0, message: '套餐已删除' });
+});
+
+// 管理后台：订单管理
+app.get('/api/v1/computing/admin/orders', authCheck, (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const pageSize = parseInt(req.query.pageSize) || 20;
+  const status = req.query.status;
+  let list = [...computingStore.valueOrders];
+  if (status) list = list.filter(o => o.status === status);
+  res.json({ code: 0, message: 'ok', data: { items: list.slice((page-1)*pageSize, page*pageSize), total: list.length, page, pageSize } });
+});
+
+app.put('/api/v1/computing/admin/orders/:id', authCheck, (req, res) => {
+  const id = parseInt(req.params.id);
+  const order = computingStore.valueOrders.find(o => o.id === id);
+  if (!order) return res.status(404).json({ code: 404, message: '订单不存在' });
+  if (req.body.status === 'paid') { order.status = 'paid'; order.paidAt = new Date().toISOString(); }
+  else if (req.body.status === 'cancelled') order.status = 'cancelled';
+  else if (req.body.status === 'refunded') order.status = 'refunded';
+  else if (req.body.status) order.status = req.body.status;
+  res.json({ code: 0, message: '订单已更新', data: order });
+});
+
+// 管理后台：所有虚拟员工
+app.get('/api/v1/computing/admin/employees', authCheck, (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const pageSize = parseInt(req.query.pageSize) || 20;
+  const industry = req.query.industry;
+  const status = req.query.status;
+  let list = [...computingStore.employees];
+  if (industry) list = list.filter(e => e.industry === industry);
+  if (status) list = list.filter(e => e.status === status);
+  res.json({ code: 0, message: 'ok', data: { items: list.slice((page-1)*pageSize, page*pageSize), total: list.length, page, pageSize } });
+});
+
+// 管理后台：调度日志（全部）
+app.get('/api/v1/computing/admin/logs', authCheck, (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const pageSize = parseInt(req.query.pageSize) || 20;
+  res.json({ code: 0, message: 'ok', data: { items: computingStore.dispatchLogs.slice((page-1)*pageSize, page*pageSize), total: computingStore.dispatchLogs.length, page, pageSize } });
+});
+
+// 管理后台：全局调度配置
+app.put('/api/v1/computing/admin/config', authCheck, (req, res) => {
+  computingStore.globalConfig = { ...computingStore.globalConfig, ...req.body };
+  res.json({ code: 0, message: '全局配置已保存', data: computingStore.globalConfig });
+});
+
+app.get('/api/v1/computing/admin/config', authCheck, (req, res) => {
+  res.json({ code: 0, message: 'ok', data: computingStore.globalConfig || { enabled: true, defaultStrategy: 'balanced' } });
+});
+
 // ===== 访客中心 =====
 const visitorsStore = [];
 const clickStore = [];

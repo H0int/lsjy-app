@@ -905,14 +905,14 @@ async function loadEmployees() {
 async function loadPackages() {
   try {
     const res = await computingApi.getPackages()
-    const data = res.data?.data || res.data || []
+    const data = res.data || []
     if (Array.isArray(data) && data.length > 0) {
       servicePackages.value = data
     } else {
-      servicePackages.value = defaultPackages
+      servicePackages.value = []
     }
   } catch {
-    servicePackages.value = defaultPackages
+    servicePackages.value = []
   }
 }
 
