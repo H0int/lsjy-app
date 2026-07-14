@@ -1,4 +1,5 @@
 services:
+  # ===== 已有服务：Matomo 统计 + Chroma 向量库 =====
   lsjy-matomo-db:
     image: mariadb:10.11
     container_name: lsjy-matomo-db
@@ -50,6 +51,31 @@ services:
     networks:
       - lsjy_skill_net
 
+  # ===== 新增：Crawl4AI — AI网页爬虫（1容器，轻量） =====
+  # GitHub: unclecode/crawl4ai ⭐67K
+  # 功能：输入URL爬取网页，输出LLM友好的Markdown/JSON
+  # API端口：11235
+  lsjy-crawl4ai:
+    image: unclecode/crawl4ai:latest
+    container_name: lsjy-crawl4ai
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:11235:11235"
+    environment:
+      CRAWL4AI_API_TOKEN: ${CRAWL4AI_API_TOKEN:-lsjy_crawl4ai_2026_secret}
+      # LLM支持（可选，使用平台已有的免费模型）
+      LLM_PROVIDER: ${CRAWL4AI_LLM_PROVIDER:-openai/glm-4-flash}
+      LLM_BASE_URL: ${CRAWL4AI_LLM_BASE_URL:-https://open.bigmodel.cn/api/paas/v4}
+      LLM_API_KEY: ${CRAWL4AI_LLM_API_KEY:-}
+      LLM_TEMPERATURE: "0.7"
+    volumes:
+      - lsjy_crawl4ai_data:/app/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    shm_size: "1g"
+    networks:
+      - lsjy_skill_net
+
 networks:
   lsjy_skill_net:
     name: lsjy_skill_net
@@ -58,3 +84,4 @@ volumes:
   lsjy_matomo_db:
   lsjy_matomo_app:
   lsjy_chroma_data:
+  lsjy_crawl4ai_data:
