@@ -1512,7 +1512,7 @@ async function submitPayProof() {
 const defaultPackages = [
   {
     name: '虚拟员工年度会员',
-    icon: '&#x1F9D1;&#x200D;&#x1F4BC;',
+    icon: '👨‍💼',
     iconBg: 'linear-gradient(135deg, #00f0ff, #0080ff)',
     description: '解锁不限量行业AI员工创建权限，覆盖8大行业全岗位类型，7x24小时全自动运行，支持自定义工作流与技能配置。',
     features: [
@@ -1530,7 +1530,7 @@ const defaultPackages = [
   },
   {
     name: '高阶算力调度专属权限',
-    icon: '&#x26A1;',
+    icon: '⚡',
     iconBg: 'linear-gradient(135deg, #ff2d95, #b700ff)',
     description: '专享高阶算力调度引擎，跨平台多模型智能切换，优先使用低成本通道，Token消耗降低35%以上。',
     features: [
@@ -1548,7 +1548,7 @@ const defaultPackages = [
   },
   {
     name: '行业定制智能体',
-    icon: '&#x1F9E0;',
+    icon: '🧠',
     iconBg: 'linear-gradient(135deg, #ffb800, #ff8c00)',
     description: '根据企业实际业务场景，量身定制专属AI智能体。包含知识库搭建、业务流程训练、专属Prompt工程等全套服务。',
     features: [
@@ -1566,7 +1566,7 @@ const defaultPackages = [
   },
   {
     name: '创业赛事项目技术咨询',
-    icon: '&#x1F3C6;',
+    icon: '🏆',
     iconBg: 'linear-gradient(135deg, #00ff88, #00cc66)',
     description: '面向创业赛事与孵化项目，提供从商业策划、竞品分析到路演答辩的全链路AI技术咨询服务。',
     features: [
