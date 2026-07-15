@@ -5,12 +5,20 @@
       <div class="welcome-bg-grid"></div>
       <div class="welcome-glow"></div>
       <div class="relative z-10 flex items-center gap-4">
-        <img
-          src="/company-logo.jpg"
-          alt="罗圣纪元"
-          class="w-14 h-14 rounded-xl object-cover"
-          style="border: 2px solid rgba(0,240,255,0.4); box-shadow: 0 0 15px rgba(0,240,255,0.3);"
-        />
+        <div
+          v-if="userAvatar"
+          class="w-14 h-14 rounded-xl object-cover flex-shrink-0"
+          style="border: 2px solid rgba(0,240,255,0.4); box-shadow: 0 0 15px rgba(0,240,255,0.3); overflow:hidden;"
+        >
+          <img :src="userAvatar" alt="头像" class="w-full h-full object-cover" />
+        </div>
+        <div
+          v-else
+          class="w-14 h-14 rounded-xl flex items-center justify-center text-xl font-bold flex-shrink-0"
+          style="background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-magenta)); border: 2px solid rgba(0,240,255,0.4); box-shadow: 0 0 15px rgba(0,240,255,0.3); color: #000;"
+        >
+          {{ (authStore.nickname || 'U')[0] }}
+        </div>
         <div>
           <h1 class="text-2xl font-bold mb-1" style="font-family: 'JetBrains Mono', monospace; color: var(--cyber-text);">
             你好，{{ authStore.nickname }}
@@ -264,6 +272,7 @@ import { ElMessage } from 'element-plus'
 const router = useRouter()
 const authStore = useAuthStore()
 const showGroupQr = ref(false)
+const userAvatar = ref(authStore.user?.avatar || localStorage.getItem('lsjy_user_avatar') || '')
 const recentExpanded = ref(false)
 
 // 统计卡片 - 带跳转路径
