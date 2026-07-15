@@ -328,12 +328,14 @@ export class ComputingService {
     const pkg = await this.packageRepo.findOne({ where: { id } });
     if (!pkg) throw new NotFoundException('套餐不存在');
     const allowed = ['name', 'description', 'price', 'originalPrice', 'features', 'duration', 'isActive', 'sortOrder'];
+    const pkgAny = pkg as any;
+    const bodyAny = body as any;
     for (const key of allowed) {
-      if (body[key] !== undefined) {
-        if (key === 'price' || key === 'originalPrice') pkg[key] = Number(body[key]);
-        else if (key === 'sortOrder') pkg[key] = Number(body[key]);
-        else if (key === 'isActive') pkg[key] = Boolean(body[key]);
-        else pkg[key] = body[key];
+      if (bodyAny[key] !== undefined) {
+        if (key === 'price' || key === 'originalPrice') pkgAny[key] = Number(bodyAny[key]);
+        else if (key === 'sortOrder') pkgAny[key] = Number(bodyAny[key]);
+        else if (key === 'isActive') pkgAny[key] = Boolean(bodyAny[key]);
+        else pkgAny[key] = bodyAny[key];
       }
     }
     return await this.packageRepo.save(pkg);
@@ -375,7 +377,7 @@ export class ComputingService {
   }
 
   async adminGetLogs(page: number, pageSize: number) {
-    const [items, total] = await this.logRepo.findAndCount({
+    const [items, total] = await this.dispatchLogRepo.findAndCount({
       order: { createdAt: 'DESC' },
       skip: (page - 1) * pageSize, take: pageSize,
     });
