@@ -390,6 +390,78 @@
           </div>
         </div>
 
+        <!-- 支付弹窗 -->
+        <Teleport to="body">
+          <div
+            v-if="payDialogVisible && selectedPkg"
+            class="fixed inset-0 z-50 flex items-center justify-center"
+            style="background: rgba(0,0,0,0.75); backdrop-filter: blur(6px);"
+            @click.self="payDialogVisible = false"
+          >
+            <div style="width: 420px; max-width: 92vw; background: linear-gradient(135deg, #0d0d2b, #1a0a3a); border: 1px solid rgba(0,240,255,0.2); border-radius: 16px; overflow: hidden; box-shadow: 0 0 40px rgba(0,240,255,0.1), 0 20px 60px rgba(0,0,0,0.6);">
+              <!-- 头部 -->
+              <div style="display:flex; align-items:center; gap:10px; padding:18px 22px; border-bottom: 1px solid rgba(0,240,255,0.1);">
+                <span style="font-size:22px;">&#x1F4B3;</span>
+                <span style="flex:1; font-size:16px; font-weight:700; color:#fff; font-family:'JetBrains Mono',monospace;">购买增值服务</span>
+                <button
+                  style="width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.4);background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);cursor:pointer;font-size:14px;"
+                  @click="payDialogVisible = false"
+                >&#x2715;</button>
+              </div>
+              <!-- 套餐信息 -->
+              <div style="padding:20px 22px 0;">
+                <div style="font-size:16px; font-weight:600; color:#fff; margin-bottom:6px;">{{ selectedPkg.name }}</div>
+                <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:4px;">
+                  <span style="font-size:28px; font-weight:800; color:#ff4d6a;">&#x165D;{{ selectedPkg.currentPrice }}</span>
+                  <span style="font-size:14px; color:rgba(255,255,255,0.4); text-decoration:line-through;">&#x165D;{{ selectedPkg.originalPrice }}</span>
+                  <span style="font-size:13px; color:rgba(255,255,255,0.4);">/{{ selectedPkg.unit }}</span>
+                </div>
+                <div style="font-size:12px; color:rgba(255,255,255,0.4); margin-bottom:16px;">{{ selectedPkg.description }}</div>
+              </div>
+              <!-- 支付方式切换 -->
+              <div style="padding:0 22px;">
+                <div style="display:flex; gap:8px; margin-bottom:16px;">
+                  <div
+                    v-for="m in [{key:'wechat',label:'微信支付',img:'/pay-wechat.png'},{key:'alipay',label:'支付宝',img:'/pay-alipay.jpg'},{key:'qq',label:'QQ支付',img:'/pay-qq.png'}]"
+                    :key="m.key"
+                    @click="payMethod = m.key as any"
+                    style="flex:1; padding:10px 8px; border-radius:10px; text-align:center; cursor:pointer; transition:all 0.2s; font-size:12px; color:rgba(255,255,255,0.6);"
+                    :style="payMethod === m.key
+                      ? 'background:rgba(0,240,255,0.1); border:1px solid rgba(0,240,255,0.4); color:#00f0ff;'
+                      : 'background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);'"
+                  >{{ m.label }}</div>
+                </div>
+              </div>
+              <!-- 收款码 -->
+              <div style="padding:0 22px 20px; text-align:center;">
+                <div style="display:inline-block; padding:16px; background:#fff; border-radius:12px; margin-bottom:12px;">
+                  <img
+                    :src="payMethod === 'wechat' ? '/pay-wechat.png' : payMethod === 'alipay' ? '/pay-alipay.jpg' : '/pay-qq.png'"
+                    :alt="payMethod === 'wechat' ? '微信收款码' : payMethod === 'alipay' ? '支付宝收款码' : 'QQ收款码'"
+                    style="width:200px; height:200px; object-fit:contain;"
+                  />
+                </div>
+                <div style="font-size:12px; color:rgba(255,255,255,0.4); line-height:1.8;">
+                  请使用{{ payMethod === 'wechat' ? '微信' : payMethod === 'alipay' ? '支付宝' : 'QQ' }}扫一扫付款<br>
+                  付款金额：<span style="color:#ff4d6a; font-weight:600;">&#x165D;{{ selectedPkg.currentPrice }}</span><br>
+                  付款后请截图保存凭证，联系客服开通服务
+                </div>
+              </div>
+              <!-- 底部按钮 -->
+              <div style="padding:0 22px 18px; display:flex; gap:12px;">
+                <button
+                  style="flex:1; padding:12px; background:rgba(255,255,255,0.08); color:rgba(255,255,255,0.7); border:1px solid rgba(255,255,255,0.1); border-radius:10px; cursor:pointer; font-size:14px; font-family:'JetBrains Mono',monospace;"
+                  @click="payDialogVisible = false"
+                >取消</button>
+                <button
+                  style="flex:1; padding:12px; background:linear-gradient(135deg, #00f0ff, #a855f7); color:#000; border:none; border-radius:10px; cursor:pointer; font-size:14px; font-weight:700; font-family:'JetBrains Mono',monospace;"
+                  @click="payDialogVisible = false; ElMessage.success('已收到您的付款，客服将尽快为您开通服务')"
+                >我已完成付款</button>
+              </div>
+            </div>
+          </div>
+        </Teleport>
+
         <!-- 一键导出 -->
         <div class="section-panel export-panel">
           <h3 class="section-title glow-cyan">&#x1F4E5; 一键导出</h3>
@@ -1317,6 +1389,9 @@ function toggleEmployeeExpand(emp: any) {
 // ===== Tab3: 增值服务 =====
 const servicePackages = ref<any[]>([])
 const exporting = ref('')
+const payDialogVisible = ref(false)
+const selectedPkg = ref<any>(null)
+const payMethod = ref<'wechat' | 'alipay' | 'qq'>('wechat')
 
 const defaultPackages = [
   {
@@ -1971,21 +2046,9 @@ async function submitEditEmployee() {
 }
 
 async function handleBuyPackage(pkg: any) {
-  try {
-    await ElMessageBox.confirm(
-      `确认购买「${pkg.name}」套餐，价格 ¥${pkg.currentPrice}/${pkg.unit}？`,
-      '确认购买',
-      { confirmButtonText: '确认支付', cancelButtonText: '取消', type: 'info' }
-    )
-    await computingApi.createOrder({
-      packageKey: pkg.packageKey,
-      name: pkg.name,
-      amount: parseFloat(pkg.currentPrice),
-    })
-    ElMessage.success('订单创建成功，请前往支付')
-  } catch {
-    // 取消购买
-  }
+  selectedPkg.value = pkg
+  payMethod.value = 'wechat'
+  payDialogVisible.value = true
 }
 
 async function handleExport(type: string) {
