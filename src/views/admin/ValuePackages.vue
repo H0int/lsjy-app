@@ -139,26 +139,6 @@ const form = reactive<any>({
   status: 'active',
 })
 
-// ===== 模拟数据 =====
-const mockPackages = [
-  {
-    id: 1, name: '算力畅享月卡', type: 'monthly', price: 99, originalPrice: 199, isHot: true, status: 'active',
-    features: ['每月100万Token算力', '智能调度自动优化', '3个虚拟员工并行', '优先响应通道', '7x12小时技术支持'],
-  },
-  {
-    id: 2, name: '算力至尊季卡', type: 'monthly', price: 259, originalPrice: 597, isHot: false, status: 'active',
-    features: ['每月500万Token算力', '全部AI模型可用', '10个虚拟员工并行', '专属调度策略', '7x24小时技术支持', '数据分析报告'],
-  },
-  {
-    id: 3, name: '虚拟员工年费套餐', type: 'yearly', price: 1999, originalPrice: 4788, isHot: true, status: 'active',
-    features: ['不限Token用量', '无限虚拟员工', '全行业岗位模板', '定制化AI训练', '专属客户经理', '优先内测资格'],
-  },
-  {
-    id: 4, name: '算力体验包', type: 'onetime', price: 9.9, originalPrice: 29.9, isHot: false, status: 'inactive',
-    features: ['10万Token体验额度', '1个虚拟员工试用', '基础调度功能', '有效期7天'],
-  },
-]
-
 // ===== 加载（从管理API获取全部套餐，包含上架/下架状态） =====
 async function loadPackages() {
   loading.value = true

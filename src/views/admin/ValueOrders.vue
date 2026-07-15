@@ -196,42 +196,6 @@ const orderPagination = reactive({ page: 1, pageSize: 10, total: 0 })
 const detailDialogVisible = ref(false)
 const currentDetail = ref<any>(null)
 
-// ===== 模拟数据 =====
-const mockOrders = (() => {
-  const users = ['张明', '李晓华', '王芳', '陈浩', '赵丽', '刘强', '周敏', '吴涛']
-  const packages = [
-    { name: '算力畅享月卡', price: 99 },
-    { name: '算力至尊季卡', price: 259 },
-    { name: '虚拟员工年费套餐', price: 1999 },
-    { name: '算力体验包', price: 9.9 },
-  ]
-  const statuses = ['paid', 'paid', 'paid', 'pending', 'pending', 'cancelled', 'refunded', 'processing']
-  const payMethods = ['wechat', 'alipay', 'coin', 'bank_transfer']
-  const list = []
-  for (let i = 0; i < 73; i++) {
-    const pkg = packages[i % packages.length]
-    const status = statuses[i % statuses.length]
-    const paid = status === 'paid' || status === 'refunded'
-    const month = String(Math.floor(Math.random() * 7) + 1).padStart(2, '0')
-    const day = String(Math.floor(Math.random() * 28) + 1).padStart(2, '0')
-    const hour = String(Math.floor(Math.random() * 24)).padStart(2, '0')
-    const min = String(Math.floor(Math.random() * 60)).padStart(2, '0')
-    list.push({
-      id: i + 1,
-      orderNo: `VP${2026}${month}${day}${String(i + 1).padStart(6, '0')}`,
-      userName: users[i % users.length],
-      userId: 10001 + (i % users.length),
-      packageName: pkg.name,
-      amount: pkg.price,
-      payMethod: payMethods[i % payMethods.length],
-      status,
-      createdAt: `2026-${month}-${day} ${hour}:${min}:00`,
-      paidAt: paid ? `2026-${month}-${day} ${hour}:${String(Math.min(59, parseInt(min) + Math.floor(Math.random() * 10) + 1)).padStart(2, '0')}:00` : null,
-    })
-  }
-  return list.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-})()
-
 async function loadOrders() {
   orderLoading.value = true
   try {

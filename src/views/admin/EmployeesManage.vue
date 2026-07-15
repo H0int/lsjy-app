@@ -201,33 +201,6 @@ const employeeLoading = ref(false)
 const employeeTableData = ref<any[]>([])
 const employeePagination = reactive({ page: 1, pageSize: 10, total: 0 })
 
-// 模拟数据
-const mockEmployees = (() => {
-  const names = ['小智助手', '客服小美', '文案专家', '数据分析员', '法务顾问', '财务助理', '教育导师', '营销策划', '翻译官', '代码审查员',
-    '设计顾问', '人事助理', '运营专员', '产品经理', '市场分析师']
-  const users = ['张明', '李晓华', '王芳', '陈浩', '赵丽', '刘强', '周敏', '吴涛']
-  const positions = ['客服', '文案', '数据分析师', '法务', '财务', '教师', '营销', '翻译', '开发', '设计']
-  const statuses = ['running', 'running', 'running', 'stopped', 'stopped', 'error']
-  const list = []
-  for (let i = 0; i < 58; i++) {
-    const userName = users[i % users.length]
-    const industry = industries[i % industries.length]
-    list.push({
-      id: i + 1,
-      name: names[i % names.length] + (i >= names.length ? ` (${Math.floor(i / names.length) + 1})` : ''),
-      userName,
-      userId: 10001 + (i % users.length),
-      industry,
-      position: positions[i % positions.length],
-      status: statuses[i % statuses.length],
-      completedTasks: Math.floor(Math.random() * 500 + 10),
-      workHours: parseFloat((Math.random() * 200 + 5).toFixed(1)),
-      createdAt: `2026-${String(Math.floor(Math.random() * 7) + 1).padStart(2, '0')}-${String(Math.floor(Math.random() * 28) + 1).padStart(2, '0')} ${String(Math.floor(Math.random() * 24)).padStart(2, '0')}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}:00`,
-    })
-  }
-  return list
-})()
-
 async function loadEmployees() {
   employeeLoading.value = true
   try {

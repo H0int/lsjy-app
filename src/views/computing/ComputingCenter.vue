@@ -838,17 +838,8 @@ async function loadDispatchLogs() {
     dispatchLogs.value = data.items || data.list || []
     logsTotal.value = data.total || 0
   } catch {
-    // 生成模拟日志
-    dispatchLogs.value = [
-      { createdAt: '2025-07-14 14:32:18', taskType: '文本生成', fromModel: '智谱', toModel: 'DeepSeek', savedTokens: 4280 },
-      { createdAt: '2025-07-14 13:18:45', taskType: '对话应答', fromModel: '豆包', toModel: '混元', savedTokens: 2150 },
-      { createdAt: '2025-07-14 11:05:22', taskType: '代码分析', fromModel: '通义', toModel: 'DeepSeek', savedTokens: 8720 },
-      { createdAt: '2025-07-14 09:47:33', taskType: '内容创作', fromModel: '智谱', toModel: '混元', savedTokens: 3150 },
-      { createdAt: '2025-07-13 22:15:08', taskType: '数据分析', fromModel: '豆包', toModel: 'DeepSeek', savedTokens: 5600 },
-      { createdAt: '2025-07-13 20:33:51', taskType: '翻译任务', fromModel: '智谱', toModel: '豆包', savedTokens: 1800 },
-      { createdAt: '2025-07-13 18:02:14', taskType: '文案生成', fromModel: '通义', toModel: 'DeepSeek', savedTokens: 6240 },
-    ]
-    logsTotal.value = dispatchLogs.value.length
+    dispatchLogs.value = []
+    logsTotal.value = 0
   } finally {
     logsLoading.value = false
   }
