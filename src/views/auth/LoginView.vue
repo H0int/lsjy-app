@@ -17,7 +17,7 @@
       <div class="logo-section">
         <div class="logo-ring">
           <div class="logo-ring-inner">
-            <img src="/company-logo.jpg" alt="罗圣纪元" class="logo-img" />
+            <img src="/company-logo.png" alt="罗圣纪元" class="logo-img" />
           </div>
           <div class="logo-ring-glow"></div>
         </div>
@@ -464,8 +464,8 @@ async function forgotResetPassword() {
   width: 100%; height: 100%;
   border-radius: 50%;
   overflow: hidden;
-  border: 2px solid rgba(0, 240, 255, 0.4);
-  box-shadow: 0 0 20px rgba(0, 240, 255, 0.2), 0 0 40px rgba(0, 240, 255, 0.1);
+  border: none;
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.15), 0 0 50px rgba(0, 240, 255, 0.08);
   animation: logoPulse 3s ease-in-out infinite;
   position: relative;
   z-index: 1;
@@ -473,12 +473,13 @@ async function forgotResetPassword() {
 .logo-ring-inner::after {
   content: '';
   position: absolute;
-  inset: -2px;
+  inset: 0;
   border-radius: 50%;
   border: 2px solid transparent;
   border-top-color: var(--cyber-cyan);
   border-right-color: var(--cyber-purple);
   animation: logoSpin 4s linear infinite;
+  pointer-events: none;
 }
 @keyframes logoSpin { to { transform: rotate(360deg); } }
 @keyframes logoPulse {
