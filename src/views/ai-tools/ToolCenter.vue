@@ -404,11 +404,7 @@ async function loadSkillsStatus() {
 }
 
 function openSkill(skill: any) {
-  if (skill.toolId) {
-    router.push(`/tools/${skill.toolId}`)
-  } else {
-    ElMessage.info(`${skill.displayName}功能开发中`)
-  }
+  router.push(`/console/tools/skill/analysis?skill=${skill.name}`)
 }
 
 onMounted(() => {

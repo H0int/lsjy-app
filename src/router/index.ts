@@ -23,6 +23,7 @@ const routes: RouteRecordRaw[] = [
     children: [
       { path: 'dashboard', name: 'Dashboard', component: () => import('@/views/dashboard/DashboardView.vue'), meta: { title: '控制台', icon: '🏠' } },
       { path: 'tools', name: 'ToolCenter', component: () => import('@/views/ai-tools/ToolCenter.vue'), meta: { title: 'AI工具中心', icon: '🤖' } },
+      { path: 'tools/skill/analysis', name: 'OpenSourceSkillAnalysis', component: () => import('@/views/ai-tools/OpenSourceSkillAnalysis.vue'), meta: { title: '开源AI技能分析', hidden: true } },
       { path: 'tools/:id', name: 'ToolDetail', component: () => import('@/views/ai-tools/ToolDetail.vue'), meta: { title: '工具详情', hidden: true } },
       { path: 'chat', name: 'AgentChat', component: () => import('@/views/chat/AgentChat.vue'), meta: { title: '罗圣AI', icon: '🤖' } },
       { path: 'profile', name: 'Profile', component: () => import('@/views/profile/ProfileView.vue'), meta: { title: '个人中心', icon: '👤' } },
