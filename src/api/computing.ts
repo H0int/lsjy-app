@@ -114,7 +114,16 @@ export const computingApi = {
     return service.put('/computing/admin/config', data).then(r => r.data)
   },
 
-  // ===== 一键部署第三方平台 =====
+  // ===== AI员工接入与分享 =====
+  getEmployeeAccess(employeeId: number): Promise<ApiResponse<any>> {
+    return service.get(`/computing/employee/${employeeId}/access`).then(r => r.data)
+  },
+
+  generateEmbedCode(employeeId: number, options: any): Promise<ApiResponse<any>> {
+    return service.post(`/computing/employee/${employeeId}/embed-code`, options).then(r => r.data)
+  },
+
+  // ===== 一键部署第三方平台（旧版兼容） =====
   deployToPlatform(data: { employeeId: number; platform: string }): Promise<ApiResponse<any>> {
     return service.post('/computing/admin/employee/deploy', data).then(r => r.data)
   },

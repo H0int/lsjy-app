@@ -270,17 +270,33 @@ export class ComputingController {
     return { code: 0, message: '工具价格已更新', data };
   }
 
-  // ====================== 一键部署第三方平台 ======================
+  // ====================== AI员工接入与分享 ======================
+
+  @Get('employee/:id/access')
+  @ApiOperation({ summary: '获取AI员工全部接入方式（分享链接+各平台配置）' })
+  async getEmployeeAccess(@Param('id') id: number, @CurrentUser('id') userId: number) {
+    const data = await this.computingService.getEmployeeAccess(+id);
+    return { code: 0, message: 'ok', data };
+  }
+
+  @Post('employee/:id/embed-code')
+  @ApiOperation({ summary: '生成网页嵌入代码' })
+  async generateEmbedCode(@Param('id') id: number, @Body() body: any, @CurrentUser('id') userId: number) {
+    const code = this.computingService.generateEmbedCode(+id, body);
+    return { code: 0, message: 'ok', data: { embedCode: code } };
+  }
+
+  // ---- 兼容旧接口 ----
 
   @Post('admin/employee/deploy')
-  @ApiOperation({ summary: '一键部署AI员工到第三方平台' })
+  @ApiOperation({ summary: '一键部署AI员工到第三方平台（旧版兼容）' })
   async deployEmployeeToPlatform(@Body() body: { employeeId: number; platform: string }) {
     const data = await this.computingService.deployEmployeeIntegration(body.employeeId, body.platform);
     return { code: 0, message: '部署成功', data };
   }
 
   @Get('admin/employee/deploy/:employeeId')
-  @ApiOperation({ summary: '获取AI员工部署配置' })
+  @ApiOperation({ summary: '获取AI员工部署配置（旧版兼容）' })
   async getEmployeeDeployments(@Param('employeeId') employeeId: number) {
     const data = await this.computingService.getEmployeeDeployments(+employeeId);
     return { code: 0, message: 'ok', data };

@@ -420,55 +420,158 @@ export class ComputingService {
     }
   }
 
-  // ====================== 一键部署第三方平台 ======================
+  // ====================== AI员工部署与分享 ======================
 
   private deploymentStore = new Map<number, Map<string, any>>();
+  private readonly FRONTEND_BASE = 'https://lsjyapp.cn';
+  private readonly API_BASE = 'https://api.lsjyapp.cn/api/v1';
 
-  async deployEmployeeIntegration(employeeId: number, platform: string): Promise<any> {
+  /** 获取AI员工的全部接入方式（分享链接、各平台配置） */
+  async getEmployeeAccess(employeeId: number): Promise<any> {
     const employee = await this.employeeRepo.findOne({ where: { id: employeeId } });
     if (!employee) throw new NotFoundException('AI员工不存在');
 
-    const token = this.generateToken(32);
-    const baseUrl = 'https://api.lsjyapp.cn/api/v1';
+    const shareToken = this.ensureShareToken(employeeId);
+    const shareUrl = `${this.FRONTEND_BASE}/#/chat/${employeeId}?token=${shareToken}`;
+    const qrCodeUrl = `${this.API_BASE}/computing/employee/${employeeId}/qrcode?token=${shareToken}`;
+
+    return {
+      employeeId,
+      employeeName: employee.name,
+      industry: employee.industry,
+      position: employee.position,
+      // ---- 快速分享（零配置） ----
+      quickShare: {
+        shareUrl,
+        qrCodeUrl,
+        shareToken,
+      },
+      // ---- 各平台接入配置 ----
+      platforms: {
+        wechat: this.buildPlatformConfig('wechat', employeeId, employee.name, shareToken),
+        wework: this.buildPlatformConfig('wework', employeeId, employee.name, shareToken),
+        dingtalk: this.buildPlatformConfig('dingtalk', employeeId, employee.name, shareToken),
+        webpage: this.buildPlatformConfig('webpage', employeeId, employee.name, shareToken),
+      },
+    };
+  }
+
+  /** 生成网页嵌入代码 */
+  generateEmbedCode(employeeId: number, options: {
+    position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
+    theme?: 'cyber' | 'light' | 'dark';
+    primaryColor?: string;
+    greeting?: string;
+    bubbleText?: string;
+  } = {}): string {
+    const token = this.ensureShareToken(employeeId);
+    const position = options.position || 'bottom-right';
+    const theme = options.theme || 'cyber';
+    const primaryColor = options.primaryColor || '#00f0ff';
+    const greeting = options.greeting || '您好！请问有什么可以帮您？';
+    const bubbleText = options.bubbleText || '点击开始对话';
+
+    return `<!-- LSJY AI 员工对话窗口 -->
+<div id="lsjy-chat-widget"></div>
+<script src="${this.FRONTEND_BASE}/sdk/lsjy-chat.js"></script>
+<script>
+  LSJYChat.init({
+    employeeId: ${employeeId},
+    token: '${token}',
+    position: '${position}',
+    theme: '${theme}',
+    primaryColor: '${primaryColor}',
+    greeting: '${greeting}',
+    bubbleText: '${bubbleText}',
+    autoPopup: true,
+    popupDelay: 3000
+  });
+</script>
+<!-- /LSJY AI 员工对话窗口 -->`;
+  }
+
+  // ---------- 内部方法 ----------
+
+  private ensureShareToken(employeeId: number): string {
+    if (!this.deploymentStore.has(employeeId)) {
+      this.deploymentStore.set(employeeId, new Map());
+    }
+    const store = this.deploymentStore.get(employeeId)!;
+    if (!store.has('share')) {
+      store.set('share', { token: this.generateToken(24), createdAt: new Date().toISOString() });
+    }
+    return store.get('share').token;
+  }
+
+  private buildPlatformConfig(platform: string, employeeId: number, employeeName: string, token: string): any {
     const webhookPaths: Record<string, string> = {
       wechat: '/webhook/wechat',
       wework: '/webhook/wework',
       dingtalk: '/webhook/dingtalk',
       webpage: '/webhook/chat',
     };
-    const webhookPath = webhookPaths[platform] || '/webhook/chat';
-    const webhookUrl = `${baseUrl}${webhookPath}/${employeeId}`;
+    const webhookUrl = `${this.API_BASE}${webhookPaths[platform] || '/webhook/chat'}/${employeeId}`;
 
-    if (!this.deploymentStore.has(employeeId)) {
-      this.deploymentStore.set(employeeId, new Map());
-    }
-    this.deploymentStore.get(employeeId)!.set(platform, {
-      employeeId,
-      employeeName: employee.name,
-      industry: employee.industry,
-      position: employee.position,
-      platform,
-      webhookUrl,
-      token,
-      deployedAt: new Date().toISOString(),
-      status: 'active',
-    });
+    const difficultyMap: Record<string, string> = {
+      wechat: '中等',
+      wework: '较难',
+      dingtalk: '较难',
+      webpage: '简单',
+    };
+    const timeMap: Record<string, string> = {
+      wechat: '约10分钟',
+      wework: '约15分钟',
+      dingtalk: '约15分钟',
+      webpage: '约2分钟',
+    };
+    const prereqMap: Record<string, string> = {
+      wechat: '需已认证的微信公众号（服务号）',
+      wework: '需企业微信管理员权限',
+      dingtalk: '需钉钉企业管理员权限',
+      webpage: '需有自己的网站并能修改HTML代码',
+    };
 
     return {
-      employeeId,
-      employeeName: employee.name,
       platform,
       webhookUrl,
       token,
-      qrCode: platform === 'webpage' ? `${baseUrl}/qrcode/chat/${employeeId}` : undefined,
-      configGuide: this.getPlatformConfigGuide(platform, webhookUrl, token, employee.name, employeeId),
+      difficulty: difficultyMap[platform] || '未知',
+      estimatedTime: timeMap[platform] || '未知',
+      prerequisite: prereqMap[platform] || '',
+      steps: this.getPlatformSteps(platform, webhookUrl, token, employeeName, employeeId),
     };
   }
 
-  async getEmployeeDeployments(employeeId: number): Promise<any[]> {
-    const platforms = this.deploymentStore.get(employeeId);
-    if (!platforms) return [];
-    return Array.from(platforms.values());
+  private getPlatformSteps(platform: string, webhookUrl: string, token: string, employeeName: string, empId: number): any[] {
+    const steps: Record<string, any[]> = {
+      wechat: [
+        { title: '登录微信公众号后台', desc: '访问 mp.weixin.qq.com，使用管理员微信扫码登录' },
+        { title: '进入基本配置', desc: '左侧菜单 → 设置与开发 → 基本配置' },
+        { title: '修改服务器配置', desc: '点击「修改配置」按钮，填写以下信息：', code: `URL：${webhookUrl}\nToken：${token}\nEncodingAESKey：随机生成即可\n消息加解密方式：明文模式` },
+        { title: '启用服务器配置', desc: '点击「提交」后，再点击「启用」按钮' },
+        { title: '完成验证', desc: `配置成功后，粉丝给公众号发消息，${employeeName}将自动回复。` },
+      ],
+      wework: [
+        { title: '登录企业微信管理后台', desc: '访问 work.weixin.qq.com，管理员扫码登录' },
+        { title: '创建自建应用', desc: '应用管理 → 自建 → 创建应用 → 上传logo、填写名称' },
+        { title: '设置接收消息', desc: '在应用详情页 → 接收消息 → 设置API接收', code: `URL：${webhookUrl}\nToken：${token}` },
+        { title: '配置可信IP', desc: '将我们的服务器IP添加到企业可信IP列表中' },
+        { title: '添加到群聊使用', desc: `在企业微信群中添加该机器人，群内@${employeeName}即可对话` },
+      ],
+      dingtalk: [
+        { title: '登录钉钉开放平台', desc: '访问 open-dev.dingtalk.com，管理员扫码登录' },
+        { title: '创建企业内部应用', desc: '应用开发 → 企业内部应用 → 创建应用' },
+        { title: '配置消息接收地址', desc: '在应用开发 → 消息推送中配置：', code: `消息接收地址：${webhookUrl}\nToken：${token}` },
+        { title: '发布并授权', desc: '点击「发布版本」→ 选择「全员」或指定部门可见' },
+        { title: '开始使用', desc: `员工在钉钉中找到该应用，即可与${employeeName}对话` },
+      ],
+      webpage: [
+        { title: '复制嵌入代码', desc: '在左侧配置好样式后，复制生成的代码片段' },
+        { title: '粘贴到网站', desc: '将代码粘贴到网站HTML的 </body> 标签之前' },
+        { title: '刷新网站查看效果', desc: '刷新你的网站，右下角将出现对话按钮' },
+      ],
+    };
+    return steps[platform] || [];
   }
 
   private generateToken(length: number): string {
@@ -480,13 +583,30 @@ export class ComputingService {
     return result;
   }
 
-  private getPlatformConfigGuide(platform: string, webhookUrl: string, token: string, employeeName: string, empId: number): string {
-    const guides: Record<string, string> = {
-      wechat: `1. 登录微信公众号后台 → 开发 → 基本配置\n2. 服务器配置 → 修改配置\n3. URL填写：${webhookUrl}\n4. Token填写：${token}\n5. 消息加解密方式选择「明文模式」\n6. 提交后点击「启用」\n\n✅ 配置完成后，粉丝给公众号发消息，${employeeName}将自动回复。`,
-      wework: `1. 登录企业微信管理后台 → 应用管理 → 自建\n2. 创建应用 → 设置接收消息的URL\n3. URL填写：${webhookUrl}\n4. Token填写：${token}\n5. 设置企业可信IP为服务器IP\n6. 在企业微信群中添加该机器人\n\n✅ 配置完成后，群内@机器人，${employeeName}将自动响应。`,
-      dingtalk: `1. 登录钉钉开放平台 → 应用开发 → 企业内部应用\n2. 创建应用 → 设置消息接收URL\n3. URL填写：${webhookUrl}\n4. 配置加解密密钥\n5. 发布应用 → 授权给组织\n\n✅ 配置完成后，在钉钉中@机器人，${employeeName}将自动回复。`,
-      webpage: `1. 在HTML中添加以下代码嵌入对话窗口\n<script src="https://lsjyapp.cn/sdk/lsjy-chat.js"></script>\n<script>\n  LSJYChat.init({\n    employeeId: ${empId},\n    token: '${token}'\n  });\n</script>\n\n✅ 配置完成后，在任意网页中嵌入该对话窗口即可使用。`,
+  /** 兼容旧接口 */
+  async deployEmployeeIntegration(employeeId: number, platform: string): Promise<any> {
+    const access = await this.getEmployeeAccess(employeeId);
+    const p = access.platforms[platform];
+    if (!p) throw new BadRequestException('不支持的平台');
+    return {
+      employeeId,
+      employeeName: access.employeeName,
+      platform,
+      webhookUrl: p.webhookUrl,
+      token: p.token,
+      configGuide: p.steps.map((s: any, i: number) => `${i + 1}. ${s.title}\n${s.desc}${s.code ? '\n' + s.code : ''}`).join('\n\n'),
     };
-    return guides[platform] || '配置说明已生成';
+  }
+
+  async getEmployeeDeployments(employeeId: number): Promise<any[]> {
+    const access = await this.getEmployeeAccess(employeeId);
+    return Object.entries(access.platforms).map(([key, val]: [string, any]) => ({
+      employeeId,
+      employeeName: access.employeeName,
+      platform: key,
+      webhookUrl: val.webhookUrl,
+      token: val.token,
+      status: 'active',
+    }));
   }
 }
