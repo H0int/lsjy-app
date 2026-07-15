@@ -506,89 +506,315 @@
       </div>
     </el-drawer>
 
-    <!-- ===== 一键部署第三方平台对话框 ===== -->
+    <!-- ===== AI员工接入中心对话框 ===== -->
     <el-dialog
       v-model="integrationDialogVisible"
-      title="一键部署到第三方平台"
-      width="620px"
+      title="AI员工接入中心"
+      width="720px"
       class="integration-dialog"
       align-center
       :close-on-click-modal="false"
     >
-      <div v-if="integrationEmployee" class="deploy-dialog-body">
-        <div class="deploy-emp-banner">
-          <div class="deploy-emp-avatar">{{ integrationEmployee.name?.charAt(0) || '?' }}</div>
-          <div class="deploy-emp-info">
-            <div class="deploy-emp-name">{{ integrationEmployee.name }}</div>
-            <div class="deploy-emp-tags">
-              <span class="deploy-emp-tag">{{ getIndustryLabel(integrationEmployee.industry) }}</span>
-              <span class="deploy-emp-tag">{{ getPositionLabel(integrationEmployee.industry, integrationEmployee.position) }}</span>
+      <div v-if="integrationEmployee && accessData" class="access-dialog-body">
+        <!-- 员工信息条 -->
+        <div class="access-emp-bar">
+          <div class="access-emp-avatar">{{ integrationEmployee.name?.charAt(0) || '?' }}</div>
+          <div class="access-emp-info">
+            <div class="access-emp-name">{{ integrationEmployee.name }}</div>
+            <div class="access-emp-tags">
+              <span class="access-emp-tag">{{ getIndustryLabel(integrationEmployee.industry) }}</span>
+              <span class="access-emp-tag">{{ getPositionLabel(integrationEmployee.industry, integrationEmployee.position) }}</span>
             </div>
+          </div>
+          <div class="access-emp-status">
+            <span class="status-dot running"></span>
+            <span>运行中</span>
           </div>
         </div>
 
-        <!-- 步骤1：选择平台 -->
-        <div v-if="deployStep === 'select'" class="deploy-step">
-          <div class="deploy-step-title">第一步：选择要部署的平台</div>
-          <div class="deploy-platform-grid">
-            <div
-              v-for="p in deployPlatforms"
-              :key="p.value"
-              class="deploy-platform-card"
-              :class="{ selected: deploySelectedPlatform === p.value }"
-              @click="deploySelectedPlatform = p.value"
-            >
-              <span class="platform-icon">{{ p.icon }}</span>
-              <span class="platform-name">{{ p.label }}</span>
-              <span class="platform-desc">{{ p.desc }}</span>
-            </div>
-          </div>
-          <div class="deploy-actions">
-            <el-button @click="integrationDialogVisible = false">取消</el-button>
-            <el-button type="primary" :disabled="!deploySelectedPlatform" :loading="deployLoading" @click="handleDeploy">
-              一键部署到 {{ deployPlatforms.find(p => p.value === deploySelectedPlatform)?.label || '' }}
-            </el-button>
-          </div>
-        </div>
+        <!-- Tab切换 -->
+        <el-tabs v-model="accessTab" class="access-tabs">
+          <!-- Tab1: 快速分享 -->
+          <el-tab-pane label="快速分享" name="share">
+            <div class="share-section">
+              <div class="share-highlight">
+                <div class="share-hl-icon">⚡</div>
+                <div class="share-hl-text">
+                  <div class="share-hl-title">零配置，10秒即用</div>
+                  <div class="share-hl-desc">无需任何开发，分享链接或二维码，对方打开就能对话</div>
+                </div>
+              </div>
 
-        <!-- 步骤2：部署结果 -->
-        <div v-else-if="deployStep === 'result'" class="deploy-step">
-          <div class="deploy-success-header">
-            <span class="deploy-success-icon">✅</span>
-            <span class="deploy-success-title">部署成功！</span>
-          </div>
-          <div class="deploy-platform-badge" v-if="deployResult">
-            <span class="platform-label">{{ deployPlatforms.find(p => p.value === deployResult.platform)?.icon }} {{ deployPlatforms.find(p => p.value === deployResult.platform)?.label }}</span>
-          </div>
+              <div class="share-main-row">
+                <!-- 二维码 -->
+                <div class="qr-card">
+                  <div class="qr-placeholder">
+                    <div class="qr-icon">📱</div>
+                    <div class="qr-tip">扫码对话</div>
+                  </div>
+                  <div class="qr-label">手机扫码立即开始</div>
+                </div>
 
-          <div class="deploy-result-section">
-            <div class="result-field">
-              <div class="result-label">Webhook URL</div>
-              <div class="result-value-row">
-                <code class="result-value">{{ deployResult.webhookUrl }}</code>
-                <el-button size="small" class="copy-btn" @click="copyText(deployResult.webhookUrl)">复制</el-button>
+                <!-- 链接 -->
+                <div class="link-card">
+                  <div class="link-label">专属对话链接</div>
+                  <div class="link-value-row">
+                    <input class="link-input" :value="accessData.quickShare.shareUrl" readonly />
+                    <el-button size="small" type="primary" @click="copyText(accessData.quickShare.shareUrl)">复制链接</el-button>
+                  </div>
+                  <div class="link-tip">将链接发给客户、员工或分享到朋友圈，点击即可对话</div>
+
+                  <div class="share-actions">
+                    <el-button size="small" @click="copyText(accessData.quickShare.shareUrl)">
+                      <span>📋</span> 复制链接
+                    </el-button>
+                    <el-button size="small" @click="openShareLink">
+                      <span>🔗</span> 打开预览
+                    </el-button>
+                    <el-button size="small" @click="shareToWechat">
+                      <span>💬</span> 分享到微信
+                    </el-button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="share-scenarios">
+                <div class="scenarios-title">适用场景</div>
+                <div class="scenarios-grid">
+                  <div class="scenario-item">
+                    <span class="scenario-icon">👥</span>
+                    <span class="scenario-text">客户服务咨询</span>
+                  </div>
+                  <div class="scenario-item">
+                    <span class="scenario-icon">📋</span>
+                    <span class="scenario-text">员工内训答疑</span>
+                  </div>
+                  <div class="scenario-item">
+                    <span class="scenario-icon">📱</span>
+                    <span class="scenario-text">朋友圈获客</span>
+                  </div>
+                  <div class="scenario-item">
+                    <span class="scenario-icon">📧</span>
+                    <span class="scenario-text">邮件签名嵌入</span>
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="result-field">
-              <div class="result-label">Token / 密钥</div>
-              <div class="result-value-row">
-                <code class="result-value">{{ deployResult.token }}</code>
-                <el-button size="small" class="copy-btn" @click="copyText(deployResult.token)">复制</el-button>
+          </el-tab-pane>
+
+          <!-- Tab2: 微信公众号 -->
+          <el-tab-pane label="微信公众号" name="wechat">
+            <div class="platform-section">
+              <div class="platform-header">
+                <div class="platform-icon-lg">💬</div>
+                <div class="platform-meta">
+                  <div class="platform-title-lg">微信公众号接入</div>
+                  <div class="platform-stats">
+                    <span class="stat-pill">难度：{{ accessData.platforms.wechat.difficulty }}</span>
+                    <span class="stat-pill">耗时：{{ accessData.platforms.wechat.estimatedTime }}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="prereq-box">
+                <span class="prereq-icon">⚠️</span>
+                <span class="prereq-text">前置条件：{{ accessData.platforms.wechat.prerequisite }}</span>
+              </div>
+
+              <div class="steps-list">
+                <div v-for="(step, idx) in accessData.platforms.wechat.steps" :key="idx" class="step-item">
+                  <div class="step-num">{{ idx + 1 }}</div>
+                  <div class="step-body">
+                    <div class="step-title">{{ step.title }}</div>
+                    <div class="step-desc">{{ step.desc }}</div>
+                    <pre v-if="step.code" class="step-code">{{ step.code }}</pre>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+          </el-tab-pane>
 
-          <div class="deploy-guide-section">
-            <div class="guide-title">配置指南</div>
-            <div class="guide-content">{{ deployResult.configGuide }}</div>
-            <el-button size="small" class="copy-btn" @click="copyText(deployResult.configGuide)" style="margin-top:8px">复制配置指南</el-button>
-          </div>
+          <!-- Tab3: 企业微信 -->
+          <el-tab-pane label="企业微信" name="wework">
+            <div class="platform-section">
+              <div class="platform-header">
+                <div class="platform-icon-lg">🏢</div>
+                <div class="platform-meta">
+                  <div class="platform-title-lg">企业微信接入</div>
+                  <div class="platform-stats">
+                    <span class="stat-pill">难度：{{ accessData.platforms.wework.difficulty }}</span>
+                    <span class="stat-pill">耗时：{{ accessData.platforms.wework.estimatedTime }}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="prereq-box">
+                <span class="prereq-icon">⚠️</span>
+                <span class="prereq-text">前置条件：{{ accessData.platforms.wework.prerequisite }}</span>
+              </div>
 
-          <div class="deploy-actions">
-            <el-button @click="resetDeploy">重新选择平台</el-button>
-            <el-button type="primary" @click="integrationDialogVisible = false">完成</el-button>
+              <div class="steps-list">
+                <div v-for="(step, idx) in accessData.platforms.wework.steps" :key="idx" class="step-item">
+                  <div class="step-num">{{ idx + 1 }}</div>
+                  <div class="step-body">
+                    <div class="step-title">{{ step.title }}</div>
+                    <div class="step-desc">{{ step.desc }}</div>
+                    <pre v-if="step.code" class="step-code">{{ step.code }}</pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </el-tab-pane>
+
+          <!-- Tab4: 钉钉 -->
+          <el-tab-pane label="钉钉" name="dingtalk">
+            <div class="platform-section">
+              <div class="platform-header">
+                <div class="platform-icon-lg">📱</div>
+                <div class="platform-meta">
+                  <div class="platform-title-lg">钉钉接入</div>
+                  <div class="platform-stats">
+                    <span class="stat-pill">难度：{{ accessData.platforms.dingtalk.difficulty }}</span>
+                    <span class="stat-pill">耗时：{{ accessData.platforms.dingtalk.estimatedTime }}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="prereq-box">
+                <span class="prereq-icon">⚠️</span>
+                <span class="prereq-text">前置条件：{{ accessData.platforms.dingtalk.prerequisite }}</span>
+              </div>
+
+              <div class="steps-list">
+                <div v-for="(step, idx) in accessData.platforms.dingtalk.steps" :key="idx" class="step-item">
+                  <div class="step-num">{{ idx + 1 }}</div>
+                  <div class="step-body">
+                    <div class="step-title">{{ step.title }}</div>
+                    <div class="step-desc">{{ step.desc }}</div>
+                    <pre v-if="step.code" class="step-code">{{ step.code }}</pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </el-tab-pane>
+
+          <!-- Tab5: 网页嵌入 -->
+          <el-tab-pane label="网页嵌入" name="webpage">
+            <div class="webpage-section">
+              <div class="platform-header">
+                <div class="platform-icon-lg">🌐</div>
+                <div class="platform-meta">
+                  <div class="platform-title-lg">嵌入到您的网站</div>
+                  <div class="platform-stats">
+                    <span class="stat-pill">难度：{{ accessData.platforms.webpage.difficulty }}</span>
+                    <span class="stat-pill">耗时：{{ accessData.platforms.webpage.estimatedTime }}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="prereq-box">
+                <span class="prereq-icon">⚠️</span>
+                <span class="prereq-text">前置条件：{{ accessData.platforms.webpage.prerequisite }}</span>
+              </div>
+
+              <div class="embed-config-row">
+                <!-- 左侧：配置面板 -->
+                <div class="embed-config-panel">
+                  <div class="config-group-title">可视化配置</div>
+
+                  <div class="config-row-item">
+                    <label>显示位置</label>
+                    <el-radio-group v-model="embedConfig.position" size="small">
+                      <el-radio-button label="bottom-right">右下</el-radio-button>
+                      <el-radio-button label="bottom-left">左下</el-radio-button>
+                    </el-radio-group>
+                  </div>
+
+                  <div class="config-row-item">
+                    <label>主题风格</label>
+                    <el-radio-group v-model="embedConfig.theme" size="small">
+                      <el-radio-button label="cyber">赛博</el-radio-button>
+                      <el-radio-button label="dark">深色</el-radio-button>
+                      <el-radio-button label="light">浅色</el-radio-button>
+                    </el-radio-group>
+                  </div>
+
+                  <div class="config-row-item">
+                    <label>主题色</label>
+                    <div class="color-picker-row">
+                      <div
+                        v-for="c in colorPresets"
+                        :key="c"
+                        class="color-dot"
+                        :class="{ active: embedConfig.primaryColor === c }"
+                        :style="{ background: c }"
+                        @click="embedConfig.primaryColor = c"
+                      ></div>
+                    </div>
+                  </div>
+
+                  <div class="config-row-item">
+                    <label>气泡文字</label>
+                    <el-input v-model="embedConfig.bubbleText" size="small" placeholder="点击开始对话" />
+                  </div>
+
+                  <div class="config-row-item">
+                    <label>欢迎语</label>
+                    <el-input v-model="embedConfig.greeting" size="small" type="textarea" :rows="2" placeholder="您好！请问有什么可以帮您？" />
+                  </div>
+                </div>
+
+                <!-- 右侧：预览 -->
+                <div class="embed-preview-panel">
+                  <div class="config-group-title">实时预览</div>
+                  <div class="preview-browser">
+                    <div class="preview-browser-bar">
+                      <span class="browser-dot red"></span>
+                      <span class="browser-dot yellow"></span>
+                      <span class="browser-dot green"></span>
+                      <span class="browser-url">yourwebsite.com</span>
+                    </div>
+                    <div class="preview-browser-body">
+                      <div class="preview-content">您的网站内容</div>
+                      <div class="preview-chat-btn" :class="embedConfig.position" :style="{ '--theme-color': embedConfig.primaryColor }">
+                        <div class="preview-bubble">{{ embedConfig.bubbleText }}</div>
+                        <div class="preview-icon" :style="{ background: embedConfig.primaryColor }">💬</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="embed-code-section">
+                <div class="code-header">
+                  <span class="code-label">嵌入代码</span>
+                  <el-button size="small" type="primary" @click="copyText(generatedEmbedCode)">一键复制代码</el-button>
+                </div>
+                <pre class="embed-code-block">{{ generatedEmbedCode }}</pre>
+              </div>
+
+              <div class="steps-list">
+                <div v-for="(step, idx) in accessData.platforms.webpage.steps" :key="idx" class="step-item">
+                  <div class="step-num">{{ idx + 1 }}</div>
+                  <div class="step-body">
+                    <div class="step-title">{{ step.title }}</div>
+                    <div class="step-desc">{{ step.desc }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </el-tab-pane>
+        </el-tabs>
+
+        <!-- 底部操作 -->
+        <div class="access-footer">
+          <div class="footer-tip">
+            <span class="tip-icon">💡</span>
+            <span>不知道选哪个？推荐先用「快速分享」体验，零配置立即使用</span>
           </div>
+          <el-button type="primary" @click="integrationDialogVisible = false">我知道了</el-button>
         </div>
+      </div>
+
+      <div v-else class="access-loading">
+        <div class="loading-spinner"></div>
+        <span>加载中...</span>
       </div>
     </el-dialog>
   </div>
@@ -1018,19 +1244,48 @@ const chatMessages = ref<{ role: 'user' | 'assistant'; content: string }[]>([])
 const chatInput = ref('')
 const chatLoading = ref(false)
 
-// -- 接入平台对话框 --
+// -- 接入中心对话框 --
 const integrationDialogVisible = ref(false)
 const integrationEmployee = ref<any>(null)
-const deployStep = ref<'select' | 'result'>('select')
-const deploySelectedPlatform = ref('')
-const deployLoading = ref(false)
-const deployResult = ref<any>(null)
-const deployPlatforms = [
-  { value: 'wechat', label: '微信公众号', icon: '💬', desc: '粉丝发送消息，AI员工自动回复' },
-  { value: 'wework', label: '企业微信', icon: '🏢', desc: '群聊@机器人，AI员工自动响应' },
-  { value: 'dingtalk', label: '钉钉', icon: '📱', desc: '钉钉群聊@机器人，AI员工自动回复' },
-  { value: 'webpage', label: '网页嵌入', icon: '🌐', desc: '在任意网页中嵌入AI员工对话窗口' },
-]
+const accessTab = ref('share')
+const accessData = ref<any>(null)
+const accessLoading = ref(false)
+
+// 网页嵌入配置
+const embedConfig = reactive({
+  position: 'bottom-right' as 'bottom-right' | 'bottom-left',
+  theme: 'cyber' as 'cyber' | 'light' | 'dark',
+  primaryColor: '#00f0ff',
+  greeting: '您好！请问有什么可以帮您？',
+  bubbleText: '点击开始对话',
+})
+const colorPresets = ['#00f0ff', '#00ff88', '#ff6b6b', '#ffd93d', '#c084fc', '#ff9f43']
+
+// 实时生成嵌入代码
+const generatedEmbedCode = computed(() => {
+  if (!integrationEmployee.value?.id) return ''
+  const id = integrationEmployee.value.id
+  const token = accessData.value?.quickShare?.shareToken || 'demo_token'
+  const scriptTagOpen = '<' + 'script'
+  const scriptTagClose = '<' + '/script>'
+  return `<!-- LSJY AI 员工对话窗口 -->
+<div id="lsjy-chat-widget"></div>
+${scriptTagOpen} src="https://lsjyapp.cn/sdk/lsjy-chat.js">${scriptTagClose}
+${scriptTagOpen}>
+  LSJYChat.init({
+    employeeId: ${id},
+    token: '${token}',
+    position: '${embedConfig.position}',
+    theme: '${embedConfig.theme}',
+    primaryColor: '${embedConfig.primaryColor}',
+    greeting: '${embedConfig.greeting}',
+    bubbleText: '${embedConfig.bubbleText}',
+    autoPopup: true,
+    popupDelay: 3000
+  });
+${scriptTagClose}
+<!-- /LSJY AI 员工对话窗口 -->`
+})
 
 function employeeStatusLabel(status: string) {
   const map: Record<string, string> = { running: '运行中', paused: '已暂停', stopped: '已停止', active: '运行中' }
@@ -1498,35 +1753,30 @@ async function sendChatMessage() {
   }
 }
 
-function handleShowIntegration(emp: any) {
+async function handleShowIntegration(emp: any) {
   integrationEmployee.value = emp
-  deployStep.value = 'select'
-  deploySelectedPlatform.value = ''
-  deployResult.value = null
+  accessTab.value = 'share'
+  accessData.value = null
   integrationDialogVisible.value = true
-}
-
-async function handleDeploy() {
-  if (!deploySelectedPlatform.value || !integrationEmployee.value) return
-  deployLoading.value = true
   try {
-    const res = await computingApi.deployToPlatform({
-      employeeId: integrationEmployee.value.id,
-      platform: deploySelectedPlatform.value,
-    })
-    deployResult.value = res.data
-    deployStep.value = 'result'
+    accessLoading.value = true
+    const res = await computingApi.getEmployeeAccess(emp.id)
+    accessData.value = res.data
   } catch (e: any) {
-    ElMessage.error('部署失败：' + (e?.message || '请稍后重试'))
+    ElMessage.error('加载失败：' + (e?.message || '请稍后重试'))
   } finally {
-    deployLoading.value = false
+    accessLoading.value = false
   }
 }
 
-function resetDeploy() {
-  deployStep.value = 'select'
-  deploySelectedPlatform.value = ''
-  deployResult.value = null
+function openShareLink() {
+  if (accessData.value?.quickShare?.shareUrl) {
+    window.open(accessData.value.quickShare.shareUrl, '_blank')
+  }
+}
+
+function shareToWechat() {
+  ElMessage.info('请保存二维码后，在微信中扫码分享')
 }
 
 function copyText(text: string) {
@@ -2009,7 +2259,7 @@ function handleResize() {
   font-weight: 600;
 }
 
-/* ===== 一键部署第三方平台样式 ===== */
+/* ===== AI员工接入中心样式 ===== */
 .integration-dialog :deep(.el-dialog__header) {
   border-bottom: 1px solid #00f0ff15;
   padding: 16px 20px;
@@ -2020,21 +2270,22 @@ function handleResize() {
   font-weight: 700;
 }
 .integration-dialog :deep(.el-dialog__body) {
-  padding: 16px 20px;
+  padding: 0 20px 20px;
+  background: #0a0a12;
+  max-height: 75vh;
+  overflow-y: auto;
+}
+.access-dialog-body {
   background: #0a0a12;
 }
-.deploy-dialog-body {
-  background: #0a0a12;
-}
-.deploy-emp-banner {
+.access-emp-bar {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
+  padding: 16px 0;
   border-bottom: 1px solid #00f0ff10;
 }
-.deploy-emp-avatar {
+.access-emp-avatar {
   width: 44px;
   height: 44px;
   border-radius: 50%;
@@ -2047,17 +2298,20 @@ function handleResize() {
   color: #000;
   flex-shrink: 0;
 }
-.deploy-emp-name {
+.access-emp-info {
+  flex: 1;
+}
+.access-emp-name {
   font-size: 14px;
   font-weight: 700;
   color: #e0e0ff;
 }
-.deploy-emp-tags {
+.access-emp-tags {
   display: flex;
   gap: 6px;
   margin-top: 4px;
 }
-.deploy-emp-tag {
+.access-emp-tag {
   font-size: 10px;
   padding: 2px 8px;
   border-radius: 10px;
@@ -2065,113 +2319,128 @@ function handleResize() {
   color: #00f0ff;
   border: 1px solid #00f0ff20;
 }
-.deploy-step {
-  min-height: 260px;
-}
-.deploy-step-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: #e0e0ff;
-  margin-bottom: 14px;
-}
-.deploy-platform-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-.deploy-platform-card {
-  padding: 16px;
-  border-radius: 12px;
-  border: 1px solid #00f0ff15;
-  background: #0f0f1a;
-  cursor: pointer;
-  transition: all 0.2s;
+.access-emp-status {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 6px;
-}
-.deploy-platform-card:hover {
-  border-color: #00f0ff40;
-  background: #00f0ff08;
-}
-.deploy-platform-card.selected {
-  border-color: #00f0ff;
-  background: #00f0ff15;
-  box-shadow: 0 0 12px #00f0ff25;
-}
-.platform-icon {
-  font-size: 28px;
-}
-.platform-name {
-  font-size: 14px;
-  font-weight: 700;
-  color: #e0e0ff;
-}
-.platform-desc {
-  font-size: 11px;
-  color: #808099;
-  line-height: 1.4;
-}
-.deploy-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  padding-top: 12px;
-  border-top: 1px solid #00f0ff10;
-}
-.deploy-success-header {
-  text-align: center;
-  padding: 12px 0;
-}
-.deploy-success-icon {
-  font-size: 36px;
-  display: block;
-  margin-bottom: 8px;
-}
-.deploy-success-title {
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 12px;
   color: #00ff88;
+  flex-shrink: 0;
 }
-.deploy-platform-badge {
-  text-align: center;
-  margin: 8px 0 16px;
+.access-emp-status .status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #00ff88;
 }
-.deploy-platform-badge .platform-label {
-  display: inline-block;
-  padding: 4px 14px;
-  border-radius: 20px;
-  background: #00f0ff15;
-  border: 1px solid #00f0ff30;
-  color: #00f0ff;
-  font-size: 13px;
-  font-weight: 600;
+.access-emp-status .status-dot.running {
+  animation: pulse-dot 2s ease-in-out infinite;
 }
-.deploy-result-section {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* Tabs */
+.access-tabs :deep(.el-tabs__header) {
   margin-bottom: 16px;
 }
-.result-field {
+.access-tabs :deep(.el-tabs__item) {
+  color: #808099;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0 12px;
+  height: 36px;
+  line-height: 36px;
+}
+.access-tabs :deep(.el-tabs__item.is-active) {
+  color: #00f0ff;
+}
+.access-tabs :deep(.el-tabs__nav-wrap::after) {
+  background-color: #00f0ff15;
+}
+
+/* Share Section */
+.share-section {
+  padding-top: 4px;
+}
+.share-highlight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #00f0ff10, #c084fc10);
+  border: 1px solid #00f0ff20;
+  margin-bottom: 20px;
+}
+.share-hl-icon {
+  font-size: 28px;
+  flex-shrink: 0;
+}
+.share-hl-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #e0e0ff;
+}
+.share-hl-desc {
+  font-size: 12px;
+  color: #808099;
+  margin-top: 2px;
+}
+.share-main-row {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+.qr-card {
+  width: 160px;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  gap: 10px;
 }
-.result-label {
+.qr-placeholder {
+  width: 140px;
+  height: 140px;
+  border-radius: 12px;
+  background: #0f0f1a;
+  border: 2px dashed #00f0ff30;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.qr-icon {
+  font-size: 36px;
+}
+.qr-tip {
+  font-size: 12px;
+  color: #808099;
+}
+.qr-label {
   font-size: 11px;
   color: #808099;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
-.result-value-row {
+.link-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.link-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #e0e0ff;
+}
+.link-value-row {
   display: flex;
   align-items: center;
   gap: 8px;
 }
-.result-value {
+.link-input {
   flex: 1;
   padding: 8px 12px;
   border-radius: 6px;
@@ -2179,28 +2448,367 @@ function handleResize() {
   border: 1px solid #00f0ff15;
   color: #00f0ff;
   font-size: 12px;
-  word-break: break-all;
   font-family: Menlo, monospace;
+  outline: none;
 }
-.deploy-guide-section {
-  margin-bottom: 12px;
-  padding: 12px;
-  border-radius: 8px;
+.link-input:focus {
+  border-color: #00f0ff40;
+}
+.link-tip {
+  font-size: 11px;
+  color: #606077;
+  line-height: 1.4;
+}
+.share-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+.share-actions .el-button span {
+  margin-right: 4px;
+}
+.share-scenarios {
+  padding: 14px;
+  border-radius: 10px;
   background: #0f0f1a;
   border: 1px solid #00f0ff10;
 }
-.guide-title {
+.scenarios-title {
   font-size: 12px;
   font-weight: 700;
   color: #e0e0ff;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
-.guide-content {
+.scenarios-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.scenario-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 12px;
   color: #808099;
-  line-height: 1.7;
-  white-space: pre-line;
 }
+.scenario-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+/* Platform Section */
+.platform-section {
+  padding-top: 4px;
+}
+.platform-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+.platform-icon-lg {
+  font-size: 36px;
+  flex-shrink: 0;
+}
+.platform-meta {
+  flex: 1;
+}
+.platform-title-lg {
+  font-size: 16px;
+  font-weight: 700;
+  color: #e0e0ff;
+  margin-bottom: 6px;
+}
+.platform-stats {
+  display: flex;
+  gap: 8px;
+}
+.stat-pill {
+  font-size: 11px;
+  padding: 2px 10px;
+  border-radius: 10px;
+  background: #00f0ff10;
+  color: #808099;
+  border: 1px solid #00f0ff15;
+}
+.prereq-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: #ffd93d10;
+  border: 1px solid #ffd93d30;
+  margin-bottom: 16px;
+  font-size: 12px;
+  color: #ffd93d;
+}
+.prereq-icon {
+  flex-shrink: 0;
+}
+.steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.step-item {
+  display: flex;
+  gap: 12px;
+}
+.step-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #00f0ff, #c084fc);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #000;
+  flex-shrink: 0;
+}
+.step-body {
+  flex: 1;
+  padding-top: 2px;
+}
+.step-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #e0e0ff;
+  margin-bottom: 4px;
+}
+.step-desc {
+  font-size: 12px;
+  color: #808099;
+  line-height: 1.6;
+}
+.step-code {
+  margin-top: 8px;
+  padding: 12px;
+  border-radius: 8px;
+  background: #080810;
+  border: 1px solid #00f0ff10;
+  color: #00f0ff;
+  font-size: 12px;
+  font-family: Menlo, monospace;
+  overflow-x: auto;
+  white-space: pre;
+  line-height: 1.5;
+}
+
+/* Webpage Embed Section */
+.webpage-section {
+  padding-top: 4px;
+}
+.embed-config-row {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 16px;
+}
+.embed-config-panel {
+  width: 320px;
+  flex-shrink: 0;
+}
+.config-group-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #e0e0ff;
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #00f0ff10;
+}
+.config-row-item {
+  margin-bottom: 14px;
+}
+.config-row-item label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #808099;
+  margin-bottom: 6px;
+}
+.color-picker-row {
+  display: flex;
+  gap: 8px;
+}
+.color-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+}
+.color-dot:hover {
+  transform: scale(1.15);
+}
+.color-dot.active {
+  border-color: #fff;
+  box-shadow: 0 0 8px var(--theme-color, #00f0ff);
+}
+.embed-preview-panel {
+  flex: 1;
+  min-width: 0;
+}
+.preview-browser {
+  border-radius: 10px;
+  background: #0f0f1a;
+  border: 1px solid #00f0ff15;
+  overflow: hidden;
+}
+.preview-browser-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: #161625;
+  border-bottom: 1px solid #00f0ff10;
+}
+.browser-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.browser-dot.red { background: #ff5f57; }
+.browser-dot.yellow { background: #ffbd2e; }
+.browser-dot.green { background: #28c840; }
+.browser-url {
+  flex: 1;
+  margin-left: 8px;
+  font-size: 11px;
+  color: #808099;
+  font-family: Menlo, monospace;
+}
+.preview-browser-body {
+  position: relative;
+  height: 200px;
+  padding: 16px;
+  background: linear-gradient(180deg, #1a1a2e, #0f0f1a);
+}
+.preview-content {
+  font-size: 13px;
+  color: #606077;
+  text-align: center;
+  padding-top: 20px;
+}
+.preview-chat-btn {
+  position: absolute;
+  bottom: 20px;
+}
+.preview-chat-btn.bottom-right {
+  right: 20px;
+}
+.preview-chat-btn.bottom-left {
+  left: 20px;
+}
+.preview-bubble {
+  position: absolute;
+  bottom: 44px;
+  padding: 6px 12px;
+  border-radius: 12px;
+  background: #1a1a2e;
+  border: 1px solid #00f0ff20;
+  color: #e0e0ff;
+  font-size: 11px;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px #00000060;
+}
+.preview-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  right: 20px;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid #1a1a2e;
+}
+.preview-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  cursor: pointer;
+  box-shadow: 0 2px 12px var(--theme-color, #00f0ff)40;
+  transition: transform 0.2s;
+}
+.preview-icon:hover {
+  transform: scale(1.1);
+}
+
+.embed-code-section {
+  margin-bottom: 16px;
+}
+.code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.code-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #e0e0ff;
+}
+.embed-code-block {
+  padding: 14px;
+  border-radius: 8px;
+  background: #080810;
+  border: 1px solid #00f0ff10;
+  color: #00f0ff;
+  font-size: 12px;
+  font-family: Menlo, monospace;
+  overflow-x: auto;
+  white-space: pre;
+  line-height: 1.6;
+}
+
+/* Access Footer */
+.access-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #00f0ff10;
+}
+.footer-tip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #808099;
+}
+.tip-icon {
+  flex-shrink: 0;
+}
+
+/* Access Loading */
+.access-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 0;
+  gap: 12px;
+  color: #808099;
+  font-size: 13px;
+}
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #00f0ff20;
+  border-top-color: #00f0ff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 .copy-btn {
   flex-shrink: 0;
 }
