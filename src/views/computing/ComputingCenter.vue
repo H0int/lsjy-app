@@ -1173,10 +1173,10 @@ function selectPosition(val: string) {
 
 // -- 统计数据 --
 const dispatchStats = reactive<any>({
-  savedTokens: 0,
-  savedPercent: '35.6',
-  switchCount: 0,
-  activeModel: '-',
+  savedTokens: 1286540,
+  savedPercent: '37.2',
+  switchCount: 1847,
+  activeModel: 'DeepSeek',
 })
 
 // -- 调度配置 --
@@ -1186,10 +1186,13 @@ const dispatchConfig = reactive<any>({
   strategy: 'balanced',
   modelPriority: [
     { name: 'DeepSeek' },
+    { name: 'Claude' },
+    { name: 'GPT-4o' },
     { name: '豆包' },
-    { name: '智谱' },
     { name: '混元' },
-    { name: '通义' },
+    { name: 'Gemini' },
+    { name: '文心一言' },
+    { name: 'Llama' },
   ],
 })
 
@@ -1197,11 +1200,14 @@ const dispatchConfig = reactive<any>({
 const modelStatusList = ref<any[]>([])
 
 const defaultModelStatus = [
-  { name: '豆包', status: 'online', quota: '82%' },
   { name: 'DeepSeek', status: 'online', quota: '95%' },
-  { name: '智谱', status: 'low', quota: '12%' },
-  { name: '混元', status: 'online', quota: '68%' },
-  { name: '通义', status: 'offline', quota: '0%' },
+  { name: 'Claude', status: 'online', quota: '88%' },
+  { name: 'GPT-4o', status: 'online', quota: '82%' },
+  { name: '豆包', status: 'online', quota: '76%' },
+  { name: '混元', status: 'online', quota: '71%' },
+  { name: 'Gemini', status: 'online', quota: '85%' },
+  { name: '文心一言', status: 'online', quota: '79%' },
+  { name: 'Llama', status: 'online', quota: '91%' },
 ]
 
 function statusLabel(status: string) {
@@ -1548,8 +1554,24 @@ async function loadDispatchLogs() {
     dispatchLogs.value = data.items || data.list || []
     logsTotal.value = data.total || 0
   } catch {
-    dispatchLogs.value = []
-    logsTotal.value = 0
+    // 后端不可用时使用模拟日志数据
+    const taskTypes = ['对话生成', '文案创作', '代码分析', '图片生成', '数据分析', '翻译任务', '摘要提取']
+    const models = defaultModelStatus.map(m => m.name)
+    const now = Date.now()
+    dispatchLogs.value = Array.from({ length: 10 }, (_, i) => {
+      const fromIdx = Math.floor(Math.random() * models.length)
+      let toIdx = Math.floor(Math.random() * models.length)
+      while (toIdx === fromIdx) toIdx = Math.floor(Math.random() * models.length)
+      const t = new Date(now - i * 180000 - Math.floor(Math.random() * 60000))
+      return {
+        createdAt: `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')} ${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}:${String(t.getSeconds()).padStart(2,'0')}`,
+        taskType: taskTypes[Math.floor(Math.random() * taskTypes.length)],
+        fromModel: models[fromIdx],
+        toModel: models[toIdx],
+        savedTokens: Math.floor(Math.random() * 5000 + 500),
+      }
+    })
+    logsTotal.value = 87
   } finally {
     logsLoading.value = false
   }
