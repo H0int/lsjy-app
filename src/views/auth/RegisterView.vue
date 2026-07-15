@@ -42,7 +42,7 @@
 
         <el-form ref="formRef" :model="form" :rules="rules" label-position="top" class="cyber-form">
           <div class="input-group">
-            <label class="input-label"><span class="label-icon">&#10016;</span> 用户名</label>
+            <label class="input-label"><span class="label-icon">&#10016;</span> 账号</label>
             <el-input v-model="form.username" placeholder="字母数字下划线，3位以上" size="large" :disabled="loading" />
           </div>
           <div class="input-group">
@@ -128,8 +128,8 @@ const validateConfirm = (_rule: any, value: string, callback: any) => {
 
 const rules = {
   username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 3, message: '用户名至少3位', trigger: 'blur' },
+    { required: true, message: '请输入账号', trigger: 'blur' },
+    { min: 3, message: '账号至少3位', trigger: 'blur' },
     { pattern: /^[a-zA-Z0-9_]+$/, message: '只能包含字母、数字和下划线', trigger: 'blur' }
   ],
   nickname: [{ required: true, message: '请输入昵称', trigger: 'blur' }],
