@@ -376,8 +376,8 @@
               </li>
             </ul>
             <div class="pkg-price">
-              <span class="price-original">&#x165D;{{ pkg.originalPrice }}</span>
-              <span class="price-current">&#x165D;{{ pkg.currentPrice }}</span>
+              <span class="price-original">¥{{ pkg.originalPrice }}</span>
+              <span class="price-current">¥{{ pkg.currentPrice }}</span>
               <span class="price-unit">/{{ pkg.unit }}</span>
             </div>
             <el-button
@@ -415,8 +415,8 @@
                 <div style="padding:20px 22px 0;">
                   <div style="font-size:16px; font-weight:600; color:#fff; margin-bottom:6px;">{{ selectedPkg.name }}</div>
                   <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:4px;">
-                    <span style="font-size:28px; font-weight:800; color:#ff4d6a;">&#x165D;{{ selectedPkg.currentPrice }}</span>
-                    <span style="font-size:14px; color:rgba(255,255,255,0.4); text-decoration:line-through;">&#x165D;{{ selectedPkg.originalPrice }}</span>
+                    <span style="font-size:28px; font-weight:800; color:#ff4d6a;">¥{{ selectedPkg.currentPrice }}</span>
+                    <span style="font-size:14px; color:rgba(255,255,255,0.4); text-decoration:line-through;">¥{{ selectedPkg.originalPrice }}</span>
                     <span style="font-size:13px; color:rgba(255,255,255,0.4);">/{{ selectedPkg.unit }}</span>
                   </div>
                 </div>
@@ -445,7 +445,7 @@
                   </div>
                   <div style="font-size:12px; color:rgba(255,255,255,0.4); line-height:1.8; margin-top:12px;">
                     请使用{{ currentPayLabel }}扫一扫付款<br>
-                    付款金额：<span style="color:#ff4d6a; font-weight:600;">&#x165D;{{ selectedPkg.currentPrice }}</span>
+                    付款金额：<span style="color:#ff4d6a; font-weight:600;">¥{{ selectedPkg.currentPrice }}</span>
                   </div>
                 </div>
                 <div style="padding:0 22px 18px;">
