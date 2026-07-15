@@ -269,4 +269,20 @@ export class ComputingController {
     const data = await this.computingService.adminUpdateToolPricing(body);
     return { code: 0, message: '工具价格已更新', data };
   }
+
+  // ====================== 一键部署第三方平台 ======================
+
+  @Post('admin/employee/deploy')
+  @ApiOperation({ summary: '一键部署AI员工到第三方平台' })
+  async deployEmployeeToPlatform(@Body() body: { employeeId: number; platform: string }) {
+    const data = await this.computingService.deployEmployeeIntegration(body.employeeId, body.platform);
+    return { code: 0, message: '部署成功', data };
+  }
+
+  @Get('admin/employee/deploy/:employeeId')
+  @ApiOperation({ summary: '获取AI员工部署配置' })
+  async getEmployeeDeployments(@Param('employeeId') employeeId: number) {
+    const data = await this.computingService.getEmployeeDeployments(+employeeId);
+    return { code: 0, message: 'ok', data };
+  }
 }

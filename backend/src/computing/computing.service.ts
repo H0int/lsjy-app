@@ -419,4 +419,74 @@ export class ComputingService {
       await queryRunner.release();
     }
   }
+
+  // ====================== 一键部署第三方平台 ======================
+
+  private deploymentStore = new Map<number, Map<string, any>>();
+
+  async deployEmployeeIntegration(employeeId: number, platform: string): Promise<any> {
+    const employee = await this.employeeRepo.findOne({ where: { id: employeeId } });
+    if (!employee) throw new NotFoundException('AI员工不存在');
+
+    const token = this.generateToken(32);
+    const baseUrl = 'https://api.lsjyapp.cn/api/v1';
+    const webhookPaths: Record<string, string> = {
+      wechat: '/webhook/wechat',
+      wework: '/webhook/wework',
+      dingtalk: '/webhook/dingtalk',
+      webpage: '/webhook/chat',
+    };
+    const webhookPath = webhookPaths[platform] || '/webhook/chat';
+    const webhookUrl = `${baseUrl}${webhookPath}/${employeeId}`;
+
+    if (!this.deploymentStore.has(employeeId)) {
+      this.deploymentStore.set(employeeId, new Map());
+    }
+    this.deploymentStore.get(employeeId)!.set(platform, {
+      employeeId,
+      employeeName: employee.name,
+      industry: employee.industry,
+      position: employee.position,
+      platform,
+      webhookUrl,
+      token,
+      deployedAt: new Date().toISOString(),
+      status: 'active',
+    });
+
+    return {
+      employeeId,
+      employeeName: employee.name,
+      platform,
+      webhookUrl,
+      token,
+      qrCode: platform === 'webpage' ? `${baseUrl}/qrcode/chat/${employeeId}` : undefined,
+      configGuide: this.getPlatformConfigGuide(platform, webhookUrl, token, employee.name, employeeId),
+    };
+  }
+
+  async getEmployeeDeployments(employeeId: number): Promise<any[]> {
+    const platforms = this.deploymentStore.get(employeeId);
+    if (!platforms) return [];
+    return Array.from(platforms.values());
+  }
+
+  private generateToken(length: number): string {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < length; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+  }
+
+  private getPlatformConfigGuide(platform: string, webhookUrl: string, token: string, employeeName: string, empId: number): string {
+    const guides: Record<string, string> = {
+      wechat: `1. 登录微信公众号后台 → 开发 → 基本配置\n2. 服务器配置 → 修改配置\n3. URL填写：${webhookUrl}\n4. Token填写：${token}\n5. 消息加解密方式选择「明文模式」\n6. 提交后点击「启用」\n\n✅ 配置完成后，粉丝给公众号发消息，${employeeName}将自动回复。`,
+      wework: `1. 登录企业微信管理后台 → 应用管理 → 自建\n2. 创建应用 → 设置接收消息的URL\n3. URL填写：${webhookUrl}\n4. Token填写：${token}\n5. 设置企业可信IP为服务器IP\n6. 在企业微信群中添加该机器人\n\n✅ 配置完成后，群内@机器人，${employeeName}将自动响应。`,
+      dingtalk: `1. 登录钉钉开放平台 → 应用开发 → 企业内部应用\n2. 创建应用 → 设置消息接收URL\n3. URL填写：${webhookUrl}\n4. 配置加解密密钥\n5. 发布应用 → 授权给组织\n\n✅ 配置完成后，在钉钉中@机器人，${employeeName}将自动回复。`,
+      webpage: `1. 在HTML中添加以下代码嵌入对话窗口\n<script src="https://lsjyapp.cn/sdk/lsjy-chat.js"></script>\n<script>\n  LSJYChat.init({\n    employeeId: ${empId},\n    token: '${token}'\n  });\n</script>\n\n✅ 配置完成后，在任意网页中嵌入该对话窗口即可使用。`,
+    };
+    return guides[platform] || '配置说明已生成';
+  }
 }

@@ -113,4 +113,13 @@ export const computingApi = {
   adminUpdateConfig(data: any): Promise<ApiResponse<any>> {
     return service.put('/computing/admin/config', data).then(r => r.data)
   },
+
+  // ===== 一键部署第三方平台 =====
+  deployToPlatform(data: { employeeId: number; platform: string }): Promise<ApiResponse<any>> {
+    return service.post('/computing/admin/employee/deploy', data).then(r => r.data)
+  },
+
+  getEmployeeDeployments(employeeId: number): Promise<ApiResponse<any[]>> {
+    return service.get(`/computing/admin/employee/deploy/${employeeId}`).then(r => r.data)
+  },
 }

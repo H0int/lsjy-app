@@ -506,55 +506,90 @@
       </div>
     </el-drawer>
 
-    <!-- ===== 接入平台对话框 ===== -->
+    <!-- ===== 一键部署第三方平台对话框 ===== -->
     <el-dialog
       v-model="integrationDialogVisible"
-      title="接入第三方平台"
-      width="560px"
+      title="一键部署到第三方平台"
+      width="620px"
       class="integration-dialog"
       align-center
+      :close-on-click-modal="false"
     >
-      <div v-if="integrationEmployee" class="integration-dialog-body">
-        <div class="integration-emp-info">
-          <span class="integration-emp-name">{{ integrationEmployee.name }}</span>
-          <span class="integration-emp-tag">{{ getIndustryLabel(integrationEmployee.industry) }}</span>
-          <span class="integration-emp-tag">{{ getPositionLabel(integrationEmployee.industry, integrationEmployee.position) }}</span>
+      <div v-if="integrationEmployee" class="deploy-dialog-body">
+        <div class="deploy-emp-banner">
+          <div class="deploy-emp-avatar">{{ integrationEmployee.name?.charAt(0) || '?' }}</div>
+          <div class="deploy-emp-info">
+            <div class="deploy-emp-name">{{ integrationEmployee.name }}</div>
+            <div class="deploy-emp-tags">
+              <span class="deploy-emp-tag">{{ getIndustryLabel(integrationEmployee.industry) }}</span>
+              <span class="deploy-emp-tag">{{ getPositionLabel(integrationEmployee.industry, integrationEmployee.position) }}</span>
+            </div>
+          </div>
         </div>
-        <div class="integration-steps">
-          <div class="integration-step">
-            <div class="step-num">1</div>
-            <div class="step-body">
-              <div class="step-name">微信公众号接入</div>
-              <div class="step-desc">登录微信公众号后台 → 开发 → 基本配置 → 服务器配置，填写URL：<code>https://api.lsjyapp.cn/api/v1/webhook/wechat</code>，Token由平台自动生成，绑定后该AI员工即可自动回复粉丝消息。</div>
+
+        <!-- 步骤1：选择平台 -->
+        <div v-if="deployStep === 'select'" class="deploy-step">
+          <div class="deploy-step-title">第一步：选择要部署的平台</div>
+          <div class="deploy-platform-grid">
+            <div
+              v-for="p in deployPlatforms"
+              :key="p.value"
+              class="deploy-platform-card"
+              :class="{ selected: deploySelectedPlatform === p.value }"
+              @click="deploySelectedPlatform = p.value"
+            >
+              <span class="platform-icon">{{ p.icon }}</span>
+              <span class="platform-name">{{ p.label }}</span>
+              <span class="platform-desc">{{ p.desc }}</span>
             </div>
           </div>
-          <div class="integration-step">
-            <div class="step-num">2</div>
-            <div class="step-body">
-              <div class="step-name">企业微信群机器人</div>
-              <div class="step-desc">进入企业微信群 → 群设置 → 添加群机器人 → 自定义机器人，Webhook地址填写 <code>https://api.lsjyapp.cn/api/v1/webhook/wework</code>，群内@机器人即可触发AI员工自动响应。</div>
+          <div class="deploy-actions">
+            <el-button @click="integrationDialogVisible = false">取消</el-button>
+            <el-button type="primary" :disabled="!deploySelectedPlatform" :loading="deployLoading" @click="handleDeploy">
+              一键部署到 {{ deployPlatforms.find(p => p.value === deploySelectedPlatform)?.label || '' }}
+            </el-button>
+          </div>
+        </div>
+
+        <!-- 步骤2：部署结果 -->
+        <div v-else-if="deployStep === 'result'" class="deploy-step">
+          <div class="deploy-success-header">
+            <span class="deploy-success-icon">✅</span>
+            <span class="deploy-success-title">部署成功！</span>
+          </div>
+          <div class="deploy-platform-badge" v-if="deployResult">
+            <span class="platform-label">{{ deployPlatforms.find(p => p.value === deployResult.platform)?.icon }} {{ deployPlatforms.find(p => p.value === deployResult.platform)?.label }}</span>
+          </div>
+
+          <div class="deploy-result-section">
+            <div class="result-field">
+              <div class="result-label">Webhook URL</div>
+              <div class="result-value-row">
+                <code class="result-value">{{ deployResult.webhookUrl }}</code>
+                <el-button size="small" class="copy-btn" @click="copyText(deployResult.webhookUrl)">复制</el-button>
+              </div>
+            </div>
+            <div class="result-field">
+              <div class="result-label">Token / 密钥</div>
+              <div class="result-value-row">
+                <code class="result-value">{{ deployResult.token }}</code>
+                <el-button size="small" class="copy-btn" @click="copyText(deployResult.token)">复制</el-button>
+              </div>
             </div>
           </div>
-          <div class="integration-step">
-            <div class="step-num">3</div>
-            <div class="step-body">
-              <div class="step-name">钉钉/飞书接入</div>
-              <div class="step-desc">在钉钉/飞书开放平台创建企业内部应用 → 事件订阅 → 填写回调URL <code>https://api.lsjyapp.cn/api/v1/webhook/callback</code>，在平台后台绑定该AI员工的Employee ID即可。</div>
-            </div>
+
+          <div class="deploy-guide-section">
+            <div class="guide-title">配置指南</div>
+            <div class="guide-content">{{ deployResult.configGuide }}</div>
+            <el-button size="small" class="copy-btn" @click="copyText(deployResult.configGuide)" style="margin-top:8px">复制配置指南</el-button>
           </div>
-          <div class="integration-step">
-            <div class="step-num">4</div>
-            <div class="step-body">
-              <div class="step-name">网页/小程序嵌入</div>
-              <div class="step-desc">在HTML中引入 <code>&lt;script src="https://lsjyapp.cn/sdk/lsjy-chat.js"&gt;&lt;/script&gt;</code>，调用 <code>LSJYChat.init({ employeeId: '{{ integrationEmployee.id }}' })</code> 即可在任意网页或小程序中嵌入该AI员工对话窗口。</div>
-            </div>
+
+          <div class="deploy-actions">
+            <el-button @click="resetDeploy">重新选择平台</el-button>
+            <el-button type="primary" @click="integrationDialogVisible = false">完成</el-button>
           </div>
         </div>
       </div>
-      <template #footer>
-        <el-button @click="integrationDialogVisible = false">关闭</el-button>
-        <el-button type="primary" @click="integrationDialogVisible = false">知道了</el-button>
-      </template>
     </el-dialog>
   </div>
 </template>
@@ -986,6 +1021,16 @@ const chatLoading = ref(false)
 // -- 接入平台对话框 --
 const integrationDialogVisible = ref(false)
 const integrationEmployee = ref<any>(null)
+const deployStep = ref<'select' | 'result'>('select')
+const deploySelectedPlatform = ref('')
+const deployLoading = ref(false)
+const deployResult = ref<any>(null)
+const deployPlatforms = [
+  { value: 'wechat', label: '微信公众号', icon: '💬', desc: '粉丝发送消息，AI员工自动回复' },
+  { value: 'wework', label: '企业微信', icon: '🏢', desc: '群聊@机器人，AI员工自动响应' },
+  { value: 'dingtalk', label: '钉钉', icon: '📱', desc: '钉钉群聊@机器人，AI员工自动回复' },
+  { value: 'webpage', label: '网页嵌入', icon: '🌐', desc: '在任意网页中嵌入AI员工对话窗口' },
+]
 
 function employeeStatusLabel(status: string) {
   const map: Record<string, string> = { running: '运行中', paused: '已暂停', stopped: '已停止', active: '运行中' }
@@ -1455,7 +1500,57 @@ async function sendChatMessage() {
 
 function handleShowIntegration(emp: any) {
   integrationEmployee.value = emp
+  deployStep.value = 'select'
+  deploySelectedPlatform.value = ''
+  deployResult.value = null
   integrationDialogVisible.value = true
+}
+
+async function handleDeploy() {
+  if (!deploySelectedPlatform.value || !integrationEmployee.value) return
+  deployLoading.value = true
+  try {
+    const res = await computingApi.deployToPlatform({
+      employeeId: integrationEmployee.value.id,
+      platform: deploySelectedPlatform.value,
+    })
+    deployResult.value = res.data
+    deployStep.value = 'result'
+  } catch (e: any) {
+    ElMessage.error('部署失败：' + (e?.message || '请稍后重试'))
+  } finally {
+    deployLoading.value = false
+  }
+}
+
+function resetDeploy() {
+  deployStep.value = 'select'
+  deploySelectedPlatform.value = ''
+  deployResult.value = null
+}
+
+function copyText(text: string) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => {
+      ElMessage.success('已复制到剪贴板')
+    }).catch(() => {
+      fallbackCopy(text)
+    })
+  } else {
+    fallbackCopy(text)
+  }
+}
+
+function fallbackCopy(text: string) {
+  const ta = document.createElement('textarea')
+  ta.value = text
+  ta.style.position = 'fixed'
+  ta.style.opacity = '0'
+  document.body.appendChild(ta)
+  ta.select()
+  document.execCommand('copy')
+  document.body.removeChild(ta)
+  ElMessage.success('已复制到剪贴板')
 }
 
 async function submitEditEmployee() {
@@ -1914,7 +2009,7 @@ function handleResize() {
   font-weight: 600;
 }
 
-/* ===== 接入平台对话框样式 ===== */
+/* ===== 一键部署第三方平台样式 ===== */
 .integration-dialog :deep(.el-dialog__header) {
   border-bottom: 1px solid #00f0ff15;
   padding: 16px 20px;
@@ -1928,26 +2023,186 @@ function handleResize() {
   padding: 16px 20px;
   background: #0a0a12;
 }
-.integration-emp-info {
+.deploy-dialog-body {
+  background: #0a0a12;
+}
+.deploy-emp-banner {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
   border-bottom: 1px solid #00f0ff10;
 }
-.integration-emp-name {
+.deploy-emp-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #00f0ff, #c084fc);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: #000;
+  flex-shrink: 0;
+}
+.deploy-emp-name {
   font-size: 14px;
   font-weight: 700;
   color: #e0e0ff;
 }
-.integration-emp-tag {
+.deploy-emp-tags {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+.deploy-emp-tag {
   font-size: 10px;
   padding: 2px 8px;
   border-radius: 10px;
   background: #00f0ff15;
   color: #00f0ff;
   border: 1px solid #00f0ff20;
+}
+.deploy-step {
+  min-height: 260px;
+}
+.deploy-step-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #e0e0ff;
+  margin-bottom: 14px;
+}
+.deploy-platform-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.deploy-platform-card {
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid #00f0ff15;
+  background: #0f0f1a;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.deploy-platform-card:hover {
+  border-color: #00f0ff40;
+  background: #00f0ff08;
+}
+.deploy-platform-card.selected {
+  border-color: #00f0ff;
+  background: #00f0ff15;
+  box-shadow: 0 0 12px #00f0ff25;
+}
+.platform-icon {
+  font-size: 28px;
+}
+.platform-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #e0e0ff;
+}
+.platform-desc {
+  font-size: 11px;
+  color: #808099;
+  line-height: 1.4;
+}
+.deploy-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #00f0ff10;
+}
+.deploy-success-header {
+  text-align: center;
+  padding: 12px 0;
+}
+.deploy-success-icon {
+  font-size: 36px;
+  display: block;
+  margin-bottom: 8px;
+}
+.deploy-success-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #00ff88;
+}
+.deploy-platform-badge {
+  text-align: center;
+  margin: 8px 0 16px;
+}
+.deploy-platform-badge .platform-label {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 20px;
+  background: #00f0ff15;
+  border: 1px solid #00f0ff30;
+  color: #00f0ff;
+  font-size: 13px;
+  font-weight: 600;
+}
+.deploy-result-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.result-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.result-label {
+  font-size: 11px;
+  color: #808099;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.result-value-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.result-value {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: #0f0f1a;
+  border: 1px solid #00f0ff15;
+  color: #00f0ff;
+  font-size: 12px;
+  word-break: break-all;
+  font-family: Menlo, monospace;
+}
+.deploy-guide-section {
+  margin-bottom: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  background: #0f0f1a;
+  border: 1px solid #00f0ff10;
+}
+.guide-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #e0e0ff;
+  margin-bottom: 8px;
+}
+.guide-content {
+  font-size: 12px;
+  color: #808099;
+  line-height: 1.7;
+  white-space: pre-line;
+}
+.copy-btn {
+  flex-shrink: 0;
 }
 
 /* ===== 页面容器 ===== */
