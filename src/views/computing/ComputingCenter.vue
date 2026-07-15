@@ -193,37 +193,40 @@
           <div class="section-panel create-panel">
             <h3 class="section-title glow-cyan">&#x2795; 创建虚拟AI员工</h3>
             <el-form :model="employeeForm" label-position="top" class="cyber-form">
+              <!-- 所属行业：横向可滑动标签栏 -->
               <el-form-item label="所属行业">
-                <el-select
-                  v-model="employeeForm.industry"
-                  placeholder="请选择行业"
-                  class="cyber-select"
-                  @change="onIndustryChange"
-                  style="width: 100%"
-                >
-                  <el-option
-                    v-for="item in industryOptions"
-                    :key="item.value"
-                    :label="item.label"
-                    :value="item.value"
-                  />
-                </el-select>
+                <div class="industry-scroll-wrapper">
+                  <div class="industry-scroll-container">
+                    <div
+                      v-for="item in industryOptions"
+                      :key="item.value"
+                      class="industry-chip"
+                      :class="{ active: employeeForm.industry === item.value }"
+                      @click="selectIndustry(item.value)"
+                    >
+                      <span class="industry-icon">{{ item.icon }}</span>
+                      <span class="industry-name">{{ item.label }}</span>
+                    </div>
+                  </div>
+                </div>
               </el-form-item>
-              <el-form-item label="岗位类型">
-                <el-select
-                  v-model="employeeForm.position"
-                  placeholder="请先选择行业"
-                  class="cyber-select"
-                  style="width: 100%"
-                  :disabled="!employeeForm.industry"
-                >
-                  <el-option
+
+              <!-- 岗位类型：标签式选择 -->
+              <el-form-item label="岗位类型" v-if="employeeForm.industry">
+                <div class="position-tags-wrapper">
+                  <div
                     v-for="item in currentPositionOptions"
                     :key="item.value"
-                    :label="item.label"
-                    :value="item.value"
-                  />
-                </el-select>
+                    class="position-tag"
+                    :class="{ active: employeeForm.position === item.value }"
+                    @click="selectPosition(item.value)"
+                  >
+                    {{ item.label }}
+                  </div>
+                </div>
+              </el-form-item>
+              <el-form-item label="岗位类型" v-else>
+                <div class="position-hint">请先选择所属行业</div>
               </el-form-item>
               <el-form-item label="员工名称">
                 <el-input
@@ -440,8 +443,9 @@ import { computingApi } from '@/api/computing'
 const router = useRouter()
 const activeTab = ref('dispatch')
 
-// ===== 行业与岗位映射 =====
+// ===== 行业与岗位映射（覆盖全球30+主要行业） =====
 const industryMap: Record<string, { label: string; value: string }[]> = {
+  // 互联网科技
   e_commerce: [
     { label: '客服代表', value: 'customer_service' },
     { label: '内容运营', value: 'content_ops' },
@@ -449,64 +453,316 @@ const industryMap: Record<string, { label: string; value: string }[]> = {
     { label: '数据分析', value: 'data_analysis' },
     { label: '社群运营', value: 'community_ops' },
     { label: '产品管理', value: 'product_mgr' },
+    { label: '直播运营', value: 'livestream_ops' },
+    { label: '供应链管理', value: 'supply_chain' },
   ],
-  pet_store: [
-    { label: '客服代表', value: 'customer_service' },
-    { label: '内容运营', value: 'content_ops' },
-    { label: '社群运营', value: 'community_ops' },
-    { label: '营销策划', value: 'marketing' },
-  ],
-  education: [
-    { label: '客服代表', value: 'customer_service' },
-    { label: '内容运营', value: 'content_ops' },
-    { label: '数据分析', value: 'data_analysis' },
+  // 互联网科技
+  tech_dev: [
     { label: '技术开发', value: 'tech_dev' },
+    { label: '数据分析', value: 'data_analysis' },
     { label: '产品管理', value: 'product_mgr' },
+    { label: 'UI设计师', value: 'ui_designer' },
+    { label: '测试工程师', value: 'qa_engineer' },
+    { label: '运维工程师', value: 'devops' },
   ],
+  // 自媒体
   self_media: [
     { label: '内容运营', value: 'content_ops' },
     { label: '营销策划', value: 'marketing' },
     { label: '社群运营', value: 'community_ops' },
     { label: '数据分析', value: 'data_analysis' },
     { label: '产品管理', value: 'product_mgr' },
+    { label: '直播运营', value: 'livestream_ops' },
+    { label: '短视频编导', value: 'video_director' },
   ],
+  // 教育培训
+  education: [
+    { label: '客服代表', value: 'customer_service' },
+    { label: '内容运营', value: 'content_ops' },
+    { label: '数据分析', value: 'data_analysis' },
+    { label: '技术开发', value: 'tech_dev' },
+    { label: '产品管理', value: 'product_mgr' },
+    { label: '课程顾问', value: 'course_consultant' },
+    { label: '教学管理', value: 'teaching_mgr' },
+  ],
+  // 校园创业
   campus_startup: [
     { label: '技术开发', value: 'tech_dev' },
     { label: '营销策划', value: 'marketing' },
     { label: '内容运营', value: 'content_ops' },
     { label: '数据分析', value: 'data_analysis' },
     { label: '产品管理', value: 'product_mgr' },
+    { label: '项目运营', value: 'project_ops' },
   ],
-  tech_dev: [
-    { label: '技术开发', value: 'tech_dev' },
-    { label: '数据分析', value: 'data_analysis' },
-    { label: '产品管理', value: 'product_mgr' },
-    { label: '内容运营', value: 'content_ops' },
-  ],
+  // 餐饮服务
   catering: [
     { label: '客服代表', value: 'customer_service' },
     { label: '营销策划', value: 'marketing' },
     { label: '内容运营', value: 'content_ops' },
     { label: '社群运营', value: 'community_ops' },
+    { label: '供应链管理', value: 'supply_chain' },
+    { label: '门店管理', value: 'store_mgr' },
+    { label: '外卖运营', value: 'delivery_ops' },
   ],
+  // 美容美业
+  beauty: [
+    { label: '客服代表', value: 'customer_service' },
+    { label: '营销策划', value: 'marketing' },
+    { label: '内容运营', value: 'content_ops' },
+    { label: '社群运营', value: 'community_ops' },
+    { label: '预约管理', value: 'appointment_mgr' },
+    { label: '会员管理', value: 'member_mgr' },
+    { label: '技师管理', value: 'technician_mgr' },
+  ],
+  // 宠物服务
+  pet_store: [
+    { label: '客服代表', value: 'customer_service' },
+    { label: '内容运营', value: 'content_ops' },
+    { label: '社群运营', value: 'community_ops' },
+    { label: '营销策划', value: 'marketing' },
+    { label: '预约管理', value: 'appointment_mgr' },
+    { label: '会员管理', value: 'member_mgr' },
+  ],
+  // 房产建筑
   real_estate: [
     { label: '客服代表', value: 'customer_service' },
     { label: '营销策划', value: 'marketing' },
     { label: '社群运营', value: 'community_ops' },
     { label: '数据分析', value: 'data_analysis' },
     { label: '产品管理', value: 'product_mgr' },
+    { label: '房源管理', value: 'listing_mgr' },
+    { label: '客户跟进', value: 'client_followup' },
+  ],
+  // 医疗健康
+  healthcare: [
+    { label: '客服代表', value: 'customer_service' },
+    { label: '数据分析', value: 'data_analysis' },
+    { label: '内容运营', value: 'content_ops' },
+    { label: '预约管理', value: 'appointment_mgr' },
+    { label: '健康管理', value: 'health_mgr' },
+    { label: '会员管理', value: 'member_mgr' },
+    { label: '病历管理', value: 'records_mgr' },
+  ],
+  // 金融保险
+  finance: [
+    { label: '客服代表', value: 'customer_service' },
+    { label: '数据分析', value: 'data_analysis' },
+    { label: '产品管理', value: 'product_mgr' },
+    { label: '营销策划', value: 'marketing' },
+    { label: '风控管理', value: 'risk_mgr' },
+    { label: '投资顾问', value: 'investment_advisor' },
+    { label: '合规管理', value: 'compliance_mgr' },
+  ],
+  // 制造工业
+  manufacturing: [
+    { label: '供应链管理', value: 'supply_chain' },
+    { label: '数据分析', value: 'data_analysis' },
+    { label: '产品管理', value: 'product_mgr' },
+    { label: '质量管理', value: 'quality_mgr' },
+    { label: '生产管理', value: 'production_mgr' },
+    { label: '设备管理', value: 'equipment_mgr' },
+    { label: '仓储管理', value: 'warehouse_mgr' },
+  ],
+  // 交通运输
+  transport: [
+    { label: '客服代表', value: 'customer_service' },
+    { label: '数据分析', value: 'data_analysis' },
+    { label: '调度管理', value: 'dispatch_mgr' },
+    { label: '产品管理', value: 'product_mgr' },
+    { label: '路线规划', value: 'route_planning' },
+    { label: '运力管理', value: 'capacity_mgr' },
+  ],
+  // 农林牧渔
+  agriculture: [
+    { label: '数据分析', value: 'data_analysis' },
+    { label: '供应链管理', value: 'supply_chain' },
+    { label: '产品管理', value: 'product_mgr' },
+    { label: '营销策划', value: 'marketing' },
+    { label: '种植管理', value: 'farming_mgr' },
+    { label: '养殖管理', value: 'breeding_mgr' },
+  ],
+  // 文娱体育
+  entertainment: [
+    { label: '内容运营', value: 'content_ops' },
+    { label: '营销策划', value: 'marketing' },
+    { label: '社群运营', value: 'community_ops' },
+    { label: '数据分析', value: 'data_analysis' },
+    { label: '产品管理', value: 'product_mgr' },
+    { label: '艺人经纪', value: 'artist_mgr' },
+    { label: '活动策划', value: 'event_planning' },
+  ],
+  // 酒店旅游
+  hospitality: [
+    { label: '客服代表', value: 'customer_service' },
+    { label: '营销策划', value: 'marketing' },
+    { label: '内容运营', value: 'content_ops' },
+    { label: '社群运营', value: 'community_ops' },
+    { label: '预约管理', value: 'appointment_mgr' },
+    { label: '房态管理', value: 'room_mgr' },
+    { label: '行程规划', value: 'itinerary_mgr' },
+  ],
+  // 法律政务
+  legal: [
+    { label: '客服代表', value: 'customer_service' },
+    { label: '数据分析', value: 'data_analysis' },
+    { label: '内容运营', value: 'content_ops' },
+    { label: '产品管理', value: 'product_mgr' },
+    { label: '案件管理', value: 'case_mgr' },
+    { label: '合规审查', value: 'compliance_mgr' },
+    { label: '档案管理', value: 'archive_mgr' },
+  ],
+  // 能源环保
+  energy: [
+    { label: '数据分析', value: 'data_analysis' },
+    { label: '产品管理', value: 'product_mgr' },
+    { label: '供应链管理', value: 'supply_chain' },
+    { label: '质量管理', value: 'quality_mgr' },
+    { label: '设备管理', value: 'equipment_mgr' },
+    { label: '环保监测', value: 'env_monitor' },
+  ],
+  // 家政服务
+  housekeeping: [
+    { label: '客服代表', value: 'customer_service' },
+    { label: '预约管理', value: 'appointment_mgr' },
+    { label: '营销策划', value: 'marketing' },
+    { label: '内容运营', value: 'content_ops' },
+    { label: '人员管理', value: 'staff_mgr' },
+    { label: '派单管理', value: 'dispatch_mgr' },
+  ],
+  // 汽车服务
+  automotive: [
+    { label: '客服代表', value: 'customer_service' },
+    { label: '营销策划', value: 'marketing' },
+    { label: '数据分析', value: 'data_analysis' },
+    { label: '产品管理', value: 'product_mgr' },
+    { label: '维修管理', value: 'repair_mgr' },
+    { label: '配件管理', value: 'parts_mgr' },
+    { label: '试驾管理', value: 'test_drive_mgr' },
+  ],
+  // 母婴亲子
+  maternity: [
+    { label: '客服代表', value: 'customer_service' },
+    { label: '内容运营', value: 'content_ops' },
+    { label: '营销策划', value: 'marketing' },
+    { label: '社群运营', value: 'community_ops' },
+    { label: '育儿顾问', value: 'parenting_advisor' },
+    { label: '会员管理', value: 'member_mgr' },
+  ],
+  // 服装时尚
+  fashion: [
+    { label: '营销策划', value: 'marketing' },
+    { label: '内容运营', value: 'content_ops' },
+    { label: '社群运营', value: 'community_ops' },
+    { label: '数据分析', value: 'data_analysis' },
+    { label: '供应链管理', value: 'supply_chain' },
+    { label: '买手管理', value: 'buyer_mgr' },
+    { label: '陈列设计', value: 'display_design' },
+  ],
+  // 珠宝首饰
+  jewelry: [
+    { label: '营销策划', value: 'marketing' },
+    { label: '客服代表', value: 'customer_service' },
+    { label: '内容运营', value: 'content_ops' },
+    { label: '社群运营', value: 'community_ops' },
+    { label: '鉴定管理', value: 'appraisal_mgr' },
+    { label: '库存管理', value: 'inventory_mgr' },
+  ],
+  // 数码电子
+  digital: [
+    { label: '产品管理', value: 'product_mgr' },
+    { label: '技术开发', value: 'tech_dev' },
+    { label: '数据分析', value: 'data_analysis' },
+    { label: '营销策划', value: 'marketing' },
+    { label: '售后管理', value: 'aftersales_mgr' },
+    { label: '评测管理', value: 'review_mgr' },
+  ],
+  // 家居家装
+  home_decor: [
+    { label: '客服代表', value: 'customer_service' },
+    { label: '营销策划', value: 'marketing' },
+    { label: '内容运营', value: 'content_ops' },
+    { label: '产品管理', value: 'product_mgr' },
+    { label: '设计管理', value: 'design_mgr' },
+    { label: '施工管理', value: 'construction_mgr' },
+  ],
+  // 运动健身
+  fitness: [
+    { label: '内容运营', value: 'content_ops' },
+    { label: '营销策划', value: 'marketing' },
+    { label: '社群运营', value: 'community_ops' },
+    { label: '预约管理', value: 'appointment_mgr' },
+    { label: '教练管理', value: 'coach_mgr' },
+    { label: '课程管理', value: 'class_mgr' },
+  ],
+  // 摄影摄像
+  photography: [
+    { label: '内容运营', value: 'content_ops' },
+    { label: '营销策划', value: 'marketing' },
+    { label: '社群运营', value: 'community_ops' },
+    { label: '产品管理', value: 'product_mgr' },
+    { label: '后期制作', value: 'post_production' },
+    { label: '客户管理', value: 'client_mgr' },
+  ],
+  // 婚庆服务
+  wedding: [
+    { label: '客服代表', value: 'customer_service' },
+    { label: '营销策划', value: 'marketing' },
+    { label: '内容运营', value: 'content_ops' },
+    { label: '预约管理', value: 'appointment_mgr' },
+    { label: '策划师', value: 'wedding_planner' },
+    { label: '司仪管理', value: 'emcee_mgr' },
+  ],
+  // 养老服务
+  elderly_care: [
+    { label: '客服代表', value: 'customer_service' },
+    { label: '健康管理', value: 'health_mgr' },
+    { label: '内容运营', value: 'content_ops' },
+    { label: '预约管理', value: 'appointment_mgr' },
+    { label: '护理管理', value: 'nursing_mgr' },
+    { label: '膳食管理', value: 'diet_mgr' },
+  ],
+  // 心理咨询
+  psychology: [
+    { label: '客服代表', value: 'customer_service' },
+    { label: '内容运营', value: 'content_ops' },
+    { label: '预约管理', value: 'appointment_mgr' },
+    { label: '社群运营', value: 'community_ops' },
+    { label: '个案管理', value: 'case_mgr' },
+    { label: '督导管理', value: 'supervision_mgr' },
   ],
 }
 
 const industryOptions = [
-  { label: '电商运营', value: 'e_commerce' },
-  { label: '宠物门店', value: 'pet_store' },
-  { label: '教育培训', value: 'education' },
-  { label: '自媒体运营', value: 'self_media' },
-  { label: '校园创业', value: 'campus_startup' },
-  { label: '技术开发', value: 'tech_dev' },
-  { label: '餐饮服务', value: 'catering' },
-  { label: '房产中介', value: 'real_estate' },
+  { label: '电商运营', value: 'e_commerce', icon: '🛒' },
+  { label: '互联网科技', value: 'tech_dev', icon: '💻' },
+  { label: '自媒体', value: 'self_media', icon: '📱' },
+  { label: '教育培训', value: 'education', icon: '📚' },
+  { label: '校园创业', value: 'campus_startup', icon: '🎓' },
+  { label: '餐饮服务', value: 'catering', icon: '🍽️' },
+  { label: '美容美业', value: 'beauty', icon: '💅' },
+  { label: '宠物服务', value: 'pet_store', icon: '🐾' },
+  { label: '房产建筑', value: 'real_estate', icon: '🏠' },
+  { label: '医疗健康', value: 'healthcare', icon: '🏥' },
+  { label: '金融保险', value: 'finance', icon: '💰' },
+  { label: '制造工业', value: 'manufacturing', icon: '🏭' },
+  { label: '交通运输', value: 'transport', icon: '🚚' },
+  { label: '农林牧渔', value: 'agriculture', icon: '🌾' },
+  { label: '文娱体育', value: 'entertainment', icon: '🎬' },
+  { label: '酒店旅游', value: 'hospitality', icon: '🏨' },
+  { label: '法律政务', value: 'legal', icon: '⚖️' },
+  { label: '能源环保', value: 'energy', icon: '⚡' },
+  { label: '家政服务', value: 'housekeeping', icon: '🧹' },
+  { label: '汽车服务', value: 'automotive', icon: '🚗' },
+  { label: '母婴亲子', value: 'maternity', icon: '👶' },
+  { label: '服装时尚', value: 'fashion', icon: '👗' },
+  { label: '珠宝首饰', value: 'jewelry', icon: '💎' },
+  { label: '数码电子', value: 'digital', icon: '📷' },
+  { label: '家居家装', value: 'home_decor', icon: '🛋️' },
+  { label: '运动健身', value: 'fitness', icon: '🏋️' },
+  { label: '摄影摄像', value: 'photography', icon: '📸' },
+  { label: '婚庆服务', value: 'wedding', icon: '💒' },
+  { label: '养老服务', value: 'elderly_care', icon: '👴' },
+  { label: '心理咨询', value: 'psychology', icon: '🧠' },
 ]
 
 const currentPositionOptions = computed(() => {
@@ -514,8 +770,13 @@ const currentPositionOptions = computed(() => {
   return industryMap[employeeForm.industry] || []
 })
 
-function onIndustryChange() {
+function selectIndustry(val: string) {
+  employeeForm.industry = val
   employeeForm.position = ''
+}
+
+function selectPosition(val: string) {
+  employeeForm.position = val
 }
 
 // ===== Tab1: 算力调度 =====
@@ -1110,6 +1371,105 @@ function handleResize() {
 </script>
 
 <style scoped>
+/* ===== 行业可滑动选择器 ===== */
+.industry-scroll-wrapper {
+  position: relative;
+  width: 100%;
+}
+.industry-scroll-container {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 2px 12px;
+  scrollbar-width: thin;
+  scrollbar-color: #00f0ff40 transparent;
+}
+.industry-scroll-container::-webkit-scrollbar {
+  height: 4px;
+}
+.industry-scroll-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+.industry-scroll-container::-webkit-scrollbar-thumb {
+  background: #00f0ff40;
+  border-radius: 2px;
+}
+.industry-chip {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 68px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid #00f0ff20;
+  background: #0f0f1a;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.industry-chip:hover {
+  border-color: #00f0ff60;
+  background: #00f0ff10;
+}
+.industry-chip.active {
+  border-color: #00f0ff;
+  background: #00f0ff20;
+  box-shadow: 0 0 8px #00f0ff30;
+}
+.industry-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+.industry-name {
+  font-size: 11px;
+  color: #b0b0cc;
+  white-space: nowrap;
+}
+.industry-chip.active .industry-name {
+  color: #00f0ff;
+  font-weight: 600;
+}
+
+/* ===== 岗位标签选择器 ===== */
+.position-tags-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.position-tag {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid #00f0ff20;
+  background: #0f0f1a;
+  color: #b0b0cc;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+.position-tag:hover {
+  border-color: #00f0ff60;
+  color: #e0e0ff;
+}
+.position-tag.active {
+  border-color: #00f0ff;
+  background: #00f0ff20;
+  color: #00f0ff;
+  font-weight: 600;
+  box-shadow: 0 0 8px #00f0ff30;
+}
+.position-hint {
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: #0f0f1a;
+  border: 1px dashed #00f0ff20;
+  color: #606080;
+  font-size: 12px;
+  text-align: center;
+}
+
 /* ===== 页面容器 ===== */
 .computing-center {
   min-height: 100vh;
