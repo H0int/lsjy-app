@@ -64,11 +64,21 @@
           <div class="font-medium text-sm mb-4" style="color: var(--cyber-cyan);">
             罗圣纪元AIGC-Agent技术核心班✓
           </div>
-          <div class="rounded-xl p-4 mb-4 inline-block" style="background: white;">
-            <img src="/official-group-qrcode.jpg" alt="官方群二维码" class="w-56 h-56 object-contain" />
+          <div class="flex gap-4 justify-center mb-4">
+            <div class="text-center">
+              <div class="rounded-xl p-3 inline-block" style="background: white;">
+                <img src="/qrcode-tech-group.png" alt="技术交流群二维码" class="w-40 h-40 object-contain" />
+              </div>
+              <p class="text-xs mt-2 font-medium" style="color: var(--cyber-cyan);">技术交流群</p>
+            </div>
+            <div class="text-center">
+              <div class="rounded-xl p-3 inline-block" style="background: white;">
+                <img src="/qrcode-personal.png" alt="个人微信二维码" class="w-40 h-40 object-contain" />
+              </div>
+              <p class="text-xs mt-2 font-medium" style="color: var(--cyber-cyan);">添加创始人微信</p>
+            </div>
           </div>
-          <p class="text-xs" style="color: var(--cyber-text-dim);">请使用微信或企业微信扫码加入</p>
-          <p class="text-xs mt-1" style="color: var(--cyber-amber);">二维码有效期至 2026年7月11日</p>
+          <p class="text-xs" style="color: var(--cyber-text-dim);">请使用微信扫一扫加入群聊或添加好友</p>
         </div>
       </div>
     </Teleport>

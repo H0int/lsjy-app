@@ -65,7 +65,7 @@
         <div class="cyber-modal-body">
           <p class="text-sm mb-3" style="color: var(--cyber-text-dim);">罗圣纪元AIGC-Agent技术核心班</p>
           <div class="cyber-qrcode-wrapper">
-            <img src="/qrcode-group.jpg" alt="技术交流群二维码" class="cyber-qrcode-img" />
+            <img src="/qrcode-tech-group.png" alt="技术交流群二维码" class="cyber-qrcode-img" />
           </div>
           <p class="text-xs mt-3" style="color: var(--cyber-text-dim);">用微信或企业微信扫码加入</p>
         </div>
