@@ -1821,12 +1821,15 @@ async function loadPackages() {
     const res = await computingApi.getPackages()
     const data = res.data || []
     if (Array.isArray(data) && data.length > 0) {
-      servicePackages.value = data
+      servicePackages.value = data.map((pkg: any) => ({
+        ...defaultPackages.find(d => d.packageKey === pkg.packageKey) || {},
+        ...pkg,
+      }))
     } else {
-      servicePackages.value = []
+      servicePackages.value = [...defaultPackages]
     }
   } catch {
-    servicePackages.value = []
+    servicePackages.value = [...defaultPackages]
   }
 }
 
