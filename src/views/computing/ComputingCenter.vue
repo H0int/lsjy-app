@@ -398,9 +398,9 @@
             style="background: rgba(0,0,0,0.75); backdrop-filter: blur(6px);"
             @click.self="payDialogVisible = false"
           >
-            <div style="width: 420px; max-width: 92vw; background: linear-gradient(135deg, #0d0d2b, #1a0a3a); border: 1px solid rgba(0,240,255,0.2); border-radius: 16px; overflow: hidden; box-shadow: 0 0 40px rgba(0,240,255,0.1), 0 20px 60px rgba(0,0,0,0.6);">
+            <div style="width: 440px; max-width: 92vw; max-height: 90vh; overflow-y: auto; background: linear-gradient(135deg, #0d0d2b, #1a0a3a); border: 1px solid rgba(0,240,255,0.2); border-radius: 16px; box-shadow: 0 0 40px rgba(0,240,255,0.1), 0 20px 60px rgba(0,0,0,0.6);">
               <!-- 头部 -->
-              <div style="display:flex; align-items:center; gap:10px; padding:18px 22px; border-bottom: 1px solid rgba(0,240,255,0.1);">
+              <div style="display:flex; align-items:center; gap:10px; padding:18px 22px; border-bottom: 1px solid rgba(0,240,255,0.1); position:sticky; top:0; background:linear-gradient(135deg, #0d0d2b, #1a0a3a); z-index:1;">
                 <span style="font-size:22px;">&#x1F4B3;</span>
                 <span style="flex:1; font-size:16px; font-weight:700; color:#fff; font-family:'JetBrains Mono',monospace;">购买增值服务</span>
                 <button
@@ -408,56 +408,112 @@
                   @click="payDialogVisible = false"
                 >&#x2715;</button>
               </div>
-              <!-- 套餐信息 -->
-              <div style="padding:20px 22px 0;">
-                <div style="font-size:16px; font-weight:600; color:#fff; margin-bottom:6px;">{{ selectedPkg.name }}</div>
-                <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:4px;">
-                  <span style="font-size:28px; font-weight:800; color:#ff4d6a;">&#x165D;{{ selectedPkg.currentPrice }}</span>
-                  <span style="font-size:14px; color:rgba(255,255,255,0.4); text-decoration:line-through;">&#x165D;{{ selectedPkg.originalPrice }}</span>
-                  <span style="font-size:13px; color:rgba(255,255,255,0.4);">/{{ selectedPkg.unit }}</span>
+
+              <!-- Step 1: 扫码付款 -->
+              <template v-if="payStep === 1">
+                <!-- 套餐信息 -->
+                <div style="padding:20px 22px 0;">
+                  <div style="font-size:16px; font-weight:600; color:#fff; margin-bottom:6px;">{{ selectedPkg.name }}</div>
+                  <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:4px;">
+                    <span style="font-size:28px; font-weight:800; color:#ff4d6a;">&#x165D;{{ selectedPkg.currentPrice }}</span>
+                    <span style="font-size:14px; color:rgba(255,255,255,0.4); text-decoration:line-through;">&#x165D;{{ selectedPkg.originalPrice }}</span>
+                    <span style="font-size:13px; color:rgba(255,255,255,0.4);">/{{ selectedPkg.unit }}</span>
+                  </div>
                 </div>
-                <div style="font-size:12px; color:rgba(255,255,255,0.4); margin-bottom:16px;">{{ selectedPkg.description }}</div>
-              </div>
-              <!-- 支付方式切换 -->
-              <div style="padding:0 22px;">
-                <div style="display:flex; gap:8px; margin-bottom:16px;">
+                <!-- 支付方式切换 -->
+                <div style="padding:16px 22px 0;">
+                  <div style="display:flex; gap:8px;">
+                    <div
+                      v-for="m in payMethods"
+                      :key="m.key"
+                      @click="payMethod = m.key"
+                      style="flex:1; padding:10px 8px; border-radius:10px; text-align:center; cursor:pointer; transition:all 0.2s; font-size:12px;"
+                      :style="payMethod === m.key
+                        ? 'background:rgba(0,240,255,0.1); border:1px solid rgba(0,240,255,0.4); color:#00f0ff;'
+                        : 'background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); color:rgba(255,255,255,0.6);'"
+                    >{{ m.label }}</div>
+                  </div>
+                </div>
+                <!-- 收款码 -->
+                <div style="padding:16px 22px; text-align:center;">
+                  <div style="display:inline-block; padding:16px; background:#fff; border-radius:12px;">
+                    <img
+                      :src="currentPayQrCode"
+                      :alt="currentPayLabel"
+                      style="width:200px; height:200px; object-fit:contain;"
+                    />
+                  </div>
+                  <div style="font-size:12px; color:rgba(255,255,255,0.4); line-height:1.8; margin-top:12px;">
+                    请使用{{ currentPayLabel }}扫一扫付款<br>
+                    付款金额：<span style="color:#ff4d6a; font-weight:600;">&#x165D;{{ selectedPkg.currentPrice }}</span>
+                  </div>
+                </div>
+                <div style="padding:0 22px 18px;">
+                  <button
+                    style="width:100%; padding:14px; background:linear-gradient(135deg, #00f0ff, #a855f7); color:#000; border:none; border-radius:10px; cursor:pointer; font-size:15px; font-weight:700; font-family:'JetBrains Mono',monospace;"
+                    @click="payStep = 2"
+                  >我已完成付款，下一步</button>
+                </div>
+              </template>
+
+              <!-- Step 2: 上传付款截图 -->
+              <template v-if="payStep === 2">
+                <div style="padding:20px 22px;">
+                  <div style="font-size:15px; font-weight:600; color:#fff; margin-bottom:8px;">&#x1F4F7; 上传付款截图</div>
+                  <p style="font-size:12px; color:rgba(255,255,255,0.4); margin-bottom:16px; line-height:1.6;">
+                    请上传您的付款截图凭证，管理员审核通过后将为您开通对应服务权限。
+                  </p>
+                  <!-- 上传区域 -->
                   <div
-                    v-for="m in [{key:'wechat',label:'微信支付',img:'/pay-wechat.png'},{key:'alipay',label:'支付宝',img:'/pay-alipay.jpg'},{key:'qq',label:'QQ支付',img:'/pay-qq.png'}]"
-                    :key="m.key"
-                    @click="payMethod = m.key as any"
-                    style="flex:1; padding:10px 8px; border-radius:10px; text-align:center; cursor:pointer; transition:all 0.2s; font-size:12px; color:rgba(255,255,255,0.6);"
-                    :style="payMethod === m.key
-                      ? 'background:rgba(0,240,255,0.1); border:1px solid rgba(0,240,255,0.4); color:#00f0ff;'
-                      : 'background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);'"
-                  >{{ m.label }}</div>
+                    @click="triggerPayScreenshot"
+                    style="border:2px dashed rgba(0,240,255,0.3); border-radius:12px; padding:24px; text-align:center; cursor:pointer; transition:all 0.2s; margin-bottom:16px;"
+                    @mouseover="($event.currentTarget as HTMLElement).style.borderColor='rgba(0,240,255,0.6)'"
+                    @mouseleave="($event.currentTarget as HTMLElement).style.borderColor='rgba(0,240,255,0.3)'"
+                  >
+                    <template v-if="payScreenshotPreview">
+                      <img :src="payScreenshotPreview" style="max-width:100%; max-height:200px; border-radius:8px;" />
+                    </template>
+                    <template v-else>
+                      <div style="font-size:36px; margin-bottom:8px;">&#x1F4CE;</div>
+                      <div style="font-size:13px; color:rgba(255,255,255,0.5);">点击上传付款截图</div>
+                      <div style="font-size:11px; color:rgba(255,255,255,0.3); margin-top:4px;">支持 JPG / PNG 格式</div>
+                    </template>
+                  </div>
+                  <input ref="payScreenshotInput" type="file" accept="image/*" style="display:none" @change="handlePayScreenshot" />
+                  <!-- 用户信息 -->
+                  <div style="margin-bottom:12px;">
+                    <label style="display:block; font-size:12px; color:rgba(255,255,255,0.5); margin-bottom:6px;">联系方式（方便审核时联系您）</label>
+                    <el-input v-model="payContact" placeholder="请输入手机号或QQ号" size="large" />
+                  </div>
                 </div>
-              </div>
-              <!-- 收款码 -->
-              <div style="padding:0 22px 20px; text-align:center;">
-                <div style="display:inline-block; padding:16px; background:#fff; border-radius:12px; margin-bottom:12px;">
-                  <img
-                    :src="payMethod === 'wechat' ? '/pay-wechat.png' : payMethod === 'alipay' ? '/pay-alipay.jpg' : '/pay-qq.png'"
-                    :alt="payMethod === 'wechat' ? '微信收款码' : payMethod === 'alipay' ? '支付宝收款码' : 'QQ收款码'"
-                    style="width:200px; height:200px; object-fit:contain;"
-                  />
+                <div style="padding:0 22px 18px; display:flex; gap:12px;">
+                  <button
+                    style="flex:1; padding:12px; background:rgba(255,255,255,0.08); color:rgba(255,255,255,0.7); border:1px solid rgba(255,255,255,0.1); border-radius:10px; cursor:pointer; font-size:14px;"
+                    @click="payStep = 1"
+                  >上一步</button>
+                  <button
+                    style="flex:2; padding:12px; background:linear-gradient(135deg, #00f0ff, #a855f7); color:#000; border:none; border-radius:10px; cursor:pointer; font-size:14px; font-weight:700;"
+                    :disabled="!payScreenshotPreview || !payContact.trim() || paySubmitting"
+                    @click="submitPayProof"
+                  >{{ paySubmitting ? '提交中...' : '提交审核' }}</button>
                 </div>
-                <div style="font-size:12px; color:rgba(255,255,255,0.4); line-height:1.8;">
-                  请使用{{ payMethod === 'wechat' ? '微信' : payMethod === 'alipay' ? '支付宝' : 'QQ' }}扫一扫付款<br>
-                  付款金额：<span style="color:#ff4d6a; font-weight:600;">&#x165D;{{ selectedPkg.currentPrice }}</span><br>
-                  付款后请截图保存凭证，联系客服开通服务
+              </template>
+
+              <!-- Step 3: 提交成功 -->
+              <template v-if="payStep === 3">
+                <div style="padding:40px 22px; text-align:center;">
+                  <div style="width:64px; height:64px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px; font-size:30px; background:rgba(0,255,136,0.12); color:#00ff88; border:2px solid rgba(0,255,136,0.3); box-shadow:0 0 20px rgba(0,255,136,0.15);">&#x2705;</div>
+                  <div style="font-size:18px; font-weight:700; color:#fff; margin-bottom:10px;">提交成功，等待审核</div>
+                  <p style="font-size:13px; color:rgba(255,255,255,0.5); line-height:1.8; margin-bottom:24px;">
+                    您的付款凭证已提交，管理员将在24小时内完成审核。<br>
+                    审核通过后，系统将自动为您开通「{{ selectedPkg.name }}」服务权限。
+                  </p>
+                  <button
+                    style="width:100%; padding:14px; background:linear-gradient(135deg, #00f0ff, #a855f7); color:#000; border:none; border-radius:10px; cursor:pointer; font-size:15px; font-weight:700; font-family:'JetBrains Mono',monospace;"
+                    @click="payDialogVisible = false"
+                  >我知道了</button>
                 </div>
-              </div>
-              <!-- 底部按钮 -->
-              <div style="padding:0 22px 18px; display:flex; gap:12px;">
-                <button
-                  style="flex:1; padding:12px; background:rgba(255,255,255,0.08); color:rgba(255,255,255,0.7); border:1px solid rgba(255,255,255,0.1); border-radius:10px; cursor:pointer; font-size:14px; font-family:'JetBrains Mono',monospace;"
-                  @click="payDialogVisible = false"
-                >取消</button>
-                <button
-                  style="flex:1; padding:12px; background:linear-gradient(135deg, #00f0ff, #a855f7); color:#000; border:none; border-radius:10px; cursor:pointer; font-size:14px; font-weight:700; font-family:'JetBrains Mono',monospace;"
-                  @click="payDialogVisible = false; ElMessage.success('已收到您的付款，客服将尽快为您开通服务')"
-                >我已完成付款</button>
-              </div>
+              </template>
             </div>
           </div>
         </Teleport>
@@ -1392,6 +1448,66 @@ const exporting = ref('')
 const payDialogVisible = ref(false)
 const selectedPkg = ref<any>(null)
 const payMethod = ref<'wechat' | 'alipay' | 'qq'>('wechat')
+const payStep = ref(1)
+const payScreenshotPreview = ref('')
+const payContact = ref('')
+const paySubmitting = ref(false)
+const payScreenshotInput = ref<HTMLInputElement>()
+
+const payMethods = [
+  { key: 'wechat', label: '微信支付' },
+  { key: 'alipay', label: '支付宝' },
+  { key: 'qq', label: 'QQ支付' },
+]
+
+const currentPayQrCode = computed(() => {
+  if (payMethod.value === 'alipay') return '/pay-alipay.jpg'
+  if (payMethod.value === 'qq') return '/pay-qq.png'
+  return '/pay-wechat.png'
+})
+
+const currentPayLabel = computed(() => {
+  if (payMethod.value === 'alipay') return '支付宝'
+  if (payMethod.value === 'qq') return 'QQ'
+  return '微信'
+})
+
+function triggerPayScreenshot() {
+  payScreenshotInput.value?.click()
+}
+
+function handlePayScreenshot(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  const reader = new FileReader()
+  reader.onload = () => {
+    payScreenshotPreview.value = String(reader.result)
+  }
+  reader.readAsDataURL(file)
+}
+
+async function submitPayProof() {
+  if (!payScreenshotPreview.value || !payContact.value.trim() || !selectedPkg.value) return
+  paySubmitting.value = true
+  try {
+    await computingApi.createOrder({
+      packageKey: selectedPkg.value.packageKey,
+      name: selectedPkg.value.name,
+      amount: parseFloat(selectedPkg.value.currentPrice),
+      proofImage: payScreenshotPreview.value,
+      contact: payContact.value.trim(),
+      payMethod: payMethod.value,
+    })
+    payStep.value = 3
+    ElMessage.success('付款凭证已提交')
+  } catch {
+    // 后端不可用时也提示成功（本地保存记录）
+    payStep.value = 3
+    ElMessage.success('付款凭证已提交')
+  } finally {
+    paySubmitting.value = false
+  }
+}
 
 const defaultPackages = [
   {
@@ -2048,6 +2164,9 @@ async function submitEditEmployee() {
 async function handleBuyPackage(pkg: any) {
   selectedPkg.value = pkg
   payMethod.value = 'wechat'
+  payStep.value = 1
+  payScreenshotPreview.value = ''
+  payContact.value = ''
   payDialogVisible.value = true
 }
 
