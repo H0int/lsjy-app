@@ -46,10 +46,10 @@
       <div class="flex items-center gap-2 mb-3">
         <span class="text-lg">🔧</span>
         <h2 class="text-lg font-bold cyber-glow-text" style="color: var(--cyber-cyan);">开源AI技能</h2>
-        <span class="text-xs text-gray-400">Docker独立部署 · 永久免费</span>
+        <span class="text-xs text-gray-400">Docker独立部署 · 50圣力/次</span>
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div v-for="skill in skillsList" :key="skill.name" class="cyber-skill-card" :class="{ 'opacity-60': !skill.available }" @click="skill.available && openSkill(skill)">
+        <div v-for="skill in skillsList" :key="skill.name" class="cyber-skill-card cursor-pointer" @click="openSkill(skill)">
           <div class="flex items-center gap-3 mb-2">
             <span class="text-2xl">{{ skill.icon }}</span>
             <div>
@@ -59,7 +59,7 @@
           </div>
           <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{{ skill.description }}</p>
           <div class="mt-2 flex gap-2">
-            <el-tag size="small" type="success">免费</el-tag>
+            <el-tag size="small" type="warning">{{ skill.coinCost }}圣点/次</el-tag>
             <el-tag size="small" type="info">{{ skill.tag }}</el-tag>
           </div>
         </div>
@@ -147,6 +147,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useToolStore } from '@/stores/tool'
 import type { Tool } from '@/types'
 import { toolTypeMap } from '@/utils'
@@ -186,6 +187,7 @@ function toggleFavorite(toolId: number, e: Event) {
 }
 
 const toolStore = useToolStore()
+const router = useRouter()
 const searchQuery = ref('')
 const currentCategoryId = ref<number | null>(null)
 const currentSubCategory = ref<string>('')
@@ -354,9 +356,9 @@ import { skillsApi } from '@/api'
 import { ElMessage } from 'element-plus'
 
 const skillsList = ref([
-  { name: 'crawl4ai', displayName: 'AI网页爬虫', icon: '🕷️', available: false, description: '输入URL自动爬取网页内容，输出LLM友好的Markdown格式', tag: '数据采集' },
-  { name: 'whisper', displayName: 'AI语音识别', icon: '🎙️', available: false, description: '语音转文字，支持中文、英文、日文等99+语言', tag: '语音处理' },
-  { name: 'tabby', displayName: 'AI编程助手', icon: '💻', available: false, description: '代码智能补全与解释，支持VSCode/JetBrains插件', tag: '代码开发' },
+  { name: 'crawl4ai', displayName: 'AI网页爬虫', icon: '🕷️', available: true, toolId: 5, description: '输入URL自动爬取网页内容，输出LLM友好的Markdown格式', tag: '数据采集', coinCost: 50 },
+  { name: 'whisper', displayName: 'AI语音识别', icon: '🎙️', available: true, toolId: 52, description: '语音转文字，支持中文、英文、日文等99+语言', tag: '语音处理', coinCost: 50 },
+  { name: 'tabby', displayName: 'AI编程助手', icon: '💻', available: true, toolId: 5, description: '代码智能补全与解释，支持VSCode/JetBrains插件', tag: '代码开发', coinCost: 50 },
 ])
 
 async function loadSkillsStatus() {
@@ -402,12 +404,10 @@ async function loadSkillsStatus() {
 }
 
 function openSkill(skill: any) {
-  if (skill.name === 'crawl4ai') {
-    ElMessage.info('网页爬虫功能开发中，请通过API调用')
-  } else if (skill.name === 'whisper') {
-    ElMessage.info('语音识别功能开发中，请通过API调用')
-  } else if (skill.name === 'tabby') {
-    ElMessage.info('编程助手功能开发中，请通过API调用')
+  if (skill.toolId) {
+    router.push(`/tools/${skill.toolId}`)
+  } else {
+    ElMessage.info(`${skill.displayName}功能开发中`)
   }
 }
 

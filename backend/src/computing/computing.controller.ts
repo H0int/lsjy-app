@@ -262,4 +262,11 @@ export class ComputingController {
     const data = await this.computingService.adminUpdateConfig(body);
     return { code: 0, message: '全局配置已保存', data };
   }
+
+  @Post('admin/tools/pricing')
+  @ApiOperation({ summary: '管理后台：批量更新工具价格' })
+  async adminUpdateToolPricing(@Body() body: any) {
+    const data = await this.computingService.adminUpdateToolPricing(body);
+    return { code: 0, message: '工具价格已更新', data };
+  }
 }

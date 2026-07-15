@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { ComputingDispatchConfig, VirtualEmployee, ComputingDispatchLog, ValueAddedPackage, ValueAddedOrder } from '../database/entities/computing-entity';
 
@@ -17,6 +17,7 @@ export class ComputingService {
     private readonly packageRepo: Repository<ValueAddedPackage>,
     @InjectRepository(ValueAddedOrder)
     private readonly orderRepo: Repository<ValueAddedOrder>,
+    private readonly dataSource: DataSource,
   ) {}
 
   // ======================== 算力调度配置 ========================
@@ -389,5 +390,31 @@ export class ComputingService {
   async adminUpdateConfig(body: any) {
     // 全局配置暂存内存，后续可迁移到数据库
     return { ...body, updatedAt: new Date().toISOString() };
+  }
+
+  async adminUpdateToolPricing(body: { coinCost?: number; setAllToPaid?: boolean }) {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    try {
+      await queryRunner.startTransaction();
+      if (body.setAllToPaid && body.coinCost) {
+        await queryRunner.query(
+          'UPDATE ai_tools SET is_free = 0, coin_cost = ? WHERE is_free = 1',
+          [body.coinCost],
+        );
+        const [result] = await queryRunner.query(
+          'SELECT COUNT(*) as affected FROM ai_tools WHERE coin_cost = ? AND is_free = 0',
+          [body.coinCost],
+        );
+        return { updated: result.affected, coinCost: body.coinCost };
+      }
+      await queryRunner.commitTransaction();
+      return { message: 'no action taken' };
+    } catch (e) {
+      await queryRunner.rollbackTransaction();
+      throw e;
+    } finally {
+      await queryRunner.release();
+    }
   }
 }
