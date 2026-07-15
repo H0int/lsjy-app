@@ -280,8 +280,8 @@
                     <div class="card-info">
                       <div class="card-name">{{ emp.name }}</div>
                       <div class="card-tags">
-                        <span class="emp-tag industry-tag">{{ emp.industry }}</span>
-                        <span class="emp-tag position-tag">{{ emp.position }}</span>
+                        <span class="emp-tag industry-tag">{{ getIndustryLabel(emp.industry) }}</span>
+                        <span class="emp-tag position-tag">{{ getPositionLabel(emp.industry, emp.position) }}</span>
                       </div>
                     </div>
                     <div class="card-status" :class="'status-badge-' + emp.status">
@@ -299,6 +299,7 @@
                     </div>
                   </div>
                   <div class="card-actions" @click.stop>
+                    <el-button size="small" type="primary" @click="handleChatEmployee(emp)">对话使用</el-button>
                     <el-button
                       v-if="emp.status === 'running'"
                       size="small"
@@ -333,6 +334,41 @@
                     </el-steps>
                     <div class="workflow-desc">
                       <p>{{ emp.description || '暂无描述' }}</p>
+                    </div>
+
+                    <!-- 接入平台指引 -->
+                    <div class="integration-guide">
+                      <div class="integration-title">&#x1F517; 接入第三方平台</div>
+                      <div class="integration-steps">
+                        <div class="integration-step">
+                          <div class="step-num">1</div>
+                          <div class="step-body">
+                            <div class="step-name">微信/公众号接入</div>
+                            <div class="step-desc">前往「控制台 > AI智能体」找到该员工对应智能体，复制API Key，在微信公众号后台填写服务器配置URL为 <code>https://api.lsjyapp.cn/api/v1/webhook/wechat</code>，即可接收微信消息并自动由AI员工回复。</div>
+                          </div>
+                        </div>
+                        <div class="integration-step">
+                          <div class="step-num">2</div>
+                          <div class="step-body">
+                            <div class="step-name">企业微信群机器人</div>
+                            <div class="step-desc">在企业微信群设置中添加自定义机器人，Webhook地址填写 <code>https://api.lsjyapp.cn/api/v1/webhook/wework</code>，群内@机器人即可触发AI员工响应。</div>
+                          </div>
+                        </div>
+                        <div class="integration-step">
+                          <div class="step-num">3</div>
+                          <div class="step-body">
+                            <div class="step-name">钉钉/飞书接入</div>
+                            <div class="step-desc">在钉钉/飞书开放平台创建应用，将消息回调地址指向 <code>https://api.lsjyapp.cn/api/v1/webhook/callback</code>，并绑定该AI员工的Agent ID。</div>
+                          </div>
+                        </div>
+                        <div class="integration-step">
+                          <div class="step-num">4</div>
+                          <div class="step-body">
+                            <div class="step-name">网页/小程序嵌入</div>
+                            <div class="step-desc">使用平台提供的JS SDK：<code>&lt;script src="https://lsjyapp.cn/sdk/lsjy-chat.js"&gt;&lt;/script&gt;</code>，传入Agent ID即可在你的网站或小程序中嵌入AI员工对话窗口。</div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -851,8 +887,17 @@ const editForm = reactive<any>({
 })
 
 function employeeStatusLabel(status: string) {
-  const map: Record<string, string> = { running: '运行中', paused: '已暂停', stopped: '已停止' }
+  const map: Record<string, string> = { running: '运行中', paused: '已暂停', stopped: '已停止', active: '运行中' }
   return map[status] || status
+}
+
+function getIndustryLabel(val: string): string {
+  return industryOptions.find(o => o.value === val)?.label || val
+}
+
+function getPositionLabel(industryVal: string, posVal: string): string {
+  const positions = industryMap[industryVal] || []
+  return positions.find(p => p.value === posVal)?.label || posVal
 }
 
 function toggleEmployeeExpand(emp: any) {
@@ -1267,6 +1312,11 @@ function handleEditEmployee(emp: any) {
   editDialogVisible.value = true
 }
 
+function handleChatEmployee(emp: any) {
+  // 跳转到AI智能体对话页面，带上员工信息
+  router.push({ path: '/chat', query: { employeeId: String(emp.id), employeeName: emp.name } })
+}
+
 async function submitEditEmployee() {
   if (!editForm.name.trim()) {
     ElMessage.warning('请输入员工名称')
@@ -1468,6 +1518,68 @@ function handleResize() {
   color: #606080;
   font-size: 12px;
   text-align: center;
+}
+
+/* ===== 接入第三方平台指引 ===== */
+.integration-guide {
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 10px;
+  background: #0a0a18;
+  border: 1px solid #00f0ff15;
+}
+.integration-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #e0e0ff;
+  margin-bottom: 12px;
+}
+.integration-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.integration-step {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.step-num {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #00f0ff20;
+  border: 1px solid #00f0ff50;
+  color: #00f0ff;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.step-body {
+  flex: 1;
+}
+.step-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #00f0ff;
+  margin-bottom: 4px;
+}
+.step-desc {
+  font-size: 12px;
+  color: #808099;
+  line-height: 1.6;
+}
+.step-desc code {
+  background: #00f0ff10;
+  border: 1px solid #00f0ff25;
+  padding: 1px 6px;
+  border-radius: 4px;
+  color: #00f0ff;
+  font-size: 11px;
+  word-break: break-all;
 }
 
 /* ===== 页面容器 ===== */
