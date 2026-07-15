@@ -1817,19 +1817,18 @@ async function loadEmployees() {
 }
 
 async function loadPackages() {
+  servicePackages.value = [...defaultPackages]
   try {
     const res = await computingApi.getPackages()
     const data = res.data || []
-    if (Array.isArray(data) && data.length > 0) {
+    if (Array.isArray(data) && data.length > 0 && data[0]?.currentPrice && data[0]?.unit) {
       servicePackages.value = data.map((pkg: any) => ({
         ...defaultPackages.find(d => d.packageKey === pkg.packageKey) || {},
         ...pkg,
       }))
-    } else {
-      servicePackages.value = [...defaultPackages]
     }
   } catch {
-    servicePackages.value = [...defaultPackages]
+    // keep defaultPackages
   }
 }
 
