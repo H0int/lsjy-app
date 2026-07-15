@@ -826,6 +826,9 @@ import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { computingApi } from '@/api/computing'
 
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'https://api.lsjyapp.cn/api/v1').replace(/\/$/, '')
+const authToken = computed(() => localStorage.getItem('lsjy_token') || '')
+
 // ===== 基础状态 =====
 const router = useRouter()
 const activeTab = ref('dispatch')
@@ -1737,16 +1740,40 @@ async function sendChatMessage() {
   chatInput.value = ''
   chatLoading.value = true
   try {
-    const res = await computingApi.chatWithEmployee({
-      employeeId: chatEmployee.value.id,
-      message: text,
+    const emp = chatEmployee.value
+    const industryLabel = getIndustryLabel(emp.industry)
+    const positionLabel = getPositionLabel(emp.industry, emp.position)
+    const systemPrompt = `你是"罗圣纪元-${emp.name}"，一个专业的AI虚拟员工。` +
+      `所属行业：${industryLabel}，岗位：${positionLabel}。` +
+      `职能描述：${emp.description || '无'}` +
+      `公司：祁阳市罗圣纪元互联网科技有限责任公司（严禁写成"祈阳"）。` +
+      `你是一个7x24小时全自动运行的AI员工，直接为企业提供专业服务，` +
+      `替代企业在该岗位的线下员工。请用专业、简洁、直接的方式回答用户的问题，` +
+      `每次回答都要围绕你的行业和岗位职能展开，提供切实可用的解决方案和建议。`
+
+    const res = await fetch(`${API_BASE}/agent/chat`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${authToken.value}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messages: [{ role: 'user', content: text }],
+        model: 'lsjy-pro',
+        provider: 'lsjy',
+        agentId: emp.id,
+        systemPrompt,
+      }),
     })
-    const reply = res.data?.reply || res.data?.content || '收到，我来处理。'
-    chatMessages.value.push({ role: 'assistant', content: reply })
+    if (!res.ok) throw new Error(`API ${res.status}`)
+    const result = await res.json()
+    if (result.code !== 0) throw new Error(result.message || '服务错误')
+    const answerText = result.data?.content || result.data?.reply || '收到，我来处理。'
+    chatMessages.value.push({ role: 'assistant', content: answerText })
   } catch {
     chatMessages.value.push({
       role: 'assistant',
-      content: `【${chatEmployee.value.name}】已收到您的指令："${text}"。我正在根据${getIndustryLabel(chatEmployee.value.industry)}-${getPositionLabel(chatEmployee.value.industry, chatEmployee.value.position)}的职能范围进行处理，稍后为您输出结果。`,
+      content: `【${chatEmployee.value.name}】收到您的指令，正在处理中...请稍后重试或检查网络连接。`,
     })
   } finally {
     chatLoading.value = false
