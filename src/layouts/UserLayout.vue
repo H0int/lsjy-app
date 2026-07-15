@@ -5,7 +5,7 @@
       <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
         <!-- Logo -->
         <div class="flex items-center gap-3 cursor-pointer" @click="$router.push('/dashboard')">
-          <div class="w-9 h-9 rounded-lg flex items-center justify-center font-bold text-lg" style="background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple)); color: #000; box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);">罗</div>
+          <img src="/company-logo-nav.png" alt="罗圣纪元" class="w-9 h-9 rounded-lg object-cover" style="box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);" />
           <span class="text-lg font-bold hidden sm:block glow-cyan" style="color: var(--cyber-cyan); font-family: 'JetBrains Mono', monospace;">罗圣纪元</span>
         </div>
 
