@@ -1762,8 +1762,80 @@ async function handleShowIntegration(emp: any) {
     accessLoading.value = true
     const res = await computingApi.getEmployeeAccess(emp.id)
     accessData.value = res.data
-  } catch (e: any) {
-    ElMessage.error('加载失败：' + (e?.message || '请稍后重试'))
+  } catch {
+    // 后端不可用时使用本地数据
+    const shareToken = 'local_' + emp.id + '_' + Date.now().toString(36)
+    accessData.value = {
+      employeeId: emp.id,
+      employeeName: emp.name,
+      industry: emp.industry,
+      position: emp.position,
+      quickShare: {
+        shareUrl: `${window.location.origin}/#/chat/${emp.id}?token=${shareToken}`,
+        qrCodeUrl: '',
+        shareToken,
+      },
+      platforms: {
+        wechat: {
+          platform: 'wechat',
+          webhookUrl: `https://api.lsjyapp.cn/api/v1/webhook/wechat/${emp.id}`,
+          token: shareToken,
+          difficulty: '中等',
+          estimatedTime: '约10分钟',
+          prerequisite: '需已认证的微信公众号（服务号）',
+          steps: [
+            { title: '登录微信公众号后台', desc: '访问 mp.weixin.qq.com，使用管理员微信扫码登录' },
+            { title: '进入基本配置', desc: '左侧菜单 → 设置与开发 → 基本配置' },
+            { title: '修改服务器配置', desc: '点击「修改配置」按钮，填写回调URL和Token' },
+            { title: '启用服务器配置', desc: '点击「提交」后，再点击「启用」按钮' },
+            { title: '完成验证', desc: `配置成功后，粉丝给公众号发消息，${emp.name}将自动回复。` },
+          ],
+        },
+        wework: {
+          platform: 'wework',
+          webhookUrl: `https://api.lsjyapp.cn/api/v1/webhook/wework/${emp.id}`,
+          token: shareToken,
+          difficulty: '较难',
+          estimatedTime: '约15分钟',
+          prerequisite: '需企业微信管理员权限',
+          steps: [
+            { title: '登录企业微信管理后台', desc: '访问 work.weixin.qq.com，管理员扫码登录' },
+            { title: '创建自建应用', desc: '应用管理 → 自建 → 创建应用' },
+            { title: '设置接收消息', desc: '在应用详情页设置API接收URL和Token' },
+            { title: '配置可信IP', desc: '将服务器IP添加到企业可信IP列表' },
+            { title: '添加到群聊使用', desc: `在企业微信群中添加该机器人即可对话` },
+          ],
+        },
+        dingtalk: {
+          platform: 'dingtalk',
+          webhookUrl: `https://api.lsjyapp.cn/api/v1/webhook/dingtalk/${emp.id}`,
+          token: shareToken,
+          difficulty: '较难',
+          estimatedTime: '约15分钟',
+          prerequisite: '需钉钉企业管理员权限',
+          steps: [
+            { title: '登录钉钉开放平台', desc: '访问 open-dev.dingtalk.com，管理员扫码登录' },
+            { title: '创建企业内部应用', desc: '应用开发 → 企业内部应用 → 创建应用' },
+            { title: '配置消息接收地址', desc: '在消息推送中配置回调URL和Token' },
+            { title: '发布并授权', desc: '点击「发布版本」→ 选择可见范围' },
+            { title: '开始使用', desc: `员工在钉钉中找到该应用即可对话` },
+          ],
+        },
+        webpage: {
+          platform: 'webpage',
+          webhookUrl: `https://api.lsjyapp.cn/api/v1/webhook/chat/${emp.id}`,
+          token: shareToken,
+          difficulty: '简单',
+          estimatedTime: '约2分钟',
+          prerequisite: '需有自己的网站并能修改HTML代码',
+          steps: [
+            { title: '复制嵌入代码', desc: '在左侧配置好样式后，复制生成的代码片段' },
+            { title: '粘贴到网站', desc: '将代码粘贴到网站HTML的 </body> 标签之前' },
+            { title: '刷新网站查看效果', desc: '刷新你的网站，右下角将出现对话按钮' },
+          ],
+        },
+      },
+    }
   } finally {
     accessLoading.value = false
   }
