@@ -47,7 +47,7 @@ export class SkillsService {
   async crawl(url: string, params?: { outputFormat?: string; excludeImages?: boolean }): Promise<any> {
     const startTime = Date.now();
     try {
-      const res = await fetch('http://127.0.0.1:11235/crawl', {
+      const res = await fetch(`${this.configService.get('SKILL_CRAWL4AI_URL', 'http://127.0.0.1:11235')}/crawl`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Token': this.configService.get('CRAWL4AI_API_TOKEN', 'lsjy_crawl4ai_2026_secret') },
         body: JSON.stringify({ url, output_format: params?.outputFormat || 'markdown', exclude_images: params?.excludeImages ?? true }),
@@ -64,7 +64,7 @@ export class SkillsService {
   async transcribe(audioUrl: string, language?: string): Promise<any> {
     const startTime = Date.now();
     try {
-      const res = await fetch('http://127.0.0.1:9000/v1/audio/transcriptions', {
+      const res = await fetch(`${this.configService.get('SKILL_WHISPER_URL', 'http://127.0.0.1:9000')}/v1/audio/transcriptions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ file: audioUrl, language: language || 'zh' }),
@@ -81,7 +81,7 @@ export class SkillsService {
   async codeCompletion(code: string, language?: string): Promise<any> {
     const startTime = Date.now();
     try {
-      const res = await fetch('http://127.0.0.1:8089/v1/completions', {
+      const res = await fetch(`${this.configService.get('SKILL_TABBY_URL', 'http://127.0.0.1:8089')}/v1/completions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ language: language || 'javascript', segments: { prefix: code } }),
@@ -97,9 +97,9 @@ export class SkillsService {
   /** 获取所有技能状态 */
   async getSkillsStatus(): Promise<SkillStatus[]> {
     const skills = [
-      { name: 'crawl4ai', displayName: 'AI网页爬虫', endpoint: 'http://127.0.0.1:11235', description: '输入URL自动爬取网页内容，输出LLM友好的Markdown' },
-      { name: 'whisper', displayName: 'AI语音识别', endpoint: 'http://127.0.0.1:9000', description: '语音转文字，支持99+语言，包括中文、英文、日文等' },
-      { name: 'tabby', displayName: 'AI编程助手', endpoint: 'http://127.0.0.1:8089', description: '代码智能补全，支持VSCode/JetBrains插件接入' },
+      { name: 'crawl4ai', displayName: 'AI网页爬虫', endpoint: this.configService.get('SKILL_CRAWL4AI_URL', 'http://127.0.0.1:11235'), description: '输入URL自动爬取网页内容，输出LLM友好的Markdown' },
+      { name: 'whisper', displayName: 'AI语音识别', endpoint: this.configService.get('SKILL_WHISPER_URL', 'http://127.0.0.1:9000'), description: '语音转文字，支持99+语言，包括中文、英文、日文等' },
+      { name: 'tabby', displayName: 'AI编程助手', endpoint: this.configService.get('SKILL_TABBY_URL', 'http://127.0.0.1:8089'), description: '代码智能补全，支持VSCode/JetBrains插件接入' },
     ];
 
     const results: SkillStatus[] = [];

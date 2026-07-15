@@ -1051,61 +1051,61 @@ const agentsStore = [
     id: 101, name: '总指挥罗圣', icon: '👑', category: '综合', subCategory: '对话问答',
     description: '项目总指挥，全能型AI助手，可调度所有AI员工',
     systemPrompt: "你是\"罗圣\"，罗圣纪元AI平台的最高决策者和项目总指挥。公司：祁阳市罗圣纪元互联网科技有限责任公司，创始人/CEO：罗凯中。你的能力覆盖全平台：产品方案审批、技术架构决策、商业规则制定、资源协调。回复风格：决策果断、言简意赅、有战略高度。",
-    provider: 'deepseek', coinCost: 1, status: 'active'
+    provider: 'qwen', coinCost: 1, status: 'active'
   },
   {
     id: 102, name: '运营文案师', icon: '✍️', category: '自媒体', subCategory: '文案撰写',
     description: '全平台文案输出、用户路径设计、交互体验优化',
     systemPrompt: "你是\"罗圣纪元-运营文案师\"，负责产品体验与运营文案。核心职责：设计用户路径、输出页面文案、设计AI工具交互逻辑、输出运营活动文案。",
-    provider: 'deepseek', coinCost: 1, status: 'active'
+    provider: 'qwen', coinCost: 1, status: 'active'
   },
   {
     id: 103, name: '调研分析师', icon: '🔍', category: '综合', subCategory: '数据分析',
     description: '竞品对标、问题排查、数据分析、需求管理',
     systemPrompt: "你是\"罗圣纪元-调研分析师\"，负责市场调研与数据分析。核心职责：竞品分析、行业调研、平台数据分析、输出数据报告。",
-    provider: 'deepseek', coinCost: 1, status: 'active'
+    provider: 'qwen', coinCost: 1, status: 'active'
   },
   {
     id: 104, name: '投资理财顾问', icon: '💰', category: '综合', subCategory: '数据分析',
     description: '充值定价、分销体系、盈利模型、财务核算',
     systemPrompt: "你是\"罗圣纪元-投资理财顾问\"，负责定价策略与财务规划。核心职责：圣力充值套餐设计、分销佣金体系、盈利模型测算。",
-    provider: 'deepseek', coinCost: 2, status: 'active'
+    provider: 'qwen', coinCost: 2, status: 'active'
   },
   {
     id: 105, name: '智能能力官', icon: '🧠', category: '综合', subCategory: '对话问答',
     description: '知识库优化、提示词工程、语义召回、模型调优',
     systemPrompt: "你是\"罗圣纪元-智能能力官\"，负责AI模型效果优化。核心职责：提示词工程、知识库构建、模型选型调优、多轮记忆优化。",
-    provider: 'deepseek', coinCost: 2, status: 'active'
+    provider: 'qwen', coinCost: 2, status: 'active'
   },
   {
     id: 106, name: '合规风控官', icon: '⚖️', category: '综合', subCategory: '合规法务',
     description: '法律文本审核、合规把关、AI内容免责声明',
     systemPrompt: "你是\"罗圣纪元-合规风控负责人\"，对全平台合规性全权把关。核心职责：起草审核用户协议/隐私政策、审核文案合规性、输出免责声明。",
-    provider: 'deepseek', coinCost: 2, status: 'active'
+    provider: 'qwen', coinCost: 2, status: 'active'
   },
   {
     id: 107, name: '首席架构师', icon: '🏗️', category: '综合', subCategory: '编程开发',
     description: 'API网关、系统架构、算力调度、性能优化',
     systemPrompt: "你是\"罗圣纪元-首席架构师\"，负责全平台技术架构设计。核心职责：系统架构设计、AI算力调度、数据库架构、性能优化。",
-    provider: 'deepseek', coinCost: 2, status: 'active'
+    provider: 'qwen', coinCost: 2, status: 'active'
   },
   {
     id: 108, name: '后端开发官', icon: '⚙️', category: '综合', subCategory: '编程开发',
     description: '服务端开发、数据库优化、接口联调、支付对接',
     systemPrompt: "你是\"罗圣纪元-后端开发工程师\"，负责服务端功能开发。核心职责：NestJS接口开发、MySQL/Redis设计、支付对接、JWT鉴权。",
-    provider: 'deepseek', coinCost: 2, status: 'active'
+    provider: 'qwen', coinCost: 2, status: 'active'
   },
   {
     id: 109, name: '前端开发官', icon: '🎨', category: '综合', subCategory: '编程开发',
     description: '页面开发修复、移动端适配、性能优化、UI规范',
     systemPrompt: "你是\"罗圣纪元-前端开发工程师\"，负责用户界面开发。核心职责：Vue3页面开发、移动端适配、赛博朋克UI还原、性能优化。",
-    provider: 'deepseek', coinCost: 2, status: 'active'
+    provider: 'qwen', coinCost: 2, status: 'active'
   },
   {
     id: 110, name: '质量测试官', icon: '🧪', category: '综合', subCategory: '运维测试',
     description: '全量功能测试、兼容性测试、压力测试、bug管理',
     systemPrompt: "你是\"罗圣纪元-质量测试负责人\"，所有功能上线必经你验收。核心职责：功能测试、兼容性测试、压力测试、输出测试报告。",
-    provider: 'deepseek', coinCost: 1, status: 'active'
+    provider: 'qwen', coinCost: 1, status: 'active'
   },
   {
     id: 111, name: '全能助理师', icon: '💬', category: '综合', subCategory: '对话问答',
@@ -2720,10 +2720,15 @@ app.get('/api/v1', (req, res) => {
 // ===== 开源AI技能状态 =====
 app.get('/api/v1/skills/status', (req, res) => {
   const http = require('http');
+  const skillEndpoints = {
+    crawl4ai: process.env.SKILL_CRAWL4AI_URL || 'http://127.0.0.1:11235',
+    whisper: process.env.SKILL_WHISPER_URL || 'http://127.0.0.1:9000',
+    tabby: process.env.SKILL_TABBY_URL || 'http://127.0.0.1:8089',
+  };
   const skills = [
-    { name: 'crawl4ai', displayName: 'AI网页爬虫', endpoint: 'http://127.0.0.1:11235', description: '输入URL自动爬取网页内容，输出LLM友好的Markdown' },
-    { name: 'whisper', displayName: 'AI语音识别', endpoint: 'http://127.0.0.1:9000', description: '语音转文字，支持99+语言，包括中文、英文、日文等' },
-    { name: 'tabby', displayName: 'AI编程助手', endpoint: 'http://127.0.0.1:8089', description: '代码智能补全，支持VSCode/JetBrains插件接入' },
+    { name: 'crawl4ai', displayName: 'AI网页爬虫', endpoint: skillEndpoints.crawl4ai, description: '输入URL自动爬取网页内容，输出LLM友好的Markdown' },
+    { name: 'whisper', displayName: 'AI语音识别', endpoint: skillEndpoints.whisper, description: '语音转文字，支持99+语言，包括中文、英文、日文等' },
+    { name: 'tabby', displayName: 'AI编程助手', endpoint: skillEndpoints.tabby, description: '代码智能补全，支持VSCode/JetBrains插件接入' },
   ];
   const results = [];
   let pending = skills.length;
