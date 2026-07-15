@@ -3783,21 +3783,24 @@ function handleResize() {
   display: flex;
   align-items: baseline;
   gap: 8px;
+  flex-wrap: wrap;
 }
 .price-original {
-  color: #666;
-  font-size: 14px;
+  color: rgba(255,255,255,0.4);
+  font-size: 15px;
   text-decoration: line-through;
 }
 .price-current {
   color: #ff2d95;
-  font-size: 28px;
+  font-size: 32px;
   font-weight: 700;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'JetBrains Mono', 'PingFang SC', 'Microsoft YaHei', monospace;
+  text-shadow: 0 0 12px rgba(255, 45, 149, 0.3);
 }
 .price-unit {
-  color: #808099;
-  font-size: 14px;
+  color: var(--cyber-cyan);
+  font-size: 15px;
+  font-weight: 500;
 }
 .pkg-buy-btn {
   width: 100%;
