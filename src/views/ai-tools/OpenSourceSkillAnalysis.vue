@@ -2,7 +2,7 @@
   <div class="max-w-7xl mx-auto px-4 py-6">
     <!-- 返回按钮 -->
     <div class="mb-4">
-      <router-link to="/console/tools" class="text-sm flex items-center gap-1 hover:underline" style="color:#00f0ff;">
+      <router-link to="/tools" class="text-sm flex items-center gap-1 hover:underline" style="color:#00f0ff;">
         ← 返回AI工具中心
       </router-link>
     </div>
@@ -60,7 +60,7 @@
 
     <!-- 工具网格 -->
     <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-      <router-link v-for="tool in filteredTools" :key="tool.id" :to="`/console/tools/${tool.id}`"
+      <router-link v-for="tool in filteredTools" :key="tool.id" :to="`/tools/${tool.id}`"
         class="rounded-xl p-4 transition-all hover:scale-[1.02] cursor-pointer"
         style="background:#1a1a2eee;border:1px solid #00f0ff15;">
         <div class="flex items-start justify-between mb-2">

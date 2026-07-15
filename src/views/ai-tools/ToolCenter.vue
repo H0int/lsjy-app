@@ -404,7 +404,7 @@ async function loadSkillsStatus() {
 }
 
 function openSkill(skill: any) {
-  router.push(`/console/tools/skill/analysis?skill=${skill.name}`)
+  router.push(`/tools/skill/analysis?skill=${skill.name}`)
 }
 
 onMounted(() => {
