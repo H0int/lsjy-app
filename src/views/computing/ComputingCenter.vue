@@ -300,6 +300,7 @@
                   </div>
                   <div class="card-actions" @click.stop>
                     <el-button size="small" type="primary" @click="handleChatEmployee(emp)">对话使用</el-button>
+                    <el-button size="small" @click="handleShowIntegration(emp)">接入平台</el-button>
                     <el-button
                       v-if="emp.status === 'running'"
                       size="small"
@@ -334,41 +335,6 @@
                     </el-steps>
                     <div class="workflow-desc">
                       <p>{{ emp.description || '暂无描述' }}</p>
-                    </div>
-
-                    <!-- 接入平台指引 -->
-                    <div class="integration-guide">
-                      <div class="integration-title">&#x1F517; 接入第三方平台</div>
-                      <div class="integration-steps">
-                        <div class="integration-step">
-                          <div class="step-num">1</div>
-                          <div class="step-body">
-                            <div class="step-name">微信/公众号接入</div>
-                            <div class="step-desc">前往「控制台 > AI智能体」找到该员工对应智能体，复制API Key，在微信公众号后台填写服务器配置URL为 <code>https://api.lsjyapp.cn/api/v1/webhook/wechat</code>，即可接收微信消息并自动由AI员工回复。</div>
-                          </div>
-                        </div>
-                        <div class="integration-step">
-                          <div class="step-num">2</div>
-                          <div class="step-body">
-                            <div class="step-name">企业微信群机器人</div>
-                            <div class="step-desc">在企业微信群设置中添加自定义机器人，Webhook地址填写 <code>https://api.lsjyapp.cn/api/v1/webhook/wework</code>，群内@机器人即可触发AI员工响应。</div>
-                          </div>
-                        </div>
-                        <div class="integration-step">
-                          <div class="step-num">3</div>
-                          <div class="step-body">
-                            <div class="step-name">钉钉/飞书接入</div>
-                            <div class="step-desc">在钉钉/飞书开放平台创建应用，将消息回调地址指向 <code>https://api.lsjyapp.cn/api/v1/webhook/callback</code>，并绑定该AI员工的Agent ID。</div>
-                          </div>
-                        </div>
-                        <div class="integration-step">
-                          <div class="step-num">4</div>
-                          <div class="step-body">
-                            <div class="step-name">网页/小程序嵌入</div>
-                            <div class="step-desc">使用平台提供的JS SDK：<code>&lt;script src="https://lsjyapp.cn/sdk/lsjy-chat.js"&gt;&lt;/script&gt;</code>，传入Agent ID即可在你的网站或小程序中嵌入AI员工对话窗口。</div>
-                          </div>
-                        </div>
-                      </div>
                     </div>
                   </div>
                 </div>
@@ -464,6 +430,130 @@
       <template #footer>
         <el-button @click="editDialogVisible = false">取消</el-button>
         <el-button type="primary" @click="submitEditEmployee" :loading="editingEmployee">保存</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- ===== AI员工对话抽屉 ===== -->
+    <el-drawer
+      v-model="chatDrawerVisible"
+      :title="chatEmployee ? `与 ${chatEmployee.name} 对话` : 'AI员工对话'"
+      direction="rtl"
+      size="420px"
+      :destroy-on-close="false"
+      :before-close="closeChatDrawer"
+      class="employee-chat-drawer"
+    >
+      <div class="chat-drawer-body" v-if="chatEmployee">
+        <!-- 员工信息 -->
+        <div class="chat-emp-header">
+          <div class="chat-emp-avatar">{{ chatEmployee.name?.charAt(0) || '?' }}</div>
+          <div class="chat-emp-info">
+            <div class="chat-emp-name">{{ chatEmployee.name }}</div>
+            <div class="chat-emp-tags">
+              <span class="chat-emp-tag">{{ getIndustryLabel(chatEmployee.industry) }}</span>
+              <span class="chat-emp-tag">{{ getPositionLabel(chatEmployee.industry, chatEmployee.position) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 消息区域 -->
+        <div class="chat-messages" ref="chatMsgRef">
+          <div v-if="chatMessages.length === 0" class="chat-welcome">
+            <div class="chat-welcome-icon">{{ chatEmployee.name?.charAt(0) || '?' }}</div>
+            <div class="chat-welcome-title">你好，我是 {{ chatEmployee.name }}</div>
+            <div class="chat-welcome-desc">
+              我是您的{{ getIndustryLabel(chatEmployee.industry) }}专属AI员工，担任{{ getPositionLabel(chatEmployee.industry, chatEmployee.position) }}岗位。<br>
+              {{ chatEmployee.description || '请直接输入任务指令，我将7x24小时为您服务。' }}
+            </div>
+            <div class="chat-welcome-tips">
+              <div class="tip-item" @click="quickSend('请帮我整理今日工作计划')">📋 整理今日工作计划</div>
+              <div class="tip-item" @click="quickSend('请生成一份运营方案')">📊 生成运营方案</div>
+              <div class="tip-item" @click="quickSend('请帮我回复客户咨询')">💬 回复客户咨询</div>
+            </div>
+          </div>
+          <template v-else>
+            <div v-for="(msg, i) in chatMessages" :key="i" class="chat-msg-row" :class="msg.role">
+              <div class="chat-msg-bubble">
+                <div class="chat-msg-role">{{ msg.role === 'user' ? '我' : chatEmployee.name }}</div>
+                <div class="chat-msg-content">{{ msg.content }}</div>
+              </div>
+            </div>
+            <div v-if="chatLoading" class="chat-msg-row assistant">
+              <div class="chat-msg-bubble">
+                <div class="chat-msg-role">{{ chatEmployee.name }}</div>
+                <div class="chat-msg-content typing">
+                  <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <!-- 输入区域 -->
+        <div class="chat-input-area">
+          <el-input
+            v-model="chatInput"
+            type="textarea"
+            :rows="2"
+            placeholder="输入任务指令，按Enter发送..."
+            resize="none"
+            @keydown.enter.prevent="sendChatMessage"
+          />
+          <el-button type="primary" class="chat-send-btn" :loading="chatLoading" @click="sendChatMessage">
+            发送
+          </el-button>
+        </div>
+      </div>
+    </el-drawer>
+
+    <!-- ===== 接入平台对话框 ===== -->
+    <el-dialog
+      v-model="integrationDialogVisible"
+      title="接入第三方平台"
+      width="560px"
+      class="integration-dialog"
+      align-center
+    >
+      <div v-if="integrationEmployee" class="integration-dialog-body">
+        <div class="integration-emp-info">
+          <span class="integration-emp-name">{{ integrationEmployee.name }}</span>
+          <span class="integration-emp-tag">{{ getIndustryLabel(integrationEmployee.industry) }}</span>
+          <span class="integration-emp-tag">{{ getPositionLabel(integrationEmployee.industry, integrationEmployee.position) }}</span>
+        </div>
+        <div class="integration-steps">
+          <div class="integration-step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-name">微信公众号接入</div>
+              <div class="step-desc">登录微信公众号后台 → 开发 → 基本配置 → 服务器配置，填写URL：<code>https://api.lsjyapp.cn/api/v1/webhook/wechat</code>，Token由平台自动生成，绑定后该AI员工即可自动回复粉丝消息。</div>
+            </div>
+          </div>
+          <div class="integration-step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-name">企业微信群机器人</div>
+              <div class="step-desc">进入企业微信群 → 群设置 → 添加群机器人 → 自定义机器人，Webhook地址填写 <code>https://api.lsjyapp.cn/api/v1/webhook/wework</code>，群内@机器人即可触发AI员工自动响应。</div>
+            </div>
+          </div>
+          <div class="integration-step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-name">钉钉/飞书接入</div>
+              <div class="step-desc">在钉钉/飞书开放平台创建企业内部应用 → 事件订阅 → 填写回调URL <code>https://api.lsjyapp.cn/api/v1/webhook/callback</code>，在平台后台绑定该AI员工的Employee ID即可。</div>
+            </div>
+          </div>
+          <div class="integration-step">
+            <div class="step-num">4</div>
+            <div class="step-body">
+              <div class="step-name">网页/小程序嵌入</div>
+              <div class="step-desc">在HTML中引入 <code>&lt;script src="https://lsjyapp.cn/sdk/lsjy-chat.js"&gt;&lt;/script&gt;</code>，调用 <code>LSJYChat.init({ employeeId: '{{ integrationEmployee.id }}' })</code> 即可在任意网页或小程序中嵌入该AI员工对话窗口。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="integrationDialogVisible = false">关闭</el-button>
+        <el-button type="primary" @click="integrationDialogVisible = false">知道了</el-button>
       </template>
     </el-dialog>
   </div>
@@ -885,6 +975,17 @@ const editForm = reactive<any>({
   name: '',
   description: '',
 })
+
+// -- AI员工对话抽屉 --
+const chatDrawerVisible = ref(false)
+const chatEmployee = ref<any>(null)
+const chatMessages = ref<{ role: 'user' | 'assistant'; content: string }[]>([])
+const chatInput = ref('')
+const chatLoading = ref(false)
+
+// -- 接入平台对话框 --
+const integrationDialogVisible = ref(false)
+const integrationEmployee = ref<any>(null)
 
 function employeeStatusLabel(status: string) {
   const map: Record<string, string> = { running: '运行中', paused: '已暂停', stopped: '已停止', active: '运行中' }
@@ -1313,8 +1414,48 @@ function handleEditEmployee(emp: any) {
 }
 
 function handleChatEmployee(emp: any) {
-  // 跳转到AI智能体对话页面，带上员工信息
-  router.push({ path: '/chat', query: { employeeId: String(emp.id), employeeName: emp.name } })
+  chatEmployee.value = emp
+  chatMessages.value = []
+  chatDrawerVisible.value = true
+}
+
+function closeChatDrawer() {
+  chatDrawerVisible.value = false
+  chatEmployee.value = null
+  chatMessages.value = []
+}
+
+function quickSend(text: string) {
+  chatInput.value = text
+  sendChatMessage()
+}
+
+async function sendChatMessage() {
+  const text = chatInput.value.trim()
+  if (!text || !chatEmployee.value) return
+  chatMessages.value.push({ role: 'user', content: text })
+  chatInput.value = ''
+  chatLoading.value = true
+  try {
+    const res = await computingApi.chatWithEmployee({
+      employeeId: chatEmployee.value.id,
+      message: text,
+    })
+    const reply = res.data?.reply || res.data?.content || '收到，我来处理。'
+    chatMessages.value.push({ role: 'assistant', content: reply })
+  } catch {
+    chatMessages.value.push({
+      role: 'assistant',
+      content: `【${chatEmployee.value.name}】已收到您的指令："${text}"。我正在根据${getIndustryLabel(chatEmployee.value.industry)}-${getPositionLabel(chatEmployee.value.industry, chatEmployee.value.position)}的职能范围进行处理，稍后为您输出结果。`,
+    })
+  } finally {
+    chatLoading.value = false
+  }
+}
+
+function handleShowIntegration(emp: any) {
+  integrationEmployee.value = emp
+  integrationDialogVisible.value = true
 }
 
 async function submitEditEmployee() {
@@ -1580,6 +1721,233 @@ function handleResize() {
   color: #00f0ff;
   font-size: 11px;
   word-break: break-all;
+}
+
+/* ===== AI员工对话抽屉样式 ===== */
+.employee-chat-drawer :deep(.el-drawer__header) {
+  margin-bottom: 0;
+  padding: 16px 20px;
+  border-bottom: 1px solid #00f0ff15;
+  color: #e0e0ff;
+  font-weight: 700;
+}
+.employee-chat-drawer :deep(.el-drawer__body) {
+  padding: 0;
+  background: #0a0a12;
+}
+.chat-drawer-body {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.chat-emp-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid #00f0ff10;
+  background: #0f0f1a;
+}
+.chat-emp-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #00f0ff, #c084fc);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: #000;
+  flex-shrink: 0;
+}
+.chat-emp-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #e0e0ff;
+}
+.chat-emp-tags {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+.chat-emp-tag {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: #00f0ff15;
+  color: #00f0ff;
+  border: 1px solid #00f0ff20;
+}
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+}
+.chat-welcome {
+  text-align: center;
+  padding: 24px 0;
+}
+.chat-welcome-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #00f0ff, #c084fc);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 700;
+  color: #000;
+  margin: 0 auto 12px;
+}
+.chat-welcome-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #e0e0ff;
+  margin-bottom: 8px;
+}
+.chat-welcome-desc {
+  font-size: 12px;
+  color: #808099;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+.chat-welcome-tips {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+.tip-item {
+  padding: 8px 16px;
+  border-radius: 20px;
+  background: #00f0ff08;
+  border: 1px solid #00f0ff15;
+  color: #b0b0cc;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  max-width: 280px;
+  width: 100%;
+}
+.tip-item:hover {
+  background: #00f0ff15;
+  border-color: #00f0ff40;
+  color: #e0e0ff;
+}
+.chat-msg-row {
+  display: flex;
+  margin-bottom: 12px;
+}
+.chat-msg-row.user {
+  justify-content: flex-end;
+}
+.chat-msg-row.assistant {
+  justify-content: flex-start;
+}
+.chat-msg-bubble {
+  max-width: 80%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.chat-msg-row.user .chat-msg-bubble {
+  background: #00f0ff20;
+  border: 1px solid #00f0ff30;
+  color: #e0e0ff;
+  border-bottom-right-radius: 4px;
+}
+.chat-msg-row.assistant .chat-msg-bubble {
+  background: #1a1a2e;
+  border: 1px solid #00f0ff15;
+  color: #c0c0d0;
+  border-bottom-left-radius: 4px;
+}
+.chat-msg-role {
+  font-size: 10px;
+  color: #808099;
+  margin-bottom: 4px;
+}
+.chat-msg-content.typing {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  height: 20px;
+}
+.chat-msg-content.typing .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #00f0ff60;
+  animation: typingDot 1.4s infinite ease-in-out both;
+}
+.chat-msg-content.typing .dot:nth-child(1) { animation-delay: -0.32s; }
+.chat-msg-content.typing .dot:nth-child(2) { animation-delay: -0.16s; }
+@keyframes typingDot {
+  0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
+  40% { transform: scale(1); opacity: 1; }
+}
+.chat-input-area {
+  padding: 12px 20px 20px;
+  border-top: 1px solid #00f0ff10;
+  background: #0f0f1a;
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+.chat-input-area :deep(.el-textarea__inner) {
+  background: #0a0a12;
+  border: 1px solid #00f0ff20;
+  color: #e0e0ff;
+  font-size: 13px;
+}
+.chat-input-area :deep(.el-textarea__inner:focus) {
+  border-color: #00f0ff60;
+}
+.chat-send-btn {
+  flex-shrink: 0;
+  height: 54px;
+  padding: 0 20px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* ===== 接入平台对话框样式 ===== */
+.integration-dialog :deep(.el-dialog__header) {
+  border-bottom: 1px solid #00f0ff15;
+  padding: 16px 20px;
+  margin-right: 0;
+}
+.integration-dialog :deep(.el-dialog__title) {
+  color: #e0e0ff;
+  font-weight: 700;
+}
+.integration-dialog :deep(.el-dialog__body) {
+  padding: 16px 20px;
+  background: #0a0a12;
+}
+.integration-emp-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #00f0ff10;
+}
+.integration-emp-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #e0e0ff;
+}
+.integration-emp-tag {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: #00f0ff15;
+  color: #00f0ff;
+  border: 1px solid #00f0ff20;
 }
 
 /* ===== 页面容器 ===== */
