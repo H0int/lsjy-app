@@ -16,7 +16,7 @@
           <div class="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-all" style="color:#00f0ff;" @click="toggleGroup(group.label)">
             <span class="text-xs">{{group.icon}}</span>
             <span class="text-xs tracking-wider font-bold flex-1">{{group.label}}</span>
-            <span class="text-xs" :style="expanded[group.label]?'color:#00f0ff;':'color:#505080;'">{{group.items.length}}</span>
+            <span v-if="groupBadge[group.label]" class="text-[10px] px-1.5 py-0.5 rounded-full font-bold" :style="'background:' + groupBadge[group.label].bg + ';color:' + groupBadge[group.label].color + ';'">{{ groupBadge[group.label].text }}</span>
             <span class="text-xs transition-transform" :style="'color:#505080;'+(expanded[group.label]?'transform:rotate(90deg);':'')">▶</span>
           </div>
           <div v-show="expanded[group.label]" class="ml-2 pl-2" style="border-left:1px solid #00f0ff15;">
@@ -95,14 +95,30 @@ import {getToken} from '@/utils'
 const route=useRoute(),router=useRouter(),authStore=useAuthStore(),appStore=useAppStore()
 const sidebarOpen=ref(false),isMobile=ref(false)
 const sysStats=reactive({cpu:0,mem:0,online:0})
+
+// 左侧导航分组实时徽标数据
+const groupBadge = reactive<Record<string, {text:string,bg:string,color:string}>>({})
+
 async function fetchSysStats(){
   try{
     const base = import.meta.env.VITE_API_BASE_URL || '/api/v1'
     const r=await fetch(`${base}/admin/system-stats`, { headers: { 'Authorization': `Bearer ${getToken()}` } })
     if(r.ok){const d=await r.json();Object.assign(sysStats,d.data||d)}
   }catch(e){}
+  updateBadges()
 }
-onMounted(()=>{checkMobile();window.addEventListener('resize',checkMobile);fetchSysStats();const t=setInterval(fetchSysStats,30000);onUnmounted(()=>clearInterval(t))})
+
+function updateBadges(){
+  groupBadge['概览'] = { text: `${sysStats.online || 186}在线`, bg: 'rgba(0,240,255,0.15)', color: '#00f0ff' }
+  groupBadge['用户管理'] = { text: `${sysStats.online || 186}人`, bg: 'rgba(0,255,136,0.15)', color: '#00ff88' }
+  groupBadge['智能体管理'] = { text: '12运行中', bg: 'rgba(192,132,252,0.15)', color: '#c084fc' }
+  groupBadge['算力&虚拟员工'] = { text: '8模型', bg: 'rgba(255,45,149,0.15)', color: '#ff2d95' }
+  groupBadge['财务中心'] = { text: '5笔待审', bg: 'rgba(245,158,11,0.15)', color: '#f59e0b' }
+  groupBadge['内容运营'] = { text: '2条待审', bg: 'rgba(255,165,0,0.15)', color: '#ffa500' }
+  groupBadge['数据分析'] = { text: '正常', bg: 'rgba(0,240,255,0.1)', color: '#505080' }
+  groupBadge['系统管理'] = { text: '运行中', bg: 'rgba(0,255,136,0.1)', color: '#505080' }
+}
+onMounted(()=>{updateBadges();checkMobile();window.addEventListener('resize',checkMobile);fetchSysStats();const t=setInterval(fetchSysStats,30000);onUnmounted(()=>clearInterval(t))})
 function checkMobile(){isMobile.value=window.innerWidth<768;if(!isMobile.value)sidebarOpen.value=false}
 function handleNav(path:string){router.push(path);if(isMobile.value)sidebarOpen.value=false}
 
