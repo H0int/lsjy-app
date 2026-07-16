@@ -30,6 +30,30 @@
         </div>
       </nav>
       <div class="absolute bottom-4 left-0 right-0 px-3">
+        <!-- 快捷操作区 -->
+        <div class="mb-3">
+          <div class="text-xs px-3 py-1.5 font-bold tracking-wider" style="color:#505080;">快捷操作</div>
+          <div class="grid grid-cols-2 gap-1.5 mt-1">
+            <router-link to="/admin/dashboard" class="flex flex-col items-center gap-1 px-2 py-2 rounded-lg text-center transition-all" style="background:#00f0ff08;border:1px solid #00f0ff15;color:#808099;" @mouseover="($event.currentTarget as HTMLElement).style.borderColor='#00f0ff40'" @mouseleave="($event.currentTarget as HTMLElement).style.borderColor='#00f0ff15'">
+              <span class="text-lg">📊</span><span class="text-[10px]">数据概览</span>
+            </router-link>
+            <router-link to="/admin/online-users" class="flex flex-col items-center gap-1 px-2 py-2 rounded-lg text-center transition-all" style="background:#00ff8808;border:1px solid #00ff8815;color:#808099;" @mouseover="($event.currentTarget as HTMLElement).style.borderColor='#00ff8840'" @mouseleave="($event.currentTarget as HTMLElement).style.borderColor='#00ff8815'">
+              <span class="text-lg">👥</span><span class="text-[10px]">在线用户</span>
+            </router-link>
+            <router-link to="/admin/value-orders" class="flex flex-col items-center gap-1 px-2 py-2 rounded-lg text-center transition-all" style="background:#f59e0b08;border:1px solid #f59e0b15;color:#808099;" @mouseover="($event.currentTarget as HTMLElement).style.borderColor='#f59e0b40'" @mouseleave="($event.currentTarget as HTMLElement).style.borderColor='#f59e0b15'">
+              <span class="text-lg">📦</span><span class="text-[10px]">待审订单</span>
+            </router-link>
+            <router-link to="/admin/announcements" class="flex flex-col items-center gap-1 px-2 py-2 rounded-lg text-center transition-all" style="background:#c084fc08;border:1px solid #c084fc15;color:#808099;" @mouseover="($event.currentTarget as HTMLElement).style.borderColor='#c084fc40'" @mouseleave="($event.currentTarget as HTMLElement).style.borderColor='#c084fc15'">
+              <span class="text-lg">📢</span><span class="text-[10px]">发布公告</span>
+            </router-link>
+            <router-link to="/admin/recharge" class="flex flex-col items-center gap-1 px-2 py-2 rounded-lg text-center transition-all" style="background:#ff2d9508;border:1px solid #ff2d9515;color:#808099;" @mouseover="($event.currentTarget as HTMLElement).style.borderColor='#ff2d9540'" @mouseleave="($event.currentTarget as HTMLElement).style.borderColor='#ff2d9515'">
+              <span class="text-lg">💎</span><span class="text-[10px]">充值管理</span>
+            </router-link>
+            <router-link to="/admin/settings" class="flex flex-col items-center gap-1 px-2 py-2 rounded-lg text-center transition-all" style="background:#3b82f608;border:1px solid #3b82f615;color:#808099;" @mouseover="($event.currentTarget as HTMLElement).style.borderColor='#3b82f640'" @mouseleave="($event.currentTarget as HTMLElement).style.borderColor='#3b82f615'">
+              <span class="text-lg">⚙️</span><span class="text-[10px]">系统设置</span>
+            </router-link>
+          </div>
+        </div>
         <router-link to="/dashboard" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm" style="color:#a0a0cc;border:1px solid #00f0ff20;">
           <span>↩️</span><span>返回前台</span>
         </router-link>
@@ -118,12 +142,18 @@ const menuGroups=[
     {path:'/admin/content-moderation',label:'内容审核',icon:'📝'},
     {path:'/admin/push',label:'消息推送',icon:'📨'}
   ]},
+  {label:'数据分析',icon:'📈',items:[
+    {path:'/admin/data-reports',label:'数据报表',icon:'📈'},
+    {path:'/admin/api-monitor',label:'API监控',icon:'📊'},
+    {path:'/admin/operation-log',label:'操作日志',icon:'📋'},
+    {path:'/admin/login-history',label:'登录记录',icon:'🔐'}
+  ]},
   {label:'系统管理',icon:'⚙️',items:[
     {path:'/admin/settings',label:'系统配置',icon:'⚙️'},
-    {path:'/admin/oplog',label:'操作日志',icon:'📋'},
-    {path:'/admin/login-history',label:'登录记录',icon:'🔐'},
-    {path:'/admin/api-monitor',label:'API监控',icon:'📊'},
-    {path:'/admin/data-backup',label:'数据备份',icon:'💾'}
+    {path:'/admin/data-backup',label:'数据备份',icon:'💾'},
+    {path:'/admin/tickets',label:'工单管理',icon:'🎫'},
+    {path:'/admin/coupons',label:'优惠券管理',icon:'🎁'},
+    {path:'/admin/faq',label:'FAQ管理',icon:'❓'}
   ]},
 ]
 const expanded=reactive<Record<string,boolean>>({})

@@ -73,9 +73,14 @@ const routes: RouteRecordRaw[] = [
       // 系统管理
       { path: 'settings', name: 'AdminSettings', component: () => import('@/views/admin/SystemSettings.vue'), meta: { title: '系统配置' } },
       { path: 'oplog', name: 'OperationLog', component: () => import('@/views/admin/system/OperationLog.vue'), meta: { title: '操作日志' } },
+      { path: 'operation-log', name: 'OperationLogAlt', component: () => import('@/views/admin/OperationLog.vue'), meta: { title: '操作日志' } },
       { path: 'login-history', name: 'LoginHistory', component: () => import('@/views/admin/security/LoginHistory.vue'), meta: { title: '登录记录' } },
       { path: 'api-monitor', name: 'APIMonitor', component: () => import('@/views/admin/APIMonitor.vue'), meta: { title: 'API监控' } },
       { path: 'data-backup', name: 'DataBackup', component: () => import('@/views/admin/DataBackup.vue'), meta: { title: '数据备份' } },
+      { path: 'data-reports', name: 'DataReports', component: () => import('@/views/admin/DataReports.vue'), meta: { title: '数据报表' } },
+      { path: 'tickets', name: 'TicketManagement', component: () => import('@/views/admin/TicketManagement.vue'), meta: { title: '工单管理' } },
+      { path: 'coupons', name: 'CouponManagement', component: () => import('@/views/admin/CouponManagement.vue'), meta: { title: '优惠券管理' } },
+      { path: 'faq', name: 'FAQManagement', component: () => import('@/views/admin/FAQManagement.vue'), meta: { title: 'FAQ管理' } },
     ]
   }
 ]
