@@ -245,15 +245,17 @@
           </div>
           <div class="cyber-upload-section">
             <label class="upload-label"> 上传支付截图（必须）</label>
-            <div class="upload-area" @click="triggerFileUpload" :class="{ 'has-file': screenshotFile }">
+            <div class="upload-area" :class="{ 'has-file': screenshotFile }">
               <div v-if="screenshotPreview" class="upload-preview">
                 <img :src="screenshotPreview" class="upload-img" />
+                <div class="upload-remove" @click.stop="removeScreenshot">✕ 移除</div>
               </div>
               <div v-else class="upload-placeholder">
                 <span class="upload-icon">📤</span>
                 <span class="upload-text">点击上传支付截图</span>
+                <span class="upload-hint">支持 JPG / PNG 格式</span>
               </div>
-              <input ref="fileInput" type="file" accept="image/*" class="upload-input" @change="handleFileChange" />
+              <input ref="fileInput" type="file" accept="image/png,image/jpeg,image/jpg,image/webp" class="upload-input" @change="handleFileChange" />
             </div>
           </div>
           <div class="cyber-order-section" v-if="!orderSubmitted">
@@ -511,14 +513,32 @@ function triggerFileUpload() {
 function handleFileChange(e: Event) {
   const target = e.target as HTMLInputElement
   const file = target.files?.[0]
-  if (file) {
-    screenshotFile.value = file
-    const reader = new FileReader()
-    reader.onload = (ev) => {
-      screenshotPreview.value = ev.target?.result as string
-    }
-    reader.readAsDataURL(file)
+  if (!file) return
+  if (!file.type.match(/^image\/(png|jpeg|jpg|webp)$/)) {
+    ElMessage.error('仅支持 JPG / PNG / WebP 格式的图片')
+    target.value = ''
+    return
   }
+  if (file.size > 20 * 1024 * 1024) {
+    ElMessage.error('图片大小不能超过 20MB')
+    target.value = ''
+    return
+  }
+  screenshotFile.value = file
+  const reader = new FileReader()
+  reader.onload = (ev) => {
+    screenshotPreview.value = ev.target?.result as string
+  }
+  reader.onerror = () => {
+    ElMessage.error('图片读取失败，请重试')
+  }
+  reader.readAsDataURL(file)
+}
+
+function removeScreenshot() {
+  screenshotFile.value = null
+  screenshotPreview.value = ''
+  if (fileInput.value) fileInput.value.value = ''
 }
 
 async function uploadScreenshot(): Promise<string> {
@@ -1306,12 +1326,25 @@ async function submitOrder() {
 }
 .upload-area:hover { border-color: rgba(0,240,255,0.6); background: rgba(0,240,255,0.05); }
 .upload-area.has-file { border-color: #4ade80; background: rgba(74,222,128,0.05); }
-.upload-preview { display: flex; justify-content: center; }
+.upload-preview { display: flex; flex-direction: column; align-items: center; position: relative; }
 .upload-img { max-width: 100%; max-height: 200px; border-radius: 8px; }
+.upload-remove {
+  margin-top: 8px;
+  padding: 4px 16px;
+  border-radius: 8px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.7);
+  background: rgba(255,70,70,0.15);
+  border: 1px solid rgba(255,70,70,0.3);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.upload-remove:hover { background: rgba(255,70,70,0.3); color: #fff; }
 .upload-placeholder { display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .upload-icon { font-size: 32px; }
 .upload-text { color: #888; font-size: 14px; }
-.upload-input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.upload-hint { font-size: 11px; color: rgba(255,255,255,0.3); }
+.upload-input { position: absolute; inset: 0; opacity: 0; cursor: pointer; z-index: 2; }
 
 /* 订单提交 */
 .cyber-order-section { margin-top: 16px; }
