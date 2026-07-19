@@ -211,8 +211,16 @@ const progressText = ref('生成中...')
 const generationMessage = ref('')
 const generationError = ref('')
 
-const isVideoTool = computed(() => tool.value?.toolType === 'video' || Number(tool.value?.categoryId) === 10)
-const isImageTool = computed(() => tool.value?.toolType === 'image' || Number(tool.value?.categoryId) === 9)
+const isVideoTool = computed(() => {
+  if (!tool.value) return false
+  return tool.value.toolType === 'video' || Number(tool.value.categoryId) === 10 ||
+    String(tool.value.category || '').includes('视频') || String(tool.value.subCategory || '').includes('视频')
+})
+const isImageTool = computed(() => {
+  if (!tool.value) return false
+  return tool.value.toolType === 'image' || Number(tool.value.categoryId) === 9 ||
+    String(tool.value.category || '').includes('图片') || String(tool.value.subCategory || '').includes('图片')
+})
 const isImageProcessing = computed(() => tool.value?.inputType === 'image')
 const generationTitle = computed(() => {
   if (isVideoTool.value) return videoTaskId.value ? '视频任务已提交' : '正在提交视频任务'
@@ -302,9 +310,11 @@ const inputPlaceholder = computed(() => {
 function toolTypeLabel(t: Tool | null | string): string {
   if (!t || typeof t === 'string') return toolTypeMap[t || 'text'] || t || '文本生成'
   const catId = Number(t.categoryId)
-  if (t.toolType === 'image' || catId === 9) return '图片生成'
-  if (t.toolType === 'video' || catId === 10) return '视频生成'
-  if (t.toolType === 'audio' || catId === 11) return '音频处理'
+  const catName = String(t.category || '').trim()
+  const subName = String(t.subCategory || '').trim()
+  if (t.toolType === 'image' || catId === 9 || catName.includes('图片') || subName.includes('图片')) return '图片生成'
+  if (t.toolType === 'video' || catId === 10 || catName.includes('视频') || subName.includes('视频')) return '视频生成'
+  if (t.toolType === 'audio' || catId === 11 || catName.includes('音频') || subName.includes('音频')) return '音频处理'
   return toolTypeMap[t.toolType] || t.toolType || '文本生成'
 }
 

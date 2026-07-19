@@ -251,7 +251,12 @@ const totalCount = computed(() => toolStore.tools.length)
 
 const categoryList = computed(() => {
   const countByCategory = (id: number) => {
-    return toolStore.tools.filter(t => Number(t.categoryId) === Number(id)).length
+    const catName = toolStore.categories.find(c => Number(c.id) === id)?.name || ''
+    return toolStore.tools.filter(t =>
+      Number(t.categoryId) === Number(id) ||
+      String(t.category || '').trim() === catName ||
+      String(t.subCategory || '').trim() === catName
+    ).length
   }
   const cats = [
     { id: null, label: '全部工具', icon: '📦', count: totalCount.value },
@@ -261,7 +266,12 @@ const categoryList = computed(() => {
 })
 
 function toolsByCategory(catId: number) {
-  return toolStore.tools.filter(t => Number(t.categoryId) === Number(catId))
+  const catName = toolStore.categories.find(c => Number(c.id) === catId)?.name || ''
+  return toolStore.tools.filter(t =>
+    Number(t.categoryId) === Number(catId) ||
+    String(t.category || '').trim() === catName ||
+    String(t.subCategory || '').trim() === catName
+  )
 }
 
 const subCategories = computed(() => {
@@ -282,9 +292,16 @@ const subCategories = computed(() => {
 
 const filteredTools = computed(() => {
   let list = toolStore.tools
-  // 按分类筛选
+  // 按分类筛选（同时支持 categoryId 数字匹配和 category 名称匹配）
   if (currentCategoryId.value) {
-    list = list.filter(t => Number(t.categoryId) === Number(currentCategoryId.value))
+    const catId = Number(currentCategoryId.value)
+    // 找到当前选中分类的名称，用于名称匹配兜底
+    const catName = toolStore.categories.find(c => Number(c.id) === catId)?.name || ''
+    list = list.filter(t =>
+      Number(t.categoryId) === catId ||
+      String(t.category || '').trim() === catName ||
+      String(t.subCategory || '').trim() === catName
+    )
   }
   // 按二级小框架筛选，使用后端真实 subCategory 精确匹配
   if (currentSubCategory.value) {
@@ -310,11 +327,12 @@ const filteredTools = computed(() => {
 
 function toolTypeLabel(toolOrType: Tool | string): string {
   if (typeof toolOrType === 'string') return toolTypeMap[toolOrType] || toolOrType
-  // 根据 toolType 判断，同时兼容 categoryId
   const catId = Number(toolOrType.categoryId)
-  if (toolOrType.toolType === 'image' || catId === 9) return '图片生成'
-  if (toolOrType.toolType === 'video' || catId === 10) return '视频生成'
-  if (toolOrType.toolType === 'audio' || catId === 11) return '音频处理'
+  const catName = String(toolOrType.category || '').trim()
+  const subName = String(toolOrType.subCategory || '').trim()
+  if (toolOrType.toolType === 'image' || catId === 9 || catName.includes('图片') || subName.includes('图片')) return '图片生成'
+  if (toolOrType.toolType === 'video' || catId === 10 || catName.includes('视频') || subName.includes('视频')) return '视频生成'
+  if (toolOrType.toolType === 'audio' || catId === 11 || catName.includes('音频') || subName.includes('音频')) return '音频处理'
   return toolTypeMap[toolOrType.toolType] || toolOrType.toolType || '文本生成'
 }
 
