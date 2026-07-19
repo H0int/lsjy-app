@@ -16,16 +16,33 @@ export const useToolStore = defineStore('tool', () => {
   async function fetchCategories() {
     try {
       const res = await toolApi.getCategories()
-      const backendCats: ToolCategory[] = Array.isArray(res.data) ? res.data : []
+      const backendCats: any[] = Array.isArray(res.data) ? res.data : []
       if (backendCats.length > 0) {
-        // 后端分类与内置分类合并：内置分类为基础，后端有则补充，无则保留
+        // 后端分类覆盖内置分类（相同id用后端数据，内置独有的保留）
         const builtinIds = new Set(getBuiltInCategories().map(c => c.id))
-        const merged = [...getBuiltInCategories()]
+        const backendIds = new Set(backendCats.map(c => c.id))
+        const merged: ToolCategory[] = []
+        // 先放后端分类
         for (const bc of backendCats) {
-          if (!builtinIds.has(bc.id)) {
-            merged.push(bc)
+          merged.push({
+            id: bc.id,
+            name: bc.name,
+            slug: bc.slug || '',
+            icon: bc.icon || '📁',
+            description: bc.description || null,
+            module: bc.module || '',
+            toolCount: bc.toolCount || 0,
+            filterType: bc.filterType || undefined
+          })
+        }
+        // 补充内置独有分类（后端没有的）
+        for (const bc of getBuiltInCategories()) {
+          if (!backendIds.has(bc.id)) {
+            merged.push({ ...bc, filterType: bc.id === 9 ? 'image' : bc.id === 10 ? 'video' : bc.id === 11 ? 'audio' : undefined })
           }
         }
+        // 按 sort 排序
+        merged.sort((a, b) => a.id - b.id)
         categories.value = merged
       }
     } catch (e) {
@@ -37,8 +54,15 @@ export const useToolStore = defineStore('tool', () => {
     loading.value = true
     try {
       const res = await toolApi.getTools({ page: 1, pageSize: 500, ...params })
-      tools.value = res.data.items || []
-      total.value = res.data.total || tools.value.length
+      const items = res.data.items || []
+      // 后端返回空数据时，使用内置工具数据降级
+      if (items.length === 0) {
+        tools.value = getBuiltInTools()
+        total.value = tools.value.length
+      } else {
+        tools.value = items
+        total.value = res.data.total || items.length
+      }
     } catch {
       // 后端不可用时使用内置工具数据
       tools.value = getBuiltInTools()

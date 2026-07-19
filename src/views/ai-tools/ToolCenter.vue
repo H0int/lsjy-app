@@ -251,7 +251,14 @@ const totalCount = computed(() => toolStore.tools.length)
 
 const categoryList = computed(() => {
   const countByCategory = (id: number) => {
-    const catName = toolStore.categories.find(c => Number(c.id) === id)?.name || ''
+    // 检查该分类是否有 filterType（如 image/video/audio）
+    const cat = toolStore.categories.find(c => Number(c.id) === id)
+    const filterType = (cat as any)?.filterType
+    if (filterType) {
+      return toolStore.tools.filter(t => t.toolType === filterType).length
+    }
+    // 无 filterType 时用 categoryId + 名称匹配
+    const catName = cat?.name || ''
     return toolStore.tools.filter(t =>
       Number(t.categoryId) === Number(id) ||
       String(t.category || '').trim() === catName ||
@@ -266,7 +273,12 @@ const categoryList = computed(() => {
 })
 
 function toolsByCategory(catId: number) {
-  const catName = toolStore.categories.find(c => Number(c.id) === catId)?.name || ''
+  const cat = toolStore.categories.find(c => Number(c.id) === catId)
+  const filterType = (cat as any)?.filterType
+  if (filterType) {
+    return toolStore.tools.filter(t => t.toolType === filterType)
+  }
+  const catName = cat?.name || ''
   return toolStore.tools.filter(t =>
     Number(t.categoryId) === Number(catId) ||
     String(t.category || '').trim() === catName ||
@@ -292,16 +304,23 @@ const subCategories = computed(() => {
 
 const filteredTools = computed(() => {
   let list = toolStore.tools
-  // 按分类筛选（同时支持 categoryId 数字匹配和 category 名称匹配）
+  // 按分类筛选
   if (currentCategoryId.value) {
     const catId = Number(currentCategoryId.value)
-    // 找到当前选中分类的名称，用于名称匹配兜底
-    const catName = toolStore.categories.find(c => Number(c.id) === catId)?.name || ''
-    list = list.filter(t =>
-      Number(t.categoryId) === catId ||
-      String(t.category || '').trim() === catName ||
-      String(t.subCategory || '').trim() === catName
-    )
+    const cat = toolStore.categories.find(c => Number(c.id) === catId)
+    const filterType = (cat as any)?.filterType
+    if (filterType) {
+      // 图片生成/视频生成/音频处理：按 toolType 筛选
+      list = list.filter(t => t.toolType === filterType)
+    } else {
+      // 其他分类：用 categoryId + 名称匹配
+      const catName = cat?.name || ''
+      list = list.filter(t =>
+        Number(t.categoryId) === catId ||
+        String(t.category || '').trim() === catName ||
+        String(t.subCategory || '').trim() === catName
+      )
+    }
   }
   // 按二级小框架筛选，使用后端真实 subCategory 精确匹配
   if (currentSubCategory.value) {

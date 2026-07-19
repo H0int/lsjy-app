@@ -91,6 +91,7 @@ export interface ToolCategory {
   description: string | null
   module: string
   toolCount: number
+  filterType?: string  // 后端标记：'image'=按toolType筛选, 'video'=按toolType筛选
 }
 
 // ===== AI工具 =====
