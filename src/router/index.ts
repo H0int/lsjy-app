@@ -60,6 +60,8 @@ const routes: RouteRecordRaw[] = [
       { path: 'chat-history', name: 'ChatHistory', component: () => import('@/views/admin/ai/ChatHistory.vue'), meta: { title: '对话记录' } },
       { path: 'model-config', name: 'ModelConfig', component: () => import('@/views/admin/ModelConfig.vue'), meta: { title: '模型配置' } },
       { path: 'knowledge', name: 'KnowledgeBase', component: () => import('@/views/admin/content/KnowledgeBase.vue'), meta: { title: '知识库管理' } },
+      // 算法中台管理
+      { path: 'algo-platform', name: 'AlgoPlatformAdmin', component: () => import('@/views/admin/AlgoPlatformAdmin.vue'), meta: { title: '算法中台管理' } },
       // 财务中心
       { path: 'coin-packages', name: 'CoinPackages', component: () => import('@/views/admin/CoinPackages.vue'), meta: { title: '圣力套餐' } },
       { path: 'boss-cards', name: 'BossCards', component: () => import('@/views/admin/BossCards.vue'), meta: { title: 'Boss充值卡' } },

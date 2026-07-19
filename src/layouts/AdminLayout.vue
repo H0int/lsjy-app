@@ -139,6 +139,9 @@ const menuGroups=[
     {path:'/admin/model-config',label:'模型配置',icon:'⚙️'},
     {path:'/admin/knowledge',label:'知识库管理',icon:'📚'}
   ]},
+  {label:'算法中台',icon:'⚡',items:[
+    {path:'/admin/algo-platform',label:'算法中台管理',icon:'⚡'}
+  ]},
   {label:'算力&虚拟员工',icon:'⚡',items:[
     {path:'/admin/computing-manage',label:'算力调度管理',icon:'⚡'},
     {path:'/admin/employees-manage',label:'虚拟员工管理',icon:'🤖'},
