@@ -34,6 +34,10 @@
         <div class="work-preview">
           <img v-if="isImageWork(work) && firstUrl(work)" :src="firstUrl(work)" alt="AI生成图片" />
           <video v-else-if="isVideoWork(work) && firstUrl(work)" :src="firstUrl(work)" controls />
+          <div v-else-if="isAudioWork(work)" class="work-audio">
+            <div class="audio-icon">🎤</div>
+            <span>音频作品</span>
+          </div>
           <div v-else-if="work.status === 'processing'" class="work-processing">
             <div class="cyber-spinner small"></div>
             <span>生成处理中</span>
@@ -43,7 +47,7 @@
         </div>
         <div class="work-body">
           <div class="work-row">
-            <h3>{{ work.tool?.name || 'AI作品' }}</h3>
+            <h3>{{ work.tool?.name || work.toolName || 'AI作品' }}</h3>
             <span class="work-badge" :class="work.status">{{ statusText(work.status) }}</span>
           </div>
           <p class="work-prompt">{{ work.inputText || '无输入内容' }}</p>
@@ -83,9 +87,15 @@ const activeTab = ref<string>((route.query.tab as string) || 'works')
 
 const filteredWorks = computed(() => {
   if (activeTab.value === 'tools') {
-    return works.value.filter(w => w.type === 'tool-call' || w.toolCallId || (!isImageWork(w) && !isVideoWork(w) && !w.outputUrl && !w.outputUrls))
+    // 已用工具：显示所有有记录的工具调用，区分文本对话 vs 媒体生成
+    return works.value.filter(w => {
+      // 后端 source: live-chat = 文本对话/工具调用, live-generation = 媒体生成
+      // 将 live-chat 和有 toolId 的全部显示在已用工具
+      return w.source === 'live-chat' || (w.toolId && !isImageWork(w) && !isVideoWork(w) && !w.outputUrl && !w.outputUrls?.length)
+    })
   }
-  return works.value.filter(w => isImageWork(w) || isVideoWork(w) || w.outputUrl || w.outputUrls || w.outputText)
+  // 生成作品：有图片、视频URL、音频metadata、或outputText的记录
+  return works.value.filter(w => isImageWork(w) || isVideoWork(w) || isAudioWork(w) || w.outputUrl || (w.outputUrls && w.outputUrls.length > 0) || w.outputText)
 })
 
 function switchTab(tab: string) {
@@ -109,7 +119,12 @@ function isVideoWork(work: any) {
   return work.tool?.toolType === 'video' || work.metadata?.mediaType === 'video' || /\.(mp4|mov|webm)(\?|$)/i.test(firstUrl(work))
 }
 
+function isAudioWork(work: any) {
+  return work.metadata?.mediaType === 'audio' || /\.(mp3|wav|ogg|m4a)(\?|$)/i.test(firstUrl(work))
+}
+
 function mediaLabel(work: any) {
+  if (isAudioWork(work)) return '音频库'
   if (isVideoWork(work)) return '视频库'
   if (isImageWork(work)) return '图文库'
   return '文本作品'
@@ -143,8 +158,19 @@ async function refreshTask(work: any) {
 async function loadWorks() {
   loading.value = true
   try {
-    const res = await toolApi.getWorks({ page: 1, pageSize: 100 })
-    works.value = res.data?.items || []
+    // 分页加载所有作品（pageSize=50避免网络截断）
+    let allItems: any[] = []
+    let page = 1
+    const pageSize = 50
+    while (true) {
+      const res = await toolApi.getWorks({ page, pageSize })
+      const items = res.data?.items || []
+      allItems = allItems.concat(items)
+      const total = res.data?.total || 0
+      if (allItems.length >= total || items.length < pageSize) break
+      page++
+    }
+    works.value = allItems
   } finally {
     loading.value = false
   }
@@ -185,6 +211,8 @@ onBeforeUnmount(() => {
 .work-preview img, .work-preview video { width: 100%; height: 100%; object-fit: cover; }
 .work-processing, .work-text { display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--cyber-cyan); text-align: center; padding: 18px; }
 .work-text { color: var(--cyber-text); line-height: 1.6; }
+.work-audio { display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--cyber-cyan); }
+.audio-icon { font-size: 42px; }
 .work-body { padding: 14px; }
 .work-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .work-row h3 { font-size: 15px; font-weight: 700; }
