@@ -16,8 +16,10 @@
             :class="isActive(item.path)
               ? 'cyber-nav-active'
               : 'text-gray-400 hover:text-white'"
-            :style="isActive(item.path) ? 'color: var(--cyber-cyan); background: rgba(0,240,255,0.08); box-shadow: 0 0 10px rgba(0,240,255,0.15);' : ''">
+            :style="isActive(item.path) ? 'color: var(--cyber-cyan); background: rgba(0,240,255,0.08); box-shadow: 0 0 10px rgba(0,240,255,0.15);' : ''"
+            @click.native="handleNavClick(item.path)">
             <span class="mr-1.5">{{ item.icon }}</span>{{ item.label }}
+            <span v-if="item.path === '/algorithm-platform' && !hasAlgoPlatformAccess" class="ml-1 text-xs px-1 py-0.5 rounded" style="background: rgba(245,158,11,0.15); color: #f59e0b; font-size: 10px; border: 1px solid rgba(245,158,11,0.3);">付费</span>
           </router-link>
         </nav>
 
@@ -67,7 +69,8 @@
           class="flex flex-col items-center py-2 px-3 rounded-lg transition-all relative"
           :style="isActive(item.path)
             ? 'color: var(--cyber-cyan); text-shadow: 0 0 8px rgba(0,240,255,0.5);'
-            : 'color: var(--cyber-text-dim);'">
+            : 'color: var(--cyber-text-dim);'"
+          @click.native="handleNavClick(item.path)">
           <span class="text-xl" :style="isActive(item.path) ? 'filter: drop-shadow(0 0 4px rgba(0,240,255,0.6));' : ''">{{ item.icon }}</span>
           <span class="text-xs mt-0.5 font-medium">{{ item.label }}</span>
           <!-- 活跃指示器 -->
@@ -99,22 +102,37 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 
+// 算法中台权限：KF02V9(Boss)免费，其他用户需付费或持有卡密
+const hasAlgoPlatformAccess = computed(() => {
+  const username = authStore.user?.username || ''
+  const algoAccess = localStorage.getItem('lsjy_algo_platform_access')
+  return username === 'KF02V9' || algoAccess === 'true'
+})
+
 const navItems = [
   { path: '/dashboard', label: '控制台', icon: '🏠' },
   { path: '/chat', label: 'AI智能体', icon: '🧠' },
-  { path: '/algorithm-platform', label: '算法中台', icon: '⚡' },
+  { path: '/algorithm-platform', label: '算法中台', icon: hasAlgoPlatformAccess.value ? '⚡' : '🔒' },
   { path: '/tools', label: 'AI工具', icon: '🤖' },
   { path: '/profile', label: '我的', icon: '👤' },
 ]
 
 function isActive(path: string) {
   return route.path === path || route.path.startsWith(path + '/')
+}
+
+// 点击算法中台时，未授权用户跳转到付费页面
+function handleNavClick(path: string) {
+  if (path === '/algorithm-platform' && !hasAlgoPlatformAccess.value) {
+    router.push('/profile/wallet?from=algo-platform')
+  }
 }
 
 function goAdmin() {

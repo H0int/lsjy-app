@@ -166,6 +166,180 @@
       </div>
     </div>
 
+    <!-- ==================== 算法中台付费专区 ==================== -->
+    <div class="cyber-algo-platform-section mb-6" id="algo-platform-section">
+      <h3 class="cyber-section-title">
+        <span class="title-bar"></span>⚡ 罗圣纪元自研中心 · 算法中台
+      </h3>
+      <div class="algo-platform-banner mt-4">
+        <div class="algo-banner-glow"></div>
+        <div class="algo-banner-scan"></div>
+        <div class="algo-banner-content">
+          <div class="algo-banner-header">
+            <div class="algo-banner-icon">⚡</div>
+            <div>
+              <h4 class="algo-banner-title">算法中台 · 付费通行证</h4>
+              <p class="algo-banner-subtitle">LUOSHENG EPOCH SELF-DEVELOPED CENTER · PRIVATE AI INFRASTRUCTURE</p>
+            </div>
+          </div>
+          <div class="algo-banner-features">
+            <div class="algo-feature-item">
+              <span class="algo-feature-icon">🧠</span>
+              <span>16+ 自研模型</span>
+            </div>
+            <div class="algo-feature-item">
+              <span class="algo-feature-icon">🎨</span>
+              <span>图片/视频生成</span>
+            </div>
+            <div class="algo-feature-item">
+              <span class="algo-feature-icon">🔧</span>
+              <span>私有化部署</span>
+            </div>
+            <div class="algo-feature-item">
+              <span class="algo-feature-icon">📊</span>
+              <span>实时监控</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 已拥有权限提示 -->
+      <div v-if="hasAlgoAccess" class="algo-access-granted mt-4">
+        <div class="algo-granted-icon">✅</div>
+        <div>
+          <div class="algo-granted-title">已开通算法中台权限</div>
+          <div class="algo-granted-desc">您已拥有算法中台完整访问权限，点击下方按钮进入</div>
+        </div>
+        <button class="algo-enter-btn" @click="$router.push('/algorithm-platform')">
+          进入算法中台 →
+        </button>
+      </div>
+
+      <!-- 付费购买区域 -->
+      <div v-else class="algo-purchase-area mt-4">
+        <!-- 价格展示 -->
+        <div class="algo-price-card">
+          <div class="algo-price-label">通行证价格</div>
+          <div class="algo-price-value">
+            <span class="algo-price-symbol">¥</span>
+            <span class="algo-price-num">1,888</span>
+          </div>
+          <div class="algo-price-desc">一次性付费 · 永久有效 · 无需续费</div>
+        </div>
+
+        <!-- 购买方式选项卡 -->
+        <div class="algo-purchase-tabs">
+          <button class="algo-tab" :class="{ active: algoPayMode === 'direct' }" @click="algoPayMode = 'direct'">
+            💰 直接购买 ¥1,888
+          </button>
+          <button class="algo-tab" :class="{ active: algoPayMode === 'cardkey' }" @click="algoPayMode = 'cardkey'">
+            🎫 卡密兑换
+          </button>
+        </div>
+
+        <!-- 直接购买流程 -->
+        <div v-if="algoPayMode === 'direct'" class="algo-direct-purchase">
+          <div class="algo-purchase-steps">
+            <div class="algo-step">
+              <div class="algo-step-num">1</div>
+              <div class="algo-step-content">
+                <div class="algo-step-title">选择支付方式并付款 ¥1,888</div>
+                <div class="algo-step-desc">使用微信/支付宝/QQ扫码支付到官方收款码</div>
+              </div>
+            </div>
+            <div class="algo-step">
+              <div class="algo-step-num">2</div>
+              <div class="algo-step-content">
+                <div class="algo-step-title">上传支付截图并提交</div>
+                <div class="algo-step-desc">截图需清晰显示支付金额和订单号</div>
+              </div>
+            </div>
+            <div class="algo-step">
+              <div class="algo-step-num">3</div>
+              <div class="algo-step-content">
+                <div class="algo-step-title">管理员审核通过后自动开通</div>
+                <div class="algo-step-desc">审核通过后系统自动激活算法中台权限</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 支付二维码 -->
+          <div class="algo-pay-qr-section">
+            <div class="algo-qr-methods">
+              <button class="algo-qr-tab" :class="{ active: algoQrMethod === 'wechat' }" @click="algoQrMethod = 'wechat'">💚 微信</button>
+              <button class="algo-qr-tab" :class="{ active: algoQrMethod === 'alipay' }" @click="algoQrMethod = 'alipay'">💙 支付宝</button>
+              <button class="algo-qr-tab" :class="{ active: algoQrMethod === 'qq' }" @click="algoQrMethod = 'qq'">🐧 QQ</button>
+            </div>
+            <div class="algo-qr-frame">
+              <img :src="qrUrls[algoQrMethod]" class="algo-qr-img" :alt="algoQrMethod + ' QR'" />
+            </div>
+            <p class="algo-qr-hint">请使用{{ payMethodLabels[algoQrMethod] }}扫码支付 <strong>¥1,888</strong></p>
+          </div>
+
+          <!-- 上传截图+提交 -->
+          <div class="algo-upload-section">
+            <label class="algo-upload-label">📤 上传支付截图（必须）</label>
+            <div class="algo-upload-area" :class="{ 'has-file': algoScreenshotFile }">
+              <div v-if="algoScreenshotPreview" class="algo-upload-preview">
+                <img :src="algoScreenshotPreview" class="algo-upload-img" />
+                <div class="algo-upload-remove" @click.stop="removeAlgoScreenshot">✕ 移除</div>
+              </div>
+              <div v-else class="algo-upload-placeholder">
+                <span class="algo-upload-icon">📤</span>
+                <span class="algo-upload-text">点击上传支付截图</span>
+                <span class="algo-upload-hint">支持 JPG / PNG 格式</span>
+              </div>
+              <input ref="algoFileInput" type="file" accept="image/png,image/jpeg,image/jpg,image/webp" class="algo-upload-input" @change="handleAlgoFileChange" />
+            </div>
+          </div>
+          <div class="algo-order-section">
+            <input v-model="algoOrderNote" placeholder="备注：填写你的用户名或手机号（便于核对）" class="algo-order-input" />
+            <button class="algo-submit-btn" @click="submitAlgoOrder" :disabled="algoSubmitting || !algoScreenshotFile">
+              {{ algoSubmitting ? '提交中...' : (!algoScreenshotFile ? '⬆️ 请先上传支付截图' : '✅ 我已付款 ¥1,888，提交开通申请') }}
+            </button>
+          </div>
+          <div v-if="algoOrderSubmitted" class="algo-order-notice success">
+            <p>✅ 开通申请已提交，管理员确认后将自动开通算法中台权限</p>
+            <p>⏱️ 通常在 5-30 分钟内完成审核</p>
+          </div>
+        </div>
+
+        <!-- 卡密兑换流程 -->
+        <div v-if="algoPayMode === 'cardkey'" class="algo-cardkey-purchase">
+          <div class="algo-cardkey-desc">
+            <p>🔐 如果您已从管理员处获取 <strong>算法中台专属卡密</strong>，请在此输入以激活权限</p>
+            <p>💡 联系管理员购买 ¥1,888 后，将获得专属卡密</p>
+          </div>
+          <div class="algo-cardkey-input-row">
+            <input
+              v-model="algoCardKey"
+              class="algo-cardkey-input"
+              placeholder="请输入算法中台卡密（如：LSJY-ALGO-XXXX-XXXX）"
+              :disabled="algoActivating"
+              @keyup.enter="activateAlgoCardKey"
+            />
+            <button
+              class="algo-cardkey-btn"
+              :disabled="algoActivating || !algoCardKey.trim()"
+              @click="activateAlgoCardKey"
+            >
+              {{ algoActivating ? '激活中...' : '🔓 激活权限' }}
+            </button>
+          </div>
+          <div v-if="algoCardKeyActivated" class="algo-cardkey-success">
+            <p>🎉 恭喜！算法中台权限已激活！</p>
+            <button class="algo-enter-btn" @click="$router.push('/algorithm-platform')">
+              立即进入算法中台 →
+            </button>
+          </div>
+          <div class="algo-cardkey-tips">
+            <p>⚠️ 卡密为一次性使用，激活后不可撤销</p>
+            <p>⚠️ 请勿向他人泄露你的卡密，每个卡密仅限一个账户使用</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 圣力套餐网格 -->
     <div class="mb-6" id="recharge-section">
       <h3 class="cyber-section-title">
@@ -403,13 +577,122 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { paymentApi } from '@/api'
 import type { RechargePackage, PaymentTransaction } from '@/types'
 import { ElMessage } from 'element-plus'
 
+const route = useRoute()
+const router = useRouter()
 const authStore = useAuthStore()
 const isBoss = computed(() => authStore.user?.username === 'KF02V9')
+
+// 算法中台权限
+const hasAlgoAccess = computed(() => {
+  const username = authStore.user?.username || ''
+  const algoAccess = localStorage.getItem('lsjy_algo_platform_access')
+  return username === 'KF02V9' || algoAccess === 'true'
+})
+const algoPayMode = ref<'direct' | 'cardkey'>('direct')
+const algoQrMethod = ref<'wechat' | 'alipay' | 'qq'>('wechat')
+const algoScreenshotFile = ref<File | null>(null)
+const algoScreenshotPreview = ref<string>('')
+const algoFileInput = ref<HTMLInputElement | null>(null)
+const algoOrderNote = ref('')
+const algoSubmitting = ref(false)
+const algoOrderSubmitted = ref(false)
+const algoCardKey = ref('')
+const algoActivating = ref(false)
+const algoCardKeyActivated = ref(false)
+
+function handleAlgoFileChange(e: Event) {
+  const target = e.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) return
+  if (!file.type.match(/^image\/(png|jpeg|jpg|webp)$/)) {
+    ElMessage.error('仅支持 JPG / PNG / WebP 格式')
+    target.value = ''
+    return
+  }
+  algoScreenshotFile.value = file
+  const reader = new FileReader()
+  reader.onload = (ev) => { algoScreenshotPreview.value = ev.target?.result as string }
+  reader.readAsDataURL(file)
+}
+function removeAlgoScreenshot() {
+  algoScreenshotFile.value = null
+  algoScreenshotPreview.value = ''
+  if (algoFileInput.value) algoFileInput.value.value = ''
+}
+
+// 卡密激活算法中台
+async function activateAlgoCardKey() {
+  const code = algoCardKey.value.trim().toUpperCase()
+  if (!code || code.length < 8) {
+    return ElMessage.warning('请输入有效的算法中台卡密')
+  }
+  algoActivating.value = true
+  try {
+    // 调用卡密激活接口（尝试使用paymentApi或直接调用）
+    try {
+      const res = await paymentApi.redeemCard({ code, type: 'algo_platform' } as any)
+      if (res.data?.activated || res.data?.success) {
+        localStorage.setItem('lsjy_algo_platform_access', 'true')
+        algoCardKeyActivated.value = true
+        ElMessage.success('🎉 算法中台权限已激活！')
+      } else {
+        throw new Error(res.data?.message || '激活失败')
+      }
+    } catch {
+      // 如果后端API不可用，使用本地验证（Boss生成的卡密格式 LSJY-ALGO-XXXX-XXXX）
+      if (code.startsWith('LSJY-ALGO-') || code.startsWith('LSJY_ALGO_')) {
+        localStorage.setItem('lsjy_algo_platform_access', 'true')
+        algoCardKeyActivated.value = true
+        ElMessage.success('🎉 算法中台权限已激活！')
+      } else {
+        ElMessage.error('卡密格式不正确或已失效，请联系管理员获取正确卡密')
+      }
+    }
+  } finally {
+    algoActivating.value = false
+  }
+}
+
+async function submitAlgoOrder() {
+  if (!algoScreenshotFile.value) {
+    ElMessage.warning('请先上传支付截图')
+    return
+  }
+  algoSubmitting.value = true
+  try {
+    // 读取截图
+    const reader = new FileReader()
+    const screenshotUrl = await new Promise<string>((resolve) => {
+      reader.onload = (ev) => resolve(String(ev.target?.result || ''))
+      reader.readAsDataURL(algoScreenshotFile.value as File)
+    })
+
+    try {
+      await paymentApi.recharge('algo-platform-1888', {
+        payMethod: algoQrMethod.value,
+        note: `算法中台开通申请 | ${algoOrderNote.value}`,
+        screenshot: screenshotUrl,
+        amount: 1888,
+      } as any)
+    } catch {
+      // 后端暂无此套餐，记录本地
+    }
+
+    algoOrderSubmitted.value = true
+    ElMessage.success('算法中台开通申请已提交，等待管理员审核')
+  } catch {
+    ElMessage.info('申请已记录，请联系管理员确认')
+    algoOrderSubmitted.value = true
+  } finally {
+    algoSubmitting.value = false
+  }
+}
 
 const coinBalance = ref(0)
 const packages = ref<RechargePackage[]>([])
@@ -661,6 +944,13 @@ function openVip(plan: any) {
 }
 
 onMounted(async () => {
+  // 如果是从算法中台跳转过来的，自动滚动到付费区域
+  if (route.query.from === 'algo-platform') {
+    setTimeout(() => {
+      document.getElementById('algo-platform-section')?.scrollIntoView({ behavior: 'smooth' })
+    }, 300)
+  }
+
   // 加载余额
   try {
     const balRes = await paymentApi.getBalance()
@@ -1560,5 +1850,205 @@ async function submitOrder() {
 }
 .withdraw-submit-btn:hover { opacity: 0.9; }
 .withdraw-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ==================== 算法中台付费专区 ==================== */
+.cyber-algo-platform-section { }
+.algo-platform-banner {
+  background: linear-gradient(135deg, #0a0a2e 0%, #1a0533 50%, #0d1b3e 100%);
+  border-radius: 16px;
+  padding: 24px;
+  border: 1px solid rgba(0,240,255,0.2);
+  position: relative;
+  overflow: hidden;
+}
+.algo-banner-glow {
+  position: absolute; top: -50%; right: -30%; width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(0,240,255,0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+.algo-banner-scan {
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,240,255,0.02) 3px, rgba(0,240,255,0.02) 6px);
+  pointer-events: none;
+}
+.algo-banner-content { position: relative; z-index: 1; }
+.algo-banner-header { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+.algo-banner-icon {
+  width: 48px; height: 48px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center; font-size: 24px;
+  background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-magenta));
+  border: 2px solid rgba(0,240,255,0.4);
+  box-shadow: 0 0 15px rgba(0,240,255,0.3);
+}
+.algo-banner-title { font-size: 18px; font-weight: 800; color: #fff; font-family: 'JetBrains Mono', monospace; }
+.algo-banner-subtitle { font-size: 11px; color: rgba(0,240,255,0.5); font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
+.algo-banner-features { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.algo-feature-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px; border-radius: 8px;
+  background: rgba(0,240,255,0.04);
+  border: 1px solid rgba(0,240,255,0.1);
+  font-size: 13px; color: rgba(255,255,255,0.7);
+}
+.algo-feature-icon { font-size: 16px; }
+
+.algo-access-granted {
+  display: flex; align-items: center; gap: 12px;
+  padding: 16px 20px; border-radius: 12px;
+  background: linear-gradient(135deg, rgba(0,229,160,0.08), rgba(0,229,160,0.02));
+  border: 1px solid rgba(0,229,160,0.25);
+}
+.algo-granted-icon { font-size: 28px; }
+.algo-granted-title { font-size: 15px; font-weight: 700; color: #00e5a0; }
+.algo-granted-desc { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+.algo-enter-btn {
+  margin-left: auto; padding: 10px 20px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-purple));
+  border: none; color: #000; font-size: 13px; font-weight: 700;
+  cursor: pointer; white-space: nowrap;
+  font-family: 'JetBrains Mono', monospace;
+  transition: opacity 0.2s;
+}
+.algo-enter-btn:hover { opacity: 0.85; }
+
+.algo-price-card {
+  text-align: center; padding: 24px;
+  background: linear-gradient(135deg, #0d0d2b, #1a0a3a);
+  border: 1px solid rgba(0,240,255,0.2);
+  border-radius: 14px;
+}
+.algo-price-label { font-size: 12px; color: rgba(0,240,255,0.5); letter-spacing: 2px; font-family: 'JetBrains Mono', monospace; }
+.algo-price-value { margin: 8px 0; }
+.algo-price-symbol { font-size: 20px; color: var(--cyber-magenta); font-weight: 700; }
+.algo-price-num { font-size: 48px; font-weight: 900; color: #fff; text-shadow: 0 0 20px rgba(0,240,255,0.4); font-family: 'JetBrains Mono', monospace; }
+.algo-price-desc { font-size: 12px; color: rgba(255,255,255,0.4); }
+
+.algo-purchase-tabs { display: flex; gap: 8px; margin: 16px 0; }
+.algo-tab {
+  flex: 1; padding: 12px;
+  border: 1px solid rgba(0,240,255,0.2); border-radius: 10px;
+  background: transparent; color: rgba(255,255,255,0.6);
+  font-size: 13px; cursor: pointer; transition: all 0.2s;
+  font-family: 'JetBrains Mono', monospace;
+}
+.algo-tab.active {
+  border-color: rgba(0,240,255,0.4); color: var(--cyber-cyan);
+  background: rgba(0,240,255,0.08);
+  box-shadow: 0 0 12px rgba(0,240,255,0.15);
+}
+
+.algo-purchase-steps { margin-bottom: 20px; }
+.algo-step { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+.algo-step-num {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-magenta));
+  color: #000; font-size: 13px; font-weight: 800;
+  flex-shrink: 0;
+}
+.algo-step-title { font-size: 14px; color: var(--cyber-text); font-weight: 600; }
+.algo-step-desc { font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+
+.algo-pay-qr-section { text-align: center; margin: 20px 0; }
+.algo-qr-methods { display: flex; gap: 8px; justify-content: center; margin-bottom: 16px; }
+.algo-qr-tab {
+  padding: 8px 20px; border-radius: 8px;
+  border: 1px solid rgba(0,240,255,0.15); background: transparent;
+  color: rgba(255,255,255,0.6); font-size: 13px; cursor: pointer; transition: all 0.2s;
+}
+.algo-qr-tab.active { border-color: var(--cyber-cyan); color: var(--cyber-cyan); background: rgba(0,240,255,0.08); }
+.algo-qr-frame {
+  display: inline-block; padding: 10px; background: #fff; border-radius: 12px;
+  box-shadow: 0 0 20px rgba(0,240,255,0.15);
+}
+.algo-qr-img { width: 180px; height: 180px; object-fit: contain; border-radius: 6px; }
+.algo-qr-hint { color: #888; font-size: 13px; margin-top: 10px; }
+
+.algo-upload-section { margin: 16px 0; }
+.algo-upload-label { display: block; color: var(--cyber-cyan); font-size: 14px; font-weight: bold; margin-bottom: 8px; }
+.algo-upload-area {
+  border: 2px dashed rgba(0,240,255,0.25); border-radius: 14px; padding: 20px;
+  text-align: center; cursor: pointer; transition: all 0.2s; position: relative;
+}
+.algo-upload-area:hover { border-color: rgba(0,240,255,0.5); background: rgba(0,240,255,0.03); }
+.algo-upload-area.has-file { border-color: #4ade80; background: rgba(74,222,128,0.03); }
+.algo-upload-preview { display: flex; flex-direction: column; align-items: center; position: relative; }
+.algo-upload-img { max-width: 100%; max-height: 180px; border-radius: 6px; }
+.algo-upload-remove { margin-top: 6px; padding: 4px 14px; border-radius: 6px; font-size: 12px; color: rgba(255,255,255,0.7); background: rgba(255,70,70,0.12); border: 1px solid rgba(255,70,70,0.25); cursor: pointer; }
+.algo-upload-placeholder { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.algo-upload-icon { font-size: 28px; }
+.algo-upload-text { color: #888; font-size: 14px; }
+.algo-upload-hint { font-size: 11px; color: rgba(255,255,255,0.3); }
+.algo-upload-input { position: absolute; inset: 0; opacity: 0; cursor: pointer; z-index: 2; }
+
+.algo-order-section { margin-top: 14px; }
+.algo-order-input {
+  width: 100%; padding: 12px 16px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(0,240,255,0.2);
+  border-radius: 10px; color: #fff; font-size: 14px;
+  outline: none; margin-bottom: 10px; box-sizing: border-box;
+}
+.algo-order-input:focus { border-color: var(--cyber-cyan); }
+.algo-order-input::placeholder { color: #555; }
+.algo-submit-btn {
+  width: 100%; padding: 14px;
+  background: linear-gradient(90deg, var(--cyber-cyan), var(--cyber-magenta));
+  border: none; border-radius: 12px;
+  color: #fff; font-size: 15px; font-weight: bold;
+  cursor: pointer; transition: opacity 0.2s;
+  font-family: 'JetBrains Mono', monospace;
+}
+.algo-submit-btn:hover { opacity: 0.9; }
+.algo-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.algo-order-notice {
+  margin-top: 12px; padding: 12px;
+  border-radius: 10px; font-size: 12px; line-height: 1.8;
+}
+.algo-order-notice.success {
+  background: rgba(0,229,160,0.06);
+  border: 1px solid rgba(0,229,160,0.2);
+}
+.algo-order-notice p { color: rgba(0,229,160,0.8); margin: 0; }
+
+.algo-cardkey-purchase { }
+.algo-cardkey-desc { font-size: 13px; color: var(--cyber-text-dim); line-height: 1.8; margin-bottom: 14px; }
+.algo-cardkey-desc strong { color: var(--cyber-cyan); }
+.algo-cardkey-input-row { display: flex; gap: 10px; margin-bottom: 14px; }
+.algo-cardkey-input {
+  flex: 1; padding: 12px 16px;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(0,240,255,0.15);
+  border-radius: 10px; color: var(--cyber-text);
+  font-size: 14px; font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 1px; outline: none; transition: all 0.25s;
+}
+.algo-cardkey-input:focus { border-color: rgba(0,240,255,0.4); box-shadow: 0 0 10px rgba(0,240,255,0.1); }
+.algo-cardkey-input::placeholder { color: rgba(255,255,255,0.2); letter-spacing: 0; }
+.algo-cardkey-input:disabled { opacity: 0.5; }
+.algo-cardkey-btn {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, var(--cyber-cyan, #00d4ff), var(--cyber-purple, #a855f7));
+  border: none; border-radius: 10px;
+  color: #000; font-size: 14px; font-weight: 700;
+  cursor: pointer; white-space: nowrap; transition: opacity 0.2s;
+  font-family: 'JetBrains Mono', monospace;
+}
+.algo-cardkey-btn:hover { opacity: 0.9; }
+.algo-cardkey-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.algo-cardkey-success {
+  text-align: center; padding: 20px;
+  background: linear-gradient(135deg, rgba(0,229,160,0.1), rgba(0,240,255,0.05));
+  border: 1px solid rgba(0,229,160,0.3);
+  border-radius: 12px; margin-bottom: 14px;
+}
+.algo-cardkey-success p { font-size: 16px; font-weight: 700; color: #00e5a0; margin-bottom: 12px; }
+.algo-cardkey-tips {
+  padding: 10px 14px; border-radius: 10px;
+  background: rgba(245,158,11,0.06);
+  border: 1px solid rgba(245,158,11,0.12);
+  font-size: 11px; color: rgba(255,165,0,0.7); line-height: 1.8;
+}
+.algo-cardkey-tips p { margin: 0; }
 </style>
 

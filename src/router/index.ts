@@ -25,7 +25,7 @@ const routes: RouteRecordRaw[] = [
       { path: 'tools', name: 'ToolCenter', component: () => import('@/views/ai-tools/ToolCenter.vue'), meta: { title: 'AI工具中心', icon: '🤖' } },
       { path: 'tools/skill/analysis', name: 'OpenSourceSkillAnalysis', component: () => import('@/views/ai-tools/OpenSourceSkillAnalysis.vue'), meta: { title: '开源AI技能分析', hidden: true } },
       { path: 'tools/:id', name: 'ToolDetail', component: () => import('@/views/ai-tools/ToolDetail.vue'), meta: { title: '工具详情', hidden: true } },
-      { path: 'algorithm-platform', name: 'AlgorithmPlatform', component: () => import('@/views/algorithm-platform/AlgorithmPlatform.vue'), meta: { title: '自研算法中台', icon: '⚡' } },
+      { path: 'algorithm-platform', name: 'AlgorithmPlatform', component: () => import('@/views/algorithm-platform/AlgorithmPlatform.vue'), meta: { title: '自研算法中台', icon: '⚡', requiresAlgoPlatform: true } },
       { path: 'chat', name: 'AgentChat', component: () => import('@/views/chat/AgentChat.vue'), meta: { title: '罗圣AI', icon: '🤖' }},
       { path: 'profile', name: 'Profile', component: () => import('@/views/profile/ProfileView.vue'), meta: { title: '个人中心', icon: '👤' } },
       { path: 'profile/works', name: 'Works', component: () => import('@/views/profile/WorksView.vue'), meta: { title: '我的作品', icon: '🎨' } },
@@ -134,6 +134,25 @@ router.beforeEach(async (to, _from, next) => {
     return next()
   }
   if (!token) return next('/login')
+
+  // 算法中台权限检查：KF02V9(Boss)免费，其他用户需付费或持有卡密
+  if (to.matched.some(r => r.meta.requiresAlgoPlatform)) {
+    try {
+      const savedUser = localStorage.getItem('lsjy_user')
+      const userData = savedUser ? JSON.parse(savedUser) : null
+      const username = userData?.username || ''
+      const algoAccess = localStorage.getItem('lsjy_algo_platform_access') // 卡密激活标记
+      const isBoss = username === 'KF02V9'
+      const hasAccess = isBoss || algoAccess === 'true'
+      if (!hasAccess) {
+        // 重定向到付费页面，带上来源标记
+        return next('/profile/wallet?from=algo-platform')
+      }
+    } catch {
+      return next('/profile/wallet?from=algo-platform')
+    }
+  }
+
   next()
 })
 
