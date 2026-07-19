@@ -108,6 +108,7 @@ const authStore = useAuthStore()
 const navItems = [
   { path: '/dashboard', label: '控制台', icon: '🏠' },
   { path: '/chat', label: 'AI智能体', icon: '🧠' },
+  { path: '/algorithm-platform', label: '算法中台', icon: '⚡' },
   { path: '/tools', label: 'AI工具', icon: '🤖' },
   { path: '/profile', label: '我的', icon: '👤' },
 ]
