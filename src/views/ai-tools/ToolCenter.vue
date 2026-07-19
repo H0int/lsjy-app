@@ -247,13 +247,10 @@ const subCategoryIconMap: Record<string, string> = {
   心理支持: '🌱',
 }
 
-const totalCount = computed(() => toolStore.total)
+const totalCount = computed(() => toolStore.tools.length)
 
 const categoryList = computed(() => {
   const countByCategory = (id: number) => {
-    // 图片生成(id=9)和视频生成(id=10)按toolType计数
-    if (id === 9) return toolStore.tools.filter(t => t.toolType === 'image').length
-    if (id === 10) return toolStore.tools.filter(t => t.toolType === 'video').length
     return toolStore.tools.filter(t => Number(t.categoryId) === Number(id)).length
   }
   const cats = [
@@ -264,8 +261,6 @@ const categoryList = computed(() => {
 })
 
 function toolsByCategory(catId: number) {
-  if (catId === 9) return toolStore.tools.filter(t => t.toolType === 'image')
-  if (catId === 10) return toolStore.tools.filter(t => t.toolType === 'video')
   return toolStore.tools.filter(t => Number(t.categoryId) === Number(catId))
 }
 
@@ -289,15 +284,7 @@ const filteredTools = computed(() => {
   let list = toolStore.tools
   // 按分类筛选
   if (currentCategoryId.value) {
-    const catId = currentCategoryId.value
-    // 图片生成(id=9)和视频生成(id=10)按toolType筛选
-    if (catId === 9) {
-      list = list.filter(t => t.toolType === 'image')
-    } else if (catId === 10) {
-      list = list.filter(t => t.toolType === 'video')
-    } else {
-      list = list.filter(t => Number(t.categoryId) === Number(catId))
-    }
+    list = list.filter(t => Number(t.categoryId) === Number(currentCategoryId.value))
   }
   // 按二级小框架筛选，使用后端真实 subCategory 精确匹配
   if (currentSubCategory.value) {
@@ -325,10 +312,11 @@ function toolTypeLabel(type: string): string {
   return toolTypeMap[type] || type
 }
 
-function formatUseCount(count: number): string {
-  if (count >= 10000) return (count / 10000).toFixed(1) + '万'
-  if (count >= 1000) return (count / 1000).toFixed(1) + 'k'
-  return String(count)
+function formatUseCount(count: number | undefined): string {
+  const n = count ?? 0
+  if (n >= 10000) return (n / 10000).toFixed(1) + '万'
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'k'
+  return String(n)
 }
 
 function selectCategory(catId: number | null) {
