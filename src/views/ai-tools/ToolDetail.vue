@@ -211,8 +211,8 @@ const progressText = ref('生成中...')
 const generationMessage = ref('')
 const generationError = ref('')
 
-const isVideoTool = computed(() => tool.value?.toolType === 'video')
-const isImageTool = computed(() => tool.value?.toolType === 'image')
+const isVideoTool = computed(() => tool.value?.toolType === 'video' || Number(tool.value?.categoryId) === 10)
+const isImageTool = computed(() => tool.value?.toolType === 'image' || Number(tool.value?.categoryId) === 9)
 const isImageProcessing = computed(() => tool.value?.inputType === 'image')
 const generationTitle = computed(() => {
   if (isVideoTool.value) return videoTaskId.value ? '视频任务已提交' : '正在提交视频任务'

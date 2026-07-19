@@ -97,7 +97,7 @@
           <span class="cyber-tool-icon">{{ tool.icon }}</span>
           <div class="flex gap-1">
             <span v-if="tool.isFree" class="cyber-badge cyber-badge-green">免费</span>
-            <span class="cyber-badge cyber-badge-cyan">{{ toolTypeLabel(tool.toolType) }}</span>
+            <span class="cyber-badge cyber-badge-cyan">{{ toolTypeLabel(tool) }}</span>
           </div>
         </div>
         <h3 class="cyber-tool-name">{{ tool.name }}</h3>
@@ -123,7 +123,7 @@
           <div class="flex items-center gap-2 flex-wrap">
             <h3 class="cyber-tool-name">{{ tool.name }}</h3>
             <span v-for="tag in tool.tags?.slice(0, 2)" :key="tag" class="cyber-tool-tag">{{ tag }}</span>
-            <span class="cyber-badge cyber-badge-cyan">{{ toolTypeLabel(tool.toolType) }}</span>
+            <span class="cyber-badge cyber-badge-cyan">{{ toolTypeLabel(tool) }}</span>
           </div>
           <p class="cyber-tool-desc truncate mt-1">{{ tool.description }}</p>
         </div>
@@ -308,8 +308,14 @@ const filteredTools = computed(() => {
   return list
 })
 
-function toolTypeLabel(type: string): string {
-  return toolTypeMap[type] || type
+function toolTypeLabel(toolOrType: Tool | string): string {
+  if (typeof toolOrType === 'string') return toolTypeMap[toolOrType] || toolOrType
+  // 根据 toolType 判断，同时兼容 categoryId
+  const catId = Number(toolOrType.categoryId)
+  if (toolOrType.toolType === 'image' || catId === 9) return '图片生成'
+  if (toolOrType.toolType === 'video' || catId === 10) return '视频生成'
+  if (toolOrType.toolType === 'audio' || catId === 11) return '音频处理'
+  return toolTypeMap[toolOrType.toolType] || toolOrType.toolType || '文本生成'
 }
 
 function formatUseCount(count: number | undefined): string {
