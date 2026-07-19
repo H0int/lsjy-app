@@ -29,6 +29,38 @@ export const authApi = {
   }
 }
 
+// ====== 算法中台 API ======
+export const algoPlatformApi = {
+  /** 获取中台总览数据（调用量、GPU、模型数等） */
+  getOverview(): Promise<ApiResponse<any>> {
+    return service.get('/algo-platform/overview').then(r => r.data)
+  },
+  /** 获取所有模型引擎状态 */
+  getEngines(): Promise<ApiResponse<any>> {
+    return service.get('/algo-platform/engines').then(r => r.data)
+  },
+  /** 获取调用量分布（按模态） */
+  getCallStats(params?: { period?: string }): Promise<ApiResponse<any>> {
+    return service.get('/algo-platform/call-stats', { params }).then(r => r.data)
+  },
+  /** 获取API替换状态 */
+  getProviderStatus(): Promise<ApiResponse<any>> {
+    return service.get('/algo-platform/providers').then(r => r.data)
+  },
+  /** 获取实时调用日志 */
+  getCallLogs(params?: { page?: number; pageSize?: number; engine?: string }): Promise<ApiResponse<any>> {
+    return service.get('/algo-platform/logs', { params }).then(r => r.data)
+  },
+  /** 手动切换模型引擎 */
+  switchEngine(params: { engineId: string; targetModel: string }): Promise<ApiResponse<any>> {
+    return service.post('/algo-platform/engines/switch', params).then(r => r.data)
+  },
+  /** 获取GPU实时监控数据 */
+  getGpuStats(): Promise<ApiResponse<any>> {
+    return service.get('/algo-platform/gpu-stats').then(r => r.data)
+  }
+}
+
 // ===== 用户API =====
 export const userApi = {
   getProfile(): Promise<ApiResponse<User & { roles: any[] }>> {
