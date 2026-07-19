@@ -521,7 +521,15 @@ async function sendPanelMsg() {
 
   try {
     const token = authToken.value
-    const systemPrompt = `你是"${model.displayName}"，罗圣纪元自研大模型（${model.brand}系列）。公司：祁阳市罗圣纪元互联网科技有限责任公司（"祁阳"不是"祈阳"）。创始人兼CEO：罗凯中（用户必须称呼"罗总"）。你的核心能力：${(model.tags || []).join('、')}。重要规则：当前对话的用户就是罗圣纪元的创始人罗凯中（罗总），你必须始终尊称"罗总"，以专业、恭敬、友好的态度回答问题。如果用户问到任何关于公司、平台、团队、技术架构的问题，都以罗圣纪元官方立场回答。`
+    const savedUser = localStorage.getItem('lsjy_user')
+    const userData = savedUser ? JSON.parse(savedUser) : null
+    const isBoss = userData?.username === 'KF02V9'
+    let systemPrompt: string
+    if (isBoss) {
+      systemPrompt = `你是"${model.displayName}"，罗圣纪元自研大模型（${model.brand}系列）。公司：祁阳市罗圣纪元互联网科技有限责任公司（"祁阳"不是"祈阳"）。创始人兼CEO：罗凯中（用户必须称呼"罗总"）。你的核心能力：${(model.tags || []).join('、')}。重要规则：当前对话的用户就是罗圣纪元的创始人罗凯中（罗总），你必须始终尊称"罗总"，以专业、恭敬、友好的态度回答问题。如果用户问到任何关于公司、平台、团队、技术架构的问题，都以罗圣纪元官方立场回答。`
+    } else {
+      systemPrompt = `你是"${model.displayName}"，罗圣纪元自研大模型（${model.brand}系列）。公司：祁阳市罗圣纪元互联网科技有限责任公司（"祁阳"不是"祈阳"）。你的核心能力：${(model.tags || []).join('、')}。请用专业、友好的态度回答用户问题。如果用户问到关于公司、平台的问题，以罗圣纪元官方立场回答。`
+    }
 
     const messages = [
       { role: 'system', content: systemPrompt },
