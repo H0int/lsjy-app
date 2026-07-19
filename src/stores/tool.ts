@@ -53,15 +53,25 @@ export const useToolStore = defineStore('tool', () => {
   async function fetchTools(params?: { categoryId?: number; subCategory?: string; toolType?: string; page?: number; pageSize?: number }) {
     loading.value = true
     try {
-      const res = await toolApi.getTools({ page: 1, pageSize: 500, ...params })
-      const items = res.data.items || []
-      // 后端返回空数据时，使用内置工具数据降级
-      if (items.length === 0) {
+      // 分页获取全部工具（避免单次请求过大被截断）
+      const pageSize = 100
+      let allItems: Tool[] = []
+      let page = 1
+      let totalFromBackend = 0
+      while (true) {
+        const res = await toolApi.getTools({ page, pageSize, ...params })
+        const items: Tool[] = res.data.items || []
+        totalFromBackend = res.data.total || items.length
+        allItems = allItems.concat(items)
+        if (allItems.length >= totalFromBackend || items.length < pageSize) break
+        page++
+      }
+      if (allItems.length === 0) {
         tools.value = getBuiltInTools()
         total.value = tools.value.length
       } else {
-        tools.value = items
-        total.value = res.data.total || items.length
+        tools.value = allItems
+        total.value = totalFromBackend || allItems.length
       }
     } catch {
       // 后端不可用时使用内置工具数据
