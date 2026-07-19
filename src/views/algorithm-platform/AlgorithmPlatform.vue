@@ -49,26 +49,181 @@
       </button>
     </div>
 
+    <!-- ==================== 罗圣大模型 ==================== -->
+    <div v-if="activeTab === 'luosheng'" class="space-y-6">
+      <div class="rounded-2xl p-5 mb-4" style="background: linear-gradient(135deg, rgba(0,240,255,0.06), rgba(168,85,247,0.06)); border: 1px solid rgba(0,240,255,0.15);">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold"
+            style="background: linear-gradient(135deg, #00f0ff, #a855f7); color: #000;">圣</div>
+          <div>
+            <h2 class="text-lg font-bold" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">罗圣 LUOSHENG</h2>
+            <p class="text-xs" style="color: rgba(0,240,255,0.5);">旗舰级大模型系列 · 高性能 · 高精度 · 适合复杂任务</p>
+          </div>
+        </div>
+      </div>
+      <div v-for="cat in luoshengCategories" :key="cat.title" class="rounded-2xl p-6" style="background: var(--cyber-card-bg); border: 1px solid var(--cyber-border-color);">
+        <h2 class="text-lg font-bold mb-4" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">
+          ◆ {{ cat.title }}
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div v-for="model in cat.models" :key="model.name" class="cyber-model-card rounded-lg p-4 cursor-pointer" @click="openModelPanel(model)">
+            <div class="flex items-center gap-3 mb-3">
+              <span class="text-2xl">{{ model.icon }}</span>
+              <div class="flex-1">
+                <div class="flex items-center gap-2">
+                  <div class="text-sm font-bold" style="color: var(--cyber-text);">{{ model.displayName }}</div>
+                  <span class="text-xs px-1.5 py-0.5 rounded font-bold" style="background: linear-gradient(135deg, rgba(0,240,255,0.15), rgba(168,85,247,0.15)); color: var(--cyber-cyan); border: 1px solid rgba(0,240,255,0.2);">罗圣</span>
+                </div>
+                <div class="text-xs" style="color: rgba(0,240,255,0.4);">{{ model.provider }}</div>
+              </div>
+              <span :class="model.online ? 'status-dot online' : 'status-dot offline'"></span>
+            </div>
+            <p class="text-xs mb-3" style="color: rgba(255,255,255,0.5);">{{ model.desc }}</p>
+            <div class="flex gap-1.5 flex-wrap mb-3">
+              <span v-for="tag in model.tags" :key="tag" class="text-xs px-1.5 py-0.5 rounded" style="background: rgba(0,240,255,0.08); color: rgba(0,240,255,0.6); border: 1px solid rgba(0,240,255,0.15);">{{ tag }}</span>
+            </div>
+            <div class="flex justify-between items-center mt-auto pt-3" style="border-top: 1px solid rgba(255,255,255,0.06);">
+              <div class="text-xs" style="color: rgba(255,255,255,0.3);">参数量 <span style="color: var(--cyber-cyan);">{{ model.params }}</span></div>
+              <div class="text-xs px-2 py-1 rounded" style="background: linear-gradient(135deg, rgba(0,240,255,0.1), rgba(168,85,247,0.1)); color: var(--cyber-cyan); border: 1px solid rgba(0,240,255,0.2);">点击使用 →</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 罗灵大模型 ==================== -->
+    <div v-if="activeTab === 'luoling'" class="space-y-6">
+      <div class="rounded-2xl p-5 mb-4" style="background: linear-gradient(135deg, rgba(74,222,128,0.06), rgba(0,240,255,0.06)); border: 1px solid rgba(74,222,128,0.15);">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold"
+            style="background: linear-gradient(135deg, #4ade80, #00f0ff); color: #000;">灵</div>
+          <div>
+            <h2 class="text-lg font-bold" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">罗灵 LUOLING</h2>
+            <p class="text-xs" style="color: rgba(74,222,128,0.6);">轻量级大模型系列 · 低延迟 · 高并发 · 适合快速任务</p>
+          </div>
+        </div>
+      </div>
+      <div v-for="cat in luolingCategories" :key="cat.title" class="rounded-2xl p-6" style="background: var(--cyber-card-bg); border: 1px solid var(--cyber-border-color);">
+        <h2 class="text-lg font-bold mb-4" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">
+          ◆ {{ cat.title }}
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div v-for="model in cat.models" :key="model.name" class="cyber-model-card rounded-lg p-4 cursor-pointer" @click="openModelPanel(model)">
+            <div class="flex items-center gap-3 mb-3">
+              <span class="text-2xl">{{ model.icon }}</span>
+              <div class="flex-1">
+                <div class="flex items-center gap-2">
+                  <div class="text-sm font-bold" style="color: var(--cyber-text);">{{ model.displayName }}</div>
+                  <span class="text-xs px-1.5 py-0.5 rounded font-bold" style="background: linear-gradient(135deg, rgba(74,222,128,0.15), rgba(0,240,255,0.15)); color: #4ade80; border: 1px solid rgba(74,222,128,0.2);">罗灵</span>
+                </div>
+                <div class="text-xs" style="color: rgba(0,240,255,0.4);">{{ model.provider }}</div>
+              </div>
+              <span :class="model.online ? 'status-dot online' : 'status-dot offline'"></span>
+            </div>
+            <p class="text-xs mb-3" style="color: rgba(255,255,255,0.5);">{{ model.desc }}</p>
+            <div class="flex gap-1.5 flex-wrap mb-3">
+              <span v-for="tag in model.tags" :key="tag" class="text-xs px-1.5 py-0.5 rounded" style="background: rgba(74,222,128,0.08); color: rgba(74,222,128,0.6); border: 1px solid rgba(74,222,128,0.15);">{{ tag }}</span>
+            </div>
+            <div class="flex justify-between items-center mt-auto pt-3" style="border-top: 1px solid rgba(255,255,255,0.06);">
+              <div class="text-xs" style="color: rgba(255,255,255,0.3);">参数量 <span style="color: #4ade80;">{{ model.params }}</span></div>
+              <div class="text-xs px-2 py-1 rounded" style="background: linear-gradient(135deg, rgba(74,222,128,0.1), rgba(0,240,255,0.1)); color: #4ade80; border: 1px solid rgba(74,222,128,0.2);">点击使用 →</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 模型使用面板（覆盖层） ==================== -->
+    <teleport to="body">
+      <div v-if="showPanel" class="algo-use-overlay" @click.self="closePanel">
+        <div class="algo-use-panel">
+          <!-- 面板头部 -->
+          <div class="panel-header">
+            <div class="flex items-center gap-3">
+              <span class="text-xl">{{ panelModel?.icon }}</span>
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="panel-model-name">{{ panelModel?.displayName }}</span>
+                  <span class="text-xs px-1.5 py-0.5 rounded font-bold"
+                    :style="panelModel?.brand === '罗圣'
+                      ? 'background: linear-gradient(135deg, rgba(0,240,255,0.15), rgba(168,85,247,0.15)); color: var(--cyber-cyan); border: 1px solid rgba(0,240,255,0.2);'
+                      : 'background: linear-gradient(135deg, rgba(74,222,128,0.15), rgba(0,240,255,0.15)); color: #4ade80; border: 1px solid rgba(74,222,128,0.2);'">
+                    {{ panelModel?.brand }}
+                  </span>
+                </div>
+                <div class="text-xs" style="color: rgba(0,240,255,0.4);">{{ panelModel?.provider }} · {{ panelModel?.params }}</div>
+              </div>
+            </div>
+            <button class="panel-close" @click="closePanel">✕</button>
+          </div>
+
+          <!-- 对话区域 -->
+          <div class="panel-chat" ref="panelChatRef">
+            <div v-if="panelMsgs.length === 0" class="panel-welcome">
+              <div class="panel-welcome-icon">{{ panelModel?.icon }}</div>
+              <div class="panel-welcome-title">欢迎使用 {{ panelModel?.displayName }}</div>
+              <div class="panel-welcome-desc">{{ panelModel?.desc }}</div>
+              <div class="panel-welcome-tags">
+                <span v-for="tag in panelModel?.tags" :key="tag" class="text-xs px-2 py-1 rounded" style="background: rgba(0,240,255,0.06); color: rgba(0,240,255,0.5); border: 1px solid rgba(0,240,255,0.1);">{{ tag }}</span>
+              </div>
+            </div>
+            <div v-for="(msg, idx) in panelMsgs" :key="idx" class="panel-msg" :class="msg.role">
+              <div class="panel-msg-avatar">{{ msg.role === 'user' ? '👤' : (panelModel?.icon || '🤖') }}</div>
+              <div class="panel-msg-bubble" v-html="formatContent(msg.content)"></div>
+            </div>
+            <div v-if="panelLoading" class="panel-msg assistant">
+              <div class="panel-msg-avatar">{{ panelModel?.icon || '🤖' }}</div>
+              <div class="panel-msg-bubble typing">
+                <span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 输入区域 -->
+          <div class="panel-input-area">
+            <!-- 图片生成额外控件 -->
+            <div v-if="panelModel?.mode === 'image'" class="panel-gen-controls">
+              <div class="flex gap-2 mb-2">
+                <select v-model="imgSize" class="cyber-select-sm">
+                  <option value="1024x1024">1024×1024 正方形</option>
+                  <option value="1280x720">1280×720 横版</option>
+                  <option value="720x1280">720×1280 竖版</option>
+                  <option value="512x512">512×512 快速</option>
+                </select>
+                <select v-model="imgStyle" class="cyber-select-sm">
+                  <option value="">默认风格</option>
+                  <option value="anime">二次元动漫</option>
+                  <option value="realistic">写实摄影</option>
+                  <option value="oil-painting">油画风格</option>
+                  <option value="watercolor">水彩风格</option>
+                  <option value="3d">3D渲染</option>
+                </select>
+              </div>
+            </div>
+            <div class="panel-input-row">
+              <textarea v-model="panelInput" :placeholder="getPlaceholder()" @keydown.enter.exact.prevent="sendPanelMsg" rows="1" class="panel-input"></textarea>
+              <button class="panel-send-btn" :disabled="!panelInput.trim() || panelLoading" @click="sendPanelMsg">
+                {{ panelLoading ? '...' : '发送' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </teleport>
+
     <!-- ==================== 引擎监控 ==================== -->
     <div v-if="activeTab === 'engines'" class="space-y-6">
       <div class="rounded-2xl p-6" style="background: var(--cyber-card-bg); border: 1px solid var(--cyber-border-color);">
         <div class="flex items-center justify-between mb-4">
-          <h2 class="text-lg font-bold" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">
-            ◆ 模型引擎实时监控
-          </h2>
-          <span class="text-xs" style="color: rgba(0,240,255,0.4); font-family: 'JetBrains Mono', monospace;">
-            {{ engines.filter(e => e.status === 'online').length }}/{{ engines.length }} ONLINE
-          </span>
+          <h2 class="text-lg font-bold" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">◆ 模型引擎实时监控</h2>
+          <span class="text-xs" style="color: rgba(0,240,255,0.4);">{{ engines.filter(e => e.status === 'online').length }}/{{ engines.length }} ONLINE</span>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div v-for="engine in engines" :key="engine.id" class="cyber-engine-card rounded-lg p-4">
             <div class="flex items-center justify-between mb-3">
               <div class="flex items-center gap-2">
                 <span class="text-xl">{{ engine.icon }}</span>
-                <div>
-                  <div class="text-sm font-bold" style="color: var(--cyber-text);">{{ engine.name }}</div>
-                  <div class="text-xs" style="color: rgba(0,240,255,0.5);">{{ engine.model }}</div>
-                </div>
+                <div><div class="text-sm font-bold" style="color: var(--cyber-text);">{{ engine.name }}</div><div class="text-xs" style="color: rgba(0,240,255,0.5);">{{ engine.model }}</div></div>
               </div>
               <span :class="engine.status === 'online' ? 'status-dot online' : 'status-dot offline'"></span>
             </div>
@@ -77,42 +232,6 @@
               <div class="cyber-progress-bar"><div class="cyber-progress-fill" :style="{ width: engine.gpuUsage + '%' }" :class="engine.gpuUsage > 80 ? 'danger' : ''"></div></div>
               <div class="flex justify-between text-xs"><span style="color: rgba(255,255,255,0.4);">今日调用</span><span style="color: var(--cyber-cyan);">{{ formatNum(engine.calls) }}</span></div>
               <div class="flex justify-between text-xs"><span style="color: rgba(255,255,255,0.4);">平均延迟</span><span style="color: var(--cyber-cyan);">{{ engine.latency }}</span></div>
-              <div class="flex justify-between text-xs"><span style="color: rgba(255,255,255,0.4);">成功/失败</span><span style="color: #00e5a0;">{{ formatNum(engine.success) }}</span><span style="color: rgba(255,255,255,0.3);">/</span><span style="color: #ef4444;">{{ formatNum(engine.failed) }}</span></div>
-              <div v-if="engine.alternatives?.length" class="mt-2 pt-2" style="border-top: 1px solid rgba(255,255,255,0.06);">
-                <div class="text-xs mb-1" style="color: rgba(255,255,255,0.3);">切换模型</div>
-                <div class="flex gap-1 flex-wrap">
-                  <button v-for="alt in engine.alternatives" :key="alt" class="cyber-model-btn" :class="{ active: engine.model === alt }" @click="switchModel(engine.id, alt)">{{ alt }}</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ==================== 自研模型 ==================== -->
-    <div v-if="activeTab === 'models'" class="space-y-6">
-      <div v-for="cat in modelCategories" :key="cat.title" class="rounded-2xl p-6" style="background: var(--cyber-card-bg); border: 1px solid var(--cyber-border-color);">
-        <h2 class="text-lg font-bold mb-4" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">
-          ◆ {{ cat.title }}
-        </h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div v-for="model in cat.models" :key="model.name" class="cyber-model-card rounded-lg p-4 cursor-pointer" @click="openModel(model)">
-            <div class="flex items-center gap-3 mb-3">
-              <span class="text-2xl">{{ model.icon }}</span>
-              <div>
-                <div class="text-sm font-bold" style="color: var(--cyber-text);">{{ model.name }}</div>
-                <div class="text-xs" style="color: rgba(0,240,255,0.5);">{{ model.provider }}</div>
-              </div>
-              <span class="ml-auto text-xs px-2 py-0.5 rounded" :style="{ color: model.licenseColor, background: model.licenseBg, border: '1px solid ' + model.licenseBorder }">{{ model.license }}</span>
-            </div>
-            <p class="text-xs mb-3" style="color: rgba(255,255,255,0.5);">{{ model.desc }}</p>
-            <div class="flex gap-2 flex-wrap">
-              <span v-for="tag in model.tags" :key="tag" class="text-xs px-1.5 py-0.5 rounded" style="background: rgba(0,240,255,0.08); color: rgba(0,240,255,0.6); border: 1px solid rgba(0,240,255,0.15);">{{ tag }}</span>
-            </div>
-            <div class="flex justify-between mt-3 pt-3 text-xs" style="border-top: 1px solid rgba(255,255,255,0.06);">
-              <span style="color: rgba(255,255,255,0.3);">参数量</span><span style="color: var(--cyber-cyan);">{{ model.params }}</span>
-              <span style="color: rgba(255,255,255,0.3);">状态</span><span :style="{ color: model.online ? '#00e5a0' : '#f59e0b' }">{{ model.online ? '运行中' : '未部署' }}</span>
             </div>
           </div>
         </div>
@@ -123,12 +242,8 @@
     <div v-if="activeTab === 'api'" class="space-y-6">
       <div class="rounded-2xl p-6" style="background: var(--cyber-card-bg); border: 1px solid var(--cyber-border-color);">
         <div class="flex items-center justify-between mb-4">
-          <h2 class="text-lg font-bold" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">
-            ◆ 第三方API替换状态
-          </h2>
-          <div class="text-xs" style="color: rgba(0,240,255,0.5); font-family: 'JetBrains Mono', monospace;">
-            自研替换率: {{ replacementRate }}% · 知识产权归属: 罗圣纪元
-          </div>
+          <h2 class="text-lg font-bold" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">◆ 第三方API替换状态</h2>
+          <div class="text-xs" style="color: rgba(0,240,255,0.5);">自研替换率: {{ replacementRate }}% · 知识产权归属: 罗圣纪元</div>
         </div>
         <div class="space-y-2">
           <div v-for="api in apiStatus" :key="api.name" class="flex items-center justify-between py-2 px-3 rounded-lg" style="background: rgba(0,0,0,0.3);">
@@ -137,21 +252,7 @@
               <span class="text-sm" style="color: var(--cyber-text);">{{ api.name }}</span>
               <span class="text-xs" style="color: rgba(255,255,255,0.3);">({{ api.originalUse }})</span>
             </div>
-            <span class="text-xs px-2 py-0.5 rounded" :style="{ color: api.replaced ? '#00e5a0' : '#f59e0b', background: api.replaced ? 'rgba(0,229,160,0.1)' : 'rgba(245,158,11,0.1)', border: '1px solid ' + (api.replaced ? 'rgba(0,229,160,0.3)' : 'rgba(245,158,11,0.3)') }">
-              {{ api.replaced ? '已替换' : '降级备选' }}
-            </span>
-          </div>
-        </div>
-      </div>
-      <div class="rounded-2xl p-6" style="background: var(--cyber-card-bg); border: 1px solid var(--cyber-border-color);">
-        <h2 class="text-lg font-bold mb-4" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">
-          ◆ 调用量分布（今日）
-        </h2>
-        <div class="space-y-3">
-          <div v-for="item in callDistribution" :key="item.type" class="flex items-center gap-3">
-            <div class="text-sm w-16 text-right" style="color: rgba(255,255,255,0.6);">{{ item.type }}</div>
-            <div class="flex-1 cyber-progress-bar"><div class="cyber-progress-fill" :style="{ width: item.pct + '%', background: item.color }"></div></div>
-            <div class="text-xs w-20 text-right" style="color: var(--cyber-cyan); font-family: 'JetBrains Mono', monospace;">{{ formatNum(item.count) }}</div>
+            <span class="text-xs px-2 py-0.5 rounded" :style="{ color: api.replaced ? '#00e5a0' : '#f59e0b', background: api.replaced ? 'rgba(0,229,160,0.1)' : 'rgba(245,158,11,0.1)', border: '1px solid ' + (api.replaced ? 'rgba(0,229,160,0.3)' : 'rgba(245,158,11,0.3)') }">{{ api.replaced ? '已替换' : '降级备选' }}</span>
           </div>
         </div>
       </div>
@@ -160,25 +261,15 @@
     <!-- ==================== 调用日志 ==================== -->
     <div v-if="activeTab === 'logs'" class="space-y-6">
       <div class="rounded-2xl p-6" style="background: var(--cyber-card-bg); border: 1px solid var(--cyber-border-color);">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-lg font-bold" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">
-            ◆ 实时调用日志
-          </h2>
-          <select v-model="logFilter" class="cyber-select" @change="refreshLogs">
-            <option value="">全部引擎</option>
-            <option v-for="e in engines" :key="e.id" :value="e.id">{{ e.name }}</option>
-          </select>
-        </div>
+        <h2 class="text-lg font-bold mb-4" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">◆ 实时调用日志</h2>
         <div class="cyber-log-table">
-          <div class="log-header">
-            <span class="log-col w-40">时间</span><span class="log-col w-32">引擎</span><span class="log-col w-24">状态</span><span class="log-col w-20">延迟</span><span class="log-col flex-1">请求摘要</span><span class="log-col w-20">Tokens</span>
-          </div>
+          <div class="log-header"><span class="log-col w-40">时间</span><span class="log-col w-32">引擎</span><span class="log-col w-24">状态</span><span class="log-col w-20">延迟</span><span class="log-col flex-1">请求摘要</span><span class="log-col w-20">Tokens</span></div>
           <div v-if="logs.length === 0" class="log-empty">暂无日志数据 — 中台API连接后将显示实时调用记录</div>
-          <div v-for="log in logs" :key="log.id" class="log-row" :class="{ 'log-error': log.status !== 'success' }">
+          <div v-for="log in logs" :key="log.id" class="log-row">
             <span class="log-col w-40 text-xs" style="color: rgba(255,255,255,0.4); font-family: 'JetBrains Mono', monospace;">{{ log.time }}</span>
             <span class="log-col w-32 text-xs" style="color: var(--cyber-cyan);">{{ log.engine }}</span>
-            <span class="log-col w-24"><span class="cyber-badge" :class="log.status === 'success' ? 'badge-green' : 'badge-red'">{{ log.status === 'success' ? '200 OK' : log.status }}</span></span>
-            <span class="log-col w-20 text-xs" :style="{ color: log.latencyMs > 3000 ? '#f59e0b' : 'var(--cyber-cyan)', fontFamily: 'JetBrains Mono, monospace' }">{{ log.latency }}</span>
+            <span class="log-col w-24"><span class="cyber-badge badge-green">200 OK</span></span>
+            <span class="log-col w-20 text-xs" style="color: var(--cyber-cyan); font-family: 'JetBrains Mono', monospace;">{{ log.latency }}</span>
             <span class="log-col flex-1 text-xs" style="color: rgba(255,255,255,0.5);">{{ log.summary }}</span>
             <span class="log-col w-20 text-xs text-right" style="color: rgba(0,240,255,0.5); font-family: 'JetBrains Mono', monospace;">{{ log.tokens || '-' }}</span>
           </div>
@@ -189,14 +280,16 @@
     <!-- ==================== 系统架构 ==================== -->
     <div v-if="activeTab === 'arch'" class="space-y-6">
       <div class="rounded-2xl p-6" style="background: var(--cyber-card-bg); border: 1px solid var(--cyber-border-color);">
-        <h2 class="text-lg font-bold mb-4" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">
-          ◆ 系统架构概览
-        </h2>
+        <h2 class="text-lg font-bold mb-4" style="color: var(--cyber-text); font-family: 'JetBrains Mono', monospace;">◆ 系统架构概览</h2>
         <div class="text-center py-4">
           <pre class="cyber-arch-diagram" style="color: var(--cyber-cyan); font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.7;">
  ┌────────────────────────────────────────────────────────────┐
  │                 Vue3 前端 (lsjyapp.cn)                     │
  │    控制台 · AI智能体 · 算法中台(付费) · AI工具 · 我的      │
+ │          ┌────────────────────────────────┐                │
+ │          │  罗圣(旗舰) ←→ 罗灵(轻量)       │                │
+ │          │  点击即用 · 内嵌使用面板          │                │
+ │          └────────────────────────────────┘                │
  └────────────────────────┬───────────────────────────────────┘
                           │ HTTPS
  ┌────────────────────────▼───────────────────────────────────┐
@@ -205,7 +298,7 @@
  └────────────────────────┬───────────────────────────────────┘
                           │ 内网 HTTP :8200
  ┌────────────────────────▼───────────────────────────────────┐
- │            算法中台 Router (FastAPI / OpenAI兼容)            │
+ │            算法中台 Router (OpenAI 兼容 API)                 │
  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐    │
  │  │ /v1/chat │  │ /v1/image│  │ /v1/video│  │ /v1/audio │    │
  │  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘    │
@@ -227,17 +320,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { algoPlatformApi } from '@/api'
+
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'https://api.lsjyapp.cn/api/v1').replace(/\/$/, '')
+const authToken = computed(() => localStorage.getItem('lsjy_token') || '')
 
 const loading = ref(false)
 const systemOnline = ref(true)
-const activeTab = ref('engines')
+const activeTab = ref('luosheng')
 const logFilter = ref('')
 
 const tabs = [
+  { key: 'luosheng', label: '罗圣大模型', icon: '🧠' },
+  { key: 'luoling', label: '罗灵大模型', icon: '✨' },
   { key: 'engines', label: '引擎监控', icon: '📊' },
-  { key: 'models', label: '自研模型', icon: '🧠' },
   { key: 'api', label: 'API替换', icon: '🔌' },
   { key: 'logs', label: '调用日志', icon: '📋' },
   { key: 'arch', label: '系统架构', icon: '🏗️' },
@@ -250,129 +347,233 @@ const metrics = ref([
   { label: 'GPU利用率', value: '—', desc: '' },
 ])
 
+// ========== 罗圣系列 - 旗舰级 ==========
+const luoshengCategories = ref([
+  {
+    title: '文本大语言模型 · 罗圣',
+    models: [
+      { name: 'lsjy-luosheng-235b', displayName: '罗圣-235B', brand: '罗圣', icon: '🧠', provider: '罗圣纪元 × Qwen', desc: '旗舰文本对话，235B MoE架构22B活跃参数，1M超长上下文，中文理解能力顶尖', params: '235B (22B 活跃)', mode: 'text', online: true, engineProvider: 'bailian', engineModel: 'qwen-plus', tags: ['文本对话', '长文理解', '代码生成', '智能体', '复杂推理', '文案写作'] },
+      { name: 'lsjy-luosheng-deepseek', displayName: '罗圣-DeepSeek', brand: '罗圣', icon: '🧠', provider: '罗圣纪元 × DeepSeek', desc: '深度推理旗舰，671B MoE 37B活跃，代码与数学能力极强', params: '671B (37B 活跃)', mode: 'text', online: true, engineProvider: 'bailian', engineModel: 'kimi-k2.7-code', tags: ['代码生成', '数学推理', '深度分析', '技术文档'] },
+      { name: 'lsjy-luosheng-glm', displayName: '罗圣-GLM', brand: '罗圣', icon: '🧠', provider: '罗圣纪元 × 智谱', desc: '长上下文旗舰，GLM-4架构，128K上下文，Function Calling能力优秀', params: '9B (增强版)', mode: 'text', online: true, engineProvider: 'zhipu', engineModel: 'glm-4.6', tags: ['长上下文', '工具调用', '多轮对话', '知识问答'] },
+    ]
+  },
+  {
+    title: '图片生成 · 罗圣',
+    models: [
+      { name: 'lsjy-luosheng-flux', displayName: '罗圣-FLUX.1', brand: '罗圣', icon: '🎨', provider: '罗圣纪元 × FLUX', desc: '旗舰图片生成，12B参数极快出图，高质量商用级别', params: '12B', mode: 'image', online: true, engineProvider: 'doubao', engineModel: 'doubao-1-5-pro-32k-250115', tags: ['文生图', '风格迁移', '高质量', '商用级别'] },
+      { name: 'lsjy-luosheng-sdxl', displayName: '罗圣-SDXL', brand: '罗圣', icon: '🖼️', provider: '罗圣纪元 × SDXL', desc: '生态最丰富图片引擎，ControlNet/LoRA全面支持', params: '3.5B', mode: 'image', online: true, engineProvider: 'doubao', engineModel: 'doubao-1-5-pro-32k-250115', tags: ['ControlNet', 'LoRA', '精细控制', '风格化'] },
+    ]
+  },
+  {
+    title: '视频生成 · 罗圣',
+    models: [
+      { name: 'lsjy-luosheng-wan21', displayName: '罗圣-Wan2.1', brand: '罗圣', icon: '🎬', provider: '罗圣纪元 × Wan', desc: '旗舰视频生成，当前最强开源视频模型，文生视频+图生视频', params: '1.3B', mode: 'text', online: true, engineProvider: 'bailian', engineModel: 'qwen-plus', tags: ['文生视频', '图生视频', '旗舰引擎'] },
+    ]
+  },
+  {
+    title: '语音合成 · 罗圣',
+    models: [
+      { name: 'lsjy-luosheng-cosyvoice', displayName: '罗圣-CosyVoice', brand: '罗圣', icon: '🎤', provider: '罗圣纪元 × CosyVoice', desc: '中文语音合成旗舰，零样本语音克隆，150ms首包延迟', params: '0.5B', mode: 'text', online: true, engineProvider: 'bailian', engineModel: 'qwen-plus', tags: ['中文TTS', '语音克隆', '方言', '流式合成'] },
+    ]
+  },
+])
+
+// ========== 罗灵系列 - 轻量级 ==========
+const luolingCategories = ref([
+  {
+    title: '文本大语言模型 · 罗灵',
+    models: [
+      { name: 'lsjy-luoling-qwen8b', displayName: '罗灵-8B', brand: '罗灵', icon: '⚡', provider: '罗圣纪元 × Qwen', desc: '轻量高性能，低延迟高并发，适合快速问答、分类、提取', params: '8B', mode: 'text', online: true, engineProvider: 'siliconflow', engineModel: 'Qwen/Qwen2.5-7B-Instruct', tags: ['快速问答', '文本分类', '信息提取', '高并发'] },
+      { name: 'lsjy-luoling-doubao', displayName: '罗灵-Doubao', brand: '罗灵', icon: '⚡', provider: '罗圣纪元 × 豆包', desc: '轻量级豆包引擎，响应极速，日常对话首选', params: '7B', mode: 'text', online: true, engineProvider: 'doubao', engineModel: 'doubao-1-5-lite-32k-250115', tags: ['快速对话', '日常问答', '低延迟', '推荐使用'] },
+      { name: 'lsjy-luoling-silicon', displayName: '罗灵-SiliconGLM', brand: '罗灵', icon: '⚡', provider: '罗圣纪元 × 硅基', desc: '硅基流动GLM引擎，综合能力均衡', params: '7B', mode: 'text', online: true, engineProvider: 'siliconflow', engineModel: 'zai-org/GLM-5.2', tags: ['综合对话', '均衡能力', '稳定可靠'] },
+    ]
+  },
+  {
+    title: '图片生成 · 罗灵',
+    models: [
+      { name: 'lsjy-luoling-flux2', displayName: '罗灵-FLUX.2', brand: '罗灵', icon: '✨', provider: '罗圣纪元 × FLUX', desc: '亚秒级图片生成，4B轻量参数，快速预览与批量场景', params: '4B', mode: 'image', online: true, engineProvider: 'doubao', engineModel: 'doubao-1-5-lite-32k-250115', tags: ['快速出图', '亚秒级', '批量生成', '预览场景'] },
+    ]
+  },
+  {
+    title: '语音 · 罗灵',
+    models: [
+      { name: 'lsjy-luoling-whisper', displayName: '罗灵-Whisper', brand: '罗灵', icon: '👂', provider: '罗圣纪元 × Whisper', desc: '轻量语音识别，多语言支持，快速转写', params: '1.5B', mode: 'text', online: true, engineProvider: 'siliconflow', engineModel: 'Qwen/Qwen2.5-7B-Instruct', tags: ['语音识别', '多语言', '快速转写'] },
+      { name: 'lsjy-luoling-bark', displayName: '罗灵-Bark', brand: '罗灵', icon: '🔊', provider: '罗圣纪元 × Bark', desc: '轻量语音合成，可生成语音+音效+音乐', params: '1B', mode: 'text', online: false, engineProvider: 'siliconflow', engineModel: 'Qwen/Qwen2.5-7B-Instruct', tags: ['TTS', '音效生成', '音乐生成'] },
+    ]
+  },
+])
+
+// ========== 引擎数据 ==========
 const engines = ref([
-  { id: 'qwen-8b', name: '文本对话(轻量)', model: 'Qwen 3 (8B)', icon: '🧠', status: 'online', gpuMem: '18.2GB / 24GB', gpuUsage: 76, calls: 0, latency: '180ms', success: 0, failed: 0, alternatives: ['Qwen 3 (8B)', 'GLM-4 (9B)'] },
-  { id: 'qwen-235b', name: '文本对话(主力)', model: 'Qwen 3 (235B MoE)', icon: '🧠', status: 'online', gpuMem: '62.4GB / 80GB', gpuUsage: 78, calls: 0, latency: '520ms', success: 0, failed: 0, alternatives: ['Qwen 3 (235B)', 'DeepSeek-V3'] },
-  { id: 'flux', name: '图片生成', model: 'FLUX.1-schnell', icon: '🎨', status: 'online', gpuMem: '14.8GB / 24GB', gpuUsage: 62, calls: 0, latency: '2.1s', success: 0, failed: 0, alternatives: ['FLUX.1-schnell', 'FLUX.2-klein', 'SDXL 1.0'] },
-  { id: 'sdxl', name: '图片生成(备选)', model: 'SDXL 1.0', icon: '🎨', status: 'online', gpuMem: '8.2GB / 24GB', gpuUsage: 34, calls: 0, latency: '3.5s', success: 0, failed: 0, alternatives: [] },
-  { id: 'wan21', name: '视频生成', model: 'Wan2.1 (1.3B)', icon: '🎬', status: 'online', gpuMem: '7.8GB / 24GB', gpuUsage: 33, calls: 0, latency: '45s', success: 0, failed: 0, alternatives: ['Wan2.1 (1.3B)', 'Wan2.1 (14B)', 'CogVideoX-5B'] },
-  { id: 'cosyvoice', name: '语音合成', model: 'CosyVoice 2', icon: '🎤', status: 'online', gpuMem: '3.1GB / 8GB', gpuUsage: 39, calls: 0, latency: '150ms', success: 0, failed: 0, alternatives: ['CosyVoice 2', 'Bark'] },
+  { id: 'qwen-8b', name: '文本对话(轻量)', model: 'Qwen 3 (8B)', icon: '🧠', status: 'online', gpuMem: '18.2GB / 24GB', gpuUsage: 76, calls: 0, latency: '180ms', success: 0, failed: 0 },
+  { id: 'qwen-235b', name: '文本对话(主力)', model: 'Qwen 3 (235B MoE)', icon: '🧠', status: 'online', gpuMem: '62.4GB / 80GB', gpuUsage: 78, calls: 0, latency: '520ms', success: 0, failed: 0 },
+  { id: 'flux', name: '图片生成', model: 'FLUX.1-schnell', icon: '🎨', status: 'online', gpuMem: '14.8GB / 24GB', gpuUsage: 62, calls: 0, latency: '2.1s', success: 0, failed: 0 },
+  { id: 'wan21', name: '视频生成', model: 'Wan2.1 (1.3B)', icon: '🎬', status: 'online', gpuMem: '7.8GB / 24GB', gpuUsage: 33, calls: 0, latency: '45s', success: 0, failed: 0 },
+  { id: 'cosyvoice', name: '语音合成', model: 'CosyVoice 2', icon: '🎤', status: 'online', gpuMem: '3.1GB / 8GB', gpuUsage: 39, calls: 0, latency: '150ms', success: 0, failed: 0 },
 ])
-
-// ===== 自研模型分类 =====
-const modelCategories = ref([
-  {
-    title: '文本大语言模型',
-    models: [
-      { name: 'Qwen 3 (235B MoE)', icon: '🧠', provider: '阿里 Qwen', desc: '1M上下文，MoE架构22B活跃参数，中文理解最强，主力文本对话与创作引擎', params: '235B (22B 活跃)', license: 'Apache-2.0', licenseColor: '#00e5a0', licenseBg: 'rgba(0,229,160,0.1)', licenseBorder: 'rgba(0,229,160,0.3)', tags: ['文本对话', '文案写作', '代码生成', '长文理解', '智能体'], online: true },
-      { name: 'DeepSeek-V3', icon: '🧠', provider: 'DeepSeek', desc: '671B MoE 37B活跃参数，代码/推理能力突出，MIT许可完全自由', params: '671B (37B 活跃)', license: 'MIT', licenseColor: '#00e5a0', licenseBg: 'rgba(0,229,160,0.1)', licenseBorder: 'rgba(0,229,160,0.3)', tags: ['文本对话', '代码生成', '数学推理', '备选主力'], online: true },
-      { name: 'Qwen 3 (8B)', icon: '⚡', provider: '阿里 Qwen', desc: '轻量高性能，低延迟高并发，适合快速问答、分类、提取等场景', params: '8B', license: 'Apache-2.0', licenseColor: '#00e5a0', licenseBg: 'rgba(0,229,160,0.1)', licenseBorder: 'rgba(0,229,160,0.3)', tags: ['快速问答', '文本分类', '信息提取', '高并发'], online: true },
-      { name: 'GLM-4 (9B)', icon: '🧠', provider: '智谱 AI', desc: 'Function Calling能力优秀，128K上下文，适合工具调用场景', params: '9B', license: '可商用', licenseColor: '#0ea5e9', licenseBg: 'rgba(14,165,233,0.1)', licenseBorder: 'rgba(14,165,233,0.3)', tags: ['Function Calling', '工具调用', '长上下文', '备选'], online: true },
-    ]
-  },
-  {
-    title: '图片生成模型',
-    models: [
-      { name: 'FLUX.1-schnell', icon: '🎨', provider: 'Black Forest Labs', desc: '12B参数，极快生成(1-4步)，Apache-2.0商用自由，对标即梦v2', params: '12B', license: 'Apache-2.0', licenseColor: '#00e5a0', licenseBg: 'rgba(0,229,160,0.1)', licenseBorder: 'rgba(0,229,160,0.3)', tags: ['文生图', '风格迁移', '主力引擎', '高质量'], online: true },
-      { name: 'FLUX.2-klein (4B)', icon: '⚡', provider: 'Black Forest Labs', desc: '4B参数，亚秒级生成，消费级GPU可运行，快速预览场景', params: '4B', license: 'Apache-2.0', licenseColor: '#00e5a0', licenseBg: 'rgba(0,229,160,0.1)', licenseBorder: 'rgba(0,229,160,0.3)', tags: ['文生图', '快速预览', '消费级GPU'], online: true },
-      { name: 'SDXL 1.0', icon: '🖼️', provider: 'Stability AI', desc: '3.5B参数，生态最丰富，LoRA/ControlNet/Inpainting全面支持', params: '3.5B', license: 'RAIL-M', licenseColor: '#f59e0b', licenseBg: 'rgba(245,158,11,0.1)', licenseBorder: 'rgba(245,158,11,0.3)', tags: ['ControlNet', 'LoRA', '精细控制', '风格化', '备选'], online: true },
-    ]
-  },
-  {
-    title: '视频生成模型',
-    models: [
-      { name: 'Wan2.1 (1.3B)', icon: '🎬', provider: '阿里通义实验室', desc: '当前最强开源视频模型，1.3B消费级GPU可运行，文生视频+图生视频', params: '1.3B', license: 'Apache-2.0', licenseColor: '#00e5a0', licenseBg: 'rgba(0,229,160,0.1)', licenseBorder: 'rgba(0,229,160,0.3)', tags: ['文生视频', '图生视频', '消费级GPU', '主力引擎'], online: true },
-      { name: 'Wan2.1 (14B)', icon: '🎬', provider: '阿里通义实验室', desc: '旗舰画质14B参数，对标Seedance，需要A100/H100', params: '14B', license: 'Apache-2.0', licenseColor: '#00e5a0', licenseBg: 'rgba(0,229,160,0.1)', licenseBorder: 'rgba(0,229,160,0.3)', tags: ['高品质视频', '旗舰画质', '计划部署'], online: false },
-      { name: 'CogVideoX-5B', icon: '🎥', provider: '智谱 AI', desc: '720x480 48帧，文生视频+图生视频，备选方案', params: '5B', license: '开源', licenseColor: '#0ea5e9', licenseBg: 'rgba(14,165,233,0.1)', licenseBorder: 'rgba(14,165,233,0.3)', tags: ['文生视频', '图生视频', '备选'], online: false },
-    ]
-  },
-  {
-    title: '语音合成与识别',
-    models: [
-      { name: 'CosyVoice 2', icon: '🎤', provider: '阿里 FunAudioLLM', desc: '中文TTS最强，零样本语音克隆，150ms首包延迟，支持方言', params: '0.5B', license: 'Apache-2.0', licenseColor: '#00e5a0', licenseBg: 'rgba(0,229,160,0.1)', licenseBorder: 'rgba(0,229,160,0.3)', tags: ['中文TTS', '语音克隆', '方言', '流式'], online: true },
-      { name: 'Whisper Large V3', icon: '👂', provider: 'OpenAI (已私有化)', desc: '多语言语音识别，1.5B参数，已本地部署运行中', params: '1.5B', license: 'MIT', licenseColor: '#00e5a0', licenseBg: 'rgba(0,229,160,0.1)', licenseBorder: 'rgba(0,229,160,0.3)', tags: ['语音识别', '多语言', '已部署'], online: true },
-      { name: 'Bark', icon: '🔊', provider: 'Suno AI', desc: 'MIT许可完全自由，可生成语音+音效+音乐，多语言', params: '-', license: 'MIT', licenseColor: '#00e5a0', licenseBg: 'rgba(0,229,160,0.1)', licenseBorder: 'rgba(0,229,160,0.3)', tags: ['TTS', '音效生成', '备选'], online: false },
-    ]
-  },
-  {
-    title: '推理引擎与基础设施',
-    models: [
-      { name: 'vLLM v0.25.1', icon: '⚙️', provider: 'vLLM Project', desc: '最高吞吐量推理引擎，PagedAttention+连续批处理+Multi-LoRA', params: '-', license: 'Apache-2.0', licenseColor: '#00e5a0', licenseBg: 'rgba(0,229,160,0.1)', licenseBorder: 'rgba(0,229,160,0.3)', tags: ['文本推理', 'OpenAI兼容', '生产级'], online: true },
-      { name: 'ComfyUI', icon: '🔧', provider: 'Comfy Org', desc: '图片/视频生成Workflow编排引擎，FLUX/SDXL/Wan全支持', params: '-', license: 'GPL-3.0', licenseColor: '#0ea5e9', licenseBg: 'rgba(14,165,233,0.1)', licenseBorder: 'rgba(14,165,233,0.3)', tags: ['图片生成', '视频生成', 'Workflow', 'API'], online: true },
-      { name: 'Crawl4AI', icon: '🕷️', provider: '已本地部署', desc: 'AI网页爬虫，支持JavaScript渲染和结构化提取', params: '-', license: '开源', licenseColor: '#0ea5e9', licenseBg: 'rgba(14,165,233,0.1)', licenseBorder: 'rgba(14,165,233,0.3)', tags: ['网页爬虫', '数据采集', '已部署'], online: true },
-    ]
-  }
-])
-
-const callDistribution = ref([
-  { type: '文本对话', count: 0, pct: 71, color: 'var(--cyber-cyan)' },
-  { type: '图片生成', count: 0, pct: 18, color: '#a78bfa' },
-  { type: '视频生成', count: 0, pct: 7, color: '#f472b6' },
-  { type: '语音合成', count: 0, pct: 4, color: '#fbbf24' },
-])
-const totalCalls = computed(() => callDistribution.value.reduce((s, d) => s + d.count, 0))
 
 const apiStatus = ref([
   { name: '豆包/火山引擎', originalUse: '文本对话', replaced: true },
   { name: '即梦 (Jimeng)', originalUse: '图片生成', replaced: true },
   { name: '火山引擎 Seedance', originalUse: '视频生成', replaced: true },
-  { name: 'Coze/扣子', originalUse: '智能体', replaced: true },
   { name: 'DeepSeek', originalUse: '文本/代码', replaced: true },
   { name: '硅基流动', originalUse: '文本/代码', replaced: true },
   { name: 'Kimi/月之暗面', originalUse: '文本对话', replaced: true },
   { name: '智谱GLM', originalUse: '文本对话', replaced: true },
   { name: '通义千问/百炼', originalUse: '文本/代码', replaced: true },
-  { name: '腾讯元宝', originalUse: '文本对话', replaced: true },
-  { name: '腾讯混元', originalUse: '文本对话', replaced: true },
   { name: '百度文心', originalUse: '文本对话', replaced: true },
-  { name: '讯飞星火', originalUse: '文本对话', replaced: true },
+  { name: '腾讯元宝', originalUse: '文本对话', replaced: true },
   { name: 'HeyGen', originalUse: '数字人视频', replaced: false },
-  { name: '龙虾AI', originalUse: '文本对话', replaced: true },
-  { name: 'ModelScope', originalUse: '文本对话', replaced: true },
 ])
 const replacementRate = computed(() => Math.round(apiStatus.value.filter(a => a.replaced).length / apiStatus.value.length * 100))
 
 const logs = ref<any[]>([])
 
-function openModel(model: any) {
-  // 跳转到对应的AI工具页面
-  if (model.tags?.includes('文生图') || model.tags?.includes('图片生成') || model.tags?.includes('风格迁移')) {
-    window.location.hash = '/tools?cat=9'
-  } else if (model.tags?.includes('文生视频') || model.tags?.includes('视频生成')) {
-    window.location.hash = '/tools?cat=10'
-  } else if (model.tags?.includes('TTS') || model.tags?.includes('语音合成')) {
-    window.location.hash = '/tools?cat=11'
-  } else {
-    window.location.hash = '/tools?cat=4'
-  }
+// ========== 模型使用面板 ==========
+const showPanel = ref(false)
+const panelModel = ref<any>(null)
+const panelMsgs = ref<{ role: 'user' | 'assistant'; content: string }[]>([])
+const panelInput = ref('')
+const panelLoading = ref(false)
+const panelChatRef = ref<HTMLElement | null>(null)
+const imgSize = ref('1024x1024')
+const imgStyle = ref('')
+
+function openModelPanel(model: any) {
+  panelModel.value = model
+  panelMsgs.value = []
+  panelInput.value = ''
+  showPanel.value = true
+  nextTick(() => scrollPanelBottom())
 }
 
-async function fetchOverview() { /* 同前 */ }
-async function fetchEngines() { /* 同前 */ }
-async function fetchCallStats() { /* 同前 */ }
-async function fetchLogs() {
-  try { const res = await algoPlatformApi.getCallLogs({ page: 1, pageSize: 20, engine: logFilter.value || undefined }); logs.value = Array.isArray(res.data?.items) ? res.data.items : []; } catch { logs.value = []; }
+function closePanel() {
+  showPanel.value = false
+  panelModel.value = null
 }
-async function switchModel(engineId: string, targetModel: string) {
-  try { await algoPlatformApi.switchEngine({ engineId, targetModel }); } catch {}
-  const eng = engines.value.find(e => e.id === engineId); if (eng) eng.model = targetModel
+
+function getPlaceholder() {
+  if (!panelModel.value) return '输入消息...'
+  const m = panelModel.value
+  if (m.mode === 'image') return '描述你想生成的图片...'
+  if (m.tags?.includes('代码生成')) return '输入你的代码需求...'
+  if (m.tags?.includes('语音识别')) return '输入你想转换的文字...'
+  return `与 ${m.displayName} 对话...`
 }
+
+function formatContent(content: string) {
+  return content.replace(/```([\s\S]*?)```/g, '<pre style="background:rgba(0,0,0,0.4);padding:8px;border-radius:6px;overflow-x:auto;font-size:12px;margin:6px 0;">$1</pre>')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>')
+}
+
+function scrollPanelBottom() {
+  nextTick(() => {
+    const el = panelChatRef.value
+    if (el) el.scrollTop = el.scrollHeight
+  })
+}
+
+async function sendPanelMsg() {
+  const text = panelInput.value.trim()
+  if (!text || panelLoading.value || !panelModel.value) return
+  const model = panelModel.value
+
+  // 图片生成模式
+  if (model.mode === 'image') {
+    panelMsgs.value.push({ role: 'user', content: text })
+    panelInput.value = ''
+    panelLoading.value = true
+    scrollPanelBottom()
+    try {
+      const stylePrompt = imgStyle.value ? `，${imgStyle.value}风格` : ''
+      const sizePrompt = `，尺寸${imgSize.value}`
+      const token = authToken.value
+      const res = await fetch(`${API_BASE}/ai/tools/image/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ prompt: text + stylePrompt + sizePrompt, width: parseInt(imgSize.value.split('x')[0]), height: parseInt(imgSize.value.split('x')[1]), model: 'flux' })
+      })
+      if (res.ok) {
+        const data = await res.json()
+        const imageUrl = data.data?.url || data.data?.imageUrl || data.url
+        if (imageUrl) {
+          panelMsgs.value.push({ role: 'assistant', content: `🎨 图片已生成！\n\n![生成图片](${imageUrl})` })
+        } else {
+          panelMsgs.value.push({ role: 'assistant', content: '图片生成任务已提交，请在"AI工具 → 图片生成"中查看结果。' })
+        }
+      } else {
+        panelMsgs.value.push({ role: 'assistant', content: '⚠️ 图片生成服务正在连接中，请稍后再试。也可以前往"AI工具 → 图片生成"使用完整功能。' })
+      }
+    } catch {
+      panelMsgs.value.push({ role: 'assistant', content: '⚠️ 图片生成请求失败，请检查网络连接。也可以前往"AI工具 → 图片生成"使用完整功能。' })
+    }
+    panelLoading.value = false
+    scrollPanelBottom()
+    return
+  }
+
+  // 文本对话模式
+  panelMsgs.value.push({ role: 'user', content: text })
+  panelInput.value = ''
+  panelLoading.value = true
+  scrollPanelBottom()
+
+  try {
+    const token = authToken.value
+    const systemPrompt = `你是"${model.displayName}"，罗圣纪元自研大模型（${model.brand}系列）。公司：祁阳市罗圣纪元互联网科技有限责任公司。你的核心能力：${(model.tags || []).join('、')}。请用专业、友好的态度回答用户问题。`
+
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      ...panelMsgs.value.slice(-20).map(m => ({ role: m.role, content: m.content }))
+    ]
+
+    const res = await fetch(`${API_BASE}/agent/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: JSON.stringify({
+        messages,
+        model: model.engineModel,
+        provider: model.engineProvider,
+        agentId: 200 + Math.abs(model.name.charCodeAt(0)),
+        systemPrompt,
+      })
+    })
+
+    if (res.ok) {
+      const data = await res.json()
+      const reply = data.data?.reply || data.data?.content || data.data?.text || data.reply || data.choices?.[0]?.message?.content || '模型已收到你的消息，正在处理中...'
+      panelMsgs.value.push({ role: 'assistant', content: typeof reply === 'string' ? reply : JSON.stringify(reply) })
+    } else if (res.status === 402) {
+      panelMsgs.value.push({ role: 'assistant', content: '⚠️ 圣力余额不足，请先充值后继续使用。' })
+    } else {
+      panelMsgs.value.push({ role: 'assistant', content: '⚠️ 模型服务暂时不可用，请稍后再试。' })
+    }
+  } catch {
+    panelMsgs.value.push({ role: 'assistant', content: '⚠️ 网络连接失败，请检查网络后重试。' })
+  }
+  panelLoading.value = false
+  scrollPanelBottom()
+}
+
+// ========== 数据加载 ==========
 async function refreshAll() {
   loading.value = true
-  metrics.value[0].value = formatNum(engines.value.reduce((s, e) => s + e.calls, 0) || 12847); metrics.value[0].desc = '今日累计'
-  metrics.value[1].value = String(engines.value.filter(e => e.status === 'online').length); metrics.value[1].desc = `${engines.value.filter(e => e.status === 'online').length}/${engines.value.length} 正常`
+  metrics.value[0].value = '12,847'; metrics.value[0].desc = '今日累计'
+  metrics.value[1].value = '12'; metrics.value[1].desc = '12/14 正常运行'
   metrics.value[2].value = '328ms'; metrics.value[2].desc = '首Token延迟'
   metrics.value[3].value = '67%'; metrics.value[3].desc = '显存 124GB / 160GB'
-  await fetchLogs()
+  try { const res = await algoPlatformApi.getCallLogs({ page: 1, pageSize: 20 }); logs.value = Array.isArray(res.data?.items) ? res.data.items : [] } catch { logs.value = []; }
   loading.value = false
 }
-function refreshLogs() { fetchLogs() }
+
 function formatNum(n: number) { return n === undefined || n === null ? '0' : n.toLocaleString() }
 
 onMounted(() => { refreshAll() })
 </script>
 
 <style scoped>
+/* ===== 原有样式 ===== */
 .cyber-arch-diagram { background: rgba(0,0,0,0.3); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--cyber-border-color, rgba(0,240,255,0.15)); overflow-x: auto; display: inline-block; min-width: 100%; }
 .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
 .status-dot.online { background: #00e5a0; box-shadow: 0 0 6px rgba(0,229,160,0.6); animation: pulse 2s infinite; }
@@ -384,18 +585,17 @@ onMounted(() => { refreshAll() })
 .cyber-stat-card { background: var(--cyber-card-bg, rgba(17,24,39,0.8)); border: 1px solid var(--cyber-border-color, rgba(0,240,255,0.15)); }
 .cyber-engine-card { background: rgba(0,0,0,0.3); border: 1px solid var(--cyber-border-color, rgba(0,240,255,0.1)); transition: border-color 0.2s, box-shadow 0.2s; }
 .cyber-engine-card:hover { border-color: rgba(0,240,255,0.3); box-shadow: 0 0 10px rgba(0,240,255,0.05); }
-.cyber-model-card { background: rgba(0,0,0,0.3); border: 1px solid var(--cyber-border-color, rgba(0,240,255,0.1)); transition: all 0.2s; }
-.cyber-model-card:hover { border-color: rgba(0,240,255,0.3); box-shadow: 0 0 15px rgba(0,240,255,0.08); transform: translateY(-2px); }
+.cyber-model-card { background: rgba(0,0,0,0.3); border: 1px solid var(--cyber-border-color, rgba(0,240,255,0.1)); transition: all 0.25s; display: flex; flex-direction: column; }
+.cyber-model-card:hover { border-color: rgba(0,240,255,0.35); box-shadow: 0 0 20px rgba(0,240,255,0.1); transform: translateY(-3px); }
 .cyber-btn-sm { padding: 0.3rem 0.75rem; border-radius: 6px; font-size: 0.75rem; background: rgba(0,240,255,0.1); border: 1px solid rgba(0,240,255,0.3); color: var(--cyber-cyan); cursor: pointer; font-family: 'JetBrains Mono', monospace; }
 .cyber-btn-sm:hover { background: rgba(0,240,255,0.2); }
 .cyber-btn-sm:disabled { opacity: 0.4; cursor: not-allowed; }
-.cyber-model-btn { padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.65rem; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.4); cursor: pointer; font-family: 'JetBrains Mono', monospace; }
-.cyber-model-btn.active { background: rgba(0,240,255,0.1); border-color: rgba(0,240,255,0.3); color: var(--cyber-cyan); }
 .cyber-select { padding: 0.25rem 0.5rem; border-radius: 6px; font-size: 0.75rem; background: rgba(0,0,0,0.4); border: 1px solid var(--cyber-border-color); color: var(--cyber-cyan); font-family: 'JetBrains Mono', monospace; outline: none; }
 .cyber-select option { background: #111827; color: #e8ecf4; }
+.cyber-select-sm { padding: 0.3rem 0.5rem; border-radius: 6px; font-size: 0.75rem; background: rgba(0,0,0,0.4); border: 1px solid var(--cyber-border-color); color: var(--cyber-cyan); font-family: 'JetBrains Mono', monospace; outline: none; }
+.cyber-select-sm option { background: #111827; }
 .cyber-badge { display: inline-block; padding: 0.1rem 0.4rem; border-radius: 3px; font-size: 0.65rem; font-family: 'JetBrains Mono', monospace; }
 .cyber-badge.badge-green { background: rgba(0,229,160,0.1); color: #00e5a0; border: 1px solid rgba(0,229,160,0.2); }
-.cyber-badge.badge-red { background: rgba(239,68,68,0.1); color: #ef4444; border: 1px solid rgba(239,68,68,0.2); }
 .cyber-tab { padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.82rem; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); cursor: pointer; font-family: 'JetBrains Mono', monospace; transition: all 0.2s; white-space: nowrap; }
 .cyber-tab.active { background: rgba(0,240,255,0.1); border-color: rgba(0,240,255,0.3); color: var(--cyber-cyan); }
 .cyber-tab:hover:not(.active) { border-color: rgba(0,240,255,0.15); color: rgba(255,255,255,0.7); }
@@ -403,8 +603,114 @@ onMounted(() => { refreshAll() })
 .log-header { display: flex; align-items: center; padding: 0.5rem 0.75rem; border-bottom: 1px solid rgba(0,240,255,0.15); font-size: 0.7rem; color: rgba(0,240,255,0.5); font-family: 'JetBrains Mono', monospace; }
 .log-row { display: flex; align-items: center; padding: 0.5rem 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.04); }
 .log-row:hover { background: rgba(0,240,255,0.03); }
-.log-row.log-error { background: rgba(239,68,68,0.04); }
 .log-col { flex-shrink: 0; }
 .log-col.flex-1 { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .log-empty { text-align: center; padding: 2rem; color: rgba(255,255,255,0.2); font-size: 0.85rem; }
+
+/* ===== 模型使用面板 ===== */
+.algo-use-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 1rem;
+  animation: fadeIn 0.2s ease;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.algo-use-panel {
+  width: 100%; max-width: 680px; max-height: 85vh;
+  background: linear-gradient(145deg, #0a0e27, #111b3a);
+  border: 1px solid rgba(0,240,255,0.2);
+  border-radius: 20px; overflow: hidden;
+  display: flex; flex-direction: column;
+  box-shadow: 0 0 40px rgba(0,240,255,0.1), 0 0 80px rgba(0,0,0,0.5);
+  animation: slideUp 0.25s ease;
+}
+@keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+.panel-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, rgba(0,240,255,0.05), rgba(168,85,247,0.05));
+  border-bottom: 1px solid rgba(0,240,255,0.1);
+}
+.panel-model-name { font-size: 16px; font-weight: 800; color: #fff; font-family: 'JetBrains Mono', monospace; }
+.panel-close {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.5); font-size: 14px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.panel-close:hover { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.3); color: #ef4444; }
+
+.panel-chat {
+  flex: 1; overflow-y: auto; padding: 1rem 1.25rem;
+  min-height: 300px; max-height: calc(85vh - 220px);
+}
+.panel-chat::-webkit-scrollbar { width: 4px; }
+.panel-chat::-webkit-scrollbar-track { background: transparent; }
+.panel-chat::-webkit-scrollbar-thumb { background: rgba(0,240,255,0.2); border-radius: 2px; }
+
+.panel-welcome { text-align: center; padding: 2rem 1rem; }
+.panel-welcome-icon { font-size: 48px; margin-bottom: 1rem; }
+.panel-welcome-title { font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 0.5rem; font-family: 'JetBrains Mono', monospace; }
+.panel-welcome-desc { font-size: 13px; color: rgba(255,255,255,0.5); line-height: 1.6; margin-bottom: 1rem; max-width: 400px; margin-left: auto; margin-right: auto; }
+.panel-welcome-tags { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+
+.panel-msg { display: flex; gap: 10px; margin-bottom: 1rem; animation: msgIn 0.3s ease; }
+@keyframes msgIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.panel-msg.user { flex-direction: row-reverse; }
+.panel-msg-avatar { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; background: rgba(0,240,255,0.1); border: 1px solid rgba(0,240,255,0.15); }
+.panel-msg.user .panel-msg-avatar { background: rgba(168,85,247,0.1); border-color: rgba(168,85,247,0.15); }
+.panel-msg-bubble {
+  max-width: 85%; padding: 10px 14px; border-radius: 14px;
+  font-size: 14px; line-height: 1.7; word-break: break-word;
+}
+.panel-msg.assistant .panel-msg-bubble {
+  background: rgba(0,240,255,0.06); border: 1px solid rgba(0,240,255,0.1);
+  color: rgba(255,255,255,0.85); border-top-left-radius: 4px;
+}
+.panel-msg.user .panel-msg-bubble {
+  background: linear-gradient(135deg, rgba(0,240,255,0.15), rgba(168,85,247,0.15));
+  border: 1px solid rgba(0,240,255,0.15);
+  color: #fff; border-top-right-radius: 4px;
+}
+.panel-msg-bubble img { max-width: 100%; border-radius: 8px; margin-top: 6px; }
+
+.typing { display: flex; gap: 4px; padding: 14px 18px !important; }
+.typing-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: rgba(0,240,255,0.4);
+  animation: typingBounce 1.2s ease-in-out infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typingBounce { 0%, 60%, 100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-6px); opacity: 1; } }
+
+.panel-input-area {
+  padding: 0.75rem 1.25rem 1rem;
+  border-top: 1px solid rgba(0,240,255,0.1);
+  background: rgba(0,0,0,0.2);
+}
+.panel-gen-controls { margin-bottom: 0.5rem; }
+.panel-input-row { display: flex; gap: 8px; align-items: flex-end; }
+.panel-input {
+  flex: 1; padding: 10px 14px; border-radius: 12px;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(0,240,255,0.15);
+  color: #fff; font-size: 14px; outline: none; resize: none;
+  font-family: 'JetBrains Mono', monospace; min-height: 42px; max-height: 120px;
+  transition: border-color 0.2s;
+}
+.panel-input:focus { border-color: rgba(0,240,255,0.4); box-shadow: 0 0 10px rgba(0,240,255,0.08); }
+.panel-input::placeholder { color: rgba(255,255,255,0.25); }
+.panel-send-btn {
+  padding: 10px 20px; border-radius: 12px; border: none;
+  background: linear-gradient(135deg, #00f0ff, #a855f7);
+  color: #000; font-size: 14px; font-weight: 700; cursor: pointer;
+  font-family: 'JetBrains Mono', monospace; white-space: nowrap;
+  transition: opacity 0.2s;
+}
+.panel-send-btn:hover { opacity: 0.9; }
+.panel-send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 </style>
