@@ -76,7 +76,7 @@
         <el-table-column prop="packageName" label="套餐名称" width="160" style="color:#e0e0ff;" show-overflow-tooltip />
         <el-table-column prop="amount" label="金额" width="100" style="color:#e0e0ff;">
           <template #default="{ row }">
-            <span class="font-bold" style="color:#00f0ff;">¥{{ row.amount }}</span>
+            <span class="font-bold" style="color:#00f0ff;">¥{{ row.amount ?? '-' }}</span>
           </template>
         </el-table-column>
         <el-table-column prop="payMethod" label="支付方式" width="100" style="color:#e0e0ff;">
@@ -208,7 +208,7 @@ async function loadOrders() {
     orderTableData.value = data.items || []
     orderPagination.total = data.total || 0
   } catch (e: any) {
-    ElMessage.error(e.message || '加载订单失败')
+    console.warn('[API] 加载订单失败:', e?.message)
     orderTableData.value = []
   } finally {
     orderLoading.value = false

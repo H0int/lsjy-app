@@ -59,7 +59,7 @@
           </div>
           <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{{ skill.description }}</p>
           <div class="mt-2 flex gap-2">
-            <el-tag size="small" type="warning">{{ skill.coinCost }}圣点/次</el-tag>
+            <el-tag size="small" type="warning">{{ skill.coinCost }}圣力/次</el-tag>
             <el-tag size="small" type="info">{{ skill.tag }}</el-tag>
           </div>
         </div>
@@ -104,7 +104,7 @@
         <p class="cyber-tool-desc">{{ tool.description }}</p>
         <div class="cyber-tool-foot">
           <span class="cyber-cost" :class="tool.isFree ? 'cyber-cost-free' : 'cyber-cost-paid'">
-            {{ tool.isFree ? '免费使用' : `${tool.coinCost} 圣点/次` }}
+            {{ tool.isFree ? '免费使用' : `${tool.coinCost} 圣力/次` }}
           </span>
           <span class="cyber-use-count">{{ formatUseCount(tool.usageCount) }}次使用</span>
         </div>
@@ -129,7 +129,7 @@
         </div>
         <div class="cyber-list-right">
           <div class="cyber-cost" :class="tool.isFree ? 'cyber-cost-free' : 'cyber-cost-paid'">
-            {{ tool.isFree ? '免费' : `${tool.coinCost} 圣点` }}
+            {{ tool.isFree ? '免费' : `${tool.coinCost} 圣力` }}
           </div>
           <div class="cyber-use-count">{{ formatUseCount(tool.usageCount) }}次使用</div>
         </div>

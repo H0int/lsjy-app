@@ -58,7 +58,7 @@ async function loadData() {
         { method: 'GET', path: '/api/v1/knowledge', count: 342, latency: 80, errors: 0, lastTime: new Date().toISOString() },
       ]
     }
-  } catch (e: any) { ElMessage.error(e.message || '加载失败') }
+  } catch (e: any) { console.warn('[API] 加载失败:', e?.message) }
   finally { loading.value = false }
 }
 

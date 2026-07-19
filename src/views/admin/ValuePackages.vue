@@ -198,7 +198,7 @@ async function submitForm() {
     dialogVisible.value = false
     loadPackages()
   } catch (e: any) {
-    ElMessage.error(e.message || '保存失败')
+    console.warn('[API] 保存失败:', e?.message)
   }
 }
 

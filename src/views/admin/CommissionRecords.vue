@@ -31,7 +31,7 @@
         <el-table-column prop="source" label="来源" />
         <el-table-column prop="amount" label="佣金" width="100" />
         <el-table-column prop="rate" label="比例" width="90">
-          <template #default="{ row }">{{ row.rate }}%</template>
+          <template #default="{ row }">{{ row.rate ?? '-' }}%</template>
         </el-table-column>
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
@@ -72,7 +72,7 @@ async function loadData() {
   try {
     const res = await adminApi.getCommissions()
     list.value = res.data?.list || res.data?.commissions || res.data?.items || res.data || []
-  } catch (e: any) { ElMessage.error(e.message || '加载失败') }
+  } catch (e: any) { console.warn('[API] 加载失败:', e?.message) }
   finally { loading.value = false }
 }
 

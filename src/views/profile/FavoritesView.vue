@@ -26,7 +26,7 @@
         <p class="cyber-fav-desc">{{ tool.description || '' }}</p>
         <div class="cyber-fav-foot">
           <span class="cyber-fav-cost" :class="tool.isFree ? 'free' : 'paid'">
-            {{ tool.isFree ? '免费使用' : `${tool.coinCost} 圣点/次` }}
+            {{ tool.isFree ? '免费使用' : `${tool.coinCost} 圣力/次` }}
           </span>
           <router-link :to="`/tools/${tool.id}`" class="cyber-fav-use-btn" @click.stop>
             立即使用 →

@@ -94,7 +94,7 @@ async function loadData() {
       { title: '今日活跃', value: d.activeUsers || 0, trend: d.activeGrowth || 0 },
     ]
   } catch (e: any) {
-    ElMessage.error(e.message || '加载失败')
+    console.warn('[API] 加载失败:', e?.message)
   }
 }
 

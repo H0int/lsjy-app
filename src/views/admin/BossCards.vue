@@ -90,7 +90,7 @@ async function loadData() {
   try {
     const res = await adminApi.getBossCards()
     list.value = res.data?.items || []
-  } catch (e: any) { ElMessage.error(e.message || '加载失败') }
+  } catch (e: any) { console.warn('[API] 加载失败:', e?.message) }
   finally { loading.value = false }
 }
 

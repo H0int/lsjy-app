@@ -33,7 +33,7 @@
 
           <div class="cyber-info-list">
             <div class="cyber-info-row">
-              <span class="cyber-info-label">⚡ 圣点余额</span>
+              <span class="cyber-info-label">⚡ 圣力余额</span>
               <span class="cyber-info-value cyber-amber">
                 {{ isBoss ? '∞ 无限' : (authStore.coinBalance?.toLocaleString() || '0') }}
               </span>
@@ -50,7 +50,7 @@
 
           <div class="cyber-action-list">
             <router-link to="/profile/wallet" class="cyber-action-btn primary">
-              <span>💰</span><span>圣点账户</span>
+              <span>💰</span><span>圣力账户</span>
             </router-link>
             <button class="cyber-action-btn" @click="showSecurity = true">
               <span>🔒</span><span>安全设置</span>

@@ -97,8 +97,8 @@ const form = ref({ name: '', description: '', type: 'flash_sale', totalReward: 0
 
 const list = ref<Campaign[]>([
   { id: 1, name: '暑期充值大返利', type: 'flash_sale', description: '暑期限时充值返利活动，充值满200返30，满500返100', startTime: '2025-07-20 00:00', endTime: '2025-08-20 23:59', participantCount: 2340, totalReward: 56000, status: 'active', config: {}, createdAt: '2025-07-15 10:00' },
-  { id: 2, name: '每日签到领圣点', type: 'check_in', description: '连续签到7天可获得50圣点奖励，连续30天获得300圣点', startTime: '2025-07-01 00:00', endTime: '2025-09-30 23:59', participantCount: 8920, totalReward: 123000, status: 'active', config: {}, createdAt: '2025-06-28 14:00' },
-  { id: 3, name: '邀请好友得奖励', type: 'invite_reward', description: '每邀请一位新用户注册并完成首充，双方各得20圣点', startTime: '2025-07-01 00:00', endTime: '2025-12-31 23:59', participantCount: 1560, totalReward: 31200, status: 'active', config: {}, createdAt: '2025-06-25 09:00' },
+  { id: 2, name: '每日签到领圣力', type: 'check_in', description: '连续签到7天可获得50圣力奖励，连续30天获得300圣力', startTime: '2025-07-01 00:00', endTime: '2025-09-30 23:59', participantCount: 8920, totalReward: 123000, status: 'active', config: {}, createdAt: '2025-06-28 14:00' },
+  { id: 3, name: '邀请好友得奖励', type: 'invite_reward', description: '每邀请一位新用户注册并完成首充，双方各得20圣力', startTime: '2025-07-01 00:00', endTime: '2025-12-31 23:59', participantCount: 1560, totalReward: 31200, status: 'active', config: {}, createdAt: '2025-06-25 09:00' },
   { id: 4, name: '618大促', type: 'flash_sale', description: '618限时折扣，全场AI工具8折', startTime: '2025-06-18 00:00', endTime: '2025-06-20 23:59', participantCount: 15600, totalReward: 280000, status: 'ended', config: {}, createdAt: '2025-06-10 10:00' },
 ])
 

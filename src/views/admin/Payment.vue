@@ -19,7 +19,7 @@
         </el-table-column>
         <el-table-column prop="channel" label="Channel" width="120" />
         <el-table-column prop="feeRate" label="费率" width="100">
-          <template #default="{ row }">{{ row.feeRate }}%</template>
+          <template #default="{ row }">{{ row.feeRate ?? '-' }}%</template>
         </el-table-column>
         <el-table-column prop="description" label="说明" />
         <el-table-column label="状态" width="100">
@@ -68,7 +68,7 @@ async function loadData() {
   try {
     const res = await adminApi.getPaymentChannels()
     list.value = res.data || []
-  } catch (e: any) { ElMessage.error(e.message || '加载失败') }
+  } catch (e: any) { console.warn('[API] 加载失败:', e?.message) }
   finally { loading.value = false }
 }
 
@@ -84,7 +84,7 @@ async function toggleStatus(row: any) {
     await adminApi.updatePaymentChannel(row.id, { status })
     ElMessage.success(status === 'active' ? '已启用' : '已停用')
     loadData()
-  } catch (e: any) { ElMessage.error(e.message || '操作失败') }
+  } catch (e: any) { console.warn('[API] 操作失败:', e?.message) }
 }
 
 async function submit() {
@@ -94,7 +94,7 @@ async function submit() {
     ElMessage.success('保存成功')
     dialogVisible.value = false
     loadData()
-  } catch (e: any) { ElMessage.error(e.message || '保存失败') }
+  } catch (e: any) { console.warn('[API] 保存失败:', e?.message) }
 }
 
 async function handleDelete(row: any) {

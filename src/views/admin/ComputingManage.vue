@@ -213,7 +213,7 @@ async function handleToggleGlobal(val: boolean) {
     await computingApi.updateDispatchConfig({ enabled: val })
     ElMessage.success(val ? '已开启算力调度' : '已关闭算力调度')
   } catch (e: any) {
-    ElMessage.error(e.message || '操作失败')
+    console.warn('[API] 操作失败:', e?.message)
   }
 }
 
@@ -222,7 +222,7 @@ async function handleStrategyChange(val: string) {
     await computingApi.updateDispatchConfig({ defaultStrategy: val })
     ElMessage.success('策略已更新')
   } catch (e: any) {
-    ElMessage.error(e.message || '操作失败')
+    console.warn('[API] 操作失败:', e?.message)
   }
 }
 
@@ -232,7 +232,7 @@ async function saveModelPriority() {
     ElMessage.success('模型优先级已保存')
     modelPriorityDialogVisible.value = false
   } catch (e: any) {
-    ElMessage.error(e.message || '保存失败')
+    console.warn('[API] 保存失败:', e?.message)
   }
 }
 

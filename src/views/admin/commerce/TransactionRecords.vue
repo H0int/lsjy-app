@@ -7,7 +7,7 @@ const names=["张三","李四","王五","赵六","钱七","孙八","周九","吴
 function rid(){return Math.random().toString(36).slice(2,10)}
 function rd(){const d=new Date(Date.now()-Math.random()*2592e6);return d.toLocaleDateString('zh-CN')+' '+d.toTimeString().slice(0,5)}
 function rip(){return [1,2,3,4].map(()=>Math.floor(Math.random()*223+1)).join('.')}
-function gen(){return Array.from({length:35},(_,i)=>({_id:rid(),'order_id':'示例'+(i+1), 'user':names[i%20], 'amount':'¥'+(Math.random()*1000).toFixed(2), 'method':['微信','支付宝','圣点'][Math.floor(Math.random()*3)], 'time':rd()}))}
+function gen(){return Array.from({length:35},(_,i)=>({_id:rid(),'order_id':'示例'+(i+1), 'user':names[i%20], 'amount':'¥'+(Math.random()*1000).toFixed(2), 'method':['微信','支付宝','圣力'][Math.floor(Math.random()*3)], 'time':rd()}))}
 const rows=ref<any[]>(gen())
 const filtered=computed(()=>{const s=search.value.toLowerCase();return s?rows.value.filter(r=>Object.values(r).some(v=>String(v).toLowerCase().includes(s))):rows.value})
 const totalPages=computed(()=>Math.max(1,Math.ceil(filtered.value.length/perPage)))

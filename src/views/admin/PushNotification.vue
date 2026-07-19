@@ -59,7 +59,7 @@ async function loadData() {
   try {
     const res = await service.get('/admin/push-messages')
     list.value = res.data?.items || res.data?.data?.items || res.data || []
-  } catch (e: any) { ElMessage.error(e.message || '加载失败') }
+  } catch (e: any) { console.warn('[API] 加载失败:', e?.message) }
   finally { loading.value = false }
 }
 
@@ -74,7 +74,7 @@ async function submit() {
     ElMessage.success('保存成功')
     dialogVisible.value = false
     loadData()
-  } catch (e: any) { ElMessage.error(e.message || '保存失败') }
+  } catch (e: any) { console.warn('[API] 保存失败:', e?.message) }
 }
 
 async function send(row: any) {

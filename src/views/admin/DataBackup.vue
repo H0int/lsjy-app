@@ -47,7 +47,7 @@ async function loadData() {
         { id: 2, name: 'manual-backup-2026-07-07', size: '11.8 MB', type: '手动', createdAt: '2026-07-07T18:30:00Z' },
       ]
     }
-  } catch (e: any) { ElMessage.error(e.message || '加载失败') }
+  } catch (e: any) { console.warn('[API] 加载失败:', e?.message) }
   finally { loading.value = false }
 }
 

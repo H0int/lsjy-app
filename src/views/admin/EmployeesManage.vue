@@ -66,7 +66,7 @@
         <el-table-column prop="userName" label="所属用户" width="120" style="color:#e0e0ff;" />
         <el-table-column prop="industry" label="行业" width="110" style="color:#e0e0ff;">
           <template #default="{ row }">
-            <el-tag size="small" type="info">{{ row.industry }}</el-tag>
+            <el-tag size="small" type="info">{{ row.industry || '-' }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="position" label="岗位" width="110" style="color:#e0e0ff;" show-overflow-tooltip />
@@ -77,11 +77,11 @@
         </el-table-column>
         <el-table-column prop="completedTasks" label="完成任务数" width="110" style="color:#e0e0ff;">
           <template #default="{ row }">
-            <span style="color:#00f0ff;">{{ row.completedTasks }}</span>
+            <span style="color:#00f0ff;">{{ row.completedTasks ?? 0 }}</span>
           </template>
         </el-table-column>
         <el-table-column prop="workHours" label="工作时长" width="100" style="color:#e0e0ff;">
-          <template #default="{ row }">{{ row.workHours }}h</template>
+          <template #default="{ row }">{{ row.workHours ?? 0 }}h</template>
         </el-table-column>
         <el-table-column prop="createdAt" label="创建时间" width="170" style="color:#e0e0ff;" />
         <el-table-column label="操作" width="200" fixed="right">
@@ -214,7 +214,7 @@ async function loadEmployees() {
     employeeTableData.value = data.items || []
     employeePagination.total = data.total || 0
   } catch (e: any) {
-    ElMessage.error(e.message || '加载员工数据失败')
+    console.warn('[API] 加载员工数据失败:', e?.message)
     employeeTableData.value = []
   } finally {
     employeeLoading.value = false

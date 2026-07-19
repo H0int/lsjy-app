@@ -24,7 +24,7 @@
               <span class="cyber-provider">{{ tool.provider }}</span>
               <span class="cyber-use-count">{{ tool.usageCount.toLocaleString() }}次使用</span>
               <span class="cyber-cost" :class="(tool.isFree && !isImageTool && !isVideoTool) ? 'cyber-cost-free' : 'cyber-cost-paid'">
-                {{ (tool.isFree && !isImageTool && !isVideoTool) ? `免费(每日${tool.freeDailyLimit}次)` : `${effectiveCost} 圣点` }}
+                {{ (tool.isFree && !isImageTool && !isVideoTool) ? `免费(每日${tool.freeDailyLimit}次)` : `${effectiveCost} 圣力` }}
               </span>
             </div>
           </div>
@@ -109,7 +109,7 @@
           <div class="cyber-gen-bar">
             <span class="cyber-cost-tip">
               本次消耗：<strong :class="(tool.isFree && !isImageTool && !isVideoTool) ? 'cyber-cost-free' : 'cyber-cost-paid'">
-                {{ (tool.isFree && !isImageTool && !isVideoTool) ? '免费' : `${effectiveCost} 圣点` }}
+                {{ (tool.isFree && !isImageTool && !isVideoTool) ? '免费' : `${effectiveCost} 圣力` }}
               </strong>
             </span>
             <button class="cyber-gen-btn" :disabled="generating || !inputContent.trim()" @click="handleGenerate">

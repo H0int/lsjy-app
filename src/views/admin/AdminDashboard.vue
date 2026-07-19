@@ -184,13 +184,13 @@ const realtimeStats = computed(() => {
     { label: '在线用户', value: 0, color: '#00f0ff' },
     { label: '今日注册', value: 0, color: '#00ff88' },
     { label: '今日营收', value: 0, color: '#f59e0b' },
-    { label: '圣点消耗', value: 0, color: '#c084fc' },
+    { label: '圣力消耗', value: 0, color: '#c084fc' },
   ]
   const changeMap: Record<string, number> = {
     '在线用户': d?.onlineUsersChange || 0,
     '今日注册': d?.todayRegistrationsChange || 0,
     '今日营收': d?.todayRevenueChange || 0,
-    '圣点消耗': d?.energyConsumptionChange || 0,
+    '圣力消耗': d?.energyConsumptionChange || 0,
   }
   return items.map((item: any, idx: number) => {
     const isRevenue = item.label === '今日营收'
@@ -443,7 +443,7 @@ function generateMockDashboard(): any {
       { label: '在线用户', value: 186, color: '#00f0ff' },
       { label: '今日注册', value: 23, color: '#00ff88' },
       { label: '今日营收', value: 4580, color: '#f59e0b' },
-      { label: '圣点消耗', value: 12460, color: '#c084fc' },
+      { label: '圣力消耗', value: 12460, color: '#c084fc' },
     ],
     onlineUsersChange: 12,
     todayRegistrationsChange: 8,

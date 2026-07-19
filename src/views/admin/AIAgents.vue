@@ -85,7 +85,7 @@ async function loadData() {
   try {
     const res = await adminApi.getAdminAgents()
     list.value = res.data?.list || res.data?.items || res.data || []
-  } catch (e: any) { ElMessage.error(e.message || '加载失败') }
+  } catch (e: any) { console.warn('[API] 加载失败:', e?.message) }
   finally { loading.value = false }
 }
 
@@ -106,7 +106,7 @@ async function toggleStatus(row: any) {
     await adminApi.updateAgentStatus(row.id, status)
     ElMessage.success(status === 'active' ? '已启用' : '已停用')
     loadData()
-  } catch (e: any) { ElMessage.error(e.message || '操作失败') }
+  } catch (e: any) { console.warn('[API] 操作失败:', e?.message) }
 }
 
 async function submit() {

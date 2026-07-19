@@ -64,7 +64,7 @@ async function loadData() {
     list.value = res.data?.list || []
     Object.assign(stats, res.data?.stats || {})
   } catch (e: any) {
-    ElMessage.error(e.message || '加载失败')
+    console.warn('[API] 加载失败:', e?.message)
   } finally {
     loading.value = false
   }

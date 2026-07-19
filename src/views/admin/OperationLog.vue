@@ -50,7 +50,7 @@ async function loadData() {
     const res = await adminApi.getOperationLogs(params)
     list.value = res.data?.items || res.data?.list || []
     total.value = res.data?.total || list.value.length
-  } catch (e: any) { ElMessage.error(e.message || '加载失败') }
+  } catch (e: any) { console.warn('[API] 加载失败:', e?.message) }
   finally { loading.value = false }
 }
 

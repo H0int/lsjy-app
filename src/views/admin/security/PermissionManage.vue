@@ -6,7 +6,7 @@ const roles=ref([
 {name:'至尊管理员',icon:'💎',count:0,perms:['用户管理','内容管理','数据报表','系统配置']},
 {name:'超级管理员',icon:'🌟',count:1,perms:['用户管理','内容管理','订单管理','数据报表']},
 {name:'普通管理员',icon:'🔧',count:0,perms:['内容审核','工单管理','FAQ管理']},
-{name:'高级用户',icon:'⭐',count:12,perms:['AI工具','个人中心','圣点账户']},
+{name:'高级用户',icon:'⭐',count:12,perms:['AI工具','个人中心','圣力账户']},
 {name:'普通用户',icon:'👤',count:156,perms:['AI工具','个人中心']}
 ])
 </script>

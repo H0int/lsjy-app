@@ -105,7 +105,7 @@
           </div>
           <div><label class="block text-sm text-gray-600 dark:text-gray-400 mb-1">执行动作</label>
             <select v-model="form.actionType" class="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-dark-200 text-gray-700 dark:text-gray-200">
-              <option value="send_coins">发放圣点</option>
+              <option value="send_coins">发放圣力</option>
               <option value="send_notification">发送通知</option>
               <option value="send_coupon">发放优惠券</option>
               <option value="change_role">变更角色/VIP</option>
@@ -132,11 +132,11 @@ const logRule = ref<AutomationRule | null>(null)
 const form = ref({ name: '', description: '', triggerEvent: 'user_register', actionType: 'send_coins' })
 
 const list = ref<AutomationRule[]>([
-  { id: 1, name: '新用户欢迎奖励', description: '新用户注册后自动发放20圣点作为欢迎奖励', triggerEvent: 'user_register', triggerCondition: {}, actions: [{ type: 'send_coins', config: { amount: 20, remark: '新用户注册奖励' } }, { type: 'send_notification', config: { template: 'welcome_bonus' } }], status: 'active', executionCount: 3420, lastExecutedAt: '2025-07-18 14:30', createdAt: '2025-06-01 10:00' },
-  { id: 2, name: '消费满100自动升级VIP1', description: '用户累计消费满100圣点自动升级为VIP1', triggerEvent: 'consume_threshold', triggerCondition: { threshold: 100 }, actions: [{ type: 'change_role', config: { vipLevel: 1 } }, { type: 'send_notification', config: { template: 'vip_upgrade' } }], status: 'active', executionCount: 856, lastExecutedAt: '2025-07-18 12:15', createdAt: '2025-06-05 14:00' },
-  { id: 3, name: '首次充值双倍返还', description: '用户首次充值额外赠送等额圣点', triggerEvent: 'first_recharge', triggerCondition: {}, actions: [{ type: 'send_coins', config: { amount: 'equal', remark: '首充双倍奖励' } }, { type: 'send_coupon', config: { couponId: 2, count: 1 } }], status: 'active', executionCount: 1230, lastExecutedAt: '2025-07-18 10:00', createdAt: '2025-06-10 09:00' },
-  { id: 4, name: '邀请3人奖励', description: '用户成功邀请3位好友注册各得50圣点', triggerEvent: 'invite_success', triggerCondition: { count: 3 }, actions: [{ type: 'send_coins', config: { amount: 50, remark: '邀请奖励', target: 'both' } }], status: 'active', executionCount: 345, lastExecutedAt: '2025-07-17 18:00', createdAt: '2025-06-15 16:00' },
-  { id: 5, name: '完成课程奖励', description: '用户完成任意课程全部章节后奖励30圣点', triggerEvent: 'course_complete', triggerCondition: { progress: 100 }, actions: [{ type: 'send_coins', config: { amount: 30, remark: '课程完成奖励' } }, { type: 'send_coupon', config: { couponId: 1, count: 1 } }], status: 'disabled', executionCount: 89, lastExecutedAt: '2025-07-10 09:30', createdAt: '2025-06-20 11:00' },
+  { id: 1, name: '新用户欢迎奖励', description: '新用户注册后自动发放20圣力作为欢迎奖励', triggerEvent: 'user_register', triggerCondition: {}, actions: [{ type: 'send_coins', config: { amount: 20, remark: '新用户注册奖励' } }, { type: 'send_notification', config: { template: 'welcome_bonus' } }], status: 'active', executionCount: 3420, lastExecutedAt: '2025-07-18 14:30', createdAt: '2025-06-01 10:00' },
+  { id: 2, name: '消费满100自动升级VIP1', description: '用户累计消费满100圣力自动升级为VIP1', triggerEvent: 'consume_threshold', triggerCondition: { threshold: 100 }, actions: [{ type: 'change_role', config: { vipLevel: 1 } }, { type: 'send_notification', config: { template: 'vip_upgrade' } }], status: 'active', executionCount: 856, lastExecutedAt: '2025-07-18 12:15', createdAt: '2025-06-05 14:00' },
+  { id: 3, name: '首次充值双倍返还', description: '用户首次充值额外赠送等额圣力', triggerEvent: 'first_recharge', triggerCondition: {}, actions: [{ type: 'send_coins', config: { amount: 'equal', remark: '首充双倍奖励' } }, { type: 'send_coupon', config: { couponId: 2, count: 1 } }], status: 'active', executionCount: 1230, lastExecutedAt: '2025-07-18 10:00', createdAt: '2025-06-10 09:00' },
+  { id: 4, name: '邀请3人奖励', description: '用户成功邀请3位好友注册各得50圣力', triggerEvent: 'invite_success', triggerCondition: { count: 3 }, actions: [{ type: 'send_coins', config: { amount: 50, remark: '邀请奖励', target: 'both' } }], status: 'active', executionCount: 345, lastExecutedAt: '2025-07-17 18:00', createdAt: '2025-06-15 16:00' },
+  { id: 5, name: '完成课程奖励', description: '用户完成任意课程全部章节后奖励30圣力', triggerEvent: 'course_complete', triggerCondition: { progress: 100 }, actions: [{ type: 'send_coins', config: { amount: 30, remark: '课程完成奖励' } }, { type: 'send_coupon', config: { couponId: 1, count: 1 } }], status: 'disabled', executionCount: 89, lastExecutedAt: '2025-07-10 09:30', createdAt: '2025-06-20 11:00' },
 ])
 
 const lastExecuted = computed(() => {
@@ -145,15 +145,15 @@ const lastExecuted = computed(() => {
 })
 
 const executionLogs = ref([
-  { id: 1, message: '用户 张三(id:1001) 注册触发，发放20圣点', success: true, time: '2025-07-18 14:30:22' },
-  { id: 2, message: '用户 李四(id:1002) 注册触发，发放20圣点', success: true, time: '2025-07-18 14:28:10' },
+  { id: 1, message: '用户 张三(id:1001) 注册触发，发放20圣力', success: true, time: '2025-07-18 14:30:22' },
+  { id: 2, message: '用户 李四(id:1002) 注册触发，发放20圣力', success: true, time: '2025-07-18 14:28:10' },
   { id: 3, message: '用户 王五(id:1003) 注册触发，发送通知失败(用户通知关闭)', success: false, time: '2025-07-18 13:45:33' },
-  { id: 4, message: '用户 赵六(id:1004) 注册触发，发放20圣点', success: true, time: '2025-07-18 12:20:15' },
-  { id: 5, message: '用户 孙七(id:1005) 注册触发，发放20圣点', success: true, time: '2025-07-18 11:10:08' },
+  { id: 4, message: '用户 赵六(id:1004) 注册触发，发放20圣力', success: true, time: '2025-07-18 12:20:15' },
+  { id: 5, message: '用户 孙七(id:1005) 注册触发，发放20圣力', success: true, time: '2025-07-18 11:10:08' },
 ])
 
 function triggerLabel(t: string) { return { user_register: '用户注册', first_recharge: '首次充值', consume_threshold: '消费达标', tool_call_count: '工具调用达标', course_complete: '完成课程', invite_success: '邀请成功' }[t] || t }
-function actionLabel(a: string) { return { send_coins: '发放圣点', send_notification: '发送通知', send_coupon: '发放优惠券', change_role: '变更角色' }[a] || a }
+function actionLabel(a: string) { return { send_coins: '发放圣力', send_notification: '发送通知', send_coupon: '发放优惠券', change_role: '变更角色' }[a] || a }
 function toggleStatus(rule: AutomationRule) { rule.status = rule.status === 'active' ? 'disabled' : 'active' }
 function handleViewLog(rule: AutomationRule) { logRule.value = rule; showLog.value = true }
 function handleDelete(rule: AutomationRule) { const i = list.value.findIndex(x => x.id === rule.id); if (i >= 0) list.value.splice(i, 1) }

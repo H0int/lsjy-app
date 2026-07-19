@@ -30,13 +30,13 @@
       <el-table-column label="费用" width="100">
         <template #default="{ row }">
           <span :class="row.isFree ? 'text-green-500' : 'text-amber-500'">
-            {{ row.isFree ? '免费' : `${row.coinCost}圣点` }}
+            {{ row.isFree ? '免费' : `${row.coinCost}圣力` }}
           </span>
         </template>
       </el-table-column>
       <el-table-column label="使用次数" width="100">
         <template #default="{ row }">
-          <span>{{ row.usageCount.toLocaleString() }}</span>
+          <span>{{ (row.usageCount || 0).toLocaleString() }}</span>
         </template>
       </el-table-column>
       <el-table-column label="提供商" width="100">

@@ -79,8 +79,8 @@ const categories = ['账号相关', '支付充值', 'AI工具', '电商购物', 
 const form = ref({ category: '账号相关', question: '', answer: '', sortOrder: 0 })
 
 const list = ref<FAQItem[]>([
-  { id: 1, category: '支付充值', question: '圣点充值后多久到账？', answer: '正常情况下圣点充值即时到账。如超过10分钟未到账，请检查支付是否成功，或提交工单联系客服处理。', searchCount: 1256, sortOrder: 1, status: 'active', createdAt: '2025-06-01 10:00', updatedAt: '2025-06-01 10:00' },
-  { id: 2, category: 'AI工具', question: 'AI工具调用失败会扣圣点吗？', answer: '不会。如果AI工具调用失败（状态为failed），系统会自动退还消耗的圣点。一般会在5分钟内退还到您的账户。', searchCount: 980, sortOrder: 2, status: 'active', createdAt: '2025-06-01 10:00', updatedAt: '2025-06-01 10:00' },
+  { id: 1, category: '支付充值', question: '圣力充值后多久到账？', answer: '正常情况下圣力充值即时到账。如超过10分钟未到账，请检查支付是否成功，或提交工单联系客服处理。', searchCount: 1256, sortOrder: 1, status: 'active', createdAt: '2025-06-01 10:00', updatedAt: '2025-06-01 10:00' },
+  { id: 2, category: 'AI工具', question: 'AI工具调用失败会扣圣力吗？', answer: '不会。如果AI工具调用失败（状态为failed），系统会自动退还消耗的圣力。一般会在5分钟内退还到您的账户。', searchCount: 980, sortOrder: 2, status: 'active', createdAt: '2025-06-01 10:00', updatedAt: '2025-06-01 10:00' },
   { id: 3, category: '账号相关', question: '如何修改绑定手机号？', answer: '进入个人中心 -> 安全设置 -> 修改手机号，需要验证原手机号后即可绑定新手机号。如原手机号已无法接收验证码，请提交工单进行人工审核。', searchCount: 756, sortOrder: 3, status: 'active', createdAt: '2025-06-01 10:00', updatedAt: '2025-06-01 10:00' },
   { id: 4, category: '电商购物', question: '商品退换货流程是什么？', answer: '在订单详情页点击"申请退换货"，填写原因并上传凭证图片。商家将在48小时内处理。如商家拒绝，可申请平台介入。', searchCount: 634, sortOrder: 4, status: 'active', createdAt: '2025-06-05 14:00', updatedAt: '2025-06-05 14:00' },
   { id: 5, category: '课程学习', question: '课程购买后可以退款吗？', answer: '课程购买后7天内且学习进度不超过20%可申请退款。超过退款条件则不支持退款，建议先试看再购买。', searchCount: 520, sortOrder: 5, status: 'active', createdAt: '2025-06-10 09:00', updatedAt: '2025-06-10 09:00' },

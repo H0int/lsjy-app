@@ -56,14 +56,14 @@ async function loadData() {
   try {
     const res = await service.get('/system/settings')
     Object.assign(form, res.data?.data || res.data || {})
-  } catch (e: any) { ElMessage.error(e.message || '加载失败') }
+  } catch (e: any) { console.warn('[API] 加载失败:', e?.message) }
 }
 
 async function save() {
   try {
     await service.post('/system/settings', form)
     ElMessage.success('保存成功')
-  } catch (e: any) { ElMessage.error(e.message || '保存失败') }
+  } catch (e: any) { console.warn('[API] 保存失败:', e?.message) }
 }
 
 onMounted(loadData)

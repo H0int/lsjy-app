@@ -4,8 +4,6 @@ import { ElMessage } from 'element-plus'
 import type { ApiResponse } from '@/types'
 import { getToken, removeToken } from '@/utils'
 
-let _networkWarned = false
-
 const service: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1',
   timeout: 15000,
@@ -57,15 +55,10 @@ service.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config
 
-    // 网络错误处理（仅提示一次，避免多个请求重复弹出）
+    // 网络错误：静默处理，不打扰用户（前端已内置降级数据）
     const isNetErr = !error.response || error.code === 'ERR_NETWORK' || error.message === 'Network Error'
     if (isNetErr) {
-      const isLoginReq = originalRequest.url?.includes('/auth/login')
-      if (!isLoginReq && !_networkWarned) {
-        _networkWarned = true
-        ElMessage.warning('网络连接异常，部分功能可能受限')
-        setTimeout(() => { _networkWarned = false }, 5000)
-      }
+      console.warn('[API] 网络不可用:', originalRequest.url)
       return Promise.reject(error)
     }
 
@@ -123,14 +116,12 @@ service.interceptors.response.use(
       }
     }
 
-    // 非401错误：登录请求由登录页处理，避免重复弹窗
+    // 其他错误：登录请求由登录页处理；404静默（功能可能尚未部署）
+    // 其余状态码也静默处理，由业务代码自行决定是否提示用户
     const isLoginReq = originalRequest.url?.includes('/auth/login')
-    // 404静默处理：功能可能尚未部署，不打扰用户，由业务代码自行处理
-    const is404 = error.response?.status === 404
-    if (!isLoginReq && !is404) {
-      // 兼容Express后端error字段和NestJS message字段
+    if (!isLoginReq) {
       const msg = error.response?.data?.error || error.response?.data?.message || error.message || '请求失败'
-      ElMessage.error(msg)
+      console.warn('[API] 请求失败:', originalRequest.url, msg)
     }
     return Promise.reject(error)
   }

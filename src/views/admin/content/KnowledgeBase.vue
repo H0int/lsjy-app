@@ -97,7 +97,7 @@ async function refresh() {
   try {
     const res = await adminApi.getKnowledgeBase()
     rows.value = res.data?.items || res.data?.items || res.data || []
-  } catch (e: any) { ElMessage.error(e.message || '加载失败') }
+  } catch (e: any) { console.warn('[API] 加载失败:', e?.message) }
   finally { loading.value = false }
 }
 

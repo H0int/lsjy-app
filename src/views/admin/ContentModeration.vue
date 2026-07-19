@@ -54,7 +54,7 @@ async function loadData() {
     if (filter.status) params.status = filter.status
     const res = await service.get('/moderation/list', { params })
     list.value = res.data?.items || res.data?.data?.items || res.data || []
-  } catch (e: any) { ElMessage.error(e.message || '加载失败') }
+  } catch (e: any) { console.warn('[API] 加载失败:', e?.message) }
   finally { loading.value = false }
 }
 
@@ -63,7 +63,7 @@ async function approve(row: any) {
     await service.post(`/moderation/${row.id}/approve`)
     ElMessage.success('已通过')
     loadData()
-  } catch (e: any) { ElMessage.error(e.message || '操作失败') }
+  } catch (e: any) { console.warn('[API] 操作失败:', e?.message) }
 }
 
 async function reject(row: any) {
@@ -71,7 +71,7 @@ async function reject(row: any) {
     await service.post(`/moderation/${row.id}/reject`)
     ElMessage.success('已拒绝')
     loadData()
-  } catch (e: any) { ElMessage.error(e.message || '操作失败') }
+  } catch (e: any) { console.warn('[API] 操作失败:', e?.message) }
 }
 
 function exportData() {

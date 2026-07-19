@@ -59,7 +59,7 @@
             <th class="px-4 py-3 text-right text-gray-500">新增用户</th>
             <th class="px-4 py-3 text-right text-gray-500">活跃用户</th>
             <th class="px-4 py-3 text-right text-gray-500">营收(¥)</th>
-            <th class="px-4 py-3 text-right text-gray-500">圣点消耗</th>
+            <th class="px-4 py-3 text-right text-gray-500">圣力消耗</th>
             <th class="px-4 py-3 text-right text-gray-500">订单数</th>
             <th class="px-4 py-3 text-right text-gray-500">工具调用</th>
           </tr>
@@ -128,7 +128,7 @@ const summaryMetrics = computed(() => {
     { label: '新增用户', value: totalNewUsers.toLocaleString(), change: 12.5 },
     { label: '日均活跃', value: avgActiveUsers.toLocaleString(), change: 8.3 },
     { label: '总营收', value: '¥' + totalRevenue.toLocaleString(), change: 15.2 },
-    { label: '圣点消耗', value: totalCoinConsumed.toLocaleString(), change: 10.7 },
+    { label: '圣力消耗', value: totalCoinConsumed.toLocaleString(), change: 10.7 },
     { label: '订单数', value: totalOrders.toLocaleString(), change: -3.2 },
     { label: '工具调用', value: totalToolCalls.toLocaleString(), change: 18.9 },
   ]
@@ -136,6 +136,6 @@ const summaryMetrics = computed(() => {
 
 const exportData = computed(() => reportData.value.map(r => ({
   '日期': r.period, '新增用户': r.newUsers, '活跃用户': r.activeUsers,
-  '营收': r.revenue, '圣点消耗': r.coinConsumed, '订单数': r.orders, '工具调用': r.toolCalls
+  '营收': r.revenue, '圣力消耗': r.coinConsumed, '订单数': r.orders, '工具调用': r.toolCalls
 })))
 </script>

@@ -74,7 +74,7 @@ async function loadData() {
     const res = await adminApi.getCoinPackages()
     list.value = res.data?.items || res.data?.items || res.data?.list || []
   } catch (e: any) {
-    ElMessage.error(e.message || '加载失败')
+    console.warn('[API] 加载失败:', e?.message)
   } finally {
     loading.value = false
   }
@@ -100,7 +100,7 @@ async function submit() {
     dialogVisible.value = false
     loadData()
   } catch (e: any) {
-    ElMessage.error(e.message || '保存失败')
+    console.warn('[API] 保存失败:', e?.message)
   }
 }
 

@@ -27,7 +27,7 @@
           <option value="">全部类型</option>
           <option value="full_reduce">满减券</option>
           <option value="discount">折扣券</option>
-          <option value="coin_gift">圣点赠送</option>
+          <option value="coin_gift">圣力赠送</option>
         </select>
       </div>
       <button @click="showDialog = true" class="bg-primary text-white px-4 py-2 rounded-lg text-sm hover:opacity-90">+ 创建优惠券</button>
@@ -70,7 +70,7 @@
         <div class="space-y-4">
           <div><label class="block text-sm text-gray-600 dark:text-gray-400 mb-1">名称</label><input v-model="form.name" class="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-dark-200 text-gray-700 dark:text-gray-200" /></div>
           <div class="grid grid-cols-2 gap-4">
-            <div><label class="block text-sm text-gray-600 dark:text-gray-400 mb-1">类型</label><select v-model="form.type" class="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-dark-200 text-gray-700 dark:text-gray-200"><option value="full_reduce">满减券</option><option value="discount">折扣券</option><option value="coin_gift">圣点赠送</option></select></div>
+            <div><label class="block text-sm text-gray-600 dark:text-gray-400 mb-1">类型</label><select v-model="form.type" class="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-dark-200 text-gray-700 dark:text-gray-200"><option value="full_reduce">满减券</option><option value="discount">折扣券</option><option value="coin_gift">圣力赠送</option></select></div>
             <div><label class="block text-sm text-gray-600 dark:text-gray-400 mb-1">面值</label><input v-model.number="form.discountValue" type="number" class="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-dark-200 text-gray-700 dark:text-gray-200" /></div>
           </div>
           <div class="grid grid-cols-2 gap-4">
@@ -103,7 +103,7 @@ const form = ref({ name: '', type: 'full_reduce', discountValue: 10, minAmount: 
 const list = ref<Coupon[]>([
   { id: 1, name: '新用户满50减10', type: 'full_reduce', discountValue: 10, minAmount: 50, maxReduce: null, totalQuantity: 5000, usedQuantity: 3280, validFrom: '2025-07-01', validTo: '2025-08-31', issueRule: 'new_user', status: 'active', createdAt: '2025-07-01 00:00' },
   { id: 2, name: '暑期8折优惠券', type: 'discount', discountValue: 8, minAmount: 100, maxReduce: 50, totalQuantity: 2000, usedQuantity: 856, validFrom: '2025-07-15', validTo: '2025-08-15', issueRule: 'activity', status: 'active', createdAt: '2025-07-15 10:00' },
-  { id: 3, name: '充值赠送100圣点', type: 'coin_gift', discountValue: 100, minAmount: 200, maxReduce: null, totalQuantity: 1000, usedQuantity: 423, validFrom: '2025-07-01', validTo: '2025-07-31', issueRule: 'consume_threshold', status: 'active', createdAt: '2025-07-01 00:00' },
+  { id: 3, name: '充值赠送100圣力', type: 'coin_gift', discountValue: 100, minAmount: 200, maxReduce: null, totalQuantity: 1000, usedQuantity: 423, validFrom: '2025-07-01', validTo: '2025-07-31', issueRule: 'consume_threshold', status: 'active', createdAt: '2025-07-01 00:00' },
   { id: 4, name: 'VIP专属9折券', type: 'discount', discountValue: 9, minAmount: 0, maxReduce: 30, totalQuantity: 500, usedQuantity: 120, validFrom: '2025-06-01', validTo: '2025-06-30', issueRule: 'manual', status: 'expired', createdAt: '2025-06-01 00:00' },
 ])
 
@@ -113,7 +113,7 @@ const usageRate = computed(() => {
   return total > 0 ? ((used / total) * 100).toFixed(1) : '0'
 })
 
-function couponTypeLabel(t: string) { return { full_reduce: '满减券', discount: '折扣券', coin_gift: '圣点赠送' }[t] || t }
+function couponTypeLabel(t: string) { return { full_reduce: '满减券', discount: '折扣券', coin_gift: '圣力赠送' }[t] || t }
 function couponTypeBg(t: string) { return { full_reduce: 'bg-gradient-to-br from-red-500 to-orange-500', discount: 'bg-gradient-to-br from-blue-500 to-purple-500', coin_gift: 'bg-gradient-to-br from-green-500 to-teal-500' }[t] || 'bg-gray-500' }
 function couponStatusLabel(s: string) { return { active: '生效中', paused: '已暂停', expired: '已过期' }[s] || s }
 function issueRuleLabel(r: string) { return { new_user: '新用户', consume_threshold: '消费满额', activity: '活动发放', manual: '手动发放' }[r] || r }
