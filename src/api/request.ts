@@ -4,6 +4,8 @@ import { ElMessage } from 'element-plus'
 import type { ApiResponse } from '@/types'
 import { getToken, removeToken } from '@/utils'
 
+let _networkWarned = false
+
 const service: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1',
   timeout: 15000,
@@ -55,12 +57,14 @@ service.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config
 
-    // 网络错误处理
+    // 网络错误处理（仅提示一次，避免多个请求重复弹出）
     const isNetErr = !error.response || error.code === 'ERR_NETWORK' || error.message === 'Network Error'
     if (isNetErr) {
       const isLoginReq = originalRequest.url?.includes('/auth/login')
-      if (!isLoginReq) {
+      if (!isLoginReq && !_networkWarned) {
+        _networkWarned = true
         ElMessage.warning('网络连接异常，部分功能可能受限')
+        setTimeout(() => { _networkWarned = false }, 5000)
       }
       return Promise.reject(error)
     }
