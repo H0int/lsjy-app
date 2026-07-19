@@ -10,12 +10,26 @@ export const useToolStore = defineStore('tool', () => {
   const loading = ref(false)
   const total = ref(0)
 
+  // 始终先加载内置分类，确保分类标签完整
+  categories.value = getBuiltInCategories()
+
   async function fetchCategories() {
     try {
       const res = await toolApi.getCategories()
-      categories.value = res.data
+      const backendCats: ToolCategory[] = Array.isArray(res.data) ? res.data : []
+      if (backendCats.length > 0) {
+        // 后端分类与内置分类合并：内置分类为基础，后端有则补充，无则保留
+        const builtinIds = new Set(getBuiltInCategories().map(c => c.id))
+        const merged = [...getBuiltInCategories()]
+        for (const bc of backendCats) {
+          if (!builtinIds.has(bc.id)) {
+            merged.push(bc)
+          }
+        }
+        categories.value = merged
+      }
     } catch (e) {
-      console.error('获取分类失败', e)
+      console.warn('[ToolStore] 获取分类失败，使用内置分类', e)
     }
   }
 
@@ -29,7 +43,6 @@ export const useToolStore = defineStore('tool', () => {
       // 后端不可用时使用内置工具数据
       tools.value = getBuiltInTools()
       total.value = tools.value.length
-      categories.value = getBuiltInCategories()
     } finally {
       loading.value = false
     }
