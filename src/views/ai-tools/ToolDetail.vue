@@ -22,7 +22,7 @@
             <p class="cyber-tool-desc-line">{{ tool.description }}</p>
             <div class="cyber-tool-meta">
               <span class="cyber-provider">{{ tool.provider }}</span>
-              <span class="cyber-use-count">{{ tool.usageCount.toLocaleString() }}次使用</span>
+              <span class="cyber-use-count">{{ (tool.usageCount || 0).toLocaleString() }}次使用</span>
               <span class="cyber-cost" :class="(tool.isFree && !isImageTool && !isVideoTool) ? 'cyber-cost-free' : 'cyber-cost-paid'">
                 {{ (tool.isFree && !isImageTool && !isVideoTool) ? `免费(每日${tool.freeDailyLimit}次)` : `${effectiveCost} 圣力` }}
               </span>
@@ -195,6 +195,7 @@ import { toolTypeMap } from '@/utils'
 import { getToolParams, hasToolParams } from '@/utils/toolParams'
 import type { Tool } from '@/types'
 import { ElMessage } from 'element-plus'
+import { useToolStore } from '@/stores/tool'
 
 const route = useRoute()
 const router = useRouter()
@@ -235,25 +236,21 @@ const toolParamGroups = computed(() => {
     return getToolParams(tool.value.subCategory)
   }
 
-  // 根据 categoryId 匹配参数（兼容线上33个细分类别ID）
-  const catId = Number(tool.value?.categoryId)
-  if ([1, 20].includes(catId)) return getToolParams('文案撰写')       // 文本创作/内容创作
-  if ([2].includes(catId)) return getToolParams('AI绘画')             // 图片生成
-  if ([3, 13].includes(catId)) return getToolParams('数据分析')       // 数据分析
-  if ([4].includes(catId)) return getToolParams('对话聊天')           // 智能对话
-  if ([5].includes(catId)) return getToolParams('对话聊天')           // 音频处理
-  if ([6].includes(catId)) return getToolParams('视频生成')           // 视频制作
-  if ([7].includes(catId)) return getToolParams('编程开发')           // 代码开发
-  if ([8].includes(catId)) return getToolParams('效率自动化')         // 效率办公
-  if ([9, 10, 11, 12, 14].includes(catId)) return getToolParams('商品运营') // 电商
-  if ([15, 16, 17, 18, 19].includes(catId)) return getToolParams('学习方法') // 教育
-  if ([21].includes(catId)) return getToolParams('视频脚本')          // 短视频
-  if ([22].includes(catId)) return getToolParams('直播运营')          // 直播运营
-  if ([23].includes(catId)) return getToolParams('账号运营')          // 账号运营
-  if ([24, 25, 26, 27, 28].includes(catId)) return getToolParams('养宠指导')  // 宠物
-  if ([29, 30, 31, 32, 33].includes(catId)) return getToolParams('校园生活')  // 校园
+  // 用 category 名称匹配参数（覆盖所有内置分类）
+  const cat = tool.value?.category || ''
+  if (cat.includes('图片') || cat.includes('AI绘画')) return getToolParams('AI绘画')
+  if (cat.includes('视频')) return getToolParams('视频生成')
+  if (cat.includes('音频')) return getToolParams('对话聊天')
+  if (cat.includes('内容创作') || cat.includes('文案')) return getToolParams('文案撰写')
+  if (cat.includes('电商')) return getToolParams('商品运营')
+  if (cat.includes('教育') || cat.includes('培训')) return getToolParams('学习方法')
+  if (cat.includes('宠物')) return getToolParams('养宠指导')
+  if (cat.includes('校园')) return getToolParams('校园生活')
+  if (cat.includes('生活')) return getToolParams('对话聊天')
+  if (cat.includes('办公') || cat.includes('效率')) return getToolParams('对话聊天')
+  if (cat.includes('AI智能') || cat.includes('AI')) return getToolParams('对话聊天')
 
-  // 兜底：通用参数（始终有参数面板）
+  // 兜底：通用参数
   return getToolParams('对话聊天')
 })
 const hasParams = computed(() => toolParamGroups.value.length > 0)
@@ -456,12 +453,19 @@ async function handleFileUpload(e: Event) {
 }
 
 onMounted(async () => {
+  const toolStore = useToolStore()
   try {
     const res = await toolApi.getToolDetail(Number(route.params.id))
     tool.value = res.data
+  } catch {
+    // 后端不可用时从内置数据中查找
+    const id = Number(route.params.id)
+    tool.value = toolStore.tools.find(t => t.id === id) || null
+  } finally {
+    loading.value = false
     // 初始化参数默认值
-    initParamValues()
-  } finally { loading.value = false }
+    if (tool.value) initParamValues()
+  }
 })
 </script>
 
