@@ -17,7 +17,7 @@
           <div class="flex-1">
             <div class="flex items-center gap-3 mb-1">
               <h1 class="cyber-tool-title">{{ tool.name }}</h1>
-              <span class="cyber-badge cyber-badge-cyan">{{ toolTypeLabel(tool.toolType) }}</span>
+              <span class="cyber-badge cyber-badge-cyan">{{ toolTypeLabel(tool.value) }}</span>
             </div>
             <p class="cyber-tool-desc-line">{{ tool.description }}</p>
             <div class="cyber-tool-meta">
@@ -299,8 +299,13 @@ const inputPlaceholder = computed(() => {
   }
 })
 
-function toolTypeLabel(type: string): string {
-  return toolTypeMap[type] || type
+function toolTypeLabel(t: Tool | null | string): string {
+  if (!t || typeof t === 'string') return toolTypeMap[t || 'text'] || t || '文本生成'
+  const catId = Number(t.categoryId)
+  if (t.toolType === 'image' || catId === 9) return '图片生成'
+  if (t.toolType === 'video' || catId === 10) return '视频生成'
+  if (t.toolType === 'audio' || catId === 11) return '音频处理'
+  return toolTypeMap[t.toolType] || t.toolType || '文本生成'
 }
 
 async function handleGenerate() {
