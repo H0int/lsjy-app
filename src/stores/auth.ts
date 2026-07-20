@@ -96,11 +96,14 @@ export const useAuthStore = defineStore('auth', () => {
         if (!parsed.nickname || parsed.nickname === '罗凯中') parsed.nickname = '罗总'
         if (!parsed.createdAt || !parsed.createdAt.startsWith('2026-05-12')) parsed.createdAt = '2026-05-12T00:00:00.000Z'
         if (!parsed.userType) parsed.userType = 'founder'
-        if (!parsed.gender) parsed.gender = 0
-        if (!parsed.email) parsed.email = ''
+        if (parsed.gender === undefined || parsed.gender === null) parsed.gender = 1
+        if (!parsed.email) parsed.email = 'ceo@lsjyapp.cn'
         if (!parsed.phone) parsed.phone = ''
-        if (!parsed.bio) parsed.bio = ''
+        if (!parsed.bio) parsed.bio = '罗圣纪元创始人'
         if (!parsed.roles?.length) parsed.roles = ['boss', 'founder', 'super_admin']
+        if (!parsed.vipLevel) parsed.vipLevel = 99
+        if (!parsed.status) parsed.status = 'active'
+        if (parsed.unlimited === undefined) parsed.unlimited = true
         // 同步修正后的数据回localStorage
         localStorage.setItem('lsjy_user', JSON.stringify(parsed))
       }

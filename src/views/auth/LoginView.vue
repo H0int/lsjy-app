@@ -300,16 +300,17 @@ async function localFallbackLogin(username: string, password: string) {
 
     // 写入用户信息（使用真实数据，包含完整字段）
     const saved = JSON.parse(localStorage.getItem('lsjy_user') || '{}')
+    const isBoss = username === 'KF02V9'
     const userData = {
       id: 1,
       username: username,
-      nickname: username === 'KF02V9' ? '罗总' : (saved.nickname || username),
+      nickname: isBoss ? '罗总' : (saved.nickname || username),
       avatar: saved.avatar || localStorage.getItem('lsjy_user_avatar') || null,
-      email: saved.email || '',
+      email: isBoss ? (saved.email || 'ceo@lsjyapp.cn') : (saved.email || ''),
       phone: saved.phone || '',
-      bio: saved.bio || '',
-      gender: saved.gender ?? 0,
-      roles: ['boss', 'founder', 'super_admin'],
+      bio: isBoss ? (saved.bio || '罗圣纪元创始人') : (saved.bio || ''),
+      gender: isBoss ? (saved.gender ?? 1) : (saved.gender ?? 0),
+      roles: isBoss ? ['boss', 'founder', 'ultimate_admin', 'super_admin', 'admin', 'operator'] : ['boss', 'founder', 'super_admin'],
       vipLevel: 999,
       status: 'active',
       userType: 'founder',
