@@ -521,6 +521,8 @@ onMounted(async () => {
   } catch {
     // 后端不可用时从内置数据中查找
     const id = Number(route.params.id)
+    // 确保store数据已加载
+    if (toolStore.tools.length === 0) await toolStore.fetchTools()
     tool.value = toolStore.tools.find(t => t.id === id) || null
   } finally {
     loading.value = false
