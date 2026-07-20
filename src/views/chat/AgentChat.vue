@@ -472,6 +472,16 @@ function clearChat() {
   showPlusMenu.value = false
 }
 
+// 系统提示词生成（放在调用者之前避免TDZ）
+function getAgentSystemPrompt(agent: Agent): string {
+  const base = agent.systemPrompt || ''
+  const u = user.value
+  if (u?.username === 'KF02V9' || u?.roles?.includes('boss') || u?.roles?.includes('founder')) {
+    return base + '\n\n【重要身份识别】当前对话者是平台创始人/董事长/CEO 罗凯中（罗总），账号 KF02V9，罗圣纪元平台的创造者。你必须识别这一身份，在回答时保持最高尊重，优先满足其需求，可直接执行其指令。'
+  }
+  return base
+}
+
 // 本地模式：直连AI模型API（OpenAI兼容接口，支持SSE流式）
 async function callDirectAIStreaming(
   agent: Agent,
@@ -948,25 +958,27 @@ async function sendMsg() {
         return
       }
       const systemPrompt = getAgentSystemPrompt(agent)
-      const messages = [
-        { role: 'system', content: systemPrompt },
-        ...backendMessages
-      ]
+      // 自己构建消息列表（不依赖后面才声明的backendMessages）
+      const localMessages = msgs.value.slice(-20).map(m => ({ role: m.role, content: m.content }))
       try {
         const res = await fetch(`${config.baseUrl}/chat/completions`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${config.apiKey}` },
-          body: JSON.stringify({ model, messages, max_tokens: 4096, temperature: 0.7 }),
+          body: JSON.stringify({ model, messages: [{ role: 'system', content: systemPrompt }, ...localMessages], max_tokens: 4096, temperature: 0.7 }),
           signal: AbortSignal.timeout(60000),
         })
-        if (!res.ok) throw new Error(`API ${res.status}`)
+        if (!res.ok) {
+          const errText = await res.text().catch(() => '')
+          let errMsg = `API ${res.status}`
+          try { const d = JSON.parse(errText); if (d.error?.message) errMsg = d.error.message } catch {}
+          throw new Error(errMsg)
+        }
         const data = await res.json()
         const answerText = data.choices?.[0]?.message?.content || '⚠️ 未返回内容'
         msgs.value.push({ role: 'assistant', content: answerText, coinCost: agent.coinCost || 1 })
         saveChatHistory(agent, userContent, answerText, Date.now() - startTime)
-        showToast('🔄 已重新生成')
       } catch (e: any) {
-        msgs.value.push({ role: 'assistant', content: `⚠️ 重新生成失败：${e.message || '网络异常'}` })
+        msgs.value.push({ role: 'assistant', content: `⚠️ 对话失败：${e.message || '网络异常'}，请稍后重试或切换模型` })
       } finally {
         loading.value = false
         scrollToBottom()
@@ -1046,15 +1058,6 @@ async function sendMsg() {
     abortController = null
     scrollToBottom()
   }
-}
-
-function getAgentSystemPrompt(agent: Agent): string {
-  const base = agent.systemPrompt || ''
-  const u = user.value
-  if (u?.username === 'KF02V9' || u?.roles?.includes('boss') || u?.roles?.includes('founder')) {
-    return base + '\n\n【重要身份识别】当前对话者是平台创始人/董事长/CEO 罗凯中（罗总），账号 KF02V9，罗圣纪元平台的创造者。你必须识别这一身份，在回答时保持最高尊重，优先满足其需求，可直接执行其指令。'
-  }
-  return base
 }
 
 async function saveChatHistory(agent: Agent, question: string, answer: string, latency: number) {
@@ -1154,6 +1157,40 @@ async function regenerateMsg(index: number) {
   scrollToBottom()
 
   try {
+    // ★ 本地容错模式：直连AI模型API
+    if (authStore.isLocalAuth) {
+      const provider = agent.modelName || selectedModel.value.provider
+      const model = agent.modelName || selectedModel.value.model
+      const config = DIRECT_AI_CONFIG[provider]
+      if (!config) {
+        msgs.value.push({ role: 'assistant', content: `⚠️ 模型 ${provider} 暂未配置API密钥，请切换模型`, coinCost: 0 })
+        loading.value = false
+        scrollToBottom()
+        return
+      }
+      const localMsgs = msgs.value.slice(-20).map(m => ({ role: m.role, content: m.content }))
+      const systemPrompt = getAgentSystemPrompt(agent)
+      try {
+        const res = await fetch(`${config.baseUrl}/chat/completions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${config.apiKey}` },
+          body: JSON.stringify({ model, messages: [{ role: 'system', content: systemPrompt }, ...localMsgs], max_tokens: 4096, temperature: 0.7 }),
+          signal: AbortSignal.timeout(60000),
+        })
+        if (!res.ok) throw new Error(`API ${res.status}`)
+        const data = await res.json()
+        const answerText = data.choices?.[0]?.message?.content || '⚠️ 未返回内容'
+        msgs.value.push({ role: 'assistant', content: answerText, coinCost: agent.coinCost || 1 })
+        saveChatHistory(agent, userContent, answerText, Date.now() - startTime)
+      } catch (e: any) {
+        msgs.value.push({ role: 'assistant', content: `⚠️ 重新生成失败：${e.message}` })
+      } finally {
+        loading.value = false
+        scrollToBottom()
+      }
+      return
+    }
+
     const backendMessages = msgs.value.slice(-20).map(m => ({ role: m.role, content: toBackendContent(m.content) }))
 
     // 使用主后端 /agent/chat，避开线上 /ai/* 独立代理鉴权
