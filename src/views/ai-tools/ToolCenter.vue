@@ -21,7 +21,7 @@
 
     <!-- 一级分类标签 -->
     <div class="flex flex-wrap gap-2 mb-4">
-      <button v-for="cat in categoryList" :key="cat.id ?? 'all'"
+      <button v-for="cat in categoryList.filter(c => c.id === null || c.count > 0)" :key="cat.id ?? 'all'"
         @click="selectCategory(cat.id)"
         class="cyber-cat-btn"
         :class="{ active: currentCategoryId === cat.id }">

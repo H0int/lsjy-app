@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen cyber-circuit-bg" style="background-color: var(--cyber-bg);">
+  <div class="min-h-screen cyber-circuit-bg" style="background-color: var(--cyber-bg); display: flex; flex-direction: column;">
     <!-- 顶部导航栏 - 赛博朋克 -->
     <header class="fixed top-0 left-0 right-0 z-50" style="background: rgba(10, 10, 15, 0.92); backdrop-filter: blur(12px); border-bottom: 1px solid var(--cyber-border);">
       <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -84,7 +84,7 @@
     </nav>
 
     <!-- 主内容区 -->
-    <main class="pt-16 pb-28 md:pb-8" style="min-height: calc(100vh - 4rem); background: var(--cyber-bg);">
+    <main class="pt-16 pb-28 md:pb-8" style="flex: 1 0 auto; background: var(--cyber-bg);">
       <router-view v-slot="{ Component }">
         <transition name="fade" mode="out-in">
           <component :is="Component" :key="route.fullPath" />
@@ -116,13 +116,13 @@ const hasAlgoPlatformAccess = computed(() => {
   return username === 'KF02V9' || algoAccess === 'true'
 })
 
-const navItems = [
+const navItems = computed(() => [
   { path: '/dashboard', label: '控制台', icon: '🏠' },
   { path: '/chat', label: 'AI智能体', icon: '🧠' },
   { path: '/algorithm-platform', label: '算法中台', icon: hasAlgoPlatformAccess.value ? '⚡' : '🔒' },
   { path: '/tools', label: 'AI工具', icon: '🤖' },
   { path: '/profile', label: '我的', icon: '👤' },
-]
+])
 
 function isActive(path: string) {
   return route.path === path || route.path.startsWith(path + '/')
@@ -168,6 +168,8 @@ function handleLogout() {
   letter-spacing: 0.5px;
   background: transparent;
   margin-bottom: 60px;
+  margin-top: auto;
+  flex-shrink: 0;
 }
 .cyber-footer-beian a {
   color: rgba(0, 240, 255, 0.35);

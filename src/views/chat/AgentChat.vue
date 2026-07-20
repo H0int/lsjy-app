@@ -21,6 +21,8 @@
         </button>
         <button @click="clearChat" class="px-2 py-1 rounded-lg text-[11px]"
           style="background: rgba(255,68,68,0.08); color: #ff4444; border: 1px solid rgba(255,68,68,0.2);">🗑️</button>
+        <button v-if="loading && streamingMsgIndex !== null" @click="stopStreaming()" class="px-2 py-1 rounded-lg text-[11px]"
+          style="background: rgba(255,68,68,0.15); color: #ff4444; border: 1px solid rgba(255,68,68,0.3); font-weight:600;">⏹ 停止</button>
       </div>
     </div>
 
@@ -234,9 +236,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { storeToRefs } from 'pinia'
+import { getToken } from '@/utils'
 
 // ========== API配置 ==========
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'https://api.lsjyapp.cn/api/v1').replace(/\/$/, '')
@@ -281,6 +284,8 @@ const aiOnline = ref(true)
 const authStore = useAuthStore()
 const { coinBalance, user } = storeToRefs(authStore)
 const activeActionIndex = ref<number | null>(null)
+const streamingMsgIndex = ref<number | null>(null) // 当前正在流式输出的消息索引
+let abortController: AbortController | null = null
 
 const modelOptions = [
   { key: 'doubao|doubao-1-5-pro-32k-250115', label: '豆包 Pro', provider: 'doubao', model: 'doubao-1-5-pro-32k-250115' },
@@ -403,10 +408,11 @@ const quickCmdsMap: Record<number, {icon:string; l:string; t:string}[]> = {
 
 const currentQuickCmds = computed(() => {
   if (!selectedAgent.value) return []
-  return quickCmdsMap[selectedAgent.value.id] || quickCmdsMap[1] || []
+  return quickCmdsMap[selectedAgent.value.id] || quickCmdsMap[101] || []
 })
 
 const statusText = computed(() => {
+  if (loading.value && streamingMsgIndex.value !== null) return `${selectedAgent.value?.name || 'AI'}输出中...`
   if (loading.value) return `${selectedAgent.value?.name || 'AI'}思考中...`
   if (genLoading.value) return '生成图片中...'
   return aiOnline.value ? `在线 · ${selectedAgent.value?.name || '罗圣AI'}待命` : 'AI服务暂不可用'
@@ -499,6 +505,149 @@ async function requestAgentChat(agent: Agent, payload: Record<string, any>) {
   }
 
   throw lastError || new Error('网络异常')
+}
+
+// ========== SSE 流式对话 ==========
+async function requestAgentChatSSE(
+  agent: Agent,
+  payload: Record<string, any>,
+  onChunk: (text: string) => void,
+  onDone: (data?: { coinCost?: number; balance?: number }) => void,
+  onError: (err: string) => void,
+) {
+  abortController = new AbortController()
+  const headers: Record<string, string> = {
+    'Authorization': `Bearer ${authToken.value}`,
+    'Content-Type': 'application/json',
+    'Accept': 'text/event-stream',
+  }
+
+  // 优先使用 NestJS 后端的 SSE 端点
+  const endpoints = [
+    `${API_BASE}/agents/${agent.id}/chat/stream`,
+    `${API_BASE}/ai/tools/${agent.id}/chat/stream`,
+  ]
+
+  for (const endpoint of endpoints) {
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload),
+        signal: abortController.signal,
+      })
+
+      if (res.status === 404 || res.status === 405) continue
+
+      if (res.status === 401) {
+        onError('登录已过期，请重新登录')
+        authStore.logout()
+        return
+      }
+
+      if (res.status === 402) {
+        try {
+          const errData = await res.json()
+          coinBalance.value = errData.data?.balance || errData.balance || 0
+          onError(`⚡ 圣力不足，当前余额 ${coinBalance.value}`)
+        } catch { onError('⚡ 圣力不足') }
+        return
+      }
+
+      if (!res.ok) {
+        const errText = await res.text().catch(() => '')
+        let errMsg = `API ${res.status}`
+        try { const d = JSON.parse(errText); if (d.message) errMsg = d.message } catch {}
+        onError(errMsg)
+        return
+      }
+
+      // 解析SSE流
+      const reader = res.body?.getReader()
+      if (!reader) {
+        onError('浏览器不支持流式读取')
+        return
+      }
+
+      const decoder = new TextDecoder()
+      let buffer = ''
+      let doneData: any = null
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() || ''
+
+        for (const line of lines) {
+          const trimmed = line.trim()
+          if (!trimmed || trimmed.startsWith(':')) continue
+          if (trimmed.startsWith('data: ')) {
+            const jsonStr = trimmed.slice(6)
+            if (jsonStr === '[DONE]') continue
+            try {
+              const parsed = JSON.parse(jsonStr)
+              if (parsed.type === 'chunk' || parsed.type === 'delta') {
+                onChunk(parsed.content || '')
+              } else if (parsed.type === 'done') {
+                doneData = parsed
+              } else if (parsed.type === 'error') {
+                onError(parsed.message || '流式响应错误')
+                return
+              }
+            } catch {
+              // 非 JSON 数据，可能是纯文本 content，直接输出
+              if (jsonStr) onChunk(jsonStr)
+            }
+          }
+        }
+      }
+
+      // 处理 buffer 中剩余的数据
+      if (buffer.trim().startsWith('data: ')) {
+        const jsonStr = buffer.trim().slice(6)
+        try {
+          const parsed = JSON.parse(jsonStr)
+          if (parsed.type === 'done') doneData = parsed
+          else if (parsed.type === 'chunk' || parsed.type === 'delta') onChunk(parsed.content || '')
+        } catch {}
+      }
+
+      onDone({
+        coinCost: doneData?.coinCost || doneData?.usage?.coinCost || agent.coinCost,
+        balance: doneData?.balance !== undefined ? doneData.balance : undefined,
+      })
+      return
+    } catch (err: any) {
+      if (err.name === 'AbortError') return
+      // 继续尝试下一个端点
+    }
+  }
+
+  // SSE端点都不可用，降级到普通请求
+  try {
+    const res = await requestAgentChat(agent, payload)
+    if (res.status === 401) { onError('登录已过期，请重新登录'); authStore.logout(); return }
+    if (res.status === 402) {
+      try { const d = await res.json(); coinBalance.value = d.data?.balance || 0; onError(`⚡ 圣力不足，当前余额 ${coinBalance.value}`) } catch { onError('⚡ 圣力不足') }
+      return
+    }
+    if (!res.ok) { const t = await res.text().catch(() => ''); onError(t || `API ${res.status}`); return }
+    const result = await res.json()
+    if (result.code !== 0) { onError(result.message || '服务错误'); return }
+    if (result.data.balance !== undefined) coinBalance.value = result.data.balance
+    const answer = result.data.content || result.data.reply || ''
+    onChunk(answer)
+    onDone({ coinCost: result.data.coinCost || agent.coinCost, balance: result.data.balance })
+  } catch (err: any) {
+    onError(formatChatError(err))
+  }
+}
+
+function stopStreaming() {
+  if (abortController) { abortController.abort(); abortController = null }
 }
 
 function formatChatError(err: any): string {
@@ -660,65 +809,65 @@ async function sendMsg() {
       }
     }
 
-    // 系统提示通过 systemPrompt 字段传给后端，不混入用户消息
-
-    // 使用主后端 /agent/chat，并在入口不可用时兜底到 /ai/tools/:id/chat
     const modelName = agent.modelName || selectedModel.value.model
     const providerName = agent.provider || selectedModel.value.provider
-    const res = await requestAgentChat(agent, {
-      messages: backendMessages,
-      model: modelName,
-      provider: providerName,
-      agentId: agent.id,
-      systemPrompt: getAgentSystemPrompt(agent),
-    })
 
-    // 圣力不足
-    if (res.status === 402) {
-      const errData = await res.json()
-      coinBalance.value = errData.data?.balance || 0
+    // 先添加一条空的assistant消息用于流式填充
+    msgs.value.push({ role: 'assistant', content: '', coinCost: 0 })
+    streamingMsgIndex.value = msgs.value.length - 1
+    let fullAnswer = ''
+
+    await requestAgentChatSSE(
+      agent,
+      {
+        messages: backendMessages,
+        model: modelName,
+        provider: providerName,
+        agentId: agent.id,
+        systemPrompt: getAgentSystemPrompt(agent),
+      },
+      // onChunk: 逐字追加
+      (chunk: string) => {
+        fullAnswer += chunk
+        if (streamingMsgIndex.value !== null) {
+          msgs.value[streamingMsgIndex.value].content = fullAnswer
+        }
+        scrollToBottom()
+      },
+      // onDone: 流式完成
+      (data) => {
+        if (streamingMsgIndex.value !== null) {
+          msgs.value[streamingMsgIndex.value].content = fullAnswer || '⚠️ 未返回内容'
+          msgs.value[streamingMsgIndex.value].coinCost = data?.coinCost || agent.coinCost
+        }
+        if (data?.balance !== undefined) coinBalance.value = data.balance
+        streamingMsgIndex.value = null
+        // 保存对话历史
+        saveChatHistory(agent, userContent, fullAnswer, Date.now() - startTime)
+      },
+      // onError: 流式错误
+      (errMsg: string) => {
+        if (streamingMsgIndex.value !== null) {
+          msgs.value[streamingMsgIndex.value].content = `⚠️ ${errMsg}`
+          streamingMsgIndex.value = null
+        } else {
+          msgs.value.push({ role: 'assistant', content: `⚠️ ${errMsg}` })
+        }
+      }
+    )
+  } catch (e: any) {
+    if (streamingMsgIndex.value !== null) {
+      msgs.value[streamingMsgIndex.value].content = `⚠️ 连接失败：${formatChatError(e)}`
+      streamingMsgIndex.value = null
+    } else {
       msgs.value.push({
         role: 'assistant',
-        content: `⚡ **圣力不足**\n\n当前余额：${coinBalance.value}\n本次需要：${errData.data?.cost || agent.coinCost}\n\n点击右上角「⚡」前往充值`,
+        content: `⚠️ 连接失败：${formatChatError(e)}`,
       })
-      loading.value = false
-      scrollToBottom()
-      return
     }
-
-    if (!res.ok) {
-      const errText = await res.text().catch(() => '')
-      let errMsg = `API ${res.status}`
-      try {
-        const errData = JSON.parse(errText)
-        if (errData.message) errMsg = errData.message
-        if (errData.data?.debug) console.error('[agent/chat] 400 debug:', errData.data.debug)
-      } catch { /* 非JSON响应 */ }
-      throw new Error(errMsg)
-    }
-
-    const result = await res.json()
-    if (result.code !== 0) throw new Error(result.message || '服务错误')
-
-    if (result.data.balance !== undefined) {
-      coinBalance.value = result.data.balance
-    }
-
-    const answerText = result.data.content || result.data.reply || '⚠️ 未返回内容'
-    msgs.value.push({
-      role: 'assistant',
-      content: answerText,
-      coinCost: result.data.coinCost || agent.coinCost
-    })
-    // 同步对话记录到后端
-    saveChatHistory(agent, userContent, answerText, Date.now() - startTime)
-  } catch (e: any) {
-    msgs.value.push({
-      role: 'assistant',
-      content: `⚠️ 连接失败：${formatChatError(e)}`,
-    })
   } finally {
     loading.value = false
+    abortController = null
     scrollToBottom()
   }
 }

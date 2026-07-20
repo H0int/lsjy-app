@@ -349,7 +349,7 @@ async function localFallbackLogin(username: string, password: string) {
   }
 
   if (knownAccounts[username] && knownAccounts[username] === password) {
-    // 本地验证通过，生成一个临时token
+    // 本地验证通过，生成一个临时token并写入localStorage
     const fakeToken = `local_${Date.now()}_${username}`
     setToken(fakeToken)
 
@@ -368,25 +368,12 @@ async function localFallbackLogin(username: string, password: string) {
     localStorage.setItem('lsjy_user', JSON.stringify(userData))
     localStorage.setItem('lsjy_local_auth', 'true')
 
-    // 手动设置auth store状态
-    const { useAuthStore } = await import('@/stores/auth')
-    const auth = useAuthStore()
-    // @ts-ignore - 直接设置内部状态
-    auth.token = fakeToken
-    auth.user = userData as any
-    auth.userRoles = ['boss', 'founder', 'super_admin']
-    auth.isLocalAuth = true
-
-    // ElMessage需要延迟导入避免循环依赖
     const { ElMessage } = await import('element-plus')
-    ElMessage.success('已通过本地验证进入系统（部分功能可能受限）')
+    ElMessage.success('已通过本地验证，正在进入系统...')
 
-    // 刷新服务器状态检测（后台恢复后可以正常使用）
-    checkServerHealth()
-
-    router.push('/dashboard')
+    // 使用全页面跳转而非router.push，确保所有状态完整初始化
+    window.location.href = '/#/dashboard'
   } else {
-    // 未知账号或密码错误
     const { ElMessage } = await import('element-plus')
     ElMessage.error('账号或密码错误，且服务器不可用无法验证')
     failCount.value++

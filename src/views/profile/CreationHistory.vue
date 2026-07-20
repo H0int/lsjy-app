@@ -7,7 +7,20 @@
         </h1>
         <p class="mt-1" style="color: var(--cyber-text-dim); font-size: 13px;">您的AI工具使用历史与创作成果</p>
       </div>
-      <div class="flex gap-2">
+      <div class="flex items-center gap-2">
+        <el-select v-model="toolTypeFilter" placeholder="按工具类型筛选" size="default" clearable
+          style="width: 150px; background: rgba(0,240,255,0.03); border-color: rgba(0,240,255,0.2);">
+          <el-option label="全部" value="" />
+          <el-option label="内容创作" value="内容创作" />
+          <el-option label="AI绘画" value="AI绘画" />
+          <el-option label="视频创作" value="视频创作" />
+          <el-option label="AI智能" value="AI智能" />
+          <el-option label="其他" value="其他" />
+        </el-select>
+        <el-button v-if="allRecords.length > 0" @click="exportRecords" size="default"
+          style="border-color: rgba(0,240,255,0.4); color: var(--cyber-cyan); background: rgba(0,240,255,0.05);">
+          导出记录
+        </el-button>
         <el-button v-if="allRecords.length > 0" @click="clearRecords" size="default"
           style="border-color: rgba(239,68,68,0.4); color: #ef4444; background: rgba(239,68,68,0.05);">
           🗑️ 清空记录
@@ -80,6 +93,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 
 const router = useRouter()
 const activeFilter = ref('all')
+const toolTypeFilter = ref('')
 const previewUrl = ref('')
 
 const filterTabs = [
@@ -96,6 +110,7 @@ interface Record {
   icon: string
   time: string
   category: string
+  toolType?: string
   inputText?: string
   outputText?: string
   outputUrl?: string
@@ -124,9 +139,49 @@ function loadRecords() {
 }
 
 const filteredRecords = computed(() => {
-  if (activeFilter.value === 'all') return allRecords.value
-  return allRecords.value.filter(r => r.category?.includes(activeFilter.value))
+  let list = allRecords.value
+  if (activeFilter.value !== 'all') {
+    list = list.filter(r => r.category?.includes(activeFilter.value))
+  }
+  if (toolTypeFilter.value) {
+    list = list.filter(r => {
+      const cat = r.category || r.toolType || ''
+      if (toolTypeFilter.value === '其他') {
+        return !cat.includes('内容创作') && !cat.includes('AI绘画') && !cat.includes('图片生成') && !cat.includes('视频创作') && !cat.includes('视频生成') && !cat.includes('AI智能')
+      }
+      return cat.includes(toolTypeFilter.value)
+    })
+  }
+  return list
 })
+
+function exportRecords() {
+  const records = filteredRecords.value
+  if (records.length === 0) {
+    ElMessage.warning('没有可导出的记录')
+    return
+  }
+  const lines = records.map((r, i) => {
+    const parts = [
+      `[${i + 1}] ${r.name || '未知工具'}`,
+      `  时间: ${r.time}`,
+      `  类型: ${r.category || 'AI工具'}`,
+    ]
+    if (r.inputText) parts.push(`  输入: ${r.inputText}`)
+    if (r.outputText) parts.push(`  输出: ${r.outputText}`)
+    if (r.outputUrl) parts.push(`  链接: ${r.outputUrl}`)
+    return parts.join('\n')
+  })
+  const content = `创作记录导出\n导出时间: ${new Date().toLocaleString()}\n共 ${records.length} 条记录\n${'='.repeat(40)}\n\n${lines.join('\n\n')}\n`
+  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `创作记录_${new Date().toISOString().slice(0, 10)}.txt`
+  a.click()
+  URL.revokeObjectURL(url)
+  ElMessage.success('导出成功')
+}
 
 async function clearRecords() {
   try {

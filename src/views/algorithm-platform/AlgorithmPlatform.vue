@@ -487,26 +487,64 @@ async function sendPanelMsg() {
     scrollPanelBottom()
     try {
       const stylePrompt = imgStyle.value ? `，${imgStyle.value}风格` : ''
-      const sizePrompt = `，尺寸${imgSize.value}`
+      const sizeParts = imgSize.value.split('x')
+      const w = parseInt(sizeParts[0]) || 1024
+      const h = parseInt(sizeParts[1]) || 1024
       const token = authToken.value
-      const res = await fetch(`${API_BASE}/ai/tools/image/generate`, {
+
+      // 健康检查：先探测后端是否可达，避免用户长时间等待
+      try {
+        const healthRes = await fetch(`${API_BASE}/ai/tools?t=${Date.now()}`, {
+          method: 'GET',
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        })
+        if (healthRes.status >= 500) {
+          panelMsgs.value.push({ role: 'assistant', content: '⚠️ AI服务正在维护中，请稍后再试。\n\n💡 你也可以前往「AI工具 → 图片生成」使用完整功能。' })
+          panelLoading.value = false
+          scrollPanelBottom()
+          return
+        }
+      } catch {
+        panelMsgs.value.push({ role: 'assistant', content: '⚠️ 无法连接到AI服务，请检查网络后重试。\n\n💡 你也可以前往「AI工具 → 图片生成」使用完整功能。' })
+        panelLoading.value = false
+        scrollPanelBottom()
+        return
+      }
+
+      // 使用后端正确的图片生成接口：POST /ai/tools/:id/generate
+      // toolId=3 对应 AI绘画师（后端已注册的图片生成工具）
+      const imageToolId = 3
+      const res = await fetch(`${API_BASE}/ai/tools/${imageToolId}/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-        body: JSON.stringify({ prompt: text + stylePrompt + sizePrompt, width: parseInt(imgSize.value.split('x')[0]), height: parseInt(imgSize.value.split('x')[1]), model: 'flux' })
+        body: JSON.stringify({ prompt: text + stylePrompt, width: w, height: h, style: imgStyle.value || 'auto', quality: 'standard' })
       })
       if (res.ok) {
         const data = await res.json()
-        const imageUrl = data.data?.url || data.data?.imageUrl || data.url
-        if (imageUrl) {
-          panelMsgs.value.push({ role: 'assistant', content: `🎨 图片已生成！\n\n![生成图片](${imageUrl})` })
+        if (data.code === 0 || data.code === 200) {
+          // 成功：提取图片URL
+          const urls = data.data?.urls || data.data?.url || data.data?.imageUrl
+          if (Array.isArray(urls) && urls.length > 0) {
+            panelMsgs.value.push({ role: 'assistant', content: `🎨 图片已生成！\n\n${urls.map((u: string, i: number) => `![生成图片${i + 1}](${u})`).join('\n')}` })
+          } else if (typeof urls === 'string' && urls) {
+            panelMsgs.value.push({ role: 'assistant', content: `🎨 图片已生成！\n\n![生成图片](${urls})` })
+          } else {
+            panelMsgs.value.push({ role: 'assistant', content: '图片生成任务已提交，请在「AI工具 → 图片生成」中查看结果。' })
+          }
+        } else if (data.code === 402) {
+          panelMsgs.value.push({ role: 'assistant', content: `⚡ 圣力不足，${data.message || '请前往个人中心充值。'}` })
         } else {
-          panelMsgs.value.push({ role: 'assistant', content: '图片生成任务已提交，请在"AI工具 → 图片生成"中查看结果。' })
+          panelMsgs.value.push({ role: 'assistant', content: `⚠️ ${data.message || '图片生成失败，请稍后再试。'}` })
         }
+      } else if (res.status === 401) {
+        panelMsgs.value.push({ role: 'assistant', content: '⚠️ 登录已过期，请重新登录后使用。' })
+      } else if (res.status === 402) {
+        panelMsgs.value.push({ role: 'assistant', content: '⚡ 圣力不足，请前往个人中心充值。' })
       } else {
-        panelMsgs.value.push({ role: 'assistant', content: '⚠️ 图片生成服务正在连接中，请稍后再试。也可以前往"AI工具 → 图片生成"使用完整功能。' })
+        panelMsgs.value.push({ role: 'assistant', content: `⚠️ 图片生成服务暂不可用（${res.status}），请稍后再试。\n\n💡 也可以前往「AI工具 → 图片生成」使用完整功能。` })
       }
     } catch {
-      panelMsgs.value.push({ role: 'assistant', content: '⚠️ 图片生成请求失败，请检查网络连接。也可以前往"AI工具 → 图片生成"使用完整功能。' })
+      panelMsgs.value.push({ role: 'assistant', content: '⚠️ 网络连接失败，请检查网络后重试。\n\n💡 也可以前往「AI工具 → 图片生成」使用完整功能。' })
     }
     panelLoading.value = false
     scrollPanelBottom()
