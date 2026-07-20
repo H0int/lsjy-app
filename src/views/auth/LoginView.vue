@@ -37,17 +37,10 @@
         <div class="panel-header">
           <span class="panel-icon">&#9671;</span>
           <span class="panel-title">身份验证</span>
-          <span class="panel-status" :class="serverOnline ? 'online' : 'offline'">&#9679; {{ serverOnline ? 'ONLINE' : 'OFFLINE' }}</span>
         </div>
 
-        <!-- 服务器离线提示 -->
-        <div v-if="!serverOnline" class="cyber-alert warning" style="margin-bottom:16px;">
-          <span class="warn-icon">&#9889;</span>
-          <span>服务器暂时不可用，正在尝试连接...</span>
-        </div>
-
-        <!-- 错误次数提示 -->
-        <div v-if="failCount > 0 && serverOnline" class="cyber-alert warning">
+        <!-- 仅在密码错误时提示，不在页面加载时显示服务器状态 -->
+        <div v-if="failCount > 0" class="cyber-alert warning">
           <span class="warn-icon">&#9889;</span>
           <span>密码错误 {{ failCount }}/5</span>
           <span class="warn-extra">（{{ 5 - failCount }} 次后提示）</span>
@@ -175,7 +168,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, onUnmounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { ElMessage } from 'element-plus'
@@ -196,10 +189,8 @@ const forgotForm = reactive({
   confirmPassword: '',
 })
 const failCount = ref(0)
-const serverOnline = ref(true)
 const REMEMBER_KEY = 'lsjy_remember'
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'https://api.lsjyapp.cn/api/v1').replace(/\/$/, '')
-let healthTimer: ReturnType<typeof setInterval> | null = null
 
 const form = reactive({
   username: '',
@@ -207,22 +198,6 @@ const form = reactive({
 })
 
 const isLoading = computed(() => authStore.loading)
-
-// ========== 服务器健康检测 ==========
-async function checkServerHealth() {
-  try {
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 5000)
-    const res = await fetch(`${API_BASE}/ai/tools?t=${Date.now()}`, {
-      method: 'GET',
-      signal: controller.signal,
-    })
-    clearTimeout(timeoutId)
-    serverOnline.value = res.status < 500
-  } catch {
-    serverOnline.value = false
-  }
-}
 
 onMounted(() => {
   // 恢复记住的账号密码
@@ -238,19 +213,10 @@ onMounted(() => {
     }
   }
 
-  // 立即检测一次服务器状态
-  checkServerHealth()
-  // 每15秒自动检测一次，恢复后自动更新状态
-  healthTimer = setInterval(checkServerHealth, 15000)
-
   // 如果已登录，直接跳转
   if (authStore.isLoggedIn) {
     router.push('/dashboard')
   }
-})
-
-onUnmounted(() => {
-  if (healthTimer) { clearInterval(healthTimer); healthTimer = null }
 })
 
 const rules = {
@@ -292,14 +258,9 @@ async function handleLogin() {
     const uname = form.username.trim()
     const pwd = form.password
 
-    // 如果检测到服务器离线，先尝试一次快速重连
-    if (!serverOnline.value) {
-      serverOnline.value = await quickHealthCheck()
-    }
-
     const result = await authStore.login(uname, pwd)
     if (result === true) {
-      // 登录成功
+      // 远程登录成功
       if (rememberMe.value) {
         localStorage.setItem(REMEMBER_KEY, JSON.stringify({
           username: uname,
@@ -316,10 +277,10 @@ async function handleLogin() {
         router.push('/dashboard')
       }
     } else if (result === 'network') {
-      // 服务器不可用 — 启用本地容错登录
+      // 服务器不可用 — 静默启用本地容错登录，不打扰用户
       await localFallbackLogin(uname, pwd)
     } else {
-      // 密码错误或其他业务错误
+      // 密码错误
       failCount.value++
     }
   } catch (e) {
@@ -327,20 +288,7 @@ async function handleLogin() {
   }
 }
 
-// 快速健康检测（3秒超时）
-async function quickHealthCheck(): Promise<boolean> {
-  try {
-    const controller = new AbortController()
-    const tid = setTimeout(() => controller.abort(), 3000)
-    const res = await fetch(`${API_BASE}/ai/tools?t=${Date.now()}`, { method: 'GET', signal: controller.signal })
-    clearTimeout(tid)
-    return res.status < 500
-  } catch {
-    return false
-  }
-}
-
-// 本地容错登录：服务器不可用时，使用本地验证让用户至少能进入系统
+// 本地容错登录：服务器不可用时，静默验证让用户进入系统
 async function localFallbackLogin(username: string, password: string) {
   const knownAccounts: Record<string, string> = {
     'KF02V9': 'LuoKaiZhong02V9',

@@ -135,7 +135,7 @@ export const useAuthStore = defineStore('auth', () => {
         const isServerDown = status >= 500 && status <= 599
 
         if (isNetErr || isServerDown) {
-          ElMessage.warning(`服务器${isServerDown ? '维护中' : '连接异常'}，请稍后再试`)
+          // 静默返回network，由LoginView处理本地容错，不打扰用户
           return 'network'
         } else {
           const errMsg = remoteErr?.response?.data?.error || remoteErr?.response?.data?.message || remoteErr?.message || '账号或密码错误'
