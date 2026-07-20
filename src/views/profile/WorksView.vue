@@ -26,6 +26,7 @@
     <div v-else-if="filteredWorks.length === 0" class="works-empty">
       <div class="empty-icon">🗂️</div>
       <p>{{ activeTab === 'works' ? '暂无作品' : '暂无已用工具记录' }}</p>
+      <p class="works-empty-hint" v-if="authStore.isLocalAuth">💡 服务器维护中，历史数据暂不可用。维护完成后将自动恢复您的作品和工具记录。</p>
       <router-link to="/tools" class="works-refresh">去 AI 工具体验</router-link>
     </div>
 
@@ -70,9 +71,11 @@ import { onMounted, onBeforeUnmount, ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { toolApi } from '@/api'
+import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
 const router = useRouter()
+const authStore = useAuthStore()
 
 const works = ref<any[]>([])
 const loading = ref(false)
@@ -174,10 +177,17 @@ async function loadWorks() {
     // 缓存到localStorage
     if (allItems.length) localStorage.setItem('lsjy_works', JSON.stringify(allItems))
   } catch {
-    // ★ 本地容错：从localStorage恢复作品数据
+    // ★ 本地容错：从localStorage恢复数据（作品+工具使用记录）
     try {
       const cached = localStorage.getItem('lsjy_works')
       if (cached) works.value = JSON.parse(cached)
+      // 合并本地工具使用记录（lsjy_tool_usage，AI对话产生）
+      const usage = JSON.parse(localStorage.getItem('lsjy_tool_usage') || '[]')
+      if (usage.length) {
+        const existingIds = new Set(works.value.map((w: any) => `${w.toolId}_${w.createdAt}`))
+        const newItems = usage.filter((u: any) => !existingIds.has(`${u.toolId}_${u.createdAt}`))
+        works.value = [...newItems, ...works.value]
+      }
     } catch {}
   } finally {
     loading.value = false

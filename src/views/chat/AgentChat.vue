@@ -1120,6 +1120,19 @@ async function saveChatHistory(agent: Agent, question: string, answer: string, l
       history.unshift({ agentId: agent.id, agentName: agent.name, question, answer, latency, createdAt: new Date().toISOString() })
       if (history.length > 50) history.length = 50
       localStorage.setItem('lsjy_chat_history', JSON.stringify(history))
+      // ★ 同时记录到"已用工具"列表（让WorksView的已用工具有数据）
+      const toolUsage = JSON.parse(localStorage.getItem('lsjy_tool_usage') || '[]')
+      toolUsage.unshift({
+        id: Date.now(),
+        toolId: agent.id,
+        toolName: agent.name,
+        source: 'live-chat',
+        status: 'completed',
+        outputText: answer.substring(0, 200),
+        createdAt: new Date().toISOString(),
+      })
+      if (toolUsage.length > 100) toolUsage.length = 100
+      localStorage.setItem('lsjy_tool_usage', JSON.stringify(toolUsage))
       return
     }
     const base = import.meta.env.VITE_API_BASE_URL || '/api/v1'
