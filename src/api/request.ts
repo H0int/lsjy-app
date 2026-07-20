@@ -1,8 +1,20 @@
 import axios from 'axios'
-import type { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from 'axios'
+import type { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse, AxiosAdapter } from 'axios'
 import { ElMessage } from 'element-plus'
 import type { ApiResponse } from '@/types'
 import { getToken, removeToken } from '@/utils'
+
+// ★ 本地模式适配器：local_ token 时直接返回模拟成功响应
+const localModeAdapter: AxiosAdapter = (config) => {
+  return Promise.resolve({
+    data: { code: 0, data: null, message: 'ok' },
+    status: 200,
+    statusText: 'OK',
+    headers: {},
+    config,
+    statusText: 'OK'
+  } as AxiosResponse)
+}
 
 const service: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1',
@@ -33,24 +45,15 @@ service.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`
     }
 
-    // ★ 本地容错登录时：拦截API请求，返回空数据避免向后端发请求报错
+    // ★ 本地容错登录时：使用本地适配器直接返回模拟响应，不实际发送请求
     if (token && token.startsWith('local_')) {
       const url = config.url || ''
-      // 登录/注册相关请求放行（由业务代码处理）
+      // 登录/注册相关请求放行
       if (url.includes('/auth/login') || url.includes('/auth/register')) {
         return config
       }
-      // 其他请求直接返回模拟空响应，不实际发送
       console.info('[API] 本地模式，跳过请求:', url)
-      const adapter = () => Promise.resolve({
-        data: { code: 0, data: null, message: '本地模式' },
-        status: 200,
-        statusText: 'OK',
-        headers: {},
-        config
-      })
-      // @ts-ignore - AxiosRequestConfig.adapter 类型限制
-      config.adapter = adapter
+      config.adapter = localModeAdapter
     }
 
     return config

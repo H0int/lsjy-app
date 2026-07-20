@@ -492,6 +492,14 @@ async function sendPanelMsg() {
       const h = parseInt(sizeParts[1]) || 1024
       const token = authToken.value
 
+      // ★ 本地容错模式：提示服务维护中
+      if (token && token.startsWith('local_')) {
+        panelMsgs.value.push({ role: 'assistant', content: '⚠️ AI服务正在维护中，暂时无法生成图片。\n\n💡 维护完成后将自动恢复，请稍后再试。' })
+        panelLoading.value = false
+        scrollPanelBottom()
+        return
+      }
+
       // 健康检查：先探测后端是否可达，避免用户长时间等待
       try {
         const healthRes = await fetch(`${API_BASE}/ai/tools?t=${Date.now()}`, {

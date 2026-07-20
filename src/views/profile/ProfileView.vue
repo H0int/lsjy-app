@@ -353,16 +353,27 @@ function handleQuickAction(item: any) {
 async function saveProfile() {
   saving.value = true
   try {
-    await userApi.updateProfile({
+    const profileData = {
       nickname: profileForm.nickname,
       bio: profileForm.bio,
       gender: profileForm.gender,
       phone: profileForm.phone,
       email: profileForm.email,
       avatar: avatarUrl.value
-    })
-    await authStore.fetchUserProfile()
-    ElMessage.success('保存成功')
+    }
+
+    if (authStore.isLocalAuth) {
+      // 本地模式：直接更新 localStorage 和 store，不请求后端
+      const userData = JSON.parse(localStorage.getItem('lsjy_user') || '{}')
+      Object.assign(userData, profileData)
+      localStorage.setItem('lsjy_user', JSON.stringify(userData))
+      authStore.user = { ...userData } as any
+      ElMessage.success('保存成功')
+    } else {
+      await userApi.updateProfile(profileData)
+      await authStore.fetchUserProfile()
+      ElMessage.success('保存成功')
+    }
   } catch {
     // 错误由拦截器处理
   } finally {
@@ -379,6 +390,10 @@ async function changePassword() {
   }
   if (pwdForm.newPassword !== pwdForm.confirmPassword) {
     return ElMessage.warning('两次新密码不一致')
+  }
+
+  if (authStore.isLocalAuth) {
+    return ElMessage.info('服务器维护中，密码修改功能暂时不可用')
   }
 
   pwdLoading.value = true

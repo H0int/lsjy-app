@@ -409,6 +409,10 @@ async function loadSkillsStatus() {
     }
   } catch { /* 后端API不可用，降级到直接探测 */ }
 
+  // 本地容错模式：跳过服务探测，全部标记为不可用
+  const currentToken = localStorage.getItem('lsjy_token')
+  if (currentToken && currentToken.startsWith('local_')) return
+
   // 降级：直接探测各服务的Nginx代理路径
   const probes = [
     { name: 'crawl4ai', path: '/api/v1/skills/crawl/' },

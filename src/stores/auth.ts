@@ -154,6 +154,21 @@ export const useAuthStore = defineStore('auth', () => {
 
   // 获取用户信息
   async function fetchUserProfile() {
+    // 本地容错模式：从 localStorage 读取，不发请求
+    const currentToken = getToken()
+    if (currentToken && currentToken.startsWith('local_')) {
+      try {
+        const saved = localStorage.getItem('lsjy_user')
+        if (saved) {
+          const userData = JSON.parse(saved)
+          user.value = userData
+          userRoles.value = extractRoles(userData.roles)
+        }
+      } catch (e) {
+        console.error('本地模式读取用户信息失败', e)
+      }
+      return
+    }
     try {
       const res = await userApi.getProfile()
       const userData = (res as any).data?.data || (res as any).data || res
@@ -169,6 +184,12 @@ export const useAuthStore = defineStore('auth', () => {
 
   // 获取圣力余额
   async function fetchBalance() {
+    // 本地容错模式：Boss 无限，不发请求
+    const currentToken = getToken()
+    if (currentToken && currentToken.startsWith('local_')) {
+      coinBalance.value = Infinity
+      return
+    }
     try {
       const res = await paymentApi.getBalance()
       const balData = (res as any).data?.data || (res as any).data || res

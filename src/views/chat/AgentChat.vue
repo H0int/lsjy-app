@@ -516,6 +516,25 @@ async function requestAgentChatSSE(
   onDone: (data?: { coinCost?: number; balance?: number }) => void,
   onError: (err: string) => void,
 ) {
+  // ★ 本地容错模式：返回模拟AI响应，不发请求
+  if (authStore.isLocalAuth) {
+    const lastMsg = payload.messages?.filter((m: any) => m.role === 'user').pop()
+    const userText = typeof lastMsg?.content === 'string' ? lastMsg.content : '你好'
+    const reply = `你好！我是${agent.name}，${agent.description || '您的AI助手'}。\n\n目前服务器维护中，AI对话功能暂时不可用。维护完成后将自动恢复，感谢您的理解。`
+    // 模拟逐字输出效果
+    let idx = 0
+    const timer = setInterval(() => {
+      if (idx < reply.length && streamingMsgIndex.value !== null) {
+        onChunk(reply[idx])
+        idx++
+      } else {
+        clearInterval(timer)
+        onDone({ coinCost: 0 })
+      }
+    }, 30)
+    return
+  }
+
   abortController = new AbortController()
   const headers: Record<string, string> = {
     'Authorization': `Bearer ${authToken.value}`,
@@ -886,6 +905,14 @@ async function saveChatHistory(agent: Agent, question: string, answer: string, l
   try {
     const token = getToken()
     if (!token) return
+    // 本地容错模式：只存 localStorage，不发请求
+    if (token.startsWith('local_')) {
+      const history = JSON.parse(localStorage.getItem('lsjy_chat_history') || '[]')
+      history.unshift({ agentId: agent.id, agentName: agent.name, question, answer, latency, createdAt: new Date().toISOString() })
+      if (history.length > 50) history.length = 50
+      localStorage.setItem('lsjy_chat_history', JSON.stringify(history))
+      return
+    }
     const base = import.meta.env.VITE_API_BASE_URL || '/api/v1'
     await fetch(`${base}/chat-history/save`, {
       method: 'POST',
