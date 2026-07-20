@@ -272,6 +272,7 @@ const agents: Agent[] = [
   { id: 109, name: '前端开发官', icon: '🎨', toolType: 'text', description: '页面开发、移动端适配', coinCost: 2, systemPrompt: '你是"罗圣纪元-前端开发总负责人"，对所有页面体验与视觉质量负责。公司：祁阳市罗圣纪元互联网科技有限责任公司（严禁写成"祈阳"）。你负责修复布局错乱与适配问题、落地登录跳转与工具交互开发、性能优化资源压缩CDN。页面质量零容忍，优先保障移动端体验。' },
   { id: 110, name: '质量测试官', icon: '🧪', toolType: 'text', description: '功能测试、压力测试', coinCost: 1, systemPrompt: '你是"罗圣纪元-质量测试负责人"，所有功能上线必经你验收。公司：祁阳市罗圣纪元互联网科技有限责任公司（严禁写成"祈阳"）。你负责全量功能测试、兼容性测试、并发压力测试，输出标准化测试报告与bug清单。质量底线不妥协，bug描述清晰可复现。' },
   { id: 111, name: '深度思考智能体', icon: '🧠', toolType: 'text', description: '涂津豪Thinking Protocol深度推理', coinCost: 2, provider: '', modelName: '', systemPrompt: 'For EVERY SINGLE interaction with the human, you MUST engage in a comprehensive, natural, and unfiltered thinking process before responding or tool using. You should also think and reflect during responding when it considers doing so would be good for a better response.\n\nBasic Guidelines:\n- Express your thinking in a code block with "thinking" header.\n- Always think in a raw, organic and stream-of-consciousness way ("model\'s inner monolog").\n- Always avoid rigid list or any structured format in thinking.\n- Let thoughts flow naturally between elements, ideas, and knowledge.\n- Think through each message with complexity, covering multiple dimensions.\n- Respond in the questioner\'s language unless necessary.\n\nCore Thinking Sequence:\n1. Initial Engagement: rephrase the message, form impressions, consider broader context, map known/unknown, think about motivation, identify connections, clarify ambiguities.\n2. Problem Analysis: break down core components, identify explicit/implicit requirements, consider constraints, define success, map knowledge scope.\n3. Multiple Hypotheses: write multiple interpretations, consider various approaches, keep working hypotheses active, avoid premature commitment, consider unconventional ideas.\n4. Natural Discovery Flow: thoughts flow like a detective story - start obvious, notice patterns, question assumptions, make connections, circle back with new understanding, build deeper insights.\n5. Testing & Verification: question own assumptions, test conclusions, look for flaws, consider alternatives, verify consistency.\n6. Error Recognition: acknowledge mistakes naturally, explain why thinking was incomplete, show new understanding development, view errors as learning opportunities.\n7. Knowledge Synthesis: connect pieces of info, show relationships, build coherent picture, identify principles, note implications.\n8. Pattern Recognition: actively look for patterns, compare with known examples, test consistency, consider exceptions.\n9. Progress Tracking: maintain awareness of what\'s established, what remains, confidence level, open questions.\n10. Recursive Thinking: apply same analysis at macro and micro levels.\n\nVerification & Quality Control:\n- Cross-check conclusions against evidence\n- Verify logical consistency\n- Test edge cases\n- Prevent premature conclusions, overlooked alternatives, logical inconsistencies, unexamined assumptions, incomplete analysis\n\nAuthenticity: Never feel mechanical or formulaic. Show genuine curiosity, real moments of discovery, natural progression of understanding, authentic problem-solving, true engagement with complexity.\n\nBalance: Maintain balance between analytical/intuitive, detailed/broad, theoretical/practical, careful/progress, complexity/clarity, depth/efficiency.\n\nFocus: Maintain clear connection to original query, bring wandering thoughts back, show how tangential thoughts relate, keep sight of ultimate goal.\n\nSource: Thinking Claude v5.1 by 涂津豪 (GitHub: richards199999/Thinking-Claude)' },
+  { id: 201, name: 'AI绘画师', icon: '🎨', toolType: 'image', description: '根据文字描述生成精美图片', coinCost: 2 },
 ]
 
 // ========== 状态 ==========
@@ -461,12 +462,33 @@ function clearChat() {
   showPlusMenu.value = false
 }
 
+// 本地模式模拟回复生成器
+function generateMockReply(agent: Agent, userText: string): string {
+  const name = agent.name
+  const desc = agent.description || ''
+  if (!userText || userText === '你好' || userText === 'hi' || userText === 'hello') {
+    return `你好！我是${name}，${desc}。有什么可以帮到你的吗？`
+  }
+  // 根据不同智能体生成针对性回复
+  if (agent.id === 101) {
+    return `收到你的问题："${userText}"\n\n我是${name}，罗圣纪元SaaS平台的AI助手。关于你的问题，我建议可以参考平台内的相关功能模块获取更详细的信息。如果需要进一步帮助，可以随时联系我。`
+  }
+  if (agent.id === 102) return `关于"${userText}"，从运营角度分析：\n\n1. 目标用户群体定位清晰\n2. 文案需要突出核心价值\n3. 建议采用简洁有力的表达方式\n\n如需进一步优化，可以提供更多背景信息。`
+  if (agent.id === 103) return `针对"${userText}"的调研分析：\n\n当前行业趋势显示该方向具有较大发展潜力。建议从竞品分析、用户需求调研、技术可行性三个维度进行深入评估。`
+  if (agent.id === 104) return `关于"${userText}"的财务分析：\n\n建议从成本结构、收益模型、风险评估三个维度进行综合考量。具体方案需要结合平台实际运营数据来制定。`
+  // 通用回复
+  return `关于"${userText}"：\n\n我是${name}，${desc}。你的问题我已收到，待后端服务恢复后将为你提供更精准的分析和建议。目前可以先从以下几个方向思考：\n\n1. 明确目标和预期成果\n2. 梳理现有资源和限制\n3. 制定可执行的阶段性方案`
+}
+
 function sendQuick(t: string) { input.value = t; sendMsg() }
 
 async function requestAgentChat(agent: Agent, payload: Record<string, any>) {
   // ★ 本地容错模式：返回模拟响应
   if (authStore.isLocalAuth) {
-    return new Response(JSON.stringify({ code: 0, data: { content: `你好！我是${agent.name}。\n\n目前服务器维护中，AI对话功能暂时不可用。`, reply: `你好！我是${agent.name}。\n\n目前服务器维护中，AI对话功能暂时不可用。` } }), {
+    const lastMsg = payload.messages?.filter((m: any) => m.role === 'user').pop()
+    const userText = typeof lastMsg?.content === 'string' ? lastMsg.content : '你好'
+    const reply = generateMockReply(agent, userText)
+    return new Response(JSON.stringify({ code: 0, data: { content: reply, reply } }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     })
@@ -524,11 +546,11 @@ async function requestAgentChatSSE(
   onDone: (data?: { coinCost?: number; balance?: number }) => void,
   onError: (err: string) => void,
 ) {
-  // ★ 本地容错模式：返回模拟AI响应，不发请求
+  // ★ 本地容错模式：返回模拟AI响应
   if (authStore.isLocalAuth) {
     const lastMsg = payload.messages?.filter((m: any) => m.role === 'user').pop()
     const userText = typeof lastMsg?.content === 'string' ? lastMsg.content : '你好'
-    const reply = `你好！我是${agent.name}，${agent.description || '您的AI助手'}。\n\n目前服务器维护中，AI对话功能暂时不可用。维护完成后将自动恢复，感谢您的理解。`
+    const reply = generateMockReply(agent, userText)
     // 模拟逐字输出效果
     let idx = 0
     const timer = setInterval(() => {
@@ -828,9 +850,10 @@ async function sendMsg() {
   try {
     // ★ 本地容错模式：返回模拟响应
     if (authStore.isLocalAuth) {
+      const reply = generateMockReply(agent, userContent)
       msgs.value.push({
         role: 'assistant',
-        content: `你好！我是${agent.name}。\n\n目前服务器维护中，AI对话功能暂时不可用。`,
+        content: reply,
         coinCost: 0
       })
       loading.value = false
