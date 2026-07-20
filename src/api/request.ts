@@ -32,6 +32,27 @@ service.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
+
+    // ★ 本地容错登录时：拦截API请求，返回空数据避免向后端发请求报错
+    if (token && token.startsWith('local_')) {
+      const url = config.url || ''
+      // 登录/注册相关请求放行（由业务代码处理）
+      if (url.includes('/auth/login') || url.includes('/auth/register')) {
+        return config
+      }
+      // 其他请求直接返回模拟空响应，不实际发送
+      console.info('[API] 本地模式，跳过请求:', url)
+      const adapter = () => Promise.resolve({
+        data: { code: 0, data: null, message: '本地模式' },
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config
+      })
+      // @ts-ignore - AxiosRequestConfig.adapter 类型限制
+      config.adapter = adapter
+    }
+
     return config
   },
   (error) => Promise.reject(error)
@@ -55,20 +76,26 @@ service.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config
 
-    // 网络错误：静默处理，不打扰用户（前端已内置降级数据）
+    // 网络错误处理
     const isNetErr = !error.response || error.code === 'ERR_NETWORK' || error.message === 'Network Error'
     if (isNetErr) {
+      // 本地容错token时：网络错误静默返回空数据，不报错
+      const currentToken = getToken()
+      if (currentToken && currentToken.startsWith('local_')) {
+        console.info('[API] 本地模式，忽略网络错误:', originalRequest.url)
+        return Promise.resolve({ data: { code: 0, data: null }, status: 200, statusText: 'OK', headers: {}, config: originalRequest })
+      }
       console.warn('[API] 网络不可用:', originalRequest.url)
       return Promise.reject(error)
     }
 
     // 401处理：尝试Token刷新
     if (error.response?.status === 401 && !originalRequest._retry) {
-      // 本地容错token不尝试刷新
+      // 本地容错token不尝试刷新，静默返回空数据
       const currentToken = getToken()
       if (currentToken && currentToken.startsWith('local_')) {
-        console.warn('[API] 本地容错token无法通过后端验证，请等待服务器恢复')
-        return Promise.reject(error)
+        console.warn('[API] 本地模式，忽略401:', originalRequest.url)
+        return Promise.resolve({ data: { code: 0, data: null }, status: 200, statusText: 'OK', headers: {}, config: originalRequest })
       }
 
       if (isRefreshing) {

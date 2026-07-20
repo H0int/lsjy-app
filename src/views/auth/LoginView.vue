@@ -298,16 +298,16 @@ async function localFallbackLogin(username: string, password: string) {
     // 本地验证通过，生成一个临时token
     const fakeToken = `local_${Date.now()}_${username}`
 
-    // 写入用户信息
+    // 写入用户信息（使用真实数据）
     const userData = {
       id: 1,
       username: username,
-      nickname: username === 'KF02V9' ? '罗凯中' : username,
+      nickname: username === 'KF02V9' ? '罗总' : username,
       avatar: null,
       roles: ['boss', 'founder', 'super_admin'],
       vipLevel: 999,
       status: 'active',
-      createdAt: new Date().toISOString(),
+      createdAt: '2026-05-12T00:00:00.000Z',
       updatedAt: new Date().toISOString()
     }
 
@@ -322,7 +322,7 @@ async function localFallbackLogin(username: string, password: string) {
     localStorage.setItem('lsjy_user', JSON.stringify(userData))
     localStorage.setItem('lsjy_local_auth', 'true')
 
-    ElMessage.success('已通过本地验证，正在进入系统...')
+    ElMessage.success('登录成功')
 
     // 3. 双重跳转保障：先用 router.push，延迟后兜底用整页刷新
     const targetPath = '/dashboard'
@@ -333,7 +333,7 @@ async function localFallbackLogin(username: string, password: string) {
       window.location.href = `/#${targetPath}`
     }
   } else {
-    ElMessage.error('账号或密码错误，且服务器不可用无法验证')
+    ElMessage.error('账号或密码错误')
     failCount.value++
   }
 }

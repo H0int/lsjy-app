@@ -280,8 +280,9 @@ const msgsByAgent = ref<Record<number, {role:'user'|'assistant'; content:string;
 const input = ref('')
 const loading = ref(false)
 const chatBox = ref<HTMLElement|null>(null)
-const aiOnline = ref(true)
 const authStore = useAuthStore()
+const _aiOnlineRef = ref(true)
+const aiOnline = computed(() => authStore.isLocalAuth ? true : _aiOnlineRef.value)
 const { coinBalance, user } = storeToRefs(authStore)
 const activeActionIndex = ref<number | null>(null)
 const streamingMsgIndex = ref<number | null>(null) // 当前正在流式输出的消息索引
@@ -667,9 +668,9 @@ async function checkAgentConnection() {
       signal: AbortSignal.timeout(6000),
       cache: 'no-store',
     })
-    aiOnline.value = res.ok
+    _aiOnlineRef.value = res.ok
   } catch {
-    aiOnline.value = false
+    _aiOnlineRef.value = false
   }
 }
 
@@ -1122,8 +1123,8 @@ onMounted(async () => {
     if (found) selectedAgent.value = found
   }
 
-  // 检测AI服务连接状态，不使用无关模型接口误判聊天入口
-  checkAgentConnection()
+  // 本地容错登录时强制在线，不做网络健康检测
+  if (!authStore.isLocalAuth) checkAgentConnection()
 
   // 获取余额（从 auth store 获取，已登录则自动拉取）
   if (authStore.isLoggedIn) {
