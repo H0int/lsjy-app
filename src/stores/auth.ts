@@ -81,7 +81,7 @@ export const useAuthStore = defineStore('auth', () => {
   const userRoles = ref<string[]>([])
   const coinBalance = ref(0)
   const loading = ref(false)
-  const isLocalAuth = ref(false)
+  const isLocalAuth = ref(localStorage.getItem('lsjy_local_auth') === 'true')
 
   // 初始化时从localStorage恢复用户信息
   try {
@@ -89,6 +89,10 @@ export const useAuthStore = defineStore('auth', () => {
     if (savedUser && token.value) {
       user.value = JSON.parse(savedUser)
       userRoles.value = extractRoles(user.value?.roles)
+      // Boss本地模式：余额设为无限
+      if (token.value.startsWith('local_')) {
+        coinBalance.value = Infinity
+      }
     }
   } catch (e) {}
 

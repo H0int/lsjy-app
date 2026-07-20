@@ -464,6 +464,14 @@ function clearChat() {
 function sendQuick(t: string) { input.value = t; sendMsg() }
 
 async function requestAgentChat(agent: Agent, payload: Record<string, any>) {
+  // ★ 本地容错模式：返回模拟响应
+  if (authStore.isLocalAuth) {
+    return new Response(JSON.stringify({ code: 0, data: { content: `你好！我是${agent.name}。\n\n目前服务器维护中，AI对话功能暂时不可用。`, reply: `你好！我是${agent.name}。\n\n目前服务器维护中，AI对话功能暂时不可用。` } }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    })
+  }
+
   const headers = {
     'Authorization': `Bearer ${authToken.value}`,
     'Content-Type': 'application/json',
@@ -818,6 +826,18 @@ async function sendMsg() {
   scrollToBottom()
 
   try {
+    // ★ 本地容错模式：返回模拟响应
+    if (authStore.isLocalAuth) {
+      msgs.value.push({
+        role: 'assistant',
+        content: `你好！我是${agent.name}。\n\n目前服务器维护中，AI对话功能暂时不可用。`,
+        coinCost: 0
+      })
+      loading.value = false
+      scrollToBottom()
+      return
+    }
+
     const backendMessages = msgs.value.slice(-20).map(m => ({ role: m.role, content: toBackendContent(m.content) }))
     if (file?.isImage) {
       const lastUserIndex = backendMessages.map(m => m.role).lastIndexOf('user')
@@ -1095,6 +1115,12 @@ async function exportMsg(content: string) {
 async function genImage() {
   const prompt = imgPrompt.value.trim()
   if (!prompt || genLoading.value || !selectedAgent.value) return
+
+  // ★ 本地容错模式：提示维护中
+  if (authStore.isLocalAuth) {
+    images.value.unshift({ prompt, error: '⚠️ 服务器维护中，图片生成暂时不可用' })
+    return
+  }
 
   const fullPrompt = imgStyle.value ? `以${imgStyle.value}风格生成：${prompt}` : prompt
   images.value.unshift({ prompt, loading: true })
