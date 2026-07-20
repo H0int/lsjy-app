@@ -298,15 +298,21 @@ async function localFallbackLogin(username: string, password: string) {
     // 本地验证通过，生成一个临时token
     const fakeToken = `local_${Date.now()}_${username}`
 
-    // 写入用户信息（使用真实数据）
+    // 写入用户信息（使用真实数据，包含完整字段）
+    const saved = JSON.parse(localStorage.getItem('lsjy_user') || '{}')
     const userData = {
       id: 1,
       username: username,
-      nickname: username === 'KF02V9' ? '罗总' : username,
-      avatar: null,
+      nickname: saved.nickname || (username === 'KF02V9' ? '罗总' : username),
+      avatar: saved.avatar || localStorage.getItem('lsjy_user_avatar') || null,
+      email: saved.email || '',
+      phone: saved.phone || '',
+      bio: saved.bio || '',
+      gender: saved.gender ?? 0,
       roles: ['boss', 'founder', 'super_admin'],
       vipLevel: 999,
       status: 'active',
+      userType: 'founder',
       createdAt: '2026-05-12T00:00:00.000Z',
       updatedAt: new Date().toISOString()
     }

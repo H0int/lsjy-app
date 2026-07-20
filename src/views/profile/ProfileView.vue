@@ -317,6 +317,13 @@ function handleAvatarUpload(e: Event) {
     ElMessage.success('头像已更新')
     // 保存到 localStorage 作为临时方案
     localStorage.setItem('lsjy_user_avatar', avatarUrl.value)
+    // ★ 同步更新 auth store 和 lsjy_user，确保全平台头像一致
+    if (authStore.user) {
+      authStore.user.avatar = avatarUrl.value
+      const saved = JSON.parse(localStorage.getItem('lsjy_user') || '{}')
+      saved.avatar = avatarUrl.value
+      localStorage.setItem('lsjy_user', JSON.stringify(saved))
+    }
   }
   reader.readAsDataURL(file)
 }

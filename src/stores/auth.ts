@@ -87,8 +87,12 @@ export const useAuthStore = defineStore('auth', () => {
   try {
     const savedUser = localStorage.getItem('lsjy_user')
     if (savedUser && token.value) {
-      user.value = JSON.parse(savedUser)
-      userRoles.value = extractRoles(user.value?.roles)
+      const parsed = JSON.parse(savedUser)
+      // 合并 localStorage 中单独保存的头像
+      const savedAvatar = localStorage.getItem('lsjy_user_avatar')
+      if (savedAvatar && !parsed.avatar) parsed.avatar = savedAvatar
+      user.value = parsed
+      userRoles.value = extractRoles(parsed?.roles)
       // Boss本地模式：余额设为无限
       if (token.value.startsWith('local_')) {
         coinBalance.value = Infinity
