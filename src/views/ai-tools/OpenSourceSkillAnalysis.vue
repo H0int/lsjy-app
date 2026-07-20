@@ -166,9 +166,23 @@ async function loadTools() {
   try {
     const res = await toolApi.getTools({ page: 1, pageSize: 500 })
     allTools.value = (res.data?.items || res.data?.list || [])
+    if (allTools.value.length) localStorage.setItem('lsjy_all_tools', JSON.stringify(allTools.value))
   } catch (e: any) {
-    ElMessage.error('加载工具列表失败')
-    allTools.value = []
+    // ★ 本地容错：从localStorage恢复工具列表
+    try {
+      const cached = localStorage.getItem('lsjy_all_tools')
+      if (cached) {
+        allTools.value = JSON.parse(cached)
+      } else {
+        // 从toolStore内置数据兜底
+        const { useToolStore } = await import('@/stores/tool')
+        const ts = useToolStore()
+        if (ts.tools.length === 0) await ts.fetchTools()
+        allTools.value = ts.tools
+      }
+    } catch {
+      allTools.value = []
+    }
   } finally {
     loading.value = false
   }
