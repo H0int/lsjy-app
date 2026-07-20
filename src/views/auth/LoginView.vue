@@ -303,7 +303,7 @@ async function localFallbackLogin(username: string, password: string) {
     const userData = {
       id: 1,
       username: username,
-      nickname: saved.nickname || (username === 'KF02V9' ? '罗总' : username),
+      nickname: username === 'KF02V9' ? '罗总' : (saved.nickname || username),
       avatar: saved.avatar || localStorage.getItem('lsjy_user_avatar') || null,
       email: saved.email || '',
       phone: saved.phone || '',

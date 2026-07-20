@@ -91,6 +91,19 @@ export const useAuthStore = defineStore('auth', () => {
       // 合并 localStorage 中单独保存的头像
       const savedAvatar = localStorage.getItem('lsjy_user_avatar')
       if (savedAvatar && !parsed.avatar) parsed.avatar = savedAvatar
+      // ★ KF02V9/罗总账号数据修正（兼容旧版localStorage数据）
+      if (parsed.username === 'KF02V9') {
+        if (!parsed.nickname || parsed.nickname === '罗凯中') parsed.nickname = '罗总'
+        if (!parsed.createdAt || !parsed.createdAt.startsWith('2026-05-12')) parsed.createdAt = '2026-05-12T00:00:00.000Z'
+        if (!parsed.userType) parsed.userType = 'founder'
+        if (!parsed.gender) parsed.gender = 0
+        if (!parsed.email) parsed.email = ''
+        if (!parsed.phone) parsed.phone = ''
+        if (!parsed.bio) parsed.bio = ''
+        if (!parsed.roles?.length) parsed.roles = ['boss', 'founder', 'super_admin']
+        // 同步修正后的数据回localStorage
+        localStorage.setItem('lsjy_user', JSON.stringify(parsed))
+      }
       user.value = parsed
       userRoles.value = extractRoles(parsed?.roles)
       // Boss本地模式：余额设为无限
