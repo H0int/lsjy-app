@@ -98,7 +98,8 @@ export const useAuthStore = defineStore('auth', () => {
   const nickname = computed(() => user.value?.nickname || user.value?.username || '未登录')
 
   // 登录（用户名 + 密码）- 必须由后端签发token
-  async function login(username: string, password: string) {
+  // 返回 true=成功, false=密码错误, 'network'=网络/服务器不可用
+  async function login(username: string, password: string): Promise<boolean | string> {
     loading.value = true
     const uname = username.trim()
     try {
@@ -129,10 +130,13 @@ export const useAuthStore = defineStore('auth', () => {
         return false
       } catch (remoteErr: any) {
         console.error('远程登录失败:', remoteErr)
+        const status = remoteErr?.response?.status
         const isNetErr = !remoteErr.response || remoteErr.code === 'ERR_NETWORK' || remoteErr.message === 'Network Error' || remoteErr.message?.includes('timeout')
+        const isServerDown = status >= 500 && status <= 599
 
-        if (isNetErr) {
-          ElMessage.warning('服务器连接异常，请检查网络后重试')
+        if (isNetErr || isServerDown) {
+          ElMessage.warning(`服务器${isServerDown ? '维护中' : '连接异常'}，请稍后再试`)
+          return 'network'
         } else {
           const errMsg = remoteErr?.response?.data?.error || remoteErr?.response?.data?.message || remoteErr?.message || '账号或密码错误'
           ElMessage.error(errMsg)

@@ -255,9 +255,9 @@ async function handleLogin() {
     const valid = await formRef.value.validate().catch(() => false)
     if (!valid) return
 
-    const success = await authStore.login(form.username, form.password)
-    if (success) {
-      // 保存或清除记住的密码
+    const result = await authStore.login(form.username, form.password)
+    if (result === true) {
+      // 登录成功
       if (rememberMe.value) {
         localStorage.setItem(REMEMBER_KEY, JSON.stringify({
           username: form.username,
@@ -267,14 +267,16 @@ async function handleLogin() {
         localStorage.removeItem(REMEMBER_KEY)
       }
 
-      // 判断跳转地址
       const isAdminSubdomain = window.location.hostname.startsWith('admin')
       if (isAdminSubdomain) {
         router.push('/admin/dashboard')
       } else {
         router.push('/dashboard')
       }
+    } else if (result === 'network') {
+      // 网络错误/服务器不可用 — 不计入密码错误次数
     } else {
+      // 密码错误或其他业务错误
       failCount.value++
     }
   } catch (e) {
