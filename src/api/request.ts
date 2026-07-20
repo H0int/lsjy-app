@@ -64,6 +64,13 @@ service.interceptors.response.use(
 
     // 401处理：尝试Token刷新
     if (error.response?.status === 401 && !originalRequest._retry) {
+      // 本地容错token不尝试刷新
+      const currentToken = getToken()
+      if (currentToken && currentToken.startsWith('local_')) {
+        console.warn('[API] 本地容错token无法通过后端验证，请等待服务器恢复')
+        return Promise.reject(error)
+      }
+
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject })
