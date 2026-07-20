@@ -171,6 +171,14 @@ async function loadWorks() {
       page++
     }
     works.value = allItems
+    // 缓存到localStorage
+    if (allItems.length) localStorage.setItem('lsjy_works', JSON.stringify(allItems))
+  } catch {
+    // ★ 本地容错：从localStorage恢复作品数据
+    try {
+      const cached = localStorage.getItem('lsjy_works')
+      if (cached) works.value = JSON.parse(cached)
+    } catch {}
   } finally {
     loading.value = false
   }

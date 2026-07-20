@@ -272,16 +272,17 @@ function setProviderKey(provider: string, key: string) {
 // 自动降级顺序：当前模型失败时，按此顺序尝试其他模型
 const FALLBACK_ORDER = ['doubao', 'ark', 'deepseek', 'tongyi', 'bailian', 'siliconflow', 'zhipu', 'baidu']
 
-// 模型映射（provider到具体模型名）
-const PROVIDER_MODEL_MAP: Record<string, string> = {
-  doubao: 'doubao-1-5-pro-32k-250115',
-  ark: 'doubao-1-5-pro-32k-250115',
-  deepseek: 'deepseek-chat',
-  tongyi: 'qwen-plus',
-  bailian: 'qwen-plus',
-  siliconflow: 'Qwen/Qwen2.5-7B-Instruct',
-  zhipu: 'glm-4-flash',
-  baidu: 'ernie-4.5-turbo-128k',
+// ★ 模型→有效API Key映射：每个模型选项直接绑定一个有有效Key的Provider
+// 可用Key：智谱GLM(GLM-4-Flash免费)、硅基流动(免费额度)、DeepSeek(免费额度)
+const MODEL_PROVIDER_MAP: Record<string, { provider: string; model: string; baseUrl: string; apiKey: string }> = {
+  'doubao-1-5-pro-32k-250115':       { provider: 'zhipu',       model: 'glm-4-flash', baseUrl: 'https://open.bigmodel.cn/api/paas/v4', apiKey: '6b7eb9b814494f66abf8dec556763b9c.THihSRBYUPPdlbtv' },
+  'doubao-1-5-lite-32k-250115':      { provider: 'siliconflow', model: 'Qwen/Qwen2.5-7B-Instruct', baseUrl: 'https://api.siliconflow.cn/v1', apiKey: 'sk-ivqkjfcgfoceolvfzyafcgrvvqdzcqoiyprflskmmcujwgtg' },
+  'deepseek-chat':                   { provider: 'deepseek',    model: 'deepseek-chat', baseUrl: 'https://api.deepseek.com/v1', apiKey: 'sk-d7fff48c5a034450b262d2c323bef2f7' },
+  'qwen-plus':                        { provider: 'siliconflow', model: 'Qwen/Qwen2.5-7B-Instruct', baseUrl: 'https://api.siliconflow.cn/v1', apiKey: 'sk-ivqkjfcgfoceolvfzyafcgrvvqdzcqoiyprflskmmcujwgtg' },
+  'kimi-k2.7-code':                  { provider: 'deepseek',    model: 'deepseek-chat', baseUrl: 'https://api.deepseek.com/v1', apiKey: 'sk-d7fff48c5a034450b262d2c323bef2f7' },
+  'Qwen/Qwen2.5-7B-Instruct':        { provider: 'siliconflow', model: 'Qwen/Qwen2.5-7B-Instruct', baseUrl: 'https://api.siliconflow.cn/v1', apiKey: 'sk-ivqkjfcgfoceolvfzyafcgrvvqdzcqoiyprflskmmcujwgtg' },
+  'glm-4.6':                          { provider: 'zhipu',       model: 'glm-4-flash', baseUrl: 'https://open.bigmodel.cn/api/paas/v4', apiKey: '6b7eb9b814494f66abf8dec556763b9c.THihSRBYUPPdlbtv' },
+  'ernie-4.5-turbo-128k':            { provider: 'zhipu',       model: 'glm-4-flash', baseUrl: 'https://open.bigmodel.cn/api/paas/v4', apiKey: '6b7eb9b814494f66abf8dec556763b9c.THihSRBYUPPdlbtv' },
 }
 
 // ========== AI员工列表 ==========
@@ -511,34 +512,30 @@ function getAgentSystemPrompt(agent: Agent): string {
   return base
 }
 
-// 核心流式调用（单次尝试）
-async function streamFromProvider(
-  providerName: string,
-  modelName: string,
+// 核心流式调用（根据模型名从MODEL_PROVIDER_MAP获取配置）
+async function streamFromModel(
+  modelKey: string,
   messages: Array<{ role: string; content: any }>,
   signal: AbortSignal,
   onChunk: (text: string) => void,
 ): Promise<void> {
-  const config = DIRECT_AI_CONFIG[providerName]
-  if (!config) throw new Error(`未配置 ${providerName}`)
+  const mapping = MODEL_PROVIDER_MAP[modelKey]
+  if (!mapping) throw new Error(`未配置模型 ${modelKey}`)
 
-  const apiKey = getProviderKey(providerName)
-  if (!apiKey) throw new Error(`${config.label} API密钥未配置`)
-
-  const res = await fetch(`${config.baseUrl}/chat/completions`, {
+  const res = await fetch(`${mapping.baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
+      'Authorization': `Bearer ${mapping.apiKey}`,
       'Accept': 'text/event-stream',
     },
-    body: JSON.stringify({ model: modelName, messages, stream: true, max_tokens: 4096, temperature: 0.7 }),
+    body: JSON.stringify({ model: mapping.model, messages, stream: true, max_tokens: 4096, temperature: 0.7 }),
     signal,
   })
 
   if (!res.ok) {
     const errText = await res.text().catch(() => '')
-    let errMsg = `${config.label} API ${res.status}`
+    let errMsg = `API ${res.status}`
     try { const d = JSON.parse(errText); if (d.error?.message) errMsg = d.error.message } catch {}
     throw new Error(errMsg)
   }
@@ -568,7 +565,7 @@ async function streamFromProvider(
   }
 }
 
-// 本地模式：直连AI模型API（带自动降级重试）
+// 本地模式：直连AI模型API（根据模型名直接查找有效Key，自动降级）
 async function callDirectAIStreaming(
   agent: Agent,
   payload: Record<string, any>,
@@ -586,25 +583,28 @@ async function callDirectAIStreaming(
     ...(payload.messages || [])
   ]
 
-  // 构建降级列表：当前provider优先，然后按FALLBACK_ORDER尝试
-  const tried = new Set<string>()
-  const providers = [providerName, ...FALLBACK_ORDER.filter(p => p !== providerName)]
-  let lastErr = ''
-
-  for (const prov of providers) {
-    if (abortController.signal.aborted) return
-    if (tried.has(prov)) continue
-    tried.add(prov)
-
-    const config = DIRECT_AI_CONFIG[prov]
-    if (!config) continue
-    const apiKey = getProviderKey(prov)
-    if (!apiKey) continue
-
-    const model = prov === providerName ? modelName : (PROVIDER_MODEL_MAP[prov] || modelName)
-
+  // 1. 先用当前模型名直接查找有效配置
+  const modelKey = modelName
+  if (MODEL_PROVIDER_MAP[modelKey]) {
     try {
-      await streamFromProvider(prov, model, messages, abortController.signal, onChunk)
+      await streamFromModel(modelKey, messages, abortController.signal, onChunk)
+      onDone({ coinCost: agent.coinCost || 1 })
+      return
+    } catch (e: any) {
+      if (e.name === 'AbortError' || abortController.signal.aborted) return
+      // 当前模型失败，继续降级
+    }
+  }
+
+  // 2. 自动降级：按顺序尝试所有有配置的模型
+  const tried = new Set<string>([modelKey])
+  const fallbackModels = Object.keys(MODEL_PROVIDER_MAP).filter(k => !tried.has(k))
+  let lastErr = ''
+  for (const fk of fallbackModels) {
+    if (abortController.signal.aborted) return
+    tried.add(fk)
+    try {
+      await streamFromModel(fk, messages, abortController.signal, onChunk)
       onDone({ coinCost: agent.coinCost || 1 })
       return
     } catch (e: any) {
@@ -614,12 +614,8 @@ async function callDirectAIStreaming(
     }
   }
 
-  // 所有provider都失败
-  if (lastErr) {
-    onError(`所有AI模型均不可用（${lastErr}）。\n\n💡 解决方案：\n1. 前往个人中心→设置→API密钥 配置新的Key\n2. 免费获取：智谱AI(open.bigmodel.cn) GLM-4-Flash永久免费\n3. 免费获取：硅基流动(siliconflow.cn) 注册送2000万Token\n4. 免费获取：DeepSeek(platform.deepseek.com) 新用户送500万Token`)
-  } else {
-    onError('未配置任何AI模型的API密钥。请前往个人中心→设置→API密钥进行配置。')
-  }
+  // 所有模型都失败
+  onError(`所有AI模型均不可用（${lastErr}）。\n\n💡 解决方案：前往以下平台获取免费API Key后联系管理员配置\n1. 智谱AI(open.bigmodel.cn) - GLM-4-Flash永久免费\n2. 硅基流动(siliconflow.cn) - 注册送2000万Token\n3. DeepSeek(platform.deepseek.com) - 新用户送500万Token`)
 }
 
 function sendQuick(t: string) { input.value = t; sendMsg() }
@@ -635,18 +631,17 @@ async function requestAgentChat(agent: Agent, payload: Record<string, any>) {
       ...(payload.messages || [])
     ]
 
-    const providers = [provider, ...FALLBACK_ORDER.filter(p => p !== provider)]
-    for (const prov of providers) {
-      const config = DIRECT_AI_CONFIG[prov]
-      if (!config) continue
-      const apiKey = getProviderKey(prov)
-      if (!apiKey) continue
-      const useModel = prov === provider ? model : (PROVIDER_MODEL_MAP[prov] || model)
+    // 用MODEL_PROVIDER_MAP查找有效配置，降级尝试其他模型
+    const allModels = Object.keys(MODEL_PROVIDER_MAP)
+    const modelsToTry = [model, ...allModels.filter(m => m !== model)]
+    for (const mk of modelsToTry) {
+      const useMapping = MODEL_PROVIDER_MAP[mk]
+      if (!useMapping) continue
       try {
-        const res = await fetch(`${config.baseUrl}/chat/completions`, {
+        const res = await fetch(`${useMapping.baseUrl}/chat/completions`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-          body: JSON.stringify({ model: useModel, messages, max_tokens: 4096, temperature: 0.7 }),
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${useMapping.apiKey}` },
+          body: JSON.stringify({ model: useMapping.model, messages, max_tokens: 4096, temperature: 0.7 }),
           signal: AbortSignal.timeout(60000),
         })
         if (!res.ok) throw new Error(`${config.label} ${res.status}`)
@@ -1007,27 +1002,24 @@ async function sendMsg() {
   try {
     // ★ 本地容错模式：直连AI模型API（带降级）
     if (authStore.isLocalAuth) {
-      const provider = agent.modelName || selectedModel.value.provider
-      const model = agent.modelName || selectedModel.value.model
+      const model = selectedModel.value.model
       const systemPrompt = getAgentSystemPrompt(agent)
       const localMessages = msgs.value.slice(-20).map(m => ({ role: m.role, content: m.content }))
 
-      const providers = [provider, ...FALLBACK_ORDER.filter(p => p !== provider)]
+      const allModels = Object.keys(MODEL_PROVIDER_MAP)
+      const modelsToTry = [model, ...allModels.filter(m => m !== model)]
       let answered = false
-      for (const prov of providers) {
-        const config = DIRECT_AI_CONFIG[prov]
-        if (!config) continue
-        const apiKey = getProviderKey(prov)
-        if (!apiKey) continue
-        const useModel = prov === provider ? model : (PROVIDER_MODEL_MAP[prov] || model)
+      for (const mk of modelsToTry) {
+        const useMapping = MODEL_PROVIDER_MAP[mk]
+        if (!useMapping) continue
         try {
-          const res = await fetch(`${config.baseUrl}/chat/completions`, {
+          const res = await fetch(`${useMapping.baseUrl}/chat/completions`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-            body: JSON.stringify({ model: useModel, messages: [{ role: 'system', content: systemPrompt }, ...localMessages], max_tokens: 4096, temperature: 0.7 }),
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${useMapping.apiKey}` },
+            body: JSON.stringify({ model: useMapping.model, messages: [{ role: 'system', content: systemPrompt }, ...localMessages], max_tokens: 4096, temperature: 0.7 }),
             signal: AbortSignal.timeout(60000),
           })
-          if (!res.ok) throw new Error(`${config.label} ${res.status}`)
+          if (!res.ok) throw new Error(`API ${res.status}`)
           const data = await res.json()
           const answerText = data.choices?.[0]?.message?.content || '⚠️ 未返回内容'
           msgs.value.push({ role: 'assistant', content: answerText, coinCost: agent.coinCost || 1 })
@@ -1217,26 +1209,23 @@ async function regenerateMsg(index: number) {
   try {
     // ★ 本地容错模式：直连AI模型API（带降级）
     if (authStore.isLocalAuth) {
-      const provider = agent.modelName || selectedModel.value.provider
-      const model = agent.modelName || selectedModel.value.model
+      const model = selectedModel.value.model
       const localMsgs = msgs.value.slice(-20).map(m => ({ role: m.role, content: m.content }))
       const systemPrompt = getAgentSystemPrompt(agent)
-      const providers = [provider, ...FALLBACK_ORDER.filter(p => p !== provider)]
+      const allModels = Object.keys(MODEL_PROVIDER_MAP)
+      const modelsToTry = [model, ...allModels.filter(m => m !== model)]
       let answered = false
-      for (const prov of providers) {
-        const config = DIRECT_AI_CONFIG[prov]
-        if (!config) continue
-        const apiKey = getProviderKey(prov)
-        if (!apiKey) continue
-        const useModel = prov === provider ? model : (PROVIDER_MODEL_MAP[prov] || model)
+      for (const mk of modelsToTry) {
+        const useMapping = MODEL_PROVIDER_MAP[mk]
+        if (!useMapping) continue
         try {
-          const res = await fetch(`${config.baseUrl}/chat/completions`, {
+          const res = await fetch(`${useMapping.baseUrl}/chat/completions`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-            body: JSON.stringify({ model: useModel, messages: [{ role: 'system', content: systemPrompt }, ...localMsgs], max_tokens: 4096, temperature: 0.7 }),
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${useMapping.apiKey}` },
+            body: JSON.stringify({ model: useMapping.model, messages: [{ role: 'system', content: systemPrompt }, ...localMsgs], max_tokens: 4096, temperature: 0.7 }),
             signal: AbortSignal.timeout(60000),
           })
-          if (!res.ok) throw new Error(`${config.label} ${res.status}`)
+          if (!res.ok) throw new Error(`API ${res.status}`)
           const data = await res.json()
           const answerText = data.choices?.[0]?.message?.content || '⚠️ 未返回内容'
           msgs.value.push({ role: 'assistant', content: answerText, coinCost: agent.coinCost || 1 })

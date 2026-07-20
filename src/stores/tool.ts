@@ -282,6 +282,7 @@ function getBuiltInTools(): Tool[] {
     { id: 190, name: '育儿知识', description: '智能育儿知识，高效便捷', icon: '📻', category: '生活服务', categoryId: 8, toolType: 'text', coinCost: 60, isHot: false, status: 'active', subCategory: '生活服务' },
     { id: 191, name: '养老规划', description: '智能养老规划，高效便捷', icon: '💼', category: '生活服务', categoryId: 8, toolType: 'text', coinCost: 80, isHot: false, status: 'active', subCategory: '生活服务' },
     { id: 192, name: '心理健康测试', description: '智能心理健康测试，高效便捷', icon: '📅', category: '生活服务', categoryId: 8, toolType: 'text', coinCost: 100, isHot: false, status: 'active', subCategory: '生活服务' },
+    { id: 3, name: 'AI绘画师', description: '根据文字描述生成精美AI图片，支持多种风格', icon: '🎨', category: '图片生成', categoryId: 9, toolType: 'image', coinCost: 2, isHot: true, status: 'active', subCategory: '图片生成' },
     { id: 193, name: 'AI写真生成', description: '智能AI写真生成，高效便捷', icon: '✅', category: '图片生成', categoryId: 9, toolType: 'image', coinCost: 10, isHot: true, status: 'active', subCategory: '图片生成' },
     { id: 194, name: '动漫风格转换', description: '智能动漫风格转换，高效便捷', icon: '📎', category: '图片生成', categoryId: 9, toolType: 'image', coinCost: 20, isHot: true, status: 'active', subCategory: '图片生成' },
     { id: 195, name: '油画风格转换', description: '智能油画风格转换，高效便捷', icon: '📧', category: '图片生成', categoryId: 9, toolType: 'image', coinCost: 30, isHot: true, status: 'active', subCategory: '图片生成' },
