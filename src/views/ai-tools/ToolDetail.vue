@@ -9,6 +9,13 @@
       <div class="cyber-spinner"></div>
     </div>
 
+    <div v-else-if="!tool" class="flex flex-col items-center justify-center py-20 text-center">
+      <div class="text-6xl mb-4">🔍</div>
+      <h2 class="text-xl text-gray-300 mb-2">工具加载失败</h2>
+      <p class="text-gray-500 mb-6">AI服务暂时不可用，工具信息未加载到，请稍后再试。</p>
+      <button @click="$router.push('/tools')" class="cyber-btn cyber-btn-cyan">返回工具中心</button>
+    </div>
+
     <template v-else-if="tool">
       <!-- 工具头部 -->
       <div class="cyber-tool-header">
@@ -395,8 +402,47 @@ async function handleGenerate() {
       recordUsage()
     }
   } catch (e: any) {
-    generationError.value = e?.message || '生成失败，请稍后重试'
-    ElMessage.error(generationError.value)
+    // ★ 本地容错：图片工具降级到硅基流动API，文本工具降级到AI模型
+    const isLocal = localStorage.getItem('lsjy_local_auth') === 'true'
+    if (isLocal && isImageTool.value) {
+      try {
+        const sizeStr = paramValues.value.size || '1024x1024'
+        const parts = sizeStr.split('x')
+        const imgRes = await fetch('https://api.siliconflow.cn/v1/images/generations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer sk-ivqkjfcgfoceolvfzyafcgrvvqdzcqoiyprflskmmcujwgtg' },
+          body: JSON.stringify({ model: 'black-forest-labs/FLUX.1-schnell', prompt: inputContent.value, image_size: `${parts[0] || 1024}x${parts[1] || 1024}`, num_inference_steps: 20 }),
+          signal: AbortSignal.timeout(120000),
+        })
+        if (imgRes.ok) {
+          const imgData = await imgRes.json()
+          const url = imgData.images?.[0]?.url || imgData.data?.[0]?.url || ''
+          if (url) { imageUrls.value = [url]; generationMessage.value = '图片已生成（本地模式）'; ElMessage.success('图片生成成功！'); recordUsage() }
+          else throw new Error('未返回图片URL')
+        } else throw new Error(`图片生成API返回${imgRes.status}`)
+      } catch (e2: any) {
+        generationError.value = `图片生成失败：${e2.message}`
+        ElMessage.error(generationError.value)
+      }
+    } else if (isLocal && !isVideoTool.value) {
+      // 文本工具降级到AI模型
+      try {
+        const msgs = [{ role: 'user', content: inputContent.value }]
+        const r = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
+          method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer 6b7eb9b814494f66abf8dec556763b9c.THihSRBYUPPdlbtv' },
+          body: JSON.stringify({ model: 'glm-4-flash', messages: msgs, max_tokens: 4096 }),
+          signal: AbortSignal.timeout(30000),
+        })
+        if (r.ok) { const d = await r.json(); result.value = d.choices?.[0]?.message?.content || '生成完成'; generationMessage.value = '内容已生成（本地模式）'; ElMessage.success('生成完成！'); recordUsage() }
+        else throw new Error(`API返回${r.status}`)
+      } catch (e2: any) {
+        generationError.value = `生成失败：${e2.message}`
+        ElMessage.error(generationError.value)
+      }
+    } else {
+      generationError.value = e?.message || '生成失败，请稍后重试'
+      ElMessage.error(generationError.value)
+    }
   } finally {
     generating.value = false
     progressText.value = '生成中...'

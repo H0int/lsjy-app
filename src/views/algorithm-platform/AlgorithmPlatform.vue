@@ -492,9 +492,35 @@ async function sendPanelMsg() {
       const h = parseInt(sizeParts[1]) || 1024
       const token = authToken.value
 
-      // ★ 本地容错模式：提示服务维护中
+      // ★ 本地容错模式：直连硅基流动图片生成API
       if (token && token.startsWith('local_')) {
-        panelMsgs.value.push({ role: 'assistant', content: '⚠️ AI服务正在维护中，暂时无法生成图片。\n\n💡 维护完成后将自动恢复，请稍后再试。' })
+        try {
+          const imgRes = await fetch('https://api.siliconflow.cn/v1/images/generations', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer sk-ivqkjfcgfoceolvfzyafcgrvvqdzcqoiyprflskmmcujwgtg' },
+            body: JSON.stringify({
+              model: 'black-forest-labs/FLUX.1-schnell',
+              prompt: text + (imgStyle.value ? `，${imgStyle.value}风格` : ''),
+              image_size: `${w}x${h}`,
+              num_inference_steps: 20,
+            }),
+            signal: AbortSignal.timeout(120000),
+          })
+          if (imgRes.ok) {
+            const imgData = await imgRes.json()
+            const imgUrl = imgData.images?.[0]?.url || imgData.data?.[0]?.url || imgData.output?.[0] || ''
+            if (imgUrl) {
+              panelMsgs.value.push({ role: 'assistant', content: `🎨 图片已生成！\n\n![${text}](${imgUrl})` })
+            } else {
+              panelMsgs.value.push({ role: 'assistant', content: '⚠️ 图片生成返回数据异常，请稍后再试。' })
+            }
+          } else {
+            const errText = await imgRes.text().catch(() => '')
+            panelMsgs.value.push({ role: 'assistant', content: `⚠️ 图片生成失败（${imgRes.status}），请稍后再试。\n${errText.substring(0, 200)}` })
+          }
+        } catch (e: any) {
+          panelMsgs.value.push({ role: 'assistant', content: `⚠️ 图片生成失败：${e.message || '网络异常'}，请稍后再试。` })
+        }
         panelLoading.value = false
         scrollPanelBottom()
         return
@@ -604,7 +630,37 @@ async function sendPanelMsg() {
       panelMsgs.value.push({ role: 'assistant', content: '⚠️ 模型服务暂时不可用，请稍后再试。' })
     }
   } catch {
-    panelMsgs.value.push({ role: 'assistant', content: '⚠️ 网络连接失败，请检查网络后重试。' })
+    // ★ 本地容错：直连AI模型API
+    try {
+      const fallbackModels = [
+        { baseUrl: 'https://open.bigmodel.cn/api/paas/v4', apiKey: '6b7eb9b814494f66abf8dec556763b9c.THihSRBYUPPdlbtv', model: 'glm-4-flash' },
+        { baseUrl: 'https://api.siliconflow.cn/v1', apiKey: 'sk-ivqkjfcgfoceolvfzyafcgrvvqdzcqoiyprflskmmcujwgtg', model: 'Qwen/Qwen2.5-7B-Instruct' },
+        { baseUrl: 'https://api.deepseek.com/v1', apiKey: 'sk-d7fff48c5a034450b262d2c323bef2f7', model: 'deepseek-chat' },
+      ]
+      let reply = ''
+      for (const fm of fallbackModels) {
+        try {
+          const r = await fetch(`${fm.baseUrl}/chat/completions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${fm.apiKey}` },
+            body: JSON.stringify({ model: fm.model, messages, max_tokens: 4096, temperature: 0.7 }),
+            signal: AbortSignal.timeout(30000),
+          })
+          if (r.ok) {
+            const d = await r.json()
+            reply = d.choices?.[0]?.message?.content || ''
+            if (reply) break
+          }
+        } catch { continue }
+      }
+      if (reply) {
+        panelMsgs.value.push({ role: 'assistant', content: reply })
+      } else {
+        panelMsgs.value.push({ role: 'assistant', content: '⚠️ 网络连接失败，所有AI模型均不可用。' })
+      }
+    } catch {
+      panelMsgs.value.push({ role: 'assistant', content: '⚠️ 网络连接失败，请检查网络后重试。' })
+    }
   }
   panelLoading.value = false
   scrollPanelBottom()
