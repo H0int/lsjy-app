@@ -150,29 +150,30 @@ export const useAuthStore = defineStore('auth', () => {
           return true
         }
 
-        // ★ 响应格式异常：可能是后端版本问题，降级到本地模式
+        // 响应格式异常：后端可能异常，降级到本地模式
         console.warn('远程登录响应格式异常，降级到本地模式')
         return 'network'
       } catch (remoteErr: any) {
         console.error('远程登录失败:', remoteErr)
         const status = remoteErr?.response?.status
+        const responseData = remoteErr?.response?.data
         const isNetErr = !remoteErr.response || remoteErr.code === 'ERR_NETWORK' || remoteErr.message === 'Network Error' || remoteErr.message?.includes('timeout')
         const isServerDown = status >= 500 && status <= 599
+        const isClientErr = status === 400 || status === 422
 
-        if (isNetErr || isServerDown) {
-          // 网络错误或服务器宕机：静默降级到本地模式
+        if (isNetErr || isServerDown || isClientErr) {
+          // 网络/服务器/格式错误：静默降级到本地模式，不显示错误
           return 'network'
         } else {
-          // 密码错误等认证失败：显示具体错误信息
-          const errMsg = remoteErr?.response?.data?.error || remoteErr?.response?.data?.message || '账号或密码错误'
+          // 真正的密码错误（401/403）：显示提示
+          const errMsg = responseData?.error || responseData?.message || '账号或密码错误'
           ElMessage.error(errMsg)
           return false
         }
       }
     } catch (e: any) {
       console.error('登录异常:', e)
-      ElMessage.error(e?.message || '登录失败，请稍后重试')
-      return false
+      return 'network'
     } finally {
       loading.value = false
     }
