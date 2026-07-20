@@ -249,11 +249,14 @@ const authToken = computed(() => localStorage.getItem('lsjy_token') || '')
 // ★ 本地直连AI API配置（支持动态Key、自动降级重试）
 interface ProviderConfig { apiKey: string; baseUrl: string; label: string }
 const DIRECT_AI_CONFIG: Record<string, ProviderConfig> = {
-  doubao:   { apiKey: 'ark-3c2a939f-9aec-4930-946e-29a97d476611-e6c69', baseUrl: 'https://ark.cn-beijing.volces.com/api/v3', label: '豆包 Pro' },
-  ark:      { apiKey: 'ark-3c2a939f-9aec-4930-946e-29a97d476611-e6c69', baseUrl: 'https://ark.cn-beijing.volces.com/api/v3', label: '火山方舟' },
-  deepseek: { apiKey: 'sk-4f60d83ebf904321b99000888baf313c', baseUrl: 'https://api.deepseek.com/v1', label: 'DeepSeek' },
-  tongyi:   { apiKey: 'sk-c4212c9d7e4644e6825d796f6365668e', baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', label: '通义千问' },
-  bailian:  { apiKey: 'sk-c4212c9d7e4644e6825d796f6365668e', baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', label: '百炼 Qwen+' },
+  doubao:      { apiKey: 'ark-3c2a939f-9aec-4930-946e-29a97d476611-e6c69', baseUrl: 'https://ark.cn-beijing.volces.com/api/v3', label: '豆包 Pro' },
+  ark:         { apiKey: 'ark-3c2a939f-9aec-4930-946e-29a97d476611-e6c69', baseUrl: 'https://ark.cn-beijing.volces.com/api/v3', label: '火山方舟' },
+  deepseek:    { apiKey: 'sk-d7fff48c5a034450b262d2c323bef2f7', baseUrl: 'https://api.deepseek.com/v1', label: 'DeepSeek' },
+  tongyi:      { apiKey: 'sk-c4212c9d7e4644e6825d796f6365668e', baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', label: '通义千问' },
+  bailian:     { apiKey: 'sk-c4212c9d7e4644e6825d796f6365668e', baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', label: '百炼 Qwen+' },
+  siliconflow: { apiKey: 'sk-ivqkjfcgfoceolvfzyafcgrvvqdzcqoiyprflskmmcujwgtg', baseUrl: 'https://api.siliconflow.cn/v1', label: '硅基流动' },
+  zhipu:       { apiKey: '6b7eb9b814494f66abf8dec556763b9c.THihSRBYUPPdlbtv', baseUrl: 'https://open.bigmodel.cn/api/paas/v4', label: '智谱GLM' },
+  baidu:       { apiKey: '', baseUrl: 'https://qianfan.baidubce.com/v2', label: '百度ERNIE' },
 }
 
 // 动态Key覆盖（用户可通过localStorage自定义各provider的Key）
