@@ -59,7 +59,7 @@
         </router-link>
       </div>
     </aside>
-    <div class="transition-all duration-300" :class="isMobile?'ml-0':(appStore.sidebarCollapsed?'ml-0':'ml-64')">
+    <div class="transition-all duration-300 relative z-10" :class="isMobile?'ml-0':(appStore.sidebarCollapsed?'ml-0':'ml-64')">
       <header class="h-16 flex items-center justify-between px-4 sticky top-0 z-50" style="background:#0d0d1aee;backdrop-filter:blur(10px);border-bottom:1px solid #00f0ff30;">
         <div class="flex items-center gap-3">
           <button v-if="isMobile" @click="sidebarOpen=!sidebarOpen" class="p-2 text-xl" style="color:#00f0ff;">☰</button>
@@ -82,7 +82,7 @@
           </el-dropdown>
         </div>
       </header>
-      <main class="p-4"><router-view /></main>
+      <main class="p-4" style="min-height: calc(100vh - 4rem);"><router-view /></main>
     </div>
   </div>
 </template>
@@ -185,4 +185,5 @@ const allItems=menuGroups.flatMap(g=>g.items)
 const currentTitle=computed(()=>{const i=allItems.find(x=>route.path===x.path);return i?.label||'管理后台'})
 function handleLogout(){authStore.logout();router.push('/login')}
 </script>
+
 
