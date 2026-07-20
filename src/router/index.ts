@@ -103,6 +103,32 @@ router.beforeEach(async (to, _from, next) => {
   }
   if (to.matched.some(r => r.meta.requiresAdmin)) {
     if (!token) return next('/login')
+    // ★ 本地容错模式：跳过API验证，直接从localStorage判断权限
+    if (token.startsWith('local_')) {
+      const savedUser = localStorage.getItem('lsjy_user')
+      if (savedUser) {
+        try {
+          const userData = JSON.parse(savedUser)
+          const roleNames = Array.isArray(userData?.roles)
+            ? userData.roles.map((r: any) => typeof r === 'string' ? r : (r.roleName || r.name || r.role || '')).filter(Boolean)
+            : []
+          const isAdmin = roleNames.some((r: string) =>
+            ['boss', 'founder', 'ultimate_admin', 'super_admin', 'admin'].includes(r)
+          )
+          if (isAdmin) {
+            // 同步auth store
+            const authStore = useAuthStore()
+            if (!authStore.user) {
+              authStore.user = userData
+              authStore.userRoles = roleNames
+            }
+            return next()
+          }
+        } catch {}
+      }
+      // 本地token但无法验证权限，放行到dashboard
+      return next('/dashboard')
+    }
     try {
       const authStore = useAuthStore()
       const [profileRes, rolesRes] = await Promise.all([
