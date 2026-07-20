@@ -342,18 +342,15 @@ async function quickHealthCheck(): Promise<boolean> {
 
 // 本地容错登录：服务器不可用时，使用本地验证让用户至少能进入系统
 async function localFallbackLogin(username: string, password: string) {
-  // 简单的账号密码校验（仅支持已知账号的容错登录）
-  const { setToken } = await import('@/utils')
   const knownAccounts: Record<string, string> = {
     'KF02V9': 'LuoKaiZhong02V9',
   }
 
   if (knownAccounts[username] && knownAccounts[username] === password) {
-    // 本地验证通过，生成一个临时token并写入localStorage
+    // 本地验证通过，生成一个临时token
     const fakeToken = `local_${Date.now()}_${username}`
-    setToken(fakeToken)
 
-    // 写入用户信息到localStorage
+    // 写入用户信息
     const userData = {
       id: 1,
       username: username,
@@ -365,16 +362,29 @@ async function localFallbackLogin(username: string, password: string) {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     }
+
+    // 1. 同步更新 auth store 的响应式状态（关键！）
+    authStore.token = fakeToken
+    authStore.user = userData as any
+    authStore.userRoles = userData.roles
+    authStore.isLocalAuth = true
+
+    // 2. 写入 localStorage（持久化）
+    localStorage.setItem('lsjy_token', fakeToken)
     localStorage.setItem('lsjy_user', JSON.stringify(userData))
     localStorage.setItem('lsjy_local_auth', 'true')
 
-    const { ElMessage } = await import('element-plus')
     ElMessage.success('已通过本地验证，正在进入系统...')
 
-    // 使用全页面跳转而非router.push，确保所有状态完整初始化
-    window.location.href = '/#/dashboard'
+    // 3. 双重跳转保障：先用 router.push，延迟后兜底用整页刷新
+    const targetPath = '/dashboard'
+    try {
+      await router.push(targetPath)
+    } catch {
+      // router.push 失败时用整页刷新兜底
+      window.location.href = `/#${targetPath}`
+    }
   } else {
-    const { ElMessage } = await import('element-plus')
     ElMessage.error('账号或密码错误，且服务器不可用无法验证')
     failCount.value++
   }
