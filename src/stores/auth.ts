@@ -107,6 +107,10 @@ export const useAuthStore = defineStore('auth', () => {
         if (!parsed.roles?.length || !parsed.roles.includes('boss')) {
           parsed.roles = ['boss', 'founder', 'ultimate_admin', 'super_admin', 'admin', 'operator']
         }
+        // ★ 头像保护：lsjy_user_avatar优先，确保不丢失
+        if (savedAvatar) {
+          parsed.avatar = savedAvatar
+        }
         // 同步修正后的数据回localStorage
         localStorage.setItem('lsjy_user', JSON.stringify(parsed))
       }
