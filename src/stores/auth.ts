@@ -123,6 +123,38 @@ export const useAuthStore = defineStore('auth', () => {
     }
   } catch (e) {}
 
+  // ★ 后端同步检测：本地模式用户进入系统时，检测后端是否恢复并尝试同步
+  async function syncLocalDataToBackend() {
+    if (!isLocalAuth.value || !user.value) return
+    try {
+      const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'https://api.lsjyapp.cn/api/v1').replace(/\/$/, '')
+      const healthRes = await fetch(`${API_BASE}/health`, {
+        method: 'GET',
+        signal: AbortSignal.timeout(3000),
+      })
+      if (healthRes.ok) {
+        // 后端恢复了，尝试用本地数据同步注册（如果用户不存在于后端）
+        try {
+          const known: Record<string, string> = JSON.parse(localStorage.getItem('lsjy_known_accounts') || '{}')
+          const pwd = known[user.value.username]
+          if (pwd) {
+            await authApi.register({
+              username: user.value.username,
+              password: pwd,
+              nickname: user.value.nickname || user.value.username,
+              phone: user.value.phone || undefined,
+              email: user.value.email || undefined,
+            })
+          }
+        } catch {
+          // 用户可能已存在于后端，忽略注册失败
+        }
+      }
+    } catch {
+      // 后端仍然不可用，静默忽略
+    }
+  }
+
   const isLoggedIn = computed(() => !!token.value)
   const isAdmin = computed(() => userRoles.value.some(r => ['super_admin', 'boss', 'founder', 'ultimate_admin', 'admin', 'operator'].includes(r)))
   const isBossAccount = computed(() => user.value?.username === 'KF02V9' && isAdmin.value)
@@ -259,6 +291,6 @@ export const useAuthStore = defineStore('auth', () => {
   return {
     token, user, userRoles, coinBalance, loading, isLocalAuth,
     isLoggedIn, isAdmin, isBossAccount, nickname,
-    login, fetchUserProfile, fetchBalance, logout
+    login, fetchUserProfile, fetchBalance, logout, syncLocalDataToBackend
   }
 })

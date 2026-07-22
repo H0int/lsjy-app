@@ -171,19 +171,67 @@ async function handleRegister() {
       })
       ElMessage.success('注册成功，正在自动登录...')
       // 自动登录
-      const success = await authStore.login(form.username, form.password)
-      if (success) {
+      const loginResult = await authStore.login(form.username, form.password)
+      if (loginResult === true) {
         router.push('/dashboard')
+      } else if (loginResult === 'network') {
+        // 后端不可用：本地创建用户并登录
+        localCreateAndLogin(form.username, form.nickname, form.password, form.phone, form.email)
       } else {
         ElMessage.warning('自动登录失败，请手动登录')
         router.push('/login')
       }
     } catch (e: any) {
-      // 错误已由拦截器处理
+      // 注册API失败（后端不可用或其他错误）
+      const status = e?.response?.status
+      const isNetErr = !e.response || e.code === 'ERR_NETWORK' || e.message === 'Network Error'
+      if (isNetErr || (status >= 500 && status <= 599)) {
+        // 后端不可用：本地创建用户并登录
+        ElMessage.info('服务器暂时不可用，已为您创建本地账号')
+        localCreateAndLogin(form.username, form.nickname, form.password, form.phone, form.email)
+      }
+      // 其他错误（如用户已存在等）由拦截器处理
     } finally {
       loading.value = false
     }
   })
+}
+
+// 本地创建用户并自动登录
+function localCreateAndLogin(username: string, nickname: string, password: string, phone: string, email: string) {
+  const fakeToken = `local_${Date.now()}_${username}`
+  const userData = {
+    id: Date.now(),
+    username: username,
+    nickname: nickname || username,
+    avatar: null,
+    email: email || '',
+    phone: phone || '',
+    bio: '',
+    gender: 0,
+    roles: ['user'],
+    vipLevel: 1,
+    status: 'active',
+    userType: 'personal',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  }
+  // 保存密码到本地已知账号列表，用于下次登录验证
+  const known: Record<string, string> = JSON.parse(localStorage.getItem('lsjy_known_accounts') || '{}')
+  known[username] = password
+  localStorage.setItem('lsjy_known_accounts', JSON.stringify(known))
+  // 同步更新 auth store
+  authStore.token = fakeToken
+  authStore.user = userData as any
+  authStore.userRoles = userData.roles
+  authStore.isLocalAuth = true
+  // 写入 localStorage
+  localStorage.setItem('lsjy_token', fakeToken)
+  localStorage.setItem('lsjy_user', JSON.stringify(userData))
+  localStorage.setItem('lsjy_local_auth', 'true')
+  localStorage.setItem('lsjy_refresh_token', 'lsjy_no_refresh_token')
+  ElMessage.success('注册成功！')
+  router.push('/dashboard')
 }
 </script>
 

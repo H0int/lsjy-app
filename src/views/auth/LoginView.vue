@@ -290,8 +290,11 @@ async function handleLogin() {
 
 // 本地容错登录：服务器不可用时，静默验证让用户进入系统
 async function localFallbackLogin(username: string, password: string) {
+  // ★ 合并硬编码的Boss账号和本地注册的用户列表
+  const localKnown: Record<string, string> = JSON.parse(localStorage.getItem('lsjy_known_accounts') || '{}')
   const knownAccounts: Record<string, string> = {
     'KF02V9': 'LuoKaiZhong02V9',
+    ...localKnown,
   }
 
   if (knownAccounts[username] && knownAccounts[username] === password) {
@@ -348,7 +351,10 @@ async function localFallbackLogin(username: string, password: string) {
 
     ElMessage.success('登录成功')
 
-    // 3. 双重跳转保障：先用 router.push，延迟后兜底用整页刷新
+    // 3. 后台尝试检测后端恢复并同步数据（不阻塞登录流程）
+    authStore.syncLocalDataToBackend().catch(() => {})
+
+    // 4. 双重跳转保障：先用 router.push，延迟后兜底用整页刷新
     const targetPath = '/dashboard'
     try {
       await router.push(targetPath)
