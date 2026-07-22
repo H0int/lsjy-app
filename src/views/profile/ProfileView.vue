@@ -298,7 +298,9 @@ function syncFormFromUser() {
     profileForm.gender = u.gender ?? 0
   }
   profileForm.username = u.username || ''
-  avatarUrl.value = u.avatar || ''
+  // ★ 头像优先从 lsjy_user_avatar 读取，避免authStore.user.avatar同步延迟导致丢失
+  const savedAvatar = localStorage.getItem('lsjy_user_avatar')
+  avatarUrl.value = savedAvatar || u.avatar || ''
 }
 
 onMounted(() => {
@@ -320,20 +322,51 @@ function handleAvatarUpload(e: Event) {
   const file = target.files?.[0]
   if (!file) return
 
+  // 文件类型检查
+  if (!file.type.startsWith('image/')) {
+    ElMessage.warning('请选择图片文件')
+    target.value = ''
+    return
+  }
+  // 文件大小限制2MB（微信浏览器localStorage容量有限）
+  if (file.size > 2 * 1024 * 1024) {
+    ElMessage.warning('图片大小不能超过2MB，请选择较小的图片')
+    target.value = ''
+    return
+  }
+
   // 读取并显示预览
   const reader = new FileReader()
   reader.onload = () => {
-    avatarUrl.value = String(reader.result)
+    const dataUrl = String(reader.result)
+    avatarUrl.value = dataUrl
     ElMessage.success('头像已更新')
     // 保存到 localStorage 作为临时方案
-    localStorage.setItem('lsjy_user_avatar', avatarUrl.value)
+    try {
+      localStorage.setItem('lsjy_user_avatar', dataUrl)
+    } catch (storageErr) {
+      ElMessage.error('头像保存失败：存储空间不足，请使用更小的图片')
+      target.value = ''
+      return
+    }
     // ★ 同步更新 auth store 和 lsjy_user，确保全平台头像一致
     if (authStore.user) {
-      authStore.user.avatar = avatarUrl.value
+      authStore.user.avatar = dataUrl
       const saved = JSON.parse(localStorage.getItem('lsjy_user') || '{}')
-      saved.avatar = avatarUrl.value
-      localStorage.setItem('lsjy_user', JSON.stringify(saved))
+      saved.avatar = dataUrl
+      try {
+        localStorage.setItem('lsjy_user', JSON.stringify(saved))
+      } catch (e) {
+        console.warn('lsjy_user保存失败', e)
+      }
     }
+    // 强制刷新表单同步，确保UI一致
+    syncFormFromUser()
+    target.value = ''
+  }
+  reader.onerror = () => {
+    ElMessage.error('头像读取失败，请重试')
+    target.value = ''
   }
   reader.readAsDataURL(file)
 }

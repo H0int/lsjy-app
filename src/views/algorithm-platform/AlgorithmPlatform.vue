@@ -492,35 +492,47 @@ async function sendPanelMsg() {
       const h = parseInt(sizeParts[1]) || 1024
       const token = authToken.value
 
-      // ★ 本地容错模式：直连硅基流动图片生成API
+      // ★ 本地容错模式：直连硅基流动图片生成API（模型fallback）
       if (token && token.startsWith('local_')) {
-        try {
-          const imgRes = await fetch('https://api.siliconflow.cn/v1/images/generations', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer sk-ivqkjfcgfoceolvfzyafcgrvvqdzcqoiyprflskmmcujwgtg' },
-            body: JSON.stringify({
-              model: 'black-forest-labs/FLUX.1-schnell',
-              prompt: text + (imgStyle.value ? `，${imgStyle.value}风格` : ''),
-              image_size: `${w}x${h}`,
-              num_inference_steps: 20,
-            }),
-            signal: AbortSignal.timeout(120000),
-          })
-          if (imgRes.ok) {
-            const imgData = await imgRes.json()
-            const imgUrl = imgData.images?.[0]?.url || imgData.data?.[0]?.url || imgData.output?.[0] || ''
-            if (imgUrl) {
-              panelMsgs.value.push({ role: 'assistant', content: `🎨 图片已生成！\n\n![${text}](${imgUrl})` })
+        const IMAGE_MODELS = [
+          { model: 'black-forest-labs/FLUX.1-dev', label: 'FLUX.1-dev' },
+          { model: 'stabilityai/stable-diffusion-xl-base-1.0', label: 'SDXL' },
+        ]
+        let lastErr = ''
+        for (const cfg of IMAGE_MODELS) {
+          try {
+            const imgRes = await fetch('https://api.siliconflow.cn/v1/images/generations', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer sk-ivqkjfcgfoceolvfzyafcgrvvqdzcqoiyprflskmmcujwgtg' },
+              body: JSON.stringify({
+                model: cfg.model,
+                prompt: text + (imgStyle.value ? `，${imgStyle.value}风格` : ''),
+                image_size: `${w}x${h}`,
+                num_inference_steps: 20,
+              }),
+              signal: AbortSignal.timeout(120000),
+            })
+            if (imgRes.ok) {
+              const imgData = await imgRes.json()
+              const imgUrl = imgData.images?.[0]?.url || imgData.data?.[0]?.url || imgData.output?.[0] || ''
+              if (imgUrl) {
+                panelMsgs.value.push({ role: 'assistant', content: `🎨 图片已生成！\n\n![${text}](${imgUrl})` })
+                panelLoading.value = false
+                scrollPanelBottom()
+                return
+              }
             } else {
-              panelMsgs.value.push({ role: 'assistant', content: '⚠️ 图片生成返回数据异常，请稍后再试。' })
+              const errText = await imgRes.text().catch(() => '')
+              const errJson = JSON.parse(errText)
+              lastErr = errJson.message || errText
+              console.warn(`模型${cfg.label}失败:`, lastErr)
             }
-          } else {
-            const errText = await imgRes.text().catch(() => '')
-            panelMsgs.value.push({ role: 'assistant', content: `⚠️ 图片生成失败（${imgRes.status}），请稍后再试。\n${errText.substring(0, 200)}` })
+          } catch (e: any) {
+            lastErr = e.message || '网络异常'
+            console.warn(`模型${cfg.label}异常:`, lastErr)
           }
-        } catch (e: any) {
-          panelMsgs.value.push({ role: 'assistant', content: `⚠️ 图片生成失败：${e.message || '网络异常'}，请稍后再试。` })
         }
+        panelMsgs.value.push({ role: 'assistant', content: `⚠️ 图片生成失败：${lastErr || '所有模型均不可用'}，请稍后再试。` })
         panelLoading.value = false
         scrollPanelBottom()
         return

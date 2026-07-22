@@ -405,23 +405,44 @@ async function handleGenerate() {
     // ★ 本地容错：图片工具降级到硅基流动API，文本工具降级到AI模型
     const isLocal = localStorage.getItem('lsjy_local_auth') === 'true'
     if (isLocal && isImageTool.value) {
-      try {
-        const sizeStr = paramValues.value.size || '1024x1024'
-        const parts = sizeStr.split('x')
-        const imgRes = await fetch('https://api.siliconflow.cn/v1/images/generations', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer sk-ivqkjfcgfoceolvfzyafcgrvvqdzcqoiyprflskmmcujwgtg' },
-          body: JSON.stringify({ model: 'black-forest-labs/FLUX.1-schnell', prompt: inputContent.value, image_size: `${parts[0] || 1024}x${parts[1] || 1024}`, num_inference_steps: 20 }),
-          signal: AbortSignal.timeout(120000),
-        })
-        if (imgRes.ok) {
-          const imgData = await imgRes.json()
-          const url = imgData.images?.[0]?.url || imgData.data?.[0]?.url || ''
-          if (url) { imageUrls.value = [url]; generationMessage.value = '图片已生成（本地模式）'; ElMessage.success('图片生成成功！'); recordUsage() }
-          else throw new Error('未返回图片URL')
-        } else throw new Error(`图片生成API返回${imgRes.status}`)
-      } catch (e2: any) {
-        generationError.value = `图片生成失败：${e2.message}`
+      const IMAGE_MODELS = [
+        { model: 'black-forest-labs/FLUX.1-dev', label: 'FLUX.1-dev' },
+        { model: 'stabilityai/stable-diffusion-xl-base-1.0', label: 'SDXL' },
+      ]
+      let lastErr = ''
+      for (const cfg of IMAGE_MODELS) {
+        try {
+          const sizeStr = paramValues.value.size || '1024x1024'
+          const parts = sizeStr.split('x')
+          const imgRes = await fetch('https://api.siliconflow.cn/v1/images/generations', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer sk-ivqkjfcgfoceolvfzyafcgrvvqdzcqoiyprflskmmcujwgtg' },
+            body: JSON.stringify({ model: cfg.model, prompt: inputContent.value, image_size: `${parts[0] || 1024}x${parts[1] || 1024}`, num_inference_steps: 20 }),
+            signal: AbortSignal.timeout(120000),
+          })
+          if (imgRes.ok) {
+            const imgData = await imgRes.json()
+            const url = imgData.images?.[0]?.url || imgData.data?.[0]?.url || ''
+            if (url) {
+              imageUrls.value = [url]
+              generationMessage.value = '图片已生成（本地模式）'
+              ElMessage.success('图片生成成功！')
+              recordUsage()
+              break
+            } else throw new Error('未返回图片URL')
+          } else {
+            const errText = await imgRes.text().catch(() => '')
+            const errJson = JSON.parse(errText)
+            lastErr = errJson.message || errText
+            console.warn(`模型${cfg.label}失败:`, lastErr)
+          }
+        } catch (e2: any) {
+          lastErr = e2.message
+          console.warn(`模型${cfg.label}异常:`, lastErr)
+        }
+      }
+      if (!imageUrls.value.length) {
+        generationError.value = `图片生成失败：${lastErr || '所有模型均不可用'}`
         ElMessage.error(generationError.value)
       }
     } else if (isLocal && !isVideoTool.value) {
