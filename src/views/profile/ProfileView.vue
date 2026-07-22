@@ -283,12 +283,21 @@ function syncFormFromUser() {
   if (!authStore.user) return
   const u = authStore.user
   const isBoss = u.username === 'KF02V9'
-  profileForm.nickname = u.nickname || ''
+  // 罗总账号强制显示最新信息
+  if (isBoss) {
+    profileForm.nickname = '罗总'
+    profileForm.phone = '18890000368'
+    profileForm.email = '3196542376@qq.com'
+    profileForm.bio = '罗圣纪元创始人'
+    profileForm.gender = 1
+  } else {
+    profileForm.nickname = u.nickname || ''
+    profileForm.phone = u.phone || ''
+    profileForm.email = u.email || ''
+    profileForm.bio = u.bio || ''
+    profileForm.gender = u.gender ?? 0
+  }
   profileForm.username = u.username || ''
-  profileForm.phone = u.phone || (isBoss ? '18890000368' : '')
-  profileForm.email = u.email || (isBoss ? '3196542376@qq.com' : '')
-  profileForm.bio = u.bio || (isBoss ? '罗圣纪元创始人' : '')
-  profileForm.gender = u.gender ?? (isBoss ? 1 : 0)
   avatarUrl.value = u.avatar || ''
 }
 

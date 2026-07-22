@@ -301,16 +301,33 @@ async function localFallbackLogin(username: string, password: string) {
     // 写入用户信息（使用真实数据，包含完整字段）
     const saved = JSON.parse(localStorage.getItem('lsjy_user') || '{}')
     const isBoss = username === 'KF02V9'
-    const userData = {
+    // 罗总账号：强制使用最新信息覆盖
+    const userData = isBoss ? {
       id: 1,
       username: username,
-      nickname: isBoss ? '罗总' : (saved.nickname || username),
+      nickname: '罗总',
       avatar: saved.avatar || localStorage.getItem('lsjy_user_avatar') || null,
-      email: isBoss ? (saved.email || '3196542376@qq.com') : (saved.email || ''),
-      phone: isBoss ? (saved.phone || '18890000368') : (saved.phone || ''),
-      bio: isBoss ? (saved.bio || '罗圣纪元创始人') : (saved.bio || ''),
-      gender: isBoss ? (saved.gender ?? 1) : (saved.gender ?? 0),
-      roles: isBoss ? ['boss', 'founder', 'ultimate_admin', 'super_admin', 'admin', 'operator'] : ['boss', 'founder', 'super_admin'],
+      email: '3196542376@qq.com',
+      phone: '18890000368',
+      bio: '罗圣纪元创始人',
+      gender: 1,
+      roles: ['boss', 'founder', 'ultimate_admin', 'super_admin', 'admin', 'operator'],
+      vipLevel: 999,
+      status: 'active',
+      userType: 'founder',
+      unlimited: true,
+      createdAt: '2026-05-12T00:00:00.000Z',
+      updatedAt: new Date().toISOString()
+    } : {
+      id: 1,
+      username: username,
+      nickname: saved.nickname || username,
+      avatar: saved.avatar || localStorage.getItem('lsjy_user_avatar') || null,
+      email: saved.email || '',
+      phone: saved.phone || '',
+      bio: saved.bio || '',
+      gender: saved.gender ?? 0,
+      roles: ['boss', 'founder', 'super_admin'],
       vipLevel: 999,
       status: 'active',
       userType: 'founder',

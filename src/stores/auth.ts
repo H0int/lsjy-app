@@ -91,19 +91,22 @@ export const useAuthStore = defineStore('auth', () => {
       // 合并 localStorage 中单独保存的头像
       const savedAvatar = localStorage.getItem('lsjy_user_avatar')
       if (savedAvatar && !parsed.avatar) parsed.avatar = savedAvatar
-      // ★ KF02V9/罗总账号数据修正（兼容旧版localStorage数据）
+      // ★ KF02V9/罗总账号数据修正（强制同步最新信息）
       if (parsed.username === 'KF02V9') {
-        if (!parsed.nickname || parsed.nickname === '罗凯中') parsed.nickname = '罗总'
-        if (!parsed.createdAt || !parsed.createdAt.startsWith('2026-05-12')) parsed.createdAt = '2026-05-12T00:00:00.000Z'
-        if (!parsed.userType) parsed.userType = 'founder'
-        if (parsed.gender === undefined || parsed.gender === null) parsed.gender = 1
-        if (!parsed.email) parsed.email = '3196542376@qq.com'
-        if (!parsed.phone) parsed.phone = '18890000368'
-        if (!parsed.bio) parsed.bio = '罗圣纪元创始人'
-        if (!parsed.roles?.length) parsed.roles = ['boss', 'founder', 'super_admin']
-        if (!parsed.vipLevel) parsed.vipLevel = 99
-        if (!parsed.status) parsed.status = 'active'
-        if (parsed.unlimited === undefined) parsed.unlimited = true
+        // 强制更新的字段（每次都覆盖，确保最新）
+        parsed.nickname = '罗总'
+        parsed.phone = '18890000368'
+        parsed.email = '3196542376@qq.com'
+        parsed.bio = '罗圣纪元创始人'
+        parsed.gender = 1
+        parsed.userType = 'founder'
+        parsed.vipLevel = 999
+        parsed.status = 'active'
+        parsed.unlimited = true
+        parsed.createdAt = '2026-05-12T00:00:00.000Z'
+        if (!parsed.roles?.length || !parsed.roles.includes('boss')) {
+          parsed.roles = ['boss', 'founder', 'ultimate_admin', 'super_admin', 'admin', 'operator']
+        }
         // 同步修正后的数据回localStorage
         localStorage.setItem('lsjy_user', JSON.stringify(parsed))
       }
