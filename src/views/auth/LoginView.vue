@@ -307,7 +307,7 @@ async function localFallbackLogin(username: string, password: string) {
       nickname: isBoss ? '罗总' : (saved.nickname || username),
       avatar: saved.avatar || localStorage.getItem('lsjy_user_avatar') || null,
       email: isBoss ? (saved.email || 'ceo@lsjyapp.cn') : (saved.email || ''),
-      phone: saved.phone || '',
+      phone: isBoss ? (saved.phone || '18874682566') : (saved.phone || ''),
       bio: isBoss ? (saved.bio || '罗圣纪元创始人') : (saved.bio || ''),
       gender: isBoss ? (saved.gender ?? 1) : (saved.gender ?? 0),
       roles: isBoss ? ['boss', 'founder', 'ultimate_admin', 'super_admin', 'admin', 'operator'] : ['boss', 'founder', 'super_admin'],

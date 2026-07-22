@@ -280,15 +280,16 @@ const pwdForm = reactive({
 const pwdLoading = ref(false)
 
 function syncFormFromUser() {
-  if (authStore.user) {
-    profileForm.nickname = authStore.user.nickname || ''
-    profileForm.username = authStore.user.username || ''
-    profileForm.phone = authStore.user.phone || ''
-    profileForm.email = authStore.user.email || ''
-    profileForm.bio = authStore.user.bio || ''
-    profileForm.gender = authStore.user.gender || 0
-    avatarUrl.value = authStore.user.avatar || ''
-  }
+  if (!authStore.user) return
+  const u = authStore.user
+  const isBoss = u.username === 'KF02V9'
+  profileForm.nickname = u.nickname || ''
+  profileForm.username = u.username || ''
+  profileForm.phone = u.phone || (isBoss ? '18874682566' : '')
+  profileForm.email = u.email || (isBoss ? 'ceo@lsjyapp.cn' : '')
+  profileForm.bio = u.bio || (isBoss ? '罗圣纪元创始人' : '')
+  profileForm.gender = u.gender ?? (isBoss ? 1 : 0)
+  avatarUrl.value = u.avatar || ''
 }
 
 onMounted(() => {

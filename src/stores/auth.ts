@@ -98,7 +98,7 @@ export const useAuthStore = defineStore('auth', () => {
         if (!parsed.userType) parsed.userType = 'founder'
         if (parsed.gender === undefined || parsed.gender === null) parsed.gender = 1
         if (!parsed.email) parsed.email = 'ceo@lsjyapp.cn'
-        if (!parsed.phone) parsed.phone = ''
+        if (!parsed.phone) parsed.phone = '18874682566'
         if (!parsed.bio) parsed.bio = '罗圣纪元创始人'
         if (!parsed.roles?.length) parsed.roles = ['boss', 'founder', 'super_admin']
         if (!parsed.vipLevel) parsed.vipLevel = 99
