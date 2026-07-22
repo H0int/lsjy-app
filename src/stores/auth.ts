@@ -91,6 +91,10 @@ export const useAuthStore = defineStore('auth', () => {
       // 合并 localStorage 中单独保存的头像
       const savedAvatar = localStorage.getItem('lsjy_user_avatar')
       if (savedAvatar && !parsed.avatar) parsed.avatar = savedAvatar
+      // ★ 反向保护：如果lsjy_user中有base64头像但lsjy_user_avatar丢失，自动恢复
+      if (!savedAvatar && parsed.avatar && parsed.avatar.startsWith('data:image')) {
+        localStorage.setItem('lsjy_user_avatar', parsed.avatar)
+      }
       // ★ KF02V9/罗总账号数据修正（强制同步最新信息）
       if (parsed.username === 'KF02V9') {
         // 强制更新的字段（每次都覆盖，确保最新）

@@ -304,6 +304,17 @@ function syncFormFromUser() {
 }
 
 onMounted(() => {
+  // ★ 头像数据保护：如果lsjy_user中有base64头像但lsjy_user_avatar丢失，自动恢复
+  if (!localStorage.getItem('lsjy_user_avatar')) {
+    try {
+      const savedUser = JSON.parse(localStorage.getItem('lsjy_user') || '{}')
+      const avatar = savedUser.avatar
+      if (avatar && avatar.startsWith('data:image')) {
+        localStorage.setItem('lsjy_user_avatar', avatar)
+        console.info('[Profile] 已从lsjy_user恢复头像到lsjy_user_avatar')
+      }
+    } catch {}
+  }
   syncFormFromUser()
   if (!authStore.user) {
     authStore.fetchUserProfile().then(() => syncFormFromUser())

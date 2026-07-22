@@ -406,18 +406,20 @@ async function handleGenerate() {
     const isLocal = localStorage.getItem('lsjy_local_auth') === 'true'
     if (isLocal && isImageTool.value) {
       const IMAGE_MODELS = [
-        { model: 'black-forest-labs/FLUX.1-dev', label: 'FLUX.1-dev' },
-        { model: 'stabilityai/stable-diffusion-xl-base-1.0', label: 'SDXL' },
+        { model: 'cogview-3-flash', label: 'CogView3-Flash', baseUrl: 'https://open.bigmodel.cn/api/paas/v4/images/generations', apiKey: '6b7eb9b814494f66abf8dec556763b9c.THihSRBYUPPdlbtv', format: 'zhipu' },
       ]
       let lastErr = ''
       for (const cfg of IMAGE_MODELS) {
         try {
           const sizeStr = paramValues.value.size || '1024x1024'
           const parts = sizeStr.split('x')
-          const imgRes = await fetch('https://api.siliconflow.cn/v1/images/generations', {
+          const imgRes = await fetch(cfg.baseUrl, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer sk-ivqkjfcgfoceolvfzyafcgrvvqdzcqoiyprflskmmcujwgtg' },
-            body: JSON.stringify({ model: cfg.model, prompt: inputContent.value, image_size: `${parts[0] || 1024}x${parts[1] || 1024}`, num_inference_steps: 20 }),
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfg.apiKey}` },
+            body: JSON.stringify(cfg.format === 'zhipu'
+              ? { model: cfg.model, prompt: inputContent.value, size: `${parts[0] || 1024}x${parts[1] || 1024}` }
+              : { model: cfg.model, prompt: inputContent.value, image_size: `${parts[0] || 1024}x${parts[1] || 1024}`, num_inference_steps: 20 }
+            ),
             signal: AbortSignal.timeout(120000),
           })
           if (imgRes.ok) {

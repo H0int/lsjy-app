@@ -1362,25 +1362,24 @@ async function genImage() {
   const isLocal = token && token.startsWith('local_')
 
   if (isLocal) {
-    // 硅基流动图片模型fallback列表
+    // 图片模型fallback列表（优先使用可用模型）
     const IMAGE_MODELS = [
-      { model: 'black-forest-labs/FLUX.1-dev', label: 'FLUX.1-dev' },
-      { model: 'stabilityai/stable-diffusion-xl-base-1.0', label: 'SDXL' },
+      { model: 'cogview-3-flash', label: 'CogView3-Flash', baseUrl: 'https://open.bigmodel.cn/api/paas/v4/images/generations', apiKey: '6b7eb9b814494f66abf8dec556763b9c.THihSRBYUPPdlbtv', format: 'zhipu' },
     ]
     let lastErr = ''
     for (const cfg of IMAGE_MODELS) {
       try {
         const sizeStr = imgSize.value || '1024x1024'
         const parts = sizeStr.split('x')
-        const imgRes = await fetch('https://api.siliconflow.cn/v1/images/generations', {
+        const w = parseInt(parts[0]) || 1024
+        const h = parseInt(parts[1]) || 1024
+        const imgRes = await fetch(cfg.baseUrl, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer sk-ivqkjfcgfoceolvfzyafcgrvvqdzcqoiyprflskmmcujwgtg' },
-          body: JSON.stringify({
-            model: cfg.model,
-            prompt: fullPrompt,
-            image_size: `${parts[0] || 1024}x${parts[1] || 1024}`,
-            num_inference_steps: 20,
-          }),
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfg.apiKey}` },
+          body: JSON.stringify(cfg.format === 'zhipu'
+            ? { model: cfg.model, prompt: fullPrompt, size: `${w}x${h}` }
+            : { model: cfg.model, prompt: fullPrompt, image_size: `${w}x${h}`, num_inference_steps: 20 }
+          ),
           signal: AbortSignal.timeout(120000),
         })
         if (!imgRes.ok) {
