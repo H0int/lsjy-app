@@ -285,8 +285,8 @@ function syncFormFromUser() {
   const isBoss = u.username === 'KF02V9'
   profileForm.nickname = u.nickname || ''
   profileForm.username = u.username || ''
-  profileForm.phone = u.phone || (isBoss ? '18874682566' : '')
-  profileForm.email = u.email || (isBoss ? 'ceo@lsjyapp.cn' : '')
+  profileForm.phone = u.phone || (isBoss ? '18890000368' : '')
+  profileForm.email = u.email || (isBoss ? '3196542376@qq.com' : '')
   profileForm.bio = u.bio || (isBoss ? '罗圣纪元创始人' : '')
   profileForm.gender = u.gender ?? (isBoss ? 1 : 0)
   avatarUrl.value = u.avatar || ''
