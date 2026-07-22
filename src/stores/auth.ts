@@ -100,7 +100,7 @@ export const useAuthStore = defineStore('auth', () => {
         parsed.bio = '罗圣纪元创始人'
         parsed.gender = 1
         parsed.userType = 'founder'
-        parsed.vipLevel = 999
+        parsed.vipLevel = 99
         parsed.status = 'active'
         parsed.unlimited = true
         parsed.createdAt = '2026-05-12T00:00:00.000Z'

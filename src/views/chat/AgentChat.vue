@@ -1353,15 +1353,48 @@ async function genImage() {
   const prompt = imgPrompt.value.trim()
   if (!prompt || genLoading.value || !selectedAgent.value) return
 
-  // ★ 本地容错模式：提示维护中
-  if (authStore.isLocalAuth) {
-    images.value.unshift({ prompt, error: '⚠️ 服务器维护中，图片生成暂时不可用' })
-    return
-  }
-
   const fullPrompt = imgStyle.value ? `以${imgStyle.value}风格生成：${prompt}` : prompt
   images.value.unshift({ prompt, loading: true })
   genLoading.value = true
+
+  // ★ 本地容错模式：直连硅基流动图片生成API
+  const token = authToken.value
+  const isLocal = token && token.startsWith('local_')
+
+  if (isLocal) {
+    try {
+      const sizeStr = imgSize.value || '1024x1024'
+      const parts = sizeStr.split('x')
+      const imgRes = await fetch('https://api.siliconflow.cn/v1/images/generations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer sk-ivqkjfcgfoceolvfzyafcgrvvqdzcqoiyprflskmmcujwgtg' },
+        body: JSON.stringify({
+          model: 'black-forest-labs/FLUX.1-schnell',
+          prompt: fullPrompt,
+          image_size: `${parts[0] || 1024}x${parts[1] || 1024}`,
+          num_inference_steps: 20,
+        }),
+        signal: AbortSignal.timeout(120000),
+      })
+
+      if (!imgRes.ok) {
+        const errText = await imgRes.text()
+        throw new Error(`硅基流动API错误 ${imgRes.status}: ${errText}`)
+      }
+      const imgData = await imgRes.json()
+      const imgUrl = imgData.images?.[0]?.url || imgData.data?.[0]?.url || imgData.output?.[0]
+      if (imgUrl) {
+        images.value[0] = { prompt, url: imgUrl }
+      } else {
+        throw new Error('API未返回图片地址')
+      }
+    } catch (imgErr: any) {
+      images.value[0] = { prompt, error: `生成失败：${imgErr?.message || '网络错误'}` }
+    } finally {
+      genLoading.value = false
+    }
+    return
+  }
 
   try {
     const res = await fetch(`${API_BASE}/ai/tools/${selectedAgent.value.id}/generate`, {
