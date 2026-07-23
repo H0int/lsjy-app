@@ -140,10 +140,17 @@ export class AIProviderManager implements OnModuleInit {
             { id: 'qwen-turbo', name: 'Qwen Turbo', capabilities: ['text'], supportStream: true },
             { id: 'qwen-plus', name: 'Qwen Plus', capabilities: ['text'], supportStream: true },
             { id: 'qwen-max', name: 'Qwen Max', capabilities: ['text'], supportStream: true },
+            { id: 'qwen-long', name: 'Qwen Long', capabilities: ['text'], supportStream: true },
+            { id: 'qwen-vl-plus', name: 'Qwen VL Plus', capabilities: ['text', 'multimodal'], supportStream: true },
+            { id: 'qwen-vl-max', name: 'Qwen VL Max', capabilities: ['text', 'multimodal'], supportStream: true },
+            { id: 'deepseek-v3', name: 'DeepSeek V3', capabilities: ['text', 'code'], supportStream: true },
           ],
         }),
-        apiKey: this.configService.get<string>('BAILIAN_API_KEY'),
-        baseUrl: this.configService.get<string>('BAILIAN_BASE_URL', 'https://dashscope.aliyuncs.com/compatible-mode/v1'),
+        // DASHSCOPE_API_KEY 缺省回退 BAILIAN_API_KEY；Base URL 由 WORKSPACE_ID 决定（可选）
+        apiKey:
+          this.configService.get<string>('DASHSCOPE_API_KEY') ||
+          this.configService.get<string>('BAILIAN_API_KEY'),
+        baseUrl: this.resolveBailianBaseUrl(),
         defaultModel: this.configService.get<string>('BAILIAN_MODEL', 'qwen-plus'),
       },
       {
@@ -212,6 +219,22 @@ export class AIProviderManager implements OnModuleInit {
     }
 
     this.logger.log(`AI Provider Manager: ${this.providers.size} providers active`);
+  }
+
+  /**
+   * 解析百炼 Base URL：
+   *  - 设置 WORKSPACE_ID 时使用 workspace 专属端点；
+   *  - 否则回退 BAILIAN_BASE_URL，最终使用标准 DashScope 端点。
+   */
+  private resolveBailianBaseUrl(): string {
+    const workspaceId = this.configService.get<string>('WORKSPACE_ID');
+    if (workspaceId && workspaceId.trim()) {
+      return `https://${workspaceId.trim()}.cn-beijing.maas.aliyuncs.com/compatible-mode/v1`;
+    }
+    return this.configService.get<string>(
+      'BAILIAN_BASE_URL',
+      'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    );
   }
 
   /**

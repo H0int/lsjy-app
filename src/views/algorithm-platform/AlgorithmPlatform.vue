@@ -355,6 +355,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { algoPlatformApi } from '@/api'
+import { tryModelRouter } from '@/utils/modelRouter'
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'https://api.lsjyapp.cn/api/v1').replace(/\/$/, '')
 const authToken = computed(() => localStorage.getItem('lsjy_token') || '')
@@ -778,20 +779,26 @@ async function sendPanelMsg() {
     ]
 
     let handled = false
-    // 优先走后端（豆包视觉模型，后端会自动识别图片内容路由到vision）
-    try {
-      const res = await fetch(`${API_BASE}/agent/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-        body: JSON.stringify({ messages: visionMessages, provider: 'doubao', agentId: 201, systemPrompt: visionMessages[0].content as string }),
-        signal: AbortSignal.timeout(60000),
-      })
-      if (res.ok) {
-        const data = await res.json()
-        const reply = data.data?.reply || data.data?.content || ''
-        if (reply) { panelMsgs.value.push({ role: 'assistant', content: reply }); handled = true }
-      }
-    } catch { /* 后端不可达，走直连降级 */ }
+    // ★ Router优先层：统一模型路由（vision 任务，自动识图）
+    const routerReply = await tryModelRouter({ taskType: 'vision', messages: visionMessages, token })
+    if (routerReply) { panelMsgs.value.push({ role: 'assistant', content: routerReply }); handled = true }
+
+    // 优先走后端（豆包视觉模型，后端会自动识别图片内容路由到vision）——保留作为降级
+    if (!handled) {
+      try {
+        const res = await fetch(`${API_BASE}/agent/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+          body: JSON.stringify({ messages: visionMessages, provider: 'doubao', agentId: 201, systemPrompt: visionMessages[0].content as string }),
+          signal: AbortSignal.timeout(60000),
+        })
+        if (res.ok) {
+          const data = await res.json()
+          const reply = data.data?.reply || data.data?.content || ''
+          if (reply) { panelMsgs.value.push({ role: 'assistant', content: reply }); handled = true }
+        }
+      } catch { /* 后端不可达，走直连降级 */ }
+    }
 
     // 直连视觉模型降级
     if (!handled) {
@@ -944,34 +951,46 @@ async function sendPanelMsg() {
 
   // 优先走后端（后端有多provider容错+本地兜底）
   let handled = false
-  try {
-    const res = await fetch(`${API_BASE}/agent/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-      body: JSON.stringify({
-        messages,
-        model: model.engineModel,
-        provider: model.engineProvider,
-        agentId: 200 + Math.abs(model.name.charCodeAt(0)),
-        systemPrompt,
-      }),
-      signal: AbortSignal.timeout(60000),
-    })
 
-    if (res.ok) {
-      const data = await res.json()
-      const reply = data.data?.reply || data.data?.content || data.data?.text || data.reply || data.choices?.[0]?.message?.content || ''
-      if (reply) {
-        panelMsgs.value.push({ role: 'assistant', content: typeof reply === 'string' ? reply : JSON.stringify(reply) })
+  // ★ Router优先层：统一模型路由（后端 NestJS /ai/router/chat，任务路由+自动降级）
+  const routerTaskType = (model.tags || []).some((t: string) => t.includes('复杂推理') || t.includes('代码生成')) ? 'complex' : 'simple'
+  const routerReply = await tryModelRouter({ taskType: routerTaskType, messages, token })
+  if (routerReply) {
+    panelMsgs.value.push({ role: 'assistant', content: routerReply })
+    handled = true
+  }
+
+  // 现有 /agent/chat 降级链——原样保留
+  if (!handled) {
+    try {
+      const res = await fetch(`${API_BASE}/agent/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({
+          messages,
+          model: model.engineModel,
+          provider: model.engineProvider,
+          agentId: 200 + Math.abs(model.name.charCodeAt(0)),
+          systemPrompt,
+        }),
+        signal: AbortSignal.timeout(60000),
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        const reply = data.data?.reply || data.data?.content || data.data?.text || data.reply || data.choices?.[0]?.message?.content || ''
+        if (reply) {
+          panelMsgs.value.push({ role: 'assistant', content: typeof reply === 'string' ? reply : JSON.stringify(reply) })
+          handled = true
+        }
+      } else if (res.status === 402) {
+        panelMsgs.value.push({ role: 'assistant', content: '⚠️ 圣力余额不足，请先充值后继续使用。' })
         handled = true
       }
-    } else if (res.status === 402) {
-      panelMsgs.value.push({ role: 'assistant', content: '⚠️ 圣力余额不足，请先充值后继续使用。' })
-      handled = true
+      // 401（本地容错token）或其他异常：不标记 handled，继续走直连降级
+    } catch {
+      // 后端不可达（网络/CORS），走直连降级
     }
-    // 401（本地容错token）或其他异常：不标记 handled，继续走直连降级
-  } catch {
-    // 后端不可达（网络/CORS），走直连降级
   }
 
   // ★ 直连AI模型API降级（后端不可用/返回异常时），messages 已在外部构建可正常访问

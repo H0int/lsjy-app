@@ -6,6 +6,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AIController } from './ai.controller';
 import { AIService } from './ai.service';
 import { AIProviderManager } from './providers/provider-manager';
+import { ModelRouterController } from './model-router/model-router.controller';
+import { ModelRouterService } from './model-router/model-router.service';
 import { AiProvider } from './entities/ai-provider.entity';
 import { AiTool } from '../database/entities/ai-tool.entity';
 import { AiCallRecord } from '../database/entities/ai-call-record.entity';
@@ -24,8 +26,8 @@ import { CoinTransaction } from '../database/entities/coin-transaction.entity';
       CoinTransaction,
     ]),
   ],
-  controllers: [AIController],
-  providers: [AIService, AIProviderManager],
-  exports: [AIService, AIProviderManager],
+  controllers: [AIController, ModelRouterController],
+  providers: [AIService, AIProviderManager, ModelRouterService],
+  exports: [AIService, AIProviderManager, ModelRouterService],
 })
 export class AIModule {}

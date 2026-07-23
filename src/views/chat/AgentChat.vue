@@ -240,6 +240,7 @@ import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { storeToRefs } from 'pinia'
 import { getToken } from '@/utils'
+import { tryModelRouter } from '@/utils/modelRouter'
 
 // ========== API配置 ==========
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'https://api.lsjyapp.cn/api/v1').replace(/\/$/, '')
@@ -719,6 +720,23 @@ async function requestAgentChatSSE(
     const provider = payload.provider || selectedModel.value.provider
     const model = payload.model || selectedModel.value.model
     await callDirectAIStreaming(agent, payload, provider, model, onChunk, onDone, onError)
+    return
+  }
+
+  // ★ Router优先层：统一模型路由（后端 NestJS /ai/router/chat，任务路由+自动降级）
+  //   失败时返回 null，无缝继续下方现有 SSE 端点与直连降级链
+  const routerMessages = [
+    { role: 'system', content: payload.systemPrompt || getAgentSystemPrompt(agent) },
+    ...(payload.messages || []),
+  ]
+  const routerReply = await tryModelRouter({
+    taskType: 'simple',
+    messages: routerMessages,
+    token: authToken.value,
+  })
+  if (routerReply) {
+    onChunk(routerReply)
+    onDone({ coinCost: agent.coinCost || 1 })
     return
   }
 
