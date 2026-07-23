@@ -247,15 +247,20 @@ const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'https://api.lsjyapp.cn/a
 const authToken = computed(() => localStorage.getItem('lsjy_token') || '')
 
 // ★ 本地直连AI API配置（支持动态Key、自动降级重试）
+// ★ 2026-07 实测更新：智谱/百炼为当前可用免费Key（优先），DeepSeek/硅基流动为用户Key（余额不足，充值后生效）
+const KEY_ZHIPU = '33d4bc583aeb4c8aadcdf47dbb4998be.tZfIUwNar8uoh3ff'
+const KEY_BAILIAN = 'sk-ws-H.RYPMMHX.ZvQf.MEYCIQD5dBuJCBod7WbjkpvTK2VPo3rAJ6iByONfat8WdevKegIhALni9P294K3nOWN6b5-lJSy4ZFyX4syhIsmJc2uX8tWN'
+const KEY_DEEPSEEK = '' // DeepSeek密钥余额不足，且GitHub禁止明文Key推送；充值后请在「个人中心→设置→API密钥」配置
+const KEY_SILICONFLOW = 'sk-ihetfcnbcopnzsciokpdswcfzbrkxhywujedqyghlgdrppnq'
 interface ProviderConfig { apiKey: string; baseUrl: string; label: string }
 const DIRECT_AI_CONFIG: Record<string, ProviderConfig> = {
   doubao:      { apiKey: 'ark-3c2a939f-9aec-4930-946e-29a97d476611-e6c69', baseUrl: 'https://ark.cn-beijing.volces.com/api/v3', label: '豆包 Pro' },
   ark:         { apiKey: 'ark-3c2a939f-9aec-4930-946e-29a97d476611-e6c69', baseUrl: 'https://ark.cn-beijing.volces.com/api/v3', label: '火山方舟' },
-  deepseek:    { apiKey: 'sk-d7fff48c5a034450b262d2c323bef2f7', baseUrl: 'https://api.deepseek.com/v1', label: 'DeepSeek' },
-  tongyi:      { apiKey: 'sk-c4212c9d7e4644e6825d796f6365668e', baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', label: '通义千问' },
-  bailian:     { apiKey: 'sk-c4212c9d7e4644e6825d796f6365668e', baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', label: '百炼 Qwen+' },
-  siliconflow: { apiKey: 'sk-ivqkjfcgfoceolvfzyafcgrvvqdzcqoiyprflskmmcujwgtg', baseUrl: 'https://api.siliconflow.cn/v1', label: '硅基流动' },
-  zhipu:       { apiKey: '6b7eb9b814494f66abf8dec556763b9c.THihSRBYUPPdlbtv', baseUrl: 'https://open.bigmodel.cn/api/paas/v4', label: '智谱GLM' },
+  deepseek:    { apiKey: KEY_DEEPSEEK, baseUrl: 'https://api.deepseek.com/v1', label: 'DeepSeek' },
+  tongyi:      { apiKey: KEY_BAILIAN, baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', label: '通义千问' },
+  bailian:     { apiKey: KEY_BAILIAN, baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', label: '百炼 Qwen+' },
+  siliconflow: { apiKey: KEY_SILICONFLOW, baseUrl: 'https://api.siliconflow.cn/v1', label: '硅基流动' },
+  zhipu:       { apiKey: KEY_ZHIPU, baseUrl: 'https://open.bigmodel.cn/api/paas/v4', label: '智谱GLM' },
   baidu:       { apiKey: '', baseUrl: 'https://qianfan.baidubce.com/v2', label: '百度ERNIE' },
 }
 
@@ -273,16 +278,16 @@ function setProviderKey(provider: string, key: string) {
 const FALLBACK_ORDER = ['doubao', 'ark', 'deepseek', 'tongyi', 'bailian', 'siliconflow', 'zhipu', 'baidu']
 
 // ★ 模型→有效API Key映射：每个模型选项直接绑定一个有有效Key的Provider
-// 可用Key：智谱GLM(GLM-4-Flash免费)、硅基流动(免费额度)、DeepSeek(免费额度)
+// ★ 2026-07 实测更新：硅基流动/DeepSeek余额不足，统一改绑到实测可用的智谱GLM/阿里百炼
 const MODEL_PROVIDER_MAP: Record<string, { provider: string; model: string; baseUrl: string; apiKey: string }> = {
-  'doubao-1-5-pro-32k-250115':       { provider: 'zhipu',       model: 'glm-4-flash', baseUrl: 'https://open.bigmodel.cn/api/paas/v4', apiKey: '6b7eb9b814494f66abf8dec556763b9c.THihSRBYUPPdlbtv' },
-  'doubao-1-5-lite-32k-250115':      { provider: 'siliconflow', model: 'Qwen/Qwen2.5-7B-Instruct', baseUrl: 'https://api.siliconflow.cn/v1', apiKey: 'sk-ivqkjfcgfoceolvfzyafcgrvvqdzcqoiyprflskmmcujwgtg' },
-  'deepseek-chat':                   { provider: 'deepseek',    model: 'deepseek-chat', baseUrl: 'https://api.deepseek.com/v1', apiKey: 'sk-d7fff48c5a034450b262d2c323bef2f7' },
-  'qwen-plus':                        { provider: 'siliconflow', model: 'Qwen/Qwen2.5-7B-Instruct', baseUrl: 'https://api.siliconflow.cn/v1', apiKey: 'sk-ivqkjfcgfoceolvfzyafcgrvvqdzcqoiyprflskmmcujwgtg' },
-  'kimi-k2.7-code':                  { provider: 'deepseek',    model: 'deepseek-chat', baseUrl: 'https://api.deepseek.com/v1', apiKey: 'sk-d7fff48c5a034450b262d2c323bef2f7' },
-  'Qwen/Qwen2.5-7B-Instruct':        { provider: 'siliconflow', model: 'Qwen/Qwen2.5-7B-Instruct', baseUrl: 'https://api.siliconflow.cn/v1', apiKey: 'sk-ivqkjfcgfoceolvfzyafcgrvvqdzcqoiyprflskmmcujwgtg' },
-  'glm-4.6':                          { provider: 'zhipu',       model: 'glm-4-flash', baseUrl: 'https://open.bigmodel.cn/api/paas/v4', apiKey: '6b7eb9b814494f66abf8dec556763b9c.THihSRBYUPPdlbtv' },
-  'ernie-4.5-turbo-128k':            { provider: 'zhipu',       model: 'glm-4-flash', baseUrl: 'https://open.bigmodel.cn/api/paas/v4', apiKey: '6b7eb9b814494f66abf8dec556763b9c.THihSRBYUPPdlbtv' },
+  'doubao-1-5-pro-32k-250115':       { provider: 'zhipu',       model: 'glm-4-flash', baseUrl: 'https://open.bigmodel.cn/api/paas/v4', apiKey: KEY_ZHIPU },
+  'doubao-1-5-lite-32k-250115':      { provider: 'bailian',     model: 'qwen-turbo', baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', apiKey: KEY_BAILIAN },
+  'deepseek-chat':                   { provider: 'bailian',     model: 'qwen-plus', baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', apiKey: KEY_BAILIAN },
+  'qwen-plus':                        { provider: 'bailian',     model: 'qwen-plus', baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', apiKey: KEY_BAILIAN },
+  'kimi-k2.7-code':                  { provider: 'bailian',     model: 'qwen-plus', baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', apiKey: KEY_BAILIAN },
+  'Qwen/Qwen2.5-7B-Instruct':        { provider: 'bailian',     model: 'qwen-turbo', baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', apiKey: KEY_BAILIAN },
+  'glm-4.6':                          { provider: 'zhipu',       model: 'glm-4-flash', baseUrl: 'https://open.bigmodel.cn/api/paas/v4', apiKey: KEY_ZHIPU },
+  'ernie-4.5-turbo-128k':            { provider: 'zhipu',       model: 'glm-4-flash', baseUrl: 'https://open.bigmodel.cn/api/paas/v4', apiKey: KEY_ZHIPU },
 }
 
 // ========== AI员工列表 ==========
@@ -644,7 +649,7 @@ async function requestAgentChat(agent: Agent, payload: Record<string, any>) {
           body: JSON.stringify({ model: useMapping.model, messages, max_tokens: 4096, temperature: 0.7 }),
           signal: AbortSignal.timeout(60000),
         })
-        if (!res.ok) throw new Error(`${config.label} ${res.status}`)
+        if (!res.ok) throw new Error(`${useMapping.provider} ${res.status}`)
         const data = await res.json()
         const content = data.choices?.[0]?.message?.content || '⚠️ 未返回内容'
         return new Response(JSON.stringify({ code: 0, data: { content, reply: content, coinCost: agent.coinCost || 1 } }), {
@@ -1364,7 +1369,7 @@ async function genImage() {
   if (isLocal) {
     // 图片模型fallback列表（优先使用可用模型）
     const IMAGE_MODELS = [
-      { model: 'cogview-3-flash', label: 'CogView3-Flash', baseUrl: 'https://open.bigmodel.cn/api/paas/v4/images/generations', apiKey: '6b7eb9b814494f66abf8dec556763b9c.THihSRBYUPPdlbtv', format: 'zhipu' },
+      { model: 'cogview-3-flash', label: 'CogView3-Flash', baseUrl: 'https://open.bigmodel.cn/api/paas/v4/images/generations', apiKey: KEY_ZHIPU, format: 'zhipu' },
     ]
     let lastErr = ''
     for (const cfg of IMAGE_MODELS) {

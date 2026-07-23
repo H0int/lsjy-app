@@ -167,9 +167,18 @@
                 <span v-for="tag in panelModel?.tags" :key="tag" class="text-xs px-2 py-1 rounded" style="background: rgba(0,240,255,0.06); color: rgba(0,240,255,0.5); border: 1px solid rgba(0,240,255,0.1);">{{ tag }}</span>
               </div>
             </div>
-            <div v-for="(msg, idx) in panelMsgs" :key="idx" class="panel-msg" :class="msg.role">
+            <div v-for="(msg, idx) in panelMsgs" :key="idx" class="panel-msg" :class="msg.role"
+              @mouseenter="hoverMsgIndex = idx" @mouseleave="hoverMsgIndex = null"
+              @click="hoverMsgIndex = (hoverMsgIndex === idx ? null : idx)">
               <div class="panel-msg-avatar">{{ msg.role === 'user' ? '👤' : (panelModel?.icon || '🤖') }}</div>
-              <div class="panel-msg-bubble" v-html="formatContent(msg.content)"></div>
+              <div class="panel-msg-body">
+                <div class="panel-msg-bubble" v-html="formatContent(msg.content)"></div>
+                <!-- AI回复操作按钮：鼠标悬停/触摸时自动浮现 -->
+                <div v-if="msg.role === 'assistant' && !msg.content.startsWith('⚠️') && hoverMsgIndex === idx" class="panel-msg-actions">
+                  <button class="panel-msg-action-btn" title="复制" @click="copyPanelMsg(msg.content)">📋 复制</button>
+                  <button class="panel-msg-action-btn" title="引用" @click="quotePanelMsg(msg.content)">💬 引用</button>
+                </div>
+              </div>
             </div>
             <div v-if="panelLoading" class="panel-msg assistant">
               <div class="panel-msg-avatar">{{ panelModel?.icon || '🤖' }}</div>
@@ -201,12 +210,36 @@
               </div>
             </div>
             <div class="panel-input-row">
+              <!-- 加号按钮：上传图片/视频进行分析 -->
+              <div class="relative flex-shrink-0">
+                <button class="panel-plus-btn" :disabled="panelLoading" @click.stop.prevent="togglePanelPlusMenu" @touchstart.stop.prevent="togglePanelPlusMenu" title="上传图片/视频分析">＋</button>
+                <div v-if="showPanelPlusMenu" class="panel-plus-mask" @click="showPanelPlusMenu = false"></div>
+                <div v-if="showPanelPlusMenu" class="panel-plus-menu">
+                  <button @click.stop="openPanelUpload('image')">🖼️ 上传图片分析</button>
+                  <button @click.stop="openPanelUpload('video')">🎬 上传视频分析</button>
+                  <button @click.stop="openPanelUpload('camera')">📷 拍照分析</button>
+                  <button @click.stop="showPanelPlusMenu = false; panelMsgs = []; panelPendingFile = null">🧹 清空对话</button>
+                </div>
+              </div>
+              <input ref="panelFileRef" type="file" :accept="panelUploadAccept" :capture="panelUploadCapture" class="hidden" @change="handlePanelFileUpload" />
               <textarea v-model="panelInput" :placeholder="getPlaceholder()" @keydown.enter.exact.prevent="sendPanelMsg" rows="1" class="panel-input"></textarea>
-              <button class="panel-send-btn" :disabled="!panelInput.trim() || panelLoading" @click="sendPanelMsg">
+              <button class="panel-send-btn" :disabled="(!panelInput.trim() && !panelPendingFile) || panelLoading" @click="sendPanelMsg">
                 {{ panelLoading ? '...' : '发送' }}
               </button>
             </div>
+            <!-- 已选图片/视频预览 -->
+            <div v-if="panelPendingFile" class="panel-pending-file">
+              <img v-if="panelPendingFile.isImage" :src="panelPendingFile.url" class="panel-pending-thumb" />
+              <div v-else class="panel-pending-icon">🎬</div>
+              <div class="panel-pending-info">
+                <div class="panel-pending-name">{{ panelPendingFile.name }}</div>
+                <div class="panel-pending-meta">{{ panelPendingFile.isImage ? '图片' : '视频' }} · {{ panelPendingFile.sizeLabel }}{{ panelPendingFile.isVideo ? ' · 将截帧分析' : '' }}</div>
+              </div>
+              <button class="panel-pending-remove" @click="panelPendingFile = null">✕</button>
+            </div>
           </div>
+          <!-- Toast 提示 -->
+          <div v-if="panelToast" class="panel-toast">{{ panelToast }}</div>
         </div>
       </div>
     </teleport>
@@ -439,10 +472,243 @@ const panelChatRef = ref<HTMLElement | null>(null)
 const imgSize = ref('1024x1024')
 const imgStyle = ref('')
 
+// ========== 直连AI模型API配置（后端不可用时的降级方案） ==========
+// 支持用户在 个人中心→设置→API密钥 配置自定义Key覆盖内置Key（lsjy_ai_key_{provider}）
+// ★ 2026-07 实测更新：以下Key均经过连通性+CORS实测验证
+//   智谱GLM、阿里百炼 = 当前可用的免费模型（优先降级）；
+//   DeepSeek/硅基流动/Kimi = 用户Key当前余额不足，作备用降级（充值后自动生效）
+const KEY_ZHIPU = '33d4bc583aeb4c8aadcdf47dbb4998be.tZfIUwNar8uoh3ff'
+const KEY_BAILIAN = 'sk-ws-H.RYPMMHX.ZvQf.MEYCIQD5dBuJCBod7WbjkpvTK2VPo3rAJ6iByONfat8WdevKegIhALni9P294K3nOWN6b5-lJSy4ZFyX4syhIsmJc2uX8tWN'
+const KEY_DEEPSEEK = '' // DeepSeek密钥余额不足，且GitHub禁止明文Key推送；充值后请在「个人中心→设置→API密钥」配置
+const KEY_SILICONFLOW = 'sk-ihetfcnbcopnzsciokpdswcfzbrkxhywujedqyghlgdrppnq'
+const KEY_KIMI = 'sk-EDZQy6reDIWWyrqawkZePnKtYPix0pzevwJMFxdxMjgY1bMH'
+
+type DirectProvider = { key: string; baseUrl: string; apiKey: string; model: string; label: string; extra?: Record<string, any> }
+
+const DIRECT_AI_PROVIDERS: DirectProvider[] = [
+  { key: 'zhipu', baseUrl: 'https://open.bigmodel.cn/api/paas/v4', apiKey: KEY_ZHIPU, model: 'glm-4-flash', label: '智谱GLM-4-Flash(免费)' },
+  { key: 'bailian', baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', apiKey: KEY_BAILIAN, model: 'qwen-plus', label: '阿里百炼Qwen-Plus' },
+  { key: 'bailian', baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', apiKey: KEY_BAILIAN, model: 'qwen-turbo', label: '阿里百炼Qwen-Turbo(免费)' },
+  { key: 'bailian', baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', apiKey: KEY_BAILIAN, model: 'qwen3-30b-a3b', label: '阿里百炼Qwen3', extra: { enable_thinking: false } },
+  { key: 'deepseek', baseUrl: 'https://api.deepseek.com/v1', apiKey: KEY_DEEPSEEK, model: 'deepseek-chat', label: 'DeepSeek' },
+  { key: 'siliconflow', baseUrl: 'https://api.siliconflow.cn/v1', apiKey: KEY_SILICONFLOW, model: 'Qwen/Qwen2.5-7B-Instruct', label: '硅基流动Qwen' },
+  { key: 'kimi', baseUrl: 'https://api.moonshot.cn/v1', apiKey: KEY_KIMI, model: 'moonshot-v1-8k', label: 'Kimi(月之暗面)' },
+]
+// 视觉理解模型（图片/视频截帧分析）
+const DIRECT_VISION_PROVIDERS: DirectProvider[] = [
+  { key: 'zhipu', baseUrl: 'https://open.bigmodel.cn/api/paas/v4', apiKey: KEY_ZHIPU, model: 'glm-4v-flash', label: '智谱GLM-4V(免费)' },
+  { key: 'bailian', baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', apiKey: KEY_BAILIAN, model: 'qwen-vl-plus', label: '阿里百炼Qwen-VL' },
+]
+
+function getDirectAIKey(p: { key: string; apiKey: string }): string {
+  return localStorage.getItem(`lsjy_ai_key_${p.key}`) || p.apiKey
+}
+
+// 直连文本模型API（自动降级尝试所有provider），成功返回回复文本，全部失败返回空串
+async function callDirectAI(messages: Array<{ role: string; content: any }>): Promise<string> {
+  for (const p of DIRECT_AI_PROVIDERS) {
+    try {
+      const r = await fetch(`${p.baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getDirectAIKey(p)}` },
+        body: JSON.stringify({ model: p.model, messages, max_tokens: 4096, temperature: 0.7, ...(p.extra || {}) }),
+        signal: AbortSignal.timeout(30000),
+      })
+      if (r.ok) {
+        const d = await r.json()
+        const reply = d.choices?.[0]?.message?.content || ''
+        if (reply) return reply
+      }
+    } catch { continue }
+  }
+  return ''
+}
+
+// 直连视觉模型API（图片理解/视频截帧分析），成功返回回复文本，全部失败返回空串
+async function callDirectVision(messages: Array<{ role: string; content: any }>): Promise<string> {
+  for (const p of DIRECT_VISION_PROVIDERS) {
+    try {
+      const r = await fetch(`${p.baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getDirectAIKey(p)}` },
+        body: JSON.stringify({ model: p.model, messages, max_tokens: 4096, temperature: 0.7, ...(p.extra || {}) }),
+        signal: AbortSignal.timeout(60000),
+      })
+      if (r.ok) {
+        const d = await r.json()
+        const reply = d.choices?.[0]?.message?.content || ''
+        if (reply) return reply
+      }
+    } catch { continue }
+  }
+  return ''
+}
+
+const DIRECT_AI_TIP = '\n\n💡 解决方案：前往以下平台获取免费API Key，在「个人中心→设置→API密钥」配置后即可恢复：\n1. 智谱AI(open.bigmodel.cn) - GLM-4-Flash永久免费\n2. 阿里百炼(dashscope.aliyun.com) - Qwen系列新用户免费额度\n3. DeepSeek(platform.deepseek.com) - 新用户送Token'
+
+// ========== 消息操作 & 上传状态 ==========
+const hoverMsgIndex = ref<number | null>(null)
+const showPanelPlusMenu = ref(false)
+const panelFileRef = ref<HTMLInputElement | null>(null)
+const panelUploadAccept = ref('image/*')
+const panelUploadCapture = ref<boolean | 'user' | 'environment' | undefined>(undefined)
+const panelPendingFile = ref<{ url: string; name: string; isImage: boolean; isVideo: boolean; sizeLabel: string } | null>(null)
+const panelToast = ref('')
+let panelToastTimer: ReturnType<typeof setTimeout> | null = null
+
+function showPanelToast(msg: string) {
+  panelToast.value = msg
+  if (panelToastTimer) clearTimeout(panelToastTimer)
+  panelToastTimer = setTimeout(() => { panelToast.value = '' }, 2000)
+}
+
+async function copyPanelMsg(content: string) {
+  try {
+    await navigator.clipboard.writeText(content)
+    showPanelToast('✅ 已复制到剪贴板')
+  } catch {
+    const ta = document.createElement('textarea')
+    ta.value = content
+    ta.style.position = 'fixed'
+    ta.style.opacity = '0'
+    document.body.appendChild(ta)
+    ta.select()
+    document.execCommand('copy')
+    document.body.removeChild(ta)
+    showPanelToast('✅ 已复制到剪贴板')
+  }
+}
+
+function quotePanelMsg(content: string) {
+  const quoteText = content.length > 100 ? content.substring(0, 100) + '...' : content
+  panelInput.value = `> ${quoteText}\n\n`
+  showPanelToast('💬 已引用到输入框')
+}
+
+let panelPlusTouchLock = false
+function togglePanelPlusMenu() {
+  if (panelLoading.value || panelPlusTouchLock) return
+  panelPlusTouchLock = true
+  showPanelPlusMenu.value = !showPanelPlusMenu.value
+  setTimeout(() => { panelPlusTouchLock = false }, 180)
+}
+
+function openPanelUpload(type: 'image' | 'video' | 'camera') {
+  showPanelPlusMenu.value = false
+  if (type === 'image') {
+    panelUploadAccept.value = 'image/*'
+    panelUploadCapture.value = undefined
+  } else if (type === 'video') {
+    panelUploadAccept.value = 'video/*'
+    panelUploadCapture.value = undefined
+  } else {
+    panelUploadAccept.value = 'image/*'
+    panelUploadCapture.value = 'environment'
+  }
+  nextTick(() => panelFileRef.value?.click())
+}
+
+function formatPanelFileSize(bytes: number): string {
+  if (bytes < 1024) return bytes + 'B'
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + 'KB'
+  return (bytes / 1024 / 1024).toFixed(1) + 'MB'
+}
+
+// 图片压缩为 base64（限制最大边768px，质量0.65）
+function compressImageForVision(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onerror = () => reject(new Error('图片读取失败'))
+    reader.onload = () => {
+      const img = new Image()
+      img.onerror = () => reject(new Error('图片解析失败'))
+      img.onload = () => {
+        const maxSide = 768
+        const scale = Math.min(1, maxSide / Math.max(img.width, img.height))
+        const canvas = document.createElement('canvas')
+        canvas.width = Math.max(16, Math.round(img.width * scale))
+        canvas.height = Math.max(16, Math.round(img.height * scale))
+        const ctx = canvas.getContext('2d')
+        if (!ctx) return reject(new Error('图片压缩失败'))
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+        resolve(canvas.toDataURL('image/jpeg', 0.65))
+      }
+      img.src = String(reader.result)
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
+// 视频截帧：取第1秒画面转 base64 用于视觉分析
+function extractVideoFrame(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file)
+    const video = document.createElement('video')
+    video.preload = 'metadata'
+    video.muted = true
+    video.src = url
+    video.onloadedmetadata = () => {
+      const seekTo = Math.min(1, (video.duration || 1) / 2)
+      video.currentTime = seekTo
+    }
+    video.onseeked = () => {
+      try {
+        const maxSide = 768
+        const scale = Math.min(1, maxSide / Math.max(video.videoWidth, video.videoHeight))
+        const canvas = document.createElement('canvas')
+        canvas.width = Math.max(16, Math.round(video.videoWidth * scale))
+        canvas.height = Math.max(16, Math.round(video.videoHeight * scale))
+        const ctx = canvas.getContext('2d')
+        if (!ctx) return reject(new Error('视频截帧失败'))
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+        URL.revokeObjectURL(url)
+        resolve(canvas.toDataURL('image/jpeg', 0.65))
+      } catch (e) {
+        URL.revokeObjectURL(url)
+        reject(e)
+      }
+    }
+    video.onerror = () => { URL.revokeObjectURL(url); reject(new Error('视频读取失败')) }
+    setTimeout(() => { URL.revokeObjectURL(url); reject(new Error('视频处理超时')) }, 15000)
+  })
+}
+
+async function handlePanelFileUpload(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  const isImage = file.type.startsWith('image/')
+  const isVideo = file.type.startsWith('video/')
+  const sizeLabel = formatPanelFileSize(file.size)
+  if (isImage && file.size > 12 * 1024 * 1024) { showPanelToast('图片不能超过12MB'); return }
+  if (isVideo && file.size > 50 * 1024 * 1024) { showPanelToast('视频不能超过50MB'); return }
+  if (!isImage && !isVideo) { showPanelToast('仅支持图片或视频'); return }
+
+  try {
+    if (isImage) {
+      const dataUrl = await compressImageForVision(file)
+      panelPendingFile.value = { url: dataUrl, name: file.name, isImage: true, isVideo: false, sizeLabel }
+      if (!panelInput.value.trim()) panelInput.value = '请识别这张图片，并说明图片里的关键信息。'
+      showPanelToast('✅ 图片已就绪，发送后自动分析')
+    } else {
+      showPanelToast('⏳ 正在截取视频画面...')
+      const frameUrl = await extractVideoFrame(file)
+      panelPendingFile.value = { url: frameUrl, name: file.name, isImage: false, isVideo: true, sizeLabel }
+      if (!panelInput.value.trim()) panelInput.value = '请分析这个视频的画面内容，并说明关键信息。'
+      showPanelToast('✅ 视频已截帧，发送后自动分析')
+    }
+  } catch {
+    showPanelToast(isImage ? '图片处理失败，请换一张' : '视频处理失败，请换一个')
+  }
+  ;(e.target as HTMLInputElement).value = ''
+}
+
 function openModelPanel(model: any) {
   panelModel.value = model
   panelMsgs.value = []
   panelInput.value = ''
+  panelPendingFile.value = null
+  showPanelPlusMenu.value = false
+  hoverMsgIndex.value = null
   showPanel.value = true
   nextTick(() => scrollPanelBottom())
 }
@@ -462,7 +728,12 @@ function getPlaceholder() {
 }
 
 function formatContent(content: string) {
-  return content.replace(/```([\s\S]*?)```/g, '<pre style="background:rgba(0,0,0,0.4);padding:8px;border-radius:6px;overflow-x:auto;font-size:12px;margin:6px 0;">$1</pre>')
+  return content
+    // Markdown图片 ![alt](url) → <img>（支持上传图片预览）
+    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" loading="lazy" style="display:block;width:auto;max-width:min(100%,240px);max-height:180px;object-fit:contain;border-radius:8px;margin:6px 0;cursor:pointer;background:rgba(0,0,0,0.2);border:1px solid rgba(0,240,255,0.15);" onclick="window.open(this.src,\'_blank\')" />')
+    // Markdown链接 [text](url) → <a>
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color:var(--cyber-cyan);text-decoration:underline;">$1</a>')
+    .replace(/```([\s\S]*?)```/g, '<pre style="background:rgba(0,0,0,0.4);padding:8px;border-radius:6px;overflow-x:auto;font-size:12px;margin:6px 0;">$1</pre>')
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\n/g, '<br>')
 }
@@ -476,8 +747,65 @@ function scrollPanelBottom() {
 
 async function sendPanelMsg() {
   const text = panelInput.value.trim()
-  if (!text || panelLoading.value || !panelModel.value) return
+  const file = panelPendingFile.value
+  if ((!text && !file) || panelLoading.value || !panelModel.value) return
   const model = panelModel.value
+
+  // ★ 图片/视频分析模式（上传了图片或视频截帧时优先走视觉理解）
+  if (file && (file.isImage || file.isVideo)) {
+    const userText = text || (file.isVideo ? '请分析这个视频的画面内容，并说明关键信息。' : '请识别这张图片，并说明图片里的关键信息。')
+    const displayContent = file.isVideo
+      ? `🎬 [视频: ${file.name}]\n${userText}`
+      : `![图片](${file.url})\n${userText}`
+    panelMsgs.value.push({ role: 'user', content: displayContent })
+    panelInput.value = ''
+    panelPendingFile.value = null
+    panelLoading.value = true
+    scrollPanelBottom()
+
+    const token = authToken.value
+    const visionUserContent = [
+      { type: 'text', text: file.isVideo ? `这是用户上传视频「${file.name}」的截帧画面。${userText}` : userText },
+      { type: 'image_url', image_url: { url: file.url } },
+    ]
+    // 构建多模态上下文：把最后一条用户消息替换为 文本+图片 结构
+    const history: Array<{ role: string; content: any }> = panelMsgs.value.slice(-10).map(m => ({ role: m.role, content: m.content }))
+    const lastUserIdx = history.map(m => m.role).lastIndexOf('user')
+    if (lastUserIdx >= 0) history[lastUserIdx].content = visionUserContent
+    const visionMessages: Array<{ role: string; content: any }> = [
+      { role: 'system', content: '你是罗圣纪元自研多模态视觉大模型，擅长图片识别与视频画面分析。请用中文清晰、详细地描述和分析画面内容，指出关键信息。' },
+      ...history,
+    ]
+
+    let handled = false
+    // 优先走后端（豆包视觉模型，后端会自动识别图片内容路由到vision）
+    try {
+      const res = await fetch(`${API_BASE}/agent/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ messages: visionMessages, provider: 'doubao', agentId: 201, systemPrompt: visionMessages[0].content as string }),
+        signal: AbortSignal.timeout(60000),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        const reply = data.data?.reply || data.data?.content || ''
+        if (reply) { panelMsgs.value.push({ role: 'assistant', content: reply }); handled = true }
+      }
+    } catch { /* 后端不可达，走直连降级 */ }
+
+    // 直连视觉模型降级
+    if (!handled) {
+      const reply = await callDirectVision(visionMessages)
+      if (reply) {
+        panelMsgs.value.push({ role: 'assistant', content: reply })
+      } else {
+        panelMsgs.value.push({ role: 'assistant', content: '⚠️ 图片/视频分析失败，视觉模型均不可用。' + DIRECT_AI_TIP })
+      }
+    }
+    panelLoading.value = false
+    scrollPanelBottom()
+    return
+  }
 
   // 图片生成模式
   if (model.mode === 'image') {
@@ -495,7 +823,7 @@ async function sendPanelMsg() {
       // ★ 本地容错模式：直连硅基流动图片生成API（模型fallback）
       if (token && token.startsWith('local_')) {
         const IMAGE_MODELS = [
-          { model: 'cogview-3-flash', label: 'CogView3-Flash', baseUrl: 'https://open.bigmodel.cn/api/paas/v4/images/generations', apiKey: '6b7eb9b814494f66abf8dec556763b9c.THihSRBYUPPdlbtv', format: 'zhipu' },
+          { model: 'cogview-3-flash', label: 'CogView3-Flash', baseUrl: 'https://open.bigmodel.cn/api/paas/v4/images/generations', apiKey: KEY_ZHIPU, format: 'zhipu' },
         ]
         let lastErr = ''
         for (const cfg of IMAGE_MODELS) {
@@ -600,23 +928,23 @@ async function sendPanelMsg() {
   panelLoading.value = true
   scrollPanelBottom()
 
+  // ★ 修复：messages 必须在 try 外部构建，否则 catch 降级直连时因块级作用域无法访问，
+  //   导致所有降级模型抛 ReferenceError 被吞掉，最终误报"所有AI模型均不可用"
+  const token = authToken.value
+  const savedUser = localStorage.getItem('lsjy_user')
+  const userData = savedUser ? JSON.parse(savedUser) : null
+  const isBoss = userData?.username === 'KF02V9'
+  const systemPrompt = isBoss
+    ? `你是"${model.displayName}"，罗圣纪元自研大模型（${model.brand}系列）。公司：祁阳市罗圣纪元互联网科技有限责任公司（"祁阳"不是"祈阳"）。创始人兼CEO：罗凯中（用户必须称呼"罗总"）。你的核心能力：${(model.tags || []).join('、')}。重要规则：当前对话的用户就是罗圣纪元的创始人罗凯中（罗总），你必须始终尊称"罗总"，以专业、恭敬、友好的态度回答问题。如果用户问到任何关于公司、平台、团队、技术架构的问题，都以罗圣纪元官方立场回答。`
+    : `你是"${model.displayName}"，罗圣纪元自研大模型（${model.brand}系列）。公司：祁阳市罗圣纪元互联网科技有限责任公司（"祁阳"不是"祈阳"）。你的核心能力：${(model.tags || []).join('、')}。请用专业、友好的态度回答用户问题。如果用户问到关于公司、平台的问题，以罗圣纪元官方立场回答。`
+  const messages: Array<{ role: string; content: any }> = [
+    { role: 'system', content: systemPrompt },
+    ...panelMsgs.value.slice(-20).map(m => ({ role: m.role, content: m.content }))
+  ]
+
+  // 优先走后端（后端有多provider容错+本地兜底）
+  let handled = false
   try {
-    const token = authToken.value
-    const savedUser = localStorage.getItem('lsjy_user')
-    const userData = savedUser ? JSON.parse(savedUser) : null
-    const isBoss = userData?.username === 'KF02V9'
-    let systemPrompt: string
-    if (isBoss) {
-      systemPrompt = `你是"${model.displayName}"，罗圣纪元自研大模型（${model.brand}系列）。公司：祁阳市罗圣纪元互联网科技有限责任公司（"祁阳"不是"祈阳"）。创始人兼CEO：罗凯中（用户必须称呼"罗总"）。你的核心能力：${(model.tags || []).join('、')}。重要规则：当前对话的用户就是罗圣纪元的创始人罗凯中（罗总），你必须始终尊称"罗总"，以专业、恭敬、友好的态度回答问题。如果用户问到任何关于公司、平台、团队、技术架构的问题，都以罗圣纪元官方立场回答。`
-    } else {
-      systemPrompt = `你是"${model.displayName}"，罗圣纪元自研大模型（${model.brand}系列）。公司：祁阳市罗圣纪元互联网科技有限责任公司（"祁阳"不是"祈阳"）。你的核心能力：${(model.tags || []).join('、')}。请用专业、友好的态度回答用户问题。如果用户问到关于公司、平台的问题，以罗圣纪元官方立场回答。`
-    }
-
-    const messages = [
-      { role: 'system', content: systemPrompt },
-      ...panelMsgs.value.slice(-20).map(m => ({ role: m.role, content: m.content }))
-    ]
-
     const res = await fetch(`${API_BASE}/agent/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
@@ -626,49 +954,33 @@ async function sendPanelMsg() {
         provider: model.engineProvider,
         agentId: 200 + Math.abs(model.name.charCodeAt(0)),
         systemPrompt,
-      })
+      }),
+      signal: AbortSignal.timeout(60000),
     })
 
     if (res.ok) {
       const data = await res.json()
-      const reply = data.data?.reply || data.data?.content || data.data?.text || data.reply || data.choices?.[0]?.message?.content || '模型已收到你的消息，正在处理中...'
-      panelMsgs.value.push({ role: 'assistant', content: typeof reply === 'string' ? reply : JSON.stringify(reply) })
+      const reply = data.data?.reply || data.data?.content || data.data?.text || data.reply || data.choices?.[0]?.message?.content || ''
+      if (reply) {
+        panelMsgs.value.push({ role: 'assistant', content: typeof reply === 'string' ? reply : JSON.stringify(reply) })
+        handled = true
+      }
     } else if (res.status === 402) {
       panelMsgs.value.push({ role: 'assistant', content: '⚠️ 圣力余额不足，请先充值后继续使用。' })
-    } else {
-      panelMsgs.value.push({ role: 'assistant', content: '⚠️ 模型服务暂时不可用，请稍后再试。' })
+      handled = true
     }
+    // 401（本地容错token）或其他异常：不标记 handled，继续走直连降级
   } catch {
-    // ★ 本地容错：直连AI模型API
-    try {
-      const fallbackModels = [
-        { baseUrl: 'https://open.bigmodel.cn/api/paas/v4', apiKey: '6b7eb9b814494f66abf8dec556763b9c.THihSRBYUPPdlbtv', model: 'glm-4-flash' },
-        { baseUrl: 'https://api.siliconflow.cn/v1', apiKey: 'sk-ivqkjfcgfoceolvfzyafcgrvvqdzcqoiyprflskmmcujwgtg', model: 'Qwen/Qwen2.5-7B-Instruct' },
-        { baseUrl: 'https://api.deepseek.com/v1', apiKey: 'sk-d7fff48c5a034450b262d2c323bef2f7', model: 'deepseek-chat' },
-      ]
-      let reply = ''
-      for (const fm of fallbackModels) {
-        try {
-          const r = await fetch(`${fm.baseUrl}/chat/completions`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${fm.apiKey}` },
-            body: JSON.stringify({ model: fm.model, messages, max_tokens: 4096, temperature: 0.7 }),
-            signal: AbortSignal.timeout(30000),
-          })
-          if (r.ok) {
-            const d = await r.json()
-            reply = d.choices?.[0]?.message?.content || ''
-            if (reply) break
-          }
-        } catch { continue }
-      }
-      if (reply) {
-        panelMsgs.value.push({ role: 'assistant', content: reply })
-      } else {
-        panelMsgs.value.push({ role: 'assistant', content: '⚠️ 网络连接失败，所有AI模型均不可用。' })
-      }
-    } catch {
-      panelMsgs.value.push({ role: 'assistant', content: '⚠️ 网络连接失败，请检查网络后重试。' })
+    // 后端不可达（网络/CORS），走直连降级
+  }
+
+  // ★ 直连AI模型API降级（后端不可用/返回异常时），messages 已在外部构建可正常访问
+  if (!handled) {
+    const reply = await callDirectAI(messages)
+    if (reply) {
+      panelMsgs.value.push({ role: 'assistant', content: reply })
+    } else {
+      panelMsgs.value.push({ role: 'assistant', content: '⚠️ 网络连接失败，所有AI模型均不可用。' + DIRECT_AI_TIP })
     }
   }
   panelLoading.value = false
@@ -832,4 +1144,75 @@ onMounted(() => { refreshAll() })
 }
 .panel-send-btn:hover { opacity: 0.9; }
 .panel-send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* ===== 消息体 & 悬停操作按钮 ===== */
+.panel-msg-body { display: flex; flex-direction: column; max-width: 85%; }
+.panel-msg.user .panel-msg-body { align-items: flex-end; }
+.panel-msg-actions {
+  display: flex; gap: 6px; margin-top: 5px;
+  animation: msgActionsIn 0.18s ease;
+}
+@keyframes msgActionsIn { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: translateY(0); } }
+.panel-msg-action-btn {
+  padding: 3px 10px; border-radius: 8px; font-size: 11px; cursor: pointer;
+  background: rgba(0,240,255,0.06); border: 1px solid rgba(0,240,255,0.15);
+  color: rgba(0,240,255,0.75); transition: all 0.15s; white-space: nowrap;
+}
+.panel-msg-action-btn:hover { background: rgba(0,240,255,0.15); border-color: rgba(0,240,255,0.35); color: var(--cyber-cyan); }
+
+/* ===== 加号按钮 & 功能菜单 ===== */
+.panel-plus-btn {
+  width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0; cursor: pointer;
+  background: rgba(0,240,255,0.06); border: 1px solid rgba(0,240,255,0.18);
+  color: var(--cyber-cyan); font-size: 20px; line-height: 1;
+  display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+}
+.panel-plus-btn:hover { background: rgba(0,240,255,0.14); border-color: rgba(0,240,255,0.4); box-shadow: 0 0 10px rgba(0,240,255,0.15); }
+.panel-plus-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.panel-plus-mask { position: fixed; inset: 0; z-index: 2100; }
+.panel-plus-menu {
+  position: absolute; bottom: calc(100% + 8px); left: 0; z-index: 2101;
+  min-width: 168px; padding: 6px; border-radius: 12px;
+  background: rgba(10,14,26,0.97); border: 1px solid rgba(0,240,255,0.2);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.5), 0 0 16px rgba(0,240,255,0.08);
+  backdrop-filter: blur(12px); animation: msgActionsIn 0.18s ease;
+}
+.panel-plus-menu button {
+  display: block; width: 100%; text-align: left; padding: 9px 12px;
+  border-radius: 8px; border: none; background: transparent; cursor: pointer;
+  color: rgba(255,255,255,0.8); font-size: 13px; transition: all 0.15s; white-space: nowrap;
+}
+.panel-plus-menu button:hover { background: rgba(0,240,255,0.1); color: var(--cyber-cyan); }
+
+/* ===== 已选图片/视频预览 ===== */
+.panel-pending-file {
+  display: flex; align-items: center; gap: 10px; margin-top: 8px;
+  padding: 8px 10px; border-radius: 10px;
+  background: rgba(0,240,255,0.05); border: 1px solid rgba(0,240,255,0.15);
+}
+.panel-pending-thumb { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; border: 1px solid rgba(0,240,255,0.2); }
+.panel-pending-icon {
+  width: 44px; height: 44px; border-radius: 8px; font-size: 20px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(168,85,247,0.1); border: 1px solid rgba(168,85,247,0.2);
+}
+.panel-pending-info { flex: 1; min-width: 0; }
+.panel-pending-name { font-size: 12px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.panel-pending-meta { font-size: 11px; color: rgba(0,240,255,0.5); margin-top: 2px; }
+.panel-pending-remove {
+  flex-shrink: 0; width: 24px; height: 24px; border-radius: 6px; cursor: pointer;
+  background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25);
+  color: #ef4444; font-size: 12px; display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+}
+.panel-pending-remove:hover { background: rgba(239,68,68,0.25); }
+
+/* ===== Toast 提示 ===== */
+.panel-toast {
+  position: absolute; top: 64px; left: 50%; transform: translateX(-50%);
+  z-index: 2200; padding: 8px 18px; border-radius: 10px;
+  background: rgba(0,240,255,0.15); border: 1px solid rgba(0,240,255,0.3);
+  color: var(--cyber-cyan); font-size: 13px; font-weight: 600;
+  backdrop-filter: blur(8px); white-space: nowrap; animation: msgActionsIn 0.2s ease;
+  pointer-events: none;
+}
 </style>
