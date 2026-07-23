@@ -86,7 +86,16 @@ export const useToolStore = defineStore('tool', () => {
     loading.value = true
     try {
       const res = await toolApi.getToolDetail(id)
-      currentTool.value = res.data
+      currentTool.value = res.data || null
+      // ★ API返回空数据时，从内置工具列表中查找
+      if (!currentTool.value) {
+        if (tools.value.length === 0) await fetchTools()
+        currentTool.value = tools.value.find(t => t.id === Number(id)) || null
+      }
+    } catch {
+      // 后端不可用时从内置工具列表中查找
+      if (tools.value.length === 0) await fetchTools()
+      currentTool.value = tools.value.find(t => t.id === Number(id)) || null
     } finally {
       loading.value = false
     }

@@ -538,13 +538,17 @@ async function handleFileUpload(e: Event) {
 
 onMounted(async () => {
   const toolStore = useToolStore()
+  const id = Number(route.params.id)
   try {
-    const res = await toolApi.getToolDetail(Number(route.params.id))
-    tool.value = res.data
+    const res = await toolApi.getToolDetail(id)
+    tool.value = res.data || null
+    // ★ API返回空数据时，从内置数据/缓存中查找
+    if (!tool.value) {
+      if (toolStore.tools.length === 0) await toolStore.fetchTools()
+      tool.value = toolStore.tools.find(t => t.id === id) || null
+    }
   } catch {
     // 后端不可用时从内置数据中查找
-    const id = Number(route.params.id)
-    // 确保store数据已加载
     if (toolStore.tools.length === 0) await toolStore.fetchTools()
     tool.value = toolStore.tools.find(t => t.id === id) || null
   } finally {
