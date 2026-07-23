@@ -27,18 +27,32 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check if full build needed
+        id: check
+        run: |
+          # 检查是否只有admin文件变更（不需要npm构建）
+          CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "full")
+          if echo "$CHANGED" | grep -qvE '^admin/'; then
+            echo "need_build=true" >> $GITHUB_OUTPUT
+          else
+            echo "need_build=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Setup Node.js
+        if: steps.check.outputs.need_build == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
       - name: Install dependencies
-        run: |
-          rm -rf node_modules
-          npm ci --legacy-peer-deps
+        if: steps.check.outputs.need_build == 'true'
+        run: npm install --legacy-peer-deps
 
       - name: Build (skip type check)
+        if: steps.check.outputs.need_build == 'true'
         env:
           GITHUB_PAGES: 'true'
           VITE_API_BASE_URL: 'https://api.lsjyapp.cn/api/v1'
@@ -47,9 +61,21 @@ jobs:
         run: npx vite build
 
       - name: Create SPA 404.html
+        if: steps.check.outputs.need_build == 'true'
         run: cp dist/index.html dist/404.html
 
+      - name: Deploy admin-only (no build needed)
+        if: steps.check.outputs.need_build == 'false'
+        run: |
+          # 仅更新admin静态文件到docs/
+          mkdir -p docs/admin
+          cp admin/index.html docs/admin/
+          cp admin/admin-app.js docs/admin/
+          cp admin/logo.png docs/admin/ 2>/dev/null || true
+          echo "Admin-only deploy: updated docs/admin/"
+
       - name: Copy admin panel to dist
+        if: steps.check.outputs.need_build == 'true'
         run: |
           mkdir -p dist/admin
           cp admin/index.html dist/admin/
@@ -63,6 +89,7 @@ jobs:
           cp public/*.html dist/ 2>/dev/null || true
 
       - name: Deploy to docs/ directory
+        if: steps.check.outputs.need_build == 'true'
         run: |
           # 保留验证文件（微信等平台验证）
           mkdir -p /tmp/verify-backup
@@ -77,4 +104,13 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add docs/
           git diff --staged --quiet || git commit -m "auto-deploy: update docs/ with latest build [skip ci]"
+          git push
+
+      - name: Commit admin-only changes
+        if: steps.check.outputs.need_build == 'false'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/admin/
+          git diff --staged --quiet || git commit -m "auto-deploy: update admin panel [skip ci]"
           git push
