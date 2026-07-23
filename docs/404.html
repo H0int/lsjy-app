@@ -19,8 +19,7 @@
     if (p !== '/' && p !== '/index.html' && p !== '/404.html') {
       window.location.replace('/' + h);
     }
-    // 检查版本，如果版本不匹配则强制刷新
-    var CURRENT_VERSION = '2026072303';
+    var CURRENT_VERSION = '2026072304';
     var storedVersion = localStorage.getItem('app_version');
     if (storedVersion !== CURRENT_VERSION) {
       localStorage.setItem('app_version', CURRENT_VERSION);
@@ -35,6 +34,33 @@
         window.location.reload(true);
       }
     }
+
+    // ★★★ 网络版本检测（突破微信HTML缓存的关键）
+    // 即使当前 index.html 是旧缓存，也主动拉取最新 index.html 检测版本号
+    function checkRemoteVersion() {
+      try {
+        // 用带时间戳的URL绕过缓存，确保拿到最新的index.html
+        fetch('/?t=' + Date.now(), { cache: 'no-store' })
+          .then(function(res) { return res.text(); })
+          .then(function(html) {
+            var match = html.match(/CURRENT_VERSION\s*=\s*['"](\d+)['"]/);
+            if (match && match[1] && match[1] !== CURRENT_VERSION) {
+              // 服务器上有新版本 —— 强制整页刷新
+              localStorage.setItem('app_version', match[1]);
+              if ('caches' in window) {
+                caches.keys().then(function(names) {
+                  names.forEach(function(name) { caches.delete(name); });
+                });
+              }
+              window.location.reload(true);
+            }
+          })
+          .catch(function() { /* 网络失败时忽略，不影响使用 */ });
+      } catch(e) { /* 兼容老浏览器 */ }
+    }
+
+    // 延迟2秒后后台检测，不阻塞页面加载
+    setTimeout(checkRemoteVersion, 2000);
   })();
 </script>
   <script type="module" crossorigin src="/assets/js/index-ggk08r86.js"></script>
