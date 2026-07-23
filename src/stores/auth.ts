@@ -111,11 +111,14 @@ export const useAuthStore = defineStore('auth', () => {
         if (!parsed.roles?.length || !parsed.roles.includes('boss')) {
           parsed.roles = ['boss', 'founder', 'ultimate_admin', 'super_admin', 'admin', 'operator']
         }
-        // ★ 头像保护：lsjy_user_avatar优先，确保不丢失
+        // ★ 头像保护：lsjy_user_avatar优先，确保不丢失（不清空已有头像）
         if (savedAvatar) {
           parsed.avatar = savedAvatar
+        } else if (!parsed.avatar) {
+          // 如果两个来源都没有头像，保持默认（显示首字母）
+          parsed.avatar = ''
         }
-        // 同步修正后的数据回localStorage
+        // 同步修正后的数据回localStorage（保留 avatar 字段不丢失）
         localStorage.setItem('lsjy_user', JSON.stringify(parsed))
       }
       user.value = parsed

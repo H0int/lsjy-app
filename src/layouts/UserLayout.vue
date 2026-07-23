@@ -37,7 +37,10 @@
               style="border: 1px solid transparent;"
               @mouseover="($event.currentTarget as HTMLElement).style.borderColor='rgba(0,240,255,0.3)'"
               @mouseleave="($event.currentTarget as HTMLElement).style.borderColor='transparent'">
-              <div class="w-8 h-8 rounded-full flex items-center justify-center text-black text-sm font-medium"
+              <img v-if="userAvatar" :src="userAvatar" alt="头像"
+                class="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                style="border: 1px solid rgba(0,240,255,0.4); box-shadow: 0 0 8px rgba(0,240,255,0.3);" />
+              <div v-else class="w-8 h-8 rounded-full flex items-center justify-center text-black text-sm font-medium"
                 style="background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-magenta)); box-shadow: 0 0 8px rgba(0,240,255,0.3);">
                 {{ (authStore.nickname || 'U')[0] }}
               </div>
@@ -102,12 +105,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+
+// ★ 头像：优先读取 lsjy_user_avatar（用户自定义），其次 authStore.user.avatar
+const userAvatar = ref(localStorage.getItem('lsjy_user_avatar') || authStore.user?.avatar || '')
 
 // 算法中台权限：KF02V9(Boss)免费，其他用户需付费或持有卡密
 const hasAlgoPlatformAccess = computed(() => {

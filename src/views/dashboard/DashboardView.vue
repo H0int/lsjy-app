@@ -272,7 +272,8 @@ import { ElMessage } from 'element-plus'
 const router = useRouter()
 const authStore = useAuthStore()
 const showGroupQr = ref(false)
-const userAvatar = ref(authStore.user?.avatar || '')
+// ★ 头像：优先读取 lsjy_user_avatar（用户自定义），其次 authStore.user.avatar
+const userAvatar = ref(localStorage.getItem('lsjy_user_avatar') || authStore.user?.avatar || '')
 const recentExpanded = ref(false)
 
 // 统计卡片 - 带跳转路径
