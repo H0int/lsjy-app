@@ -951,11 +951,15 @@ onMounted(async () => {
     }, 300)
   }
 
-  // 加载余额
-  try {
-    const balRes = await paymentApi.getBalance()
-    coinBalance.value = balRes.data?.balance || 0
-  } catch { coinBalance.value = 0 }
+  // 加载余额：本地容错模式从authStore读取，远程模式调API
+  if (authStore.isLocalAuth) {
+    coinBalance.value = authStore.isBossAccount ? Infinity : (authStore.coinBalance || 0)
+  } else {
+    try {
+      const balRes = await paymentApi.getBalance()
+      coinBalance.value = balRes.data?.balance || 0
+    } catch { coinBalance.value = 0 }
+  }
 
   // 加载套餐
   try {
