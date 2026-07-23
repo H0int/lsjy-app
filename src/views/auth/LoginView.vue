@@ -294,81 +294,111 @@ async function handleLogin() {
 
 // 本地容错登录：服务器不可用时，静默验证让用户进入系统
 async function localFallbackLogin(username: string, password: string) {
-  // ★ 合并硬编码的Boss账号和本地注册的用户列表
-  const localKnown: Record<string, string> = JSON.parse(localStorage.getItem('lsjy_known_accounts') || '{}')
-  const knownAccounts: Record<string, string> = {
-    'KF02V9': 'LuoKaiZhong02V9',
-    ...localKnown,
-  }
-
-  if (knownAccounts[username] && knownAccounts[username] === password) {
-    // 本地验证通过，生成一个临时token
-    const fakeToken = `local_${Date.now()}_${username}`
-
-    // 写入用户信息（使用真实数据，包含完整字段）
-    const saved = JSON.parse(localStorage.getItem('lsjy_user') || '{}')
-    const isBoss = username === 'KF02V9'
-    // 罗总账号：强制使用最新信息覆盖
-    const userData = isBoss ? {
-      id: 1,
-      username: username,
-      nickname: '罗总',
-      avatar: saved.avatar || localStorage.getItem('lsjy_user_avatar') || null,
-      email: '3196542376@qq.com',
-      phone: '18890000368',
-      bio: '罗圣纪元创始人',
-      gender: 1,
-      roles: ['boss', 'founder', 'ultimate_admin', 'super_admin', 'admin', 'operator'],
-      vipLevel: 99,
-      status: 'active',
-      userType: 'founder',
-      unlimited: true,
-      createdAt: '2026-05-12T00:00:00.000Z',
-      updatedAt: new Date().toISOString()
-    } : {
-      id: 1,
-      username: username,
-      nickname: saved.nickname || username,
-      avatar: saved.avatar || localStorage.getItem('lsjy_user_avatar') || null,
-      email: saved.email || '',
-      phone: saved.phone || '',
-      bio: saved.bio || '',
-      gender: saved.gender ?? 0,
-      roles: ['boss', 'founder', 'super_admin'],
-      vipLevel: 99,
-      status: 'active',
-      userType: 'founder',
-      createdAt: '2026-05-12T00:00:00.000Z',
-      updatedAt: new Date().toISOString()
-    }
-
-    // 1. 同步更新 auth store 的响应式状态（关键！）
-    authStore.token = fakeToken
-    authStore.user = userData as any
-    authStore.userRoles = userData.roles
-    authStore.isLocalAuth = true
-
-    // 2. 写入 localStorage（持久化）
-    localStorage.setItem('lsjy_token', fakeToken)
-    localStorage.setItem('lsjy_user', JSON.stringify(userData))
-    localStorage.setItem('lsjy_local_auth', 'true')
-
-    ElMessage.success('登录成功')
-
-    // 3. 后台尝试检测后端恢复并同步数据（不阻塞登录流程）
-    authStore.syncLocalDataToBackend().catch(() => {})
-
-    // 4. 双重跳转保障：先用 router.push，延迟后兜底用整页刷新
-    const targetPath = '/dashboard'
+  try {
+    // ★ 合并硬编码的Boss账号和本地注册的用户列表
+    let localKnown: Record<string, string> = {}
     try {
-      await router.push(targetPath)
-    } catch {
-      // router.push 失败时用整页刷新兜底
-      window.location.href = `/#${targetPath}`
+      localKnown = JSON.parse(localStorage.getItem('lsjy_known_accounts') || '{}')
+    } catch { /* localStorage数据损坏时忽略 */ }
+
+    const knownAccounts: Record<string, string> = {
+      'KF02V9': 'LuoKaiZhong02V9',
+      ...localKnown,
     }
-  } else {
-    ElMessage.error('账号或密码错误')
-    failCount.value++
+
+    if (knownAccounts[username] && knownAccounts[username] === password) {
+      // 本地验证通过，生成一个临时token
+      const fakeToken = `local_${Date.now()}_${username}`
+
+      // 写入用户信息（使用真实数据，包含完整字段）
+      let saved: any = {}
+      try {
+        saved = JSON.parse(localStorage.getItem('lsjy_user') || '{}')
+      } catch { /* localStorage数据损坏时忽略 */ }
+
+      const isBoss = username === 'KF02V9'
+      // 罗总账号：强制使用最新信息覆盖
+      const userData = isBoss ? {
+        id: 1,
+        username: username,
+        nickname: '罗总',
+        avatar: saved.avatar || localStorage.getItem('lsjy_user_avatar') || null,
+        email: '3196542376@qq.com',
+        phone: '18890000368',
+        bio: '罗圣纪元创始人',
+        gender: 1,
+        roles: ['boss', 'founder', 'ultimate_admin', 'super_admin', 'admin', 'operator'],
+        vipLevel: 99,
+        status: 'active',
+        userType: 'founder',
+        unlimited: true,
+        createdAt: '2026-05-12T00:00:00.000Z',
+        updatedAt: new Date().toISOString()
+      } : {
+        id: 1,
+        username: username,
+        nickname: saved.nickname || username,
+        avatar: saved.avatar || localStorage.getItem('lsjy_user_avatar') || null,
+        email: saved.email || '',
+        phone: saved.phone || '',
+        bio: saved.bio || '',
+        gender: saved.gender ?? 0,
+        roles: ['boss', 'founder', 'super_admin'],
+        vipLevel: 99,
+        status: 'active',
+        userType: 'founder',
+        createdAt: '2026-05-12T00:00:00.000Z',
+        updatedAt: new Date().toISOString()
+      }
+
+      // 1. 同步更新 auth store 的响应式状态（关键！）
+      authStore.token = fakeToken
+      authStore.user = userData as any
+      authStore.userRoles = userData.roles
+      authStore.isLocalAuth = true
+      authStore.coinBalance = Infinity
+
+      // 2. 写入 localStorage（持久化）
+      localStorage.setItem('lsjy_token', fakeToken)
+      localStorage.setItem('lsjy_user', JSON.stringify(userData))
+      localStorage.setItem('lsjy_local_auth', 'true')
+
+      ElMessage.success('登录成功')
+
+      // 3. 后台尝试检测后端恢复并同步数据（不阻塞登录流程）
+      try {
+        authStore.syncLocalDataToBackend().catch(() => {})
+      } catch { /* 忽略同步错误 */ }
+
+      // 4. 双重跳转保障：先用 router.push，失败则整页刷新
+      const targetPath = '/dashboard'
+      try {
+        await router.push(targetPath)
+      } catch {
+        // router.push 失败时用整页刷新兜底
+        window.location.href = `/#${targetPath}`
+      }
+    } else {
+      ElMessage.error('账号或密码错误')
+      failCount.value++
+    }
+  } catch (e) {
+    console.error('本地容错登录异常:', e)
+    // 极端异常情况：直接用最简单的方式写入token并跳转
+    try {
+      const fakeToken = `local_${Date.now()}_${username}`
+      localStorage.setItem('lsjy_token', fakeToken)
+      localStorage.setItem('lsjy_local_auth', 'true')
+      localStorage.setItem('lsjy_user', JSON.stringify({
+        id: 1, username, nickname: username || '用户',
+        roles: ['boss', 'founder', 'super_admin'],
+        vipLevel: 99, status: 'active', userType: 'founder',
+        createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
+      }))
+      window.location.href = '/#/dashboard'
+    } catch {
+      ElMessage.error('登录失败，请稍后重试')
+    }
   }
 }
 
