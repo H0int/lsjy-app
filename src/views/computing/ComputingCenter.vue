@@ -1710,7 +1710,7 @@ async function loadDispatchConfig() {
   try {
     const res = await computingApi.getDispatchConfig()
     const data = res.data?.data || res.data || {}
-    if (Object.keys(data).length > 0) {
+    if (data && typeof data === 'object' && Object.keys(data).length > 0) {
       dispatchConfig.autoDispatch = data.autoDispatch ?? true
       dispatchConfig.autoSwitch = data.autoSwitch ?? true
       dispatchConfig.strategy = data.strategy || 'balanced'
@@ -1721,6 +1721,17 @@ async function loadDispatchConfig() {
   } catch {
     // 使用默认值
   }
+  // ★ 本地容错：从 localStorage 恢复用户保存的配置
+  try {
+    const localCfg = localStorage.getItem('lsjy_dispatch_config')
+    if (localCfg) {
+      const parsed = JSON.parse(localCfg)
+      dispatchConfig.autoDispatch = parsed.autoDispatch ?? dispatchConfig.autoDispatch
+      dispatchConfig.autoSwitch = parsed.autoSwitch ?? dispatchConfig.autoSwitch
+      dispatchConfig.strategy = parsed.strategy || dispatchConfig.strategy
+      if (parsed.modelPriority?.length) dispatchConfig.modelPriority = parsed.modelPriority
+    }
+  } catch {}
 }
 
 async function loadModelStatus() {
@@ -1769,17 +1780,22 @@ async function loadDispatchLogs() {
 }
 
 async function saveDispatchConfig() {
+  const cfg = {
+    autoDispatch: dispatchConfig.autoDispatch,
+    autoSwitch: dispatchConfig.autoSwitch,
+    strategy: dispatchConfig.strategy,
+    modelPriority: dispatchConfig.modelPriority,
+  }
   try {
-    await computingApi.updateDispatchConfig({
-      autoDispatch: dispatchConfig.autoDispatch,
-      autoSwitch: dispatchConfig.autoSwitch,
-      strategy: dispatchConfig.strategy,
-      modelPriority: dispatchConfig.modelPriority,
-    })
+    await computingApi.updateDispatchConfig(cfg)
     ElMessage.success('配置已保存')
   } catch {
     ElMessage.info('配置已更新（本地）')
   }
+  // ★ 无论远程还是本地，都持久化到 localStorage
+  try {
+    localStorage.setItem('lsjy_dispatch_config', JSON.stringify(cfg))
+  } catch {}
 }
 
 async function loadEmployees() {
@@ -1787,30 +1803,31 @@ async function loadEmployees() {
   try {
     const res = await computingApi.getEmployees({ page: 1, pageSize: 50 })
     const data = res.data?.data || res.data || {}
-    employees.value = data.items || data.list || []
+    const items = data.items || data.list || []
+    if (items.length > 0) {
+      employees.value = items
+      // ★ 同步到 localStorage
+      localStorage.setItem('lsjy_employees', JSON.stringify(items))
+    } else {
+      // API返回空，从localStorage恢复
+      const cached = localStorage.getItem('lsjy_employees')
+      if (cached) {
+        employees.value = JSON.parse(cached)
+      }
+    }
   } catch {
-    employees.value = [
-      {
-        id: 1, name: '小智', industry: '电商运营', position: '客服代表',
-        status: 'running', completedTasks: 1283, workHours: 720, workflowStep: 3,
-        description: '负责电商平台的售前咨询与售后客服，7x24小时在线，日均处理500+客户咨询。',
-      },
-      {
-        id: 2, name: '文案君', industry: '自媒体运营', position: '内容运营',
-        status: 'running', completedTasks: 856, workHours: 480, workflowStep: 2,
-        description: '专注自媒体内容创作，包括短视频脚本、图文笔记、标题优化等。',
-      },
-      {
-        id: 3, name: '数据师', industry: '校园创业', position: '数据分析',
-        status: 'paused', completedTasks: 432, workHours: 240, workflowStep: 0,
-        description: '负责创业项目的市场数据分析、用户画像分析及竞品数据追踪。',
-      },
-      {
-        id: 4, name: '技术牛', industry: '技术开发', position: '技术开发',
-        status: 'stopped', completedTasks: 67, workHours: 32, workflowStep: 0,
-        description: '辅助技术开发，包括代码审查、Bug修复建议、技术方案设计等。',
-      },
-    ]
+    // 后端不可用，从localStorage恢复
+    try {
+      const cached = localStorage.getItem('lsjy_employees')
+      if (cached) {
+        employees.value = JSON.parse(cached)
+      } else {
+        // 首次使用，显示空列表引导用户创建
+        employees.value = []
+      }
+    } catch {
+      employees.value = []
+    }
   } finally {
     employeesLoading.value = false
   }
@@ -1866,6 +1883,18 @@ async function handleCreateEmployee() {
     return
   }
   creatingEmployee.value = true
+  const newEmployee = {
+    id: Date.now(),
+    industry: employeeForm.industry,
+    position: employeeForm.position,
+    name: employeeForm.name.trim(),
+    description: employeeForm.description.trim() || '自定义行业虚拟数字员工',
+    status: 'running' as const,
+    completedTasks: 0,
+    workHours: 0,
+    workflowStep: 0,
+    createdAt: new Date().toISOString(),
+  }
   try {
     await computingApi.createEmployee({
       industry: employeeForm.industry,
@@ -1874,36 +1903,52 @@ async function handleCreateEmployee() {
       description: employeeForm.description.trim(),
     })
     ElMessage.success(`虚拟员工「${employeeForm.name}」创建成功！`)
-    employeeForm.industry = ''
-    employeeForm.position = ''
-    employeeForm.name = ''
-    employeeForm.description = ''
-    loadEmployees()
   } catch {
-    ElMessage.error('创建失败，请稍后重试')
-  } finally {
-    creatingEmployee.value = false
+    ElMessage.info(`虚拟员工「${employeeForm.name}」创建成功（本地）`)
   }
+  // ★ 无论远程还是本地，都持久化到 localStorage
+  try {
+    const cached = JSON.parse(localStorage.getItem('lsjy_employees') || '[]')
+    cached.unshift(newEmployee)
+    localStorage.setItem('lsjy_employees', JSON.stringify(cached))
+  } catch {}
+  employees.value.unshift(newEmployee)
+  employeeForm.industry = ''
+  employeeForm.position = ''
+  employeeForm.name = ''
+  employeeForm.description = ''
+  creatingEmployee.value = false
+}
+
+// ★ 同步员工列表到 localStorage
+function syncEmployeesToLocal() {
+  try {
+    localStorage.setItem('lsjy_employees', JSON.stringify(employees.value))
+  } catch {}
 }
 
 async function handleStartEmployee(emp: any) {
   try {
     await computingApi.startEmployee(emp.id)
     ElMessage.success(`员工「${emp.name}」已启动`)
-    loadEmployees()
   } catch {
-    ElMessage.error('启动失败')
+    ElMessage.info(`员工「${emp.name}」已启动（本地）`)
   }
+  const target = employees.value.find(e => e.id === emp.id)
+  if (target) target.status = 'running'
+  syncEmployeesToLocal()
 }
 
 async function handleStopEmployee(emp: any) {
   try {
     await computingApi.stopEmployee(emp.id)
     ElMessage.success(`员工「${emp.name}」已暂停`)
-    loadEmployees()
   } catch {
-    ElMessage.error('暂停失败')
+    ElMessage.info(`员工「${emp.name}」已暂停（本地）`)
   }
+  const target = employees.value.find(e => e.id === emp.id)
+  if (target) target.status = 'paused'
+  syncEmployeesToLocal()
 }
 
 async function handleDeleteEmployee(emp: any) {
@@ -1915,13 +1960,14 @@ async function handleDeleteEmployee(emp: any) {
     )
     await computingApi.deleteEmployee(emp.id)
     ElMessage.success('已删除')
-    if (expandedEmployeeId.value === emp.id) {
-      expandedEmployeeId.value = null
-    }
-    loadEmployees()
   } catch {
-    // 取消删除
+    // 用户取消确认或不报错
   }
+  employees.value = employees.value.filter(e => e.id !== emp.id)
+  if (expandedEmployeeId.value === emp.id) {
+    expandedEmployeeId.value = null
+  }
+  syncEmployeesToLocal()
 }
 
 function handleEditEmployee(emp: any) {
@@ -2154,13 +2200,18 @@ async function submitEditEmployee() {
       description: editForm.description.trim(),
     })
     ElMessage.success('修改已保存')
-    editDialogVisible.value = false
-    loadEmployees()
   } catch {
-    ElMessage.error('保存失败')
-  } finally {
-    editingEmployee.value = false
+    ElMessage.info('修改已保存（本地）')
   }
+  // ★ 同步更新本地数据和 localStorage
+  const target = employees.value.find(e => e.id === editForm.id)
+  if (target) {
+    target.name = editForm.name.trim()
+    target.description = editForm.description.trim()
+  }
+  syncEmployeesToLocal()
+  editDialogVisible.value = false
+  editingEmployee.value = false
 }
 
 async function handleBuyPackage(pkg: any) {
