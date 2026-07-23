@@ -700,6 +700,9 @@ body::after{
 @media(max-width:768px){
   :root{--topbar-h:56px;--sidebar-w:280px;}
 
+  /* 允许body在移动端正常布局 */
+  body{overflow:hidden;position:fixed;width:100%;height:100%;}
+
   /* Sidebar becomes drawer */
   #sidebar{
     position:fixed;left:0;top:0;bottom:0;z-index:1000;
@@ -707,6 +710,8 @@ body::after{
     width:280px !important;
     box-shadow:none;
     transition:transform .3s ease;
+    padding-top:env(safe-area-inset-top);
+    padding-bottom:env(safe-area-inset-bottom);
   }
   #sidebar.mobile-open{
     transform:translateX(0);
@@ -723,15 +728,26 @@ body::after{
   #mobile-menu{display:flex !important;}
 
   /* Topbar */
-  #topbar{padding:0 12px;}
+  #topbar{padding:0 12px;padding-top:env(safe-area-inset-top);}
   #page-title{font-size:14px;}
   #admin-info{display:none;}
   #btn-logout{padding:6px 10px;font-size:11px;}
   #btn-logout .btn-text{display:none;}
   .topbar-right{gap:8px;}
 
-  /* Content */
-  #main-content{padding:12px;}
+  /* Content - 确保正确滚动，防止重叠 */
+  #content-area{
+    position:relative;z-index:1;
+    width:100%;height:100%;
+    overflow:hidden;
+  }
+  #main-content{
+    padding:12px;
+    padding-bottom:calc(12px + env(safe-area-inset-bottom));
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    height:calc(100vh - var(--topbar-h));
+  }
 
   /* Stats grid - 2 columns */
   .dash-grid{
@@ -744,21 +760,23 @@ body::after{
   .stat-label{font-size:11px;}
   .stat-sub{display:none;}
 
-  /* Dash row - stack */
-  .dash-row{flex-direction:column;}
-  .dash-card{margin-bottom:12px;}
+  /* Dash row - stack vertically, prevent overlap */
+  .dash-row{flex-direction:column;overflow:visible;}
+  .dash-card{margin-bottom:12px;min-width:0 !important;width:100%;}
   .dash-card-header{padding:12px 14px;font-size:13px;}
 
   /* Table - horizontal scroll with indicator */
   .table-wrapper{
     margin:0 -12px;padding:0 12px;
     position:relative;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
   }
   .admin-table{font-size:12px;min-width:500px;}
   .admin-table th,.admin-table td{padding:10px 8px;}
 
   /* Toolbar - stack */
-  .page-toolbar{flex-direction:column;align-items:stretch;}
+  .page-toolbar{flex-direction:column;align-items:stretch;gap:8px;}
   .toolbar-left,.toolbar-right{width:100%;}
   .toolbar-left{flex-direction:column;}
   .toolbar-left input[type="text"],
@@ -776,14 +794,19 @@ body::after{
   .btn-xs{padding:6px 10px;font-size:11px;min-height:34px;}
 
   /* Modal - full screen on mobile */
-  .modal-overlay{padding:0;align-items:flex-end;}
+  .modal-overlay{padding:0;align-items:flex-end;z-index:2000;}
   .modal-box{
     max-width:100%;border-radius:16px 16px 0 0;
     max-height:85vh;padding:20px;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
   }
 
   /* Page toolbar buttons */
   .page-toolbar .admin-btn{max-width:200px;}
+
+  /* 防止固定定位元素重叠 */
+  .sidebar-backdrop{z-index:999;}
 }
 
 /* ===== RESPONSIVE - SMALL MOBILE ===== */
@@ -893,7 +916,7 @@ body::after{
         <div class="sb-menu-header" onclick="AdminAPI.toggleMenuGroup(this)">
           <i class="fa-solid fa-gauge-high menu-icon"></i>
           <span class="menu-label">概览</span>
-          <span class="menu-badge">3</span>
+          <span class="menu-badge" style="background:var(--ok);">●</span>
           <i class="fa-solid fa-chevron-right menu-arrow"></i>
         </div>
         <div class="sb-menu-items">
@@ -914,7 +937,7 @@ body::after{
         <div class="sb-menu-header" onclick="AdminAPI.toggleMenuGroup(this)">
           <i class="fa-solid fa-users menu-icon"></i>
           <span class="menu-label">用户管理</span>
-          <span class="menu-badge">3</span>
+          <span class="menu-badge" style="background:var(--ok);">--</span>
           <i class="fa-solid fa-chevron-right menu-arrow"></i>
         </div>
         <div class="sb-menu-items">
@@ -935,7 +958,7 @@ body::after{
         <div class="sb-menu-header" onclick="AdminAPI.toggleMenuGroup(this)">
           <i class="fa-solid fa-robot menu-icon"></i>
           <span class="menu-label">智能体管理</span>
-          <span class="menu-badge">4</span>
+          <span class="menu-badge" style="background:var(--p2);">AI</span>
           <i class="fa-solid fa-chevron-right menu-arrow"></i>
         </div>
         <div class="sb-menu-items">
@@ -959,7 +982,7 @@ body::after{
         <div class="sb-menu-header" onclick="AdminAPI.toggleMenuGroup(this)">
           <i class="fa-solid fa-coins menu-icon"></i>
           <span class="menu-label">财务中心</span>
-          <span class="menu-badge">6</span>
+          <span class="menu-badge" style="background:var(--warn);">--</span>
           <i class="fa-solid fa-chevron-right menu-arrow"></i>
         </div>
         <div class="sb-menu-items">
@@ -989,7 +1012,7 @@ body::after{
         <div class="sb-menu-header" onclick="AdminAPI.toggleMenuGroup(this)">
           <i class="fa-solid fa-newspaper menu-icon"></i>
           <span class="menu-label">内容运营</span>
-          <span class="menu-badge">3</span>
+          <span class="menu-badge" style="background:var(--nd);">OK</span>
           <i class="fa-solid fa-chevron-right menu-arrow"></i>
         </div>
         <div class="sb-menu-items">
@@ -1010,7 +1033,7 @@ body::after{
         <div class="sb-menu-header" onclick="AdminAPI.toggleMenuGroup(this)">
           <i class="fa-solid fa-gear menu-icon"></i>
           <span class="menu-label">系统管理</span>
-          <span class="menu-badge">6</span>
+          <span class="menu-badge" style="background:var(--p2);">SYS</span>
           <i class="fa-solid fa-chevron-right menu-arrow"></i>
         </div>
         <div class="sb-menu-items">

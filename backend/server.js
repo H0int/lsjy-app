@@ -23,8 +23,21 @@ if (portArg) process.env.PORT = portArg.split('=')[1];
 const PORT = process.env.PORT || 3000;
 
 // ===== 中间件 =====
-// CORS 由线上 Nginx 统一添加，后端不设置任何CORS头，避免重复。
+// CORS：优先由线上 Nginx 统一添加；后端作为备用也设置基本CORS头（Nginx会覆盖）
+const ALLOWED_ORIGINS = [
+  'https://lsjyapp.cn', 'https://www.lsjyapp.cn',
+  'https://h0int.github.io', 'https://admin.lsjyapp.cn',
+  'http://localhost:5173', 'http://localhost:3000'
+];
 app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin && ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,PATCH,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Max-Age', '86400');
+  }
   if (req.method === 'OPTIONS') {
     return res.status(204).end();
   }
@@ -8800,12 +8813,6 @@ app.delete('/api/v1/admin/agents/:id', authCheck, (req, res) => {
 });
 
 
-// ===== 通用 fallback（必须放在所有路由之后） =====
-// ============================================================
-app.use('/api/v1/*all', (req, res) => {
-  res.json({ code: 0, message: 'success', data: [] });
-});
-
 // ===== 临时部署API：更新admin文件 =====
 app.post('/api/v1/system/deploy-admin', authCheck, requireBoss, (req, res) => {
   try {
@@ -8819,6 +8826,18 @@ app.post('/api/v1/system/deploy-admin', authCheck, requireBoss, (req, res) => {
   } catch (e) {
     res.status(500).json({ code: 1, message: '部署失败: ' + e.message });
   }
+});
+
+// ===== 通用 fallback（必须放在所有路由之后） =====
+app.use('/api/v1/*all', (req, res) => {
+  res.status(404).json({ code: 404, message: '接口不存在: ' + req.method + ' ' + req.originalUrl, data: null });
+});
+
+// ===== 全局错误处理中间件 =====
+app.use((err, req, res, next) => {
+  console.error('[Server Error]', err.stack || err.message || err);
+  if (res.headersSent) return next(err);
+  res.status(500).json({ code: 500, message: '服务器内部错误: ' + (err.message || '未知错误'), data: null });
 });
 
 // ===== 启动服务器 =====
@@ -8844,7 +8863,12 @@ app.listen(PORT, '0.0.0.0', () => {
 
 // ===== API文档路由 =====
 app.get('/api/v1/docs', (req, res) => {
-  res.sendFile('/tmp/lsjy-app/backend/swagger.html');
+  const swaggerPath = path.join(__dirname, 'swagger.html');
+  if (fs.existsSync(swaggerPath)) {
+    res.sendFile(swaggerPath);
+  } else {
+    res.json({ code: 0, message: 'API文档', data: { version: 'v2', endpoints: '77+', base: '/api/v1' } });
+  }
 });
 app.get('/docs', (req, res) => {
   res.redirect('/api/v1/docs');

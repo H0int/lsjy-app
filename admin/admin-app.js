@@ -28,10 +28,10 @@ var APP = {
     // 生产环境使用线上API，开发环境使用本地
     var host = window.location.hostname;
     if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:3000/api/v1';
-    // 手机端访问时自动适配API域名
-    if (host === 'h0int.github.io') return 'http://8.154.16.5:3000/api/v1';
-    // lsjyapp.cn 使用独立API子域名
-    if (host === 'lsjyapp.cn' || host.endsWith('.lsjyapp.cn')) return 'https://api.lsjyapp.cn/api/v1';
+    // GitHub Pages 和 lsjyapp.cn 统一使用 HTTPS API（避免混合内容被浏览器拦截）
+    if (host === 'h0int.github.io' || host === 'lsjyapp.cn' || host.endsWith('.lsjyapp.cn')) {
+      return 'https://api.lsjyapp.cn/api/v1';
+    }
     // 自定义域名
     return 'https://' + host.replace('www.','').replace('m.','') + '/api/v1';
   })(),
@@ -539,7 +539,32 @@ window.renderDashboard = renderDashboard;
 
 // ========== 渲染：数据看板 ==========
 function renderDashboard() {
+  // 先显示加载状态
+  var contentEl = $('#main-content');
+  if (!contentEl) return;
+  contentEl.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:60vh;gap:16px;">' +
+    '<div class="cyber-spinner"></div>' +
+    '<p style="color:var(--nd);font-size:14px;">正在加载数据看板...</p></div>';
+
+  // 尝试从后端API获取真实数据
+  var token = localStorage.getItem('admin_token') || '';
+  var apiPromise = token ? fetch(APP.apiBase + '/reports/overview', {
+    headers: { 'Authorization': 'Bearer ' + token }
+  }).then(function(r) { return r.json(); }).then(function(d) {
+    return (d.code === 0 && d.data) ? d.data : null;
+  }).catch(function() { return null; }) : Promise.resolve(null);
+
+  apiPromise.then(function(apiData) {
+    renderDashboardContent(apiData);
+  });
+}
+
+function renderDashboardContent(apiData) {
   try {
+    var contentEl = $('#main-content');
+    if (!contentEl) return;
+
+    // 合并API数据和本地数据
     var stats = Store.get('stats') || DEFAULT_STATS;
     var users = Store.getUsers() || [];
     var credits = Store.getCredits() || {};
@@ -551,17 +576,37 @@ function renderDashboard() {
     var orders = Store.get('orders') || [];
     var todayOrders = orders.filter(function(o){ return o.status==='completed'&&o.type==='recharge'; }).length;
 
-  var html = '<div class="dash-grid">';
+    // 如果API返回了真实数据，优先使用
+    var totalUsers = (apiData && apiData.totalUsers) || stats.totalUsers || users.length;
+    var activeUsers = (apiData && apiData.activeUsers) || stats.activeUsers || approvedCount;
+    var totalRevenue = (apiData && apiData.totalRevenue) || stats.monthRevenue;
+    var totalOrders = (apiData && apiData.totalOrders) || orders.length;
+    var todayAIUsage = (apiData && apiData.todayAIUsage) || stats.todayCredits;
+    var topToolsData = (apiData && apiData.topTools && apiData.topTools.length) ? apiData.topTools : null;
+    var userGrowthData = (apiData && apiData.userGrowth && apiData.userGrowth.length) ? apiData.userGrowth : null;
 
-  // 统计卡片 - 增强版
-  html += statCard('fa-users', '用户总数', stats.totalUsers, '已通过'+approvedCount+'人', 'var(--p)');
+  var html = '';
+
+  // 数据来源提示
+  if (apiData) {
+    html += '<div style="margin-bottom:12px;padding:8px 14px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:8px;font-size:12px;color:var(--ok);display:flex;align-items:center;gap:8px;">' +
+      '<i class="fa-solid fa-circle-check"></i> 已连接后端服务，显示实时数据</div>';
+  } else {
+    html += '<div style="margin-bottom:12px;padding:8px 14px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:8px;font-size:12px;color:var(--warn);display:flex;align-items:center;gap:8px;">' +
+      '<i class="fa-solid fa-triangle-exclamation"></i> 后端服务未连接，显示本地缓存数据</div>';
+  }
+
+  html += '<div class="dash-grid">';
+
+  // 统计卡片 - 使用真实数据
+  html += statCard('fa-users', '用户总数', totalUsers, '活跃'+activeUsers+'人', 'var(--p)');
   html += statCard('fa-user-plus', '今日新增', stats.todayNewUsers, '待审批'+pendingCount+'人', 'var(--p2)');
-  html += statCard('fa-bolt', '算力总量', totalCreditBalance, '今日消耗+'+stats.todayCredits, '#f59e0b');
-  html += statCard('fa-coins', '今日收入', '¥'+stats.todayRevenue, '本周¥'+stats.weekRevenue, 'var(--ok)');
+  html += statCard('fa-bolt', '算力总量', totalCreditBalance || '--', '今日AI调用'+todayAIUsage+'次', '#f59e0b');
+  html += statCard('fa-coins', '累计收入', '¥'+totalRevenue, '本周¥'+stats.weekRevenue, 'var(--ok)');
   html += statCard('fa-chart-line', '本月收入', '¥'+stats.monthRevenue, '环比+15%', 'var(--p2)');
   html += statCard('fa-clock', '待审批', pendingCount, pendingCount > 0 ? '需处理' : '无待处理', pendingCount > 0 ? 'var(--err)' : 'var(--ok)');
-  html += statCard('fa-ban', '已封禁', bannedCount, '占比'+(stats.totalUsers>0?Math.round(bannedCount/stats.totalUsers*100):0)+'%', 'var(--err)');
-  html += statCard('fa-receipt', '今日订单', todayOrders, '总'+orders.length+'笔', 'var(--p2)');
+  html += statCard('fa-receipt', '总订单', totalOrders, '今日'+todayOrders+'笔', 'var(--p2)');
+  html += statCard('fa-robot', 'AI工具', (apiData && apiData.totalAITools) || '--', '运行中'+((apiData && apiData.activeAITools) || '--'), 'var(--p)');
 
   html += '</div>';
 
@@ -576,13 +621,15 @@ function renderDashboard() {
   html += '<div class="dash-row">';
   html += '<div class="dash-card" style="flex:1;min-width:300px;">';
   html += '<div class="dash-card-header"><i class="fa-solid fa-ranking-star" style="color:var(--p)"></i> 工具使用排行 (Top 10)</div>';
-  var topTools = [
+  var topTools = topToolsData || [
     {name:'AI文章生成',count:1234},{name:'AI绘画',count:987},{name:'AI代码生成',count:856},
     {name:'AI语音合成',count:743},{name:'AI翻译助手',count:698},{name:'AI数据分析',count:654},
     {name:'AI图片修复',count:543},{name:'AI简历优化',count:498},{name:'AI学习计划',count:432},
     {name:'AI菜谱生成',count:387}
   ];
-  var maxCount = topTools[0].count;
+  // 统一字段名（API返回usage，本地用count）
+  topTools = topTools.map(function(t) { return { name: t.name, count: t.count || t.usage || 0 }; });
+  var maxCount = topTools.length ? topTools[0].count : 1;
   html += '<div style="padding:0 16px 16px;">';
   topTools.forEach(function(t, i) {
     var pct = Math.round(t.count / maxCount * 100);
@@ -599,9 +646,15 @@ function renderDashboard() {
 
   // 用户增长趋势图
   html += '<div class="dash-card" style="flex:1;min-width:300px;">';
-  html += '<div class="dash-card-header"><i class="fa-solid fa-chart-area" style="color:var(--p2)"></i> 用户增长趋势 (近7天)</div>';
+  html += '<div class="dash-card-header"><i class="fa-solid fa-chart-area" style="color:var(--p2)"></i> 用户增长趋势</div>';
   html += '<div style="padding:16px;">';
-  html += renderSVGChart();
+  if (userGrowthData) {
+    var growthValues = userGrowthData.map(function(g) { return g.users; });
+    var growthLabels = userGrowthData.map(function(g) { return g.month.replace('2026-',''); });
+    html += renderSVGChart(growthValues, growthLabels, 'var(--p2)');
+  } else {
+    html += renderSVGChart();
+  }
   html += '</div></div>';
 
   html += '</div>';
@@ -659,10 +712,11 @@ function renderDashboard() {
   });
   html += '</tbody></table></div></div>';
 
-  $('#main-content').innerHTML = html;
+  contentEl.innerHTML = html;
   } catch(e) {
     console.error('Dashboard render error:', e);
-    $('#main-content').innerHTML = '<div style="text-align:center;padding:60px 20px;">' +
+    var el = $('#main-content');
+    if (el) el.innerHTML = '<div style="text-align:center;padding:60px 20px;">' +
       '<i class="fa-solid fa-triangle-exclamation" style="font-size:48px;color:var(--warn);display:block;margin-bottom:16px;"></i>' +
       '<h3 style="color:var(--w);margin-bottom:8px;">数据看板加载异常</h3>' +
       '<p style="color:var(--nd);font-size:14px;margin-bottom:16px;">' + e.message + '</p>' +
@@ -1825,7 +1879,7 @@ window.AdminAPI = {
       }
       // 检查是否为管理员
       var roles = user.roles || [];
-      var isAdmin = roles.indexOf('boss') >= 0 || roles.indexOf('admin') >= 0;
+      var isAdmin = roles.indexOf('boss') >= 0 || roles.indexOf('admin') >= 0 || roles.indexOf('super_admin') >= 0 || roles.indexOf('ultimate_admin') >= 0;
       if (!isAdmin) {
         toast('无管理员权限', 'error');
         return;
@@ -1835,13 +1889,29 @@ window.AdminAPI = {
       localStorage.setItem('admin_user', JSON.stringify(user));
       var role = roles.indexOf('boss') >= 0 ? 'boss' : 'admin';
       Store.setSession({ username: username, role: role, loginTime: new Date().toISOString(), token: data.data.accessToken });
-      addLog('login', '管理员 '+username+' 登录系统');
+      addLog('login', '管理员 '+username+' 登录系统（在线模式）');
       toast('登录成功', 'success');
       setTimeout(function() { showMainApp(); }, 500);
     })
     .catch(function(err) {
-      console.error('Login error:', err);
-      toast('网络错误，请重试', 'error');
+      console.error('Login API error:', err);
+      // 后端不可用时，使用本地验证fallback（仅限Boss账号）
+      var users = Store.getUsers() || [];
+      var localUser = null;
+      for (var i = 0; i < users.length; i++) {
+        if (users[i].username === username && users[i].password === password) {
+          localUser = users[i];
+          break;
+        }
+      }
+      if (localUser && (localUser.role === 'boss' || localUser.role === 'ultimate_admin' || localUser.role === 'super_admin')) {
+        Store.setSession({ username: username, role: localUser.role, loginTime: new Date().toISOString(), token: 'local_' + Date.now() });
+        addLog('login', '管理员 '+username+' 登录系统（本地离线模式）');
+        toast('后端不可用，已进入离线管理模式', 'warning');
+        setTimeout(function() { showMainApp(); }, 500);
+      } else {
+        toast('网络错误且本地验证失败，请检查网络后重试', 'error');
+      }
     });
   },
 
@@ -4303,7 +4373,33 @@ function showMainApp() {
     var roleMap = {boss:'罗总专属',ultimate_admin:'至尊管理员',super_admin:'超级管理员',admin:'普通管理员',premium:'高级用户',normal:'普通用户'};
     userInfo.innerHTML = '<i class="fa-solid fa-user-shield" style="color:var(--p)"></i> '+session.username+' <span style="color:var(--nd);font-size:12px;">('+roleMap[session.role]+')</span>';
   }
+  // 更新侧边栏动态badge
+  updateSidebarBadges();
   navigate('dashboard');
+}
+
+// 动态更新侧边栏badge数据
+function updateSidebarBadges() {
+  var users = Store.getUsers() || [];
+  var pendingCount = users.filter(function(u){ return u.status==='pending'; }).length;
+  var approvedCount = users.filter(function(u){ return u.status==='approved'; }).length;
+  var orders = Store.get('orders') || [];
+  var pendingOrders = orders.filter(function(o){ return o.status==='pending'; }).length;
+
+  // 更新各菜单组的badge
+  var groups = document.querySelectorAll('.sb-menu-group');
+  groups.forEach(function(g) {
+    var badge = g.querySelector('.menu-badge');
+    if (!badge) return;
+    var group = g.dataset.group;
+    if (group === 'users') {
+      badge.textContent = approvedCount;
+      badge.style.background = 'var(--ok)';
+    } else if (group === 'finance') {
+      badge.textContent = pendingOrders > 0 ? pendingOrders : '6';
+      if (pendingOrders > 0) badge.style.background = 'var(--warn)';
+    }
+  });
 }
 
 // ========== Matrix Rain Effect ==========
@@ -4704,7 +4800,9 @@ AdminAPI.exportVisitors = function() { toast('访客数据已导出','success');
 
 // ========== 通用空状态渲染 ==========
 function renderEmptyPage(title) {
-  $('#main-content').innerHTML = '<div style="text-align:center;padding:80px 20px;">' +
+  var el = $('#main-content');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:80px 20px;">' +
     '<i class="fa-solid fa-hammer" style="font-size:48px;color:var(--p);display:block;margin-bottom:16px;"></i>' +
     '<h3 style="color:var(--w);margin-bottom:8px;">' + (title || '页面') + ' - 开发中</h3>' +
     '<p style="color:var(--nd);font-size:14px;">该功能模块正在建设中，敬请期待</p>' +
