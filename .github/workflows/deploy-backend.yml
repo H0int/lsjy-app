@@ -31,6 +31,24 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_KEY }}
 
+      - name: Clean ECS disk space (fix 100% full blocking scp/deploy)
+        run: |
+          set +e
+          ssh -o StrictHostKeyChecking=no -o ConnectTimeout=20 root@47.97.166.219 <<'CLEANEOF'
+            echo "=== 部署前磁盘清理(释放空间,确保scp/部署可执行) ==="
+            df -h / || true
+            rm -rf /tmp/backend /tmp/docs /tmp/deploy /tmp/lsjy-cors-fix.tar.gz || true
+            ls -dt /opt/lsjy-app/backup-* 2>/dev/null | tail -n +3 | xargs -r rm -rf || true
+            pm2 flush >/dev/null 2>&1 || true
+            find /root/.pm2/logs -type f -exec rm -f {} \; 2>/dev/null || true
+            find /var/log -type f \( -name "*.gz" -o -name "*.log.*" -o -name "*.[0-9]" \) -exec rm -f {} \; 2>/dev/null || true
+            journalctl --vacuum-size=50M >/dev/null 2>&1 || true
+            docker image prune -f >/dev/null 2>&1 || true
+            docker builder prune -f >/dev/null 2>&1 || true
+            echo "--- 清理后磁盘状态 ---"
+            df -h / || true
+          CLEANEOF
+
       - name: Deploy to ECS
         run: |
           # 打包需要部署的文件: NestJS dist目录 + Express server.js + Nginx配置
@@ -48,6 +66,28 @@ jobs:
           ssh -o StrictHostKeyChecking=no -o ConnectTimeout=20 root@47.97.166.219 <<'EOF'
             set -x
             echo "=== 罗圣纪元 全量更新部署 ==="
+
+            # ===== 部署前磁盘清理(曾因磁盘100%满导致部署失败/服务502) =====
+            echo "=== 磁盘清理: 释放空间 ==="
+            df -h / || true
+            echo "--- 磁盘占用诊断(TOP目录) ---"
+            du -sh /root/.pm2/logs /opt/lsjy-app /tmp /var/lib/docker /var/log /usr/share/nginx/html 2>/dev/null || true
+            # 清理上次部署在/tmp的解压残留(保留本次刚scp上传的tar包)
+            rm -rf /tmp/backend /tmp/docs /tmp/deploy
+            # 仅保留最近2个备份目录
+            ls -dt /opt/lsjy-app/backup-* 2>/dev/null | tail -n +3 | xargs -r rm -rf
+            # 清空pm2日志(最常见的磁盘杀手)
+            pm2 flush >/dev/null 2>&1 || true
+            find /root/.pm2/logs -type f -exec rm -f {} \; 2>/dev/null || true
+            # 删除已轮转的旧系统日志
+            find /var/log -type f \( -name "*.gz" -o -name "*.log.*" -o -name "*.[0-9]" \) -exec rm -f {} \; 2>/dev/null || true
+            # 收缩systemd journal
+            journalctl --vacuum-size=50M >/dev/null 2>&1 || true
+            # Docker悬空镜像/构建缓存清理(安全,不影响运行中的容器)
+            docker image prune -f >/dev/null 2>&1 || true
+            docker builder prune -f >/dev/null 2>&1 || true
+            echo "--- 清理后磁盘状态 ---"
+            df -h / || true
 
             # 查找实际的后端路径（NestJS和Express都要更新）
             echo "=== 查找后端进程 ==="
@@ -181,7 +221,8 @@ jobs:
             # 重启NestJS后端（主服务，端口3000）
             if [ -n "$NEST_MAIN" ] && [ -f "$NEST_MAIN" ]; then
               echo "重启NestJS后端: $NEST_MAIN"
-              pm2 restart lsjy-backend --update-env || true
+              # 进程未注册时restart会失败(502根因),回退为首次start注册并启动
+              pm2 restart lsjy-backend --update-env || pm2 start "$NEST_MAIN" --name lsjy-backend --update-env || true
               sleep 5
             fi
 
