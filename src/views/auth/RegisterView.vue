@@ -158,43 +158,48 @@ function particleStyle(i: number) {
 
 async function handleRegister() {
   if (!formRef.value) return
-  await formRef.value.validate(async (valid) => {
-    if (!valid) return
-    loading.value = true
-    try {
-      await authApi.register({
-        username: form.username,
-        password: form.password,
-        nickname: form.nickname,
-        phone: form.phone || undefined,
-        email: form.email || undefined
-      })
-      ElMessage.success('注册成功，正在自动登录...')
-      // 自动登录
-      const loginResult = await authStore.login(form.username, form.password)
-      if (loginResult === true) {
-        router.push('/dashboard')
-      } else if (loginResult === 'network') {
-        // 后端不可用：本地创建用户并登录
-        localCreateAndLogin(form.username, form.nickname, form.password, form.phone, form.email)
-      } else {
-        ElMessage.warning('自动登录失败，请手动登录')
-        router.push('/login')
-      }
-    } catch (e: any) {
-      // 注册API失败（后端不可用或其他错误）
-      const status = e?.response?.status
-      const isNetErr = !e.response || e.code === 'ERR_NETWORK' || e.message === 'Network Error'
-      if (isNetErr || (status >= 500 && status <= 599)) {
-        // 后端不可用：本地创建用户并登录
-        ElMessage.info('服务器暂时不可用，已为您创建本地账号')
-        localCreateAndLogin(form.username, form.nickname, form.password, form.phone, form.email)
-      }
-      // 其他错误（如用户已存在等）由拦截器处理
-    } finally {
-      loading.value = false
+  
+  try {
+    // 使用 Promise 模式进行表单验证
+    const valid = await formRef.value.validate().catch(() => false)
+    if (!valid) {
+      ElMessage.warning('请填写完整的注册信息')
+      return
     }
-  })
+    
+    loading.value = true
+    await authApi.register({
+      username: form.username,
+      password: form.password,
+      nickname: form.nickname,
+      phone: form.phone || undefined,
+      email: form.email || undefined
+    })
+    ElMessage.success('注册成功，正在自动登录...')
+    // 自动登录
+    const loginResult = await authStore.login(form.username, form.password)
+    if (loginResult === true) {
+      router.push('/dashboard')
+    } else if (loginResult === 'network') {
+      // 后端不可用：本地创建用户并登录
+      localCreateAndLogin(form.username, form.nickname, form.password, form.phone, form.email)
+    } else {
+      ElMessage.warning('自动登录失败，请手动登录')
+      router.push('/login')
+    }
+  } catch (e: any) {
+    // 注册API失败（后端不可用或其他错误）
+    const status = e?.response?.status
+    const isNetErr = !e.response || e.code === 'ERR_NETWORK' || e.message === 'Network Error'
+    if (isNetErr || (status >= 500 && status <= 599)) {
+      // 后端不可用：本地创建用户并登录
+      ElMessage.info('服务器暂时不可用，已为您创建本地账号')
+      localCreateAndLogin(form.username, form.nickname, form.password, form.phone, form.email)
+    }
+    // 其他错误（如用户已存在等）由拦截器处理
+  } finally {
+    loading.value = false
+  }
 }
 
 // 本地创建用户并自动登录

@@ -205,7 +205,16 @@ export const useAuthStore = defineStore('auth', () => {
         const isClientErr = status === 400 || status === 422
 
         if (isNetErr || isServerDown || isClientErr) {
-          // 网络/服务器/格式错误：静默降级到本地模式，不显示错误
+          // 网络/服务器/格式错误：降级到本地模式，并显示友好提示
+          if (isNetErr) {
+            if (remoteErr.message?.includes('timeout')) {
+              ElMessage.error('服务器响应超时，请稍后重试。提示：罗总可使用本地专属账号 KF02V9 登录')
+            } else if (remoteErr.message?.includes('CORS') || remoteErr.message?.includes('cross-origin')) {
+              ElMessage.error('服务器跨域配置异常，请联系管理员。提示：罗总可使用本地专属账号 KF02V9 登录')
+            } else {
+              ElMessage.warning('服务器连接异常，请检查网络后重试。提示：罗总可使用本地专属账号 KF02V9 登录')
+            }
+          }
           return 'network'
         } else {
           // 真正的密码错误（401/403）：显示提示

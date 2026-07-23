@@ -253,7 +253,10 @@ async function handleLogin() {
 
   try {
     const valid = await formRef.value.validate().catch(() => false)
-    if (!valid) return
+    if (!valid) {
+      ElMessage.warning('请输入账号和密码')
+      return
+    }
 
     const uname = form.username.trim()
     const pwd = form.password
@@ -285,6 +288,7 @@ async function handleLogin() {
     }
   } catch (e) {
     console.error('登录提交异常:', e)
+    ElMessage.error('登录提交异常，请稍后重试')
   }
 }
 

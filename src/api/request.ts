@@ -88,7 +88,17 @@ service.interceptors.response.use(
         console.info('[API] 本地模式，忽略网络错误:', originalRequest.url)
         return Promise.resolve({ data: { code: 0, data: null }, status: 200, statusText: 'OK', headers: {}, config: originalRequest })
       }
+      const isLoginReq = originalRequest.url?.includes('/auth/login')
+      if (!isLoginReq) {
+        ElMessage.warning('网络连接异常，请检查网络或联系管理员')
+      }
       console.warn('[API] 网络不可用:', originalRequest.url)
+      return Promise.reject(error)
+    }
+
+    // CORS 错误特殊处理
+    if (error.message?.includes('CORS') || error.message?.includes('cross-origin')) {
+      ElMessage.error('跨域访问被阻止，请联系管理员配置服务器 CORS')
       return Promise.reject(error)
     }
 
