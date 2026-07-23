@@ -43,7 +43,7 @@
         <el-form ref="formRef" :model="form" :rules="rules" label-position="top" class="cyber-form">
           <div class="input-group">
             <label class="input-label"><span class="label-icon">&#10016;</span> 账号</label>
-            <el-input v-model="form.username" placeholder="字母数字下划线，3位以上" size="large" :disabled="loading" />
+            <el-input v-model="form.username" placeholder="字母数字下划线，4-20位" size="large" :disabled="loading" />
           </div>
           <div class="input-group">
             <label class="input-label"><span class="label-icon">&#10016;</span> 昵称</label>
@@ -129,7 +129,7 @@ const validateConfirm = (_rule: any, value: string, callback: any) => {
 const rules = {
   username: [
     { required: true, message: '请输入账号', trigger: 'blur' },
-    { min: 3, message: '账号至少3位', trigger: 'blur' },
+    { min: 4, max: 20, message: '账号需为4-20位', trigger: 'blur' },
     { pattern: /^[a-zA-Z0-9_]+$/, message: '只能包含字母、数字和下划线', trigger: 'blur' }
   ],
   nickname: [{ required: true, message: '请输入昵称', trigger: 'blur' }],
@@ -204,6 +204,15 @@ async function handleRegister() {
 
 // 本地创建用户并自动登录
 function localCreateAndLogin(username: string, nickname: string, password: string, phone: string, email: string) {
+  // 本地注册也需要验证用户名格式（与后端保持一致）
+  if (!/^[a-zA-Z0-9_]{4,20}$/.test(username)) {
+    ElMessage.error('账号需为4-20位字母、数字或下划线')
+    return
+  }
+  if (String(password).length < 6) {
+    ElMessage.error('密码至少6位')
+    return
+  }
   const fakeToken = `local_${Date.now()}_${username}`
   const userData = {
     id: Date.now(),
