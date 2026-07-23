@@ -1,15 +1,15 @@
 name: Deploy
 
 on:
-  # push:  # 临时禁用，用手动部署
-  #   branches: [main]
-  #   paths:
-  #     - 'src/**'
-  #     - 'admin/**'
-  #     - 'index.html'
-  #     - 'package.json'
-  #     - 'vite.config.ts'
-  #     - '.github/workflows/deploy.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'admin/**'
+      - 'index.html'
+      - 'package.json'
+      - 'vite.config.ts'
+      - '.github/workflows/deploy.yml'
   workflow_dispatch:
 
 permissions:
