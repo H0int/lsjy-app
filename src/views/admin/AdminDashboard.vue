@@ -248,7 +248,11 @@ const toolRanking = computed(() => dashboardData.value?.topTools || [])
 const productRanking = computed(() => dashboardData.value?.topProducts || [])
 const courseRanking = computed(() => dashboardData.value?.topCourses || [])
 
-const maxToolCount = computed(() => Math.max(...toolRanking.map(r => r.count)))
+const maxToolCount = computed(() => {
+  const list = toolRanking.value
+  if (!list || list.length === 0) return 1
+  return Math.max(...list.map((r: any) => r.count || 0)) || 1
+})
 
 // ===== 日志 =====
 const recentLogs = computed(() => dashboardData.value?.recentLogs || [])
