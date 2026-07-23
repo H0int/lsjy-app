@@ -272,7 +272,7 @@ import { ElMessage } from 'element-plus'
 const router = useRouter()
 const authStore = useAuthStore()
 const showGroupQr = ref(false)
-const userAvatar = ref(authStore.user?.avatar || localStorage.getItem('lsjy_user_avatar') || '')
+const userAvatar = ref(authStore.user?.avatar || '')
 const recentExpanded = ref(false)
 
 // 统计卡片 - 带跳转路径
@@ -355,7 +355,7 @@ function getMemberLabel() {
 
 async function loadRealTimeData() {
   // 圣力余额
-  statCards.value[0].value = authStore.isAdmin || (authStore.user?.username === 'KF02V9')
+  statCards.value[0].value = authStore.user?.username === 'KF02V9'
     ? '∞ 无限'
     : (authStore.coinBalance ? authStore.coinBalance.toLocaleString() : '0')
 

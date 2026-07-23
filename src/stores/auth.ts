@@ -120,9 +120,13 @@ export const useAuthStore = defineStore('auth', () => {
       }
       user.value = parsed
       userRoles.value = extractRoles(parsed?.roles)
-      // Boss本地模式：余额设为无限
+      // ★ 仅Boss(KF02V9)本地模式余额设为无限，其他用户使用本地存储的余额或0
       if (token.value.startsWith('local_')) {
-        coinBalance.value = Infinity
+        if (parsed.username === 'KF02V9') {
+          coinBalance.value = Infinity
+        } else {
+          coinBalance.value = 0
+        }
       }
     }
   } catch (e) {}
@@ -255,10 +259,13 @@ export const useAuthStore = defineStore('auth', () => {
 
   // 获取圣力余额
   async function fetchBalance() {
-    // 本地容错模式：Boss 无限，不发请求
+    // 本地容错模式：仅Boss无限，其他用户使用本地存储值
     const currentToken = getToken()
     if (currentToken && currentToken.startsWith('local_')) {
-      coinBalance.value = Infinity
+      if (user.value?.username === 'KF02V9') {
+        coinBalance.value = Infinity
+      }
+      // 其他用户保持 coinBalance 不变（由注册时设置的初始值或localStorage恢复）
       return
     }
     try {

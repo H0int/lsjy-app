@@ -101,6 +101,14 @@ router.beforeEach(async (to, _from, next) => {
     if (token) return next('/dashboard')
     return next()
   }
+  // ★ token 存在但无用户数据 → 无效/过期token，清除并跳转登录
+  if (token && !localStorage.getItem('lsjy_user')) {
+    removeToken()
+    localStorage.removeItem('lsjy_refresh_token')
+    localStorage.removeItem('lsjy_local_auth')
+    return next('/login')
+  }
+
   if (to.matched.some(r => r.meta.requiresAdmin)) {
     if (!token) return next('/login')
     // ★ 本地容错模式：跳过API验证，直接从localStorage判断权限

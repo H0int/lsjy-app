@@ -29,7 +29,7 @@
           <div class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium"
             style="background: rgba(255, 184, 0, 0.1); border: 1px solid rgba(255, 184, 0, 0.3); color: var(--cyber-amber);">
             <span>⚡</span>
-            <span>{{ authStore.isAdmin || (authStore.coinBalance || 0) >= 999999 ? '∞ 无限' : (authStore.coinBalance?.toFixed(2) || '0.00') }}</span>
+            <span>{{ authStore.isBossAccount ? '∞ 无限' : (authStore.coinBalance === Infinity ? '∞ 无限' : (authStore.coinBalance?.toFixed(2) || '0.00')) }}</span>
           </div>
           <!-- 用户头像 -->
           <el-dropdown trigger="click">
@@ -47,7 +47,7 @@
               <el-dropdown-menu>
                 <el-dropdown-item @click="$router.push('/profile')">👤 个人中心</el-dropdown-item>
                 <el-dropdown-item @click="$router.push('/profile/wallet')">💰 圣力中心</el-dropdown-item>
-                <el-dropdown-item v-if="authStore.isAdmin" divided @click="goAdmin">⚙️ 管理后台</el-dropdown-item>
+                <el-dropdown-item v-if="authStore.isBossAccount" divided @click="goAdmin">⚙️ 管理后台</el-dropdown-item>
                 <el-dropdown-item divided @click="handleLogout">🚪 退出登录</el-dropdown-item>
               </el-dropdown-menu>
             </template>

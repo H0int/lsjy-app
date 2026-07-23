@@ -335,19 +335,19 @@ async function localFallbackLogin(username: string, password: string) {
         createdAt: '2026-05-12T00:00:00.000Z',
         updatedAt: new Date().toISOString()
       } : {
-        id: 1,
+        id: saved.id || Date.now(),
         username: username,
         nickname: saved.nickname || username,
-        avatar: saved.avatar || localStorage.getItem('lsjy_user_avatar') || null,
+        avatar: saved.avatar || null,
         email: saved.email || '',
         phone: saved.phone || '',
         bio: saved.bio || '',
         gender: saved.gender ?? 0,
-        roles: ['boss', 'founder', 'super_admin'],
-        vipLevel: 99,
+        roles: saved.roles || ['user'],
+        vipLevel: saved.vipLevel || 0,
         status: 'active',
-        userType: 'founder',
-        createdAt: '2026-05-12T00:00:00.000Z',
+        userType: saved.userType || 'personal',
+        createdAt: saved.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString()
       }
 
@@ -356,7 +356,8 @@ async function localFallbackLogin(username: string, password: string) {
       authStore.user = userData as any
       authStore.userRoles = userData.roles
       authStore.isLocalAuth = true
-      authStore.coinBalance = Infinity
+      // ★ 仅Boss(KF02V9)设无限余额，其他用户恢复其本地存储余额
+      authStore.coinBalance = isBoss ? Infinity : (saved.coinBalance || 0)
 
       // 2. 写入 localStorage（持久化）
       localStorage.setItem('lsjy_token', fakeToken)

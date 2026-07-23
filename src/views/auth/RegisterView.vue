@@ -224,9 +224,10 @@ function localCreateAndLogin(username: string, nickname: string, password: strin
     bio: '',
     gender: 0,
     roles: ['user'],
-    vipLevel: 1,
+    vipLevel: 0,
     status: 'active',
     userType: 'personal',
+    coinBalance: 100,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   }
@@ -239,6 +240,7 @@ function localCreateAndLogin(username: string, nickname: string, password: strin
   authStore.user = userData as any
   authStore.userRoles = userData.roles
   authStore.isLocalAuth = true
+  authStore.coinBalance = 100
   // 写入 localStorage
   localStorage.setItem('lsjy_token', fakeToken)
   localStorage.setItem('lsjy_user', JSON.stringify(userData))
