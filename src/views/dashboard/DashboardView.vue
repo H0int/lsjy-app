@@ -362,14 +362,22 @@ async function loadRealTimeData() {
   // 会员等级
   statCards.value[3].value = getMemberLabel()
 
-  // 最近使用 - 从 localStorage 读取（多来源合并）
+  // 最近使用 - 从多个 localStorage 源合并
   const usedTools: any[] = JSON.parse(localStorage.getItem('lsjy_used_tools') || '[]')
+  const toolUsage: any[] = JSON.parse(localStorage.getItem('lsjy_tool_usage') || '[]')
   const generatedWorks: any[] = JSON.parse(localStorage.getItem('lsjy_generated_works') || '[]')
 
   // 合并去重：以 toolId 为主键
   const toolMap = new Map<number, any>()
   for (const u of usedTools) {
     toolMap.set(Number(u.id), { id: Number(u.id), name: u.name, icon: u.icon || '🤖', time: u.time, category: u.category || 'AI工具' })
+  }
+  // 从 tool_usage 补充不在 used_tools 中的记录
+  for (const u of toolUsage) {
+    const tid = Number(u.toolId)
+    if (tid && !toolMap.has(tid)) {
+      toolMap.set(tid, { id: tid, name: u.toolName || '未知工具', icon: '🤖', time: u.createdAt ? new Date(u.createdAt).toLocaleString('zh-CN') : '', category: 'AI工具' })
+    }
   }
   for (const w of generatedWorks) {
     const wid = Number(w.toolId || w.id)
@@ -390,32 +398,34 @@ async function loadRealTimeData() {
   statCards.value[1].value = String(toolMap.size)
   statCards.value[2].value = String(generatedWorks.length)
 
-  // 尝试从API获取更多使用记录来补充 localStorage
-  try {
-    const res = await toolApi.getHistory({ page: 1, pageSize: 20 }) as any
-    const historyItems = res?.data?.data?.items || res?.data?.items || []
-    if (historyItems.length > 0) {
-      // 从API历史记录中提取工具使用信息
-      for (const h of historyItems) {
-        const hid = Number(h.toolId)
-        if (hid && !toolMap.has(hid)) {
-          const toolName = h.toolName || '未知工具'
-          const toolIcon = h.toolIcon || '🤖'
-          const timeStr = h.createdAt ? new Date(h.createdAt).toLocaleString('zh-CN') : ''
-          toolMap.set(hid, { id: hid, name: toolName, icon: toolIcon, time: timeStr, category: 'AI工具' })
+  // 尝试从API获取更多使用记录来补充 localStorage（本地模式跳过）
+  if (!authStore.isLocalAuth) {
+    try {
+      const res = await toolApi.getHistory({ page: 1, pageSize: 20 }) as any
+      const historyItems = res?.data?.data?.items || res?.data?.items || []
+      if (historyItems.length > 0) {
+        // 从API历史记录中提取工具使用信息
+        for (const h of historyItems) {
+          const hid = Number(h.toolId)
+          if (hid && !toolMap.has(hid)) {
+            const toolName = h.toolName || '未知工具'
+            const toolIcon = h.toolIcon || '🤖'
+            const timeStr = h.createdAt ? new Date(h.createdAt).toLocaleString('zh-CN') : ''
+            toolMap.set(hid, { id: hid, name: toolName, icon: toolIcon, time: timeStr, category: 'AI工具' })
+          }
         }
+        // 重新排序
+        const merged = Array.from(toolMap.values()).sort((a, b) => {
+          const ta = a.time ? new Date(a.time.replace(/\//g, '-')).getTime() : 0
+          const tb = b.time ? new Date(b.time.replace(/\//g, '-')).getTime() : 0
+          return tb - ta
+        })
+        recentTools.value = merged.slice(0, 8)
+        statCards.value[1].value = String(toolMap.size)
       }
-      // 重新排序
-      const merged = Array.from(toolMap.values()).sort((a, b) => {
-        const ta = a.time ? new Date(a.time.replace(/\//g, '-')).getTime() : 0
-        const tb = b.time ? new Date(b.time.replace(/\//g, '-')).getTime() : 0
-        return tb - ta
-      })
-      recentTools.value = merged.slice(0, 8)
-      statCards.value[1].value = String(toolMap.size)
+    } catch (e) {
+      // API 调用失败，使用 localStorage 数据即可
     }
-  } catch (e) {
-    // API 调用失败，使用 localStorage 数据即可
   }
 
   // 加载热门工具

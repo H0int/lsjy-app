@@ -1157,31 +1157,92 @@ async function sendMsg() {
   }
 }
 
+// ★ 统一记录工具使用到 localStorage（图片/视频生成 + 文本对话均调用）
+function recordWorkToLocal(agent: Agent, prompt: string, outputUrl?: string, mediaType?: string) {
+  try {
+    const now = new Date().toISOString()
+    const record = {
+      id: Date.now() + Math.random(),
+      toolId: agent.id,
+      toolName: agent.name,
+      source: mediaType ? 'live-generation' : 'live-chat',
+      status: 'completed' as const,
+      inputText: prompt,
+      outputUrl: outputUrl || '',
+      outputText: outputUrl ? '' : prompt.substring(0, 200),
+      mediaType: mediaType || '',
+      createdAt: now,
+    }
+
+    // 写入 lsjy_tool_usage（所有记录统一入口）
+    const toolUsage = JSON.parse(localStorage.getItem('lsjy_tool_usage') || '[]')
+    toolUsage.unshift(record)
+    if (toolUsage.length > 200) toolUsage.length = 200
+    localStorage.setItem('lsjy_tool_usage', JSON.stringify(toolUsage))
+
+    // 如果是图片/视频等媒体作品，同时写入 lsjy_works（生成作品专用）
+    if (outputUrl) {
+      const works = JSON.parse(localStorage.getItem('lsjy_works') || '[]')
+      works.unshift({
+        id: record.id,
+        toolId: agent.id,
+        toolName: agent.name,
+        tool: { name: agent.name, toolType: mediaType === 'video' ? 'video' : 'image' },
+        source: 'live-generation',
+        status: 'completed',
+        inputText: prompt,
+        outputUrl,
+        outputUrls: [outputUrl],
+        metadata: { mediaType },
+        createdAt: now,
+      })
+      if (works.length > 200) works.length = 200
+      localStorage.setItem('lsjy_works', JSON.stringify(works))
+    }
+
+    // 写入 lsjy_used_tools（Dashboard 最近使用列表格式）
+    const usedTools = JSON.parse(localStorage.getItem('lsjy_used_tools') || '[]')
+    const existing = usedTools.findIndex((u: any) => u.id === agent.id)
+    const toolEntry = { id: agent.id, name: agent.name, icon: agent.icon || '🤖', time: now, category: 'AI工具' }
+    if (existing >= 0) usedTools.splice(existing, 1)
+    usedTools.unshift(toolEntry)
+    if (usedTools.length > 50) usedTools.length = 50
+    localStorage.setItem('lsjy_used_tools', JSON.stringify(usedTools))
+
+    // 写入 lsjy_generated_works（Dashboard 作品数统计格式）
+    if (outputUrl) {
+      const genWorks = JSON.parse(localStorage.getItem('lsjy_generated_works') || '[]')
+      genWorks.unshift({
+        id: record.id,
+        toolId: agent.id,
+        toolName: agent.name,
+        outputUrl,
+        createdAt: now,
+      })
+      if (genWorks.length > 200) genWorks.length = 200
+      localStorage.setItem('lsjy_generated_works', JSON.stringify(genWorks))
+    }
+  } catch (e) { /* silent */ }
+}
+
 async function saveChatHistory(agent: Agent, question: string, answer: string, latency: number) {
   try {
     const token = getToken()
     if (!token) return
-    // 本地容错模式：只存 localStorage，不发请求
+
+    // ★ 无论本地还是远程模式，都记录到 localStorage（确保作品/已用工具页面有数据）
+    recordWorkToLocal(agent, question, undefined, undefined)
+
+    // 本地容错模式：额外存聊天历史到 localStorage，不发API请求
     if (token.startsWith('local_')) {
       const history = JSON.parse(localStorage.getItem('lsjy_chat_history') || '[]')
       history.unshift({ agentId: agent.id, agentName: agent.name, question, answer, latency, createdAt: new Date().toISOString() })
       if (history.length > 50) history.length = 50
       localStorage.setItem('lsjy_chat_history', JSON.stringify(history))
-      // ★ 同时记录到"已用工具"列表（让WorksView的已用工具有数据）
-      const toolUsage = JSON.parse(localStorage.getItem('lsjy_tool_usage') || '[]')
-      toolUsage.unshift({
-        id: Date.now(),
-        toolId: agent.id,
-        toolName: agent.name,
-        source: 'live-chat',
-        status: 'completed',
-        outputText: answer.substring(0, 200),
-        createdAt: new Date().toISOString(),
-      })
-      if (toolUsage.length > 100) toolUsage.length = 100
-      localStorage.setItem('lsjy_tool_usage', JSON.stringify(toolUsage))
       return
     }
+
+    // 远程模式：调API保存
     const base = import.meta.env.VITE_API_BASE_URL || '/api/v1'
     await fetch(`${base}/chat-history/save`, {
       method: 'POST',
@@ -1441,6 +1502,8 @@ async function genImage() {
         if (imgUrl) {
           images.value[0] = { prompt, url: imgUrl }
           genLoading.value = false
+          // ★ 记录到本地作品库和已用工具
+          recordWorkToLocal(selectedAgent.value!, prompt, imgUrl, 'image')
           return
         }
       } catch (e: any) {
@@ -1483,6 +1546,8 @@ async function genImage() {
     if (data.code === 0 && data.data?.urls?.length > 0) {
       if (data.data.balance !== undefined) coinBalance.value = data.data.balance
       images.value[0] = { prompt, url: data.data.urls[0] }
+      // ★ 记录到本地作品库和已用工具
+      recordWorkToLocal(selectedAgent.value!, prompt, data.data.urls[0], 'image')
     } else {
       throw new Error(data.message || '生成失败')
     }

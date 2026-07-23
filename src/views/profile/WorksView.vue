@@ -44,7 +44,7 @@
             <span>生成处理中</span>
             <small>可离开页面，稍后刷新查看</small>
           </div>
-          <div v-else class="work-text">{{ work.outputText || '文本作品' }}</div>
+          <div v-else class="work-text">{{ work.outputText || work.inputText || '文本作品' }}</div>
         </div>
         <div class="work-body">
           <div class="work-row">
@@ -90,15 +90,28 @@ const activeTab = ref<string>((route.query.tab as string) || 'works')
 
 const filteredWorks = computed(() => {
   if (activeTab.value === 'tools') {
-    // 已用工具：显示所有有记录的工具调用，区分文本对话 vs 媒体生成
+    // 已用工具：显示所有工具调用记录（文本对话 + 媒体生成）
+    // source='live-chat' = 文本对话，source='live-generation' = 媒体生成，无source则按 toolId 判断
     return works.value.filter(w => {
-      // 后端 source: live-chat = 文本对话/工具调用, live-generation = 媒体生成
-      // 将 live-chat 和有 toolId 的全部显示在已用工具
-      return w.source === 'live-chat' || (w.toolId && !isImageWork(w) && !isVideoWork(w) && !w.outputUrl && !w.outputUrls?.length)
+      if (w.source === 'live-generation' && (isImageWork(w) || isVideoWork(w))) {
+        // 媒体生成记录仅在"已用工具"中也展示（交叉显示）
+        return true
+      }
+      return w.source === 'live-chat' || w.source === 'live-generation' || (w.toolId && !w.outputUrl && !w.outputUrls?.length)
     })
   }
-  // 生成作品：有图片、视频URL、音频metadata、或outputText的记录
-  return works.value.filter(w => isImageWork(w) || isVideoWork(w) || isAudioWork(w) || w.outputUrl || (w.outputUrls && w.outputUrls.length > 0) || w.outputText)
+  // 生成作品：有图片、视频URL、音频metadata的媒体作品，或者有 outputText 的文本内容
+  return works.value.filter(w => {
+    // 媒体作品（图片/视频/音频）
+    if (isImageWork(w) || isVideoWork(w) || isAudioWork(w) || w.outputUrl || (w.outputUrls && w.outputUrls.length > 0)) {
+      return true
+    }
+    // source='live-chat' 的纯文本对话也归为"生成作品"（因为对话本身也是一种创作）
+    if (w.source === 'live-chat' && w.outputText) {
+      return true
+    }
+    return false
+  })
 })
 
 function switchTab(tab: string) {
@@ -161,7 +174,43 @@ async function refreshTask(work: any) {
 async function loadWorks() {
   loading.value = true
   try {
-    // 分页加载所有作品（pageSize=50避免网络截断）
+    // ★ 本地容错模式：从多个 localStorage 合并数据
+    const token = localStorage.getItem('lsjy_token')
+    if (token?.startsWith('local_')) {
+      // 1) 主作品库
+      const cached = localStorage.getItem('lsjy_works')
+      if (cached) works.value = JSON.parse(cached)
+      // 2) 工具使用记录（AI对话产生）
+      const usage = JSON.parse(localStorage.getItem('lsjy_tool_usage') || '[]')
+      if (usage.length) {
+        const existingIds = new Set(works.value.map((w: any) => `${w.toolId}_${w.createdAt}`))
+        const newItems = usage.filter((u: any) => !existingIds.has(`${u.toolId}_${u.createdAt}`))
+        works.value = [...newItems, ...works.value]
+      }
+      // 3) 生成作品（Dashboard也用的格式，补充遗漏）
+      const genWorks = JSON.parse(localStorage.getItem('lsjy_generated_works') || '[]')
+      if (genWorks.length) {
+        const existingIds = new Set(works.value.map((w: any) => `${w.toolId}_${w.createdAt}`))
+        const newGen = genWorks.filter((g: any) => g.outputUrl && !existingIds.has(`${g.toolId}_${g.createdAt}`)).map((g: any) => ({
+          id: g.id,
+          toolId: g.toolId,
+          toolName: g.toolName,
+          tool: { name: g.toolName, toolType: 'image' },
+          source: 'live-generation',
+          status: 'completed',
+          inputText: '',
+          outputUrl: g.outputUrl,
+          outputUrls: [g.outputUrl],
+          createdAt: g.createdAt,
+        }))
+        works.value = [...newGen, ...works.value]
+      }
+      // 按时间倒序
+      works.value.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      return
+    }
+
+    // 远程模式：分页加载所有作品
     let allItems: any[] = []
     let page = 1
     const pageSize = 50
@@ -173,15 +222,21 @@ async function loadWorks() {
       if (allItems.length >= total || items.length < pageSize) break
       page++
     }
+    // ★ 合并本地工具使用记录（远程模式下也可能有本地产生的数据）
+    const usage = JSON.parse(localStorage.getItem('lsjy_tool_usage') || '[]')
+    if (usage.length) {
+      const existingIds = new Set(allItems.map((w: any) => `${w.toolId}_${w.createdAt}`))
+      const newItems = usage.filter((u: any) => !existingIds.has(`${u.toolId}_${u.createdAt}`))
+      allItems = [...newItems, ...allItems]
+    }
     works.value = allItems
     // 缓存到localStorage
     if (allItems.length) localStorage.setItem('lsjy_works', JSON.stringify(allItems))
   } catch {
-    // ★ 本地容错：从localStorage恢复数据（作品+工具使用记录）
+    // ★ 本地容错：从localStorage恢复数据
     try {
       const cached = localStorage.getItem('lsjy_works')
       if (cached) works.value = JSON.parse(cached)
-      // 合并本地工具使用记录（lsjy_tool_usage，AI对话产生）
       const usage = JSON.parse(localStorage.getItem('lsjy_tool_usage') || '[]')
       if (usage.length) {
         const existingIds = new Set(works.value.map((w: any) => `${w.toolId}_${w.createdAt}`))
