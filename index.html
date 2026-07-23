@@ -20,7 +20,7 @@
       window.location.replace('/' + h);
     }
     // 检查版本，如果版本不匹配则强制刷新
-    var CURRENT_VERSION = '2026072218';
+    var CURRENT_VERSION = '2026072302';
     var storedVersion = localStorage.getItem('app_version');
     if (storedVersion !== CURRENT_VERSION) {
       localStorage.setItem('app_version', CURRENT_VERSION);
@@ -29,6 +29,10 @@
         caches.keys().then(function(names) {
           names.forEach(function(name) { caches.delete(name); });
         });
+      }
+      // ★ 强制整页刷新，确保加载最新JS
+      if (storedVersion) {
+        window.location.reload(true);
       }
     }
   })();
