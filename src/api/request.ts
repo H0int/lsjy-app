@@ -89,7 +89,8 @@ service.interceptors.response.use(
         return Promise.resolve({ data: { code: 0, data: null }, status: 200, statusText: 'OK', headers: {}, config: originalRequest })
       }
       const isLoginReq = originalRequest.url?.includes('/auth/login')
-      if (!isLoginReq) {
+      const isRegisterReq = originalRequest.url?.includes('/auth/register')
+      if (!isLoginReq && !isRegisterReq) {
         ElMessage.warning('网络连接异常，请检查网络或联系管理员')
       }
       console.warn('[API] 网络不可用:', originalRequest.url)

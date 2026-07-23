@@ -175,13 +175,13 @@ async function handleRegister() {
       phone: form.phone || undefined,
       email: form.email || undefined
     })
-    ElMessage.success('注册成功，正在自动登录...')
-    // 自动登录
+    // 注册API成功，自动登录
     const loginResult = await authStore.login(form.username, form.password)
     if (loginResult === true) {
+      ElMessage.success('注册成功，正在进入系统...')
       router.push('/dashboard')
     } else if (loginResult === 'network') {
-      // 后端不可用：本地创建用户并登录
+      // 后端不可用：静默走本地创建登录（localCreateAndLogin会弹注册成功）
       localCreateAndLogin(form.username, form.nickname, form.password, form.phone, form.email)
     } else {
       ElMessage.warning('自动登录失败，请手动登录')
@@ -192,8 +192,7 @@ async function handleRegister() {
     const status = e?.response?.status
     const isNetErr = !e.response || e.code === 'ERR_NETWORK' || e.message === 'Network Error'
     if (isNetErr || (status >= 500 && status <= 599)) {
-      // 后端不可用：本地创建用户并登录
-      ElMessage.info('服务器暂时不可用，已为您创建本地账号')
+      // 后端不可用：静默走本地创建登录（不弹多余提示，localCreateAndLogin会弹注册成功）
       localCreateAndLogin(form.username, form.nickname, form.password, form.phone, form.email)
     }
     // 其他错误（如用户已存在等）由拦截器处理
