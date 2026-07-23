@@ -467,7 +467,7 @@ const statusText = computed(() => {
 })
 
 const agentCoinDisplay = computed(() => {
-  return authStore.isAdmin || coinBalance.value >= 999999 ? '∞' : String(coinBalance.value)
+  return authStore.isBossAccount ? '∞' : String(coinBalance.value)
 })
 
 // ========== 方法 ==========
@@ -594,6 +594,12 @@ async function callDirectAIStreaming(
   if (MODEL_PROVIDER_MAP[modelKey]) {
     try {
       await streamFromModel(modelKey, messages, abortController.signal, onChunk)
+      // ★ 本地模式扣费：Boss跳过，普通用户扣除圣力并保存
+      if (!authStore.isBossAccount) {
+        const cost = agent.coinCost || 1
+        coinBalance.value = Math.max(0, coinBalance.value - cost)
+        localStorage.setItem('lsjy_coin_balance', String(coinBalance.value))
+      }
       onDone({ coinCost: agent.coinCost || 1 })
       return
     } catch (e: any) {
@@ -611,6 +617,12 @@ async function callDirectAIStreaming(
     tried.add(fk)
     try {
       await streamFromModel(fk, messages, abortController.signal, onChunk)
+      // ★ 本地模式扣费：Boss跳过，普通用户扣除圣力并保存
+      if (!authStore.isBossAccount) {
+        const cost = agent.coinCost || 1
+        coinBalance.value = Math.max(0, coinBalance.value - cost)
+        localStorage.setItem('lsjy_coin_balance', String(coinBalance.value))
+      }
       onDone({ coinCost: agent.coinCost || 1 })
       return
     } catch (e: any) {
@@ -1001,6 +1013,12 @@ async function sendMsg() {
   if ((!text && !file) || loading.value || !selectedAgent.value) return
 
   const agent = selectedAgent.value
+
+  // ★ 余额预检查：Boss(KF02V9)跳过，其他用户余额不足时拦截
+  if (!authStore.isBossAccount && coinBalance.value < (agent.coinCost || 1)) {
+    ElMessage.warning(`圣力不足，当前余额 ${coinBalance.value}，需要 ${agent.coinCost || 1} 圣力`)
+    return
+  }
   // 组合消息内容：文件/图片 + 文字
   let userContent = ''
   if (file) {
@@ -1046,6 +1064,12 @@ async function sendMsg() {
           const data = await res.json()
           const answerText = data.choices?.[0]?.message?.content || '⚠️ 未返回内容'
           msgs.value.push({ role: 'assistant', content: answerText, coinCost: agent.coinCost || 1 })
+          // ★ 本地模式扣费：Boss跳过，普通用户扣除圣力并保存
+          if (!authStore.isBossAccount) {
+            const cost = agent.coinCost || 1
+            coinBalance.value = Math.max(0, coinBalance.value - cost)
+            localStorage.setItem('lsjy_coin_balance', String(coinBalance.value))
+          }
           saveChatHistory(agent, userContent, answerText, Date.now() - startTime)
           answered = true
           break

@@ -120,12 +120,13 @@ export const useAuthStore = defineStore('auth', () => {
       }
       user.value = parsed
       userRoles.value = extractRoles(parsed?.roles)
-      // ★ 仅Boss(KF02V9)本地模式余额设为无限，其他用户使用本地存储的余额或0
+      // ★ 仅Boss(KF02V9)本地模式余额设为无限，其他用户从localStorage恢复余额
       if (token.value.startsWith('local_')) {
         if (parsed.username === 'KF02V9') {
           coinBalance.value = Infinity
         } else {
-          coinBalance.value = 0
+          const savedBalance = localStorage.getItem('lsjy_coin_balance')
+          coinBalance.value = savedBalance ? Number(savedBalance) : 0
         }
       }
     }
