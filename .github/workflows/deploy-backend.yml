@@ -43,8 +43,9 @@ jobs:
             find /root/.pm2/logs -type f -exec rm -f {} \; 2>/dev/null || true
             find /var/log -type f \( -name "*.gz" -o -name "*.log.*" -o -name "*.[0-9]" \) -exec rm -f {} \; 2>/dev/null || true
             journalctl --vacuum-size=50M >/dev/null 2>&1 || true
-            docker image prune -f >/dev/null 2>&1 || true
-            docker builder prune -f >/dev/null 2>&1 || true
+            # 激进清理Docker(未使用的镜像/容器/网络/构建缓存——/var/lib/docker曾占17G是磁盘满主因)
+            docker system prune -af >/dev/null 2>&1 || true
+            docker builder prune -af >/dev/null 2>&1 || true
             echo "--- 清理后磁盘状态 ---"
             df -h / || true
           CLEANEOF
@@ -186,12 +187,6 @@ jobs:
               echo "Nginx配置已更新"
             fi
 
-            # 部署开源Skill独立服务（当前先启动 Matomo，Docker不存在时安全跳过）
-            if [ -f "/tmp/deploy/skill-services/deploy-skill-services.sh" ]; then
-              chmod +x /tmp/deploy/skill-services/deploy-skill-services.sh
-              bash /tmp/deploy/skill-services/deploy-skill-services.sh || true
-            fi
-
             # 写入后端模型环境变量（密钥来自 GitHub Secrets，不进入前端和源码）
             {
               printf '%s\n' "export SILICONFLOW_API_KEY='${{ secrets.SILICONFLOW_API_KEY }}'"
@@ -269,6 +264,18 @@ jobs:
               echo "⚠️ Tools数量异常，检查pm2日志..."
               pm2 logs lsjy-express --lines 80 --nostream || true
               exit 1
+            fi
+
+            # ===== 核心后端(NestJS+Express)已上线并验证通过,最后才部署可选的Skill独立服务 =====
+            # Docker镜像拉取(crawl4ai等)体积大会占满磁盘,放最后+磁盘守卫,避免影响已上线的核心服务
+            AVAIL_KB=$(df -k / | awk 'NR==2{print $4}')
+            echo "当前根分区可用: $((AVAIL_KB/1024)) MB"
+            if [ "${AVAIL_KB:-0}" -gt 5242880 ] && [ -f "/tmp/deploy/skill-services/deploy-skill-services.sh" ]; then
+              echo "磁盘空间充足(>5G),部署开源Skill独立服务(Matomo/crawl4ai等)"
+              chmod +x /tmp/deploy/skill-services/deploy-skill-services.sh
+              bash /tmp/deploy/skill-services/deploy-skill-services.sh || true
+            else
+              echo "⚠️ 磁盘可用<5G,跳过Skill独立服务部署(保护核心后端);如需部署请扩容或清理Docker"
             fi
 
             echo ""
