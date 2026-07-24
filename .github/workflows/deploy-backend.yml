@@ -155,21 +155,24 @@ jobs:
             fi
 
             # ===== 安装NestJS生产依赖(修复 Cannot find module '@nestjs/core' / 502根因) =====
-            # 此前部署只rsync dist/从不装NestJS依赖,且Express部署会用express-package.json覆盖package.json只装Express依赖,
-            # 导致node_modules缺少@nestjs/core,NestJS启动即崩溃。这里在backend目录安装NestJS完整生产依赖。
             NEST_BACKEND_DIR=$(dirname "$NEST_MAIN")   # /opt/lsjy-app/backend (dist的父目录)
             if [ -f "/tmp/backend/package.json" ]; then
               NEST_AVAIL_KB=$(df -k / | awk 'NR==2{print $4}')
               echo "NestJS依赖安装前可用磁盘: $((NEST_AVAIL_KB/1024)) MB"
               if [ "${NEST_AVAIL_KB:-0}" -gt 2097152 ]; then
-                echo "安装NestJS生产依赖 -> $NEST_BACKEND_DIR"
-                cp /tmp/backend/package.json "$NEST_BACKEND_DIR/package.json"
-                cp /tmp/backend/package-lock.json "$NEST_BACKEND_DIR/package-lock.json"
-                cd "$NEST_BACKEND_DIR"
-                # 优先npm ci(按lock精确安装);失败回退npm install;均只装生产依赖
-                npm ci --omit=dev --no-audit --no-fund 2>&1 | tail -15 || npm install --omit=dev --no-audit --no-fund 2>&1 | tail -15 || true
-                echo "--- NestJS依赖安装完成,校验@nestjs/core ---"
-                ls node_modules/@nestjs/core/package.json 2>/dev/null && echo "@nestjs/core OK" || echo "WARN: @nestjs/core 仍缺失"
+                # 如果@nestjs/core已存在则跳过安装(大幅加速)
+                if [ -f "$NEST_BACKEND_DIR/node_modules/@nestjs/core/package.json" ]; then
+                  echo "@nestjs/core 已存在,跳过npm install"
+                else
+                  echo "安装NestJS生产依赖 -> $NEST_BACKEND_DIR"
+                  cp /tmp/backend/package.json "$NEST_BACKEND_DIR/package.json"
+                  cp /tmp/backend/package-lock.json "$NEST_BACKEND_DIR/package-lock.json"
+                  cd "$NEST_BACKEND_DIR"
+                  # 中国镜像加速+仅生产依赖
+                  npm ci --omit=dev --no-audit --no-fund --registry=https://registry.npmmirror.com 2>&1 | tail -10 || npm install --omit=dev --no-audit --no-fund --registry=https://registry.npmmirror.com --prefer-offline 2>&1 | tail -10 || true
+                  echo "--- NestJS依赖安装完成,校验@nestjs/core ---"
+                  ls node_modules/@nestjs/core/package.json 2>/dev/null && echo "@nestjs/core OK" || echo "WARN: @nestjs/core 仍缺失"
+                fi
               else
                 echo "⚠️ 磁盘可用<2G,跳过NestJS依赖安装(可能因缺依赖启动失败,请扩容后重部署)"
               fi
