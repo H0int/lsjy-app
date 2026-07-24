@@ -242,24 +242,36 @@ jobs:
 
             # ===== 自动发现并加载DB环境变量(DB_PASSWORD等)——此前部署丢失DB凭据导致NestJS连不上MySQL =====
             echo "=== DB环境变量自动发现 ==="
-            # 按优先级排查: 1)profile.d下的db脚本 2)backend/.env 3)已保存的pm2环境
+            # 策略: 1)先从旧pm2进程抢救DB变量(--update-env会清掉) 2)查env文件 3)查profile.d
+            echo "   [1/3] 从旧lsjy-backend pm2进程抢救DB环境变量(重启后会丢失)..."
+            pm2 env lsjy-backend 2>/dev/null | grep -iE '^\s*(DB_|DATABASE|MYSQL_)' > /tmp/saved-db-env.txt 2>/dev/null || true
+            if [ -s /tmp/saved-db-env.txt ]; then
+              echo "   发现旧进程DB变量,导出到当前环境:"
+              # 用sed转成export语句再source(避免while|read的subshell问题)
+              sed -n 's/^\s*\([A-Z_a-z][A-Z_a-z0-9]*\)=\(.*\)/export \1='"'"'\2'"'"'/p' /tmp/saved-db-env.txt > /tmp/saved-db-exports.sh
+              cat /tmp/saved-db-exports.sh
+              set -a; . /tmp/saved-db-exports.sh; set +a
+            else
+              echo "   (旧进程无DB变量,继续查env文件)"
+            fi
+
+            echo "   [2/3] 查找env/profile.d中的DB配置..."
+            # 按优先级排查: profile.d下的db脚本 → backend/.env → 全局.env
             for DB_SRC in /etc/profile.d/lsjy-db.sh /opt/lsjy-app/backend/.env /opt/lsjy-app/.env; do
               if [ -f "$DB_SRC" ]; then
-                echo "发现DB配置: $DB_SRC, 加载中..."
+                echo "   发现DB配置: $DB_SRC, 加载中..."
                 set -a; . "$DB_SRC"; set +a
               fi
             done
-            # 检查DB环境变量是否已设置(不显示密码值)
-            echo "DB_HOST=${DB_HOST:-未设置}"
-            echo "DB_USERNAME=${DB_USERNAME:-未设置}"
-            echo "DB_DATABASE=${DB_DATABASE:-未设置}"
-            echo "DB_PASSWORD=${DB_PASSWORD:+(已设置,长度=${#DB_PASSWORD})}"
+
+            echo "   [3/3] DB变量最终状态:"
+            echo "   DB_HOST=${DB_HOST:-未设置}"
+            echo "   DB_USERNAME=${DB_USERNAME:-未设置}"
+            echo "   DB_DATABASE=${DB_DATABASE:-未设置}"
+            echo "   DB_PASSWORD=${DB_PASSWORD:+(已设置,长度=${#DB_PASSWORD})}"
             if [ -z "$DB_PASSWORD" ]; then
-              echo "⚠️ DB_PASSWORD未发现! NestJS将用空密码连MySQL(大概率失败)"
-              echo "   尝试从pm2保存的环境dump恢复..."
-              pm2 env lsjy-backend 2>/dev/null | grep -iE 'DB_|DATABASE' || echo "   (无已保存的pm2环境)"
-              echo "   查看已知所有env文件:"
-              ls -la /etc/profile.d/lsjy-*.sh 2>/dev/null || echo "   (无lsjy-*.sh)"
+              echo "⚠️ DB_PASSWORD仍未发现! NestJS将用空密码连MySQL(可能失败)"
+              echo "   原因: 旧pm2进程无可继承的DB变量,且env文件/profil.d中也无DB凭据"
             fi
 
             # 重启NestJS后端（主服务，端口3000）
