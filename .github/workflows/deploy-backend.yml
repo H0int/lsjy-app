@@ -270,8 +270,19 @@ jobs:
             echo "   DB_DATABASE=${DB_DATABASE:-未设置}"
             echo "   DB_PASSWORD=${DB_PASSWORD:+(已设置,长度=${#DB_PASSWORD})}"
             if [ -z "$DB_PASSWORD" ]; then
-              echo "⚠️ DB_PASSWORD仍未发现! NestJS将用空密码连MySQL(可能失败)"
-              echo "   原因: 旧pm2进程无可继承的DB变量,且env文件/profil.d中也无DB凭据"
+              echo "⚠️ DB_PASSWORD仍未发现! 诊断MySQL连接..."
+              echo "   MySQL服务状态:"
+              systemctl is-active mysql 2>/dev/null || systemctl is-active mariadb 2>/dev/null || echo "   (无法确认)"
+              echo "   测试root无密码连接:"
+              mysql -u root -e "SELECT 1" 2>&1 | head -3 || echo "   (mysql命令不可用或连接失败)"
+              echo "   尝试socket认证:"
+              mysql -u root --socket=/var/run/mysqld/mysqld.sock -e "SELECT user,host,plugin FROM mysql.user LIMIT 5" 2>&1 | head -6 || true
+              echo "   查找MySQL认证配置:"
+              grep -r 'password\|skip-grant' /etc/mysql/ 2>/dev/null | grep -iv '^#'  | head -10 || echo "   (无/etc/mysql/)"
+              echo "   查找其他env配置:"
+              find /etc -name "*.env" -o -name "*my.cnf" 2>/dev/null | head -5
+              echo "   查看pm2完整环境dump(前30行):"
+              pm2 env lsjy-backend 2>/dev/null | head -30 || echo "   (pm2 env不可用)"
             fi
 
             # 重启NestJS后端（主服务，端口3000）
