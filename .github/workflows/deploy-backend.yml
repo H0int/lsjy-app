@@ -294,12 +294,12 @@ jobs:
             # Step4: 持久化到/etc/profile.d/lsjy-db.sh(下次部署自动加载)
             echo "[4/4] 持久化DB配置..."
             if [ -n "$DB_PASSWORD" ]; then
-              printf '%s\n' \
-                "export DB_HOST='${DB_HOST:-localhost}'" \
-                "export DB_USERNAME='${DB_USERNAME:-root}'" \
-                "export DB_PASSWORD='${DB_PASSWORD}'" \
-                "export DB_DATABASE='${DB_DATABASE:-lsjy_saas}'" \
-                > /etc/profile.d/lsjy-db.sh
+              {
+                echo "export DB_HOST='${DB_HOST:-localhost}'"
+                echo "export DB_USERNAME='${DB_USERNAME:-root}'"
+                echo "export DB_PASSWORD='${DB_PASSWORD}'"
+                echo "export DB_DATABASE='${DB_DATABASE:-lsjy_saas}'"
+              } > /etc/profile.d/lsjy-db.sh
               chmod 600 /etc/profile.d/lsjy-db.sh
               echo "   ✅ /etc/profile.d/lsjy-db.sh 已创建"
             else
