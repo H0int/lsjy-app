@@ -180,12 +180,10 @@ jobs:
               echo "更新Express server.js -> $EXPRESS_SERVER"
               cp /tmp/backend/server.js "$EXPRESS_SERVER"
               cd "$(dirname "$EXPRESS_SERVER")"
-              # Express与NestJS共享本目录node_modules:用--no-package-lock无裁剪安装,
-              # 只补齐express/cors/dotenv,绝不清除NestJS依赖(默认npm install会prune掉NestJS包)
-              cp /tmp/backend/express-package.json /tmp/express-pkg.json
-              npm install --no-package-lock --no-save --no-audit --no-fund /tmp/express-pkg.json 2>&1 | tail -8 || true
-              rm -f /tmp/express-pkg.json
-              # 恢复NestJS的package.json/package-lock.json为本目录权威清单(Express依赖已并入node_modules)
+              # Express与NestJS共享本目录node_modules:
+              # 直接安装express/cors/dotenv(不修改package.json,不清除已有NestJS依赖)
+              npm install express cors dotenv --no-save --no-audit --no-fund --no-package-lock 2>&1 | tail -8 || true
+              # 恢复NestJS的package.json/package-lock.json为本目录权威清单
               [ -f "/tmp/backend/package.json" ] && cp /tmp/backend/package.json "$(dirname "$EXPRESS_SERVER")/package.json"
               [ -f "/tmp/backend/package-lock.json" ] && cp /tmp/backend/package-lock.json "$(dirname "$EXPRESS_SERVER")/package-lock.json"
             else
@@ -240,50 +238,77 @@ jobs:
             . /etc/profile.d/lsjy-ai-models.sh
             set +a
 
-            # ===== 自动发现并加载DB环境变量(DB_PASSWORD等)——此前部署丢失DB凭据导致NestJS连不上MySQL =====
-            echo "=== DB环境变量自动发现 ==="
-            # 策略: 1)先从旧pm2进程抢救DB变量(--update-env会清掉) 2)查env文件 3)查profile.d
-            echo "   [1/3] 从旧lsjy-backend pm2进程抢救DB环境变量(重启后会丢失)..."
-            pm2 env lsjy-backend 2>/dev/null | grep -iE '^\s*(DB_|DATABASE|MYSQL_)' > /tmp/saved-db-env.txt 2>/dev/null || true
-            if [ -s /tmp/saved-db-env.txt ]; then
-              echo "   发现旧进程DB变量,导出到当前环境:"
-              # 用sed转成export语句再source(避免while|read的subshell问题)
-              sed -n 's/^\s*\([A-Z_a-z][A-Z_a-z0-9]*\)=\(.*\)/export \1='"'"'\2'"'"'/p' /tmp/saved-db-env.txt > /tmp/saved-db-exports.sh
-              cat /tmp/saved-db-exports.sh
-              set -a; . /tmp/saved-db-exports.sh; set +a
-            else
-              echo "   (旧进程无DB变量,继续查env文件)"
-            fi
+            # ===== DB凭据自动修复与持久化(用debian-sys-maint重置root密码/初次部署) =====
+            echo "=== DB凭据自动修复 ==="
 
-            echo "   [2/3] 查找env/profile.d中的DB配置..."
-            # 按优先级排查: profile.d下的db脚本 → backend/.env → 全局.env
+            # 设置DB默认值
+            export DB_HOST="${DB_HOST:-localhost}"
+            export DB_USERNAME="${DB_USERNAME:-root}"
+            export DB_DATABASE="${DB_DATABASE:-lsjy_saas}"
+
+            # Step1: 尝试从已有持久化配置加载
+            echo "[1/4] 加载已有DB配置..."
             for DB_SRC in /etc/profile.d/lsjy-db.sh /opt/lsjy-app/backend/.env /opt/lsjy-app/.env; do
               if [ -f "$DB_SRC" ]; then
-                echo "   发现DB配置: $DB_SRC, 加载中..."
                 set -a; . "$DB_SRC"; set +a
+                echo "   已加载: $DB_SRC"
               fi
             done
 
-            echo "   [3/3] DB变量最终状态:"
-            echo "   DB_HOST=${DB_HOST:-未设置}"
-            echo "   DB_USERNAME=${DB_USERNAME:-未设置}"
-            echo "   DB_DATABASE=${DB_DATABASE:-未设置}"
-            echo "   DB_PASSWORD=${DB_PASSWORD:+(已设置,长度=${#DB_PASSWORD})}"
+            # Step2: 如果DB_PASSWORD仍为空→用debian-sys-maint凭据连MySQL重置root密码
             if [ -z "$DB_PASSWORD" ]; then
-              echo "⚠️ DB_PASSWORD仍未发现! 诊断MySQL连接..."
-              echo "   MySQL服务状态:"
-              systemctl is-active mysql 2>/dev/null || systemctl is-active mariadb 2>/dev/null || echo "   (无法确认)"
-              echo "   测试root无密码连接:"
-              mysql -u root -e "SELECT 1" 2>&1 | head -3 || echo "   (mysql命令不可用或连接失败)"
-              echo "   尝试socket认证:"
-              mysql -u root --socket=/var/run/mysqld/mysqld.sock -e "SELECT user,host,plugin FROM mysql.user LIMIT 5" 2>&1 | head -6 || true
-              echo "   查找MySQL认证配置:"
-              grep -r 'password\|skip-grant' /etc/mysql/ 2>/dev/null | grep -iv '^#'  | head -10 || echo "   (无/etc/mysql/)"
-              echo "   查找其他env配置:"
-              find /etc -name "*.env" -o -name "*my.cnf" 2>/dev/null | head -5
-              echo "   查看pm2完整环境dump(前30行):"
-              pm2 env lsjy-backend 2>/dev/null | head -30 || echo "   (pm2 env不可用)"
+              echo "[2/4] DB_PASSWORD未设置,尝试用debian-sys-maint恢复..."
+              DEBIAN_CNF="/etc/mysql/debian.cnf"
+              if [ -f "$DEBIAN_CNF" ]; then
+                MAINT_USER=$(grep -oP '^\s*user\s*=\s*\K.*' "$DEBIAN_CNF" | head -1 | tr -d ' ')
+                MAINT_PASS=$(grep -oP '^\s*password\s*=\s*\K.*' "$DEBIAN_CNF" | head -1 | tr -d ' ')
+                echo "   debian-sys-maint user=$MAINT_USER pass=长度${#MAINT_PASS}"
+
+                # 用debian-sys-maint连接MySQL并重置root密码
+                NEW_PASS="${ADMIN_PASSWORD:-LKZ2005430}"
+                mysql -u "$MAINT_USER" -p"$MAINT_PASS" -e "
+                  ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '$NEW_PASS';
+                  FLUSH PRIVILEGES;
+                " 2>&1 || echo "   (ALTER可能已执行,继续)"
+
+                # 验证root可用新密码连接
+                if mysql -u root -p"$NEW_PASS" -e "SELECT 1" 2>&1 | grep -q 1; then
+                  export DB_PASSWORD="$NEW_PASS"
+                  echo "   ✅ root密码已重置且可用"
+                fi
+              fi
             fi
+
+            # Step3: 如果仍无DB_PASSWORD→最后兜底(直接用debian-sys-maint连接,导出密码给NestJS)
+            if [ -z "$DB_PASSWORD" ]; then
+              echo "[3/4] root密码重置失败,尝试直接用debian-sys-maint密码..."
+              if [ -f "/etc/mysql/debian.cnf" ]; then
+                MAINT_PASS2=$(grep -oP '^\s*password\s*=\s*\K.*' /etc/mysql/debian.cnf | head -1 | tr -d ' ')
+                if mysql -u root -p"$MAINT_PASS2" -e "SELECT 1" 2>&1 | grep -q 1; then
+                  export DB_PASSWORD="$MAINT_PASS2"
+                  echo "   ✅ debian-sys-maint密码对root也有效"
+                fi
+              fi
+            fi
+
+            # Step4: 持久化到/etc/profile.d/lsjy-db.sh(下次部署自动加载)
+            echo "[4/4] 持久化DB配置..."
+            if [ -n "$DB_PASSWORD" ]; then
+              cat > /etc/profile.d/lsjy-db.sh <<DBEOF
+            export DB_HOST='${DB_HOST:-localhost}'
+            export DB_USERNAME='${DB_USERNAME:-root}'
+            export DB_PASSWORD='${DB_PASSWORD}'
+            export DB_DATABASE='${DB_DATABASE:-lsjy_saas}'
+            DBEOF
+              chmod 600 /etc/profile.d/lsjy-db.sh
+              echo "   ✅ /etc/profile.d/lsjy-db.sh 已创建"
+            else
+              echo "   ❌ DB_PASSWORD仍未解决! 请手动设置MySQL root密码后重新部署"
+              echo "   手动修复: mysql -u root -p -e \"ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'your_password';\""
+              echo "   然后在GitHub Secrets添加 DB_PASSWORD"
+            fi
+
+            echo "   最终: DB_HOST=$DB_HOST DB_USERNAME=$DB_USERNAME DB_DATABASE=$DB_DATABASE DB_PASSWORD=$([ -n "$DB_PASSWORD" ] && echo '(已设置)' || echo '(空!)')"
 
             # 重启NestJS后端（主服务，端口3000）
             if [ -n "$NEST_MAIN" ] && [ -f "$NEST_MAIN" ]; then
